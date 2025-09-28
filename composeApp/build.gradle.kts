@@ -1,11 +1,16 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.internal.builtins.StandardNames.FqNames.target
 
 plugins {
-    alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeMultiplatform)
+    alias(libs.plugins.googleServices)
+    alias(libs.plugins.kotlinMultiplatform)
+    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.spotless)
 }
 
 kotlin {
@@ -27,21 +32,36 @@ kotlin {
     
     sourceSets {
         androidMain.dependencies {
-            implementation(compose.preview)
-            implementation(libs.androidx.activity.compose)
+            implementation(dependencyNotation = compose.preview)
+            implementation(dependencyNotation = libs.androidx.activity.compose)
+
+            implementation(dependencyNotation = project.dependencies.platform(libs.firebase.bom))
+            implementation(dependencyNotation = libs.firebase.auth)
+            implementation(dependencyNotation = libs.firebase.firestore)
+
+            implementation(dependencyNotation = libs.koin.android)
+            implementation(dependencyNotation = libs.koin.androidx.compose)
+
         }
         commonMain.dependencies {
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-            implementation(libs.androidx.lifecycle.viewmodelCompose)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(dependencyNotation = compose.runtime)
+            implementation(dependencyNotation = compose.foundation)
+            implementation(dependencyNotation = compose.material3)
+            implementation(dependencyNotation = compose.ui)
+            implementation(dependencyNotation = compose.components.resources)
+            implementation(dependencyNotation = compose.components.uiToolingPreview)
+            implementation(dependencyNotation = libs.androidx.lifecycle.runtimeCompose)
+            implementation(dependencyNotation = libs.androidx.lifecycle.viewmodelCompose)
+            implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel)
+
+            implementation(dependencyNotation = libs.koin.core)
+            implementation(dependencyNotation = libs.koin.compose)
+            implementation(dependencyNotation = libs.koin.annotations)
+
+            implementation(dependencyNotation = libs.navigation.compose)
         }
         commonTest.dependencies {
-            implementation(libs.kotlin.test)
+            implementation(dependencyNotation = libs.kotlin.test)
         }
     }
 }
@@ -77,3 +97,16 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
+spotless {
+    kotlin {
+        target("**/*.kt")
+        ktlint(libs.versions.ktlint.get()).editorConfigOverride(
+            mapOf("ktlint_standard_function-naming" to "disabled"),
+        )
+    }
+
+    kotlinGradle {
+        target("*.gradle.kts")
+        ktlint()
+    }
+}

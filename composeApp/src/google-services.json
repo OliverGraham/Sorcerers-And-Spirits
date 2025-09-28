@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "848564605750",
+    "project_id": "sorcerers-and-spirits",
+    "storage_bucket": "sorcerers-and-spirits.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:848564605750:android:c101f74efbf7ab8be85997",
+        "android_client_info": {
+          "package_name": "com.linklabs.sorcerersandspirits"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAQGYLEOQRjOOwQQYXUMA-1q2fspy5rZ38"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -12,9 +12,26 @@
 		4892F1612E8A2361000068FB /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1602E8A2361000068FB /* FirebaseCore */; };
 		4892F1632E8A2361000068FB /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1622E8A2361000068FB /* FirebaseFirestore */; };
 		4892F1652E8A2361000068FB /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1642E8A2361000068FB /* FirebaseFirestoreCombine-Community */; };
+		4892F1862E8A3820000068FB /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; };
+		4892F1872E8A3820000068FB /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		4892F1882E8A3820000068FB /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				4892F1872E8A3820000068FB /* ComposeApp.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		4892F1852E8A3820000068FB /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework; sourceTree = "<group>"; };
 		D798858DFD966DF0374C9A69 /* SorcerersAndSpirits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SorcerersAndSpirits.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -50,6 +67,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4892F15D2E8A2361000068FB /* FirebaseAuth in Frameworks */,
+				4892F1862E8A3820000068FB /* ComposeApp.framework in Frameworks */,
 				4892F1632E8A2361000068FB /* FirebaseFirestore in Frameworks */,
 				4892F1612E8A2361000068FB /* FirebaseCore in Frameworks */,
 				4892F1652E8A2361000068FB /* FirebaseFirestoreCombine-Community in Frameworks */,
@@ -65,8 +83,17 @@
 			children = (
 				CD5C5D3459C18CEE4D44CF1A /* Configuration */,
 				3250F55DD3BC8B5EDF8470D4 /* iosApp */,
+				4892F1842E8A3820000068FB /* Frameworks */,
 				70DAEB74133EBC01A29247EF /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		4892F1842E8A3820000068FB /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4892F1852E8A3820000068FB /* ComposeApp.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		70DAEB74133EBC01A29247EF /* Products */ = {
@@ -88,6 +115,7 @@
 				4F1081352258B4C725A73F95 /* Sources */,
 				997DC4E6F2CB6411953E1424 /* Frameworks */,
 				1F7551E159D53E3E74F16228 /* Resources */,
+				4892F1882E8A3820000068FB /* Embed Frameworks */,
 			);
 			buildRules = (
 			);

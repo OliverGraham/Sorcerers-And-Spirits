@@ -17,8 +17,6 @@ internal fun NavigationHost(
 ) {
     val navController = rememberNavController()
 
-
-
     NavHost(
         navController = navController,
         startDestination = TavernScreenRoute,

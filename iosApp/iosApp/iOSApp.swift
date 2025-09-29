@@ -7,7 +7,7 @@ struct iOSApp: App {
     init() {
         FirebaseApp.configure()
 
-        InitializeKoinKt.initializeKoin(authenticationRepository: IOSAuthRepository())
+        InitializeKoinKt.initializeKoin(authenticationRepository: IOSAuthenticationRepository())
     }
 
     var body: some Scene {

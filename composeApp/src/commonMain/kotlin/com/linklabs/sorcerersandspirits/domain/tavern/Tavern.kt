@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.tavern
 
-// TODO: What is coming from the backend?
+import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
+
 data class Tavern(
-    val players: List<Unit>,
+    val travelers: List<Traveler>,
 )

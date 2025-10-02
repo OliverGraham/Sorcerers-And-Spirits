@@ -7,11 +7,13 @@ import kotlinx.coroutines.tasks.await
 class AndroidAuthenticationRepository : AuthenticationRepository {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
 
+    override fun getUserId() = auth.currentUser?.uid
+
     override suspend fun isSignedIn(): Boolean {
         return auth.currentUser != null
     }
 
-    override suspend fun signInAnonymously() {
-        auth.signInAnonymously().await()
+    override suspend fun signInAnonymously(): String? {
+        return auth.signInAnonymously().await()?.user?.uid
     }
 }

@@ -6,18 +6,23 @@
 //
 
 import Foundation
-import FirebaseCore      // Needed to initialize Firebase
-import FirebaseAuth      // For Auth APIs
-import ComposeApp // your KMP framework
+import FirebaseCore
+import FirebaseAuth
+import ComposeApp
 
 class IOSAuthenticationRepository: AuthenticationRepository {
+    private let authentication = Auth.auth()
+
+    func getUserId() -> String? {
+        return authentication.currentUser?.uid
+    }
 
     func isSignedIn() async throws -> KotlinBoolean {
-        let signedIn = Auth.auth().currentUser != nil
+        let signedIn = authentication.currentUser != nil
         return KotlinBoolean(bool: signedIn)
     }
 
     func signInAnonymously() async throws {
-        try await Auth.auth().signInAnonymously()
+        try await authentication.signInAnonymously()
     }
 }

@@ -13,7 +13,7 @@ class AndroidAuthenticationRepository : AuthenticationRepository {
         return auth.currentUser != null
     }
 
-    override suspend fun signInAnonymously(): String? {
-        return auth.signInAnonymously().await()?.user?.uid
+    override suspend fun signInAnonymously() {
+        auth.signInAnonymously().await()
     }
 }

@@ -33,10 +33,13 @@
 /* Begin PBXFileReference section */
 		4892F1852E8A3820000068FB /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework; sourceTree = "<group>"; };
 		D798858DFD966DF0374C9A69 /* SorcerersAndSpirits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SorcerersAndSpirits.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F0C10452FACC1650952C0324 /* IHateIOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IHateIOS.swift; sourceTree = "<group>"; };
+		F0C10BEF5BB7C6668E31D067 /* IOSTavernRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IOSTavernRepository.swift; path = data/IOSTavernRepository.swift; sourceTree = "<group>"; };
+		F0C10EB5B7D277B4D654B9E1 /* IHateIOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IHateIOS.swift; path = data/IHateIOS.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2E0652165E4080E4BA2C86B1 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
+		2E0652165E4080E4BA2C86B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -49,7 +52,7 @@
 		3250F55DD3BC8B5EDF8470D4 /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2E0652165E4080E4BA2C86B1 /* Exceptions for "iosApp" folder in "iosApp" target */,
+				2E0652165E4080E4BA2C86B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";

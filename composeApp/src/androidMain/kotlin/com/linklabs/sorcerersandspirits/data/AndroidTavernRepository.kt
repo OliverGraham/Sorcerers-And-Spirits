@@ -32,7 +32,7 @@ class AndroidTavernRepository : TavernRepository {
         awaitClose { listener.remove() }
     }
 
-    override suspend fun newTravelerEntersTavern(traveler: Traveler) {
+    override suspend fun aTravelerEntersTavern(traveler: Traveler) {
         database
             .collection(TAVERN)
             .document(traveler.id)

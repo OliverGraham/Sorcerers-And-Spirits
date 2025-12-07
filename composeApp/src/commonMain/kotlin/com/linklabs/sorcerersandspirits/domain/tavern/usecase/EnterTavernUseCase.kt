@@ -10,13 +10,15 @@ class EnterTavernUseCase(
     private val tavernRepository: TavernRepository,
     private val travelerRepository: TravelerRepository,
 ) {
+
+    // TODO: Maybe pass in id instead of querying? Or is this a local storage kind of thing
     suspend operator fun invoke() {
         val userId = authenticationRepository.getUserId()
         if (userId.isNullOrEmpty()) return
 
         val traveler = getOrCreateTraveler(userId = userId)
 
-        tavernRepository.newTravelerEntersTavern(traveler = traveler)
+        tavernRepository.aTravelerEntersTavern(traveler = traveler)
     }
 
     private suspend fun getOrCreateTraveler(userId: String): Traveler {

@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.data
+package com.linklabs.sorcerersandspirits.data.model
 
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import kotlinx.serialization.Serializable

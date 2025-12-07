@@ -51,14 +51,14 @@ private fun DrawerContent(
             .padding(16.dp),
         verticalArrangement = Arrangement.Top,
     ) {
-        Text("Settings", style = MaterialTheme.typography.titleLarge)
+        Text(text = "Settings", style = MaterialTheme.typography.titleLarge)
 
-        Spacer(Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(height = 16.dp))
 
         OutlinedTextField(
             value = displayName,
             onValueChange = { onNameChange(it) },
-            label = { Text("Display Name") },
+            label = { Text(text = "Display Name") },
             modifier = Modifier.fillMaxWidth(),
         )
 

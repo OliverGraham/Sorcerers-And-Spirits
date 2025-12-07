@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.data
 
 import com.google.firebase.firestore.FirebaseFirestore
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TRAVELERS
+import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import com.linklabs.sorcerersandspirits.domain.traveler.TravelerRepository
 import kotlinx.coroutines.tasks.await
@@ -39,7 +40,7 @@ class AndroidTravelerRepository : TravelerRepository {
             .document(id)
             .update(
                 /* field = */
-                "displayName",
+                FireStoreKeys.DISPLAY_NAME,
                 /* value = */
                 displayName,
             )

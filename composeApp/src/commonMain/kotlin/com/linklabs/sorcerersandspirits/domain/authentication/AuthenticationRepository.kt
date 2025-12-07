@@ -5,5 +5,5 @@ interface AuthenticationRepository {
 
     suspend fun isSignedIn(): Boolean
 
-    suspend fun signInAnonymously(): String?
+    suspend fun signInAnonymously()
 }

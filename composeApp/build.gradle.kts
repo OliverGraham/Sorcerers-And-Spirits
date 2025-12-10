@@ -36,6 +36,7 @@ kotlin {
             implementation(dependencyNotation = project.dependencies.platform(libs.firebase.bom))
             implementation(dependencyNotation = libs.firebase.auth)
             implementation(dependencyNotation = libs.firebase.firestore)
+            implementation(dependencyNotation = libs.firebase.database)
 
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)

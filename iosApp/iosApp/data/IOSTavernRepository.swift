@@ -56,8 +56,4 @@ class IOSTavernRepositoryImplementation : TavernRepositoryCopyForIOS  {
             // TODO: error logging?
         }
     }
-
-    func leaveTavern(id: String) {
-        database.collection(FireStoreKeys.shared.TAVERN).document(id).delete()
-    }
 }

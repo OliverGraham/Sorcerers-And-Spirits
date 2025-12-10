@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.LeaveTavernUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.NonCancellable
@@ -18,7 +17,6 @@ import kotlinx.coroutines.launch
 
 class TavernScreenViewModel(
     private val enterTavernUseCase: EnterTavernUseCase,
-    private val leaveTavernUseCase: LeaveTavernUseCase,
     private val updateTravelerDisplayNameUseCase: UpdateTravelerDisplayNameUseCase,
     getTavernFlowUseCase: GetTavernFlowUseCase,
 ) : ViewModel() {
@@ -51,7 +49,6 @@ class TavernScreenViewModel(
 
     fun onExitTavern() {
         viewModelScope.launch(context = NonCancellable) {
-            leaveTavernUseCase()
         }
     }
 

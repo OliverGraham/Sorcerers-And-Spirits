@@ -22,8 +22,4 @@ class IOSTavernRepositoryCoordinator(
     override suspend fun aTravelerEntersTavern(traveler: Traveler) {
         tavernRepositoryCopyForIOS.aTravelerEntersTavern(traveler = traveler)
     }
-
-    override suspend fun leaveTavern(id: String) {
-        tavernRepositoryCopyForIOS.leaveTavern(id = id)
-    }
 }

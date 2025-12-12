@@ -7,8 +7,6 @@ interface TavernRepository {
     fun getTavernFlow(): Flow<Tavern>
 
     suspend fun aTravelerEntersTavern(traveler: Traveler)
-
-    suspend fun leaveTavern(id: String)
 }
 
 /**
@@ -16,6 +14,4 @@ interface TavernRepository {
  */
 interface TavernRepositoryCopyForIOS {
     fun aTravelerEntersTavern(traveler: Traveler)
-
-    fun leaveTavern(id: String)
 }

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4862D6732EECA3040046000D /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = 4862D6722EECA3040046000D /* FirebaseDatabase */; };
 		4892F15D2E8A2361000068FB /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F15C2E8A2361000068FB /* FirebaseAuth */; };
 		4892F15F2E8A2361000068FB /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F15E2E8A2361000068FB /* FirebaseAuthCombine-Community */; };
 		4892F1612E8A2361000068FB /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1602E8A2361000068FB /* FirebaseCore */; };
@@ -33,13 +34,10 @@
 /* Begin PBXFileReference section */
 		4892F1852E8A3820000068FB /* ComposeApp.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ComposeApp.framework; path = ../composeApp/build/bin/iosSimulatorArm64/debugFramework/ComposeApp.framework; sourceTree = "<group>"; };
 		D798858DFD966DF0374C9A69 /* SorcerersAndSpirits.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SorcerersAndSpirits.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		F0C10452FACC1650952C0324 /* IHateIOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = IHateIOS.swift; sourceTree = "<group>"; };
-		F0C10BEF5BB7C6668E31D067 /* IOSTavernRepository.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IOSTavernRepository.swift; path = data/IOSTavernRepository.swift; sourceTree = "<group>"; };
-		F0C10EB5B7D277B4D654B9E1 /* IHateIOS.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = IHateIOS.swift; path = data/IHateIOS.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2E0652165E4080E4BA2C86B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		2E0652165E4080E4BA2C86B1 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -52,7 +50,7 @@
 		3250F55DD3BC8B5EDF8470D4 /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2E0652165E4080E4BA2C86B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
+				2E0652165E4080E4BA2C86B1 /* Exceptions for "iosApp" folder in "iosApp" target */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -74,6 +72,7 @@
 				4892F1632E8A2361000068FB /* FirebaseFirestore in Frameworks */,
 				4892F1612E8A2361000068FB /* FirebaseCore in Frameworks */,
 				4892F1652E8A2361000068FB /* FirebaseFirestoreCombine-Community in Frameworks */,
+				4862D6732EECA3040046000D /* FirebaseDatabase in Frameworks */,
 				4892F15F2E8A2361000068FB /* FirebaseAuthCombine-Community in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -134,6 +133,7 @@
 				4892F1602E8A2361000068FB /* FirebaseCore */,
 				4892F1622E8A2361000068FB /* FirebaseFirestore */,
 				4892F1642E8A2361000068FB /* FirebaseFirestoreCombine-Community */,
+				4862D6722EECA3040046000D /* FirebaseDatabase */,
 			);
 			productName = iosApp;
 			productReference = D798858DFD966DF0374C9A69 /* SorcerersAndSpirits.app */;
@@ -433,6 +433,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		4862D6722EECA3040046000D /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
 		4892F15C2E8A2361000068FB /* FirebaseAuth */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

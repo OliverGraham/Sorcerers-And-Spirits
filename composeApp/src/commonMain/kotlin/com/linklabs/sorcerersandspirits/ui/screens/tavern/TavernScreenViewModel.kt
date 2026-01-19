@@ -6,7 +6,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
-import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
@@ -33,6 +32,10 @@ class TavernScreenViewModel(
             initialValue = UiState.Loading,
         )
 
+    init {
+        enterTavern()
+    }
+
     fun onActionButtonClick() {
         viewModelScope.launch {
             updateTravelerDisplayNameUseCase(
@@ -41,14 +44,9 @@ class TavernScreenViewModel(
         }
     }
 
-    fun onEnterTavern() {
+    fun enterTavern() {
         viewModelScope.launch {
             enterTavernUseCase()
-        }
-    }
-
-    fun onExitTavern() {
-        viewModelScope.launch(context = NonCancellable) {
         }
     }
 

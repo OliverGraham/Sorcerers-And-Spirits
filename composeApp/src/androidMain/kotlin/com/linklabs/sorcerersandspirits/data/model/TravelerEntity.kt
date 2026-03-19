@@ -21,3 +21,8 @@ data class TravelerEntity(
         )
     }
 }
+
+internal fun Traveler.toTravelerEntity() = TravelerEntity(
+    id = id,
+    displayName = displayName,
+)

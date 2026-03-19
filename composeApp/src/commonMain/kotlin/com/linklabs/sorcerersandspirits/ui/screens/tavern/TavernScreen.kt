@@ -1,32 +1,52 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.tavern.Tavern
+import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.serialization.Serializable
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
 @Serializable
 internal data object TavernScreenRoute
@@ -34,20 +54,25 @@ internal data object TavernScreenRoute
 @Composable
 internal fun TavernScreen(
     viewModel: TavernScreenViewModel = koinInject(),
+    onMenuClick: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    viewModel.eventFlow.collectEvents()
+
     val uiState by viewModel.uiStateFlow.collectAsState()
     when (val state = uiState) {
         UiState.Error -> {
         }
         is UiState.Loaded ->
             TavernScreen(
-                tavern = state.data,
+                tavernState = state.data,
                 onActionButtonClick = viewModel::onActionButtonClick,
+                onMenuClick = onMenuClick,
+                onSendChallengerNotifications = viewModel::onSendChallengerNotifications,
                 modifier = modifier,
             )
         UiState.Loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
         }
@@ -57,26 +82,56 @@ internal fun TavernScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TavernScreen(
-    tavern: Tavern,
+    tavernState: TavernState,
     onActionButtonClick: () -> Unit,
+    onMenuClick: () -> Unit,
+    onSendChallengerNotifications: (TravelerState, Set<TravelerState>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Scaffold(
+    val scaffoldState = rememberBottomSheetScaffoldState()
+    var selection by remember { mutableStateOf(setOf<TravelerState>()) }
+
+    BottomSheetScaffold(
+        scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
+        sheetPeekHeight = 140.dp,
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        modifier = Modifier.fillMaxWidth(),
                         text = "Sorcerers & Spirits",
-                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.headlineSmall,
                     )
+                },
+                actions = {
+                    IconButton(onClick = onMenuClick) {
+                        Icon(
+                            painter = painterResource(resource = Res.drawable.ic_menu),
+                            contentDescription = "Open Drawer",
+                        )
+                    }
+                },
+            )
+        },
+        sheetContent = {
+            BottomSheetContent(
+                travelerStates = tavernState.otherTravelers,
+                selectedTravelers = selection,
+                onTravelerClick = { traveler ->
+                    selection = if (selection.contains(traveler)) {
+                        selection - traveler
+                    } else {
+                        selection + traveler
+                    }
+                },
+                onCompleteAction = {
+                    onSendChallengerNotifications(tavernState.userTraveler, selection)
+                    selection = emptySet()
                 },
             )
         },
     ) { padding ->
         ScaffoldContent(
-            tavern = tavern,
             padding = padding,
             onActionButtonClick = onActionButtonClick,
         )
@@ -84,53 +139,170 @@ private fun TavernScreen(
 }
 
 @Composable
-private fun ScaffoldContent(
-    tavern: Tavern,
-    padding: PaddingValues,
-    onActionButtonClick: () -> Unit,
+private fun BottomSheetContent(
+    travelerStates: List<TravelerState>,
+    selectedTravelers: Set<TravelerState>,
+    onTravelerClick: (TravelerState) -> Unit,
+    onCompleteAction: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(paddingValues = padding),
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
-        ClassCards()
-        ActionButton(onActionButtonClick = onActionButtonClick)
-        Text(text = "Travelers in Tavern:")
-        tavern.travelers.forEach {
-            Text(text = it.displayName)
+        AnimatedContent(
+            targetState = travelerStates.size,
+            modifier = Modifier.padding(top = 16.dp),
+        ) { count ->
+            Text(
+                text = "Travelers in Tavern: $count",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
         }
-    }
-}
+        Text(
+            text = "Challenge people to fight in The Arena:",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        travelerStates.forEach { travelerState ->
+            travelerState.ToCard(
+                isSelected = selectedTravelers.contains(travelerState),
+                onClick = { onTravelerClick(travelerState) },
+            )
+        }
 
-@Composable
-private fun ClassCards() {
-    val classNames = listOf(
-        "Rogue",
-        "Duelist",
-        "Mage",
-        "Paladin",
-    )
-
-    LazyRow(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        items(items = classNames) { className ->
-            Card(
-                modifier = Modifier.size(size = 150.dp),
+        AnimatedVisibility(visible = selectedTravelers.isNotEmpty()) {
+            Button(
+                onClick = onCompleteAction,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp),
             ) {
-                Text(text = className)
+                Text(text = "Challenge (${selectedTravelers.size})")
             }
         }
     }
 }
 
 @Composable
-private fun ActionButton(
-    onActionButtonClick: () -> Unit,
+private fun TravelerState.ToCard(
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    Button(
-        onClick = onActionButtonClick,
+    val text = if (isThisTravelerTheUser) "$displayName (You)" else displayName
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        shape = MaterialTheme.shapes.medium,
+        border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = when {
+                isThisTravelerTheUser -> MaterialTheme.colorScheme.primaryContainer
+                isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+                else -> MaterialTheme.colorScheme.surface
+            },
+            contentColor = if (isThisTravelerTheUser) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+        ),
     ) {
-        Text(text = "Tap Button To Change Your Traveler Name")
+        Box(
+            modifier = Modifier
+                .clickable(enabled = !isThisTravelerTheUser) { onClick() }
+                .padding(24.dp)
+                .fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = text,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (isThisTravelerTheUser || isSelected) FontWeight.Bold else FontWeight.Normal,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
+}
+
+@Composable
+private fun ScaffoldContent(
+    padding: PaddingValues,
+    @Suppress("UNUSED_PARAMETER") onActionButtonClick: () -> Unit,
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(paddingValues = padding),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        // TODO: What to put here?
+    }
+}
+
+@Suppress("ComposableNaming")
+@Composable
+private fun SharedFlow<TavernEvent>.collectEvents() {
+    // Local state to track which challenge to show in the dialog
+    var activeChallenge by remember { mutableStateOf<ArenaChallenge?>(null) }
+
+    // TODO: Why is Gemini writing these variables and the IDE saying they're not used?
+
+    // The Dialog UI for testing
+    activeChallenge?.let { challenge ->
+        AlertDialog(
+            onDismissRequest = { activeChallenge = null },
+            title = { Text("Arena Challenge") },
+            text = { Text("${challenge.sender.displayName} has challenged you!") },
+            confirmButton = {
+                Button(onClick = { activeChallenge = null }) {
+                    Text("Accept (Test)")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { activeChallenge = null }) {
+                    Text("Decline")
+                }
+            },
+        )
+    }
+
+    LaunchedEffect(Unit) {
+        collect { event ->
+            activeChallenge = when (event) {
+                is TavernEvent.ChallengeReceived -> {
+                    event.challenge
+                }
+
+                is TavernEvent.NavigateToArena -> {
+                    // For now, just clear the dialog or log it
+                    null
+                }
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TavernScreenPreview() {
+    TavernScreen(
+        tavernState = TavernState(
+            userTraveler = TravelerState(id = "0", displayName = "It's a me", isThisTravelerTheUser = true),
+            otherTravelers = listOf(
+                TravelerState(id = "1", displayName = "RandomName1", isThisTravelerTheUser = false),
+                TravelerState(id = "2", displayName = "RandomName2", isThisTravelerTheUser = false),
+            ),
+        ),
+        onActionButtonClick = {},
+        onMenuClick = {},
+        onSendChallengerNotifications = { _, _ -> },
+    )
 }

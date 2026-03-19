@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.AndroidAuthenticationRepository
-import com.linklabs.sorcerersandspirits.data.AndroidTavernRepository
 import com.linklabs.sorcerersandspirits.data.AndroidTravelerRepository
+import com.linklabs.sorcerersandspirits.data.tavern.AndroidTavernRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.traveler.TravelerRepository

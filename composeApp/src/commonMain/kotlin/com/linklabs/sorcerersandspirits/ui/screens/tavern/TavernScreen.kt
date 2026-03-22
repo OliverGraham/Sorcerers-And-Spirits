@@ -38,9 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
+import com.linklabs.sorcerersandspirits.domain.traveler.GamePlayStatus
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
-import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.Flow
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -54,23 +54,36 @@ internal data object TavernScreenRoute
 @Composable
 internal fun TavernScreen(
     viewModel: TavernScreenViewModel = koinInject(),
-    onMenuClick: () -> Unit = {},
+    onMenuClick: () -> Unit,
+    onNavigateToArena: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    viewModel.eventFlow.collectEvents()
+    viewModel.eventChannelFlow.collectEvents(
+        onNavigateToArena = onNavigateToArena,
+    )
 
     val uiState by viewModel.uiStateFlow.collectAsState()
     when (val state = uiState) {
         UiState.Error -> {
         }
-        is UiState.Loaded ->
+        is UiState.Loaded -> {
+            val data = state.data
             TavernScreen(
-                tavernState = state.data,
+                tavernState = data,
                 onActionButtonClick = viewModel::onActionButtonClick,
                 onMenuClick = onMenuClick,
                 onSendChallengerNotifications = viewModel::onSendChallengerNotifications,
                 modifier = modifier,
             )
+            if (data.arenaChallenge != null) {
+                ArenaChallengeDialog(
+                    challenge = data.arenaChallenge,
+                    userTraveler = data.userTraveler,
+                    onAcceptChallenge = viewModel::onAcceptArenaChallenge,
+                    onDeclineChallenge = viewModel::onDeclineArenaChallenge,
+                )
+            }
+        }
         UiState.Loading -> {
             Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -249,45 +262,46 @@ private fun ScaffoldContent(
 
 @Suppress("ComposableNaming")
 @Composable
-private fun SharedFlow<TavernEvent>.collectEvents() {
-    // Local state to track which challenge to show in the dialog
-    var activeChallenge by remember { mutableStateOf<ArenaChallenge?>(null) }
-
-    // TODO: Why is Gemini writing these variables and the IDE saying they're not used?
-
-    // The Dialog UI for testing
-    activeChallenge?.let { challenge ->
-        AlertDialog(
-            onDismissRequest = { activeChallenge = null },
-            title = { Text("Arena Challenge") },
-            text = { Text("${challenge.sender.displayName} has challenged you!") },
-            confirmButton = {
-                Button(onClick = { activeChallenge = null }) {
-                    Text("Accept (Test)")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { activeChallenge = null }) {
-                    Text("Decline")
-                }
-            },
-        )
-    }
-
+private fun Flow<TavernEvent>.collectEvents(
+    onNavigateToArena: (String) -> Unit,
+) {
     LaunchedEffect(Unit) {
         collect { event ->
-            activeChallenge = when (event) {
-                is TavernEvent.ChallengeReceived -> {
-                    event.challenge
-                }
-
+            when (event) {
                 is TavernEvent.NavigateToArena -> {
-                    // For now, just clear the dialog or log it
-                    null
+                    onNavigateToArena("")
                 }
             }
         }
     }
+}
+
+@Composable
+private fun ArenaChallengeDialog(
+    challenge: ArenaChallengeState,
+    userTraveler: TravelerState,
+    onAcceptChallenge: (challenge: ArenaChallengeState, userTraveler: TravelerState) -> Unit,
+    onDeclineChallenge: (challenge: ArenaChallengeState, userTraveler: TravelerState) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AlertDialog(
+        onDismissRequest = {
+            onDeclineChallenge(challenge, userTraveler)
+        },
+        title = { Text("Arena Challenge") },
+        text = { Text("${challenge.sender.displayName} has challenged you!") },
+        confirmButton = {
+            Button(onClick = { onAcceptChallenge(challenge, userTraveler) }) {
+                Text("Accept (Test)")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = { onDeclineChallenge(challenge, userTraveler) }) {
+                Text("Decline")
+            }
+        },
+        modifier = modifier,
+    )
 }
 
 @Preview
@@ -295,10 +309,10 @@ private fun SharedFlow<TavernEvent>.collectEvents() {
 private fun TavernScreenPreview() {
     TavernScreen(
         tavernState = TavernState(
-            userTraveler = TravelerState(id = "0", displayName = "It's a me", isThisTravelerTheUser = true),
+            userTraveler = TravelerState(id = "0", displayName = "It's a me", isThisTravelerTheUser = true, gamePlayStatus = GamePlayStatus.Available),
             otherTravelers = listOf(
-                TravelerState(id = "1", displayName = "RandomName1", isThisTravelerTheUser = false),
-                TravelerState(id = "2", displayName = "RandomName2", isThisTravelerTheUser = false),
+                TravelerState(id = "1", displayName = "RandomName1", isThisTravelerTheUser = false, gamePlayStatus = GamePlayStatus.Available),
+                TravelerState(id = "2", displayName = "RandomName2", isThisTravelerTheUser = false, gamePlayStatus = GamePlayStatus.Available),
             ),
         ),
         onActionButtonClick = {},

@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.tavern.usecase
 
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
+import com.linklabs.sorcerersandspirits.domain.traveler.GamePlayStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import com.linklabs.sorcerersandspirits.domain.traveler.TravelerRepository
 
@@ -26,6 +27,7 @@ class EnterTavernUseCase(
             val newTraveler = Traveler(
                 id = userId,
                 displayName = DEFAULT_DISPLAY_NAME,
+                gamePlayStatus = GamePlayStatus.Available,
             )
             travelerRepository.saveTraveler(traveler = newTraveler)
             newTraveler

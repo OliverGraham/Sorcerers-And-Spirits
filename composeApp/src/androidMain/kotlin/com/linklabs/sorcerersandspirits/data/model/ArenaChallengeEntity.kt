@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.model
 
 import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
-import com.linklabs.sorcerersandspirits.domain.tavern.ChallengeStatus
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,7 +8,6 @@ data class ArenaChallengeEntity(
     val arenaId: String = "",
     val sender: TravelerEntity = TravelerEntity(),
     val receivers: List<TravelerEntity> = emptyList(),
-    val status: ChallengeStatus = ChallengeStatus.PENDING,
 ) {
     fun toArenaChallenge(): ArenaChallenge? {
         if (arenaId.isEmpty()) return null
@@ -23,7 +21,12 @@ data class ArenaChallengeEntity(
             arenaId = arenaId,
             sender = senderDomain,
             receivers = receiversDomain,
-            status = status,
         )
     }
 }
+
+internal fun ArenaChallenge.toArenaChallengeEntity() = ArenaChallengeEntity(
+    arenaId = arenaId,
+    sender = sender.toTravelerEntity(),
+    receivers = receivers.map { it.toTravelerEntity() },
+)

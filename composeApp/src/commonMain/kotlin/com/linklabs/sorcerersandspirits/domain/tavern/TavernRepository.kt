@@ -13,6 +13,8 @@ interface TavernRepository {
     fun getArenaChallengeFlow(userId: String): Flow<ArenaChallenge>
 
     fun updateArenaChallengeStatus(arenaChallenge: ArenaChallenge)
+
+    fun removeArenaChallenge(arenaChallenge: ArenaChallenge)
 }
 
 /**

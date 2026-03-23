@@ -56,10 +56,19 @@ class TavernScreenViewModel(
         }
     }
 
+    fun showArenaChallengeDialog() {
+        updateArenaChallengeDialogVisibility(isVisible = true)
+    }
+
+    fun hideArenaChallengeDialog() {
+        updateArenaChallengeDialogVisibility(isVisible = false)
+    }
+
     fun onSendChallengerNotifications(
         userTraveler: TravelerState,
         selectedTravelerStates: Set<TravelerState>,
     ) {
+        // TODO: Check GamePlayStatus before this, so to make sure what's legal and what isn't
         viewModelScope.launch {
             sendArenaChallengesUseCase(
                 sender = userTraveler.toTraveler().copy(gamePlayStatus = GamePlayStatus.AcceptedInvite),
@@ -103,11 +112,12 @@ class TavernScreenViewModel(
             updateArenaChallengeStatusUseCase(
                 arenaChallenge = updatedChallenge.toArenaChallenge(),
             )
+            updateArenaChallengeDialogVisibility(isVisible = false)
         }
     }
 
     private suspend fun collectTavernFlow() {
-        getTavernFlowUseCase().map { tavern ->
+        getTavernFlowUseCase().filterNotNull().map { tavern ->
             val tavernState = tavern.toTavernState(userId = getUserIdUseCase())
             if (tavernState == null) {
                 UiState.Loading
@@ -121,48 +131,35 @@ class TavernScreenViewModel(
             }
     }
 
+    // TODO: What about if user logs in, and userId would change? Much later problem
     private suspend fun collectArenaChallenges() {
         val userId = getUserIdUseCase()
 
+        // TODO: Figure out test cases, start writing tests here I suppose
         getArenaChallengeFlowUseCase().filterNotNull().collect { arenaChallenge ->
-            val allParticipants = arenaChallenge.receivers + arenaChallenge.sender
-            val userGamePlayStatus =
-                allParticipants.find { it.id == userId }?.gamePlayStatus ?: return@collect
+            _uiStateFlow.updateLoaded { tavernState ->
+                val userGamePlayStatus =
+                    arenaChallenge.getUserTraveler(userId = userId).gamePlayStatus
 
-            when (userGamePlayStatus) {
-                GamePlayStatus.ConsideringInvite -> {
-                    closeArenaChallengeDialog()
+                // TODO: Could have the button for the dialog update with some animation to show that
+                //  there's been new activity
+                tavernState.copy(
+                    arenaChallenge = arenaChallenge.toArenaChallengeState(userId = userId),
+                    showArenaChallengeDialog = userGamePlayStatus == GamePlayStatus.ConsideringInvite,
+                )
+            }
 
-                    _uiStateFlow.updateLoaded { it.copy(arenaChallenge = arenaChallenge.toArenaChallengeState()) }
-                }
-                GamePlayStatus.AcceptedInvite -> {
-                    // Only show dialog if I'm not the one who sent it
-                    // if (arenaChallenge.sender.id == userId) return@collect
-
-                    // TODO: Make UI to track Status of this. Maybe button to bring up dialog again?
-                    closeArenaChallengeDialog()
-
-                    // Navigation logic: If all receivers accepted, go to Arena
-                    if (arenaChallenge.receivers.all { it.gamePlayStatus == GamePlayStatus.AcceptedInvite }) {
-                        _eventChannelFlow.send(
-                            element =
-                            TavernEvent.NavigateToArena(arenaId = arenaChallenge.arenaId),
-                        )
-                    }
-                }
-                GamePlayStatus.DeclinedInvite -> {
-                    closeArenaChallengeDialog()
-                }
-                GamePlayStatus.Available,
-                GamePlayStatus.InArena,
-                -> {
-                    // TODO: Nothing here?
-                }
+            if (arenaChallenge.hasEveryoneAcceptedTheInvite) {
+                updateArenaChallengeDialogVisibility(isVisible = false)
+                _eventChannelFlow.send(
+                    element =
+                    TavernEvent.NavigateToArena(arenaId = arenaChallenge.arenaId),
+                )
             }
         }
     }
 
-    private fun closeArenaChallengeDialog() {
-        _uiStateFlow.updateLoaded { it.copy(arenaChallenge = null) }
+    private fun updateArenaChallengeDialogVisibility(isVisible: Boolean) {
+        _uiStateFlow.updateLoaded { it.copy(showArenaChallengeDialog = isVisible) }
     }
 }

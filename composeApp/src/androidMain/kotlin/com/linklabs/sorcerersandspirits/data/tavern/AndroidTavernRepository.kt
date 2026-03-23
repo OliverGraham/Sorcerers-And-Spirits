@@ -2,9 +2,7 @@ package com.linklabs.sorcerersandspirits.data.tavern
 
 import com.google.firebase.database.FirebaseDatabase
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
-import com.linklabs.sorcerersandspirits.data.model.ArenaChallengeEntity
 import com.linklabs.sorcerersandspirits.data.model.toArenaChallengeEntity
-import com.linklabs.sorcerersandspirits.data.model.toTravelerEntity
 import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Tavern
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
@@ -40,32 +38,35 @@ class AndroidTavernRepository : TavernRepository {
     }
 
     /**
-     * Sends the initial challenge to all receivers and the sender. TODO: Update naming?
+     * Sends the initial challenge to all receivers and the sender.
      */
     override suspend fun sendArenaChallenges(sender: Traveler, receivers: List<Traveler>) {
         val arenaId = challengesReference.push().key ?: return
 
-        val challengeEntity = ArenaChallengeEntity(
+        ArenaChallenge(
             arenaId = arenaId,
-            sender = sender.toTravelerEntity(),
-            receivers = receivers.map { it.toTravelerEntity() },
-        )
-        writeChallengeToMailboxes(challengeEntity = challengeEntity)
+            sender = sender,
+            receivers = receivers,
+        ).also { it.writeChallengeToMailboxes() }
     }
 
     override fun updateArenaChallengeStatus(arenaChallenge: ArenaChallenge) {
-        writeChallengeToMailboxes(challengeEntity = arenaChallenge.toArenaChallengeEntity())
+        arenaChallenge.writeChallengeToMailboxes()
+    }
+
+    override fun removeArenaChallenge(arenaChallenge: ArenaChallenge) {
+        arenaChallenge.writeChallengeToMailboxes(shouldDelete = true)
     }
 
     /**
      * Writes challenge to everyone involved (sender and all receivers).
-     * Path: /challenges/{userId}/{arenaId}
+     *
+     * @param shouldDelete If true, then the challenge is removed from the database by setting to null
      */
-    private fun writeChallengeToMailboxes(challengeEntity: ArenaChallengeEntity) {
-        val participantIds = challengeEntity.receivers.map { it.id } + challengeEntity.sender.id
-        val arenaId = challengeEntity.arenaId
-        val updates = participantIds.associate { id ->
-            "$id/$arenaId" to challengeEntity
+    private fun ArenaChallenge.writeChallengeToMailboxes(shouldDelete: Boolean = false) {
+        val entityToWrite = if (shouldDelete) null else toArenaChallengeEntity()
+        val updates = allParticipantIds.associate { id ->
+            "$id/$arenaId" to entityToWrite
         }
 
         challengesReference.updateChildren(updates)

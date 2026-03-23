@@ -11,6 +11,7 @@ data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
     val arenaChallenge: ArenaChallengeState? = null,
+    val showArenaChallengeDialog: Boolean = false,
 )
 
 @Immutable
@@ -47,20 +48,20 @@ private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean) = TravelerS
     gamePlayStatus = gamePlayStatus,
 )
 
-internal fun ArenaChallenge.toArenaChallengeState() = ArenaChallengeState(
+internal fun TravelerState.toTraveler() = Traveler(
+    id = id,
+    displayName = displayName,
+    gamePlayStatus = gamePlayStatus,
+)
+
+internal fun ArenaChallenge.toArenaChallengeState(userId: String?) = ArenaChallengeState(
     arenaId = arenaId,
-    sender = sender.toTravelerState(isThisTravelerTheUser = false),
-    receivers = receivers.map { it.toTravelerState(isThisTravelerTheUser = false) },
+    sender = sender.toTravelerState(isThisTravelerTheUser = sender.id == userId),
+    receivers = receivers.map { it.toTravelerState(isThisTravelerTheUser = it.id == userId) },
 )
 
 internal fun ArenaChallengeState.toArenaChallenge() = ArenaChallenge(
     arenaId = arenaId,
     sender = sender.toTraveler(),
     receivers = receivers.map { it.toTraveler() },
-)
-
-internal fun TravelerState.toTraveler() = Traveler(
-    id = id,
-    displayName = displayName,
-    gamePlayStatus = gamePlayStatus,
 )

@@ -9,11 +9,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -24,11 +29,15 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreen
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenRoute
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreen
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreenRoute
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun NavigationHost(
     viewModel: AppViewModel = koinInject(),
@@ -51,20 +60,54 @@ internal fun NavigationHost(
         },
         gesturesEnabled = true,
     ) {
-        NavHost(
-            navController = navController,
-            startDestination = TavernScreenRoute,
+        Scaffold(
             modifier = modifier,
+            topBar = {
+                TopBar(onMenuClick = { scope.launch { drawerState.open() } })
+            },
         ) {
-            composable<TavernScreenRoute> {
-                TavernScreen(
-                    onMenuClick = {
-                        scope.launch { drawerState.open() }
-                    },
-                )
+            NavHost(
+                navController = navController,
+                startDestination = TavernScreenRoute,
+                modifier = modifier,
+            ) {
+                composable<TavernScreenRoute> {
+                    TavernScreen(
+                        onNavigateToArena = {
+                            // TODO: Change obviously
+                            scope.launch { drawerState.open() }
+                            // navController.navigate(route = "arena")
+                        },
+                    )
+                }
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopBar(
+    onMenuClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    CenterAlignedTopAppBar(
+        modifier = modifier,
+        title = {
+            Text(
+                text = "Sorcerers & Spirits",
+                style = MaterialTheme.typography.headlineSmall,
+            )
+        },
+        actions = {
+            IconButton(onClick = onMenuClick) {
+                Icon(
+                    painter = painterResource(resource = Res.drawable.ic_menu),
+                    contentDescription = "Open Drawer",
+                )
+            }
+        },
+    )
 }
 
 @Composable

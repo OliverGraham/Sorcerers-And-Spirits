@@ -32,14 +32,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 @Composable
 internal fun ArenaChallengeDialog(
     arenaChallenge: ArenaChallengeState,
-    userTraveler: TravelerState,
     modifier: Modifier = Modifier,
 ) {
     val onAcceptChallenge = TavernActionsProvider.current.onAcceptArenaChallenge
     val onDeclineChallenge = TavernActionsProvider.current.onDeclineArenaChallenge
 
     BasicAlertDialog(
-        onDismissRequest = { onDeclineChallenge(arenaChallenge, userTraveler) },
+        onDismissRequest = TavernActionsProvider.current.onHideArenaChallengeDialog,
         modifier = modifier,
     ) {
         Surface(
@@ -51,8 +50,29 @@ internal fun ArenaChallengeDialog(
                 modifier = Modifier.padding(24.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                // Header section
-                Text(text = "Arena Challenge", style = MaterialTheme.typography.headlineSmall)
+                // Header section with Timer
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(text = "Arena Challenge", style = MaterialTheme.typography.headlineSmall)
+
+                    arenaChallenge.secondsRemaining?.let { secondsLeft ->
+                        val minutes = secondsLeft / 60
+                        val seconds = secondsLeft % 60
+                        Text(
+                            text = "$minutes:${seconds.toString().padStart(2, '0')}",
+                            style = MaterialTheme.typography.titleMedium,
+                            color =
+                                if (secondsLeft <= 10) {
+                                    MaterialTheme.colorScheme.error
+                                } else {
+                                    MaterialTheme.colorScheme.primary
+                                },
+                        )
+                    }
+                }
 
                 Text(
                     text = "${arenaChallenge.sender?.displayName} has challenged you!",
@@ -78,11 +98,9 @@ internal fun ArenaChallengeDialog(
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    TextButton(onClick = { onDeclineChallenge(arenaChallenge, userTraveler) }) {
-                        Text("Decline")
-                    }
+                    TextButton(onClick = { onDeclineChallenge(arenaChallenge) }) { Text("Decline") }
                     Spacer(Modifier.width(8.dp))
-                    Button(onClick = { onAcceptChallenge(arenaChallenge, userTraveler) }) {
+                    Button(onClick = { onAcceptChallenge(arenaChallenge) }) {
                         Text("Accept Challenge")
                     }
                 }
@@ -100,9 +118,6 @@ private fun ParticipantRow(participant: TravelerState) {
     ) {
         Text(participant.displayName, style = MaterialTheme.typography.bodyLarge)
 
-        // Placeholder for Status (e.g. Accepted/Pending)
-        // You'll likely want to update TravelerState to include a 'status' field
-        // as we discussed in the TavernState update.
         Text(text = participant.status.toString(), style = MaterialTheme.typography.bodyMedium)
     }
 }

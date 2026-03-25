@@ -58,7 +58,7 @@ internal fun ArenaChallengeDialog(
                 )
 
                 Text(
-                    text = "${arenaChallenge.sender.displayName} has challenged you!",
+                    text = "${arenaChallenge.sender?.displayName} has challenged you!",
                     style = MaterialTheme.typography.bodyMedium,
                 )
 
@@ -70,10 +70,10 @@ internal fun ArenaChallengeDialog(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     // Combine sender and receivers for the UI
-                    val allParticipants = listOf(arenaChallenge.sender) + arenaChallenge.receivers
+                    val allTravelerStates = arenaChallenge.travelerStates
 
-                    items(allParticipants, key = { it.id }) { participant ->
-                        ParticipantRow(participant)
+                    items(allTravelerStates, key = { it.id }) { travelerState ->
+                        ParticipantRow(travelerState)
                     }
                 }
 
@@ -108,6 +108,6 @@ private fun ParticipantRow(participant: TravelerState) {
         // Placeholder for Status (e.g. Accepted/Pending)
         // You'll likely want to update TravelerState to include a 'status' field
         // as we discussed in the TavernState update.
-        Text(text = participant.gamePlayStatus.toString(), style = MaterialTheme.typography.bodyMedium)
+        Text(text = participant.status.toString(), style = MaterialTheme.typography.bodyMedium)
     }
 }

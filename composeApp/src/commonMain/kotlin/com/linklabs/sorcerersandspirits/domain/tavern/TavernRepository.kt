@@ -8,7 +8,7 @@ interface TavernRepository {
 
     fun aTravelerEntersTavern(traveler: Traveler)
 
-    suspend fun sendArenaChallenges(sender: Traveler, receivers: List<Traveler>)
+    suspend fun sendArenaChallenges(travelers: List<Traveler>)
 
     fun getArenaChallengeFlow(userId: String): Flow<ArenaChallenge>
 

@@ -3,13 +3,23 @@ package com.linklabs.sorcerersandspirits.domain.traveler
 data class Traveler(
     val id: String,
     val displayName: String,
-    val gamePlayStatus: GamePlayStatus,
+    val status: TravelerStatus,
 )
 
-enum class GamePlayStatus {
-    Available,
-    AcceptedInvite,
-    ConsideringInvite,
-    DeclinedInvite,
-    InArena,
+sealed interface TravelerStatus {
+    data object Available : TravelerStatus
+    data object InArena : TravelerStatus
+    data object Offline : TravelerStatus
+
+    data class InvitedToArena(
+        val isSenderOfInvite: Boolean,
+        val inviteStatus: InviteStatus,
+    ) : TravelerStatus
+}
+
+enum class InviteStatus {
+    Accepted,
+    Considering,
+    Declined,
+    None,
 }

@@ -3,8 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Tavern
-import com.linklabs.sorcerersandspirits.domain.traveler.GamePlayStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
+import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 
 @Immutable
 data class TavernState(
@@ -19,17 +19,17 @@ data class TravelerState(
     val id: String,
     val displayName: String,
     val isThisTravelerTheUser: Boolean,
-    val gamePlayStatus: GamePlayStatus,
+    val status: TravelerStatus,
 )
 
 @Immutable
 data class ArenaChallengeState(
     val arenaId: String,
-    val sender: TravelerState,
-    val receivers: List<TravelerState>,
-)
+    val travelerStates: List<TravelerState>,
+) {
+    val sender = travelerStates.find { it.status is TravelerStatus.InvitedToArena && it.status.isSenderOfInvite }
+}
 
-// TODO: Reevaluate - what should the UI be?
 internal fun Tavern.toTavernState(userId: String?): TavernState? {
     val (userTravelers, otherTravelers) = travelers.partition { it.id == userId }
     val userTraveler =
@@ -45,23 +45,21 @@ private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean) = TravelerS
     id = id,
     displayName = displayName,
     isThisTravelerTheUser = isThisTravelerTheUser,
-    gamePlayStatus = gamePlayStatus,
+    status = status,
 )
 
-internal fun TravelerState.toTraveler() = Traveler(
+internal fun TravelerState.toTraveler(status: TravelerStatus) = Traveler(
     id = id,
     displayName = displayName,
-    gamePlayStatus = gamePlayStatus,
+    status = status,
 )
 
 internal fun ArenaChallenge.toArenaChallengeState(userId: String?) = ArenaChallengeState(
     arenaId = arenaId,
-    sender = sender.toTravelerState(isThisTravelerTheUser = sender.id == userId),
-    receivers = receivers.map { it.toTravelerState(isThisTravelerTheUser = it.id == userId) },
+    travelerStates = travelers.map { it.toTravelerState(isThisTravelerTheUser = it.id == userId) },
 )
 
 internal fun ArenaChallengeState.toArenaChallenge() = ArenaChallenge(
     arenaId = arenaId,
-    sender = sender.toTraveler(),
-    receivers = receivers.map { it.toTraveler() },
+    travelers = travelerStates.map { it.toTraveler(status = it.status) },
 )

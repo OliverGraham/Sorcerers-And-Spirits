@@ -8,7 +8,8 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetArenaChallengeF
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendArenaChallengesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateArenaChallengeStatusUseCase
-import com.linklabs.sorcerersandspirits.domain.traveler.GamePlayStatus
+import com.linklabs.sorcerersandspirits.domain.traveler.InviteStatus
+import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -68,11 +69,25 @@ class TavernScreenViewModel(
         userTraveler: TravelerState,
         selectedTravelerStates: Set<TravelerState>,
     ) {
-        // TODO: Check GamePlayStatus before this, so to make sure what's legal and what isn't
         viewModelScope.launch {
+            // TODO move this logic
+            val sender = userTraveler.toTraveler(
+                status = TravelerStatus.InvitedToArena(
+                    isSenderOfInvite = true,
+                    inviteStatus = InviteStatus.Accepted,
+                ),
+            )
+            val selectedTravelers = selectedTravelerStates.map {
+                it.toTraveler(
+                    status = TravelerStatus.InvitedToArena(
+                        isSenderOfInvite = false,
+                        inviteStatus = InviteStatus.Considering,
+                    ),
+                )
+            }
+
             sendArenaChallengesUseCase(
-                sender = userTraveler.toTraveler().copy(gamePlayStatus = GamePlayStatus.AcceptedInvite),
-                receivers = selectedTravelerStates.map { it.toTraveler().copy(gamePlayStatus = GamePlayStatus.ConsideringInvite) },
+                travelers = listOf(sender) + selectedTravelers,
             )
         }
     }
@@ -81,7 +96,7 @@ class TavernScreenViewModel(
         updateArenaChallengeStatus(
             arenaChallengeState = challenge,
             userTravelerId = userTraveler.id,
-            gamePlayStatus = GamePlayStatus.AcceptedInvite,
+            inviteStatus = InviteStatus.Accepted,
         )
     }
 
@@ -89,28 +104,34 @@ class TavernScreenViewModel(
         updateArenaChallengeStatus(
             arenaChallengeState = challenge,
             userTravelerId = userTraveler.id,
-            gamePlayStatus = GamePlayStatus.DeclinedInvite,
+            inviteStatus = InviteStatus.Declined,
         )
     }
 
     private fun updateArenaChallengeStatus(
         arenaChallengeState: ArenaChallengeState,
-        gamePlayStatus: GamePlayStatus,
+        inviteStatus: InviteStatus,
         userTravelerId: String,
     ) {
         viewModelScope.launch {
-            val updatedChallenge = arenaChallengeState.copy(
-                receivers = arenaChallengeState.receivers.map { travelerState ->
-                    if (travelerState.id == userTravelerId) {
-                        travelerState.copy(gamePlayStatus = gamePlayStatus)
-                    } else {
-                        travelerState
-                    }
+            // TODO: Move this logic
+            val userTravelerToUpdate = arenaChallengeState.travelerStates.find { it.isThisTravelerTheUser }
+            if (userTravelerToUpdate == null) return@launch
+
+            val updatedStatus = when (val status = userTravelerToUpdate.status) {
+                is TravelerStatus.InvitedToArena -> status.copy(inviteStatus = inviteStatus)
+                else -> return@launch
+            }
+
+            val updatedUserTraveler = userTravelerToUpdate.copy(status = updatedStatus)
+            val updatedChallengeState = arenaChallengeState.copy(
+                travelerStates = arenaChallengeState.travelerStates.map { travelerState ->
+                    if (travelerState.id == userTravelerId) updatedUserTraveler else travelerState
                 },
             )
 
             updateArenaChallengeStatusUseCase(
-                arenaChallenge = updatedChallenge.toArenaChallenge(),
+                arenaChallenge = updatedChallengeState.toArenaChallenge(),
             )
             updateArenaChallengeDialogVisibility(isVisible = false)
         }
@@ -131,21 +152,18 @@ class TavernScreenViewModel(
             }
     }
 
-    // TODO: What about if user logs in, and userId would change? Much later problem
     private suspend fun collectArenaChallenges() {
         val userId = getUserIdUseCase()
 
-        // TODO: Figure out test cases, start writing tests here I suppose
         getArenaChallengeFlowUseCase().filterNotNull().collect { arenaChallenge ->
-            _uiStateFlow.updateLoaded { tavernState ->
-                val userGamePlayStatus =
-                    arenaChallenge.getUserTraveler(userId = userId).gamePlayStatus
+            val userTraveler = arenaChallenge.getUserTraveler(userId = userId) ?: return@collect
+            val userTravelerStatus = userTraveler.status
+            if (userTravelerStatus !is TravelerStatus.InvitedToArena) return@collect
 
-                // TODO: Could have the button for the dialog update with some animation to show that
-                //  there's been new activity
+            _uiStateFlow.updateLoaded { tavernState ->
                 tavernState.copy(
                     arenaChallenge = arenaChallenge.toArenaChallengeState(userId = userId),
-                    showArenaChallengeDialog = userGamePlayStatus == GamePlayStatus.ConsideringInvite,
+                    showArenaChallengeDialog = userTravelerStatus.inviteStatus == InviteStatus.Considering,
                 )
             }
 

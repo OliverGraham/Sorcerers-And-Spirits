@@ -4,7 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.Tavern
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class TavernEntity(
+internal data class TavernEntity(
     val travelerEntities: List<TravelerEntity>,
 ) {
     fun toTavern(): Tavern {

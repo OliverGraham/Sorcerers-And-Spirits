@@ -31,7 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.traveler.GamePlayStatus
+import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 import org.jetbrains.compose.resources.painterResource
@@ -217,7 +217,7 @@ private fun TheBarPreview() {
             id = "-1",
             displayName = "User",
             isThisTravelerTheUser = true,
-            gamePlayStatus = GamePlayStatus.Available,
+            status = TravelerStatus.Available,
         ),
         otherTravelers = buildList {
             repeat(times = 10) {
@@ -226,7 +226,7 @@ private fun TheBarPreview() {
                         id = it.toString(),
                         displayName = "Traveler $it",
                         isThisTravelerTheUser = false,
-                        gamePlayStatus = GamePlayStatus.Available,
+                        status = TravelerStatus.Available,
                     ),
                 )
             }

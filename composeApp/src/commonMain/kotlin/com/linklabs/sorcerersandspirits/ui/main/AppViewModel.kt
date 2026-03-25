@@ -12,8 +12,6 @@ class AppViewModel(
 ) : ViewModel() {
 
     init {
-        viewModelScope.launch {
-            signInAnonymouslyUseCase()
-        }
+        viewModelScope.launch { signInAnonymouslyUseCase() }
     }
 }

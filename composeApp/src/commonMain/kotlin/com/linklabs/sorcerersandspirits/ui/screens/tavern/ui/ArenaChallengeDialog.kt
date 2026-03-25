@@ -52,10 +52,7 @@ internal fun ArenaChallengeDialog(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // Header section
-                Text(
-                    text = "Arena Challenge",
-                    style = MaterialTheme.typography.headlineSmall,
-                )
+                Text(text = "Arena Challenge", style = MaterialTheme.typography.headlineSmall)
 
                 Text(
                     text = "${arenaChallenge.sender?.displayName} has challenged you!",
@@ -64,9 +61,7 @@ internal fun ArenaChallengeDialog(
 
                 // The Participants List
                 LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 240.dp), // Limit height to prevent taking the whole screen
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 240.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     // Combine sender and receivers for the UI

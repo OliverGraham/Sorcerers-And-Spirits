@@ -17,6 +17,5 @@ internal val LocalTavernActions = staticCompositionLocalOf { TavernActions() }
 
 internal object TavernActionsProvider {
     val current: TavernActions
-        @Composable @ReadOnlyComposable
-        get() = LocalTavernActions.current
+        @Composable @ReadOnlyComposable get() = LocalTavernActions.current
 }

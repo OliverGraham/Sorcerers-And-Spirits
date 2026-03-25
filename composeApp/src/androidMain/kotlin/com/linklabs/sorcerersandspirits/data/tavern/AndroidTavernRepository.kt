@@ -36,9 +36,10 @@ class AndroidTavernRepository : TavernRepository {
         val pathOfArenaChallengeThatContainsUser =
             "${ArenaChallengeEntity.getTravelerEntityMapName()}/$userId/${TravelerEntity.getIdPropertyName()}"
 
-        val arenaChallengeEntitiesInDatabase = arenaChallengesReference
-            .orderByChild(pathOfArenaChallengeThatContainsUser)
-            .equalTo(userId)
+        val arenaChallengeEntitiesInDatabase =
+            arenaChallengesReference
+                .orderByChild(pathOfArenaChallengeThatContainsUser)
+                .equalTo(userId)
 
         val arenaChallengeListener = getArenaChallengeListener()
 
@@ -46,16 +47,11 @@ class AndroidTavernRepository : TavernRepository {
         awaitClose { arenaChallengeEntitiesInDatabase.removeEventListener(arenaChallengeListener) }
     }
 
-    /**
-     * Sends the initial challenge to all receivers and the sender.
-     */
+    /** Sends the initial challenge to all receivers and the sender. */
     override suspend fun sendArenaChallenges(travelers: List<Traveler>) {
         val arenaId = arenaChallengesReference.push().key ?: return
 
-        ArenaChallenge(
-            arenaId = arenaId,
-            travelers = travelers,
-        ).also { it.syncWithDatabase() }
+        ArenaChallenge(arenaId = arenaId, travelers = travelers).also { it.syncWithDatabase() }
     }
 
     override fun updateArenaChallengeStatus(arenaChallenge: ArenaChallenge) {
@@ -69,8 +65,8 @@ class AndroidTavernRepository : TavernRepository {
     /**
      * Synchronizes the [ArenaChallenge] state to the Firebase Realtime Database.
      *
-     * Because participants use a deep-path query to find this challenge, updating this
-     * single node automatically notifies everyone involved.
+     * Because participants use a deep-path query to find this challenge, updating this single node
+     * automatically notifies everyone involved.
      *
      * @param shouldDelete If true, removes the challenge from the database.
      */
@@ -78,7 +74,6 @@ class AndroidTavernRepository : TavernRepository {
         val entityToWrite = if (shouldDelete) null else toArenaChallengeEntity()
 
         // encode()??????
-        arenaChallengesReference.child(arenaId)
-            .setValue(entityToWrite)
+        arenaChallengesReference.child(arenaId).setValue(entityToWrite)
     }
 }

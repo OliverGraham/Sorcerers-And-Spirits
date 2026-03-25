@@ -12,14 +12,13 @@ internal data class ArenaChallengeEntity(
         if (arenaId.isEmpty()) return null
         if (travelerEntityMap.isEmpty()) return null
 
-        val travelers = travelerEntityMap.values.map { travelerEntity ->
-            travelerEntity.toTraveler() ?: return null
-        }
+        // TODO: returning null in the map is odd? Doesn't matter too much
+        val travelers =
+            travelerEntityMap.values.map { travelerEntity ->
+                travelerEntity.toTraveler() ?: return null
+            }
 
-        return ArenaChallenge(
-            arenaId = arenaId,
-            travelers = travelers,
-        )
+        return ArenaChallenge(arenaId = arenaId, travelers = travelers)
     }
 
     companion object {
@@ -27,7 +26,9 @@ internal data class ArenaChallengeEntity(
     }
 }
 
-internal fun ArenaChallenge.toArenaChallengeEntity() = ArenaChallengeEntity(
-    arenaId = arenaId,
-    travelerEntityMap = travelers.associate { traveler -> traveler.id to traveler.toTravelerEntity() },
-)
+internal fun ArenaChallenge.toArenaChallengeEntity() =
+    ArenaChallengeEntity(
+        arenaId = arenaId,
+        travelerEntityMap =
+            travelers.associate { traveler -> traveler.id to traveler.toTravelerEntity() },
+    )

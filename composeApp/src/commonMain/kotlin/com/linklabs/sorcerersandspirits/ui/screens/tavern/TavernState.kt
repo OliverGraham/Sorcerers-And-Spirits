@@ -23,11 +23,11 @@ data class TravelerState(
 )
 
 @Immutable
-data class ArenaChallengeState(
-    val arenaId: String,
-    val travelerStates: List<TravelerState>,
-) {
-    val sender = travelerStates.find { it.status is TravelerStatus.InvitedToArena && it.status.isSenderOfInvite }
+data class ArenaChallengeState(val arenaId: String, val travelerStates: List<TravelerState>) {
+    val sender =
+        travelerStates.find {
+            it.status is TravelerStatus.InvitedToArena && it.status.isSenderOfInvite
+        }
 }
 
 internal fun Tavern.toTavernState(userId: String?): TavernState? {
@@ -41,25 +41,26 @@ internal fun Tavern.toTavernState(userId: String?): TavernState? {
     )
 }
 
-private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean) = TravelerState(
-    id = id,
-    displayName = displayName,
-    isThisTravelerTheUser = isThisTravelerTheUser,
-    status = status,
-)
+private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean) =
+    TravelerState(
+        id = id,
+        displayName = displayName,
+        isThisTravelerTheUser = isThisTravelerTheUser,
+        status = status,
+    )
 
-internal fun TravelerState.toTraveler(status: TravelerStatus) = Traveler(
-    id = id,
-    displayName = displayName,
-    status = status,
-)
+internal fun TravelerState.toTraveler(status: TravelerStatus) =
+    Traveler(id = id, displayName = displayName, status = status)
 
-internal fun ArenaChallenge.toArenaChallengeState(userId: String?) = ArenaChallengeState(
-    arenaId = arenaId,
-    travelerStates = travelers.map { it.toTravelerState(isThisTravelerTheUser = it.id == userId) },
-)
+internal fun ArenaChallenge.toArenaChallengeState(userId: String?) =
+    ArenaChallengeState(
+        arenaId = arenaId,
+        travelerStates =
+            travelers.map { it.toTravelerState(isThisTravelerTheUser = it.id == userId) },
+    )
 
-internal fun ArenaChallengeState.toArenaChallenge() = ArenaChallenge(
-    arenaId = arenaId,
-    travelers = travelerStates.map { it.toTraveler(status = it.status) },
-)
+internal fun ArenaChallengeState.toArenaChallenge() =
+    ArenaChallenge(
+        arenaId = arenaId,
+        travelers = travelerStates.map { it.toTraveler(status = it.status) },
+    )

@@ -44,16 +44,12 @@ class TavernScreenViewModel(
             collectTavernFlow()
         }
 
-        viewModelScope.launch {
-            collectArenaChallenges()
-        }
+        viewModelScope.launch { collectArenaChallenges() }
     }
 
     fun onActionButtonClick() {
         viewModelScope.launch {
-            updateTravelerDisplayNameUseCase(
-                displayName = "A Traveler with an updated name",
-            )
+            updateTravelerDisplayNameUseCase(displayName = "A Traveler with an updated name")
         }
     }
 
@@ -71,24 +67,26 @@ class TavernScreenViewModel(
     ) {
         viewModelScope.launch {
             // TODO move this logic
-            val sender = userTraveler.toTraveler(
-                status = TravelerStatus.InvitedToArena(
-                    isSenderOfInvite = true,
-                    inviteStatus = InviteStatus.Accepted,
-                ),
-            )
-            val selectedTravelers = selectedTravelerStates.map {
-                it.toTraveler(
-                    status = TravelerStatus.InvitedToArena(
-                        isSenderOfInvite = false,
-                        inviteStatus = InviteStatus.Considering,
-                    ),
+            val sender =
+                userTraveler.toTraveler(
+                    status =
+                        TravelerStatus.InvitedToArena(
+                            isSenderOfInvite = true,
+                            inviteStatus = InviteStatus.Accepted,
+                        )
                 )
-            }
+            val selectedTravelers =
+                selectedTravelerStates.map {
+                    it.toTraveler(
+                        status =
+                            TravelerStatus.InvitedToArena(
+                                isSenderOfInvite = false,
+                                inviteStatus = InviteStatus.Considering,
+                            )
+                    )
+                }
 
-            sendArenaChallengesUseCase(
-                travelers = listOf(sender) + selectedTravelers,
-            )
+            sendArenaChallengesUseCase(travelers = listOf(sender) + selectedTravelers)
         }
     }
 
@@ -115,41 +113,49 @@ class TavernScreenViewModel(
     ) {
         viewModelScope.launch {
             // TODO: Move this logic
-            val userTravelerToUpdate = arenaChallengeState.travelerStates.find { it.isThisTravelerTheUser }
+            val userTravelerToUpdate =
+                arenaChallengeState.travelerStates.find { it.isThisTravelerTheUser }
             if (userTravelerToUpdate == null) return@launch
 
-            val updatedStatus = when (val status = userTravelerToUpdate.status) {
-                is TravelerStatus.InvitedToArena -> status.copy(inviteStatus = inviteStatus)
-                else -> return@launch
-            }
+            val updatedStatus =
+                when (val status = userTravelerToUpdate.status) {
+                    is TravelerStatus.InvitedToArena -> status.copy(inviteStatus = inviteStatus)
+                    else -> return@launch
+                }
 
             val updatedUserTraveler = userTravelerToUpdate.copy(status = updatedStatus)
-            val updatedChallengeState = arenaChallengeState.copy(
-                travelerStates = arenaChallengeState.travelerStates.map { travelerState ->
-                    if (travelerState.id == userTravelerId) updatedUserTraveler else travelerState
-                },
-            )
+            val updatedChallengeState =
+                arenaChallengeState.copy(
+                    travelerStates =
+                        arenaChallengeState.travelerStates.map { travelerState ->
+                            if (travelerState.id == userTravelerId) {
+                                updatedUserTraveler
+                            } else {
+                                travelerState
+                            }
+                        }
+                )
 
             updateArenaChallengeStatusUseCase(
-                arenaChallenge = updatedChallengeState.toArenaChallenge(),
+                arenaChallenge = updatedChallengeState.toArenaChallenge()
             )
             updateArenaChallengeDialogVisibility(isVisible = false)
         }
     }
 
     private suspend fun collectTavernFlow() {
-        getTavernFlowUseCase().filterNotNull().map { tavern ->
-            val tavernState = tavern.toTavernState(userId = getUserIdUseCase())
-            if (tavernState == null) {
-                UiState.Loading
-            } else {
-                UiState.Loaded(data = tavernState)
+        getTavernFlowUseCase()
+            .filterNotNull()
+            .map { tavern ->
+                val tavernState = tavern.toTavernState(userId = getUserIdUseCase())
+                if (tavernState == null) {
+                    UiState.Loading
+                } else {
+                    UiState.Loaded(data = tavernState)
+                }
             }
-        }
             .catch { emit(UiState.Error) }
-            .collect { newState ->
-                _uiStateFlow.value = newState
-            }
+            .collect { newState -> _uiStateFlow.value = newState }
     }
 
     private suspend fun collectArenaChallenges() {
@@ -163,15 +169,15 @@ class TavernScreenViewModel(
             _uiStateFlow.updateLoaded { tavernState ->
                 tavernState.copy(
                     arenaChallenge = arenaChallenge.toArenaChallengeState(userId = userId),
-                    showArenaChallengeDialog = userTravelerStatus.inviteStatus == InviteStatus.Considering,
+                    showArenaChallengeDialog =
+                        userTravelerStatus.inviteStatus == InviteStatus.Considering,
                 )
             }
 
             if (arenaChallenge.hasEveryoneAcceptedTheInvite) {
                 updateArenaChallengeDialogVisibility(isVisible = false)
                 _eventChannelFlow.send(
-                    element =
-                    TavernEvent.NavigateToArena(arenaId = arenaChallenge.arenaId),
+                    element = TavernEvent.NavigateToArena(arenaId = arenaChallenge.arenaId)
                 )
             }
         }

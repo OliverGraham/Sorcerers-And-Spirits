@@ -18,7 +18,5 @@ fun initializeKoin(
         single<TravelerRepository> { travelerRepository }
     }
 
-    startKoin {
-        modules(commonModule, iosModule)
-    }
+    startKoin { modules(commonModule, iosModule) }
 }

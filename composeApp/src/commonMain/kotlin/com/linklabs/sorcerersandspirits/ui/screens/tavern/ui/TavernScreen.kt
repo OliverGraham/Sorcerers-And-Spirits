@@ -86,11 +86,9 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         ScaffoldContent(padding = padding)
     }
 
-    if (tavernState.arenaChallenge != null && tavernState.showArenaChallengeDialog) {
-        ArenaChallengeDialog(
-            arenaChallenge = tavernState.arenaChallenge,
-            userTraveler = tavernState.userTraveler,
-        )
+    val arenaChallengeState = tavernState.arenaChallenge
+    if (arenaChallengeState != null && arenaChallengeState.showArenaChallengeDialog) {
+        ArenaChallengeDialog(arenaChallenge = arenaChallengeState)
     }
 }
 

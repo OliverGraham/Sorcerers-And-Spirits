@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepo
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import com.linklabs.sorcerersandspirits.domain.traveler.TravelerRepository
+import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 
 class EnterTavernUseCase(
     private val authenticationRepository: AuthenticationRepository,
@@ -26,6 +27,7 @@ class EnterTavernUseCase(
             val newTraveler = Traveler(
                 id = userId,
                 displayName = DEFAULT_DISPLAY_NAME,
+                status = TravelerStatus.Available,
             )
             travelerRepository.saveTraveler(traveler = newTraveler)
             newTraveler

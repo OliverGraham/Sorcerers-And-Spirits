@@ -1,29 +1,33 @@
 package com.linklabs.sorcerersandspirits.data.model
 
 import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
-import com.linklabs.sorcerersandspirits.domain.tavern.ChallengeStatus
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ArenaChallengeEntity(
+internal data class ArenaChallengeEntity(
     val arenaId: String = "",
-    val sender: TravelerEntity = TravelerEntity(),
-    val receivers: List<TravelerEntity> = emptyList(),
-    val status: ChallengeStatus = ChallengeStatus.PENDING,
+    val travelerEntityMap: Map<String, TravelerEntity> = emptyMap(),
 ) {
     fun toArenaChallenge(): ArenaChallenge? {
         if (arenaId.isEmpty()) return null
+        if (travelerEntityMap.isEmpty()) return null
 
-        val senderDomain = sender.toTraveler() ?: return null
-
-        val receiversDomain = receivers.mapNotNull { it.toTraveler() }
-        if (receiversDomain.isEmpty()) return null
+        val travelers = travelerEntityMap.values.map { travelerEntity ->
+            travelerEntity.toTraveler() ?: return null
+        }
 
         return ArenaChallenge(
             arenaId = arenaId,
-            sender = senderDomain,
-            receivers = receiversDomain,
-            status = status,
+            travelers = travelers,
         )
     }
+
+    companion object {
+        fun getTravelerEntityMapName() = ArenaChallengeEntity::travelerEntityMap.name
+    }
 }
+
+internal fun ArenaChallenge.toArenaChallengeEntity() = ArenaChallengeEntity(
+    arenaId = arenaId,
+    travelerEntityMap = travelers.associate { traveler -> traveler.id to traveler.toTravelerEntity() },
+)

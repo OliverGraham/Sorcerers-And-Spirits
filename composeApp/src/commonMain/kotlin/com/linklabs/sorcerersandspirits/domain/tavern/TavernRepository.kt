@@ -6,11 +6,15 @@ import kotlinx.coroutines.flow.Flow
 interface TavernRepository {
     fun getTavernFlow(): Flow<Tavern>
 
-    suspend fun aTravelerEntersTavern(traveler: Traveler)
+    fun aTravelerEntersTavern(traveler: Traveler)
 
-    suspend fun sendArenaChallenges(sender: Traveler, receivers: List<Traveler>)
+    suspend fun sendArenaChallenges(travelers: List<Traveler>)
 
-    fun getArenaChallengeFlow(userId: String?): Flow<ArenaChallenge>
+    fun getArenaChallengeFlow(userId: String): Flow<ArenaChallenge>
+
+    fun updateArenaChallengeStatus(arenaChallenge: ArenaChallenge)
+
+    fun removeArenaChallenge(arenaChallenge: ArenaChallenge)
 }
 
 /**

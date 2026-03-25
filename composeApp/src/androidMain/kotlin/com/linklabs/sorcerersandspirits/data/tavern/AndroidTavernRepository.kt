@@ -3,9 +3,10 @@ package com.linklabs.sorcerersandspirits.data.tavern
 import com.google.firebase.database.FirebaseDatabase
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
 import com.linklabs.sorcerersandspirits.data.model.ArenaChallengeEntity
+import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
+import com.linklabs.sorcerersandspirits.data.model.toArenaChallengeEntity
 import com.linklabs.sorcerersandspirits.data.model.toTravelerEntity
 import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
-import com.linklabs.sorcerersandspirits.domain.tavern.ChallengeStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.Tavern
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
@@ -17,7 +18,7 @@ class AndroidTavernRepository : TavernRepository {
 
     private val database = FirebaseDatabase.getInstance()
     private val tavernReference = database.getReference(FireStoreKeys.TAVERN)
-    private val challengesReference = database.getReference(FireStoreKeys.CHALLENGES)
+    private val arenaChallengesReference = database.getReference(FireStoreKeys.ARENA_CHALLENGES)
 
     override fun getTavernFlow(): Flow<Tavern> = callbackFlow {
         val tavernListener = getTavernListener()
@@ -25,44 +26,59 @@ class AndroidTavernRepository : TavernRepository {
         awaitClose { tavernReference.removeEventListener(tavernListener) }
     }
 
-    override suspend fun aTravelerEntersTavern(traveler: Traveler) {
+    override fun aTravelerEntersTavern(traveler: Traveler) {
         val travelerRef = tavernReference.child(traveler.id)
-        travelerRef.setValue(traveler)
+        travelerRef.setValue(traveler.toTravelerEntity())
         travelerRef.onDisconnect().removeValue()
     }
 
-    override fun getArenaChallengeFlow(userId: String?): Flow<ArenaChallenge> = callbackFlow {
-        if (userId.isNullOrEmpty()) {
-            close()
-            return@callbackFlow
-        }
+    override fun getArenaChallengeFlow(userId: String): Flow<ArenaChallenge> = callbackFlow {
+        val pathOfArenaChallengeThatContainsUser =
+            "${ArenaChallengeEntity.getTravelerEntityMapName()}/$userId/${TravelerEntity.getIdPropertyName()}"
 
-        val userInboxReference = challengesReference.child(userId)
+        val arenaChallengeEntitiesInDatabase = arenaChallengesReference
+            .orderByChild(pathOfArenaChallengeThatContainsUser)
+            .equalTo(userId)
 
         val arenaChallengeListener = getArenaChallengeListener()
-        userInboxReference.addChildEventListener(arenaChallengeListener)
-        awaitClose { userInboxReference.removeEventListener(arenaChallengeListener) }
+
+        arenaChallengeEntitiesInDatabase.addChildEventListener(arenaChallengeListener)
+        awaitClose { arenaChallengeEntitiesInDatabase.removeEventListener(arenaChallengeListener) }
     }
 
-    // TODO: Evaluate/add docstring
-    override suspend fun sendArenaChallenges(sender: Traveler, receivers: List<Traveler>) {
-        // 1. Generate a unique ID for this specific arena session
-        val challengeId = challengesReference.push().key ?: return
+    /**
+     * Sends the initial challenge to all receivers and the sender.
+     */
+    override suspend fun sendArenaChallenges(travelers: List<Traveler>) {
+        val arenaId = arenaChallengesReference.push().key ?: return
 
-        // 2. Create the Entity that matches what the listener expects
-        val receiverEntities = receivers.map { it.toTravelerEntity() }
-        val challengeEntity = ArenaChallengeEntity(
-            arenaId = challengeId,
-            sender = sender.toTravelerEntity(),
-            receivers = receiverEntities,
-            status = ChallengeStatus.PENDING,
-        )
+        ArenaChallenge(
+            arenaId = arenaId,
+            travelers = travelers,
+        ).also { it.syncWithDatabase() }
+    }
 
-        receiverEntities.forEach { receiver ->
-            challengesReference
-                .child(receiver.id) // Target: /challenges/RECEIVER_ID/
-                .child(challengeId) // Entry: /challenges/RECEIVER_ID/CHALLENGE_ID
-                .setValue(challengeEntity)
-        }
+    override fun updateArenaChallengeStatus(arenaChallenge: ArenaChallenge) {
+        arenaChallenge.syncWithDatabase()
+    }
+
+    override fun removeArenaChallenge(arenaChallenge: ArenaChallenge) {
+        arenaChallenge.syncWithDatabase(shouldDelete = true)
+    }
+
+    /**
+     * Synchronizes the [ArenaChallenge] state to the Firebase Realtime Database.
+     *
+     * Because participants use a deep-path query to find this challenge, updating this
+     * single node automatically notifies everyone involved.
+     *
+     * @param shouldDelete If true, removes the challenge from the database.
+     */
+    private fun ArenaChallenge.syncWithDatabase(shouldDelete: Boolean = false) {
+        val entityToWrite = if (shouldDelete) null else toArenaChallengeEntity()
+
+        // encode()??????
+        arenaChallengesReference.child(arenaId)
+            .setValue(entityToWrite)
     }
 }

@@ -41,9 +41,7 @@ import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
 // TODO: Improve
 
-/**
- * Location where users can challenge other users to fight in the Arena.
- */
+/** Location where users can challenge other users to fight in the Arena. */
 @Composable
 internal fun TheBar(
     userTraveler: TravelerState,
@@ -77,19 +75,16 @@ private fun BarFolk(
 ) {
     val showDialog = TavernActionsProvider.current.onShowArenaChallengeDialog
     LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(bottom = 24.dp),
+        modifier = modifier.fillMaxWidth().padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         item {
             // TODO: Change UI - should say other players to challenge or something
-            //  Idea - UI in settings to show every player playing right now, and their status and such
+            //  Idea - UI in settings to show every player playing right now, and their status and
+            //  such
 
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-            ) {
+            Box(modifier = Modifier.fillMaxWidth()) {
                 IconButton(
                     onClick = showDialog,
                     modifier = Modifier.align(alignment = Alignment.TopStart).size(size = 48.dp),
@@ -120,17 +115,16 @@ private fun BarFolk(
             )
         }
 
-        items(
-            items = otherTravelers,
-        ) { travelerState ->
+        items(items = otherTravelers) { travelerState ->
             travelerState.ToCard(
                 isSelected = travelerState in selectedTravelers,
                 onClick = {
-                    val updatedTravelers = if (travelerState in selectedTravelers) {
-                        selectedTravelers - travelerState
-                    } else {
-                        selectedTravelers + travelerState
-                    }
+                    val updatedTravelers =
+                        if (travelerState in selectedTravelers) {
+                            selectedTravelers - travelerState
+                        } else {
+                            selectedTravelers + travelerState
+                        }
                     updateSelectedTravelers(updatedTravelers)
                 },
             )
@@ -154,9 +148,7 @@ private fun ChallengeButton(
                 onSendChallengerNotifications(userTraveler, selectedTravelers)
                 resetSelectedTravelers()
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
         ) {
             Text(text = "Challenge (${selectedTravelers.size})")
         }
@@ -173,36 +165,38 @@ private fun TravelerState.ToCard(
     val text = if (isThisTravelerTheUser) "$displayName (You)" else displayName
 
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp),
+        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
         shape = MaterialTheme.shapes.medium,
         border = if (isSelected) BorderStroke(2.dp, MaterialTheme.colorScheme.primary) else null,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = when {
-                isThisTravelerTheUser -> MaterialTheme.colorScheme.primaryContainer
-                isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
-                else -> MaterialTheme.colorScheme.surface
-            },
-            contentColor = if (isThisTravelerTheUser) {
-                MaterialTheme.colorScheme.onPrimaryContainer
-            } else {
-                MaterialTheme.colorScheme.onSurface
-            },
-        ),
+        colors =
+            CardDefaults.cardColors(
+                containerColor =
+                    when {
+                        isThisTravelerTheUser -> MaterialTheme.colorScheme.primaryContainer
+                        isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+                        else -> MaterialTheme.colorScheme.surface
+                    },
+                contentColor =
+                    if (isThisTravelerTheUser) {
+                        MaterialTheme.colorScheme.onPrimaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
+            ),
     ) {
         Box(
-            modifier = Modifier
-                .clickable(enabled = !isThisTravelerTheUser) { onClick() }
-                .padding(24.dp)
-                .fillMaxWidth(),
+            modifier =
+                Modifier.clickable(enabled = !isThisTravelerTheUser) { onClick() }
+                    .padding(24.dp)
+                    .fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = if (isThisTravelerTheUser || isSelected) FontWeight.Bold else FontWeight.Normal,
+                fontWeight =
+                    if (isThisTravelerTheUser || isSelected) FontWeight.Bold else FontWeight.Normal,
                 textAlign = TextAlign.Center,
             )
         }
@@ -213,24 +207,26 @@ private fun TravelerState.ToCard(
 @Composable
 private fun TheBarPreview() {
     TheBar(
-        userTraveler = TravelerState(
-            id = "-1",
-            displayName = "User",
-            isThisTravelerTheUser = true,
-            status = TravelerStatus.Available,
-        ),
-        otherTravelers = buildList {
-            repeat(times = 10) {
-                add(
-                    TravelerState(
-                        id = it.toString(),
-                        displayName = "Traveler $it",
-                        isThisTravelerTheUser = false,
-                        status = TravelerStatus.Available,
-                    ),
-                )
-            }
-        },
+        userTraveler =
+            TravelerState(
+                id = "-1",
+                displayName = "User",
+                isThisTravelerTheUser = true,
+                status = TravelerStatus.Available,
+            ),
+        otherTravelers =
+            buildList {
+                repeat(times = 10) {
+                    add(
+                        TravelerState(
+                            id = it.toString(),
+                            displayName = "Traveler $it",
+                            isThisTravelerTheUser = false,
+                            status = TravelerStatus.Available,
+                        )
+                    )
+                }
+            },
         modifier = Modifier.fillMaxSize(),
     )
 }

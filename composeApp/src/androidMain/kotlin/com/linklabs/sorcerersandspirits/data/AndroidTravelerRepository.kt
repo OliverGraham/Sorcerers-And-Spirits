@@ -10,21 +10,14 @@ import kotlinx.coroutines.tasks.await
 class AndroidTravelerRepository : TravelerRepository {
 
     private val database = FirebaseFirestore.getInstance()
+    private val travelersCollection = database.collection(TRAVELERS)
 
     override suspend fun saveTraveler(traveler: Traveler) {
-        database
-            .collection(TRAVELERS)
-            .document(traveler.id)
-            .set(traveler)
-            .await()
+        travelersCollection.document(traveler.id).set(traveler).await()
     }
 
     override suspend fun getTraveler(id: String): Traveler? {
-        val travelerDocument = database
-            .collection(TRAVELERS)
-            .document(id)
-            .get()
-            .await()
+        val travelerDocument = travelersCollection.document(id).get().await()
 
         val travelerEntity = travelerDocument.toObject(TravelerEntity::class.java)
         return travelerEntity?.toTraveler()
@@ -35,15 +28,9 @@ class AndroidTravelerRepository : TravelerRepository {
     }
 
     override suspend fun updateDisplayName(id: String, displayName: String) {
-        database
-            .collection(TRAVELERS)
+        travelersCollection
             .document(id)
-            .update(
-                /* field = */
-                FireStoreKeys.DISPLAY_NAME,
-                /* value = */
-                displayName,
-            )
+            .update(/* field= */ FireStoreKeys.DISPLAY_NAME, /* value= */ displayName)
             .await()
     }
 }

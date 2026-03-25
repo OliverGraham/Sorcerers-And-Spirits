@@ -8,5 +8,4 @@ internal fun RetryButton(
     retryMessage: String,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-) {
-}
+) {}

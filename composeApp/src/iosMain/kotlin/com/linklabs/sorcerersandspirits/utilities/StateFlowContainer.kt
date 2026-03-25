@@ -12,8 +12,6 @@ class StateFlowContainer<T> {
 
     /** Called by IOSTavernRepositoryImplementation */
     fun emit(value: T) {
-        CoroutineScope(context = Dispatchers.Default).launch {
-            _flow.emit(value = value)
-        }
+        CoroutineScope(context = Dispatchers.Default).launch { _flow.emit(value = value) }
     }
 }

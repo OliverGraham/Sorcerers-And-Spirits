@@ -107,9 +107,15 @@ dependencies {
 spotless {
     kotlin {
         target("**/*.kt")
-        ktlint(libs.versions.ktlint.get()).editorConfigOverride(
-            mapOf("ktlint_standard_function-naming" to "disabled"),
+        ktlint().editorConfigOverride(
+            mapOf(
+                "ktlint_standard_function-naming" to "disabled",
+                "ktlint_standard_comment-wrapping" to "disabled",
+            ),
         )
+        ktfmt().kotlinlangStyle().configure { it.setMaxWidth(100) }
+        trimTrailingWhitespace()
+        endWithNewline()
     }
 
     kotlinGradle {

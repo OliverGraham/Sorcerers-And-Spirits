@@ -11,8 +11,6 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 @Composable
 fun App() {
     // KoinApplication(application = { modules(modules = commonModule) }) {
-    SorcerersAndSpiritsTheme {
-        NavigationHost()
-    }
+    SorcerersAndSpiritsTheme { NavigationHost() }
     // }
 }

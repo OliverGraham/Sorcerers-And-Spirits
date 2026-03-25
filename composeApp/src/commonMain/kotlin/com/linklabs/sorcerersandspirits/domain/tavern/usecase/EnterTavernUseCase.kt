@@ -24,11 +24,12 @@ class EnterTavernUseCase(
         val existingTraveler = travelerRepository.getTraveler(id = userId)
 
         return if (existingTraveler == null) {
-            val newTraveler = Traveler(
-                id = userId,
-                displayName = DEFAULT_DISPLAY_NAME,
-                status = TravelerStatus.Available,
-            )
+            val newTraveler =
+                Traveler(
+                    id = userId,
+                    displayName = DEFAULT_DISPLAY_NAME,
+                    status = TravelerStatus.Available,
+                )
             travelerRepository.saveTraveler(traveler = newTraveler)
             newTraveler
         } else {

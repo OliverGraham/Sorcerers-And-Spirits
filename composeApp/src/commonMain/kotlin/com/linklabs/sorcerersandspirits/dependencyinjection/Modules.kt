@@ -13,7 +13,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import org.koin.dsl.module
 
 val commonModule = module {
-
     single { SignInAnonymouslyUseCase(authenticationRepository = get()) }
     single {
         UpdateTravelerDisplayNameUseCase(
@@ -22,17 +21,11 @@ val commonModule = module {
         )
     }
     factory {
-        AppViewModel(
-            signInAnonymouslyUseCase = get(),
-            updateTravelerDisplayNameUseCase = get(),
-        )
+        AppViewModel(signInAnonymouslyUseCase = get(), updateTravelerDisplayNameUseCase = get())
     }
 
     single {
-        GetArenaChallengeFlowUseCase(
-            authenticationRepository = get(),
-            tavernRepository = get(),
-        )
+        GetArenaChallengeFlowUseCase(authenticationRepository = get(), tavernRepository = get())
     }
     single { GetTavernFlowUseCase(tavernRepository = get()) }
     single {

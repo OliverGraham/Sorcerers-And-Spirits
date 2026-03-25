@@ -28,8 +28,7 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
-@Serializable
-internal data object TavernScreenRoute
+@Serializable internal data object TavernScreenRoute
 
 @Composable
 internal fun TavernScreen(
@@ -38,17 +37,18 @@ internal fun TavernScreen(
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(
-        LocalTavernActions provides TavernActions(
-            onActionButtonClick = viewModel::onActionButtonClick,
-            onSendChallengerNotifications = viewModel::onSendChallengerNotifications,
-            onAcceptArenaChallenge = viewModel::onAcceptArenaChallenge,
-            onDeclineArenaChallenge = viewModel::onDeclineArenaChallenge,
-            onShowArenaChallengeDialog = viewModel::showArenaChallengeDialog,
-            onHideArenaChallengeDialog = viewModel::hideArenaChallengeDialog,
-        ),
+        LocalTavernActions provides
+            TavernActions(
+                onActionButtonClick = viewModel::onActionButtonClick,
+                onSendChallengerNotifications = viewModel::onSendChallengerNotifications,
+                onAcceptArenaChallenge = viewModel::onAcceptArenaChallenge,
+                onDeclineArenaChallenge = viewModel::onDeclineArenaChallenge,
+                onShowArenaChallengeDialog = viewModel::showArenaChallengeDialog,
+                onHideArenaChallengeDialog = viewModel::hideArenaChallengeDialog,
+            )
     ) {
         viewModel.eventChannelFlow.collectEvents(
-            onNavigateToArena = onNavigateToArena, // TODO: make one for App?
+            onNavigateToArena = onNavigateToArena // TODO: make one for App?
         )
         val uiState by viewModel.uiStateFlow.collectAsState()
 
@@ -58,17 +58,10 @@ internal fun TavernScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TavernScreen(
-    uiState: UiState<TavernState>,
-    modifier: Modifier = Modifier,
-) {
+private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Modifier) {
     when (uiState) {
         // TODO: Update UI to show error
-        is UiState.Error -> RetryButton(
-            retryMessage = "Retry",
-            onRetry = {},
-            modifier = modifier,
-        )
+        is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
         is UiState.Loaded -> LoadedTavernScreen(tavernState = uiState.data, modifier = modifier)
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
@@ -76,10 +69,7 @@ private fun TavernScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LoadedTavernScreen(
-    tavernState: TavernState,
-    modifier: Modifier = Modifier,
-) {
+private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Modifier) {
     val scaffoldState = rememberBottomSheetScaffoldState()
 
     BottomSheetScaffold(
@@ -93,9 +83,7 @@ private fun LoadedTavernScreen(
             )
         },
     ) { padding ->
-        ScaffoldContent(
-            padding = padding,
-        )
+        ScaffoldContent(padding = padding)
     }
 
     if (tavernState.arenaChallenge != null && tavernState.showArenaChallengeDialog) {
@@ -107,9 +95,7 @@ private fun LoadedTavernScreen(
 }
 
 @Composable
-private fun ScaffoldContent(
-    padding: PaddingValues,
-) {
+private fun ScaffoldContent(padding: PaddingValues) {
     Column(
         modifier = Modifier.fillMaxSize().padding(paddingValues = padding),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -120,9 +106,7 @@ private fun ScaffoldContent(
 
 @Suppress("ComposableNaming")
 @Composable
-private fun Flow<TavernEvent>.collectEvents(
-    onNavigateToArena: (String) -> Unit,
-) {
+private fun Flow<TavernEvent>.collectEvents(onNavigateToArena: (String) -> Unit) {
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
@@ -134,7 +118,5 @@ private fun Flow<TavernEvent>.collectEvents(
     }
 }
 
-@Preview
-@Composable
-private fun TavernScreenPreview() {
-}
+// TODO: Preview
+@Preview @Composable private fun TavernScreenPreview() {}

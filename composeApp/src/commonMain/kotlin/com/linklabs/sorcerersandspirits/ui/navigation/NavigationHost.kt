@@ -39,10 +39,7 @@ import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun NavigationHost(
-    viewModel: AppViewModel = koinInject(),
-    modifier: Modifier = Modifier,
-) {
+internal fun NavigationHost(viewModel: AppViewModel = koinInject(), modifier: Modifier = Modifier) {
     val navController = rememberNavController()
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -62,9 +59,7 @@ internal fun NavigationHost(
     ) {
         Scaffold(
             modifier = modifier,
-            topBar = {
-                TopBar(onMenuClick = { scope.launch { drawerState.open() } })
-            },
+            topBar = { TopBar(onMenuClick = { scope.launch { drawerState.open() } }) },
         ) {
             NavHost(
                 navController = navController,
@@ -77,7 +72,7 @@ internal fun NavigationHost(
                             // TODO: Change obviously
                             scope.launch { drawerState.open() }
                             // navController.navigate(route = "arena")
-                        },
+                        }
                     )
                 }
             }
@@ -87,17 +82,11 @@ internal fun NavigationHost(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TopBar(
-    onMenuClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
+private fun TopBar(onMenuClick: () -> Unit, modifier: Modifier = Modifier) {
     CenterAlignedTopAppBar(
         modifier = modifier,
         title = {
-            Text(
-                text = "Sorcerers & Spirits",
-                style = MaterialTheme.typography.headlineSmall,
-            )
+            Text(text = "Sorcerers & Spirits", style = MaterialTheme.typography.headlineSmall)
         },
         actions = {
             IconButton(onClick = onMenuClick) {
@@ -111,15 +100,9 @@ private fun TopBar(
 }
 
 @Composable
-private fun DrawerContent(
-    displayName: String,
-    onNameChange: (String) -> Unit,
-) {
+private fun DrawerContent(displayName: String, onNameChange: (String) -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxHeight()
-            .width(300.dp)
-            .padding(16.dp),
+        modifier = Modifier.fillMaxHeight().width(300.dp).padding(16.dp),
         verticalArrangement = Arrangement.Top,
     ) {
         Text(text = "Settings", style = MaterialTheme.typography.titleLarge)
@@ -137,18 +120,14 @@ private fun DrawerContent(
 
         Text(
             text = "Screen A",
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { /* navigate */ }
-                .padding(vertical = 12.dp),
+            modifier =
+                Modifier.fillMaxWidth().clickable { /* navigate */ }.padding(vertical = 12.dp),
         )
 
         Text(
             text = "Screen B",
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { /* navigate */ }
-                .padding(vertical = 12.dp),
+            modifier =
+                Modifier.fillMaxWidth().clickable { /* navigate */ }.padding(vertical = 12.dp),
         )
     }
 }

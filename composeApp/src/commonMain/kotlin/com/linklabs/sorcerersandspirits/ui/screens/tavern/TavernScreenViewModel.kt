@@ -143,6 +143,7 @@ class TavernScreenViewModel(
         }
     }
 
+    // TODO: this needs to be improved
     private suspend fun collectTavernFlow() {
         getTavernFlowUseCase()
             .filterNotNull()

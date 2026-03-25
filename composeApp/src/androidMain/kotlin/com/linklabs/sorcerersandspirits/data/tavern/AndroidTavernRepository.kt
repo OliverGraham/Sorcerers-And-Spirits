@@ -73,7 +73,6 @@ class AndroidTavernRepository : TavernRepository {
     private fun ArenaChallenge.syncWithDatabase(shouldDelete: Boolean = false) {
         val entityToWrite = if (shouldDelete) null else toArenaChallengeEntity()
 
-        // encode()??????
         arenaChallengesReference.child(arenaId).setValue(entityToWrite)
     }
 }

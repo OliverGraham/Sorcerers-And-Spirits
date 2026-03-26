@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.SignInAnonymouslyU
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetArenaChallengeFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.RemoveArenaChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendArenaChallengesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateArenaChallengeStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
@@ -38,6 +39,7 @@ val commonModule = module {
     single { GetUserIdUseCase(authenticationRepository = get()) }
     single { SendArenaChallengesUseCase(tavernRepository = get()) }
     single { UpdateArenaChallengeStatusUseCase(tavernRepository = get()) }
+    single { RemoveArenaChallengeUseCase(tavernRepository = get()) }
 
     factory {
         TavernScreenViewModel(
@@ -48,6 +50,7 @@ val commonModule = module {
             getUserIdUseCase = get(),
             sendArenaChallengesUseCase = get(),
             updateArenaChallengeStatusUseCase = get(),
+            removeArenaChallengeUseCase = get(),
         )
     }
 }

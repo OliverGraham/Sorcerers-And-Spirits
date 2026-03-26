@@ -1,15 +1,16 @@
 package com.linklabs.sorcerersandspirits.domain.tavern
 
-import com.linklabs.sorcerersandspirits.domain.traveler.InviteStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 
 data class ArenaChallenge(val arenaId: String, val travelers: List<Traveler>) {
-    val hasEveryoneAcceptedTheInvite =
-        travelers.all {
-            it.status is TravelerStatus.InvitedToArena &&
-                it.status.inviteStatus == InviteStatus.Accepted
-        }
+    val totalParticipants = travelers.size
+    val acceptedCount = travelers.count { it.hasAcceptedInviteToArena }
+    val declinedCount = travelers.count { it.hasDeclinedInviteToArena }
 
-    fun getUserTraveler(userId: String?) = travelers.find { it.id == userId }
+    val canArenaCombatBegin =
+        (acceptedCount + declinedCount == totalParticipants) && acceptedCount >= 2
+
+    val notEnoughPlayers = (totalParticipants - declinedCount) < 2
+
+    val isChallengeInvitationComplete = canArenaCombatBegin || notEnoughPlayers
 }

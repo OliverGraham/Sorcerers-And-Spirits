@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.RemoveArenaChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendArenaChallengesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateArenaChallengeStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.InviteStatus
@@ -14,6 +15,7 @@ internal class ArenaChallengeHandler(
     private val coroutineScope: CoroutineScope,
     private val updateArenaChallengeStatusUseCase: UpdateArenaChallengeStatusUseCase,
     private val sendArenaChallengesUseCase: SendArenaChallengesUseCase,
+    private val removeArenaChallengeUseCase: RemoveArenaChallengeUseCase,
     private val updateTavernState: ((TavernState) -> TavernState) -> Unit,
     private val onEvent: (TavernEvent) -> Unit,
 ) {
@@ -47,40 +49,113 @@ internal class ArenaChallengeHandler(
         }
     }
 
+    fun declineGhostedParticipants(challenge: ArenaChallenge, ghostedIds: List<String>) {
+        coroutineScope.launch {
+            var needsUpdate = false
+            val updatedTravelers =
+                challenge.travelers.map { traveler ->
+                    val currentStatus =
+                        traveler.status as? TravelerStatus.InvitedToArena ?: return@map traveler
+
+                    // If they are a ghost AND they haven't been marked as Declined yet
+                    if (
+                        traveler.id in ghostedIds &&
+                            currentStatus.inviteStatus != InviteStatus.Declined
+                    ) {
+                        needsUpdate = true
+                        traveler.copy(
+                            status = currentStatus.copy(inviteStatus = InviteStatus.Declined)
+                        )
+                    } else {
+                        traveler
+                    }
+                }
+
+            if (needsUpdate) {
+                // This updates Firebase. Once this hits the server,
+                // the UseCase will see it's "Complete" and delete it.
+                updateArenaChallengeStatusUseCase(challenge.copy(travelers = updatedTravelers))
+            }
+        }
+    }
+
+    fun getUpdatedArenaState(
+        newArenaChallenge: ArenaChallenge,
+        oldArenaChallengeState: ArenaChallengeState?,
+        userId: String?,
+    ): ArenaChallengeState? {
+        val newArenaChallengeState = newArenaChallenge.toArenaChallengeState(userId = userId)
+        val userTraveler = newArenaChallengeState.userTravelerState ?: return null
+
+        // Preserve existing seconds remaining if timer is already running
+        val isConsidering = userTraveler.inviteStatus == InviteStatus.Considering
+        val isDialogAlreadyOpen = oldArenaChallengeState?.showArenaChallengeDialog ?: false
+
+        return newArenaChallengeState.copy(
+            showArenaChallengeDialog = isConsidering || isDialogAlreadyOpen,
+            secondsRemaining = oldArenaChallengeState?.secondsRemaining,
+        )
+    }
+
+    fun processArenaChallengeEffects(arenaChallengeState: ArenaChallengeState) {
+        val userTraveler = arenaChallengeState.userTravelerState ?: return
+        val isConsidering = userTraveler.inviteStatus == InviteStatus.Considering
+
+        // Trigger Timer
+        if (isConsidering && timerJob == null) {
+            startTimer(challenge = arenaChallengeState)
+        }
+
+        // Trigger RSVPs / Navigation
+        arenaChallengeState.handleRSVPs()
+    }
+
     /**
      * Processes a new [ArenaChallenge]. Encapsulates state mapping, timer logic, and navigation
      * triggers.
      */
     fun handleArenaChallengeUpdate(arenaChallenge: ArenaChallenge, userId: String?) {
-        val userTraveler = arenaChallenge.getUserTraveler(userId = userId) ?: return
-        val userStatus = userTraveler.status as? TravelerStatus.InvitedToArena ?: return
+        /* val arenaChallengeState = arenaChallenge.toArenaChallengeState(userId = userId)
+        val userTraveler = arenaChallengeState.userTravelerState ?: return
+        val isConsidering = userTraveler.inviteStatus == InviteStatus.Considering
 
-        val isConsidering = userStatus.inviteStatus == InviteStatus.Considering
-        val challengeState =
-            arenaChallenge.toArenaChallengeState(
-                userId = userId,
-                showArenaChallengeDialog = isConsidering,
-                secondsRemaining = COUNTDOWN_SECONDS,
+        updateTavernState { tavernState ->
+            val isDialogAlreadyOpen = tavernState.arenaChallenge?.showArenaChallengeDialog ?: false
+            tavernState.copy(
+                arenaChallenge = arenaChallengeState.copy(
+                    showArenaChallengeDialog = isConsidering || isDialogAlreadyOpen
+                )
             )
-        updateTavernState { it.copy(arenaChallenge = challengeState) }
+        }
 
-        // 2. Manage Timer
         if (isConsidering && timerJob == null) {
-            startTimer(challenge = challengeState)
+            startTimer(challenge = arenaChallengeState)
         }
 
-        // 3. Handle Navigation Event
+        arenaChallengeState.handleRSVPs()*/
+    }
+
+    private fun ArenaChallengeState.handleRSVPs() {
+        if (!isChallengeInvitationComplete) return
+
+        terminateAndCleanup()
+
         when {
-            arenaChallenge.hasEveryoneAcceptedTheInvite -> {
-                stopTimer()
-                updateDialogVisibility(isVisible = false)
-                onEvent(TavernEvent.NavigateToArena(arenaId = arenaChallenge.arenaId))
+            canArenaCombatBegin && hasUserTravelerAccepted -> {
+                onEvent(TavernEvent.NavigateToArena(arenaId = arenaId))
             }
-        // TODO: Figure out
-        // arenaChallenge.hasEveryoneRespondedToTheInvite -> {
-
-        // }
+            !canArenaCombatBegin -> {
+                println("NOT ENOUGH PEOPLE YO $this")
+                // TODO: show snack bar saying not enough people accepted
+            }
         }
+    }
+
+    private fun ArenaChallengeState.terminateAndCleanup() {
+        stopTimer()
+        updateDialogVisibility(isVisible = false)
+
+        //  removeArenaChallengeUseCase(arenaChallenge = toArenaChallenge())
     }
 
     fun updateDialogVisibility(isVisible: Boolean) {

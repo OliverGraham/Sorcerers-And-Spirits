@@ -1,9 +1,11 @@
 package com.linklabs.sorcerersandspirits.data
 
+// TODO: Does or can iOS use this?
 object FireStoreKeys {
-    const val TAVERN = "Tavern"
-    const val TRAVELERS = "Travelers"
-    const val ARENA_CHALLENGES = "ArenaChallenges"
+    const val CHALLENGES_PATH = "Challenges"
+    const val CHALLENGE_MAILBOXES_PATH = "ChallengeMailboxes"
+    const val TAVERN_TRAVELERS_PATH = "TavernTravelers"
 
+    const val TRAVELERS = "Travelers"
     const val DISPLAY_NAME = "displayName"
 }

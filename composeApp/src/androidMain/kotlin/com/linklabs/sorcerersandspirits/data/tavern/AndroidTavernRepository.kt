@@ -9,6 +9,9 @@ import com.google.firebase.database.OnDisconnect
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
+import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGES_PATH
+import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_PATH
+import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TAVERN_TRAVELERS_PATH
 import com.linklabs.sorcerersandspirits.data.getChildrenFlow
 import com.linklabs.sorcerersandspirits.data.getValueFlow
 import com.linklabs.sorcerersandspirits.data.model.ChallengeEntity
@@ -407,9 +410,6 @@ class AndroidTavernRepository : TavernRepository {
     )
 
     private companion object {
-        private const val CHALLENGES_PATH = "Challenges"
-        private const val CHALLENGE_MAILBOXES_PATH = "ChallengeMailboxes"
-        private const val TAVERN_TRAVELERS_PATH = "TavernTravelers"
         private const val MINIMUM_CHALLENGERS = 2
     }
 }

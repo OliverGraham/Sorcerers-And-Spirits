@@ -40,11 +40,11 @@ internal fun TavernScreen(
         LocalTavernActions provides
             TavernActions(
                 onActionButtonClick = viewModel::onActionButtonClick,
-                onSendChallengerNotifications = viewModel::onSendChallengerNotifications,
-                onAcceptArenaChallenge = viewModel::onAcceptArenaChallenge,
-                onDeclineArenaChallenge = viewModel::onDeclineArenaChallenge,
-                onShowArenaChallengeDialog = viewModel::showArenaChallengeDialog,
-                onHideArenaChallengeDialog = viewModel::hideArenaChallengeDialog,
+                onSendChallengerNotifications = viewModel::onSendChallenge,
+                onAcceptArenaChallenge = viewModel::onAcceptChallenge,
+                onDeclineArenaChallenge = viewModel::onDeclineChallenge,
+                onShowArenaChallengeDialog = viewModel::showChallengeDialog,
+                onHideArenaChallengeDialog = viewModel::hideChallengeDialog,
             )
     ) {
         viewModel.eventChannelFlow.collectEvents(
@@ -86,8 +86,8 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         ScaffoldContent(padding = padding)
     }
 
-    val arenaChallengeState = tavernState.arenaChallenge
-    if (arenaChallengeState != null && arenaChallengeState.showArenaChallengeDialog) {
+    val arenaChallengeState = tavernState.challenge
+    if (arenaChallengeState != null && arenaChallengeState.showChallengeDialog) {
         ArenaChallengeDialog(arenaChallenge = arenaChallengeState)
     }
 }
@@ -110,6 +110,13 @@ private fun Flow<TavernEvent>.collectEvents(onNavigateToArena: (String) -> Unit)
             when (event) {
                 is TavernEvent.NavigateToArena -> {
                     onNavigateToArena("")
+                }
+
+                is TavernEvent.ShowChallengeSendFailed -> {
+                    println("TAVERN EVENT: ShowChallengeSendFailed")
+                }
+                is TavernEvent.ShowTravelerUnavailable -> {
+                    println("TAVERN EVENT: Show traveler unavailable")
                 }
             }
         }

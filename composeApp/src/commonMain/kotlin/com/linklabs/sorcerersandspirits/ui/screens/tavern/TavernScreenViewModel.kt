@@ -4,10 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetArenaChallengeFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendArenaChallengesUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateArenaChallengeStatusUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernTravelersFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -15,19 +16,20 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class TavernScreenViewModel(
     private val enterTavernUseCase: EnterTavernUseCase,
     private val updateTravelerDisplayNameUseCase: UpdateTravelerDisplayNameUseCase,
-    private val sendArenaChallengesUseCase: SendArenaChallengesUseCase,
-    private val getArenaChallengeFlowUseCase: GetArenaChallengeFlowUseCase,
+    private val sendChallengeUseCase: SendChallengeUseCase,
+    private val getActiveChallengeFlowUseCase: GetActiveChallengeFlowUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
-    private val getTavernFlowUseCase: GetTavernFlowUseCase,
-    private val updateArenaChallengeStatusUseCase: UpdateArenaChallengeStatusUseCase,
+    private val getTavernTravelersFlowUseCase: GetTavernTravelersFlowUseCase,
+    private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
+    private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<TavernEvent>()
@@ -36,22 +38,21 @@ class TavernScreenViewModel(
     private val _uiStateFlow = MutableStateFlow<UiState<TavernState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
-    private val arenaChallengeHandler =
-        ArenaChallengeHandler(
+    private val challengeHandler =
+        ChallengeHandler(
             coroutineScope = viewModelScope,
-            updateArenaChallengeStatusUseCase = updateArenaChallengeStatusUseCase,
-            sendArenaChallengesUseCase = sendArenaChallengesUseCase,
+            sendChallengeUseCase = sendChallengeUseCase,
+            updateChallengerStatusUseCase = updateChallengerStatusUseCase,
+            setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
+            getCurrentTavernState = { (_uiStateFlow.value as? UiState.Loaded)?.data },
             updateTavernState = { transform -> _uiStateFlow.updateLoaded(transform = transform) },
             onEvent = { event -> viewModelScope.launch { _eventChannelFlow.send(element = event) } },
         )
 
     init {
-        viewModelScope.launch {
-            enterTavernUseCase()
-            collectTavernFlow()
-        }
-
-        viewModelScope.launch { collectArenaChallenges() }
+        viewModelScope.launch { enterTavern() }
+        viewModelScope.launch { collectTavernTravelers() }
+        viewModelScope.launch { collectActiveChallenge() }
     }
 
     fun onActionButtonClick() {
@@ -60,56 +61,77 @@ class TavernScreenViewModel(
         }
     }
 
-    fun showArenaChallengeDialog() {
-        arenaChallengeHandler.updateDialogVisibility(isVisible = true)
+    fun showChallengeDialog() {
+        challengeHandler.updateDialogVisibility(isVisible = true)
     }
 
-    fun hideArenaChallengeDialog() {
-        arenaChallengeHandler.updateDialogVisibility(isVisible = false)
+    fun hideChallengeDialog() {
+        challengeHandler.updateDialogVisibility(isVisible = false)
     }
 
-    fun onSendChallengerNotifications(
-        userTraveler: TravelerState,
-        selectedTravelerStates: Set<TravelerState>,
-    ) {
-        arenaChallengeHandler.sendArenaChallenges(
+    fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
+        challengeHandler.sendChallenges(
             userTraveler = userTraveler,
             selectedTravelerStates = selectedTravelerStates,
         )
     }
 
-    fun onAcceptArenaChallenge(challenge: ArenaChallengeState) {
-        arenaChallengeHandler.acceptArenaChallenge(arenaChallengeState = challenge)
-    }
+    fun onAcceptChallenge(challengeState: ChallengeState) {
+        viewModelScope.launch {
+            val userId = getUserIdUseCase() ?: return@launch
 
-    fun onDeclineArenaChallenge(challenge: ArenaChallengeState) {
-        arenaChallengeHandler.declineArenaChallenge(arenaChallengeState = challenge)
-    }
-
-    // TODO: this needs to be improved
-    private suspend fun collectTavernFlow() {
-        getTavernFlowUseCase()
-            .filterNotNull()
-            .map { tavern ->
-                val tavernState = tavern.toTavernState(userId = getUserIdUseCase())
-                if (tavernState == null) {
-                    UiState.Loading
-                } else {
-                    UiState.Loaded(data = tavernState)
-                }
-            }
-            .catch { emit(UiState.Error) }
-            .collect { newState -> _uiStateFlow.value = newState }
-    }
-
-    private suspend fun collectArenaChallenges() {
-        val userId = getUserIdUseCase()
-
-        getArenaChallengeFlowUseCase().filterNotNull().collect { arenaChallenge ->
-            arenaChallengeHandler.handleArenaChallengeUpdate(
-                arenaChallenge = arenaChallenge,
-                userId = userId,
-            )
+            challengeHandler.acceptChallenge(challengeState = challengeState, userId = userId)
         }
     }
+
+    fun onDeclineChallenge(challengeState: ChallengeState) {
+        viewModelScope.launch {
+            val userId = getUserIdUseCase() ?: return@launch
+
+            challengeHandler.declineChallenge(challengeState = challengeState, userId = userId)
+        }
+    }
+
+    private suspend fun enterTavern() {
+        runCatching { enterTavernUseCase() }.onFailure { _uiStateFlow.value = UiState.Error }
+    }
+
+    private suspend fun collectTavernTravelers() {
+        val userId = getUserIdUseCase()
+        if (userId == null) {
+            _uiStateFlow.value = UiState.Error
+            return
+        }
+
+        getTavernTravelersFlowUseCase()
+            .map { tavernTravelers -> tavernTravelers.toTavernState(userId = userId) }
+            .catch { _uiStateFlow.value = UiState.Error }
+            .collect { newTavernState ->
+                _uiStateFlow.update { currentUiState ->
+                    when (newTavernState) {
+                        null -> UiState.Loading
+                        else ->
+                            UiState.Loaded(
+                                data =
+                                    newTavernState.copy(
+                                        challenge = currentUiState.currentChallengeState()
+                                    )
+                            )
+                    }
+                }
+            }
+    }
+
+    private suspend fun collectActiveChallenge() {
+        val userId = getUserIdUseCase() ?: return
+
+        getActiveChallengeFlowUseCase()
+            .catch { challengeHandler.clearChallenge() }
+            .collect { challenge ->
+                challengeHandler.handleChallengeUpdate(challenge = challenge, userId = userId)
+            }
+    }
+
+    private fun UiState<TavernState>.currentChallengeState(): ChallengeState? =
+        (this as? UiState.Loaded)?.data?.challenge
 }

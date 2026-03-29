@@ -2,9 +2,9 @@ package com.linklabs.sorcerersandspirits.domain.tavern.usecase
 
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import com.linklabs.sorcerersandspirits.domain.traveler.TravelerRepository
-import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 
 class EnterTavernUseCase(
     private val authenticationRepository: AuthenticationRepository,
@@ -17,7 +17,10 @@ class EnterTavernUseCase(
 
         val traveler = getOrCreateTraveler(userId = userId)
 
-        tavernRepository.aTravelerEntersTavern(traveler = traveler)
+        tavernRepository.connectTravelerPresence(
+            userId = userId,
+            displayName = traveler.displayName,
+        )
     }
 
     private suspend fun getOrCreateTraveler(userId: String): Traveler {
@@ -26,9 +29,9 @@ class EnterTavernUseCase(
         return if (existingTraveler == null) {
             val newTraveler =
                 Traveler(
-                    id = userId,
+                    userId = userId,
                     displayName = DEFAULT_DISPLAY_NAME,
-                    status = TravelerStatus.Available,
+                    tavernStatus = TavernStatus.Available,
                 )
             travelerRepository.saveTraveler(traveler = newTraveler)
             newTraveler

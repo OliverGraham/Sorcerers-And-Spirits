@@ -63,7 +63,7 @@ internal class ChallengeHandler(
             return
         }
 
-        val currentTavernState = getCurrentTavernState() ?: return
+        val currentTavernState = getCurrentTavernState()
 
         val userChallenger =
             challenge.challengers[userId]
@@ -73,7 +73,7 @@ internal class ChallengeHandler(
                     return
                 }
 
-        val currentChallengeState = currentTavernState.challenge
+        val currentChallengeState = currentTavernState?.challenge
         val isSameChallenge = currentChallengeState?.challengeId == challenge.challengeId
         val isPendingInvitee = userChallenger.status == ChallengerStatus.Pending
 
@@ -82,14 +82,14 @@ internal class ChallengeHandler(
                 showChallengeDialog =
                     when {
                         isPendingInvitee -> true
-                        isSameChallenge -> currentChallengeState?.showChallengeDialog == true
+                        isSameChallenge -> currentChallengeState.showChallengeDialog
                         else -> false
                     },
                 secondsRemaining =
                     when {
                         !isPendingInvitee -> null
                         isSameChallenge ->
-                            currentChallengeState?.secondsRemaining ?: COUNTDOWN_SECONDS
+                            currentChallengeState.secondsRemaining ?: COUNTDOWN_SECONDS
                         else -> COUNTDOWN_SECONDS
                     },
             )

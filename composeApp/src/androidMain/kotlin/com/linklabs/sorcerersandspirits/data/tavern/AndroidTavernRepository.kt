@@ -5,7 +5,6 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.MutableData
-import com.google.firebase.database.OnDisconnect
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
@@ -29,18 +28,13 @@ import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import java.util.UUID
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
 
 class AndroidTavernRepository : TavernRepository {
@@ -52,19 +46,18 @@ class AndroidTavernRepository : TavernRepository {
     private val mailboxesRef = root.child(CHALLENGE_MAILBOXES_PATH)
     private val travelersRef = root.child(TAVERN_TRAVELERS_PATH)
 
-    private val disconnectCleanupMutex = Mutex()
-    private val disconnectCleanupByUserId = mutableMapOf<String, RegisteredDisconnectCleanup>()
-
+    /**
+     * Observes the user's mailbox for the current challengeId, then switches to that challenge's
+     * updates. If the mailbox is empty, this emits `null`; if the mailbox changes, observation
+     * moves to the newly referenced challenge.
+     */
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> =
-        getMailboxFlow(userId = userId).flatMapLatest { challengeId ->
+        getMailboxChallengeIdFlow(userId).distinctUntilChanged().transformLatest { challengeId ->
             if (challengeId.isNullOrBlank()) {
-                flow {
-                    clearRegisteredDisconnectCleanup(userId = userId)
-                    emit(value = null)
-                }
+                emit(null)
             } else {
-                getChallengeFlow(userId = userId, challengeId = challengeId)
+                emitAll(flow = getChallengeFlow(challengeId = challengeId))
             }
         }
 
@@ -76,6 +69,7 @@ class AndroidTavernRepository : TavernRepository {
     override fun connectTravelerPresence(userId: String, displayName: String): Cancelable {
         val connectedRef = database.getReference(".info/connected")
         val travelerRef = travelersRef.child(userId)
+        val mailboxRef = mailboxesRef.child(userId)
 
         val listener =
             object : ValueEventListener {
@@ -85,31 +79,40 @@ class AndroidTavernRepository : TavernRepository {
 
                     travelerRef.onDisconnect().removeValue()
 
-                    travelerRef.runTransaction(
-                        object : Transaction.Handler {
-                            override fun doTransaction(
-                                currentData: MutableData
-                            ): Transaction.Result {
-                                val current = currentData.getValue(TravelerEntity::class.java)
+                    mailboxRef.get().addOnSuccessListener { mailboxSnapshot ->
+                        val hasActiveChallenge = !mailboxSnapshot.getValue<String>().isNullOrBlank()
 
-                                currentData.value =
-                                    TravelerEntity(
-                                        userId = userId,
-                                        displayName = displayName,
-                                        tavernStatus =
-                                            current?.tavernStatus ?: TavernStatus.Available,
-                                    )
+                        travelerRef.runTransaction(
+                            object : Transaction.Handler {
+                                override fun doTransaction(
+                                    currentData: MutableData
+                                ): Transaction.Result {
+                                    val current = currentData.getValue(TravelerEntity::class.java)
 
-                                return Transaction.success(currentData)
+                                    currentData.value =
+                                        TravelerEntity(
+                                            userId = userId,
+                                            displayName = displayName,
+                                            tavernStatus =
+                                                current?.tavernStatus
+                                                    ?: if (hasActiveChallenge) {
+                                                        TavernStatus.Busy
+                                                    } else {
+                                                        TavernStatus.Available
+                                                    },
+                                        )
+
+                                    return Transaction.success(currentData)
+                                }
+
+                                override fun onComplete(
+                                    error: DatabaseError?,
+                                    committed: Boolean,
+                                    currentData: DataSnapshot?,
+                                ) = Unit
                             }
-
-                            override fun onComplete(
-                                error: DatabaseError?,
-                                committed: Boolean,
-                                currentData: DataSnapshot?,
-                            ) = Unit
-                        }
-                    )
+                        )
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) = Unit
@@ -140,18 +143,11 @@ class AndroidTavernRepository : TavernRepository {
 
                 if (!claimed) {
                     releaseClaims(userIds = claimedUserIds)
-
                     return SendChallengeResult.TravelerUnavailable(participant.userId)
                 }
 
                 claimedUserIds += participant.userId
             }
-
-            registerDisconnectCleanup(
-                userId = instigator.userId,
-                challengeId = challengeId,
-                participantUserIds = participantUserIds,
-            )
 
             val challenge =
                 ChallengeEntity(
@@ -178,7 +174,6 @@ class AndroidTavernRepository : TavernRepository {
 
             return SendChallengeResult.Success(challengeId)
         } catch (throwable: Throwable) {
-            clearRegisteredDisconnectCleanup(userId = instigator.userId)
             clearChallengeData(challengeId = challengeId, participantUserIds = participantUserIds)
             releaseClaims(userIds = claimedUserIds)
             throw throwable
@@ -195,7 +190,7 @@ class AndroidTavernRepository : TavernRepository {
             .child("challengers")
             .child(userId)
             .child("status")
-            .setValue(status.name)
+            .setValue(status)
             .await()
 
         if (status == ChallengerStatus.Declined) {
@@ -206,53 +201,12 @@ class AndroidTavernRepository : TavernRepository {
         reconcileChallenge(challengeId = challengeId)
     }
 
-    override suspend fun finishChallenge(challenge: Challenge) {
-        val participantUserIds = challenge.challengers.keys.toList()
-
-        clearRegisteredDisconnectCleanups(userIds = participantUserIds)
-        clearChallengeData(
-            challengeId = challenge.challengeId,
-            participantUserIds = participantUserIds,
-        )
-        releaseClaims(userIds = participantUserIds)
-    }
-
-    private fun getMailboxFlow(userId: String): Flow<String?> =
+    private fun getMailboxChallengeIdFlow(userId: String): Flow<String?> =
         mailboxesRef.child(userId).getValueFlow<String>()
 
-    private fun getChallengeFlow(userId: String, challengeId: String): Flow<Challenge?> =
-        callbackFlow {
-            val challengeRef = challengesRef.child(challengeId)
-
-            val listener =
-                object : ValueEventListener {
-                    override fun onDataChange(snapshot: DataSnapshot) {
-                        val challengeEntity = snapshot.getValue<ChallengeEntity>()
-                        val challenge = challengeEntity?.toDomain()
-
-                        launch(start = CoroutineStart.UNDISPATCHED) {
-                            if (challengeEntity == null) {
-                                clearRegisteredDisconnectCleanup(userId = userId)
-                            } else {
-                                registerDisconnectCleanup(
-                                    userId = userId,
-                                    challengeId = challengeId,
-                                    participantUserIds = challengeEntity.challengers.keys.toList(),
-                                )
-                            }
-                        }
-
-                        trySend(element = challenge)
-                    }
-
-                    override fun onCancelled(error: DatabaseError) {
-                        close(cause = error.toException())
-                    }
-                }
-
-            challengeRef.addValueEventListener(listener)
-
-            awaitClose { challengeRef.removeEventListener(listener) }
+    private fun getChallengeFlow(challengeId: String): Flow<Challenge?> =
+        challengesRef.child(challengeId).getValueFlow<ChallengeEntity>().map { challengeEntity ->
+            challengeEntity?.toDomain()
         }
 
     private suspend fun reconcileChallenge(challengeId: String) {
@@ -275,7 +229,6 @@ class AndroidTavernRepository : TavernRepository {
 
         when {
             hasEveryoneAccepted -> {
-                clearRegisteredDisconnectCleanups(userIds = participantUserIds)
                 clearChallengeData(
                     challengeId = challengeId,
                     participantUserIds = participantUserIds,
@@ -283,7 +236,6 @@ class AndroidTavernRepository : TavernRepository {
             }
 
             doesNotHaveEnoughPlayersLeft -> {
-                clearRegisteredDisconnectCleanups(userIds = participantUserIds)
                 clearChallengeData(
                     challengeId = challengeId,
                     participantUserIds = participantUserIds,
@@ -338,50 +290,6 @@ class AndroidTavernRepository : TavernRepository {
         root.updateChildren(updates).await()
     }
 
-    private suspend fun registerDisconnectCleanup(
-        userId: String,
-        challengeId: String,
-        participantUserIds: List<String>,
-    ) {
-        val existingCleanup = disconnectCleanupMutex.withLock { disconnectCleanupByUserId[userId] }
-
-        if (existingCleanup?.challengeId == challengeId) return
-
-        clearRegisteredDisconnectCleanup(userId = userId)
-
-        val operations = buildList {
-            add(
-                challengesRef.child(challengeId).onDisconnect().also { onDisconnect ->
-                    onDisconnect.removeValue().await()
-                }
-            )
-
-            participantUserIds.forEach { participantUserId ->
-                add(
-                    mailboxesRef.child(participantUserId).onDisconnect().also { onDisconnect ->
-                        onDisconnect.removeValue().await()
-                    }
-                )
-            }
-        }
-
-        disconnectCleanupMutex.withLock {
-            disconnectCleanupByUserId[userId] =
-                RegisteredDisconnectCleanup(challengeId = challengeId, operations = operations)
-        }
-    }
-
-    private suspend fun clearRegisteredDisconnectCleanup(userId: String) {
-        val cleanup =
-            disconnectCleanupMutex.withLock { disconnectCleanupByUserId.remove(userId) } ?: return
-
-        cleanup.operations.forEach { onDisconnect -> onDisconnect.cancel().await() }
-    }
-
-    private suspend fun clearRegisteredDisconnectCleanups(userIds: List<String>) {
-        userIds.forEach { userId -> clearRegisteredDisconnectCleanup(userId = userId) }
-    }
-
     private suspend fun DatabaseReference.runTransactionAwait(
         block: (MutableData) -> Transaction.Result
     ): Boolean = suspendCancellableCoroutine { continuation ->
@@ -403,11 +311,6 @@ class AndroidTavernRepository : TavernRepository {
             }
         )
     }
-
-    private data class RegisteredDisconnectCleanup(
-        val challengeId: String,
-        val operations: List<OnDisconnect>,
-    )
 
     private companion object {
         private const val MINIMUM_CHALLENGERS = 2

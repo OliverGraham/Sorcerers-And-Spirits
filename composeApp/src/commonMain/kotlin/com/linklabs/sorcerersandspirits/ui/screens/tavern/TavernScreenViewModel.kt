@@ -16,7 +16,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -51,8 +51,7 @@ class TavernScreenViewModel(
 
     init {
         viewModelScope.launch { enterTavern() }
-        viewModelScope.launch { collectTavernTravelers() }
-        viewModelScope.launch { collectActiveChallenge() }
+        viewModelScope.launch { collectScreenState() }
     }
 
     fun onActionButtonClick() {
@@ -96,38 +95,37 @@ class TavernScreenViewModel(
         runCatching { enterTavernUseCase() }.onFailure { _uiStateFlow.value = UiState.Error }
     }
 
-    private suspend fun collectTavernTravelers() {
+    private suspend fun collectScreenState() {
         val userId = getUserIdUseCase()
         if (userId == null) {
             _uiStateFlow.value = UiState.Error
             return
         }
 
-        getTavernTravelersFlowUseCase()
-            .map { tavernTravelers -> tavernTravelers.toTavernState(userId = userId) }
-            .catch { _uiStateFlow.value = UiState.Error }
-            .collect { newTavernState ->
-                _uiStateFlow.update { currentUiState ->
-                    when (newTavernState) {
-                        null -> UiState.Loading
-                        else ->
-                            UiState.Loaded(
-                                data =
-                                    newTavernState.copy(
-                                        challenge = currentUiState.currentChallengeState()
-                                    )
-                            )
-                    }
-                }
+        combine(flow = getTavernTravelersFlowUseCase(), flow2 = getActiveChallengeFlowUseCase()) {
+                tavernTravelers,
+                challenge ->
+                tavernTravelers to challenge
             }
-    }
+            .catch {
+                challengeHandler.clearChallenge()
+                _uiStateFlow.value = UiState.Error
+            }
+            .collect { (tavernTravelers, challenge) ->
+                val newTavernState = tavernTravelers.toTavernState(userId = userId)
 
-    private suspend fun collectActiveChallenge() {
-        val userId = getUserIdUseCase() ?: return
+                if (newTavernState == null) {
+                    _uiStateFlow.value = UiState.Loading
+                    return@collect
+                }
 
-        getActiveChallengeFlowUseCase()
-            .catch { challengeHandler.clearChallenge() }
-            .collect { challenge ->
+                _uiStateFlow.update { currentUiState ->
+                    UiState.Loaded(
+                        data =
+                            newTavernState.copy(challenge = currentUiState.currentChallengeState())
+                    )
+                }
+
                 challengeHandler.handleChallengeUpdate(challenge = challenge, userId = userId)
             }
     }

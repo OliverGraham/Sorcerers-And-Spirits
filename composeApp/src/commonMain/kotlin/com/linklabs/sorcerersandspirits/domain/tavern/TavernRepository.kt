@@ -23,8 +23,6 @@ interface TavernRepository {
     )
 
     suspend fun setTravelerAvailableIfPresent(userId: String)
-
-    suspend fun finishChallenge(challenge: Challenge)
 }
 
 /**

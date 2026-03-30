@@ -9,7 +9,7 @@ interface TavernRepository {
 
     fun getTavernTravelersFlow(): Flow<List<Traveler>>
 
-    fun connectTravelerPresence(userId: String, displayName: String): Cancelable
+    suspend fun connectTravelerPresence(userId: String, displayName: String): Cancelable
 
     suspend fun sendChallenge(
         instigator: Challenger,

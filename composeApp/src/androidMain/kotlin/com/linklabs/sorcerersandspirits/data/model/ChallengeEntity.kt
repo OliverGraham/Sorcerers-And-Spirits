@@ -6,10 +6,13 @@ import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import kotlinx.serialization.Serializable
 
+// TODO: Look into time part
 @Serializable
 data class ChallengeEntity(
     val challengeId: String = "",
     val challengerEntitiesMap: Map<String, ChallengerEntity> = emptyMap(),
+    val startTimeMillis: Long? = null,
+    val endTimeMillis: Long? = null,
 ) {
     companion object {
         val challengerEntitiesMapName = ChallengeEntity::challengerEntitiesMap.name
@@ -48,4 +51,6 @@ fun ChallengeEntity.toDomain(): Challenge =
     Challenge(
         challengeId = challengeId,
         challengers = challengerEntitiesMap.mapValues { (_, challenger) -> challenger.toDomain() },
+        startTimeMillis = startTimeMillis,
+        endTimeMillis = endTimeMillis,
     )

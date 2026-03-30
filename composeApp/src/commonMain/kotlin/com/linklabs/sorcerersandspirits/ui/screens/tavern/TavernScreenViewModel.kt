@@ -102,6 +102,7 @@ class TavernScreenViewModel(
             return
         }
 
+        // TODO: Fix
         combine(flow = getTavernTravelersFlowUseCase(), flow2 = getActiveChallengeFlowUseCase()) {
                 tavernTravelers,
                 challenge ->

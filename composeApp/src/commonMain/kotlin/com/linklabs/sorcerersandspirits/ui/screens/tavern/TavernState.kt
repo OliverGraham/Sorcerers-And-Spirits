@@ -26,7 +26,6 @@ data class TravelerState(
 data class ChallengerState(
     val userId: String,
     val displayName: String,
-    val isThisChallengerTheUser: Boolean,
     val isInstigator: Boolean,
     val status: ChallengerStatus,
 )
@@ -84,11 +83,10 @@ internal fun Challenge.toChallengeState(
         secondsRemaining = secondsRemaining,
     )
 
-private fun Challenger.toChallengerState() =
+internal fun Challenger.toChallengerState() =
     ChallengerState(
         userId = userId,
         displayName = displayName,
-        isThisChallengerTheUser = false,
         isInstigator = isInstigator,
         status = status,
     )

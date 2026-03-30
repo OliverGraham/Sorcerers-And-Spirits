@@ -1,12 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.tavern
 
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.getValue
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGES_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_PATH
@@ -14,9 +9,11 @@ import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TAVERN_TRAVELERS_PATH
 import com.linklabs.sorcerersandspirits.data.getChildrenFlow
 import com.linklabs.sorcerersandspirits.data.getValueFlow
 import com.linklabs.sorcerersandspirits.data.model.ChallengeEntity
+import com.linklabs.sorcerersandspirits.data.model.ChallengerEntity
 import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
 import com.linklabs.sorcerersandspirits.data.model.toDomain
 import com.linklabs.sorcerersandspirits.data.model.toEntity
+import com.linklabs.sorcerersandspirits.data.runTransactionAwait
 import com.linklabs.sorcerersandspirits.domain.tavern.Cancelable
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
@@ -25,26 +22,28 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import java.util.UUID
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class AndroidTavernRepository : TavernRepository {
 
     private val database = FirebaseDatabase.getInstance()
+    private val connectedReference = database.getReference(CONNECTED_REFERENCE_PATH)
 
     private val root = database.reference
     private val challengesRef = root.child(CHALLENGES_PATH)
     private val mailboxesRef = root.child(CHALLENGE_MAILBOXES_PATH)
-    private val travelersRef = root.child(TAVERN_TRAVELERS_PATH)
+    private val travelersReference = root.child(TAVERN_TRAVELERS_PATH)
 
     /**
      * Observes the user's mailbox for the current challengeId, then switches to that challenge's
@@ -62,123 +61,98 @@ class AndroidTavernRepository : TavernRepository {
         }
 
     override fun getTavernTravelersFlow(): Flow<List<Traveler>> =
-        travelersRef.getChildrenFlow<TravelerEntity>().map { travelerEntities ->
+        travelersReference.getChildrenFlow<TravelerEntity>().map { travelerEntities ->
             travelerEntities.map { travelerEntity -> travelerEntity.toDomain() }
         }
 
     override fun connectTravelerPresence(userId: String, displayName: String): Cancelable {
-        val connectedRef = database.getReference(".info/connected")
-        val travelerRef = travelersRef.child(userId)
+        val travelerRef = travelersReference.child(userId)
         val mailboxRef = mailboxesRef.child(userId)
 
-        val listener =
-            object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val connected = snapshot.getValue<Boolean>() ?: false
-                    if (!connected) return
+        val connectTravelerPresenceListener =
+            ConnectTravelerPresenceListener(
+                userId = userId,
+                displayName = displayName,
+                travelerReference = travelerRef,
+                mailBoxReference = mailboxRef,
+            )
 
-                    travelerRef.onDisconnect().removeValue()
-
-                    mailboxRef.get().addOnSuccessListener { mailboxSnapshot ->
-                        val hasActiveChallenge = !mailboxSnapshot.getValue<String>().isNullOrBlank()
-
-                        travelerRef.runTransaction(
-                            object : Transaction.Handler {
-                                override fun doTransaction(
-                                    currentData: MutableData
-                                ): Transaction.Result {
-                                    val current = currentData.getValue(TravelerEntity::class.java)
-
-                                    currentData.value =
-                                        TravelerEntity(
-                                            userId = userId,
-                                            displayName = displayName,
-                                            tavernStatus =
-                                                current?.tavernStatus
-                                                    ?: if (hasActiveChallenge) {
-                                                        TavernStatus.Busy
-                                                    } else {
-                                                        TavernStatus.Available
-                                                    },
-                                        )
-
-                                    return Transaction.success(currentData)
-                                }
-
-                                override fun onComplete(
-                                    error: DatabaseError?,
-                                    committed: Boolean,
-                                    currentData: DataSnapshot?,
-                                ) = Unit
-                            }
-                        )
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) = Unit
-            }
-
-        connectedRef.addValueEventListener(listener)
+        connectedReference.addValueEventListener(connectTravelerPresenceListener)
 
         return Cancelable {
-            connectedRef.removeEventListener(listener)
+            connectedReference.removeEventListener(connectTravelerPresenceListener)
             travelerRef.onDisconnect().cancel()
         }
     }
+
+    private data class ClaimChallengerResult(val isClaimed: Boolean, val challenger: Challenger)
 
     override suspend fun sendChallenge(
         instigator: Challenger,
         invitees: List<Challenger>,
     ): SendChallengeResult {
-        // TODO: use push() for key generation
-        val challengeId = UUID.randomUUID().toString()
-        val participants =
-            (listOf(element = instigator) + invitees).distinctBy { challenger -> challenger.userId }
-        val participantUserIds = participants.map { challenger -> challenger.userId }
-        val claimedUserIds = mutableListOf<String>()
+        val challengeId =
+            challengesRef.push().key
+                ?: return SendChallengeResult.Failure(errorMessage = SEND_RESULT_FAILURE_MESSAGE)
 
-        try {
-            participants.forEach { participant ->
-                val claimed = tryClaimTraveler(userId = participant.userId)
+        val (claimedChallengers, unclaimedChallengers) =
+            claimChallengers(challengers = (listOf(instigator) + invitees))
 
-                if (!claimed) {
-                    releaseClaims(userIds = claimedUserIds)
-                    return SendChallengeResult.TravelerUnavailable(participant.userId)
-                }
+        if (claimedChallengers.size < MINIMUM_CHALLENGERS) {
+            releaseClaims(userIds = claimedChallengers.map { it.challenger.userId })
+            return SendChallengeResult.NotEnoughChallengersAvailable(
+                unavailableChallengers = unclaimedChallengers.map { it.challenger }
+            )
+        }
 
-                claimedUserIds += participant.userId
-            }
+        val challengeEntity =
+            ChallengeEntity(
+                challengeId = challengeId,
+                challengerEntitiesMap =
+                    claimedChallengers.associate { result ->
+                        val challenger = result.challenger
+                        challenger.userId to challenger.toEntity()
+                    },
+            )
 
-            val challenge =
-                ChallengeEntity(
-                    challengeId = challengeId,
-                    challengers =
-                        participants.associate { challenger ->
-                            challenger.userId to challenger.toEntity()
-                        },
-                )
-
-            val updates =
-                buildMap<String, Any?> {
-                    put(key = "$CHALLENGES_PATH/$challengeId", value = challenge)
-
-                    participants.forEach { participant ->
-                        put(
-                            key = "$CHALLENGE_MAILBOXES_PATH/${participant.userId}",
-                            value = challengeId,
-                        )
+        return try {
+            root
+                .updateChildren(
+                    buildMap {
+                        put(key = challengeId.toChallengesPath(), value = challengeEntity)
+                        claimedChallengers.forEach {
+                            put(
+                                key = it.challenger.userId.toChallengeMailBoxesPath(),
+                                value = challengeId,
+                            )
+                        }
                     }
-                }
+                )
+                .await()
 
-            root.updateChildren(updates).await()
-
-            return SendChallengeResult.Success(challengeId)
-        } catch (throwable: Throwable) {
-            clearChallengeData(challengeId = challengeId, participantUserIds = participantUserIds)
-            releaseClaims(userIds = claimedUserIds)
-            throw throwable
+            SendChallengeResult.Success(challengeId = challengeId)
+        } catch (_: Exception) {
+            releaseClaims(userIds = claimedChallengers.map { it.challenger.userId })
+            SendChallengeResult.Failure(errorMessage = SEND_RESULT_FAILURE_MESSAGE)
         }
     }
+
+    private suspend fun claimChallengers(challengers: List<Challenger>) =
+        withContext(context = Dispatchers.IO) {
+            coroutineScope {
+                    challengers
+                        .map { challenger ->
+                            async {
+                                ClaimChallengerResult(
+                                    isClaimed = tryClaimTraveler(userId = challenger.userId),
+                                    challenger = challenger,
+                                )
+                            }
+                        }
+                        .awaitAll()
+                }
+                .partition { it.isClaimed }
+        }
 
     override suspend fun updateChallengerStatus(
         challengeId: String,
@@ -187,9 +161,9 @@ class AndroidTavernRepository : TavernRepository {
     ) {
         challengesRef
             .child(challengeId)
-            .child("challengers")
+            .child(ChallengeEntity.challengerEntitiesMapName)
             .child(userId)
-            .child("status")
+            .child(ChallengerEntity.statusName)
             .setValue(status)
             .await()
 
@@ -213,11 +187,11 @@ class AndroidTavernRepository : TavernRepository {
         val challengeEntity =
             challengesRef.child(challengeId).get().await().getValue<ChallengeEntity>() ?: return
 
-        val challengers = challengeEntity.challengers
-        val participantUserIds = challengers.keys.toList()
+        val challengerEntitiesMap = challengeEntity.challengerEntitiesMap
+        val participantUserIds = challengerEntitiesMap.keys.toList()
 
         val nonDeclinedStatuses =
-            challengers.values
+            challengerEntitiesMap.values
                 .map { challengerEntity -> challengerEntity.status }
                 .filterNot { status -> status == ChallengerStatus.Declined }
 
@@ -245,8 +219,8 @@ class AndroidTavernRepository : TavernRepository {
         }
     }
 
-    private suspend fun tryClaimTraveler(userId: String): Boolean {
-        return travelersRef.child(userId).runTransactionAwait { currentData ->
+    private suspend fun tryClaimTraveler(userId: String): Boolean =
+        travelersReference.child(userId).runTransactionAwait { currentData ->
             val traveler =
                 currentData.getValue<TravelerEntity>()
                     ?: return@runTransactionAwait Transaction.abort()
@@ -259,12 +233,11 @@ class AndroidTavernRepository : TavernRepository {
 
             Transaction.success(currentData)
         }
-    }
 
     override suspend fun setTravelerAvailableIfPresent(userId: String) {
-        travelersRef.child(userId).runTransactionAwait { currentData ->
+        travelersReference.child(userId).runTransactionAwait { currentData ->
             val traveler =
-                currentData.getValue(TravelerEntity::class.java)
+                currentData.getValue<TravelerEntity>()
                     ?: return@runTransactionAwait Transaction.success(currentData)
 
             currentData.value = traveler.copy(tavernStatus = TavernStatus.Available)
@@ -280,39 +253,23 @@ class AndroidTavernRepository : TavernRepository {
     private suspend fun clearChallengeData(challengeId: String, participantUserIds: List<String>) {
         val updates =
             buildMap<String, Any?> {
-                put(key = "$CHALLENGES_PATH/$challengeId", value = null)
+                put(key = challengeId.toChallengesPath(), value = null)
 
                 participantUserIds.forEach { userId ->
-                    put(key = "$CHALLENGE_MAILBOXES_PATH/$userId", value = null)
+                    put(key = userId.toChallengeMailBoxesPath(), value = null)
                 }
             }
 
         root.updateChildren(updates).await()
     }
 
-    private suspend fun DatabaseReference.runTransactionAwait(
-        block: (MutableData) -> Transaction.Result
-    ): Boolean = suspendCancellableCoroutine { continuation ->
-        runTransaction(
-            object : Transaction.Handler {
-                override fun doTransaction(currentData: MutableData): Transaction.Result =
-                    block(currentData)
-
-                override fun onComplete(
-                    error: DatabaseError?,
-                    committed: Boolean,
-                    currentData: DataSnapshot?,
-                ) {
-                    when {
-                        error != null -> continuation.resumeWithException(error.toException())
-                        else -> continuation.resume(value = committed)
-                    }
-                }
-            }
-        )
-    }
-
     private companion object {
         private const val MINIMUM_CHALLENGERS = 2
+        private const val CONNECTED_REFERENCE_PATH = ".info/connected"
+        private const val SEND_RESULT_FAILURE_MESSAGE = "Something went wrong, please try again."
+
+        private fun String.toChallengesPath() = "$CHALLENGES_PATH/$this"
+
+        private fun String.toChallengeMailBoxesPath() = "$CHALLENGE_MAILBOXES_PATH/$this"
     }
 }

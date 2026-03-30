@@ -40,5 +40,8 @@ fun interface Cancelable {
 sealed interface SendChallengeResult {
     data class Success(val challengeId: String) : SendChallengeResult
 
-    data class TravelerUnavailable(val userId: String) : SendChallengeResult
+    data class Failure(val errorMessage: String) : SendChallengeResult
+
+    data class NotEnoughChallengersAvailable(val unavailableChallengers: List<Challenger>) :
+        SendChallengeResult
 }

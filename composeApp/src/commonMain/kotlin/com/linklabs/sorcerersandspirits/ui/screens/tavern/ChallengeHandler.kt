@@ -38,8 +38,17 @@ internal class ChallengeHandler(
                 .onSuccess { result ->
                     when (result) {
                         is SendChallengeResult.Success -> Unit
-                        is SendChallengeResult.TravelerUnavailable -> {
-                            onEvent(TavernEvent.ShowTravelerUnavailable(userId = result.userId))
+                        is SendChallengeResult.NotEnoughChallengersAvailable -> {
+                            onEvent(
+                                TavernEvent.NotEnoughChallengersAvailable(
+                                    challengerStates =
+                                        result.unavailableChallengers.map { it.toChallengerState() }
+                                )
+                            )
+                        }
+
+                        is SendChallengeResult.Failure -> {
+                            // TODO:
                         }
                     }
                 }

@@ -9,8 +9,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ChallengeEntity(
     val challengeId: String = "",
-    val challengers: Map<String, ChallengerEntity> = emptyMap(),
-)
+    val challengerEntitiesMap: Map<String, ChallengerEntity> = emptyMap(),
+) {
+    companion object {
+        val challengerEntitiesMapName = ChallengeEntity::challengerEntitiesMap.name
+    }
+}
 
 @Serializable
 data class ChallengerEntity(
@@ -18,7 +22,11 @@ data class ChallengerEntity(
     val displayName: String = "",
     @get:PropertyName("isInstigator") val isInstigator: Boolean = false,
     val status: ChallengerStatus = ChallengerStatus.Pending,
-)
+) {
+    companion object {
+        val statusName = ChallengerEntity::status.name
+    }
+}
 
 fun Challenger.toEntity(): ChallengerEntity =
     ChallengerEntity(
@@ -39,5 +47,5 @@ fun ChallengerEntity.toDomain(): Challenger =
 fun ChallengeEntity.toDomain(): Challenge =
     Challenge(
         challengeId = challengeId,
-        challengers = challengers.mapValues { (_, challenger) -> challenger.toDomain() },
+        challengers = challengerEntitiesMap.mapValues { (_, challenger) -> challenger.toDomain() },
     )

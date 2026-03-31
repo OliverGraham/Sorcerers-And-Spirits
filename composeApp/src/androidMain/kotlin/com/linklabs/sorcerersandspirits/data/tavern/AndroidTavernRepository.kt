@@ -59,9 +59,9 @@ class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
     override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> =
         getMailboxChallengeIdFlow(userId).distinctUntilChanged().transformLatest { challengeId ->
             if (challengeId.isNullOrBlank()) {
-                emit(null)
+                emit(value = null)
             } else {
-                emitAll(getChallengeFlow(challengeId))
+                emitAll(flow = getChallengeFlow(challengeId = challengeId))
             }
         }
 
@@ -312,8 +312,8 @@ class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
         mailboxChallengesReference.child(userId).getValueFlow<String>()
 
     private fun getChallengeFlow(challengeId: String): Flow<Challenge?> =
-        challengesReference.child(challengeId).getValueFlow<ChallengeEntity>().map {
-            it?.toDomain()
+        challengesReference.child(challengeId).getValueFlow<ChallengeEntity>().map { entity ->
+            entity?.toDomain()
         }
 
     private suspend fun reconcileChallengeState(challengeId: String) {

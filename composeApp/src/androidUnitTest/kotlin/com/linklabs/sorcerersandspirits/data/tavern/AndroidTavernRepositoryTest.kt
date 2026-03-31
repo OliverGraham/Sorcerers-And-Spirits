@@ -9,7 +9,11 @@ import com.google.firebase.database.ValueEventListener
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGES_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TAVERN_TRAVELERS_PATH
+import com.linklabs.sorcerersandspirits.data.model.ChallengeEntity
+import com.linklabs.sorcerersandspirits.data.model.ChallengerEntity
 import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
+import com.linklabs.sorcerersandspirits.data.model.toDomain
+import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import io.mockk.every
@@ -93,4 +97,102 @@ class AndroidTavernRepositoryTest {
             cancelAndIgnoreRemainingEvents()
         }
     }
+
+    @Test
+    fun `getActiveChallengeFlow emits null when userChallengeMailboxReference is empty`() =
+        runTest {
+            val userChallengeMailboxReference = mockk<DatabaseReference>()
+            val mailboxListenerSlot = slot<ValueEventListener>()
+            val emptyMailboxSnapshot = mockk<DataSnapshot>()
+
+            val userId = "user-1"
+            every { mailboxRef.child(userId) } returns userChallengeMailboxReference
+            every {
+                userChallengeMailboxReference.addValueEventListener(capture(mailboxListenerSlot))
+            } answers { firstArg<ValueEventListener>() }
+            every {
+                userChallengeMailboxReference.removeEventListener(any<ValueEventListener>())
+            } returns Unit
+            every { emptyMailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                null
+
+            repository.getActiveChallengeFlow(userId).test {
+                mailboxListenerSlot.captured.onDataChange(emptyMailboxSnapshot)
+
+                assertEquals(null, awaitItem())
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `getActiveChallengeFlow emits a Challenge when userChallengeMailboxReference has a ChallengeId`() =
+        runTest {
+            val challengeId = "challenge-1"
+
+            val userChallengeMailboxReference = mockk<DatabaseReference>()
+            val challengeIdRef = mockk<DatabaseReference>()
+
+            val mailboxListenerSlot = slot<ValueEventListener>()
+            val challengeListenerSlot = slot<ValueEventListener>()
+
+            val mailboxSnapshot = mockk<DataSnapshot>()
+            val challengeSnapshot = mockk<DataSnapshot>()
+
+            val userId = "user-1"
+            val challengeEntity =
+                ChallengeEntity(
+                    challengeId = challengeId,
+                    challengerEntitiesMap =
+                        mapOf(
+                            userId to
+                                ChallengerEntity(
+                                    userId = userId,
+                                    displayName = "Alice",
+                                    isInstigator = true,
+                                    status = ChallengerStatus.Accepted,
+                                ),
+                            "user-2" to
+                                ChallengerEntity(
+                                    userId = "user-2",
+                                    displayName = "Bob",
+                                    isInstigator = false,
+                                    status = ChallengerStatus.Pending,
+                                ),
+                        ),
+                    startTimeMillis = 1000L,
+                    endTimeMillis = 2000L,
+                )
+
+            every { mailboxRef.child(userId) } returns userChallengeMailboxReference
+            every { challengesRef.child(challengeId) } returns challengeIdRef
+
+            every {
+                userChallengeMailboxReference.addValueEventListener(capture(mailboxListenerSlot))
+            } answers { firstArg<ValueEventListener>() }
+            every {
+                userChallengeMailboxReference.removeEventListener(any<ValueEventListener>())
+            } returns Unit
+
+            every { challengeIdRef.addValueEventListener(capture(challengeListenerSlot)) } answers
+                {
+                    firstArg<ValueEventListener>()
+                }
+            every { challengeIdRef.removeEventListener(any<ValueEventListener>()) } returns Unit
+
+            every { mailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                challengeId
+            every {
+                challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>())
+            } returns challengeEntity
+
+            repository.getActiveChallengeFlow(userId = userId).test {
+                mailboxListenerSlot.captured.onDataChange(mailboxSnapshot)
+                challengeListenerSlot.captured.onDataChange(challengeSnapshot)
+
+                assertEquals(expected = challengeEntity.toDomain(), actual = awaitItem())
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 }

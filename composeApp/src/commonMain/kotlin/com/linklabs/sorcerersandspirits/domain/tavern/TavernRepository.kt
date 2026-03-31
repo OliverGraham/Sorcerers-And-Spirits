@@ -9,7 +9,7 @@ interface TavernRepository {
 
     fun getTavernTravelersFlow(): Flow<List<Traveler>>
 
-    suspend fun connectTravelerPresence(userId: String, displayName: String): Cancelable
+    suspend fun connectTravelerPresence(userId: String, displayName: String)
 
     suspend fun sendChallenge(
         instigator: Challenger,
@@ -30,11 +30,6 @@ interface TavernRepository {
  */
 interface TavernRepositoryCopyForIOS {
     fun aTravelerEntersTavern(traveler: Traveler)
-}
-
-// TODO: figure out
-fun interface Cancelable {
-    fun cancel()
 }
 
 sealed interface SendChallengeResult {

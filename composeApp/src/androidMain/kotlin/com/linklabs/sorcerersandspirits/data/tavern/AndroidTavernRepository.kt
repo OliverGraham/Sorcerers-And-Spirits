@@ -14,7 +14,6 @@ import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
 import com.linklabs.sorcerersandspirits.data.model.toDomain
 import com.linklabs.sorcerersandspirits.data.model.toEntity
 import com.linklabs.sorcerersandspirits.data.runTransactionAwait
-import com.linklabs.sorcerersandspirits.domain.tavern.Cancelable
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -39,7 +38,10 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
+class AndroidTavernRepository(
+    database: FirebaseDatabase,
+    private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
+) : TavernRepository {
 
     private val connectedReference = database.getReference(CONNECTED_REFERENCE_PATH)
 
@@ -47,8 +49,6 @@ class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
     private val tavernTravelersReference = root.child(TAVERN_TRAVELERS_PATH)
     private val mailboxChallengesReference = root.child(CHALLENGE_MAILBOXES_PATH)
     private val challengesReference = root.child(CHALLENGES_PATH)
-
-    private val backgroundCoroutineScope = CoroutineScope(context = Dispatchers.IO)
 
     /**
      * Observes the user's mailbox for the current challengeId, then switches to that challenge's
@@ -70,10 +70,10 @@ class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
             travelerEntities.map { it.toDomain() }
         }
 
-    override suspend fun connectTravelerPresence(userId: String, displayName: String): Cancelable {
+    override suspend fun connectTravelerPresence(userId: String, displayName: String) {
         val connectedValueEventListener =
             ConnectedValueEventListener(
-                coroutineScope = backgroundCoroutineScope,
+                coroutineScope = coroutineScope,
                 onConnectToDatabase = {
                     syncTravelerPresenceOnConnect(userId = userId, displayName = displayName)
                 },
@@ -81,9 +81,7 @@ class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
 
         connectedReference.addValueEventListener(connectedValueEventListener)
 
-        return Cancelable {
-            // connectedReference.removeEventListener(connectedValueEventListener)
-        }
+        // TODO: need to remove the listener?
     }
 
     override suspend fun sendChallenge(

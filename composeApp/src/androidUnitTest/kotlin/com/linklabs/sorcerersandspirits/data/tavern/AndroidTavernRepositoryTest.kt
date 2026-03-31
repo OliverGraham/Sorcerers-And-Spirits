@@ -19,6 +19,7 @@ import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
+import io.mockk.verify
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -28,8 +29,7 @@ import kotlinx.coroutines.test.runTest
 
 class AndroidTavernRepositoryTest {
 
-    private val testDispatcher = StandardTestDispatcher()
-    private val testScope = TestScope(testDispatcher)
+    private val testScope = TestScope(context = StandardTestDispatcher())
 
     private val database = mockk<FirebaseDatabase>()
     private val root = mockk<DatabaseReference>()
@@ -49,7 +49,7 @@ class AndroidTavernRepositoryTest {
         every { root.child(CHALLENGE_MAILBOXES_PATH) } returns mailboxRef
         every { root.child(CHALLENGES_PATH) } returns challengesRef
 
-        repository = AndroidTavernRepository(database = database)
+        repository = AndroidTavernRepository(database = database, coroutineScope = testScope)
     }
 
     @Test
@@ -61,7 +61,7 @@ class AndroidTavernRepositoryTest {
 
         val travelerEntity1 =
             TravelerEntity(
-                userId = "1",
+                userId = USER_ID_1,
                 displayName = "Alice",
                 tavernStatus = TavernStatus.Available,
             )
@@ -85,7 +85,7 @@ class AndroidTavernRepositoryTest {
             assertEquals(
                 listOf(
                     Traveler(
-                        userId = "1",
+                        userId = USER_ID_1,
                         displayName = "Alice",
                         tavernStatus = TavernStatus.Available,
                     ),
@@ -105,8 +105,7 @@ class AndroidTavernRepositoryTest {
             val mailboxListenerSlot = slot<ValueEventListener>()
             val emptyMailboxSnapshot = mockk<DataSnapshot>()
 
-            val userId = "user-1"
-            every { mailboxRef.child(userId) } returns userChallengeMailboxReference
+            every { mailboxRef.child(USER_ID_1) } returns userChallengeMailboxReference
             every {
                 userChallengeMailboxReference.addValueEventListener(capture(mailboxListenerSlot))
             } answers { firstArg<ValueEventListener>() }
@@ -116,7 +115,7 @@ class AndroidTavernRepositoryTest {
             every { emptyMailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
                 null
 
-            repository.getActiveChallengeFlow(userId).test {
+            repository.getActiveChallengeFlow(userId = USER_ID_1).test {
                 mailboxListenerSlot.captured.onDataChange(emptyMailboxSnapshot)
 
                 assertEquals(null, awaitItem())
@@ -139,15 +138,14 @@ class AndroidTavernRepositoryTest {
             val mailboxSnapshot = mockk<DataSnapshot>()
             val challengeSnapshot = mockk<DataSnapshot>()
 
-            val userId = "user-1"
             val challengeEntity =
                 ChallengeEntity(
                     challengeId = challengeId,
                     challengerEntitiesMap =
                         mapOf(
-                            userId to
+                            USER_ID_1 to
                                 ChallengerEntity(
-                                    userId = userId,
+                                    userId = USER_ID_1,
                                     displayName = "Alice",
                                     isInstigator = true,
                                     status = ChallengerStatus.Accepted,
@@ -164,7 +162,7 @@ class AndroidTavernRepositoryTest {
                     endTimeMillis = 2000L,
                 )
 
-            every { mailboxRef.child(userId) } returns userChallengeMailboxReference
+            every { mailboxRef.child(USER_ID_1) } returns userChallengeMailboxReference
             every { challengesRef.child(challengeId) } returns challengeIdRef
 
             every {
@@ -186,7 +184,7 @@ class AndroidTavernRepositoryTest {
                 challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>())
             } returns challengeEntity
 
-            repository.getActiveChallengeFlow(userId = userId).test {
+            repository.getActiveChallengeFlow(userId = USER_ID_1).test {
                 mailboxListenerSlot.captured.onDataChange(mailboxSnapshot)
                 challengeListenerSlot.captured.onDataChange(challengeSnapshot)
 
@@ -194,5 +192,63 @@ class AndroidTavernRepositoryTest {
 
                 cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `connectTravelerPresence adds value event listener to connected reference`() = runTest {
+        val listenerSlot = slot<ValueEventListener>()
+
+        every { connectedRef.addValueEventListener(capture(listenerSlot)) } answers
+            {
+                firstArg<ValueEventListener>()
+            }
+
+        repository.connectTravelerPresence(userId = USER_ID_1, displayName = "Alice")
+
+        verify(exactly = 1) { connectedRef.addValueEventListener(any()) }
+    }
+
+    companion object {
+        private const val USER_ID_1 = "user-1"
+    }
+
+    @Test
+    fun `ConnectedValueEventListener calls onConnectToDatabase when connected becomes true`() =
+        runTest {
+            val snapshot = mockk<DataSnapshot>()
+            var wasCalled = false
+
+            every { snapshot.getValue(any<GenericTypeIndicator<Boolean>>()) } returns true
+
+            val listener =
+                ConnectedValueEventListener(
+                    coroutineScope = backgroundScope,
+                    onConnectToDatabase = { wasCalled = true },
+                )
+
+            listener.onDataChange(snapshot)
+            testScheduler.runCurrent()
+
+            assertEquals(expected = true, actual = wasCalled)
+        }
+
+    @Test
+    fun `ConnectedValueEventListener does not call onConnectToDatabase when connected becomes false`() =
+        runTest {
+            val snapshot = mockk<DataSnapshot>()
+            var wasCalled = false
+
+            every { snapshot.getValue(any<GenericTypeIndicator<Boolean>>()) } returns false
+
+            val listener =
+                ConnectedValueEventListener(
+                    coroutineScope = backgroundScope,
+                    onConnectToDatabase = { wasCalled = true },
+                )
+
+            listener.onDataChange(snapshot)
+            testScheduler.runCurrent()
+
+            assertEquals(expected = false, actual = wasCalled)
         }
 }

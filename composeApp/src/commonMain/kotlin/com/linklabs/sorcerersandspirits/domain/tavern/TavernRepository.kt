@@ -4,17 +4,25 @@ import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import kotlinx.coroutines.flow.Flow
 
 interface TavernRepository {
-    fun getTavernFlow(): Flow<Tavern>
 
-    fun aTravelerEntersTavern(traveler: Traveler)
+    fun getActiveChallengeFlow(userId: String): Flow<Challenge?>
 
-    suspend fun sendArenaChallenges(travelers: List<Traveler>)
+    fun getTavernTravelersFlow(): Flow<List<Traveler>>
 
-    fun getArenaChallengeFlow(userId: String): Flow<ArenaChallenge>
+    suspend fun connectTravelerPresence(userId: String, displayName: String)
 
-    fun updateArenaChallengeStatus(arenaChallenge: ArenaChallenge)
+    suspend fun sendChallenge(
+        instigator: Challenger,
+        invitees: List<Challenger>,
+    ): SendChallengeResult
 
-    fun removeArenaChallenge(arenaChallenge: ArenaChallenge)
+    suspend fun updateChallengerStatus(
+        challengeId: String,
+        userId: String,
+        status: ChallengerStatus,
+    )
+
+    suspend fun setTravelerAvailableIfPresent(userId: String)
 }
 
 /**
@@ -22,4 +30,13 @@ interface TavernRepository {
  */
 interface TavernRepositoryCopyForIOS {
     fun aTravelerEntersTavern(traveler: Traveler)
+}
+
+sealed interface SendChallengeResult {
+    data class Success(val challengeId: String) : SendChallengeResult
+
+    data class Failure(val errorMessage: String) : SendChallengeResult
+
+    data class NotEnoughChallengersAvailable(val unavailableChallengers: List<Challenger>) :
+        SendChallengeResult
 }

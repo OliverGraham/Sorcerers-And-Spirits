@@ -1,76 +1,92 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.tavern.ArenaChallenge
-import com.linklabs.sorcerersandspirits.domain.tavern.Tavern
+import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
+import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
+import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import com.linklabs.sorcerersandspirits.domain.traveler.TravelerStatus
 
 @Immutable
 data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
-    val arenaChallenge: ArenaChallengeState? = null,
+    val challenge: ChallengeState? = null,
 )
 
 @Immutable
 data class TravelerState(
-    val id: String,
+    val userId: String,
     val displayName: String,
     val isThisTravelerTheUser: Boolean,
-    val status: TravelerStatus,
+    val tavernStatus: TavernStatus,
 )
 
 @Immutable
-data class ArenaChallengeState(
-    val arenaId: String,
-    val travelerStates: List<TravelerState>,
-    val showArenaChallengeDialog: Boolean = false,
+data class ChallengerState(
+    val userId: String,
+    val displayName: String,
+    val isInstigator: Boolean,
+    val status: ChallengerStatus,
+)
+
+@Immutable
+data class ChallengeState(
+    val challengeId: String,
+    val challengerStates: List<ChallengerState>,
+    val showChallengeDialog: Boolean = false,
     val secondsRemaining: Int? = null,
 ) {
-    val sender =
-        travelerStates.find {
-            it.status is TravelerStatus.InvitedToArena && it.status.isSenderOfInvite
-        }
+    val sender: ChallengerState? =
+        challengerStates.find { challengerState -> challengerState.isInstigator }
 }
 
-internal fun Tavern.toTavernState(userId: String?): TavernState? {
-    val (userTravelers, otherTravelers) = travelers.partition { it.id == userId }
+internal fun List<Traveler>.toTavernState(userId: String?): TavernState? {
+    val (userTravelers, otherTravelers) = partition { traveler -> traveler.userId == userId }
+
     val userTraveler =
         userTravelers.firstOrNull()?.toTravelerState(isThisTravelerTheUser = true) ?: return null
 
     return TavernState(
         userTraveler = userTraveler,
-        otherTravelers = otherTravelers.map { it.toTravelerState(isThisTravelerTheUser = false) },
+        otherTravelers =
+            otherTravelers.map { traveler ->
+                traveler.toTravelerState(isThisTravelerTheUser = false)
+            },
     )
 }
 
-private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean) =
+private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean): TravelerState =
     TravelerState(
-        id = id,
+        userId = userId,
         displayName = displayName,
         isThisTravelerTheUser = isThisTravelerTheUser,
+        tavernStatus = tavernStatus,
+    )
+
+internal fun TravelerState.toChallenger(isInstigator: Boolean, status: ChallengerStatus) =
+    Challenger(
+        userId = userId,
+        displayName = displayName,
+        isInstigator = isInstigator,
         status = status,
     )
 
-internal fun TravelerState.toTraveler(status: TravelerStatus) =
-    Traveler(id = id, displayName = displayName, status = status)
-
-internal fun ArenaChallenge.toArenaChallengeState(
-    userId: String?,
-    showArenaChallengeDialog: Boolean,
+internal fun Challenge.toChallengeState(
+    showChallengeDialog: Boolean,
     secondsRemaining: Int? = null,
 ) =
-    ArenaChallengeState(
-        arenaId = arenaId,
-        travelerStates =
-            travelers.map { it.toTravelerState(isThisTravelerTheUser = it.id == userId) },
-        showArenaChallengeDialog = showArenaChallengeDialog,
+    ChallengeState(
+        challengeId = challengeId,
+        challengerStates = challengers.values.map { challenger -> challenger.toChallengerState() },
+        showChallengeDialog = showChallengeDialog,
         secondsRemaining = secondsRemaining,
     )
 
-internal fun ArenaChallengeState.toArenaChallenge() =
-    ArenaChallenge(
-        arenaId = arenaId,
-        travelers = travelerStates.map { it.toTraveler(status = it.status) },
+internal fun Challenger.toChallengerState() =
+    ChallengerState(
+        userId = userId,
+        displayName = displayName,
+        isInstigator = isInstigator,
+        status = status,
     )

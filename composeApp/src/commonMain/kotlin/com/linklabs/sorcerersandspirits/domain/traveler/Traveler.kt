@@ -1,21 +1,5 @@
 package com.linklabs.sorcerersandspirits.domain.traveler
 
-data class Traveler(val id: String, val displayName: String, val status: TravelerStatus)
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 
-sealed interface TravelerStatus {
-    data object Available : TravelerStatus
-
-    data object InArena : TravelerStatus
-
-    data object Offline : TravelerStatus
-
-    data class InvitedToArena(val isSenderOfInvite: Boolean, val inviteStatus: InviteStatus) :
-        TravelerStatus
-}
-
-enum class InviteStatus {
-    Accepted,
-    Considering,
-    Declined,
-    None,
-}
+data class Traveler(val userId: String, val displayName: String, val tavernStatus: TavernStatus)

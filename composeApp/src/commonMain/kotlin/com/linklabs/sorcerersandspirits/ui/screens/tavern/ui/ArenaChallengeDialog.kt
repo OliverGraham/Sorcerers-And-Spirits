@@ -22,18 +22,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.ArenaChallengeState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 
 // TODO: Update the AI Slop
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun ArenaChallengeDialog(
-    arenaChallenge: ArenaChallengeState,
-    modifier: Modifier = Modifier,
-) {
+internal fun ArenaChallengeDialog(arenaChallenge: ChallengeState, modifier: Modifier = Modifier) {
     val onAcceptChallenge = TavernActionsProvider.current.onAcceptArenaChallenge
     val onDeclineChallenge = TavernActionsProvider.current.onDeclineArenaChallenge
 
@@ -85,10 +82,10 @@ internal fun ArenaChallengeDialog(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     // Combine sender and receivers for the UI
-                    val allTravelerStates = arenaChallenge.travelerStates
+                    val allTravelerStates = arenaChallenge.challengerStates
 
-                    items(allTravelerStates, key = { it.id }) { travelerState ->
-                        ParticipantRow(travelerState)
+                    items(allTravelerStates, key = { it.userId }) { challengerState ->
+                        ParticipantRow(challengerState = challengerState)
                     }
                 }
 
@@ -110,14 +107,14 @@ internal fun ArenaChallengeDialog(
 }
 
 @Composable
-private fun ParticipantRow(participant: TravelerState) {
+private fun ParticipantRow(challengerState: ChallengerState) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(participant.displayName, style = MaterialTheme.typography.bodyLarge)
+        Text(challengerState.displayName, style = MaterialTheme.typography.bodyLarge)
 
-        Text(text = participant.status.toString(), style = MaterialTheme.typography.bodyMedium)
+        Text(text = challengerState.status.toString(), style = MaterialTheme.typography.bodyMedium)
     }
 }

@@ -3,10 +3,11 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInAnonymouslyUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetArenaChallengeFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendArenaChallengesUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateArenaChallengeStatusUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernTravelersFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
@@ -25,9 +26,9 @@ val commonModule = module {
     }
 
     single {
-        GetArenaChallengeFlowUseCase(authenticationRepository = get(), tavernRepository = get())
+        GetActiveChallengeFlowUseCase(authenticationRepository = get(), tavernRepository = get())
     }
-    single { GetTavernFlowUseCase(tavernRepository = get()) }
+    single { GetTavernTravelersFlowUseCase(tavernRepository = get()) }
     single {
         EnterTavernUseCase(
             authenticationRepository = get(),
@@ -36,18 +37,25 @@ val commonModule = module {
         )
     }
     single { GetUserIdUseCase(authenticationRepository = get()) }
-    single { SendArenaChallengesUseCase(tavernRepository = get()) }
-    single { UpdateArenaChallengeStatusUseCase(tavernRepository = get()) }
+    single { SendChallengeUseCase(tavernRepository = get()) }
+    single { UpdateChallengerStatusUseCase(tavernRepository = get()) }
+    single {
+        SetCurrentTravelerAvailableUseCase(
+            authenticationRepository = get(),
+            tavernRepository = get(),
+        )
+    }
 
     factory {
         TavernScreenViewModel(
             enterTavernUseCase = get(),
             updateTravelerDisplayNameUseCase = get(),
-            getArenaChallengeFlowUseCase = get(),
-            getTavernFlowUseCase = get(),
+            getActiveChallengeFlowUseCase = get(),
+            getTavernTravelersFlowUseCase = get(),
             getUserIdUseCase = get(),
-            sendArenaChallengesUseCase = get(),
-            updateArenaChallengeStatusUseCase = get(),
+            sendChallengeUseCase = get(),
+            updateChallengerStatusUseCase = get(),
+            setCurrentTravelerAvailableUseCase = get(),
         )
     }
 }

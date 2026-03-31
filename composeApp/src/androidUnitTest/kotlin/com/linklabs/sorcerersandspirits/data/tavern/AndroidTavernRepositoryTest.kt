@@ -223,6 +223,158 @@ class AndroidTavernRepositoryTest {
         }
 
     @Test
+    fun `getActiveChallengeFlow switches to latest mailbox challenge id`() = runTest {
+        val userChallengeMailboxReference = mockk<DatabaseReference>()
+        val challenge1Ref = mockk<DatabaseReference>()
+        val challenge2Ref = mockk<DatabaseReference>()
+
+        val mailboxListenerSlot = slot<ValueEventListener>()
+        val challenge1ListenerSlot = slot<ValueEventListener>()
+        val challenge2ListenerSlot = slot<ValueEventListener>()
+
+        val mailboxSnapshot1 = mockk<DataSnapshot>()
+        val mailboxSnapshot2 = mockk<DataSnapshot>()
+        val challengeSnapshot1 = mockk<DataSnapshot>()
+        val challengeSnapshot2 = mockk<DataSnapshot>()
+
+        val challengeEntity1 =
+            ChallengeEntity(
+                challengeId = "challenge-1",
+                challengerEntitiesMap =
+                    mapOf(
+                        USER_ID_1 to
+                            ChallengerEntity(
+                                userId = USER_ID_1,
+                                displayName = DISPLAY_NAME_1,
+                                isInstigator = true,
+                                status = ChallengerStatus.Pending,
+                            ),
+                        USER_ID_2 to
+                            ChallengerEntity(
+                                userId = USER_ID_2,
+                                displayName = DISPLAY_NAME_2,
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                    ),
+                startTimeMillis = 1000L,
+                endTimeMillis = 2000L,
+            )
+
+        val challengeEntity2 =
+            ChallengeEntity(
+                challengeId = "challenge-2",
+                challengerEntitiesMap =
+                    mapOf(
+                        USER_ID_1 to
+                            ChallengerEntity(
+                                userId = USER_ID_1,
+                                displayName = DISPLAY_NAME_1,
+                                isInstigator = true,
+                                status = ChallengerStatus.Accepted,
+                            ),
+                        USER_ID_3 to
+                            ChallengerEntity(
+                                userId = USER_ID_3,
+                                displayName = DISPLAY_NAME_3,
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                    ),
+                startTimeMillis = 3000L,
+                endTimeMillis = 4000L,
+            )
+
+        every { mailboxRef.child(USER_ID_1) } returns userChallengeMailboxReference
+        every {
+            userChallengeMailboxReference.addValueEventListener(capture(mailboxListenerSlot))
+        } answers { firstArg<ValueEventListener>() }
+        every {
+            userChallengeMailboxReference.removeEventListener(any<ValueEventListener>())
+        } returns Unit
+
+        every { challengesRef.child("challenge-1") } returns challenge1Ref
+        every { challengesRef.child("challenge-2") } returns challenge2Ref
+
+        every { challenge1Ref.addValueEventListener(capture(challenge1ListenerSlot)) } answers
+            {
+                firstArg<ValueEventListener>()
+            }
+        every { challenge2Ref.addValueEventListener(capture(challenge2ListenerSlot)) } answers
+            {
+                firstArg<ValueEventListener>()
+            }
+        every { challenge1Ref.removeEventListener(any<ValueEventListener>()) } returns Unit
+        every { challenge2Ref.removeEventListener(any<ValueEventListener>()) } returns Unit
+
+        every { mailboxSnapshot1.getValue(any<GenericTypeIndicator<String>>()) } returns
+            "challenge-1"
+        every { mailboxSnapshot2.getValue(any<GenericTypeIndicator<String>>()) } returns
+            "challenge-2"
+
+        every { challengeSnapshot1.getValue(any<GenericTypeIndicator<ChallengeEntity>>()) } returns
+            challengeEntity1
+        every { challengeSnapshot2.getValue(any<GenericTypeIndicator<ChallengeEntity>>()) } returns
+            challengeEntity2
+
+        repository.getActiveChallengeFlow(userId = USER_ID_1).test {
+            mailboxListenerSlot.captured.onDataChange(mailboxSnapshot1)
+            challenge1ListenerSlot.captured.onDataChange(challengeSnapshot1)
+            assertEquals(challengeEntity1.toDomain(), awaitItem())
+
+            mailboxListenerSlot.captured.onDataChange(mailboxSnapshot2)
+            challenge2ListenerSlot.captured.onDataChange(challengeSnapshot2)
+            assertEquals(challengeEntity2.toDomain(), awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+
+        verify(exactly = 1) { challenge1Ref.removeEventListener(any<ValueEventListener>()) }
+    }
+
+    @Test
+    fun `getActiveChallengeFlow emits null when challenge entity becomes null`() = runTest {
+        val userChallengeMailboxReference = mockk<DatabaseReference>()
+        val challengeIdRef = mockk<DatabaseReference>()
+
+        val mailboxListenerSlot = slot<ValueEventListener>()
+        val challengeListenerSlot = slot<ValueEventListener>()
+
+        val mailboxSnapshot = mockk<DataSnapshot>()
+        val challengeSnapshot = mockk<DataSnapshot>()
+
+        every { mailboxRef.child(USER_ID_1) } returns userChallengeMailboxReference
+        every { challengesRef.child(CHALLENGE_ID_1) } returns challengeIdRef
+
+        every {
+            userChallengeMailboxReference.addValueEventListener(capture(mailboxListenerSlot))
+        } answers { firstArg<ValueEventListener>() }
+        every {
+            userChallengeMailboxReference.removeEventListener(any<ValueEventListener>())
+        } returns Unit
+
+        every { challengeIdRef.addValueEventListener(capture(challengeListenerSlot)) } answers
+            {
+                firstArg<ValueEventListener>()
+            }
+        every { challengeIdRef.removeEventListener(any<ValueEventListener>()) } returns Unit
+
+        every { mailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+            CHALLENGE_ID_1
+        every { challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>()) } returns
+            null
+
+        repository.getActiveChallengeFlow(userId = USER_ID_1).test {
+            mailboxListenerSlot.captured.onDataChange(mailboxSnapshot)
+            challengeListenerSlot.captured.onDataChange(challengeSnapshot)
+
+            assertEquals(null, awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
     fun `connectTravelerPresence adds value event listener to connected reference`() = runTest {
         val listenerSlot = slot<ValueEventListener>()
 
@@ -731,6 +883,277 @@ class AndroidTavernRepositoryTest {
                     tavernStatus = TavernStatus.Available,
                 ),
                 setup.getWrittenTravelerEntity(),
+            )
+        }
+
+    @Test
+    fun `setTravelerAvailableIfPresent updates traveler to Available when traveler exists`() =
+        runTest {
+            val userTravelerReference = mockk<DatabaseReference>()
+
+            every { travelersRef.child(USER_ID_1) } returns userTravelerReference
+            every { userTravelerReference.runTransaction(any()) } answers
+                {
+                    val handler = firstArg<Transaction.Handler>()
+                    handler.onComplete(null, true, mockk())
+                }
+
+            repository.setTravelerAvailableIfPresent(userId = USER_ID_1)
+
+            verify(exactly = 1) { travelersRef.child(USER_ID_1) }
+            verify(exactly = 1) { userTravelerReference.runTransaction(any()) }
+        }
+
+    @Test
+    fun `setTravelerAvailableIfPresent is a no-op when traveler does not exist`() = runTest {
+        val userTravelerReference = mockk<DatabaseReference>()
+
+        every { travelersRef.child(USER_ID_1) } returns userTravelerReference
+        every { userTravelerReference.runTransaction(any()) } answers
+            {
+                val handler = firstArg<Transaction.Handler>()
+                handler.onComplete(null, true, mockk())
+            }
+
+        repository.setTravelerAvailableIfPresent(userId = USER_ID_1)
+
+        verify(exactly = 1) { travelersRef.child(USER_ID_1) }
+        verify(exactly = 1) { userTravelerReference.runTransaction(any()) }
+    }
+
+    @Test
+    fun `sendChallenge returns Failure and releases claimed travelers when updateChildren fails`() =
+        runTest {
+            val instigator =
+                Challenger(
+                    userId = USER_ID_1,
+                    displayName = DISPLAY_NAME_1,
+                    isInstigator = true,
+                    status = ChallengerStatus.Accepted,
+                )
+            val invitee =
+                Challenger(
+                    userId = USER_ID_2,
+                    displayName = DISPLAY_NAME_2,
+                    isInstigator = false,
+                    status = ChallengerStatus.Pending,
+                )
+
+            val pushedChallengeRef = mockk<DatabaseReference>()
+            val user1TravelerRef = mockk<DatabaseReference>()
+            val user2TravelerRef = mockk<DatabaseReference>()
+            val user1MailboxRef = mockk<DatabaseReference>()
+            val user2MailboxRef = mockk<DatabaseReference>()
+            val user1MailboxSnapshot = mockk<DataSnapshot>()
+            val user2MailboxSnapshot = mockk<DataSnapshot>()
+
+            every { challengesRef.push() } returns pushedChallengeRef
+            every { pushedChallengeRef.key } returns CHALLENGE_ID_1
+
+            every { travelersRef.child(USER_ID_1) } returns user1TravelerRef
+            every { travelersRef.child(USER_ID_2) } returns user2TravelerRef
+
+            stubRunTransactionCommitted(travelerReference = user1TravelerRef)
+            stubRunTransactionCommitted(travelerReference = user2TravelerRef)
+
+            every { root.updateChildren(any()) } returns
+                Tasks.forException(RuntimeException("boom"))
+
+            every { mailboxRef.child(USER_ID_1) } returns user1MailboxRef
+            every { mailboxRef.child(USER_ID_2) } returns user2MailboxRef
+            every { user1MailboxRef.get() } returns Tasks.forResult(user1MailboxSnapshot)
+            every { user2MailboxRef.get() } returns Tasks.forResult(user2MailboxSnapshot)
+            every { user1MailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                null
+            every { user2MailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                null
+
+            val result =
+                repository.sendChallenge(instigator = instigator, invitees = listOf(invitee))
+
+            assertEquals(
+                SendChallengeResult.Failure(
+                    errorMessage = AndroidTavernRepository.SEND_RESULT_FAILURE_MESSAGE
+                ),
+                result,
+            )
+
+            verify(exactly = 1) { challengesRef.push() }
+            verify(exactly = 2) { user1TravelerRef.runTransaction(any()) }
+            verify(exactly = 2) { user2TravelerRef.runTransaction(any()) }
+            verify(exactly = 1) { root.updateChildren(any()) }
+            verify(exactly = 1) { user1MailboxRef.get() }
+            verify(exactly = 1) { user2MailboxRef.get() }
+        }
+
+    @Test
+    fun `updateChallengerStatus when invitee changes from Pending to Accepted and not everyone is accepted does not clean up challenge`() =
+        runTest {
+            val challengeReference = mockk<DatabaseReference>()
+            val challengersMapReference = mockk<DatabaseReference>()
+            val challengerReference = mockk<DatabaseReference>()
+            val statusReference = mockk<DatabaseReference>()
+
+            var currentStatus = ChallengerStatus.Pending
+
+            every { challengesRef.child(CHALLENGE_ID_1) } returns challengeReference
+            every { challengeReference.child(ChallengeEntity.challengerEntitiesMapName) } returns
+                challengersMapReference
+            every { challengersMapReference.child(USER_ID_2) } returns challengerReference
+            every { challengerReference.child(ChallengerEntity.statusName) } returns statusReference
+
+            every { statusReference.setValue(ChallengerStatus.Accepted) } answers
+                {
+                    currentStatus = ChallengerStatus.Accepted
+                    Tasks.forResult(null)
+                }
+
+            every { challengeReference.get() } returns Tasks.forResult(challengeSnapshot)
+            every {
+                challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>())
+            } answers
+                {
+                    createChallengeEntity(
+                        challengers =
+                            listOf(
+                                Challenger(
+                                    userId = USER_ID_1,
+                                    displayName = DISPLAY_NAME_1,
+                                    isInstigator = true,
+                                    status = ChallengerStatus.Accepted,
+                                ),
+                                Challenger(
+                                    userId = USER_ID_2,
+                                    displayName = DISPLAY_NAME_2,
+                                    isInstigator = false,
+                                    status = currentStatus,
+                                ),
+                                Challenger(
+                                    userId = USER_ID_3,
+                                    displayName = DISPLAY_NAME_3,
+                                    isInstigator = false,
+                                    status = ChallengerStatus.Pending,
+                                ),
+                            )
+                    )
+                }
+
+            repository.updateChallengerStatus(
+                challengeId = CHALLENGE_ID_1,
+                userId = USER_ID_2,
+                status = ChallengerStatus.Accepted,
+            )
+
+            verify(exactly = 1) { statusReference.setValue(ChallengerStatus.Accepted) }
+            verify(exactly = 1) { challengeReference.get() }
+            verify(exactly = 0) { mailboxRef.child(any()) }
+            verify(exactly = 0) { travelersRef.child(any()) }
+            verify(exactly = 0) { root.updateChildren(any()) }
+        }
+
+    @Test
+    fun `updateChallengerStatus when invitee declines and fewer than minimum challengers remain cleans up and releases travelers`() =
+        runTest {
+            val challengeReference = mockk<DatabaseReference>()
+            val challengersMapReference = mockk<DatabaseReference>()
+            val challengerReference = mockk<DatabaseReference>()
+            val statusReference = mockk<DatabaseReference>()
+
+            val user1MailboxRef = mockk<DatabaseReference>()
+            val user2MailboxRef = mockk<DatabaseReference>()
+            val user1MailboxSnapshot = mockk<DataSnapshot>()
+            val user2MailboxSnapshot = mockk<DataSnapshot>()
+
+            val user1TravelerRef = mockk<DatabaseReference>()
+            val user2TravelerRef = mockk<DatabaseReference>()
+
+            val updatesSlot = slot<Map<String, Any?>>()
+
+            var currentChallengeEntity =
+                createChallengeEntity(
+                    challengers =
+                        listOf(
+                            Challenger(
+                                userId = USER_ID_1,
+                                displayName = DISPLAY_NAME_1,
+                                isInstigator = true,
+                                status = ChallengerStatus.Accepted,
+                            ),
+                            Challenger(
+                                userId = USER_ID_2,
+                                displayName = DISPLAY_NAME_2,
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                        )
+                )
+
+            every { challengesRef.child(CHALLENGE_ID_1) } returns challengeReference
+            every { challengeReference.child(ChallengeEntity.challengerEntitiesMapName) } returns
+                challengersMapReference
+            every { challengersMapReference.child(USER_ID_2) } returns challengerReference
+            every { challengerReference.child(ChallengerEntity.statusName) } returns statusReference
+
+            every { statusReference.setValue(ChallengerStatus.Declined) } answers
+                {
+                    currentChallengeEntity =
+                        currentChallengeEntity.copy(
+                            challengerEntitiesMap =
+                                currentChallengeEntity.challengerEntitiesMap.toMutableMap().apply {
+                                    this[USER_ID_2] =
+                                        checkNotNull(this[USER_ID_2])
+                                            .copy(status = ChallengerStatus.Declined)
+                                }
+                        )
+                    Tasks.forResult(null)
+                }
+
+            every { mailboxRef.child(USER_ID_1) } returns user1MailboxRef
+            every { mailboxRef.child(USER_ID_2) } returns user2MailboxRef
+
+            every { user1MailboxRef.get() } returns Tasks.forResult(user1MailboxSnapshot)
+            every { user2MailboxRef.removeValue() } returns Tasks.forResult(null)
+            every { user2MailboxRef.get() } returns Tasks.forResult(user2MailboxSnapshot)
+
+            every { user1MailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                CHALLENGE_ID_1
+            every { user2MailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                null
+
+            every { travelersRef.child(USER_ID_1) } returns user1TravelerRef
+            every { travelersRef.child(USER_ID_2) } returns user2TravelerRef
+            stubRunTransactionCommitted(travelerReference = user1TravelerRef)
+            stubRunTransactionCommitted(travelerReference = user2TravelerRef)
+
+            every { challengeReference.get() } returns Tasks.forResult(challengeSnapshot)
+            every {
+                challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>())
+            } answers { currentChallengeEntity }
+
+            every { root.updateChildren(capture(updatesSlot)) } returns Tasks.forResult(null)
+
+            repository.updateChallengerStatus(
+                challengeId = CHALLENGE_ID_1,
+                userId = USER_ID_2,
+                status = ChallengerStatus.Declined,
+            )
+
+            verify(exactly = 1) { statusReference.setValue(ChallengerStatus.Declined) }
+            verify(exactly = 1) { user2MailboxRef.removeValue() }
+            verify(exactly = 1) { challengeReference.get() }
+            verify(exactly = 1) { root.updateChildren(any()) }
+            verify(exactly = 1) { user1MailboxRef.get() }
+            verify(exactly = 2) { user2MailboxRef.get() }
+            verify(exactly = 1) { user1TravelerRef.runTransaction(any()) }
+            verify(exactly = 2) { user2TravelerRef.runTransaction(any()) }
+
+            assertEquals(
+                mapOf(
+                    CHALLENGE_ID_1.toChallengesPath() to null,
+                    USER_ID_1.toChallengeMailBoxesPath() to null,
+                    USER_ID_2.toChallengeMailBoxesPath() to null,
+                ),
+                updatesSlot.captured,
             )
         }
 

@@ -113,7 +113,7 @@ class AndroidTavernRepository(
 
         return try {
             applyUpdates {
-                putChallenge(challengeEntity)
+                putChallenge(challengeEntity = challengeEntity)
                 setMailboxes(
                     userIds = claimedChallengers.map { it.challenger.userId },
                     challengeId = challengeId,
@@ -414,8 +414,8 @@ class AndroidTavernRepository(
 
 // TODO: Move to separate file
 
-private fun MutableMap<String, Any?>.putChallenge(challenge: ChallengeEntity) {
-    this[challenge.challengeId.toChallengesPath()] = challenge
+private fun MutableMap<String, Any?>.putChallenge(challengeEntity: ChallengeEntity) {
+    this[challengeEntity.challengeId.toChallengesPath()] = challengeEntity
 }
 
 private fun MutableMap<String, Any?>.removeChallenge(challengeId: String) {

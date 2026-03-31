@@ -489,6 +489,149 @@ class AndroidTavernRepositoryTest {
         verify(exactly = 0) { root.updateChildren(any()) }
     }
 
+    @Test
+    fun `sendChallenge returns NotEnoughChallengersAvailable when only one challenger is claimed`() =
+        runTest {
+            val instigator =
+                Challenger(
+                    userId = USER_ID_1,
+                    displayName = DISPLAY_NAME_1,
+                    isInstigator = true,
+                    status = ChallengerStatus.Accepted,
+                )
+            val invitee =
+                Challenger(
+                    userId = USER_ID_2,
+                    displayName = DISPLAY_NAME_2,
+                    isInstigator = false,
+                    status = ChallengerStatus.Pending,
+                )
+
+            val pushedChallengeRef = mockk<DatabaseReference>()
+            val user1TravelerRef = mockk<DatabaseReference>()
+            val user2TravelerRef = mockk<DatabaseReference>()
+            val user1MailboxRef = mockk<DatabaseReference>()
+            val user1MailboxSnapshot = mockk<DataSnapshot>()
+
+            every { challengesRef.push() } returns pushedChallengeRef
+            every { pushedChallengeRef.key } returns CHALLENGE_ID_1
+
+            every { travelersRef.child(USER_ID_1) } returns user1TravelerRef
+            every { travelersRef.child(USER_ID_2) } returns user2TravelerRef
+
+            stubRunTransactionCommitted(travelerReference = user1TravelerRef)
+            stubRunTransactionAborted(travelerReference = user2TravelerRef)
+
+            every { mailboxRef.child(USER_ID_1) } returns user1MailboxRef
+            every { user1MailboxRef.get() } returns Tasks.forResult(user1MailboxSnapshot)
+            every { user1MailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
+                null
+
+            val result =
+                repository.sendChallenge(instigator = instigator, invitees = listOf(invitee))
+
+            assertEquals(
+                expected =
+                    SendChallengeResult.NotEnoughChallengersAvailable(
+                        unavailableChallengers = listOf(invitee)
+                    ),
+                actual = result,
+            )
+
+            verify(exactly = 1) { challengesRef.push() }
+            verify(exactly = 2) { user1TravelerRef.runTransaction(any()) }
+            verify(exactly = 1) { user2TravelerRef.runTransaction(any()) }
+            verify(exactly = 1) { user1MailboxRef.get() }
+            verify(exactly = 0) { root.updateChildren(any()) }
+        }
+
+    @Test
+    fun `sendChallenge returns Success when exactly two challengers are claimed`() = runTest {
+        val instigator =
+            Challenger(
+                userId = USER_ID_1,
+                displayName = DISPLAY_NAME_1,
+                isInstigator = true,
+                status = ChallengerStatus.Accepted,
+            )
+        val invitee =
+            Challenger(
+                userId = USER_ID_2,
+                displayName = DISPLAY_NAME_2,
+                isInstigator = false,
+                status = ChallengerStatus.Pending,
+            )
+
+        val pushedChallengeRef = mockk<DatabaseReference>()
+        val user1TravelerRef = mockk<DatabaseReference>()
+        val user2TravelerRef = mockk<DatabaseReference>()
+        val updatesSlot = slot<Map<String, Any?>>()
+
+        every { challengesRef.push() } returns pushedChallengeRef
+        every { pushedChallengeRef.key } returns CHALLENGE_ID_1
+
+        every { travelersRef.child(USER_ID_1) } returns user1TravelerRef
+        every { travelersRef.child(USER_ID_2) } returns user2TravelerRef
+
+        stubRunTransactionCommitted(travelerReference = user1TravelerRef)
+        stubRunTransactionCommitted(travelerReference = user2TravelerRef)
+
+        every { root.updateChildren(capture(updatesSlot)) } returns Tasks.forResult(null)
+
+        val result = repository.sendChallenge(instigator = instigator, invitees = listOf(invitee))
+
+        assertEquals(SendChallengeResult.Success(challengeId = CHALLENGE_ID_1), result)
+
+        verify(exactly = 1) { challengesRef.push() }
+        verify(exactly = 1) { user1TravelerRef.runTransaction(any()) }
+        verify(exactly = 1) { user2TravelerRef.runTransaction(any()) }
+        verify(exactly = 1) { root.updateChildren(any()) }
+        verify(exactly = 0) { mailboxRef.child(any()) }
+
+        val updates = updatesSlot.captured
+        assertEquals(CHALLENGE_ID_1, updates[USER_ID_1.toChallengeMailBoxesPath()])
+        assertEquals(CHALLENGE_ID_1, updates[USER_ID_2.toChallengeMailBoxesPath()])
+
+        val challengeEntity = updates[CHALLENGE_ID_1.toChallengesPath()] as ChallengeEntity
+        assertEquals(CHALLENGE_ID_1, challengeEntity.challengeId)
+        assertEquals(
+            mapOf(
+                USER_ID_1 to
+                    ChallengerEntity(
+                        userId = USER_ID_1,
+                        displayName = DISPLAY_NAME_1,
+                        isInstigator = true,
+                        status = ChallengerStatus.Pending,
+                    ),
+                USER_ID_2 to
+                    ChallengerEntity(
+                        userId = USER_ID_2,
+                        displayName = DISPLAY_NAME_2,
+                        isInstigator = false,
+                        status = ChallengerStatus.Pending,
+                    ),
+            ),
+            challengeEntity.challengerEntitiesMap,
+        )
+        assertEquals(true, challengeEntity.endTimeMillis!! > challengeEntity.startTimeMillis!!)
+    }
+
+    private fun stubRunTransactionCommitted(travelerReference: DatabaseReference) {
+        every { travelerReference.runTransaction(any()) } answers
+            {
+                val handler = firstArg<Transaction.Handler>()
+                handler.onComplete(null, true, mockk())
+            }
+    }
+
+    private fun stubRunTransactionAborted(travelerReference: DatabaseReference) {
+        every { travelerReference.runTransaction(any()) } answers
+            {
+                val handler = firstArg<Transaction.Handler>()
+                handler.onComplete(null, false, mockk())
+            }
+    }
+
     private fun setUpConnectTravelerPresenceCommon(
         mailboxChallengeId: String?
     ): () -> TravelerEntity? {

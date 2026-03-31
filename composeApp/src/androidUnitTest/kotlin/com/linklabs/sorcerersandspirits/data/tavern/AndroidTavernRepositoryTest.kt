@@ -23,6 +23,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
+import io.mockk.CapturingSlot
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -608,6 +609,117 @@ class AndroidTavernRepositoryTest {
         assertTrue(actual = challengeEntity.endTimeMillis > challengeEntity.startTimeMillis)
     }
 
+    @Test
+    fun `updateChallengerStatus when invitee changes from Pending to Accepted and all challengers are then accepted removes challenge references`() =
+        runTest {
+            val updatesSlot = slot<Map<String, Any?>>()
+
+            val setup =
+                setUpUpdateChallengerStatusAcceptanceTransitionTest(
+                    userId = USER_ID_2,
+                    otherChallengers =
+                        listOf(
+                            Challenger(
+                                userId = USER_ID_1,
+                                displayName = DISPLAY_NAME_1,
+                                isInstigator = true,
+                                status = ChallengerStatus.Accepted,
+                            )
+                        ),
+                    updatesSlot = updatesSlot,
+                )
+
+            repository.updateChallengerStatus(
+                challengeId = CHALLENGE_ID_1,
+                userId = USER_ID_2,
+                status = ChallengerStatus.Accepted,
+            )
+
+            verify(exactly = 1) { setup.statusReference.setValue(ChallengerStatus.Accepted) }
+            verify(exactly = 1) { setup.challengeReference.get() }
+            verify(exactly = 0) { setup.userMailboxReference.removeValue() }
+            verify(exactly = 0) { travelersRef.child(any()) }
+            verify(exactly = 1) { root.updateChildren(any()) }
+
+            assertEquals(
+                mapOf(
+                    CHALLENGE_ID_1.toChallengesPath() to null,
+                    USER_ID_1.toChallengeMailBoxesPath() to null,
+                    USER_ID_2.toChallengeMailBoxesPath() to null,
+                ),
+                updatesSlot.captured,
+            )
+        }
+
+    private fun setUpUpdateChallengerStatusAcceptanceTransitionTest(
+        challengeId: String = CHALLENGE_ID_1,
+        userId: String,
+        otherChallengers: List<Challenger>,
+        updatesSlot: CapturingSlot<Map<String, Any?>>? = null,
+    ): UpdateChallengerStatusTestSetup {
+        val challengeReference = mockk<DatabaseReference>()
+        val challengersMapReference = mockk<DatabaseReference>()
+        val challengerReference = mockk<DatabaseReference>()
+        val statusReference = mockk<DatabaseReference>()
+        val userMailboxReference = mockk<DatabaseReference>()
+
+        var currentStatus = ChallengerStatus.Pending
+
+        every { challengesRef.child(challengeId) } returns challengeReference
+        every { challengeReference.child(ChallengeEntity.challengerEntitiesMapName) } returns
+            challengersMapReference
+        every { challengersMapReference.child(userId) } returns challengerReference
+        every { challengerReference.child(ChallengerEntity.statusName) } returns statusReference
+
+        every { statusReference.setValue(ChallengerStatus.Accepted) } answers
+            {
+                currentStatus = ChallengerStatus.Accepted
+                Tasks.forResult(null)
+            }
+
+        every { mailboxRef.child(userId) } returns userMailboxReference
+
+        every { challengeReference.get() } returns Tasks.forResult(challengeSnapshot)
+        every { challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>()) } answers
+            {
+                createChallengeEntity(
+                    challengeId = challengeId,
+                    challengers =
+                        otherChallengers +
+                            Challenger(
+                                userId = userId,
+                                displayName = DISPLAY_NAME_2,
+                                isInstigator = false,
+                                status = currentStatus,
+                            ),
+                )
+            }
+
+        if (updatesSlot != null) {
+            every { root.updateChildren(capture(updatesSlot)) } returns Tasks.forResult(null)
+        }
+
+        return UpdateChallengerStatusTestSetup(
+            challengeReference = challengeReference,
+            statusReference = statusReference,
+            userMailboxReference = userMailboxReference,
+        )
+    }
+
+    private fun createChallengeEntity(
+        challengeId: String = CHALLENGE_ID_1,
+        challengers: List<Challenger>,
+        startTimeMillis: Long = 1000L,
+        endTimeMillis: Long = Long.MAX_VALUE,
+    ): ChallengeEntity =
+        ChallengeEntity(
+            challengeId = challengeId,
+            challengerEntitiesMap =
+                challengers.associate { challenger -> challenger.userId to challenger.toEntity() },
+            startTimeMillis = startTimeMillis,
+            endTimeMillis = endTimeMillis,
+        )
+
     private fun stubRunTransactionCommitted(travelerReference: DatabaseReference) {
         every { travelerReference.runTransaction(any()) } answers
             {
@@ -675,6 +787,12 @@ class AndroidTavernRepositoryTest {
 
         return { writtenTravelerEntity }
     }
+
+    private data class UpdateChallengerStatusTestSetup(
+        val challengeReference: DatabaseReference,
+        val statusReference: DatabaseReference,
+        val userMailboxReference: DatabaseReference,
+    )
 
     companion object {
         private const val USER_ID_1 = "user-1"

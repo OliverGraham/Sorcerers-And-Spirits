@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.data.model.ChallengeEntity
 import com.linklabs.sorcerersandspirits.data.model.ChallengerEntity
 import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
 import com.linklabs.sorcerersandspirits.data.model.toDomain
+import com.linklabs.sorcerersandspirits.data.model.toEntity
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
@@ -29,6 +30,8 @@ import io.mockk.verify
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -593,27 +596,16 @@ class AndroidTavernRepositoryTest {
         assertEquals(CHALLENGE_ID_1, updates[USER_ID_2.toChallengeMailBoxesPath()])
 
         val challengeEntity = updates[CHALLENGE_ID_1.toChallengesPath()] as ChallengeEntity
+
         assertEquals(CHALLENGE_ID_1, challengeEntity.challengeId)
         assertEquals(
-            mapOf(
-                USER_ID_1 to
-                    ChallengerEntity(
-                        userId = USER_ID_1,
-                        displayName = DISPLAY_NAME_1,
-                        isInstigator = true,
-                        status = ChallengerStatus.Pending,
-                    ),
-                USER_ID_2 to
-                    ChallengerEntity(
-                        userId = USER_ID_2,
-                        displayName = DISPLAY_NAME_2,
-                        isInstigator = false,
-                        status = ChallengerStatus.Pending,
-                    ),
-            ),
+            mapOf(USER_ID_1 to instigator.toEntity(), USER_ID_2 to invitee.toEntity()),
             challengeEntity.challengerEntitiesMap,
         )
-        assertEquals(true, challengeEntity.endTimeMillis!! > challengeEntity.startTimeMillis!!)
+
+        assertNotNull(actual = challengeEntity.endTimeMillis)
+        assertNotNull(actual = challengeEntity.startTimeMillis)
+        assertTrue(actual = challengeEntity.endTimeMillis > challengeEntity.startTimeMillis)
     }
 
     private fun stubRunTransactionCommitted(travelerReference: DatabaseReference) {

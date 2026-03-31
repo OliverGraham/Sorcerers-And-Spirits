@@ -41,6 +41,12 @@ kotlin {
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)
         }
+        androidUnitTest.dependencies {
+            implementation(dependencyNotation = libs.kotlin.test)
+            implementation(dependencyNotation = libs.kotlinx.coroutines.test)
+            implementation(dependencyNotation = libs.mockk)
+            implementation(dependencyNotation = libs.turbine)
+        }
         commonMain.dependencies {
             implementation(dependencyNotation = compose.runtime)
             implementation(dependencyNotation = compose.foundation)

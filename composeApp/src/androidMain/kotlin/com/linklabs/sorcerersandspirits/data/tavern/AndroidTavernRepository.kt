@@ -39,9 +39,7 @@ import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
 
-class AndroidTavernRepository : TavernRepository {
-
-    private val database = FirebaseDatabase.getInstance()
+class AndroidTavernRepository(database: FirebaseDatabase) : TavernRepository {
 
     private val connectedReference = database.getReference(CONNECTED_REFERENCE_PATH)
 
@@ -414,9 +412,9 @@ class AndroidTavernRepository : TavernRepository {
         CancelInsufficientPlayers,
     }
 
-    private companion object {
+    companion object {
+        const val CONNECTED_REFERENCE_PATH = ".info/connected"
         private const val MINIMUM_CHALLENGERS = 2
-        private const val CONNECTED_REFERENCE_PATH = ".info/connected"
         private const val SEND_RESULT_FAILURE_MESSAGE = "Something went wrong, please try again."
     }
 }

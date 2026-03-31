@@ -17,7 +17,9 @@ import com.linklabs.sorcerersandspirits.data.model.ChallengeEntity
 import com.linklabs.sorcerersandspirits.data.model.ChallengerEntity
 import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
 import com.linklabs.sorcerersandspirits.data.model.toDomain
+import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
+import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import io.mockk.every
@@ -450,6 +452,42 @@ class AndroidTavernRepositoryTest {
             verify(exactly = 1) { travelerReference.runTransaction(any()) }
             verify(exactly = 0) { root.updateChildren(any()) }
         }
+
+    @Test
+    fun `sendChallenge returns Failure when pushed challenge key is null`() = runTest {
+        val instigator =
+            Challenger(
+                userId = USER_ID_1,
+                displayName = DISPLAY_NAME_1,
+                isInstigator = true,
+                status = ChallengerStatus.Pending,
+            )
+        val invitee =
+            Challenger(
+                userId = USER_ID_2,
+                displayName = DISPLAY_NAME_2,
+                isInstigator = false,
+                status = ChallengerStatus.Pending,
+            )
+
+        val pushedChallengeRef = mockk<DatabaseReference>()
+
+        every { challengesRef.push() } returns pushedChallengeRef
+        every { pushedChallengeRef.key } returns null
+
+        val result = repository.sendChallenge(instigator = instigator, invitees = listOf(invitee))
+
+        assertEquals(
+            SendChallengeResult.Failure(
+                errorMessage = AndroidTavernRepository.SEND_RESULT_FAILURE_MESSAGE
+            ),
+            result,
+        )
+
+        verify(exactly = 1) { challengesRef.push() }
+        verify(exactly = 0) { travelersRef.child(any()) }
+        verify(exactly = 0) { root.updateChildren(any()) }
+    }
 
     private fun setUpConnectTravelerPresenceCommon(
         mailboxChallengeId: String?

@@ -407,8 +407,8 @@ class AndroidTavernRepository(
 
     companion object {
         const val CONNECTED_REFERENCE_PATH = ".info/connected"
-        private const val MINIMUM_CHALLENGERS = 2
-        private const val SEND_RESULT_FAILURE_MESSAGE = "Something went wrong, please try again."
+        const val MINIMUM_CHALLENGERS = 2
+        const val SEND_RESULT_FAILURE_MESSAGE = "Something went wrong, please try again."
     }
 }
 

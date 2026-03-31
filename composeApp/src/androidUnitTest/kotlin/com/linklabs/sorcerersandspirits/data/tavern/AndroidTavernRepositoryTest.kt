@@ -20,9 +20,7 @@ import com.linklabs.sorcerersandspirits.data.model.toDomain
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import io.mockk.Runs
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
@@ -46,14 +44,12 @@ class AndroidTavernRepositoryTest {
     private val travelersRef = mockk<DatabaseReference>()
     private val mailboxRef = mockk<DatabaseReference>()
     private val challengesRef = mockk<DatabaseReference>()
-
     private val travelerReference = mockk<DatabaseReference>()
     private val userChallengeMailboxReference = mockk<DatabaseReference>()
     private val onDisconnect = mockk<OnDisconnect>()
     private val connectedSnapshot = mockk<DataSnapshot>()
     private val mailboxSnapshot = mockk<DataSnapshot>()
     private val connectedListenerSlot = slot<ValueEventListener>()
-    private val transactionHandlerSlot = slot<Transaction.Handler>()
     private val mutableData = mockk<MutableData>()
     private val challengeReference = mockk<DatabaseReference>()
     private val challengeSnapshot = mockk<DataSnapshot>()
@@ -82,11 +78,15 @@ class AndroidTavernRepositoryTest {
         val travelerEntity1 =
             TravelerEntity(
                 userId = USER_ID_1,
-                displayName = "Alice",
+                displayName = DISPLAY_NAME_1,
                 tavernStatus = TavernStatus.Available,
             )
         val travelerEntity2 =
-            TravelerEntity(userId = "2", displayName = "Bob", tavernStatus = TavernStatus.Busy)
+            TravelerEntity(
+                userId = USER_ID_2,
+                displayName = DISPLAY_NAME_2,
+                tavernStatus = TavernStatus.Busy,
+            )
 
         every { travelersRef.addValueEventListener(capture(listenerSlot)) } answers
             {
@@ -106,10 +106,14 @@ class AndroidTavernRepositoryTest {
                 listOf(
                     Traveler(
                         userId = USER_ID_1,
-                        displayName = "Alice",
+                        displayName = DISPLAY_NAME_1,
                         tavernStatus = TavernStatus.Available,
                     ),
-                    Traveler(userId = "2", displayName = "Bob", tavernStatus = TavernStatus.Busy),
+                    Traveler(
+                        userId = USER_ID_2,
+                        displayName = DISPLAY_NAME_2,
+                        tavernStatus = TavernStatus.Busy,
+                    ),
                 ),
                 awaitItem(),
             )
@@ -147,8 +151,6 @@ class AndroidTavernRepositoryTest {
     @Test
     fun `getActiveChallengeFlow emits a Challenge when userChallengeMailboxReference has a ChallengeId`() =
         runTest {
-            val challengeId = "challenge-1"
-
             val userChallengeMailboxReference = mockk<DatabaseReference>()
             val challengeIdRef = mockk<DatabaseReference>()
 
@@ -160,20 +162,20 @@ class AndroidTavernRepositoryTest {
 
             val challengeEntity =
                 ChallengeEntity(
-                    challengeId = challengeId,
+                    challengeId = CHALLENGE_ID_1,
                     challengerEntitiesMap =
                         mapOf(
                             USER_ID_1 to
                                 ChallengerEntity(
                                     userId = USER_ID_1,
-                                    displayName = "Alice",
+                                    displayName = DISPLAY_NAME_1,
                                     isInstigator = true,
                                     status = ChallengerStatus.Accepted,
                                 ),
-                            "user-2" to
+                            USER_ID_2 to
                                 ChallengerEntity(
-                                    userId = "user-2",
-                                    displayName = "Bob",
+                                    userId = USER_ID_2,
+                                    displayName = DISPLAY_NAME_2,
                                     isInstigator = false,
                                     status = ChallengerStatus.Pending,
                                 ),
@@ -183,7 +185,7 @@ class AndroidTavernRepositoryTest {
                 )
 
             every { mailboxRef.child(USER_ID_1) } returns userChallengeMailboxReference
-            every { challengesRef.child(challengeId) } returns challengeIdRef
+            every { challengesRef.child(CHALLENGE_ID_1) } returns challengeIdRef
 
             every {
                 userChallengeMailboxReference.addValueEventListener(capture(mailboxListenerSlot))
@@ -199,7 +201,7 @@ class AndroidTavernRepositoryTest {
             every { challengeIdRef.removeEventListener(any<ValueEventListener>()) } returns Unit
 
             every { mailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
-                challengeId
+                CHALLENGE_ID_1
             every {
                 challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>())
             } returns challengeEntity
@@ -223,7 +225,7 @@ class AndroidTavernRepositoryTest {
                 firstArg<ValueEventListener>()
             }
 
-        repository.connectTravelerPresence(userId = USER_ID_1, displayName = "Alice")
+        repository.connectTravelerPresence(userId = USER_ID_1, displayName = DISPLAY_NAME_1)
 
         verify(exactly = 1) { connectedRef.addValueEventListener(any()) }
     }
@@ -271,13 +273,22 @@ class AndroidTavernRepositoryTest {
     @Test
     fun `connectTravelerPresence sets traveler available when mailbox challenge id is null or blank`() =
         runTest {
-            setUpConnectTravelerPresence(mailboxChallengeId = null)
+            val getWrittenTravelerEntity =
+                setUpConnectTravelerPresenceCommon(mailboxChallengeId = null)
 
             repository.connectTravelerPresence(userId = USER_ID_1, displayName = DISPLAY_NAME_1)
 
             connectedListenerSlot.captured.onDataChange(connectedSnapshot)
             testScope.advanceUntilIdle()
 
+            assertEquals(
+                TravelerEntity(
+                    userId = USER_ID_1,
+                    displayName = DISPLAY_NAME_1,
+                    tavernStatus = TavernStatus.Available,
+                ),
+                getWrittenTravelerEntity(),
+            )
             verify(exactly = 1) { travelerReference.onDisconnect() }
             verify(exactly = 1) { onDisconnect.removeValue() }
             verify(exactly = 1) { userChallengeMailboxReference.get() }
@@ -288,7 +299,8 @@ class AndroidTavernRepositoryTest {
     @Test
     fun `connectTravelerPresence clears mailbox and sets traveler available when challenge entity is null`() =
         runTest {
-            setUpConnectTravelerPresence(mailboxChallengeId = CHALLENGE_ID_1)
+            val getWrittenTravelerEntity =
+                setUpConnectTravelerPresenceCommon(mailboxChallengeId = CHALLENGE_ID_1)
 
             every { challengesRef.child(CHALLENGE_ID_1) } returns challengeReference
             every { challengeReference.get() } returns Tasks.forResult(challengeSnapshot)
@@ -302,6 +314,14 @@ class AndroidTavernRepositoryTest {
             connectedListenerSlot.captured.onDataChange(connectedSnapshot)
             testScope.advanceUntilIdle()
 
+            assertEquals(
+                TravelerEntity(
+                    userId = USER_ID_1,
+                    displayName = DISPLAY_NAME_1,
+                    tavernStatus = TavernStatus.Available,
+                ),
+                getWrittenTravelerEntity(),
+            )
             verify(exactly = 1) { travelerReference.onDisconnect() }
             verify(exactly = 1) { onDisconnect.removeValue() }
             verify(exactly = 1) { userChallengeMailboxReference.get() }
@@ -312,9 +332,10 @@ class AndroidTavernRepositoryTest {
         }
 
     @Test
-    fun `connectTravelerPresence expires challenge and sets traveler available when challenge is expired`() =
+    fun `connectTravelerPresence cleans up expired challenge and sets traveler available`() =
         runTest {
-            setUpConnectTravelerPresence(mailboxChallengeId = CHALLENGE_ID_1)
+            val getWrittenTravelerEntityUser1 =
+                setUpConnectTravelerPresenceCommon(mailboxChallengeId = CHALLENGE_ID_1)
 
             val expiredChallengeEntity =
                 ChallengeEntity(
@@ -340,51 +361,31 @@ class AndroidTavernRepositoryTest {
                     endTimeMillis = 1L,
                 )
 
+            val updatesSlot = slot<Map<String, Any?>>()
+
             every { challengesRef.child(CHALLENGE_ID_1) } returns challengeReference
             every { challengeReference.get() } returns Tasks.forResult(challengeSnapshot)
             every {
                 challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>())
             } returns expiredChallengeEntity
-
-            every { root.updateChildren(any()) } returns Tasks.forResult(null)
-
-            val mailboxUser2Reference = mockk<DatabaseReference>()
-            val mailboxSnapshotUser1 = mockk<DataSnapshot>()
-            val mailboxSnapshotUser2 = mockk<DataSnapshot>()
-            val travelerUser2Reference = mockk<DatabaseReference>()
-            val travelerUser2TransactionHandlerSlot = slot<Transaction.Handler>()
-            val mutableDataUser2 = mockk<MutableData>()
-
-            every { mailboxRef.child(USER_ID_2) } returns mailboxUser2Reference
-            every { mailboxUser2Reference.get() } returns Tasks.forResult(mailboxSnapshotUser2)
-            every { userChallengeMailboxReference.get() } returns
-                Tasks.forResult(mailboxSnapshotUser1)
-            every { mailboxSnapshotUser1.getValue(any<GenericTypeIndicator<String>>()) } returns
-                CHALLENGE_ID_1
-            every { mailboxSnapshotUser2.getValue(any<GenericTypeIndicator<String>>()) } returns
-                CHALLENGE_ID_1
-
-            every { travelersRef.child(USER_ID_2) } returns travelerUser2Reference
-            every { mutableDataUser2.getValue(any<GenericTypeIndicator<TravelerEntity>>()) } returns
-                null
-            every { mutableDataUser2.value = any() } just Runs
-            every {
-                travelerUser2Reference.runTransaction(capture(travelerUser2TransactionHandlerSlot))
-            } answers
-                {
-                    val result =
-                        travelerUser2TransactionHandlerSlot.captured.doTransaction(mutableDataUser2)
-                    travelerUser2TransactionHandlerSlot.captured.onComplete(
-                        null,
-                        result.isSuccess,
-                        mockk(),
-                    )
-                }
+            every { root.updateChildren(capture(updatesSlot)) } returns Tasks.forResult(null)
 
             repository.connectTravelerPresence(userId = USER_ID_1, displayName = DISPLAY_NAME_1)
 
             connectedListenerSlot.captured.onDataChange(connectedSnapshot)
             testScope.advanceUntilIdle()
+
+            assertEquals(USER_ID_1, getWrittenTravelerEntityUser1()?.userId)
+            assertEquals(TavernStatus.Available, getWrittenTravelerEntityUser1()?.tavernStatus)
+
+            assertEquals(
+                mapOf(
+                    CHALLENGE_ID_1.toChallengesPath() to null,
+                    USER_ID_1.toChallengeMailBoxesPath() to null,
+                    USER_ID_2.toChallengeMailBoxesPath() to null,
+                ),
+                updatesSlot.captured,
+            )
 
             verify(exactly = 1) { challengeReference.get() }
             verify(exactly = 1) { root.updateChildren(any()) }
@@ -394,7 +395,8 @@ class AndroidTavernRepositoryTest {
     @Test
     fun `connectTravelerPresence sets traveler busy when challenge exists and is not expired`() =
         runTest {
-            setUpConnectTravelerPresence(mailboxChallengeId = CHALLENGE_ID_1)
+            val getWrittenTravelerEntity =
+                setUpConnectTravelerPresenceCommon(mailboxChallengeId = CHALLENGE_ID_1)
 
             val activeChallengeEntity =
                 ChallengeEntity(
@@ -431,6 +433,14 @@ class AndroidTavernRepositoryTest {
             connectedListenerSlot.captured.onDataChange(connectedSnapshot)
             testScope.advanceUntilIdle()
 
+            assertEquals(
+                TravelerEntity(
+                    userId = USER_ID_1,
+                    displayName = DISPLAY_NAME_1,
+                    tavernStatus = TavernStatus.Busy,
+                ),
+                getWrittenTravelerEntity(),
+            )
             verify(exactly = 1) { travelerReference.onDisconnect() }
             verify(exactly = 1) { onDisconnect.removeValue() }
             verify(exactly = 1) { userChallengeMailboxReference.get() }
@@ -441,7 +451,9 @@ class AndroidTavernRepositoryTest {
             verify(exactly = 0) { root.updateChildren(any()) }
         }
 
-    private fun setUpConnectTravelerPresence(mailboxChallengeId: String?) {
+    private fun setUpConnectTravelerPresenceCommon(
+        mailboxChallengeId: String?
+    ): () -> TravelerEntity? {
         every { travelersRef.child(USER_ID_1) } returns travelerReference
         every { mailboxRef.child(USER_ID_1) } returns userChallengeMailboxReference
 
@@ -458,20 +470,43 @@ class AndroidTavernRepositoryTest {
         every { mailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns
             mailboxChallengeId
 
-        every { mutableData.getValue(any<GenericTypeIndicator<TravelerEntity>>()) } returns null
-        every { mutableData.value = any() } just Runs
+        return stubTravelerTransaction(
+            travelerReference = travelerReference,
+            mutableData = mutableData,
+            currentTravelerEntity =
+                TravelerEntity(
+                    userId = USER_ID_1,
+                    displayName = "Old Name",
+                    tavernStatus = TavernStatus.Busy,
+                ),
+        )
+    }
+
+    private fun stubTravelerTransaction(
+        travelerReference: DatabaseReference,
+        mutableData: MutableData,
+        currentTravelerEntity: TravelerEntity,
+    ): () -> TravelerEntity? {
+        var writtenTravelerEntity: TravelerEntity? = null
+        val transactionHandlerSlot = slot<Transaction.Handler>()
+
+        every { mutableData.getValue(any<GenericTypeIndicator<TravelerEntity>>()) } returns
+            currentTravelerEntity
+        every { mutableData.value = any() } answers { writtenTravelerEntity = firstArg() }
 
         every { travelerReference.runTransaction(capture(transactionHandlerSlot)) } answers
             {
                 val result = transactionHandlerSlot.captured.doTransaction(mutableData)
                 transactionHandlerSlot.captured.onComplete(null, result.isSuccess, mockk())
             }
+
+        return { writtenTravelerEntity }
     }
 
     companion object {
         private const val USER_ID_1 = "user-1"
-        private const val USER_ID_2 = "user-2"
         private const val DISPLAY_NAME_1 = "Alice"
+        private const val USER_ID_2 = "user-2"
         private const val DISPLAY_NAME_2 = "Bob"
         private const val CHALLENGE_ID_1 = "challenge-1"
     }

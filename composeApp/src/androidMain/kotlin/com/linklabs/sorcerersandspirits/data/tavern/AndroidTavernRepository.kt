@@ -321,7 +321,7 @@ class AndroidTavernRepository(
 
         val participantUserIds = challengeEntity.challengerEntitiesMap.keys.toList()
 
-        when (resolveChallengeState(challengeEntity)) {
+        when (resolveChallengeState(challengeEntity = challengeEntity)) {
             ChallengeResolution.None -> Unit
             ChallengeResolution.Complete -> {
                 removeChallengeReferences(
@@ -348,17 +348,12 @@ class AndroidTavernRepository(
                 .map { it.status }
                 .filterNot { it == ChallengerStatus.Declined }
 
-        val hasEveryoneAccepted =
-            nonDeclinedStatuses.isNotEmpty() &&
-                nonDeclinedStatuses.all { it == ChallengerStatus.Accepted }
-
         val doesNotHaveEnoughPlayersLeft = nonDeclinedStatuses.size < MINIMUM_CHALLENGERS
+        if (doesNotHaveEnoughPlayersLeft) return ChallengeResolution.CancelInsufficientPlayers
 
-        return when {
-            hasEveryoneAccepted -> ChallengeResolution.Complete
-            doesNotHaveEnoughPlayersLeft -> ChallengeResolution.CancelInsufficientPlayers
-            else -> ChallengeResolution.None
-        }
+        val hasEveryoneAccepted = nonDeclinedStatuses.all { it == ChallengerStatus.Accepted }
+
+        return if (hasEveryoneAccepted) ChallengeResolution.Complete else ChallengeResolution.None
     }
 
     private suspend fun expireChallenge(challengeId: String, participantUserIds: List<String>) {
@@ -447,6 +442,6 @@ private fun MutableMap<String, Any?>.clearMailboxes(userIds: List<String>) {
 private fun ChallengeEntity.isExpired(): Boolean =
     endTimeMillis?.let { it <= Clock.System.now().toEpochMilliseconds() } == true
 
-private fun String.toChallengesPath(): String = "$CHALLENGES_PATH/$this"
+internal fun String.toChallengesPath(): String = "$CHALLENGES_PATH/$this"
 
-private fun String.toChallengeMailBoxesPath(): String = "$CHALLENGE_MAILBOXES_PATH/$this"
+internal fun String.toChallengeMailBoxesPath(): String = "$CHALLENGE_MAILBOXES_PATH/$this"

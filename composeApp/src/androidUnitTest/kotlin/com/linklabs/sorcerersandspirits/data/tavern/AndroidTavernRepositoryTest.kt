@@ -651,6 +651,156 @@ class AndroidTavernRepositoryTest {
             )
         }
 
+    @Test
+    fun `updateChallengerStatus when invitee changes from Pending to Declined and enough challengers remain does not clean up challenge`() =
+        runTest {
+            // Arrange
+            var currentChallengeEntity =
+                createChallengeEntity(
+                    challengers =
+                        listOf(
+                            Challenger(
+                                userId = USER_ID_1,
+                                displayName = DISPLAY_NAME_1,
+                                isInstigator = true,
+                                status = ChallengerStatus.Accepted,
+                            ),
+                            Challenger(
+                                userId = USER_ID_2,
+                                displayName = DISPLAY_NAME_2,
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                            Challenger(
+                                userId = USER_ID_3,
+                                displayName = DISPLAY_NAME_3,
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                        )
+                )
+
+            val setup =
+                setUpUpdateChallengerStatusDeclineTransitionTest(
+                    userId = USER_ID_2,
+                    currentTravelerEntity =
+                        TravelerEntity(
+                            userId = USER_ID_2,
+                            displayName = DISPLAY_NAME_2,
+                            tavernStatus = TavernStatus.Busy,
+                        ),
+                    onStatusUpdated = { newStatus ->
+                        currentChallengeEntity =
+                            currentChallengeEntity.copy(
+                                challengerEntitiesMap =
+                                    currentChallengeEntity.challengerEntitiesMap
+                                        .toMutableMap()
+                                        .apply {
+                                            this[USER_ID_2] =
+                                                checkNotNull(this[USER_ID_2])
+                                                    .copy(status = newStatus)
+                                        }
+                            )
+                    },
+                    getChallengeEntity = { currentChallengeEntity },
+                )
+
+            // Act
+            repository.updateChallengerStatus(
+                challengeId = CHALLENGE_ID_1,
+                userId = USER_ID_2,
+                status = ChallengerStatus.Declined,
+            )
+
+            // Assert
+            verify(exactly = 1) { setup.statusReference.setValue(ChallengerStatus.Declined) }
+            verify(exactly = 1) { setup.userMailboxReference.removeValue() }
+            verify(exactly = 1) { setup.userMailboxReference.get() }
+            verify(exactly = 1) { setup.userTravelerReference.runTransaction(any()) }
+            verify(exactly = 1) { setup.challengeReference.get() }
+            verify(exactly = 0) { root.updateChildren(any()) }
+
+            assertEquals(
+                ChallengerStatus.Declined,
+                currentChallengeEntity.challengerEntitiesMap.getValue(USER_ID_2).status,
+            )
+            assertEquals(
+                TravelerEntity(
+                    userId = USER_ID_2,
+                    displayName = DISPLAY_NAME_2,
+                    tavernStatus = TavernStatus.Available,
+                ),
+                setup.getWrittenTravelerEntity(),
+            )
+        }
+
+    private data class UpdateChallengerStatusDeclineTestSetup(
+        val challengeReference: DatabaseReference,
+        val statusReference: DatabaseReference,
+        val userMailboxReference: DatabaseReference,
+        val userTravelerReference: DatabaseReference,
+        val getWrittenTravelerEntity: () -> TravelerEntity?,
+    )
+
+    private fun setUpUpdateChallengerStatusDeclineTransitionTest(
+        challengeId: String = CHALLENGE_ID_1,
+        userId: String,
+        currentTravelerEntity: TravelerEntity,
+        onStatusUpdated: (ChallengerStatus) -> Unit,
+        getChallengeEntity: () -> ChallengeEntity,
+    ): UpdateChallengerStatusDeclineTestSetup {
+        val challengeReference = mockk<DatabaseReference>()
+        val challengersMapReference = mockk<DatabaseReference>()
+        val challengerReference = mockk<DatabaseReference>()
+        val statusReference = mockk<DatabaseReference>()
+        val userMailboxReference = mockk<DatabaseReference>()
+        val userTravelerReference = mockk<DatabaseReference>()
+        val mailboxSnapshot = mockk<DataSnapshot>()
+
+        var writtenTravelerEntity: TravelerEntity? = null
+
+        every { challengesRef.child(challengeId) } returns challengeReference
+        every { challengeReference.child(ChallengeEntity.challengerEntitiesMapName) } returns
+            challengersMapReference
+        every { challengersMapReference.child(userId) } returns challengerReference
+        every { challengerReference.child(ChallengerEntity.statusName) } returns statusReference
+
+        every { statusReference.setValue(any<ChallengerStatus>()) } answers
+            {
+                onStatusUpdated(firstArg())
+                Tasks.forResult(null)
+            }
+
+        every { mailboxRef.child(userId) } returns userMailboxReference
+        every { userMailboxReference.removeValue() } returns Tasks.forResult(null)
+        every { userMailboxReference.get() } returns Tasks.forResult(mailboxSnapshot)
+        every { mailboxSnapshot.getValue(any<GenericTypeIndicator<String>>()) } returns null
+
+        every { travelersRef.child(userId) } returns userTravelerReference
+        every { userTravelerReference.runTransaction(any()) } answers
+            {
+                writtenTravelerEntity =
+                    currentTravelerEntity.copy(tavernStatus = TavernStatus.Available)
+
+                val handler = firstArg<Transaction.Handler>()
+                handler.onComplete(null, true, mockk())
+            }
+
+        every { challengeReference.get() } returns Tasks.forResult(challengeSnapshot)
+        every { challengeSnapshot.getValue(any<GenericTypeIndicator<ChallengeEntity>>()) } answers
+            {
+                getChallengeEntity()
+            }
+
+        return UpdateChallengerStatusDeclineTestSetup(
+            challengeReference = challengeReference,
+            statusReference = statusReference,
+            userMailboxReference = userMailboxReference,
+            userTravelerReference = userTravelerReference,
+            getWrittenTravelerEntity = { writtenTravelerEntity },
+        )
+    }
+
     private fun setUpUpdateChallengerStatusAcceptanceTransitionTest(
         challengeId: String = CHALLENGE_ID_1,
         userId: String,
@@ -799,6 +949,8 @@ class AndroidTavernRepositoryTest {
         private const val DISPLAY_NAME_1 = "Alice"
         private const val USER_ID_2 = "user-2"
         private const val DISPLAY_NAME_2 = "Bob"
+        private const val USER_ID_3 = "user-3"
+        private const val DISPLAY_NAME_3 = "Charlie"
         private const val CHALLENGE_ID_1 = "challenge-1"
     }
 }

@@ -24,11 +24,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
-
-@Serializable internal data object TavernScreenRoute
 
 @Composable
 internal fun TavernScreen(
@@ -108,16 +105,11 @@ private fun Flow<TavernEvent>.collectEvents(onNavigateToArena: (String) -> Unit)
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
-                is TavernEvent.NavigateToArena -> {
-                    onNavigateToArena("")
-                }
-
-                is TavernEvent.ShowChallengeSendFailed -> {
+                is TavernEvent.NavigateToArena -> onNavigateToArena(event.arenaId)
+                is TavernEvent.ShowChallengeSendFailed ->
                     println("TAVERN EVENT: ShowChallengeSendFailed")
-                }
-                is TavernEvent.NotEnoughChallengersAvailable -> {
+                is TavernEvent.NotEnoughChallengersAvailable ->
                     println("TAVERN EVENT: Show traveler unavailable")
-                }
             }
         }
     }

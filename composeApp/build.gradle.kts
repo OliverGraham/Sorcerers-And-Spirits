@@ -56,13 +56,13 @@ kotlin {
             implementation(dependencyNotation = compose.components.uiToolingPreview)
             implementation(dependencyNotation = libs.androidx.lifecycle.runtimeCompose)
             implementation(dependencyNotation = libs.androidx.lifecycle.viewmodelCompose)
-            implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel)
+            implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel.navigation3)
+            implementation(dependencyNotation = libs.androidx.navigation3.runtime)
+            implementation(dependencyNotation = libs.androidx.navigation3.ui)
 
             implementation(dependencyNotation = libs.koin.core)
             implementation(dependencyNotation = libs.koin.compose)
             implementation(dependencyNotation = libs.koin.annotations)
-
-            implementation(dependencyNotation = libs.navigation.compose)
         }
         commonTest.dependencies {
             implementation(dependencyNotation = libs.kotlin.test)

@@ -8,54 +8,34 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernTravelers
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
+import com.linklabs.sorcerersandspirits.domain.traveler.GetTravelerUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
+import org.koin.core.module.Module
+import org.koin.core.module.dsl.factoryOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 
 val commonModule = module {
-    single { SignInAnonymouslyUseCase(authenticationRepository = get()) }
-    single {
-        UpdateTravelerDisplayNameUseCase(
-            authenticationRepository = get(),
-            travelerRepository = get(),
-        )
-    }
-    factory {
-        AppViewModel(signInAnonymouslyUseCase = get(), updateTravelerDisplayNameUseCase = get())
-    }
+    initializeUseCases()
+    initializeViewModels()
+}
 
-    single {
-        GetActiveChallengeFlowUseCase(authenticationRepository = get(), tavernRepository = get())
-    }
-    single { GetTavernTravelersFlowUseCase(tavernRepository = get()) }
-    single {
-        EnterTavernUseCase(
-            authenticationRepository = get(),
-            tavernRepository = get(),
-            travelerRepository = get(),
-        )
-    }
-    single { GetUserIdUseCase(authenticationRepository = get()) }
-    single { SendChallengeUseCase(tavernRepository = get()) }
-    single { UpdateChallengerStatusUseCase(tavernRepository = get()) }
-    single {
-        SetCurrentTravelerAvailableUseCase(
-            authenticationRepository = get(),
-            tavernRepository = get(),
-        )
-    }
+private fun Module.initializeUseCases() {
+    singleOf(::EnterTavernUseCase)
+    singleOf(::GetActiveChallengeFlowUseCase)
+    singleOf(::GetTavernTravelersFlowUseCase)
+    singleOf(::GetTravelerUseCase)
+    singleOf(::GetUserIdUseCase)
+    singleOf(::SetCurrentTravelerAvailableUseCase)
+    singleOf(::SendChallengeUseCase)
+    singleOf(::SignInAnonymouslyUseCase)
+    singleOf(::UpdateChallengerStatusUseCase)
+    singleOf(::UpdateTravelerDisplayNameUseCase)
+}
 
-    factory {
-        TavernScreenViewModel(
-            enterTavernUseCase = get(),
-            updateTravelerDisplayNameUseCase = get(),
-            getActiveChallengeFlowUseCase = get(),
-            getTavernTravelersFlowUseCase = get(),
-            getUserIdUseCase = get(),
-            sendChallengeUseCase = get(),
-            updateChallengerStatusUseCase = get(),
-            setCurrentTravelerAvailableUseCase = get(),
-        )
-    }
+private fun Module.initializeViewModels() {
+    factoryOf(::AppViewModel)
+    factoryOf(::TavernScreenViewModel)
 }

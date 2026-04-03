@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Sorcerers &amp; Spirits</string>
+    <string name="open_drawer">Open Drawer</string>
+    <string name="sign_in_title">Choose your name</string>
+    <string name="sign_in_description">Pick a random one or type your own.</string>
+    <string name="sign_in_label_name">Name</string>
+    <string name="sign_in_button_random">Random</string>
+    <string name="sign_in_button_accept">Accept</string>
+</resources>

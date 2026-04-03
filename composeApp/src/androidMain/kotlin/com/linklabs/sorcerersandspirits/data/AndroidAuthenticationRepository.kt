@@ -11,7 +11,5 @@ class AndroidAuthenticationRepository : AuthenticationRepository {
 
     override suspend fun isSignedIn() = auth.currentUser != null
 
-    override suspend fun signInAnonymously() {
-        auth.signInAnonymously().await()
-    }
+    override suspend fun signInAnonymously() = auth.signInAnonymously().await()?.user?.uid
 }

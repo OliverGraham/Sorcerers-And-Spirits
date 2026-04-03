@@ -54,11 +54,7 @@ class TavernScreenViewModel(
         viewModelScope.launch { collectScreenState() }
     }
 
-    fun onActionButtonClick() {
-        viewModelScope.launch {
-            updateTravelerDisplayNameUseCase(displayName = "A Traveler with an updated name")
-        }
-    }
+    fun onActionButtonClick() {}
 
     fun showChallengeDialog() {
         challengeHandler.updateDialogVisibility(isVisible = true)

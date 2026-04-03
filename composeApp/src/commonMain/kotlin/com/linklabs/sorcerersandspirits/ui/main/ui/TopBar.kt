@@ -8,9 +8,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.app_name
 import sorcerersandspirits.composeapp.generated.resources.ic_menu
+import sorcerersandspirits.composeapp.generated.resources.open_drawer
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -18,15 +23,24 @@ internal fun TopBar(onMenuClick: () -> Unit, modifier: Modifier = Modifier) {
     CenterAlignedTopAppBar(
         modifier = modifier,
         title = {
-            Text(text = "Sorcerers & Spirits", style = MaterialTheme.typography.headlineSmall)
+            Text(
+                text = stringResource(resource = Res.string.app_name),
+                style = MaterialTheme.typography.headlineSmall,
+            )
         },
         actions = {
             IconButton(onClick = onMenuClick) {
                 Icon(
-                    painter = painterResource(Res.drawable.ic_menu),
-                    contentDescription = "Open Drawer",
+                    painter = painterResource(resource = Res.drawable.ic_menu),
+                    contentDescription = stringResource(resource = Res.string.open_drawer),
                 )
             }
         },
     )
+}
+
+@Preview
+@Composable
+private fun TopBarPreview() {
+    SorcerersAndSpiritsTheme { TopBar(onMenuClick = {}) }
 }

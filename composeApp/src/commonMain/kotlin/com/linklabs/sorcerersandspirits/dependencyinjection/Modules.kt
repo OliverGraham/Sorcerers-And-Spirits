@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
-import com.linklabs.sorcerersandspirits.domain.authentication.SignInAnonymouslyUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernTravelersFlowUseCase
@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCa
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.GetTravelerUseCase
+import com.linklabs.sorcerersandspirits.domain.traveler.SaveNewTravelerUseCase
 import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
@@ -28,9 +29,10 @@ private fun Module.initializeUseCases() {
     singleOf(::GetTavernTravelersFlowUseCase)
     singleOf(::GetTravelerUseCase)
     singleOf(::GetUserIdUseCase)
+    singleOf(::IsUserSignedInUseCase)
+    singleOf(::SaveNewTravelerUseCase)
     singleOf(::SetCurrentTravelerAvailableUseCase)
     singleOf(::SendChallengeUseCase)
-    singleOf(::SignInAnonymouslyUseCase)
     singleOf(::UpdateChallengerStatusUseCase)
     singleOf(::UpdateTravelerDisplayNameUseCase)
 }

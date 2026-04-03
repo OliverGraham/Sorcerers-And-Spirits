@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.main.AppState
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
+import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.TopBar
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
@@ -32,12 +33,26 @@ internal fun SorcerersAndSpiritsNavigationHost(
     when (val state = uiState) {
         // TODO: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
-        is UiState.Loaded ->
-            SorcerersAndSpirits(
-                appState = state.data,
-                onUpdateDisplayName = viewModel::onUpdateDisplayName,
-                modifier = modifier,
-            )
+        is UiState.Loaded -> {
+            val data = state.data
+
+            if (data.showSignInDialog) {
+                SignInNameDialog(
+                    displayName = data.displayName,
+                    onRandomNameClick = viewModel::getRandomName,
+                    onAcceptClick = viewModel::saveNewTraveler,
+                    onDismissRequest = {
+                        /** TODO: what to do here, show another dialog? Snack bar? Just exit app? */
+                    },
+                )
+            } else {
+                SorcerersAndSpirits(
+                    appState = data,
+                    onUpdateDisplayName = viewModel::onUpdateDisplayName,
+                    modifier = modifier,
+                )
+            }
+        }
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }

@@ -40,7 +40,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
                 SignInNameDialog(
                     displayName = data.displayName,
                     onRandomNameClick = viewModel::getRandomName,
-                    onAcceptClick = viewModel::saveNewTraveler,
+                    onAcceptClick = viewModel::createProfile,
                     onDismissRequest = {
                         /** TODO: what to do here, show another dialog? Snack bar? Just exit app? */
                     },

@@ -162,7 +162,12 @@ private fun TravelerState.ToCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val text = if (isThisTravelerTheUser) "$displayName (You)" else displayName
+    val isBusy = tavernStatus == TavernStatus.Busy
+    val text =
+        when {
+            isBusy -> "$displayName (Busy)"
+            else -> displayName
+        }
 
     Card(
         modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp),
@@ -173,30 +178,26 @@ private fun TravelerState.ToCard(
             CardDefaults.cardColors(
                 containerColor =
                     when {
-                        isThisTravelerTheUser -> MaterialTheme.colorScheme.primaryContainer
                         isSelected -> MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
+                        isBusy -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                         else -> MaterialTheme.colorScheme.surface
                     },
                 contentColor =
-                    if (isThisTravelerTheUser) {
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
+                    when {
+                        isBusy -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                        else -> MaterialTheme.colorScheme.onSurface
                     },
             ),
     ) {
         Box(
             modifier =
-                Modifier.clickable(enabled = !isThisTravelerTheUser) { onClick() }
-                    .padding(24.dp)
-                    .fillMaxWidth(),
+                Modifier.clickable(enabled = !isBusy) { onClick() }.padding(24.dp).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = text,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight =
-                    if (isThisTravelerTheUser || isSelected) FontWeight.Bold else FontWeight.Normal,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                 textAlign = TextAlign.Center,
             )
         }
@@ -216,13 +217,23 @@ private fun TheBarPreview() {
             ),
         otherTravelers =
             buildList {
-                repeat(times = 10) {
+                repeat(times = 5) {
                     add(
                         TravelerState(
                             userId = it.toString(),
                             displayName = "Traveler $it",
                             isThisTravelerTheUser = false,
                             tavernStatus = TavernStatus.Available,
+                        )
+                    )
+                }
+                repeat(times = 5) {
+                    add(
+                        TravelerState(
+                            userId = (it + 5).toString(),
+                            displayName = "Traveler ${it + 5}",
+                            isThisTravelerTheUser = false,
+                            tavernStatus = TavernStatus.Busy,
                         )
                     )
                 }

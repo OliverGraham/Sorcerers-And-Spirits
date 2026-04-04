@@ -3,14 +3,15 @@ package com.linklabs.sorcerersandspirits.ui.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
-import com.linklabs.sorcerersandspirits.domain.traveler.GetTravelerUseCase
-import com.linklabs.sorcerersandspirits.domain.traveler.SaveNewTravelerUseCase
-import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import com.linklabs.sorcerersandspirits.domain.traveler.UpdateTravelerDisplayNameUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 
 // TODO: Get random names from remote config
@@ -54,10 +55,10 @@ private val randomNames =
     )
 
 class AppViewModel(
-    private val getTravelerUseCase: GetTravelerUseCase,
+    private val createProfileUseCase: CreateProfileUseCase,
+    private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
-    private val saveNewTravelerUseCase: SaveNewTravelerUseCase,
-    private val updateTravelerDisplayNameUseCase: UpdateTravelerDisplayNameUseCase,
+    private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
 ) : ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<AppState>>(value = UiState.Loading)
@@ -66,7 +67,7 @@ class AppViewModel(
     init {
         viewModelScope.launch {
             if (isUserSignedInUseCase()) {
-                initializeAppState()
+                collectScreenState()
             } else {
                 showSignInDialog()
             }
@@ -74,16 +75,14 @@ class AppViewModel(
     }
 
     fun onUpdateDisplayName(newDisplayName: String) {
-        viewModelScope.launch {
-            updateTravelerDisplayNameUseCase(displayName = newDisplayName)
-            initializeAppState()
-        }
+        viewModelScope.launch { updateProfileDisplayNameUseCase(displayName = newDisplayName) }
     }
 
-    fun saveNewTraveler(newDisplayName: String) {
+    fun createProfile(newDisplayName: String) {
         viewModelScope.launch {
-            val newTraveler = saveNewTravelerUseCase(displayName = newDisplayName)
-            initializeAppState(newTraveler = newTraveler)
+            _uiStateFlow.value = UiState.Loading
+            createProfileUseCase(displayName = newDisplayName)
+            collectScreenState()
         }
     }
 
@@ -98,15 +97,9 @@ class AppViewModel(
             )
     }
 
-    private suspend fun initializeAppState(newTraveler: Traveler? = null) {
-        val traveler = newTraveler ?: getTravelerUseCase()
-        val appState =
-            if (traveler == null) {
-                UiState.Error
-            } else {
-                UiState.Loaded(data = AppState(displayName = traveler.displayName))
-            }
-
-        _uiStateFlow.value = appState
+    private suspend fun collectScreenState() {
+        getProfileFlowUseCase().filterNotNull().collectLatest { profile ->
+            _uiStateFlow.value = UiState.Loaded(data = AppState(displayName = profile.displayName))
+        }
     }
 }

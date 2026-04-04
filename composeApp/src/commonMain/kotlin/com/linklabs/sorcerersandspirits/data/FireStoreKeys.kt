@@ -6,6 +6,6 @@ object FireStoreKeys {
     const val CHALLENGE_MAILBOXES_PATH = "ChallengeMailboxes"
     const val TAVERN_TRAVELERS_PATH = "TavernTravelers"
 
-    const val TRAVELERS = "Travelers"
+    const val PROFILES = "Profiles"
     const val DISPLAY_NAME = "displayName"
 }

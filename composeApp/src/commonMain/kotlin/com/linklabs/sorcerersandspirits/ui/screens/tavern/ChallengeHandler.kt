@@ -89,7 +89,7 @@ internal class ChallengeHandler(
         stopTimer()
     }
 
-    fun acceptChallenge(challengeState: ChallengeState, userId: String) {
+    suspend fun acceptChallenge(challengeState: ChallengeState, userId: String) {
         updateChallengerStatus(
             challengeId = challengeState.challengeId,
             userId = userId,

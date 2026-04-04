@@ -1,11 +1,22 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -24,8 +35,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_martini
+import sorcerersandspirits.composeapp.generated.resources.ic_swords
+import sorcerersandspirits.composeapp.generated.resources.ic_up_arrow
 
 @Composable
 internal fun TavernScreen(
@@ -68,11 +84,42 @@ private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Mod
 @Composable
 private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Modifier) {
     val scaffoldState = rememberBottomSheetScaffoldState()
+    val arenaChallengeState = tavernState.challenge
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
-        sheetPeekHeight = 140.dp,
+        sheetPeekHeight = 48.dp,
+        sheetDragHandle = {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(all = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                ChallengeDialogHandle(
+                    showHandle = arenaChallengeState != null,
+                    contentAlignment = Alignment.Start,
+                )
+
+                val isExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
+                AnimatedContent(
+                    targetState =
+                        if (isExpanded) Res.drawable.ic_martini else Res.drawable.ic_up_arrow,
+                    label = "DragHandleIcon",
+                ) { targetIcon ->
+                    Icon(
+                        painter = painterResource(resource = targetIcon),
+                        contentDescription = null,
+                        modifier = Modifier.size(size = 36.dp),
+                    )
+                }
+
+                ChallengeDialogHandle(
+                    showHandle = arenaChallengeState != null,
+                    contentAlignment = Alignment.End,
+                )
+            }
+        },
         sheetContent = {
             TheBar(
                 userTraveler = tavernState.userTraveler,
@@ -83,7 +130,6 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         ScaffoldContent(padding = padding)
     }
 
-    val arenaChallengeState = tavernState.challenge
     if (arenaChallengeState != null && arenaChallengeState.showChallengeDialog) {
         ArenaChallengeDialog(arenaChallenge = arenaChallengeState)
     }
@@ -111,6 +157,26 @@ private fun Flow<TavernEvent>.collectEvents(onNavigateToArena: (String) -> Unit)
                 is TavernEvent.NotEnoughChallengersAvailable ->
                     println("TAVERN EVENT: Show traveler unavailable")
             }
+        }
+    }
+}
+
+@Composable
+private fun RowScope.ChallengeDialogHandle(
+    showHandle: Boolean,
+    contentAlignment: Alignment.Horizontal,
+    modifier: Modifier = Modifier,
+) {
+    AnimatedVisibility(visible = showHandle, modifier = modifier.weight(weight = 1f)) {
+        IconButton(
+            onClick = LocalTavernActions.current.onShowArenaChallengeDialog,
+            modifier = Modifier.fillMaxWidth().wrapContentWidth(align = contentAlignment),
+        ) {
+            Icon(
+                painter = painterResource(resource = Res.drawable.ic_swords),
+                contentDescription = null,
+                modifier = Modifier.size(size = 24.dp),
+            )
         }
     }
 }

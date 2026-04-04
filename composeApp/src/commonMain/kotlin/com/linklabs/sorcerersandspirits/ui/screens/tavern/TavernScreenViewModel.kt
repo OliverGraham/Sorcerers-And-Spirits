@@ -17,9 +17,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNot
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -44,13 +44,9 @@ class TavernScreenViewModel(
 
     private val challengeHandler =
         ChallengeHandler(
-            coroutineScope = viewModelScope,
             sendChallengeUseCase = sendChallengeUseCase,
             updateChallengerStatusUseCase = updateChallengerStatusUseCase,
             setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
-            getCurrentTavernState = { (_uiStateFlow.value as? UiState.Loaded)?.data },
-            updateTavernState = { transform -> _uiStateFlow.updateLoaded(transform = transform) },
-            onEvent = { event -> viewModelScope.launch { _eventChannelFlow.send(element = event) } },
         )
 
     init {
@@ -60,18 +56,23 @@ class TavernScreenViewModel(
     fun onActionButtonClick() {}
 
     fun showChallengeDialog() {
-        challengeHandler.updateDialogVisibility(isVisible = true)
+        updateChallengeDialogVisibility(isVisible = true)
     }
 
     fun hideChallengeDialog() {
-        challengeHandler.updateDialogVisibility(isVisible = false)
+        updateChallengeDialogVisibility(isVisible = false)
     }
 
     fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
-        challengeHandler.sendChallenges(
-            userTraveler = userTraveler,
-            selectedTravelerStates = selectedTravelerStates,
-        )
+        viewModelScope.launch {
+            val tavernEvent =
+                challengeHandler.sendChallenges(
+                    userTraveler = userTraveler,
+                    selectedTravelerStates = selectedTravelerStates,
+                ) ?: return@launch
+
+            _eventChannelFlow.send(element = tavernEvent)
+        }
     }
 
     fun onAcceptChallenge(challengeState: ChallengeState) {
@@ -99,35 +100,49 @@ class TavernScreenViewModel(
                 isSameSession(old = oldProfile, new = newProfile)
             }
             .flatMapLatest { profile ->
-                runCatching { enterTavernUseCase(profile = profile) }
+                enterTavernUseCase(profile = profile)
 
                 combine(
-                    flow = getTavernTravelersFlowUseCase(),
+                    flow =
+                        getTavernTravelersFlowUseCase().filterNot { travelers ->
+                            travelers.none { it.userId == profile.userId }
+                        },
                     flow2 = getActiveChallengeFlowUseCase(),
                 ) { travelers, challenge ->
-                    val state = travelers.toTavernState(userId = profile.userId)
-                    state to challenge
+                    travelers.toTavernState(
+                        userId = profile.userId,
+                        updatedChallenge = challenge,
+                        challengeBeforeUpdate = getChallengeFromCurrentState(),
+                    )
                 }
             }
-            .catch {
-                challengeHandler.clearChallenge()
-                _uiStateFlow.value = UiState.Error
-            }
-            .collect { (newTavernState, challenge) ->
-                if (newTavernState == null) {
-                    _uiStateFlow.value = UiState.Loading
-                    return@collect
-                }
-
+            .collect { newTavernState ->
                 _uiStateFlow.value = UiState.Loaded(data = newTavernState)
 
                 challengeHandler.handleChallengeUpdate(
-                    challenge = challenge,
-                    userId = newTavernState.userTraveler.userId,
+                    newTavernState = newTavernState,
+                    onTimerTick = ::onChallengeTimerTick,
                 )
             }
     }
 
     private fun isSameSession(old: Profile, new: Profile) =
         old.userId == new.userId && old.displayName == new.displayName
+
+    private fun updateChallengeDialogVisibility(isVisible: Boolean) {
+        val challengeState = getChallengeFromCurrentState() ?: return
+        _uiStateFlow.updateLoaded {
+            it.copy(challenge = challengeState.copy(showChallengeDialog = isVisible))
+        }
+    }
+
+    private fun onChallengeTimerTick(secondsRemaining: Int) {
+        val challengeState = getChallengeFromCurrentState() ?: return
+        _uiStateFlow.updateLoaded {
+            it.copy(challenge = challengeState.copy(secondsRemaining = secondsRemaining))
+        }
+    }
+
+    private fun getChallengeFromCurrentState() =
+        (_uiStateFlow.value as? UiState.Loaded)?.data?.challenge
 }

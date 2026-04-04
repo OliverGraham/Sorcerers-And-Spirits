@@ -6,5 +6,5 @@ sealed interface TavernEvent {
     data class NotEnoughChallengersAvailable(val challengerStates: List<ChallengerState>) :
         TavernEvent
 
-    data object ShowChallengeSendFailed : TavernEvent
+    data object SendChallengeFailed : TavernEvent
 }

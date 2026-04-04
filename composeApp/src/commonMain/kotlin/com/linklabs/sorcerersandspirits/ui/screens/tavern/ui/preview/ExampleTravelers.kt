@@ -6,9 +6,4 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 // TODO: Make example state that can be reused for previews
 
 val exampleTravelerState =
-    TravelerState(
-        userId = "-1",
-        displayName = "User",
-        isThisTravelerTheUser = true,
-        tavernStatus = TavernStatus.Available,
-    )
+    TravelerState(userId = "-1", displayName = "User", tavernStatus = TavernStatus.Available)

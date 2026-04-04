@@ -1,30 +1,27 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
-import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class ChallengeHandler(
-    private val coroutineScope: CoroutineScope,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
-    private val getCurrentTavernState: () -> TavernState?,
-    private val updateTavernState: ((TavernState) -> TavernState) -> Unit,
-    private val onEvent: (TavernEvent) -> Unit,
 ) {
     private var timerJob: Job? = null
-    private var timerChallengeId: String? = null
-    private var navigatingToArenaChallengeId: String? = null
 
-    fun sendChallenges(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
+    suspend fun sendChallenges(
+        userTraveler: TravelerState,
+        selectedTravelerStates: Set<TravelerState>,
+    ): TavernEvent? {
         val instigator =
             userTraveler.toChallenger(isInstigator = true, status = ChallengerStatus.Accepted)
 
@@ -33,99 +30,63 @@ internal class ChallengeHandler(
                 travelerState.toChallenger(isInstigator = false, status = ChallengerStatus.Pending)
             }
 
-        coroutineScope.launch {
-            runCatching { sendChallengeUseCase(instigator = instigator, invitees = invitees) }
-                .onSuccess { result ->
-                    when (result) {
-                        is SendChallengeResult.Success -> Unit
-                        is SendChallengeResult.NotEnoughChallengersAvailable -> {
-                            onEvent(
-                                TavernEvent.NotEnoughChallengersAvailable(
-                                    challengerStates =
-                                        result.unavailableChallengers.map { it.toChallengerState() }
-                                )
-                            )
-                        }
-
-                        is SendChallengeResult.Failure -> {
-                            // TODO:
-                        }
-                    }
-                }
-                .onFailure { onEvent(TavernEvent.ShowChallengeSendFailed) }
+        val result = sendChallengeUseCase(instigator = instigator, invitees = invitees)
+        return when (result) {
+            is SendChallengeResult.Success -> null
+            is SendChallengeResult.NotEnoughChallengersAvailable ->
+                TavernEvent.NotEnoughChallengersAvailable(
+                    challengerStates = result.unavailableChallengers.map { it.toChallengerState() }
+                )
+            is SendChallengeResult.Failure -> TavernEvent.SendChallengeFailed
         }
     }
 
-    fun handleChallengeUpdate(challenge: Challenge?, userId: String) {
-        if (challenge == null) {
-            val shouldSetCurrentTravelerAvailable =
-                shouldSetCurrentTravelerAvailableWhenChallengeClears()
-
-            stopTimer()
-            clearChallenge()
-            navigatingToArenaChallengeId = null
-
-            if (shouldSetCurrentTravelerAvailable) {
-                coroutineScope.launch { setCurrentTravelerAvailableUseCase() }
-            }
-
-            return
+    /**
+     * Coordinates timer and side-effects related to challenge updates and returns [TavernEvent] if
+     * applicable
+     */
+    suspend fun handleChallengeUpdate(
+        newTavernState: TavernState,
+        onTimerTick: (secondsRemaining: Int) -> Unit,
+    ): TavernEvent? {
+        val challengeState = newTavernState.challenge
+        // if newChallengeState is null and oldChallengeState is something
+        if (challengeState == null) {
+            releaseUserFromChallenge(tavernStatus = newTavernState.userTraveler.tavernStatus)
+            return null
         }
 
-        val currentTavernState = getCurrentTavernState()
-
-        val userChallenger =
-            challenge.challengers[userId]
-                ?: run {
-                    stopTimer()
-                    clearChallenge()
-                    return
+        // TODO: This could be in use case, right?
+        val userChallenger = newTavernState.userChallenger
+        return when (userChallenger?.status) {
+            ChallengerStatus.Accepted -> {
+                stopTimer()
+                if (challengeState.hasEveryoneAccepted()) {
+                    TavernEvent.NavigateToArena(arenaId = challengeState.challengeId)
+                } else {
+                    null
                 }
-
-        val currentChallengeState = currentTavernState?.challenge
-        val isSameChallenge = currentChallengeState?.challengeId == challenge.challengeId
-        val isPendingInvitee = userChallenger.status == ChallengerStatus.Pending
-
-        val challengeState =
-            challenge.toChallengeState(
-                showChallengeDialog =
-                    when {
-                        isPendingInvitee -> true
-                        isSameChallenge -> currentChallengeState.showChallengeDialog
-                        else -> false
-                    },
-                secondsRemaining =
-                    when {
-                        !isPendingInvitee -> null
-                        isSameChallenge ->
-                            currentChallengeState.secondsRemaining ?: COUNTDOWN_SECONDS
-                        else -> COUNTDOWN_SECONDS
-                    },
-            )
-
-        updateTavernState { tavernState -> tavernState.copy(challenge = challengeState) }
-
-        val shouldNavigateToArena =
-            userChallenger.status == ChallengerStatus.Accepted &&
-                challengeState.hasEveryoneAccepted()
-
-        when {
-            shouldNavigateToArena -> {
-                navigatingToArenaChallengeId = challenge.challengeId
+            }
+            ChallengerStatus.Declined -> {
                 stopTimer()
-                updateDialogVisibility(isVisible = false)
-
-                onEvent(TavernEvent.NavigateToArena(arenaId = challenge.challengeId))
+                null // todo: show snackbar?
             }
-
-            isPendingInvitee && timerChallengeId != challenge.challengeId -> {
-                startTimer(challengeId = challenge.challengeId, userId = userId)
+            ChallengerStatus.Pending -> {
+                if (!isTimerGoing()) {
+                    startTimer(
+                        challengeId = challengeState.challengeId,
+                        userId = newTavernState.userId,
+                        onTimerTick = onTimerTick,
+                    )
+                }
+                null
             }
-
-            !isPendingInvitee -> {
-                stopTimer()
-            }
+            null -> null
         }
+    }
+
+    private suspend fun releaseUserFromChallenge(tavernStatus: TavernStatus?) {
+        stopTimer()
     }
 
     fun acceptChallenge(challengeState: ChallengeState, userId: String) {
@@ -136,7 +97,7 @@ internal class ChallengeHandler(
         )
     }
 
-    fun declineChallenge(challengeState: ChallengeState, userId: String) {
+    suspend fun declineChallenge(challengeState: ChallengeState, userId: String) {
         updateChallengerStatus(
             challengeId = challengeState.challengeId,
             userId = userId,
@@ -144,85 +105,58 @@ internal class ChallengeHandler(
         )
     }
 
-    fun updateDialogVisibility(isVisible: Boolean) {
-        updateTavernState { tavernState ->
-            tavernState.updateChallengeDialogVisibility(isVisible = isVisible)
-        }
-    }
-
-    fun clearChallenge() {
-        updateTavernState { tavernState -> tavernState.copy(challenge = null) }
-    }
-
-    private fun startTimer(challengeId: String, userId: String) {
-        stopTimer()
-
-        timerChallengeId = challengeId
-        timerJob =
-            coroutineScope.launch {
-                var secondsRemaining = COUNTDOWN_SECONDS
-
-                while (secondsRemaining >= 0) {
-                    updateTavernState { tavernState ->
-                        tavernState.updateChallengeStateSeconds(secondsRemaining = secondsRemaining)
-                    }
-
-                    delay(timeMillis = 1000L)
-                    secondsRemaining--
-                }
-
-                updateChallengerStatus(
-                    challengeId = challengeId,
-                    userId = userId,
-                    status = ChallengerStatus.Declined,
-                )
-            }
-    }
-
-    private fun stopTimer() {
-        timerJob?.cancel()
-        timerJob = null
-        timerChallengeId = null
-
-        updateTavernState { tavernState ->
-            tavernState.updateChallengeStateSeconds(secondsRemaining = null)
-        }
-    }
-
-    private fun updateChallengerStatus(
+    private suspend fun updateChallengerStatus(
         challengeId: String,
         userId: String,
         status: ChallengerStatus,
     ) {
         stopTimer()
+        updateChallengerStatusUseCase(challengeId = challengeId, userId = userId, status = status)
+    }
 
-        coroutineScope.launch {
-            updateChallengerStatusUseCase(
+    private suspend fun startTimer(
+        challengeId: String,
+        userId: String,
+        onTimerTick: (secondsRemaining: Int) -> Unit,
+    ) = coroutineScope {
+        stopTimer()
+
+        timerJob = launch {
+            var secondsRemaining = COUNTDOWN_SECONDS
+            while (secondsRemaining >= 0) {
+                onTimerTick(secondsRemaining)
+                delay(timeMillis = ONE_SECOND)
+                secondsRemaining--
+            }
+
+            updateChallengerStatus(
                 challengeId = challengeId,
                 userId = userId,
-                status = status,
+                status = ChallengerStatus.Declined,
             )
-
-            updateDialogVisibility(isVisible = false)
         }
     }
 
-    private fun shouldSetCurrentTravelerAvailableWhenChallengeClears(): Boolean {
+    fun stopTimer() {
+        timerJob?.cancel()
+        timerJob = null
+
+        /*updateTavernState { tavernState ->
+            tavernState.updateChallengeStateSeconds(secondsRemaining = null)
+        }*/
+    }
+
+    // TODO: Why is there navigatingToArenaChallengeId
+    /*private fun shouldSetCurrentTravelerAvailableWhenChallengeClears(): Boolean {
         val currentChallengeId = getCurrentTavernState()?.challenge?.challengeId ?: return false
 
         return currentChallengeId != navigatingToArenaChallengeId
-    }
+    }*/
 
     private fun TavernState.updateChallengeStateSeconds(secondsRemaining: Int?): TavernState {
         val challenge = challenge ?: return this
 
         return copy(challenge = challenge.copy(secondsRemaining = secondsRemaining))
-    }
-
-    private fun TavernState.updateChallengeDialogVisibility(isVisible: Boolean): TavernState {
-        val challenge = challenge ?: return this
-
-        return copy(challenge = challenge.copy(showChallengeDialog = isVisible))
     }
 
     private fun ChallengeState.hasEveryoneAccepted(): Boolean =
@@ -235,8 +169,11 @@ internal class ChallengeHandler(
                     }
             }
 
-    private companion object {
-        private const val COUNTDOWN_SECONDS = 60
+    private fun isTimerGoing() = timerJob != null
+
+    companion object {
+        const val COUNTDOWN_SECONDS = 60
+        private const val ONE_SECOND = 1000L
         private const val MINIMUM_CHALLENGERS = 2
     }
 }

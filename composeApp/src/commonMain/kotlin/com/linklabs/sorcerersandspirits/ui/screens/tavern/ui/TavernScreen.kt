@@ -152,8 +152,7 @@ private fun Flow<TavernEvent>.collectEvents(onNavigateToArena: (String) -> Unit)
         collect { event ->
             when (event) {
                 is TavernEvent.NavigateToArena -> onNavigateToArena(event.arenaId)
-                is TavernEvent.ShowChallengeSendFailed ->
-                    println("TAVERN EVENT: ShowChallengeSendFailed")
+                is TavernEvent.SendChallengeFailed -> println("TAVERN EVENT: SendChallengeFailed")
                 is TavernEvent.NotEnoughChallengersAvailable ->
                     println("TAVERN EVENT: Show traveler unavailable")
             }

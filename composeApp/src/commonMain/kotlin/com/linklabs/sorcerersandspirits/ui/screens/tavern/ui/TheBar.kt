@@ -17,8 +17,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,10 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
 // TODO: Improve
 
@@ -73,7 +68,6 @@ private fun BarFolk(
     updateSelectedTravelers: (Set<TravelerState>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val showDialog = TavernActionsProvider.current.onShowArenaChallengeDialog
     LazyColumn(
         modifier = modifier.fillMaxWidth().padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -84,28 +78,16 @@ private fun BarFolk(
             //  Idea - UI in settings to show every player playing right now, and their status and
             //  such
 
-            Box(modifier = Modifier.fillMaxWidth()) {
-                IconButton(
-                    onClick = showDialog,
-                    modifier = Modifier.align(alignment = Alignment.TopStart).size(size = 48.dp),
-                ) {
-                    // TODO: new icon
-                    Icon(
-                        painter = painterResource(resource = Res.drawable.ic_menu),
-                        contentDescription = "",
-                    )
-                }
-
-                AnimatedContent(
-                    targetState = otherTravelers.size,
-                    modifier = Modifier.align(alignment = Alignment.Center),
-                ) { count ->
-                    Text(
-                        text = "Travelers in Tavern: $count",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
+            AnimatedContent(
+                targetState = otherTravelers.size,
+                modifier = Modifier.fillMaxWidth(),
+            ) { count ->
+                Text(
+                    text = "Travelers in Tavern: $count",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
             }
 
             Text(
@@ -212,7 +194,6 @@ private fun TheBarPreview() {
             TravelerState(
                 userId = "-1",
                 displayName = "User",
-                isThisTravelerTheUser = true,
                 tavernStatus = TavernStatus.Available,
             ),
         otherTravelers =
@@ -222,7 +203,6 @@ private fun TheBarPreview() {
                         TravelerState(
                             userId = it.toString(),
                             displayName = "Traveler $it",
-                            isThisTravelerTheUser = false,
                             tavernStatus = TavernStatus.Available,
                         )
                     )
@@ -232,7 +212,6 @@ private fun TheBarPreview() {
                         TravelerState(
                             userId = (it + 5).toString(),
                             displayName = "Traveler ${it + 5}",
-                            isThisTravelerTheUser = false,
                             tavernStatus = TavernStatus.Busy,
                         )
                     )

@@ -6,6 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHandler
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeTimer
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.channels.Channel
@@ -28,13 +30,10 @@ class TavernScreenViewModel(
     private val _uiStateFlow = MutableStateFlow<UiState<TavernState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
-    private val challengeHandler =
-        ChallengeHandler(
-            coroutineScope = viewModelScope,
-            sendChallengeUseCase = sendChallengeUseCase,
-            updateChallengerStatusUseCase = updateChallengerStatusUseCase,
-            updateTavernState = { transform -> _uiStateFlow.updateLoaded(transform = transform) },
-        )
+    private val loadedUiState
+        get() = (_uiStateFlow.value as? UiState.Loaded)?.data
+
+    private val challengeHandler = initializeChallengeHandler()
 
     init {
         viewModelScope.launch { collectScreenState() }
@@ -77,15 +76,17 @@ class TavernScreenViewModel(
 
     private suspend fun collectScreenState() {
         getTavernDataFlowUseCase().filterNotNull().collect { data ->
-            val tavernState =
-                data.travelers.toTavernState(userId = data.profile.userId) ?: return@collect
+            val currentUiChallenge = loadedUiState?.challenge
 
             val result =
                 challengeHandler.handleChallengeUpdate(
-                    previousChallengeState = tavernState.challenge,
+                    previousChallengeState = currentUiChallenge,
                     updatedChallenge = data.challenge,
                     userId = data.profile.userId,
                 )
+
+            val tavernState =
+                data.travelers.toTavernState(userId = data.profile.userId) ?: return@collect
 
             val updatedTavernState =
                 if (result != null) {
@@ -99,5 +100,36 @@ class TavernScreenViewModel(
 
             _uiStateFlow.value = UiState.Loaded(data = updatedTavernState)
         }
+    }
+
+    private fun initializeChallengeHandler() =
+        ChallengeHandler(
+            challengeTimer =
+                ChallengeTimer(
+                    coroutineScope = viewModelScope,
+                    onTimerTick = ::updateChallengeStateSeconds,
+                    onTimerExpiration = ::declineChallenge,
+                ),
+            sendChallengeUseCase = sendChallengeUseCase,
+            updateChallengerStatusUseCase = updateChallengerStatusUseCase,
+            updateTavernState = { transform -> _uiStateFlow.updateLoaded(transform = transform) },
+        )
+
+    private fun declineChallenge() {
+        val currentChallengeState = loadedUiState?.challenge ?: return
+
+        onDeclineChallenge(challengeState = currentChallengeState)
+    }
+
+    private fun updateChallengeStateSeconds(secondsRemaining: Int?) {
+        _uiStateFlow.updateLoaded { tavernState ->
+            tavernState.updateChallengeStateSeconds(secondsRemaining = secondsRemaining)
+        }
+    }
+
+    private fun TavernState.updateChallengeStateSeconds(secondsRemaining: Int?): TavernState {
+        val challenge = challenge ?: return this
+
+        return copy(challenge = challenge.copy(secondsRemaining = secondsRemaining))
     }
 }

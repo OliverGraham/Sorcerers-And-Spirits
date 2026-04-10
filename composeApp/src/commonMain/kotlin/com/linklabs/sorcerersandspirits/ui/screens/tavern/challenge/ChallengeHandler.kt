@@ -1,28 +1,24 @@
-package com.linklabs.sorcerersandspirits.ui.screens.tavern
+package com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge
 
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-internal data class HandleChallengeUpdateResult(
-    val challengeState: ChallengeState,
-    val tavernEvent: TavernEvent?,
-)
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengeState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallenger
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengerState
 
 internal class ChallengeHandler(
-    private val coroutineScope: CoroutineScope,
+    private val challengeTimer: ChallengeTimer,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
     private val updateTavernState: ((TavernState) -> TavernState) -> Unit,
 ) {
-    private var timerJob: Job? = null
-    private var timerChallengeId: String? = null
 
     suspend fun sendChallenges(
         userTraveler: TravelerState,
@@ -76,8 +72,8 @@ internal class ChallengeHandler(
                 secondsRemaining =
                     when {
                         !isPendingInvitee -> null
-                        isSameChallenge ->
-                            previousChallengeState.secondsRemaining ?: COUNTDOWN_SECONDS
+                        challengeTimer.isTimerCurrentlyRunning() ->
+                            previousChallengeState?.secondsRemaining
                         else -> COUNTDOWN_SECONDS
                     },
             )
@@ -95,8 +91,8 @@ internal class ChallengeHandler(
                     TavernEvent.NavigateToArena(arenaId = updatedChallenge.challengeId)
                 }
 
-                isPendingInvitee && timerChallengeId != updatedChallenge.challengeId -> {
-                    startTimer(challengeId = updatedChallenge.challengeId, userId = userId)
+                isPendingInvitee && !challengeTimer.isTimerCurrentlyRunning() -> {
+                    startTimer()
                     null
                 }
 
@@ -113,7 +109,7 @@ internal class ChallengeHandler(
         )
     }
 
-    fun acceptChallenge(challengeState: ChallengeState, userId: String) {
+    suspend fun acceptChallenge(challengeState: ChallengeState, userId: String) {
         updateChallengerStatus(
             challengeId = challengeState.challengeId,
             userId = userId,
@@ -121,7 +117,7 @@ internal class ChallengeHandler(
         )
     }
 
-    fun declineChallenge(challengeState: ChallengeState, userId: String) {
+    suspend fun declineChallenge(challengeState: ChallengeState, userId: String) {
         updateChallengerStatus(
             challengeId = challengeState.challengeId,
             userId = userId,
@@ -139,63 +135,24 @@ internal class ChallengeHandler(
         updateTavernState { tavernState -> tavernState.copy(challenge = null) }
     }
 
-    private fun startTimer(challengeId: String, userId: String) {
-        stopTimer()
-
-        timerChallengeId = challengeId
-        timerJob =
-            coroutineScope.launch {
-                var secondsRemaining = COUNTDOWN_SECONDS
-
-                while (secondsRemaining >= 0) {
-                    updateTavernState { tavernState ->
-                        tavernState.updateChallengeStateSeconds(secondsRemaining = secondsRemaining)
-                    }
-
-                    delay(timeMillis = 1000L)
-                    secondsRemaining--
-                }
-
-                updateChallengerStatus(
-                    challengeId = challengeId,
-                    userId = userId,
-                    status = ChallengerStatus.Declined,
-                )
-            }
+    private fun startTimer() {
+        challengeTimer.startTimer()
     }
 
     private fun stopTimer() {
-        timerJob?.cancel()
-        timerJob = null
-        timerChallengeId = null
-
-        updateTavernState { tavernState ->
-            tavernState.updateChallengeStateSeconds(secondsRemaining = null)
-        }
+        challengeTimer.stopTimer()
     }
 
-    private fun updateChallengerStatus(
+    private suspend fun updateChallengerStatus(
         challengeId: String,
         userId: String,
         status: ChallengerStatus,
     ) {
         stopTimer()
 
-        coroutineScope.launch {
-            updateChallengerStatusUseCase(
-                challengeId = challengeId,
-                userId = userId,
-                status = status,
-            )
+        updateChallengerStatusUseCase(challengeId = challengeId, userId = userId, status = status)
 
-            updateDialogVisibility(isVisible = false)
-        }
-    }
-
-    private fun TavernState.updateChallengeStateSeconds(secondsRemaining: Int?): TavernState {
-        val challenge = challenge ?: return this
-
-        return copy(challenge = challenge.copy(secondsRemaining = secondsRemaining))
+        updateDialogVisibility(isVisible = false)
     }
 
     private fun TavernState.updateChallengeDialogVisibility(isVisible: Boolean): TavernState {

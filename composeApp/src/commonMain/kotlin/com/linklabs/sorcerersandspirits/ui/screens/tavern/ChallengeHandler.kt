@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -20,14 +19,10 @@ internal class ChallengeHandler(
     private val coroutineScope: CoroutineScope,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
-    private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
-    private val getCurrentTavernState: () -> TavernState?,
     private val updateTavernState: ((TavernState) -> TavernState) -> Unit,
-    private val onEvent: (TavernEvent) -> Unit,
 ) {
     private var timerJob: Job? = null
     private var timerChallengeId: String? = null
-    private var navigatingToArenaChallengeId: String? = null
 
     suspend fun sendChallenges(
         userTraveler: TravelerState,
@@ -52,25 +47,12 @@ internal class ChallengeHandler(
         }
     }
 
-    suspend fun handleChallengeUpdate(
+    fun handleChallengeUpdate(
         previousChallengeState: ChallengeState?,
         updatedChallenge: Challenge?,
         userId: String,
     ): HandleChallengeUpdateResult? {
-        if (updatedChallenge == null) {
-            val shouldSetCurrentTravelerAvailable =
-                shouldSetCurrentTravelerAvailableWhenChallengeClears()
-
-            stopTimer()
-            clearChallenge()
-            navigatingToArenaChallengeId = null
-
-            if (shouldSetCurrentTravelerAvailable) {
-                setCurrentTravelerAvailableUseCase()
-            }
-
-            return null
-        }
+        if (updatedChallenge == null) return null
 
         val userChallenger =
             updatedChallenge.challengers[userId]
@@ -107,7 +89,6 @@ internal class ChallengeHandler(
         val tavernEvent =
             when {
                 shouldNavigateToArena -> {
-                    navigatingToArenaChallengeId = updatedChallenge.challengeId
                     stopTimer()
                     updateDialogVisibility(isVisible = false)
 
@@ -209,12 +190,6 @@ internal class ChallengeHandler(
 
             updateDialogVisibility(isVisible = false)
         }
-    }
-
-    private fun shouldSetCurrentTravelerAvailableWhenChallengeClears(): Boolean {
-        val currentChallengeId = getCurrentTavernState()?.challenge?.challengeId ?: return false
-
-        return currentChallengeId != navigatingToArenaChallengeId
     }
 
     private fun TavernState.updateChallengeStateSeconds(secondsRemaining: Int?): TavernState {

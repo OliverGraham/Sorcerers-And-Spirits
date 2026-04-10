@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -20,7 +19,6 @@ class TavernScreenViewModel(
     private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val sendChallengeUseCase: SendChallengeUseCase,
-    private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
 ) : ViewModel() {
 
@@ -35,10 +33,7 @@ class TavernScreenViewModel(
             coroutineScope = viewModelScope,
             sendChallengeUseCase = sendChallengeUseCase,
             updateChallengerStatusUseCase = updateChallengerStatusUseCase,
-            setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
-            getCurrentTavernState = { (_uiStateFlow.value as? UiState.Loaded)?.data },
             updateTavernState = { transform -> _uiStateFlow.updateLoaded(transform = transform) },
-            onEvent = { event -> viewModelScope.launch { _eventChannelFlow.send(element = event) } },
         )
 
     init {

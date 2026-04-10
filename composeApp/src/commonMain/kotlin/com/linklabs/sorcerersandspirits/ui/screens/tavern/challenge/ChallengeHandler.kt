@@ -58,7 +58,6 @@ internal class ChallengeHandler(
                     return null
                 }
 
-        val isSameChallenge = previousChallengeState?.challengeId == updatedChallenge.challengeId
         val isPendingInvitee = userChallenger.status == ChallengerStatus.Pending
 
         val challengeState =
@@ -66,7 +65,7 @@ internal class ChallengeHandler(
                 showChallengeDialog =
                     when {
                         isPendingInvitee -> true
-                        isSameChallenge -> previousChallengeState.showChallengeDialog
+                        previousChallengeState?.showChallengeDialog == true -> true
                         else -> false
                     },
                 secondsRemaining =
@@ -79,8 +78,7 @@ internal class ChallengeHandler(
             )
 
         val shouldNavigateToArena =
-            userChallenger.status == ChallengerStatus.Accepted &&
-                challengeState.hasEveryoneAccepted()
+            userChallenger.status == ChallengerStatus.Accepted && updatedChallenge.isReadyToStart()
 
         val tavernEvent =
             when {
@@ -161,18 +159,7 @@ internal class ChallengeHandler(
         return copy(challenge = challenge.copy(showChallengeDialog = isVisible))
     }
 
-    private fun ChallengeState.hasEveryoneAccepted(): Boolean =
-        challengerStates
-            .filterNot { challengerState -> challengerState.status == ChallengerStatus.Declined }
-            .let { activeChallengerStates ->
-                activeChallengerStates.size >= MINIMUM_CHALLENGERS &&
-                    activeChallengerStates.all { challengerState ->
-                        challengerState.status == ChallengerStatus.Accepted
-                    }
-            }
-
     private companion object {
         private const val COUNTDOWN_SECONDS = 60
-        private const val MINIMUM_CHALLENGERS = 2
     }
 }

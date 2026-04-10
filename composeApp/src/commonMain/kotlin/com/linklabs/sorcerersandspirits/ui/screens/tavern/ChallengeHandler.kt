@@ -47,8 +47,12 @@ internal class ChallengeHandler(
         }
     }
 
-    fun handleChallengeUpdate(challenge: Challenge?, userId: String) {
-        if (challenge == null) {
+    suspend fun handleChallengeUpdate(
+        previousChallengeState: ChallengeState?,
+        updatedChallenge: Challenge?,
+        userId: String,
+    ) {
+        if (updatedChallenge == null) {
             val shouldSetCurrentTravelerAvailable =
                 shouldSetCurrentTravelerAvailableWhenChallengeClears()
 
@@ -57,39 +61,36 @@ internal class ChallengeHandler(
             navigatingToArenaChallengeId = null
 
             if (shouldSetCurrentTravelerAvailable) {
-                coroutineScope.launch { setCurrentTravelerAvailableUseCase() }
+                setCurrentTravelerAvailableUseCase()
             }
 
             return
         }
 
-        val currentTavernState = getCurrentTavernState()
-
         val userChallenger =
-            challenge.challengers[userId]
+            updatedChallenge.challengers[userId]
                 ?: run {
                     stopTimer()
                     clearChallenge()
                     return
                 }
 
-        val currentChallengeState = currentTavernState?.challenge
-        val isSameChallenge = currentChallengeState?.challengeId == challenge.challengeId
+        val isSameChallenge = previousChallengeState?.challengeId == updatedChallenge.challengeId
         val isPendingInvitee = userChallenger.status == ChallengerStatus.Pending
 
         val challengeState =
-            challenge.toChallengeState(
+            updatedChallenge.toChallengeState(
                 showChallengeDialog =
                     when {
                         isPendingInvitee -> true
-                        isSameChallenge -> currentChallengeState.showChallengeDialog
+                        isSameChallenge -> previousChallengeState.showChallengeDialog
                         else -> false
                     },
                 secondsRemaining =
                     when {
                         !isPendingInvitee -> null
                         isSameChallenge ->
-                            currentChallengeState.secondsRemaining ?: COUNTDOWN_SECONDS
+                            previousChallengeState.secondsRemaining ?: COUNTDOWN_SECONDS
                         else -> COUNTDOWN_SECONDS
                     },
             )
@@ -102,15 +103,15 @@ internal class ChallengeHandler(
 
         when {
             shouldNavigateToArena -> {
-                navigatingToArenaChallengeId = challenge.challengeId
+                navigatingToArenaChallengeId = updatedChallenge.challengeId
                 stopTimer()
                 updateDialogVisibility(isVisible = false)
 
-                onEvent(TavernEvent.NavigateToArena(arenaId = challenge.challengeId))
+                onEvent(TavernEvent.NavigateToArena(arenaId = updatedChallenge.challengeId))
             }
 
-            isPendingInvitee && timerChallengeId != challenge.challengeId -> {
-                startTimer(challengeId = challenge.challengeId, userId = userId)
+            isPendingInvitee && timerChallengeId != updatedChallenge.challengeId -> {
+                startTimer(challengeId = updatedChallenge.challengeId, userId = userId)
             }
 
             !isPendingInvitee -> {

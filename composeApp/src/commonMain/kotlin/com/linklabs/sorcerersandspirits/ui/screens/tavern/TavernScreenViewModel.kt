@@ -85,14 +85,24 @@ class TavernScreenViewModel(
             val tavernState =
                 data.travelers.toTavernState(userId = data.profile.userId) ?: return@collect
 
-            // TODO: Don't want to set this until after the handleChallengeUpdate()
-            _uiStateFlow.value = UiState.Loaded(data = tavernState)
+            val result =
+                challengeHandler.handleChallengeUpdate(
+                    previousChallengeState = tavernState.challenge,
+                    updatedChallenge = data.challenge,
+                    userId = data.profile.userId,
+                )
 
-            challengeHandler.handleChallengeUpdate(
-                previousChallengeState = tavernState.challenge,
-                updatedChallenge = data.challenge,
-                userId = data.profile.userId,
-            )
+            val updatedTavernState =
+                if (result != null) {
+                    if (result.tavernEvent != null) {
+                        _eventChannelFlow.send(element = result.tavernEvent)
+                    }
+                    tavernState.copy(challenge = result.challengeState)
+                } else {
+                    tavernState
+                }
+
+            _uiStateFlow.value = UiState.Loaded(data = updatedTavernState)
         }
     }
 }

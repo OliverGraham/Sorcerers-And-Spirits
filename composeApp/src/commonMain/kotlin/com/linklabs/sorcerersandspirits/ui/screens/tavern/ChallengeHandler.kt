@@ -11,6 +11,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+internal data class HandleChallengeUpdateResult(
+    val challengeState: ChallengeState,
+    val tavernEvent: TavernEvent?,
+)
+
 internal class ChallengeHandler(
     private val coroutineScope: CoroutineScope,
     private val sendChallengeUseCase: SendChallengeUseCase,
@@ -51,7 +56,7 @@ internal class ChallengeHandler(
         previousChallengeState: ChallengeState?,
         updatedChallenge: Challenge?,
         userId: String,
-    ) {
+    ): HandleChallengeUpdateResult? {
         if (updatedChallenge == null) {
             val shouldSetCurrentTravelerAvailable =
                 shouldSetCurrentTravelerAvailableWhenChallengeClears()
@@ -64,7 +69,7 @@ internal class ChallengeHandler(
                 setCurrentTravelerAvailableUseCase()
             }
 
-            return
+            return null
         }
 
         val userChallenger =
@@ -72,7 +77,7 @@ internal class ChallengeHandler(
                 ?: run {
                     stopTimer()
                     clearChallenge()
-                    return
+                    return null
                 }
 
         val isSameChallenge = previousChallengeState?.challengeId == updatedChallenge.challengeId
@@ -95,29 +100,36 @@ internal class ChallengeHandler(
                     },
             )
 
-        updateTavernState { tavernState -> tavernState.copy(challenge = challengeState) }
-
         val shouldNavigateToArena =
             userChallenger.status == ChallengerStatus.Accepted &&
                 challengeState.hasEveryoneAccepted()
 
-        when {
-            shouldNavigateToArena -> {
-                navigatingToArenaChallengeId = updatedChallenge.challengeId
-                stopTimer()
-                updateDialogVisibility(isVisible = false)
+        val tavernEvent =
+            when {
+                shouldNavigateToArena -> {
+                    navigatingToArenaChallengeId = updatedChallenge.challengeId
+                    stopTimer()
+                    updateDialogVisibility(isVisible = false)
 
-                onEvent(TavernEvent.NavigateToArena(arenaId = updatedChallenge.challengeId))
+                    TavernEvent.NavigateToArena(arenaId = updatedChallenge.challengeId)
+                }
+
+                isPendingInvitee && timerChallengeId != updatedChallenge.challengeId -> {
+                    startTimer(challengeId = updatedChallenge.challengeId, userId = userId)
+                    null
+                }
+
+                !isPendingInvitee -> {
+                    stopTimer()
+                    null
+                }
+                else -> null
             }
 
-            isPendingInvitee && timerChallengeId != updatedChallenge.challengeId -> {
-                startTimer(challengeId = updatedChallenge.challengeId, userId = userId)
-            }
-
-            !isPendingInvitee -> {
-                stopTimer()
-            }
-        }
+        return HandleChallengeUpdateResult(
+            challengeState = challengeState,
+            tavernEvent = tavernEvent,
+        )
     }
 
     fun acceptChallenge(challengeState: ChallengeState, userId: String) {

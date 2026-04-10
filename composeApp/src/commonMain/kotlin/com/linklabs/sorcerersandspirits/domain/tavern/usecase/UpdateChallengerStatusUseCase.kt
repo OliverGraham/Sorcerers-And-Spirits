@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 
 class UpdateChallengerStatusUseCase(private val tavernRepository: TavernRepository) {
     suspend operator fun invoke(challengeId: String, userId: String, status: ChallengerStatus) {
+        // TODO: Can get userId here right?
         tavernRepository.updateChallengerStatus(
             challengeId = challengeId,
             userId = userId,

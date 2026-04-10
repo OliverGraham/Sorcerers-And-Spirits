@@ -5,9 +5,8 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernTravelersFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
@@ -24,11 +23,10 @@ val commonModule = module {
 }
 
 private fun Module.initializeUseCases() {
+    singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)
-    singleOf(::EnterTavernUseCase)
-    singleOf(::GetActiveChallengeFlowUseCase)
     singleOf(::GetProfileFlowUseCase)
-    singleOf(::GetTavernTravelersFlowUseCase)
+    singleOf(::GetTavernDataFlowUseCase)
     singleOf(::GetUserIdUseCase)
     singleOf(::IsUserSignedInUseCase)
     singleOf(::SetCurrentTravelerAvailableUseCase)

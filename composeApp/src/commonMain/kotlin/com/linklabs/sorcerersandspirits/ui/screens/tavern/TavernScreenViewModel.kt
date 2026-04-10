@@ -3,37 +3,25 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.Profile
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.EnterTavernUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernTravelersFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 class TavernScreenViewModel(
-    private val enterTavernUseCase: EnterTavernUseCase,
-    private val sendChallengeUseCase: SendChallengeUseCase,
-    private val getActiveChallengeFlowUseCase: GetActiveChallengeFlowUseCase,
+    private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
-    private val getProfileFlowUseCase: GetProfileFlowUseCase,
-    private val getTavernTravelersFlowUseCase: GetTavernTravelersFlowUseCase,
-    private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
+    private val sendChallengeUseCase: SendChallengeUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
+    private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<TavernEvent>()
@@ -90,44 +78,17 @@ class TavernScreenViewModel(
         }
     }
 
-    // TODO: Improve
-    @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun collectScreenState() {
-        getProfileFlowUseCase()
-            .filterNotNull()
-            .distinctUntilChanged { oldProfile, newProfile ->
-                isSameSession(old = oldProfile, new = newProfile)
-            }
-            .flatMapLatest { profile ->
-                runCatching { enterTavernUseCase(profile = profile) }
+        getTavernDataFlowUseCase().filterNotNull().collect { data ->
+            val tavernState =
+                data.travelers.toTavernState(userId = data.profile.userId) ?: return@collect
 
-                combine(
-                    flow = getTavernTravelersFlowUseCase(),
-                    flow2 = getActiveChallengeFlowUseCase(),
-                ) { travelers, challenge ->
-                    val state = travelers.toTavernState(userId = profile.userId)
-                    state to challenge
-                }
-            }
-            .catch {
-                challengeHandler.clearChallenge()
-                _uiStateFlow.value = UiState.Error
-            }
-            .collect { (newTavernState, challenge) ->
-                if (newTavernState == null) {
-                    _uiStateFlow.value = UiState.Loading
-                    return@collect
-                }
+            _uiStateFlow.value = UiState.Loaded(data = tavernState)
 
-                _uiStateFlow.value = UiState.Loaded(data = newTavernState)
-
-                challengeHandler.handleChallengeUpdate(
-                    challenge = challenge,
-                    userId = newTavernState.userTraveler.userId,
-                )
-            }
+            challengeHandler.handleChallengeUpdate(
+                challenge = data.challenge,
+                userId = data.profile.userId,
+            )
+        }
     }
-
-    private fun isSameSession(old: Profile, new: Profile) =
-        old.userId == new.userId && old.displayName == new.displayName
 }

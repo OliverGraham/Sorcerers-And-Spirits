@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,6 +56,7 @@ private val randomNames =
     )
 
 class AppViewModel(
+    private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
@@ -99,6 +101,8 @@ class AppViewModel(
 
     private suspend fun collectScreenState() {
         getProfileFlowUseCase().filterNotNull().collectLatest { profile ->
+            connectTravelerPresenceUseCase(profile = profile)
+
             _uiStateFlow.value = UiState.Loaded(data = AppState(displayName = profile.displayName))
         }
     }

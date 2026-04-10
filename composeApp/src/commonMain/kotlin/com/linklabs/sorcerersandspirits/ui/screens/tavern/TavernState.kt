@@ -23,14 +23,6 @@ data class TravelerState(
 )
 
 @Immutable
-data class ChallengerState(
-    val userId: String,
-    val displayName: String,
-    val isInstigator: Boolean,
-    val status: ChallengerStatus,
-)
-
-@Immutable
 data class ChallengeState(
     val challengeId: String,
     val challengerStates: List<ChallengerState>,
@@ -40,6 +32,14 @@ data class ChallengeState(
     val sender: ChallengerState? =
         challengerStates.find { challengerState -> challengerState.isInstigator }
 }
+
+@Immutable
+data class ChallengerState(
+    val userId: String,
+    val displayName: String,
+    val isInstigator: Boolean,
+    val status: ChallengerStatus,
+)
 
 internal fun List<Traveler>.toTavernState(userId: String?): TavernState? {
     val (userTravelers, otherTravelers) = partition { traveler -> traveler.userId == userId }

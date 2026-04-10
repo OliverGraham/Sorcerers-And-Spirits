@@ -24,7 +24,10 @@ internal class ChallengeHandler(
     private var timerChallengeId: String? = null
     private var navigatingToArenaChallengeId: String? = null
 
-    fun sendChallenges(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
+    suspend fun sendChallenges(
+        userTraveler: TravelerState,
+        selectedTravelerStates: Set<TravelerState>,
+    ): TavernEvent? {
         val instigator =
             userTraveler.toChallenger(isInstigator = true, status = ChallengerStatus.Accepted)
 
@@ -33,26 +36,14 @@ internal class ChallengeHandler(
                 travelerState.toChallenger(isInstigator = false, status = ChallengerStatus.Pending)
             }
 
-        coroutineScope.launch {
-            runCatching { sendChallengeUseCase(instigator = instigator, invitees = invitees) }
-                .onSuccess { result ->
-                    when (result) {
-                        is SendChallengeResult.Success -> Unit
-                        is SendChallengeResult.NotEnoughChallengersAvailable -> {
-                            onEvent(
-                                TavernEvent.NotEnoughChallengersAvailable(
-                                    challengerStates =
-                                        result.unavailableChallengers.map { it.toChallengerState() }
-                                )
-                            )
-                        }
-
-                        is SendChallengeResult.Failure -> {
-                            // TODO:
-                        }
-                    }
-                }
-                .onFailure { onEvent(TavernEvent.ShowChallengeSendFailed) }
+        val result = sendChallengeUseCase(instigator = instigator, invitees = invitees)
+        return when (result) {
+            is SendChallengeResult.Success -> null
+            is SendChallengeResult.NotEnoughChallengersAvailable ->
+                TavernEvent.NotEnoughChallengersAvailable(
+                    challengerStates = result.unavailableChallengers.map { it.toChallengerState() }
+                )
+            is SendChallengeResult.Failure -> TavernEvent.ShowChallengeSendFailed
         }
     }
 

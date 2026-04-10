@@ -56,10 +56,12 @@ class TavernScreenViewModel(
     }
 
     fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
-        challengeHandler.sendChallenges(
-            userTraveler = userTraveler,
-            selectedTravelerStates = selectedTravelerStates,
-        )
+        viewModelScope.launch {
+            challengeHandler.sendChallenges(
+                userTraveler = userTraveler,
+                selectedTravelerStates = selectedTravelerStates,
+            )
+        }
     }
 
     fun onAcceptChallenge(challengeState: ChallengeState) {

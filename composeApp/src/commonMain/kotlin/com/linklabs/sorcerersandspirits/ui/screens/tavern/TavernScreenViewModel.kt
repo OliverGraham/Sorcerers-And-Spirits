@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
@@ -19,7 +19,6 @@ import kotlinx.coroutines.launch
 
 class TavernScreenViewModel(
     private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
-    private val getUserIdUseCase: GetUserIdUseCase,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
 ) : ViewModel() {
@@ -42,11 +41,11 @@ class TavernScreenViewModel(
     fun onActionButtonClick() {}
 
     fun showChallengeDialog() {
-        challengeHandler.updateDialogVisibility(isVisible = true)
+        updateChallengeDialogVisibility(isVisible = true)
     }
 
     fun hideChallengeDialog() {
-        challengeHandler.updateDialogVisibility(isVisible = false)
+        updateChallengeDialogVisibility(isVisible = false)
     }
 
     fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
@@ -59,46 +58,44 @@ class TavernScreenViewModel(
     }
 
     fun onAcceptChallenge(challengeState: ChallengeState) {
-        viewModelScope.launch {
-            val userId = getUserIdUseCase() ?: return@launch
-
-            challengeHandler.acceptChallenge(challengeState = challengeState, userId = userId)
-        }
+        updateChallengeStatus(
+            challengeId = challengeState.challengeId,
+            status = ChallengerStatus.Accepted,
+        )
     }
 
     fun onDeclineChallenge(challengeState: ChallengeState) {
-        viewModelScope.launch {
-            val userId = getUserIdUseCase() ?: return@launch
+        updateChallengeStatus(
+            challengeId = challengeState.challengeId,
+            status = ChallengerStatus.Declined,
+        )
+    }
 
-            challengeHandler.declineChallenge(challengeState = challengeState, userId = userId)
+    private fun updateChallengeStatus(challengeId: String, status: ChallengerStatus) {
+        viewModelScope.launch {
+            challengeHandler.updateChallengerStatus(challengeId = challengeId, status = status)
+            updateChallengeDialogVisibility(isVisible = false)
         }
     }
 
     private suspend fun collectScreenState() {
         getTavernDataFlowUseCase().filterNotNull().collect { data ->
-            val currentUiChallenge = loadedUiState?.challenge
-
-            val result =
-                challengeHandler.handleChallengeUpdate(
-                    previousChallengeState = currentUiChallenge,
+            val challengeState =
+                challengeHandler.handleChallengeUpdateAndGetState(
+                    previousChallengeState = loadedUiState?.challenge,
                     updatedChallenge = data.challenge,
                     userId = data.profile.userId,
                 )
 
-            val tavernState =
-                data.travelers.toTavernState(userId = data.profile.userId) ?: return@collect
+            if (challengeState?.navigateToArena == true) {
+                _eventChannelFlow.send(
+                    element = TavernEvent.NavigateToArena(arenaId = challengeState.challengeId)
+                )
+            } else {
+                val tavernState = data.toState(challengeState = challengeState) ?: return@collect
 
-            val updatedTavernState =
-                if (result != null) {
-                    if (result.tavernEvent != null) {
-                        _eventChannelFlow.send(element = result.tavernEvent)
-                    }
-                    tavernState.copy(challenge = result.challengeState)
-                } else {
-                    tavernState
-                }
-
-            _uiStateFlow.value = UiState.Loaded(data = updatedTavernState)
+                _uiStateFlow.value = UiState.Loaded(data = tavernState)
+            }
         }
     }
 
@@ -112,13 +109,20 @@ class TavernScreenViewModel(
                 ),
             sendChallengeUseCase = sendChallengeUseCase,
             updateChallengerStatusUseCase = updateChallengerStatusUseCase,
-            updateTavernState = { transform -> _uiStateFlow.updateLoaded(transform = transform) },
         )
 
     private fun declineChallenge() {
         val currentChallengeState = loadedUiState?.challenge ?: return
 
         onDeclineChallenge(challengeState = currentChallengeState)
+    }
+
+    private fun updateChallengeDialogVisibility(isVisible: Boolean) {
+        _uiStateFlow.updateLoaded { tavernState ->
+            val challenge = tavernState.challenge ?: return@updateLoaded tavernState
+
+            tavernState.copy(challenge = challenge.copy(showChallengeDialog = isVisible))
+        }
     }
 
     private fun updateChallengeStateSeconds(secondsRemaining: Int?) {

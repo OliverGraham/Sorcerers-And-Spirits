@@ -7,7 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCa
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallenger
@@ -17,7 +16,6 @@ internal class ChallengeHandler(
     private val challengeTimer: ChallengeTimer,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
-    private val updateTavernState: ((TavernState) -> TavernState) -> Unit,
 ) {
 
     suspend fun sendChallenges(
@@ -43,122 +41,56 @@ internal class ChallengeHandler(
         }
     }
 
-    fun handleChallengeUpdate(
+    // TODO: Update comments
+    fun handleChallengeUpdateAndGetState(
         previousChallengeState: ChallengeState?,
         updatedChallenge: Challenge?,
         userId: String,
-    ): HandleChallengeUpdateResult? {
-        if (updatedChallenge == null) return null
+    ): ChallengeState? =
+        when {
+            // if previous is null and new is not, (show , start timer)
+            previousChallengeState == null && updatedChallenge != null -> {
+                // TODO: Currently, this will open the dialog for the instigator - which is GOOD
+                //  But the Dialog UI needs to be updated for instigator vs others
 
-        val userChallenger =
-            updatedChallenge.challengers[userId]
-                ?: run {
-                    stopTimer()
-                    clearChallenge()
-                    return null
-                }
-
-        val isPendingInvitee = userChallenger.status == ChallengerStatus.Pending
-
-        val challengeState =
-            updatedChallenge.toChallengeState(
-                showChallengeDialog =
-                    when {
-                        isPendingInvitee -> true
-                        previousChallengeState?.showChallengeDialog == true -> true
-                        else -> false
-                    },
-                secondsRemaining =
-                    when {
-                        !isPendingInvitee -> null
-                        challengeTimer.isTimerCurrentlyRunning() ->
-                            previousChallengeState?.secondsRemaining
-                        else -> COUNTDOWN_SECONDS
-                    },
-            )
-
-        val shouldNavigateToArena =
-            userChallenger.status == ChallengerStatus.Accepted && updatedChallenge.isReadyToStart()
-
-        val tavernEvent =
-            when {
-                shouldNavigateToArena -> {
-                    stopTimer()
-                    updateDialogVisibility(isVisible = false)
-
-                    TavernEvent.NavigateToArena(arenaId = updatedChallenge.challengeId)
-                }
-
-                isPendingInvitee && !challengeTimer.isTimerCurrentlyRunning() -> {
-                    startTimer()
-                    null
-                }
-
-                !isPendingInvitee -> {
-                    stopTimer()
-                    null
-                }
-                else -> null
+                val isUserInstigator =
+                    updatedChallenge.getUserChallenger(userId = userId)?.isInstigator == true
+                challengeTimer.startTimer(callOnTimerExpiration = !isUserInstigator)
+                updatedChallenge.toChallengeState(
+                    showChallengeDialog = true,
+                    secondsRemaining = COUNTDOWN_SECONDS,
+                )
+            }
+            // if previous is not null and new is null, (hide dialog, clear seconds if needed, etc.)
+            previousChallengeState != null && updatedChallenge == null -> {
+                challengeTimer.stopTimer()
+                // clearChallenge()
+                null
             }
 
-        return HandleChallengeUpdateResult(
-            challengeState = challengeState,
-            tavernEvent = tavernEvent,
-        )
-    }
+            // if previous is not null and new is not null, (show dialog if old is showing it, copy
+            // seconds)
+            previousChallengeState != null && updatedChallenge != null -> {
+                val isChallengeReadyToStart = updatedChallenge.isReadyToStart(userId = userId)
 
-    suspend fun acceptChallenge(challengeState: ChallengeState, userId: String) {
-        updateChallengerStatus(
-            challengeId = challengeState.challengeId,
-            userId = userId,
-            status = ChallengerStatus.Accepted,
-        )
-    }
-
-    suspend fun declineChallenge(challengeState: ChallengeState, userId: String) {
-        updateChallengerStatus(
-            challengeId = challengeState.challengeId,
-            userId = userId,
-            status = ChallengerStatus.Declined,
-        )
-    }
-
-    fun updateDialogVisibility(isVisible: Boolean) {
-        updateTavernState { tavernState ->
-            tavernState.updateChallengeDialogVisibility(isVisible = isVisible)
+                if (isChallengeReadyToStart) {
+                    updatedChallenge.toChallengeState(isReadyToStart = true)
+                } else {
+                    updatedChallenge.toChallengeState(
+                        showChallengeDialog = previousChallengeState.showChallengeDialog,
+                        secondsRemaining = previousChallengeState.secondsRemaining,
+                    )
+                }
+            }
+            else -> null
         }
-    }
 
-    fun clearChallenge() {
-        updateTavernState { tavernState -> tavernState.copy(challenge = null) }
-    }
-
-    private fun startTimer() {
-        challengeTimer.startTimer()
-    }
-
-    private fun stopTimer() {
+    suspend fun updateChallengerStatus(challengeId: String, status: ChallengerStatus) {
         challengeTimer.stopTimer()
+        updateChallengerStatusUseCase(challengeId = challengeId, status = status)
     }
 
-    private suspend fun updateChallengerStatus(
-        challengeId: String,
-        userId: String,
-        status: ChallengerStatus,
-    ) {
-        stopTimer()
-
-        updateChallengerStatusUseCase(challengeId = challengeId, userId = userId, status = status)
-
-        updateDialogVisibility(isVisible = false)
-    }
-
-    private fun TavernState.updateChallengeDialogVisibility(isVisible: Boolean): TavernState {
-        val challenge = challenge ?: return this
-
-        return copy(challenge = challenge.copy(showChallengeDialog = isVisible))
-    }
-
+    // TODO: Move seconds somewhere?
     private companion object {
         private const val COUNTDOWN_SECONDS = 60
     }

@@ -13,7 +13,7 @@ internal class ChallengeTimer(
 ) {
     private var timerJob: Job? = null
 
-    fun startTimer() {
+    fun startTimer(callOnTimerExpiration: Boolean = true) {
         stopTimer()
 
         timerJob =
@@ -27,18 +27,16 @@ internal class ChallengeTimer(
                     secondsRemaining--
                 }
 
-                onTimerExpiration()
+                if (callOnTimerExpiration) {
+                    onTimerExpiration()
+                }
             }
     }
 
     fun stopTimer() {
         timerJob?.cancel()
         timerJob = null
-
-        onTimerTick(null)
     }
-
-    fun isTimerCurrentlyRunning() = timerJob?.isActive == true
 
     companion object {
         private const val COUNTDOWN_SECONDS = 60

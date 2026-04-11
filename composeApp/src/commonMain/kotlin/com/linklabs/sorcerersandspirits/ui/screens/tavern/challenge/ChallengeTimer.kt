@@ -18,7 +18,7 @@ internal class ChallengeTimer(
 
         timerJob =
             coroutineScope.launch {
-                var secondsRemaining = COUNTDOWN_SECONDS
+                var secondsRemaining = SIXTY_SECONDS
 
                 while (secondsRemaining >= 0) {
                     onTimerTick(secondsRemaining)
@@ -39,6 +39,6 @@ internal class ChallengeTimer(
     }
 
     companion object {
-        private const val COUNTDOWN_SECONDS = 60
+        const val SIXTY_SECONDS = 60
     }
 }

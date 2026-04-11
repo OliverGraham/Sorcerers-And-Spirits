@@ -41,47 +41,21 @@ internal class ChallengeHandler(
         }
     }
 
-    // TODO: Update comments
     fun handleChallengeUpdateAndGetState(
         previousChallengeState: ChallengeState?,
         updatedChallenge: Challenge?,
         userId: String,
     ): ChallengeState? =
         when {
-            // if previous is null and new is not, (show , start timer)
-            previousChallengeState == null && updatedChallenge != null -> {
-                // TODO: Currently, this will open the dialog for the instigator - which is GOOD
-                //  But the Dialog UI needs to be updated for instigator vs others
-
-                val isUserInstigator =
-                    updatedChallenge.getUserChallenger(userId = userId)?.isInstigator == true
-                challengeTimer.startTimer(callOnTimerExpiration = !isUserInstigator)
-                updatedChallenge.toChallengeState(
-                    showChallengeDialog = true,
-                    secondsRemaining = COUNTDOWN_SECONDS,
+            previousChallengeState == null && updatedChallenge != null ->
+                handleChallengeStart(updatedChallenge = updatedChallenge, userId = userId)
+            previousChallengeState != null && updatedChallenge != null ->
+                handleChallengeUpdate(
+                    previousChallengeState = previousChallengeState,
+                    updatedChallenge = updatedChallenge,
+                    userId = userId,
                 )
-            }
-            // if previous is not null and new is null, (hide dialog, clear seconds if needed, etc.)
-            previousChallengeState != null && updatedChallenge == null -> {
-                challengeTimer.stopTimer()
-                // clearChallenge()
-                null
-            }
-
-            // if previous is not null and new is not null, (show dialog if old is showing it, copy
-            // seconds)
-            previousChallengeState != null && updatedChallenge != null -> {
-                val isChallengeReadyToStart = updatedChallenge.isReadyToStart(userId = userId)
-
-                if (isChallengeReadyToStart) {
-                    updatedChallenge.toChallengeState(isReadyToStart = true)
-                } else {
-                    updatedChallenge.toChallengeState(
-                        showChallengeDialog = previousChallengeState.showChallengeDialog,
-                        secondsRemaining = previousChallengeState.secondsRemaining,
-                    )
-                }
-            }
+            previousChallengeState != null && updatedChallenge == null -> handleChallengeFinish()
             else -> null
         }
 
@@ -90,8 +64,36 @@ internal class ChallengeHandler(
         updateChallengerStatusUseCase(challengeId = challengeId, status = status)
     }
 
-    // TODO: Move seconds somewhere?
-    private companion object {
-        private const val COUNTDOWN_SECONDS = 60
+    private fun handleChallengeStart(updatedChallenge: Challenge, userId: String): ChallengeState {
+        val isUserInstigator =
+            updatedChallenge.getUserChallenger(userId = userId)?.isInstigator == true
+        challengeTimer.startTimer(callOnTimerExpiration = !isUserInstigator)
+
+        return updatedChallenge.toChallengeState(
+            showChallengeDialog = true,
+            secondsRemaining = ChallengeTimer.SIXTY_SECONDS,
+        )
+    }
+
+    private fun handleChallengeUpdate(
+        previousChallengeState: ChallengeState,
+        updatedChallenge: Challenge,
+        userId: String,
+    ): ChallengeState {
+        val isChallengeReadyToStart = updatedChallenge.isReadyToStart(userId = userId)
+
+        return if (isChallengeReadyToStart) {
+            updatedChallenge.toChallengeState(isReadyToStart = true)
+        } else {
+            updatedChallenge.toChallengeState(
+                showChallengeDialog = previousChallengeState.showChallengeDialog,
+                secondsRemaining = previousChallengeState.secondsRemaining,
+            )
+        }
+    }
+
+    private fun handleChallengeFinish(): ChallengeState? {
+        challengeTimer.stopTimer()
+        return null
     }
 }

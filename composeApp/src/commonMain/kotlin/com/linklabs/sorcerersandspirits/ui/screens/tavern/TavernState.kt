@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 
@@ -11,7 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
-    val challenge: ChallengeState? = null,
+    val challenge: ChallengeState?,
 )
 
 @Immutable
@@ -23,6 +24,18 @@ data class TravelerState(
 )
 
 @Immutable
+data class ChallengeState(
+    val challengeId: String,
+    val challengerStates: List<ChallengerState>,
+    val showChallengeDialog: Boolean = false,
+    val secondsRemaining: Int? = null,
+    val navigateToArena: Boolean = false,
+) {
+    val sender: ChallengerState? =
+        challengerStates.find { challengerState -> challengerState.isInstigator }
+}
+
+@Immutable
 data class ChallengerState(
     val userId: String,
     val displayName: String,
@@ -30,19 +43,9 @@ data class ChallengerState(
     val status: ChallengerStatus,
 )
 
-@Immutable
-data class ChallengeState(
-    val challengeId: String,
-    val challengerStates: List<ChallengerState>,
-    val showChallengeDialog: Boolean = false,
-    val secondsRemaining: Int? = null,
-) {
-    val sender: ChallengerState? =
-        challengerStates.find { challengerState -> challengerState.isInstigator }
-}
-
-internal fun List<Traveler>.toTavernState(userId: String?): TavernState? {
-    val (userTravelers, otherTravelers) = partition { traveler -> traveler.userId == userId }
+internal fun TavernData.toState(challengeState: ChallengeState?): TavernState? {
+    val (userTravelers, otherTravelers) =
+        travelers.partition { traveler -> traveler.userId == profile.userId }
 
     val userTraveler =
         userTravelers.firstOrNull()?.toTravelerState(isThisTravelerTheUser = true) ?: return null
@@ -53,6 +56,7 @@ internal fun List<Traveler>.toTavernState(userId: String?): TavernState? {
             otherTravelers.map { traveler ->
                 traveler.toTravelerState(isThisTravelerTheUser = false)
             },
+        challenge = challengeState,
     )
 }
 
@@ -73,14 +77,16 @@ internal fun TravelerState.toChallenger(isInstigator: Boolean, status: Challenge
     )
 
 internal fun Challenge.toChallengeState(
-    showChallengeDialog: Boolean,
+    showChallengeDialog: Boolean = false,
     secondsRemaining: Int? = null,
+    isReadyToStart: Boolean = false,
 ) =
     ChallengeState(
         challengeId = challengeId,
         challengerStates = challengers.values.map { challenger -> challenger.toChallengerState() },
         showChallengeDialog = showChallengeDialog,
         secondsRemaining = secondsRemaining,
+        navigateToArena = isReadyToStart,
     )
 
 internal fun Challenger.toChallengerState() =

@@ -6,7 +6,27 @@ data class Challenge(
     val challengers: Map<String, Challenger>,
     val startTimeMillis: Long? = null,
     val endTimeMillis: Long? = null,
-)
+) {
+    fun isReadyToStart(
+        userId: String,
+        minimumNumberOfChallengers: Int = MINIMUM_CHALLENGERS,
+    ): Boolean {
+        val hasUserChallengerAccepted = challengers[userId]?.status == ChallengerStatus.Accepted
+        if (!hasUserChallengerAccepted) return false
+
+        val activeChallengers =
+            challengers.values.filterNot { it.status == ChallengerStatus.Declined }
+
+        return activeChallengers.size >= minimumNumberOfChallengers &&
+            activeChallengers.all { it.status == ChallengerStatus.Accepted }
+    }
+
+    fun getUserChallenger(userId: String) = challengers[userId]
+
+    companion object {
+        const val MINIMUM_CHALLENGERS = 2
+    }
+}
 
 data class Challenger(
     val userId: String,

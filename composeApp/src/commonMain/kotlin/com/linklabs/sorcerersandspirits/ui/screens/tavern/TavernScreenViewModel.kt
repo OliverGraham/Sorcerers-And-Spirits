@@ -62,18 +62,12 @@ class TavernScreenViewModel(
         }
     }
 
-    fun onAcceptChallenge(challengeState: ChallengeState) {
-        updateChallengeStatus(
-            challengeId = challengeState.challengeId,
-            status = ChallengerStatus.Accepted,
-        )
+    fun onAcceptChallenge(challengeId: String) {
+        updateChallengeStatus(challengeId = challengeId, status = ChallengerStatus.Accepted)
     }
 
-    fun onDeclineChallenge(challengeState: ChallengeState) {
-        updateChallengeStatus(
-            challengeId = challengeState.challengeId,
-            status = ChallengerStatus.Declined,
-        )
+    fun onDeclineChallenge(challengeId: String) {
+        updateChallengeStatus(challengeId = challengeId, status = ChallengerStatus.Declined)
     }
 
     private suspend fun updateScreenState(data: TavernData) {
@@ -108,9 +102,9 @@ class TavernScreenViewModel(
         )
 
     private fun declineChallenge() {
-        val currentChallengeState = loadedUiState?.challenge ?: return
+        val challengeId = loadedUiState?.challenge?.challengeId ?: return
 
-        onDeclineChallenge(challengeState = currentChallengeState)
+        onDeclineChallenge(challengeId = challengeId)
     }
 
     private fun updateChallengeStatus(challengeId: String, status: ChallengerStatus) {
@@ -128,7 +122,7 @@ class TavernScreenViewModel(
         }
     }
 
-    private fun updateChallengeStateSeconds(secondsRemaining: Int?) {
+    private fun updateChallengeStateSeconds(secondsRemaining: Int) {
         _uiStateFlow.updateLoaded { tavernState ->
             val challenge = tavernState.challenge ?: return@updateLoaded tavernState
 

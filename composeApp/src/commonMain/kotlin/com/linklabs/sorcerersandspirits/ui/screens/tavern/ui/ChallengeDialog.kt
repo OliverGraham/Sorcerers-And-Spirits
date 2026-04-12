@@ -221,7 +221,7 @@ private fun ChallengeDialogRecipientPreview() {
                                 status = ChallengerStatus.Pending,
                             ),
                         ),
-                    secondsRemaining = 45,
+                    secondsRemaining = 9,
                     showChallengeDialog = true,
                     isThisUserTheInstigator = false,
                 )

@@ -21,7 +21,7 @@ data class Challenge(
             activeChallengers.all { it.status == ChallengerStatus.Accepted }
     }
 
-    fun getUserChallenger(userId: String) = challengers[userId]
+    fun isUserInstigator(userId: String) = challengers[userId]?.isInstigator == true
 
     companion object {
         const val MINIMUM_CHALLENGERS = 2

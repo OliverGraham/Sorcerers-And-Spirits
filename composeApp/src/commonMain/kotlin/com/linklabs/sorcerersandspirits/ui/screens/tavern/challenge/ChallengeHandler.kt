@@ -46,19 +46,12 @@ internal class ChallengeHandler(
         previousChallengeState: ChallengeState?,
         updatedChallenge: Challenge?,
         userId: String,
-    ): ChallengeState? {
-        val isUserInstigator =
-            updatedChallenge?.getUserChallenger(userId = userId)?.isInstigator == true
-
-        return when {
+    ): ChallengeState? =
+        when {
             previousChallengeState == null && updatedChallenge != null ->
-                handleChallengeStart(
-                    isUserInstigator = isUserInstigator,
-                    updatedChallenge = updatedChallenge,
-                )
+                handleChallengeStart(userId = userId, updatedChallenge = updatedChallenge)
             previousChallengeState != null && updatedChallenge != null ->
                 handleChallengeUpdate(
-                    isUserInstigator = isUserInstigator,
                     previousChallengeState = previousChallengeState,
                     updatedChallenge = updatedChallenge,
                     userId = userId,
@@ -66,17 +59,14 @@ internal class ChallengeHandler(
             previousChallengeState != null && updatedChallenge == null -> handleChallengeFinish()
             else -> null
         }
-    }
 
     suspend fun updateChallengerStatus(challengeId: String, status: ChallengerStatus) {
         challengeTimer.stopTimer()
         updateChallengerStatusUseCase(challengeId = challengeId, status = status)
     }
 
-    private fun handleChallengeStart(
-        isUserInstigator: Boolean,
-        updatedChallenge: Challenge,
-    ): ChallengeState {
+    private fun handleChallengeStart(userId: String, updatedChallenge: Challenge): ChallengeState {
+        val isUserInstigator = updatedChallenge.isUserInstigator(userId = userId)
         challengeTimer.startTimer(callOnTimerExpiration = !isUserInstigator)
 
         return updatedChallenge.toChallengeState(
@@ -87,11 +77,11 @@ internal class ChallengeHandler(
     }
 
     private fun handleChallengeUpdate(
-        isUserInstigator: Boolean,
         previousChallengeState: ChallengeState,
         updatedChallenge: Challenge,
         userId: String,
     ): ChallengeState {
+        val isUserInstigator = updatedChallenge.isUserInstigator(userId = userId)
         val isChallengeReadyToStart = updatedChallenge.isReadyToStart(userId = userId)
 
         return if (isChallengeReadyToStart) {

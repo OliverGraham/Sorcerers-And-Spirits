@@ -20,10 +20,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
+import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_awaiting_responses
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_button_accept
@@ -44,28 +47,31 @@ internal fun ChallengeDialog(challengeState: ChallengeState, modifier: Modifier 
             tonalElevation = AlertDialogDefaults.TonalElevation,
             color = AlertDialogDefaults.containerColor,
         ) {
-            Column(
-                modifier = Modifier.padding(all = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(space = 16.dp),
-            ) {
-                val isThisUserTheInstigator = challengeState.isThisUserTheInstigator
-                HeaderSection(
-                    formattedTimeRemaining = challengeState.formattedTimeRemaining,
-                    isLessThanTenSeconds = challengeState.isLessThanTenSeconds,
-                    instigatorDisplayName =
-                        challengeState.instigator?.displayName
-                            ?: stringResource(
-                                resource = Res.string.challenge_dialog_default_instigator
-                            ),
-                    isThisUserTheInstigator = isThisUserTheInstigator,
-                )
+            DialogContent(challengeState = challengeState)
+        }
+    }
+}
 
-                ChallengersList(challengerStates = challengeState.challengerStates)
+@Composable
+private fun DialogContent(challengeState: ChallengeState, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(all = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 16.dp),
+    ) {
+        val isThisUserTheInstigator = challengeState.isThisUserTheInstigator
+        HeaderSection(
+            formattedTimeRemaining = challengeState.formattedTimeRemaining,
+            isLessThanTenSeconds = challengeState.isLessThanTenSeconds,
+            instigatorDisplayName =
+                challengeState.instigator?.displayName
+                    ?: stringResource(resource = Res.string.challenge_dialog_default_instigator),
+            isThisUserTheInstigator = isThisUserTheInstigator,
+        )
 
-                if (!isThisUserTheInstigator) {
-                    ActionButtons(challengeId = challengeState.challengeId)
-                }
-            }
+        ChallengersList(challengerStates = challengeState.challengerStates)
+
+        if (!isThisUserTheInstigator) {
+            ActionButtons(challengeId = challengeState.challengeId)
         }
     }
 }
@@ -144,7 +150,8 @@ private fun ChallengerInformation(challengerState: ChallengerState, modifier: Mo
 private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
+        horizontalArrangement =
+            Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val onDeclineChallenge = TavernActionsProvider.current.onDeclineChallenge
@@ -156,5 +163,68 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
         Button(onClick = { onAcceptChallenge(challengeId) }) {
             Text(text = stringResource(resource = Res.string.challenge_dialog_button_accept))
         }
+    }
+}
+
+// TODO: Update preview data
+@Preview
+@Composable
+private fun ChallengeDialogInstigatorPreview() {
+    SorcerersAndSpiritsTheme {
+        ChallengeDialog(
+            challengeState =
+                ChallengeState(
+                    challengeId = "preview_challenge",
+                    challengerStates =
+                        listOf(
+                            ChallengerState(
+                                userId = "user_1",
+                                displayName = "Merlin",
+                                isInstigator = true,
+                                status = ChallengerStatus.Accepted,
+                            ),
+                            ChallengerState(
+                                userId = "user_2",
+                                displayName = "Morgana",
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                        ),
+                    secondsRemaining = 45,
+                    showChallengeDialog = true,
+                    isThisUserTheInstigator = true,
+                )
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun ChallengeDialogRecipientPreview() {
+    SorcerersAndSpiritsTheme {
+        ChallengeDialog(
+            challengeState =
+                ChallengeState(
+                    challengeId = "preview_challenge",
+                    challengerStates =
+                        listOf(
+                            ChallengerState(
+                                userId = "user_1",
+                                displayName = "Merlin",
+                                isInstigator = true,
+                                status = ChallengerStatus.Accepted,
+                            ),
+                            ChallengerState(
+                                userId = "user_2",
+                                displayName = "Morgana (You)",
+                                isInstigator = false,
+                                status = ChallengerStatus.Pending,
+                            ),
+                        ),
+                    secondsRemaining = 45,
+                    showChallengeDialog = true,
+                    isThisUserTheInstigator = false,
+                )
+        )
     }
 }

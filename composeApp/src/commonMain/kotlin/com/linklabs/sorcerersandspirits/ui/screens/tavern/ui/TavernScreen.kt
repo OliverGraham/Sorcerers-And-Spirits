@@ -54,10 +54,10 @@ internal fun TavernScreen(
             TavernActions(
                 onActionButtonClick = viewModel::onActionButtonClick,
                 onSendChallengerNotifications = viewModel::onSendChallenge,
-                onAcceptArenaChallenge = viewModel::onAcceptChallenge,
-                onDeclineArenaChallenge = viewModel::onDeclineChallenge,
-                onShowArenaChallengeDialog = viewModel::showChallengeDialog,
-                onHideArenaChallengeDialog = viewModel::hideChallengeDialog,
+                onAcceptChallenge = viewModel::onAcceptChallenge,
+                onDeclineChallenge = viewModel::onDeclineChallenge,
+                onShowChallengeDialog = viewModel::showChallengeDialog,
+                onHideChallengeDialog = viewModel::hideChallengeDialog,
             )
     ) {
         viewModel.eventChannelFlow.collectEvents(
@@ -69,7 +69,6 @@ internal fun TavernScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Modifier) {
     when (uiState) {
@@ -84,41 +83,17 @@ private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Mod
 @Composable
 private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Modifier) {
     val scaffoldState = rememberBottomSheetScaffoldState()
-    val arenaChallengeState = tavernState.challenge
+    val challengeState = tavernState.challenge
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
         sheetDragHandle = {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(all = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                ChallengeDialogHandle(
-                    showHandle = arenaChallengeState != null,
-                    contentAlignment = Alignment.Start,
-                )
-
-                val isExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded
-                AnimatedContent(
-                    targetState =
-                        if (isExpanded) Res.drawable.ic_martini else Res.drawable.ic_up_arrow,
-                    label = "DragHandleIcon",
-                ) { targetIcon ->
-                    Icon(
-                        painter = painterResource(resource = targetIcon),
-                        contentDescription = null,
-                        modifier = Modifier.size(size = 36.dp),
-                    )
-                }
-
-                ChallengeDialogHandle(
-                    showHandle = arenaChallengeState != null,
-                    contentAlignment = Alignment.End,
-                )
-            }
+            SheetDragHandle(
+                showChallengeHandle = challengeState != null,
+                isExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded,
+            )
         },
         sheetContent = {
             TheBar(
@@ -130,8 +105,36 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         ScaffoldContent(padding = padding)
     }
 
-    if (arenaChallengeState != null && arenaChallengeState.showChallengeDialog) {
-        ArenaChallengeDialog(arenaChallenge = arenaChallengeState)
+    if (challengeState?.showChallengeDialog == true) {
+        ChallengeDialog(challengeState = challengeState)
+    }
+}
+
+@Composable
+private fun SheetDragHandle(
+    isExpanded: Boolean,
+    showChallengeHandle: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier.fillMaxWidth().padding(all = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        ChallengeDialogHandle(showHandle = showChallengeHandle, contentAlignment = Alignment.Start)
+
+        AnimatedContent(
+            targetState = if (isExpanded) Res.drawable.ic_martini else Res.drawable.ic_up_arrow,
+            label = "DragHandleIcon",
+        ) { targetIcon ->
+            Icon(
+                painter = painterResource(resource = targetIcon),
+                contentDescription = null,
+                modifier = Modifier.size(size = 36.dp),
+            )
+        }
+
+        ChallengeDialogHandle(showHandle = showChallengeHandle, contentAlignment = Alignment.End)
     }
 }
 
@@ -169,7 +172,7 @@ private fun RowScope.ChallengeDialogHandle(
 ) {
     AnimatedVisibility(visible = showHandle, modifier = modifier.weight(weight = 1f)) {
         IconButton(
-            onClick = LocalTavernActions.current.onShowArenaChallengeDialog,
+            onClick = LocalTavernActions.current.onShowChallengeDialog,
             modifier = Modifier.fillMaxWidth().wrapContentWidth(align = contentAlignment),
         ) {
             Icon(

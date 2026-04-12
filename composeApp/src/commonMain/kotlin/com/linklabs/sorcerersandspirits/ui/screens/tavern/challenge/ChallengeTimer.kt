@@ -1,5 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge
 
+import com.linklabs.sorcerersandspirits.domain.utilities.ONE_SECOND
+import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -8,7 +10,7 @@ import kotlinx.coroutines.launch
 // TODO: Can make more generic and reuse for Arena
 internal class ChallengeTimer(
     private val coroutineScope: CoroutineScope,
-    private val onTimerTick: (Int?) -> Unit,
+    private val onTimerTick: (Int) -> Unit,
     private val onTimerExpiration: () -> Unit,
 ) {
     private var timerJob: Job? = null
@@ -23,7 +25,7 @@ internal class ChallengeTimer(
                 while (secondsRemaining >= 0) {
                     onTimerTick(secondsRemaining)
 
-                    delay(timeMillis = 1000L)
+                    delay(timeMillis = ONE_SECOND)
                     secondsRemaining--
                 }
 
@@ -36,9 +38,5 @@ internal class ChallengeTimer(
     fun stopTimer() {
         timerJob?.cancel()
         timerJob = null
-    }
-
-    companion object {
-        const val SIXTY_SECONDS = 60
     }
 }

@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
+import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
 
 @Immutable
 data class TavernState(
@@ -27,12 +28,19 @@ data class TravelerState(
 data class ChallengeState(
     val challengeId: String,
     val challengerStates: List<ChallengerState>,
-    val showChallengeDialog: Boolean = false,
-    val secondsRemaining: Int? = null,
-    val navigateToArena: Boolean = false,
+    val secondsRemaining: Int,
+    val showChallengeDialog: Boolean,
+    val isThisUserTheInstigator: Boolean,
+    val navigateToArena: Boolean = false, // TODO: Move this out of state?
 ) {
-    val sender: ChallengerState? =
+    val instigator: ChallengerState? =
         challengerStates.find { challengerState -> challengerState.isInstigator }
+
+    private val minutes = secondsRemaining / SIXTY_SECONDS
+    private val seconds = secondsRemaining % SIXTY_SECONDS
+
+    val formattedTimeRemaining = "$minutes:${seconds.toString().padStart(2, '0')}"
+    val isLessThanTenSeconds = secondsRemaining <= 10
 }
 
 @Immutable
@@ -77,13 +85,15 @@ internal fun TravelerState.toChallenger(isInstigator: Boolean, status: Challenge
     )
 
 internal fun Challenge.toChallengeState(
+    isUserInstigator: Boolean,
+    secondsRemaining: Int = 0,
     showChallengeDialog: Boolean = false,
-    secondsRemaining: Int? = null,
     isReadyToStart: Boolean = false,
 ) =
     ChallengeState(
         challengeId = challengeId,
         challengerStates = challengers.values.map { challenger -> challenger.toChallengerState() },
+        isThisUserTheInstigator = isUserInstigator,
         showChallengeDialog = showChallengeDialog,
         secondsRemaining = secondsRemaining,
         navigateToArena = isReadyToStart,

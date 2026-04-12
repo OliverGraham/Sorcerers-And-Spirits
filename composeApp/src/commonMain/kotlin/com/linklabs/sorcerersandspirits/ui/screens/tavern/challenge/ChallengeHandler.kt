@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
+import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
@@ -48,7 +49,7 @@ internal class ChallengeHandler(
     ): ChallengeState? =
         when {
             previousChallengeState == null && updatedChallenge != null ->
-                handleChallengeStart(updatedChallenge = updatedChallenge, userId = userId)
+                handleChallengeStart(userId = userId, updatedChallenge = updatedChallenge)
             previousChallengeState != null && updatedChallenge != null ->
                 handleChallengeUpdate(
                     previousChallengeState = previousChallengeState,
@@ -64,14 +65,14 @@ internal class ChallengeHandler(
         updateChallengerStatusUseCase(challengeId = challengeId, status = status)
     }
 
-    private fun handleChallengeStart(updatedChallenge: Challenge, userId: String): ChallengeState {
-        val isUserInstigator =
-            updatedChallenge.getUserChallenger(userId = userId)?.isInstigator == true
+    private fun handleChallengeStart(userId: String, updatedChallenge: Challenge): ChallengeState {
+        val isUserInstigator = updatedChallenge.isUserInstigator(userId = userId)
         challengeTimer.startTimer(callOnTimerExpiration = !isUserInstigator)
 
         return updatedChallenge.toChallengeState(
+            isUserInstigator = isUserInstigator,
+            secondsRemaining = SIXTY_SECONDS,
             showChallengeDialog = true,
-            secondsRemaining = ChallengeTimer.SIXTY_SECONDS,
         )
     }
 
@@ -80,12 +81,17 @@ internal class ChallengeHandler(
         updatedChallenge: Challenge,
         userId: String,
     ): ChallengeState {
+        val isUserInstigator = updatedChallenge.isUserInstigator(userId = userId)
         val isChallengeReadyToStart = updatedChallenge.isReadyToStart(userId = userId)
 
         return if (isChallengeReadyToStart) {
-            updatedChallenge.toChallengeState(isReadyToStart = true)
+            updatedChallenge.toChallengeState(
+                isUserInstigator = isUserInstigator,
+                isReadyToStart = true,
+            )
         } else {
             updatedChallenge.toChallengeState(
+                isUserInstigator = isUserInstigator,
                 showChallengeDialog = previousChallengeState.showChallengeDialog,
                 secondsRemaining = previousChallengeState.secondsRemaining,
             )

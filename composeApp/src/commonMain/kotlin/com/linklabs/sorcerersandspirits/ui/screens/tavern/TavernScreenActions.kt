@@ -7,10 +7,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 internal data class TavernActions(
     val onActionButtonClick: () -> Unit = {},
     val onSendChallengerNotifications: (TravelerState, Set<TravelerState>) -> Unit = { _, _ -> },
-    val onAcceptArenaChallenge: (ChallengeState) -> Unit = {},
-    val onDeclineArenaChallenge: (ChallengeState) -> Unit = {},
-    val onShowArenaChallengeDialog: () -> Unit = {},
-    val onHideArenaChallengeDialog: () -> Unit = {},
+    val onAcceptChallenge: (challengeId: String) -> Unit = {},
+    val onDeclineChallenge: (challengeId: String) -> Unit = {},
+    val onShowChallengeDialog: () -> Unit = {},
+    val onHideChallengeDialog: () -> Unit = {},
 )
 
 internal val LocalTavernActions = staticCompositionLocalOf { TavernActions() }

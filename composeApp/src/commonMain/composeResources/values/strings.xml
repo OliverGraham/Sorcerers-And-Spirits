@@ -6,4 +6,11 @@
     <string name="sign_in_label_name">Name</string>
     <string name="sign_in_button_random">Random</string>
     <string name="sign_in_button_accept">Accept</string>
+
+    <string name="challenge_dialog_default_instigator">A Traveler</string>
+    <string name="challenge_dialog_title">Do battle in The Arena</string>
+    <string name="challenge_dialog_awaiting_responses">You are awaiting responses</string>
+    <string name="challenge_dialog_challenged_by">%s has challenged you!</string>
+    <string name="challenge_dialog_button_decline">Decline</string>
+    <string name="challenge_dialog_button_accept">Accept Challenge</string>
 </resources>

@@ -73,7 +73,7 @@ private fun BarFolk(
     updateSelectedTravelers: (Set<TravelerState>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val showDialog = TavernActionsProvider.current.onShowArenaChallengeDialog
+    val showDialog = TavernActionsProvider.current.onShowChallengeDialog
     LazyColumn(
         modifier = modifier.fillMaxWidth().padding(bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

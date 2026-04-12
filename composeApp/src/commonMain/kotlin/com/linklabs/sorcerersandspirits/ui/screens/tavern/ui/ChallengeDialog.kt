@@ -23,6 +23,14 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
+import org.jetbrains.compose.resources.stringResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_awaiting_responses
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_button_accept
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_button_decline
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_challenged_by
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_default_instigator
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_title
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +52,11 @@ internal fun ChallengeDialog(challengeState: ChallengeState, modifier: Modifier 
                 HeaderSection(
                     formattedTimeRemaining = challengeState.formattedTimeRemaining,
                     isLessThanTenSeconds = challengeState.isLessThanTenSeconds,
-                    instigatorDisplayName = challengeState.instigator?.displayName ?: "A Traveler",
+                    instigatorDisplayName =
+                        challengeState.instigator?.displayName
+                            ?: stringResource(
+                                resource = Res.string.challenge_dialog_default_instigator
+                            ),
                     isThisUserTheInstigator = isThisUserTheInstigator,
                 )
 
@@ -72,7 +84,7 @@ private fun HeaderSection(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "Challenge to do battle in The Arena",
+            text = stringResource(resource = Res.string.challenge_dialog_title),
             style = MaterialTheme.typography.headlineSmall,
         )
 
@@ -90,9 +102,12 @@ private fun HeaderSection(
 
     val text =
         if (isThisUserTheInstigator) {
-            "You are awaiting responses"
+            stringResource(resource = Res.string.challenge_dialog_awaiting_responses)
         } else {
-            "$instigatorDisplayName has challenged you!"
+            stringResource(
+                resource = Res.string.challenge_dialog_challenged_by,
+                instigatorDisplayName,
+            )
         }
     Text(text = text, style = MaterialTheme.typography.bodyMedium)
 }
@@ -133,9 +148,13 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val onDeclineChallenge = TavernActionsProvider.current.onDeclineChallenge
-        TextButton(onClick = { onDeclineChallenge(challengeId) }) { Text("Decline") }
+        TextButton(onClick = { onDeclineChallenge(challengeId) }) {
+            Text(text = stringResource(resource = Res.string.challenge_dialog_button_decline))
+        }
 
         val onAcceptChallenge = TavernActionsProvider.current.onAcceptChallenge
-        Button(onClick = { onAcceptChallenge(challengeId) }) { Text("Accept Challenge") }
+        Button(onClick = { onAcceptChallenge(challengeId) }) {
+            Text(text = stringResource(resource = Res.string.challenge_dialog_button_accept))
+        }
     }
 }

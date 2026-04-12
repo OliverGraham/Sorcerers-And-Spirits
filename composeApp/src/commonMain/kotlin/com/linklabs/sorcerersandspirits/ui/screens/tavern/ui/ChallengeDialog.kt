@@ -3,11 +3,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialogDefaults
@@ -42,16 +40,19 @@ internal fun ChallengeDialog(challengeState: ChallengeState, modifier: Modifier 
                 modifier = Modifier.padding(all = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(space = 16.dp),
             ) {
+                val isThisUserTheInstigator = challengeState.isThisUserTheInstigator
                 HeaderSection(
                     formattedTimeRemaining = challengeState.formattedTimeRemaining,
                     isLessThanTenSeconds = challengeState.isLessThanTenSeconds,
                     instigatorDisplayName = challengeState.instigator?.displayName ?: "A Traveler",
-                    isThisUserTheInstigator = challengeState.isThisUserTheInstigator,
+                    isThisUserTheInstigator = isThisUserTheInstigator,
                 )
 
                 ChallengersList(challengerStates = challengeState.challengerStates)
 
-                ActionButtons(challengeId = challengeState.challengeId)
+                if (!isThisUserTheInstigator) {
+                    ActionButtons(challengeId = challengeState.challengeId)
+                }
             }
         }
     }
@@ -70,7 +71,10 @@ private fun HeaderSection(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(text = "Arena Challenge", style = MaterialTheme.typography.headlineSmall)
+        Text(
+            text = "Challenge to do battle in The Arena",
+            style = MaterialTheme.typography.headlineSmall,
+        )
 
         Text(
             text = formattedTimeRemaining,
@@ -125,12 +129,11 @@ private fun ChallengerInformation(challengerState: ChallengerState, modifier: Mo
 private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.End,
+        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val onDeclineChallenge = TavernActionsProvider.current.onDeclineChallenge
         TextButton(onClick = { onDeclineChallenge(challengeId) }) { Text("Decline") }
-        Spacer(modifier = Modifier.width(width = 8.dp))
 
         val onAcceptChallenge = TavernActionsProvider.current.onAcceptChallenge
         Button(onClick = { onAcceptChallenge(challengeId) }) { Text("Accept Challenge") }

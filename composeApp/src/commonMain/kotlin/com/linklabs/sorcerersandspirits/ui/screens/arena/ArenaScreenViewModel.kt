@@ -1,11 +1,14 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ConnectToArenaUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
 
 // TODO: What events are needed?
 sealed interface ArenaEvent
@@ -82,11 +85,18 @@ sealed interface ArenaLogEntry {
     ) : ArenaLogEntry
 }
 
-class ArenaScreenViewModel : ViewModel() {
+class ArenaScreenViewModel(
+    private val arenaId: String,
+    private val connectToArenaUseCase: ConnectToArenaUseCase,
+) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
     val eventChannelFlow = _eventChannelFlow.receiveAsFlow()
 
     private val _uiStateFlow = MutableStateFlow<UiState<ArenaState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
+
+    init {
+        viewModelScope.launch { connectToArenaUseCase(arenaId = arenaId) }
+    }
 }

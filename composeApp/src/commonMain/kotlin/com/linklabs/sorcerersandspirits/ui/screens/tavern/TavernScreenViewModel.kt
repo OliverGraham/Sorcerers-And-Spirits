@@ -43,8 +43,6 @@ class TavernScreenViewModel(
         }
     }
 
-    fun onActionButtonClick() {}
-
     fun showChallengeDialog() {
         updateChallengeDialogVisibility(isVisible = true)
     }

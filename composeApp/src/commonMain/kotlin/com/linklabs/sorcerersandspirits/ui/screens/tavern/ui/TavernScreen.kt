@@ -52,7 +52,6 @@ internal fun TavernScreen(
     CompositionLocalProvider(
         LocalTavernActions provides
             TavernActions(
-                onActionButtonClick = viewModel::onActionButtonClick,
                 onSendChallengerNotifications = viewModel::onSendChallenge,
                 onAcceptChallenge = viewModel::onAcceptChallenge,
                 onDeclineChallenge = viewModel::onDeclineChallenge,
@@ -144,7 +143,7 @@ private fun ScaffoldContent(padding: PaddingValues) {
         modifier = Modifier.fillMaxSize().padding(paddingValues = padding),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // TODO: What to put here?
+        // TODO: Pager of Cards for each Class
     }
 }
 

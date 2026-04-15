@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ConnectToArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
@@ -11,6 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCa
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
@@ -23,6 +25,7 @@ val commonModule = module {
 }
 
 private fun Module.initializeUseCases() {
+    singleOf(::ConnectToArenaUseCase)
     singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)
     singleOf(::GetProfileFlowUseCase)
@@ -37,5 +40,10 @@ private fun Module.initializeUseCases() {
 
 private fun Module.initializeViewModels() {
     factoryOf(::AppViewModel)
+
+    // todo: arguments data class
+    factory { (arenaId: String) ->
+        ArenaScreenViewModel(arenaId = arenaId, connectToArenaUseCase = get())
+    }
     factoryOf(::TavernScreenViewModel)
 }

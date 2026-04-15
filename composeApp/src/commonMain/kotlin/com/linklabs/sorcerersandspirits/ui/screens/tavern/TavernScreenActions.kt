@@ -5,7 +5,6 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 
 internal data class TavernActions(
-    val onActionButtonClick: () -> Unit = {},
     val onSendChallengerNotifications: (TravelerState, Set<TravelerState>) -> Unit = { _, _ -> },
     val onAcceptChallenge: (challengeId: String) -> Unit = {},
     val onDeclineChallenge: (challengeId: String) -> Unit = {},

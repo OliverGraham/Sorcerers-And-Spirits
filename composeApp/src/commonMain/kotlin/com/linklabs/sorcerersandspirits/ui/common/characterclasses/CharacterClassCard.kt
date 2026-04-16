@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -23,15 +25,16 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun CharacterClassCard(characterClass: CharacterClass, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth().padding(all = 8.dp)) {
+    Card(modifier = modifier.fillMaxWidth().height(height = 240.dp).padding(all = 8.dp)) {
         Column(
-            modifier = Modifier.padding(all = 16.dp).fillMaxWidth(),
+            modifier = Modifier.fillMaxSize().padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(space = 8.dp),
         ) {
             Header(className = characterClass.className, classSpeed = characterClass.speed)
             Body(
                 offensiveAbility = characterClass.offensiveAbility,
                 defensiveAbility = characterClass.defensiveAbility,
+                modifier = Modifier.weight(weight = 1f),
             )
             Footer(armorClass = characterClass.armorClass, hitPoints = characterClass.hitPoints)
         }

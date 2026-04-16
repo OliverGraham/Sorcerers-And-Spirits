@@ -26,8 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCards
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
@@ -101,7 +103,7 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
             )
         },
     ) { padding ->
-        ScaffoldContent(padding = padding)
+        ScaffoldContent(characterClasses = tavernState.characterClasses, padding = padding)
     }
 
     if (challengeState?.showChallengeDialog == true) {
@@ -138,12 +140,16 @@ private fun SheetDragHandle(
 }
 
 @Composable
-private fun ScaffoldContent(padding: PaddingValues) {
+private fun ScaffoldContent(
+    characterClasses: List<CharacterClass>,
+    padding: PaddingValues,
+    modifier: Modifier = Modifier,
+) {
     Column(
-        modifier = Modifier.fillMaxSize().padding(paddingValues = padding),
+        modifier = modifier.fillMaxSize().padding(paddingValues = padding),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // TODO: Pager of Cards for each Class
+        CharacterClassCards(characterClasses = characterClasses)
     }
 }
 

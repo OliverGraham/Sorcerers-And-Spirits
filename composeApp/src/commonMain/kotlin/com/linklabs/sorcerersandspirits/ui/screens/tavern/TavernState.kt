@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -14,6 +15,8 @@ data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
     val challenge: ChallengeState?,
+    val characterClasses: List<CharacterClass> =
+        CharacterClass.getAllClasses(), // TODO: any reason to get from config?
 )
 
 @Immutable

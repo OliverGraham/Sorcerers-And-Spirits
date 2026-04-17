@@ -1,10 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena
 
-// TODO: Arena figure out the logs
-
-// TODO: How to convey information about the gameplay?
-//   Text log can be BottomSheet
-//      Preview can contain 3 lines
+// TODO Arena: figure out the logs
+//   Text log can contain 3 lines in preview, and the rest below
 //          RoundMessage  // "Round 1"
 //          ActionMessage // "Rogue rolled 6 against Paladin's AC"
 //          ResultMessage // "Rogue is now rolling against Paladin's health!"

@@ -1,4 +1,4 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena
 
-// TODO: What events are needed?
+// TODO Arena: What events are needed?
 sealed interface ArenaEvent

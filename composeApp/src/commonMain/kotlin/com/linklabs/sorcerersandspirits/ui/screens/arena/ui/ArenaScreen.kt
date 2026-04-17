@@ -45,7 +45,7 @@ internal fun ArenaScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // TODO: CompositionLocalProvider
+    // TODO Arena: CompositionLocalProvider
 
     viewModel.eventChannelFlow.collectEvents()
     val uiState by viewModel.uiStateFlow.collectAsState()
@@ -56,7 +56,7 @@ internal fun ArenaScreen(
 @Composable
 private fun ArenaScreen(uiState: UiState<ArenaState>, modifier: Modifier = Modifier) {
     when (uiState) {
-        // TODO: Update UI to show error
+        // TODO Arena: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
         is UiState.Loaded -> LoadedArenaScreen(arenaState = uiState.data, modifier = modifier)
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
@@ -78,17 +78,17 @@ private fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modif
             )
         },
         sheetContent = {
-            // TODO: MessageLog
+            // TODO Arena: MessageLog
         },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
     }
 
-    // TODO: Dialogs go here
-    // TODO: Dialog showing that going back will forfeit the game
+    // TODO Arena: Dialogs go here
+    // TODO Arena: Dialog showing that going back will forfeit the game
 }
 
-// TODO: Make generic or just fix this one
+// TODO Arena: Make generic or just fix this one
 @Composable
 private fun SheetDragHandle(isExpanded: Boolean, modifier: Modifier = Modifier) {
     Row(
@@ -122,7 +122,7 @@ private fun ScreenContent(
                 ArenaPhase.Combat -> ArenaCombat()
                 ArenaPhase.WaitingForAllPlayers -> ArenaWaitingForPlayers()
                 ArenaPhase.Finished -> {
-                    // TODO: figure out
+                    // TODO Arena: figure out
                 }
             }
         }
@@ -135,4 +135,4 @@ private fun Flow<ArenaEvent>.collectEvents() {
     LaunchedEffect(Unit) { collect { event -> } }
 }
 
-// TODO: Previews
+// TODO Arena: Previews

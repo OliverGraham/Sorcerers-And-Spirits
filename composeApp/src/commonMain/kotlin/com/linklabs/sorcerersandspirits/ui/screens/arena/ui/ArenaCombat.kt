@@ -4,7 +4,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
-// TODO:
+// TODO Arena:
 //      Grid arrangement
 //      Timer of 20 seconds
 //      CurrentPlayer can use abilities or make attack
@@ -18,4 +18,4 @@ internal fun ArenaCombat(modifier: Modifier = Modifier) {
     Text(text = "ArenaCombat")
 }
 
-// TODO: Previews
+// TODO Arena: Previews

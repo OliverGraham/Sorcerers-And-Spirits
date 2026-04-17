@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
-// TODO: Upon entering, everyone needs to connect to the Arena using the ArenaId
+// TODO Arena: Upon entering, everyone needs to connect to the Arena using the ArenaId
 //  Needs to be created via a transaction done by the first person who gets there
 //      So, create (or try to) and get the flow of data
 //  If everyone's there, then need to choose classes, in order

@@ -18,5 +18,5 @@ internal fun ArenaMatchEntity.toDomain() =
         phase = phase,
         playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
         activePlayerUserId = activePlayerUserId,
-        // TODO: Arena Logs
+        // TODO Arena: Logs
     )

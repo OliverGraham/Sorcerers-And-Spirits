@@ -103,7 +103,7 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
             )
         },
     ) { padding ->
-        ScaffoldContent(characterClasses = tavernState.characterClasses, padding = padding)
+        ScreenContent(characterClasses = tavernState.characterClasses, padding = padding)
     }
 
     if (challengeState?.showChallengeDialog == true) {
@@ -140,7 +140,7 @@ private fun SheetDragHandle(
 }
 
 @Composable
-private fun ScaffoldContent(
+private fun ScreenContent(
     characterClasses: List<CharacterClass>,
     padding: PaddingValues,
     modifier: Modifier = Modifier,

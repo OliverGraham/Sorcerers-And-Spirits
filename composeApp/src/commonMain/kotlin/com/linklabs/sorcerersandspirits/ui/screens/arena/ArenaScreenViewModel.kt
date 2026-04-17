@@ -1,8 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena
 
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ConnectToArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,16 +15,29 @@ import kotlinx.coroutines.launch
 // TODO: What events are needed?
 sealed interface ArenaEvent
 
-data class ArenaState(val arenaId: String)
+@Immutable data class ArenaState(val arenaId: String, val phase: ArenaPhase)
 
 // TODO: What's needed in the state?
+@Immutable
 sealed interface ArenaPhase {
     data object WaitingForAllPlayers : ArenaPhase
 
-    data class ChoosingClasses(val fighters: List<Any>) : ArenaPhase
+    data class ChoosingClasses(val players: List<PlayerState>, val currentPlayerIndex: Int) :
+        ArenaPhase {
+        val currentPlayer = players[currentPlayerIndex]
+    }
 
-    data class Combat(val fighters: List<Any>) : ArenaPhase
+    data class Combat(val players: List<PlayerState>) : ArenaPhase
 }
+
+@Immutable
+data class PlayerState(
+    val userId: String,
+    val displayName: String,
+    val characterClassState: CharacterClass,
+)
+
+// TODO: Implement "state" version of CharacterClass
 
 // TODO: Upon entering, everyone needs to connect to the Arena using the ArenaId
 //  Needs to be created via a transaction done by the first person who gets there

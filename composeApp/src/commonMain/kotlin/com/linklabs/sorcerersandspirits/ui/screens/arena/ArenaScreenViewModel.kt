@@ -1,43 +1,14 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena
 
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ConnectToArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-
-// TODO: What events are needed?
-sealed interface ArenaEvent
-
-@Immutable data class ArenaState(val arenaId: String, val phase: ArenaPhase)
-
-// TODO: What's needed in the state?
-@Immutable
-sealed interface ArenaPhase {
-    data object WaitingForAllPlayers : ArenaPhase
-
-    data class ChoosingClasses(val players: List<PlayerState>, val currentPlayerIndex: Int) :
-        ArenaPhase {
-        val currentPlayer = players[currentPlayerIndex]
-    }
-
-    data class Combat(val players: List<PlayerState>) : ArenaPhase
-}
-
-@Immutable
-data class PlayerState(
-    val userId: String,
-    val displayName: String,
-    val characterClassState: CharacterClass,
-)
-
-// TODO: Implement "state" version of CharacterClass
 
 // TODO: Upon entering, everyone needs to connect to the Arena using the ArenaId
 //  Needs to be created via a transaction done by the first person who gets there
@@ -49,59 +20,9 @@ data class PlayerState(
 //          "clockwise" order (hmm, order of who entered right after that person, or random, doesn't
 // matter)
 //      Timer for choosing (15 seconds), otherwise randomly chosen
-//      When all classes are chosen, the game starts
-//      Gameplay itself will be the next set of work
-
-// TODO: Gameplay Architecture
-//  Everyone is subscribed to the Arena document/flow
-//
-
-// TODO: How to convey information about the gameplay?
-//   Text log can be BottomSheet
-//      Preview can contain 3 lines
-//          RoundMessage  // "Round 1"
-//          ActionMessage // "Rogue rolled 6 against Paladin's AC"
-//          ResultMessage // "Rogue is now rolling against Paladin's health!"
-
-// CHatGPT idea
-sealed interface ArenaLogEntry {
-    val id: String
-    val timestampMs: Long
-
-    data class PlayerJoined(
-        override val id: String,
-        override val timestampMs: Long,
-        val playerName: String,
-    ) : ArenaLogEntry
-
-    data class ClassChosen(
-        override val id: String,
-        override val timestampMs: Long,
-        val playerName: String,
-        val className: String,
-    ) : ArenaLogEntry
-
-    data class AttackRolled(
-        override val id: String,
-        override val timestampMs: Long,
-        val attackerName: String,
-        val defenderName: String,
-        val roll: Int,
-        val targetArmorClass: Int,
-    ) : ArenaLogEntry
-
-    data class DamageApplied(
-        override val id: String,
-        override val timestampMs: Long,
-        val sourceName: String,
-        val targetName: String,
-        val damage: Int,
-        val remainingHp: Int,
-    ) : ArenaLogEntry
-}
 
 class ArenaScreenViewModel(
-    private val arenaId: String,
+    private val arguments: ArenaScreenViewModelArguments,
     private val connectToArenaUseCase: ConnectToArenaUseCase,
 ) : ViewModel() {
 
@@ -112,6 +33,11 @@ class ArenaScreenViewModel(
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
     init {
-        viewModelScope.launch { connectToArenaUseCase(arenaId = arenaId) }
+        viewModelScope.launch {
+            connectToArenaUseCase(arenaId = arguments.arenaId)
+
+            // TODO: get result to determine UI state
+            //  If
+        }
     }
 }

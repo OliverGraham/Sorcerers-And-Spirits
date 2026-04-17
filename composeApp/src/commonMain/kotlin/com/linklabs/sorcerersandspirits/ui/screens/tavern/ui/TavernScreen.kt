@@ -30,6 +30,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCards
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
@@ -48,7 +49,7 @@ import sorcerersandspirits.composeapp.generated.resources.ic_up_arrow
 @Composable
 internal fun TavernScreen(
     viewModel: TavernScreenViewModel = koinInject(),
-    onNavigateToArena: (String) -> Unit,
+    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(
@@ -155,11 +156,13 @@ private fun ScreenContent(
 
 @Suppress("ComposableNaming")
 @Composable
-private fun Flow<TavernEvent>.collectEvents(onNavigateToArena: (String) -> Unit) {
+private fun Flow<TavernEvent>.collectEvents(
+    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit
+) {
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
-                is TavernEvent.NavigateToArena -> onNavigateToArena(event.arenaId)
+                is TavernEvent.NavigateToArena -> onNavigateToArena(event.arguments)
                 is TavernEvent.ShowChallengeSendFailed ->
                     println("TAVERN EVENT: ShowChallengeSendFailed")
                 is TavernEvent.NotEnoughChallengersAvailable ->

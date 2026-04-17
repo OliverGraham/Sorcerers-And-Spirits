@@ -11,7 +11,6 @@ import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreen
-import kotlin.collections.removeLastOrNull
 
 @Composable
 internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifier = Modifier) {
@@ -29,15 +28,23 @@ private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
         Route.TavernScreen ->
             NavEntry(key = this) {
                 TavernScreen(
-                    onNavigateToArena = { arenaId ->
-                        backStack.add(element = Route.ArenaScreen(arenaId = arenaId))
+                    onNavigateToArena = { arenaScreenViewModelArguments ->
+                        backStack.add(
+                            element =
+                                Route.ArenaScreen(
+                                    arguments = arenaScreenViewModelArguments.toSerializable()
+                                )
+                        )
                     }
                 )
             }
 
         is Route.ArenaScreen ->
             NavEntry(key = this) {
-                ArenaScreen(arenaId = arenaId, onBack = { backStack.removeLastOrNull() })
+                ArenaScreen(
+                    arguments = arguments.toDomain(),
+                    onBack = { backStack.removeLastOrNull() },
+                )
             }
         else -> throw IllegalArgumentException("Unknown key: $this")
     }

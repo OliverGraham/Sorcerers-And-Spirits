@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHandler
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeTimer
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -77,9 +78,12 @@ class TavernScreenViewModel(
             )
 
         if (challengeState?.navigateToArena == true) {
-            _eventChannelFlow.send(
-                element = TavernEvent.NavigateToArena(arenaId = challengeState.challengeId)
-            )
+            val arguments =
+                ArenaScreenViewModelArguments(
+                    arenaId = challengeState.challengeId,
+                    expectedNumberOfPlayers = challengeState.getExpectedNumberOfPlayers(),
+                )
+            _eventChannelFlow.send(element = TavernEvent.NavigateToArena(arguments = arguments))
         } else {
             val tavernState = data.toState(challengeState = challengeState) ?: return
 

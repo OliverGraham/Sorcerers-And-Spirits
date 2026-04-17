@@ -22,11 +22,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.arena.ArenaPhase
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaPhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
@@ -39,8 +40,8 @@ import sorcerersandspirits.composeapp.generated.resources.ic_up_arrow
 
 @Composable
 internal fun ArenaScreen(
-    arenaId: String,
-    viewModel: ArenaScreenViewModel = koinInject { parametersOf(arenaId) },
+    arguments: ArenaScreenViewModelArguments,
+    viewModel: ArenaScreenViewModel = koinInject { parametersOf(arguments) },
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -117,9 +118,12 @@ private fun ScreenContent(
     Column(modifier = modifier.fillMaxSize().padding(paddingValues = paddingValues)) {
         Crossfade(targetState = arenaState.phase) { phase ->
             when (phase) {
-                is ArenaPhase.ChoosingClasses -> ArenaChoosingClasses()
-                is ArenaPhase.Combat -> ArenaCombat()
-                is ArenaPhase.WaitingForAllPlayers -> ArenaWaitingForPlayers()
+                ArenaPhase.ChoosingClasses -> ArenaChoosingClasses()
+                ArenaPhase.Combat -> ArenaCombat()
+                ArenaPhase.WaitingForAllPlayers -> ArenaWaitingForPlayers()
+                ArenaPhase.Finished -> {
+                    // TODO: figure out
+                }
             }
         }
     }

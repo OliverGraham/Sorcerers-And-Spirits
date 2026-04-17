@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.domain.arena
+package com.linklabs.sorcerersandspirits.domain.arena.model
 
 enum class ArenaPhase {
     WaitingForAllPlayers,

@@ -4,13 +4,17 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.getValue
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.getValueFlow
 import com.linklabs.sorcerersandspirits.data.runTransactionAwait
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaMessageLogEntry
 import kotlinx.coroutines.flow.Flow
-import kotlinx.serialization.Serializable
-
-// TODO: After implementing class definitions, add more logic here
+import kotlinx.coroutines.flow.map
 
 class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
@@ -19,7 +23,11 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     /**
      * Connects a user to the arena. Uses a transaction so the first player initializes the match.
      */
-    override suspend fun connectToArena(arenaId: String, userId: String) {
+    override suspend fun connectToArena(
+        arenaId: String,
+        expectedNumberOfPlayers: Int,
+        userId: String,
+    ) =
         arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
             val match =
                 currentData.getValue<ArenaMatchEntity>()
@@ -27,17 +35,23 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
             val updatedPlayers = match.playerEntitiesMap.toMutableMap()
 
-            if (!updatedPlayers.containsKey(userId)) {
+            if (userId !in updatedPlayers) {
                 updatedPlayers[userId] = ArenaPlayerEntity(userId = userId)
 
                 // Optional: Automatically log the joining event here if desired
                 // match.logs.put(UUID.randomUUID(), ArenaLogEntity(...))
             }
 
-            currentData.value = match.copy(playerEntitiesMap = updatedPlayers)
+            val arenaPhase =
+                if (updatedPlayers.size == expectedNumberOfPlayers) {
+                    ArenaPhase.ChoosingClasses
+                } else {
+                    ArenaPhase.WaitingForAllPlayers
+                }
+
+            currentData.value = match.copy(playerEntitiesMap = updatedPlayers, phase = arenaPhase)
             Transaction.success(currentData)
         }
-    }
 
     /** Updates the game phase using the Enum directly. */
     suspend fun updateArenaPhase(arenaId: String, phase: ArenaPhase) {
@@ -65,36 +79,13 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     }
 
     /** Adds a log entry (Attack, Class chosen, etc.) to the match. */
-    suspend fun addLogEntry(arenaId: String, log: ArenaLogEntity) {
+    suspend fun addLogEntry(arenaId: String, log: ArenaMessageLogEntry) {
         arenaMatchesReference.child(arenaId).child("logs").push().setValue(log)
     }
 
     /** Streams the match document to all subscribers. */
-    fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatchEntity?> =
-        arenaMatchesReference.child(arenaId).getValueFlow()
-}
-
-@Serializable
-data class ArenaMatchEntity(
-    val arenaId: String = "",
-    val phase: ArenaPhase = ArenaPhase.WaitingForAllPlayers,
-    val activePlayerId: String? = null,
-    val playerEntitiesMap: Map<String, ArenaPlayerEntity> = emptyMap(),
-    val logs: Map<String, ArenaLogEntity> = emptyMap(),
-)
-
-@Serializable data class ArenaPlayerEntity(val userId: String = "", val displayName: String = "")
-
-@Serializable
-data class ArenaLogEntity(
-    val type: String = "", // Matches the sealed interface types in ViewModel
-    val message: String = "",
-    val timestamp: Long = System.currentTimeMillis(),
-)
-
-enum class ArenaPhase {
-    WaitingForAllPlayers,
-    ChoosingClasses,
-    Combat,
-    Finished,
+    override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
+        arenaMatchesReference.child(arenaId).getValueFlow<ArenaMatchEntity>().map { entity ->
+            entity?.toDomain()
+        }
 }

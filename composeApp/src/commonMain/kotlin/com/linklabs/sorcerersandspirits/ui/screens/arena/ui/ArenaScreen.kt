@@ -22,13 +22,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.arena.ArenaPhase
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.painterResource

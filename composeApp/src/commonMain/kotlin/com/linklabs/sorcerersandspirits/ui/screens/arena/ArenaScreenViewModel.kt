@@ -2,7 +2,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.ConnectToArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.JoinArenaUseCase
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,7 +25,7 @@ import kotlinx.coroutines.launch
 
 class ArenaScreenViewModel(
     private val arguments: ArenaScreenViewModelArguments,
-    private val connectToArenaUseCase: ConnectToArenaUseCase,
+    private val joinArenaUseCase: JoinArenaUseCase,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
@@ -34,10 +36,23 @@ class ArenaScreenViewModel(
 
     init {
         viewModelScope.launch {
-            connectToArenaUseCase(arenaId = arguments.arenaId)
+            // TODO Arena: Arena Need a timer for waiting for all players to connect. If timer runs
+            // out, then
+            //  game doesn't happen (even if there are enough people?)
+            joinArenaUseCase(
+                    arenaId = arguments.arenaId,
+                    expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
+                )
+                .collect { arenaMatch ->
+                    if (arenaMatch == null) {
+                        // TODO Arena: Probably show message briefly and then navigate back, with
+                        // cleanup
+                        _uiStateFlow.value = UiState.Error
+                        return@collect
+                    }
 
-            // TODO: get result to determine UI state
-            //  If
+                    _uiStateFlow.value = UiState.Loaded(data = arenaMatch.toState())
+                }
         }
     }
 }

@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation
 
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -10,7 +11,8 @@ import kotlinx.serialization.modules.polymorphic
 sealed interface Route : NavKey {
     @Serializable data object TavernScreen : Route
 
-    @Serializable data class ArenaScreen(val arenaId: String) : Route
+    @Serializable
+    data class ArenaScreen(val arguments: ArenaScreenViewModelArgumentsSerializable) : Route
 }
 
 /** Necessary for KMP and to work with iOS */
@@ -28,3 +30,21 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
         }
     }
 }
+
+@Serializable
+data class ArenaScreenViewModelArgumentsSerializable(
+    val arenaId: String,
+    val expectedNumberOfPlayers: Int,
+)
+
+internal fun ArenaScreenViewModelArgumentsSerializable.toDomain() =
+    ArenaScreenViewModelArguments(
+        arenaId = arenaId,
+        expectedNumberOfPlayers = expectedNumberOfPlayers,
+    )
+
+fun ArenaScreenViewModelArguments.toSerializable() =
+    ArenaScreenViewModelArgumentsSerializable(
+        arenaId = arenaId,
+        expectedNumberOfPlayers = expectedNumberOfPlayers,
+    )

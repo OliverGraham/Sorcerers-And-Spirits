@@ -44,6 +44,9 @@ data class ChallengeState(
 
     val formattedTimeRemaining = "$minutes:${seconds.toString().padStart(2, '0')}"
     val isLessThanTenSeconds = secondsRemaining <= 10
+
+    fun getExpectedNumberOfPlayers() =
+        challengerStates.count { it.status == ChallengerStatus.Accepted }
 }
 
 @Immutable

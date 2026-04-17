@@ -29,6 +29,8 @@ import com.linklabs.sorcerersandspirits.ui.main.navigation.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
+// TODO: What to do with this?
+
 @Composable
 internal fun SettingsDrawer(
     backStack: NavBackStack<NavKey>,
@@ -47,7 +49,7 @@ internal fun SettingsDrawer(
             scope.launch { drawerState.close() }
         },
         onNavigateToArena = {
-            backStack.add(Route.ArenaScreen(arenaId = "default"))
+            // backStack.add(Route.ArenaScreen(arenaId = "default"))
             scope.launch { drawerState.close() }
         },
         modifier = modifier,

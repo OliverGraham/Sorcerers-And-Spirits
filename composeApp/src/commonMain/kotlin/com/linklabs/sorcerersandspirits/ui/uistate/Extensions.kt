@@ -10,3 +10,5 @@ fun <T> MutableStateFlow<UiState<T>>.updateLoaded(transform: (T) -> T) {
         state.copy(data = transform(state.data))
     }
 }
+
+fun <T> MutableStateFlow<UiState<T>>.getLoadedStateOrNull() = (value as? UiState.Loaded<T>)?.data

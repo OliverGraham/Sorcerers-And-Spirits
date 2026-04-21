@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.JoinArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
@@ -26,13 +26,13 @@ val commonModule = module {
 }
 
 private fun Module.initializeUseCases() {
+    singleOf(::CoordinateArenaMatchUseCase)
     singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)
     singleOf(::GetProfileFlowUseCase)
     singleOf(::GetTavernDataFlowUseCase)
     singleOf(::GetUserIdUseCase)
     singleOf(::IsUserSignedInUseCase)
-    singleOf(::JoinArenaUseCase)
     singleOf(::SetCurrentTravelerAvailableUseCase)
     singleOf(::SendChallengeUseCase)
     singleOf(::UpdateChallengerStatusUseCase)
@@ -42,7 +42,7 @@ private fun Module.initializeUseCases() {
 private fun Module.initializeViewModels() {
     factoryOf(::AppViewModel)
     factory { (arguments: ArenaScreenViewModelArguments) ->
-        ArenaScreenViewModel(arguments = arguments, joinArenaUseCase = get())
+        ArenaScreenViewModel(arguments = arguments, coordinateArenaMatchUseCase = get())
     }
     factoryOf(::TavernScreenViewModel)
 }

@@ -22,8 +22,40 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     private val arenaMatchesReference = database.reference.child(ARENA_MATCHES_PATH)
 
+    // TODO Arena: Cleanup, docstring
+    // Determine the next phase and active player
+    // If nextPlayerId is null, it means everyone has picked a class
+    override suspend fun chooseCharacterClass(
+        arenaId: String,
+        arenaPlayer: ArenaPlayer,
+        nextPlayerId: String?,
+    ) {
+        arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
+            val match =
+                currentData.getValue<ArenaMatchEntity>()
+                    ?: return@runTransactionAwait Transaction.abort()
+
+            val updatedPlayers = match.playerEntitiesMap.toMutableMap()
+            updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
+
+            val nextPhase =
+                if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
+
+            val updatedMatch =
+                match.copy(
+                    playerEntitiesMap = updatedPlayers,
+                    activePlayerUserId = nextPlayerId,
+                    phase = nextPhase,
+                )
+
+            currentData.value = updatedMatch
+            Transaction.success(currentData)
+        }
+    }
+
     /**
-     * Connects a user to the arena. Uses a transaction so the first player initializes the match.
+     * Connects a user to the arena. Uses a transaction so the first player initializes the match,
+     * and so gets the honor of being first in the game.
      */
     override suspend fun connectToArena(
         arenaId: String,
@@ -33,7 +65,11 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
             val match =
                 currentData.getValue<ArenaMatchEntity>()
-                    ?: ArenaMatchEntity(arenaId = arenaId, phase = ArenaPhase.WaitingForAllPlayers)
+                    ?: ArenaMatchEntity(
+                        arenaId = arenaId,
+                        phase = ArenaPhase.WaitingForAllPlayers,
+                        activePlayerUserId = userId,
+                    )
 
             val updatedPlayers = match.playerEntitiesMap.toMutableMap()
 

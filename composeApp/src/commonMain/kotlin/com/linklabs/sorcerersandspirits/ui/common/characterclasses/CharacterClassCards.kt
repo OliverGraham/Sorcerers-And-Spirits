@@ -13,8 +13,15 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+// TODO Arena: Update class-selection logic
+
 @Composable
-fun CharacterClassCards(characterClasses: List<CharacterClass>, modifier: Modifier = Modifier) {
+fun CharacterClassCards(
+    characterClasses: List<CharacterClassState>,
+    modifier: Modifier = Modifier,
+    selectedClass: CharacterClassState? = null,
+    onClassSelected: (CharacterClassState) -> Unit = {},
+) {
     val count = characterClasses.size
     val startPage =
         remember(key1 = count) {
@@ -28,6 +35,8 @@ fun CharacterClassCards(characterClasses: List<CharacterClass>, modifier: Modifi
         count = count,
         characterClasses = characterClasses,
         pagerState = pagerState,
+        selectedClass = selectedClass,
+        onClassSelected = onClassSelected,
         modifier = modifier,
     )
 }
@@ -35,17 +44,27 @@ fun CharacterClassCards(characterClasses: List<CharacterClass>, modifier: Modifi
 @Composable
 private fun CharacterClassCards(
     count: Int,
-    characterClasses: List<CharacterClass>,
+    characterClasses: List<CharacterClassState>,
     pagerState: PagerState,
+    selectedClass: CharacterClassState? = null,
+    onClassSelected: (CharacterClassState) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     HorizontalPager(
         state = pagerState,
         modifier = modifier.fillMaxWidth(),
         contentPadding = PaddingValues(horizontal = 32.dp),
-        key = { index -> characterClasses[index % count].className },
+        key = { index ->
+            val characterClass = characterClasses[index % count]
+            "${characterClass.className}-$index"
+        },
     ) { index ->
-        CharacterClassCard(characterClass = characterClasses[index % count])
+        val characterClass = characterClasses[index % count]
+        CharacterClassCard(
+            characterClass = characterClass,
+            isSelected = characterClass == selectedClass,
+            onClick = { onClassSelected(characterClass) },
+        )
     }
 }
 
@@ -53,6 +72,6 @@ private fun CharacterClassCards(
 @Composable
 private fun CharacterClassCardsPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCards(characterClasses = CharacterClass.getAllClasses())
+        CharacterClassCards(characterClasses = CharacterClass.getAllClasses().map { it.toState() })
     }
 }

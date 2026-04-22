@@ -6,6 +6,12 @@ import kotlinx.coroutines.flow.Flow
 
 interface ArenaRepository {
 
+    suspend fun chooseCharacterClass(
+        arenaId: String,
+        arenaPlayer: ArenaPlayer,
+        nextPlayerId: String?,
+    )
+
     suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer)
 
     suspend fun connectToArena(

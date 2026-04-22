@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -23,8 +24,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
+// TODO Arena: As soon as possible, write tests for this behavior. DO NOT do like the other view
+//  model test, with all the Firebase craziness. Figure out another way that makes more sense
+
 class ArenaScreenViewModel(
     private val arguments: ArenaScreenViewModelArguments,
+    private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
@@ -74,28 +79,25 @@ class ArenaScreenViewModel(
 
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
+            val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
+
+            val nextPlayerId =
+                loadedState.playerStatesMap.values
+                    .filterNot { it == playerState }
+                    .filter { it.characterClassState == null }
+                    .randomOrNull()
+                    ?.userId
+
             val arenaPlayer = playerState.copy(characterClassState = characterClassState).toDomain()
-            updateArenaPlayerUseCase(arenaId = arguments.arenaId, arenaPlayer = arenaPlayer)
+
+            chooseCharacterClassUseCase(
+                arenaId = arguments.arenaId,
+                arenaPlayer = arenaPlayer,
+                nextPlayerId = nextPlayerId,
+            )
         }
     }
 
-    // TODO Arena:
-    //  Previous is WaitingForAllPlayers, new is ChoosingClasses
-    //      Same as Previous is ChoosingClasses, new is ChoosingClasses
-    //      Start a new 20 second timer
-    //      Active player (given from RTDB) chooses their CharacterClass and updates RTDB, then
-    //   Same as Previous is ChoosingClasses, new is ChoosingClasses
-    //       Repeat previous until everyone has chosen their CharacterClass
-    //  Previous is ChoosingClasses, new is Combat
-    //      Start game, animation, whatever, then start 15 second timer for Active player
-    //          to choose their target
-    //      Active player rolls against a target, then updates RTDB
-    //  Previous is Combat, new is Combat
-    //      Active player could now roll against player's HP if applicable (with 5 second timer),
-    //          or it goes to the next person
-    //      And so on
-    //  Previous is Combat, new is Finished
-    //      etc.
     private fun getUpdatedState(
         previousState: ArenaState?,
         updatedArenaMatch: ArenaMatch,

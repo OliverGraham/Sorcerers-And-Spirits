@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -25,7 +26,10 @@ val commonModule = module {
     initializeViewModels()
 }
 
+// TODO: Update Koin to use Compiler Plugin
+
 private fun Module.initializeUseCases() {
+    singleOf(::ChooseCharacterClassUseCase)
     singleOf(::CoordinateArenaMatchUseCase)
     singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)

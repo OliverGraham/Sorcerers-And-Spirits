@@ -75,7 +75,14 @@ private fun ScreenContent(
     Column(modifier = modifier.fillMaxSize().padding(paddingValues = paddingValues)) {
         Crossfade(targetState = arenaState.phase) { phase ->
             when (phase) {
-                ArenaPhase.ChoosingClasses -> ArenaChoosingClasses()
+                ArenaPhase.ChoosingClasses -> {
+                    ArenaChoosingClasses(
+                        userPlayerState = arenaState.userPlayer,
+                        activePlayerState = arenaState.activePlayer,
+                        isItThisUsersTurn = arenaState.isItThisUsersTurn,
+                        characterClasses = CharacterClass.getAllClasses().map { it.toState() },
+                    )
+                }
                 ArenaPhase.Combat -> ArenaCombat()
                 ArenaPhase.WaitingForAllPlayers -> ArenaWaitingForPlayers()
                 ArenaPhase.Finished -> {

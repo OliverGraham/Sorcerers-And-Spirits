@@ -6,103 +6,126 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface CharacterClassEntity {
-    val hitPoints: Int
-    val armorClass: Int
-    val speed: Int
-    val offensiveAbility: OffensiveAbility
-    val defensiveAbility: DefensiveAbility
-    val className: String
-
-    @Serializable
-    data class Rogue(
-        override val hitPoints: Int,
-        override val armorClass: Int,
-        override val speed: Int,
-        override val offensiveAbility: OffensiveAbility,
-        override val defensiveAbility: DefensiveAbility,
-        override val className: String,
-    ) : CharacterClassEntity
-
-    @Serializable
-    data class Mage(
-        override val hitPoints: Int,
-        override val armorClass: Int,
-        override val speed: Int,
-        override val offensiveAbility: OffensiveAbility,
-        override val defensiveAbility: DefensiveAbility,
-        override val className: String,
-    ) : CharacterClassEntity
-
-    @Serializable
-    data class Paladin(
-        override val hitPoints: Int,
-        override val armorClass: Int,
-        override val speed: Int,
-        override val offensiveAbility: OffensiveAbility,
-        override val defensiveAbility: DefensiveAbility,
-        override val className: String,
-    ) : CharacterClassEntity
+enum class CharacterClassType {
+    Rogue,
+    Mage,
+    Paladin,
 }
 
-internal fun CharacterClassEntity.toDomain() =
-    when (this) {
-        is CharacterClassEntity.Rogue ->
+@Serializable
+data class CharacterClassEntity(
+    val type: CharacterClassType = CharacterClassType.Rogue,
+    val hitPoints: Int = 0,
+    val armorClass: Int = 0,
+    val speed: Int = 0,
+    val offensiveAbility: OffensiveAbilityEntity = OffensiveAbilityEntity.KillingMomentum,
+    val defensiveAbility: DefensiveAbilityEntity = DefensiveAbilityEntity.Anticipation,
+    val className: String = "",
+)
+
+internal fun CharacterClassEntity.toDomain(): CharacterClass =
+    when (type) {
+        CharacterClassType.Rogue ->
             CharacterClass.Rogue(
                 hitPoints = hitPoints,
                 armorClass = armorClass,
                 speed = speed,
-                offensiveAbility = offensiveAbility,
-                defensiveAbility = defensiveAbility,
+                offensiveAbility = offensiveAbility.toDomain(),
+                defensiveAbility = defensiveAbility.toDomain(),
                 className = className,
             )
-        is CharacterClassEntity.Mage ->
+        CharacterClassType.Mage ->
             CharacterClass.Mage(
                 hitPoints = hitPoints,
                 armorClass = armorClass,
                 speed = speed,
-                offensiveAbility = offensiveAbility,
-                defensiveAbility = defensiveAbility,
+                offensiveAbility = offensiveAbility.toDomain(),
+                defensiveAbility = defensiveAbility.toDomain(),
                 className = className,
             )
-        is CharacterClassEntity.Paladin ->
+        CharacterClassType.Paladin ->
             CharacterClass.Paladin(
                 hitPoints = hitPoints,
                 armorClass = armorClass,
                 speed = speed,
-                offensiveAbility = offensiveAbility,
-                defensiveAbility = defensiveAbility,
+                offensiveAbility = offensiveAbility.toDomain(),
+                defensiveAbility = defensiveAbility.toDomain(),
                 className = className,
             )
     }
 
-internal fun CharacterClass.toEntity() =
+internal fun CharacterClass.toEntity(): CharacterClassEntity =
     when (this) {
         is CharacterClass.Rogue ->
-            CharacterClassEntity.Rogue(
+            CharacterClassEntity(
+                type = CharacterClassType.Rogue,
                 hitPoints = hitPoints,
                 armorClass = armorClass,
                 speed = speed,
-                offensiveAbility = offensiveAbility,
-                defensiveAbility = defensiveAbility,
+                offensiveAbility = offensiveAbility.toEntity(),
+                defensiveAbility = defensiveAbility.toEntity(),
                 className = className,
             )
         is CharacterClass.Mage ->
-            CharacterClassEntity.Mage(
+            CharacterClassEntity(
+                type = CharacterClassType.Mage,
                 hitPoints = hitPoints,
                 armorClass = armorClass,
                 speed = speed,
-                offensiveAbility = offensiveAbility,
-                defensiveAbility = defensiveAbility,
+                offensiveAbility = offensiveAbility.toEntity(),
+                defensiveAbility = defensiveAbility.toEntity(),
                 className = className,
             )
         is CharacterClass.Paladin ->
-            CharacterClassEntity.Paladin(
+            CharacterClassEntity(
+                type = CharacterClassType.Paladin,
                 hitPoints = hitPoints,
                 armorClass = armorClass,
                 speed = speed,
-                offensiveAbility = offensiveAbility,
-                defensiveAbility = defensiveAbility,
+                offensiveAbility = offensiveAbility.toEntity(),
+                defensiveAbility = defensiveAbility.toEntity(),
                 className = className,
             )
+    }
+
+@Serializable
+enum class OffensiveAbilityEntity {
+    KillingMomentum,
+    SpellNova,
+    ReflectiveShield,
+}
+
+@Serializable
+enum class DefensiveAbilityEntity {
+    Anticipation,
+    Blink,
+    HolyPrayer,
+}
+
+internal fun OffensiveAbility.toEntity() =
+    when (this) {
+        OffensiveAbility.KillingMomentum -> OffensiveAbilityEntity.KillingMomentum
+        OffensiveAbility.SpellNova -> OffensiveAbilityEntity.SpellNova
+        OffensiveAbility.ReflectiveShield -> OffensiveAbilityEntity.ReflectiveShield
+    }
+
+internal fun DefensiveAbility.toEntity() =
+    when (this) {
+        DefensiveAbility.Anticipation -> DefensiveAbilityEntity.Anticipation
+        DefensiveAbility.Blink -> DefensiveAbilityEntity.Blink
+        DefensiveAbility.HolyPrayer -> DefensiveAbilityEntity.HolyPrayer
+    }
+
+internal fun OffensiveAbilityEntity.toDomain() =
+    when (this) {
+        OffensiveAbilityEntity.KillingMomentum -> OffensiveAbility.KillingMomentum
+        OffensiveAbilityEntity.SpellNova -> OffensiveAbility.SpellNova
+        OffensiveAbilityEntity.ReflectiveShield -> OffensiveAbility.ReflectiveShield
+    }
+
+internal fun DefensiveAbilityEntity.toDomain() =
+    when (this) {
+        DefensiveAbilityEntity.Anticipation -> DefensiveAbility.Anticipation
+        DefensiveAbilityEntity.Blink -> DefensiveAbility.Blink
+        DefensiveAbilityEntity.HolyPrayer -> DefensiveAbility.HolyPrayer
     }

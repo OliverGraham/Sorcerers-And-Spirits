@@ -10,7 +10,7 @@ import androidx.compose.ui.Modifier
 //      When choice is made, gets selected
 //      When all selections made, go to next state,
 //          transition of cards into Grid Arrangement (that are simplified and smaller but can be
-// expanded)
+//          expanded)
 //          Arrangement moves in queue-like fashion, with current player's Card at top
 //          then next up, etc.
 //          Current player has fancy border and is large version and top-center

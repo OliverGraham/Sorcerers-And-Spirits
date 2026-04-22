@@ -16,3 +16,10 @@ internal fun ArenaPlayer.toState() =
         displayName = displayName,
         characterClassState = characterClass?.toState(),
     )
+
+internal fun PlayerState.toDomain() =
+    ArenaPlayer(
+        userId = userId,
+        displayName = displayName,
+        characterClass = characterClassState?.toDomain(),
+    )

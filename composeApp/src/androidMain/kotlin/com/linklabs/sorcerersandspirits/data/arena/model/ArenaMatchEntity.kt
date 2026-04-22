@@ -11,7 +11,11 @@ data class ArenaMatchEntity(
     val activePlayerUserId: String? = null,
     val playerEntitiesMap: Map<String, ArenaPlayerEntity> = emptyMap(),
     val logs: Map<String, ArenaMessageLogEntryEntity> = emptyMap(),
-)
+) {
+    companion object {
+        val playerEntitiesMapName = ArenaMatchEntity::playerEntitiesMap.name
+    }
+}
 
 internal fun ArenaMatchEntity.toDomain() =
     ArenaMatch(

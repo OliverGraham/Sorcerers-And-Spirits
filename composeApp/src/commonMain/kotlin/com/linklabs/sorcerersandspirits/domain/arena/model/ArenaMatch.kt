@@ -5,4 +5,6 @@ data class ArenaMatch(
     val playerMap: Map<String, ArenaPlayer>,
     val activePlayerUserId: String?,
     // TODO Arena: Arena
-)
+) {
+    val activePlayer = playerMap[activePlayerUserId]
+}

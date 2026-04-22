@@ -75,3 +75,34 @@ internal fun CharacterClassEntity.toDomain() =
                 className = className,
             )
     }
+
+internal fun CharacterClass.toEntity() =
+    when (this) {
+        is CharacterClass.Rogue ->
+            CharacterClassEntity.Rogue(
+                hitPoints = hitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbility,
+                defensiveAbility = defensiveAbility,
+                className = className,
+            )
+        is CharacterClass.Mage ->
+            CharacterClassEntity.Mage(
+                hitPoints = hitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbility,
+                defensiveAbility = defensiveAbility,
+                className = className,
+            )
+        is CharacterClass.Paladin ->
+            CharacterClassEntity.Paladin(
+                hitPoints = hitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbility,
+                defensiveAbility = defensiveAbility,
+                className = className,
+            )
+    }

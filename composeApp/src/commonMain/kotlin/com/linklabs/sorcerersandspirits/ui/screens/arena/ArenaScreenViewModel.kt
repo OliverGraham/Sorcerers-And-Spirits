@@ -5,8 +5,13 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
@@ -20,6 +25,7 @@ import kotlinx.coroutines.launch
 class ArenaScreenViewModel(
     private val arguments: ArenaScreenViewModelArguments,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
+    private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
@@ -32,7 +38,7 @@ class ArenaScreenViewModel(
         Timer(
             coroutineScope = viewModelScope,
             onTimerTick = ::updateArenaStateSeconds,
-            onTimerExpiration = ::onWaitingForPlayersTimerExpiration,
+            onTimerExpiration = ::onTimerExpiration,
         )
 
     init {
@@ -60,11 +66,14 @@ class ArenaScreenViewModel(
         }
     }
 
+    fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
+        viewModelScope.launch {
+            val arenaPlayer = playerState.copy(characterClassState = characterClassState).toDomain()
+            updateArenaPlayerUseCase(arenaId = arguments.arenaId, arenaPlayer = arenaPlayer)
+        }
+    }
+
     // TODO Arena:
-    //  Previous null, new is WaitingForAllPlayers
-    //      Start 20 second timer, everyone should connect by then
-    //  Previous is WaitingForAllPlayers, new is WaitingForAllPlayers
-    //      20 second timer still going, just a loading indicator
     //  Previous is WaitingForAllPlayers, new is ChoosingClasses
     //      Same as Previous is ChoosingClasses, new is ChoosingClasses
     //      Start a new 20 second timer
@@ -85,46 +94,61 @@ class ArenaScreenViewModel(
         previousState: ArenaState?,
         updatedArenaMatch: ArenaMatch,
     ): ArenaState {
+        val timerAction =
+            determineTimerAction(
+                previousState = previousState,
+                updatedArenaMatch = updatedArenaMatch,
+            )
+
+        return when (timerAction) {
+            is TimerAction.Start -> {
+                arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
+                updatedArenaMatch.toState(secondsRemaining = timerAction.timerDuration)
+            }
+            is TimerAction.Stop -> {
+                arenaTimer.stopTimer()
+                updatedArenaMatch.toState(secondsRemaining = 0)
+            }
+            is TimerAction.None -> {
+                updatedArenaMatch.toState(secondsRemaining = previousState?.secondsRemaining ?: 0)
+            }
+        }
+    }
+
+    private fun determineTimerAction(
+        previousState: ArenaState?,
+        updatedArenaMatch: ArenaMatch,
+    ): TimerAction {
         val previousPhase = previousState?.phase
         val currentPhase = updatedArenaMatch.phase
-        val nextState = updatedArenaMatch.toState()
 
-        // We use a Pair to represent the state transition clearly
         return when (previousPhase to currentPhase) {
-            // Previous null, new is WaitingForAllPlayers
-            null to ArenaPhase.WaitingForAllPlayers -> {
-                // TODO: Start 20s timer
-                nextState
-            }
-            ArenaPhase.WaitingForAllPlayers to ArenaPhase.WaitingForAllPlayers -> {
-                // TODO: Keep 20s timer going, preserve seconds from previousState
-                nextState.copy(secondsRemaining = previousState?.secondsRemaining ?: 0)
-            }
-            ArenaPhase.WaitingForAllPlayers to ArenaPhase.ChoosingClasses -> {
-                // TODO: Start new 20s timer
-                nextState
-            }
-            ArenaPhase.ChoosingClasses to ArenaPhase.ChoosingClasses -> {
-                // TODO: If active player changed, restart 20s timer.
-                // Else, preserve seconds from previousState.
-                nextState.copy(secondsRemaining = previousState?.secondsRemaining ?: 0)
-            }
+            null to ArenaPhase.WaitingForAllPlayers -> TimerAction.Start(timerDuration = 20)
+            ArenaPhase.WaitingForAllPlayers to ArenaPhase.WaitingForAllPlayers -> TimerAction.None
+            null to ArenaPhase.ChoosingClasses,
+            ArenaPhase.WaitingForAllPlayers to ArenaPhase.ChoosingClasses ->
+                TimerAction.Start(timerDuration = 20)
+            ArenaPhase.ChoosingClasses to ArenaPhase.ChoosingClasses ->
+                if (previousState?.activePlayer != updatedArenaMatch.activePlayer) {
+                    TimerAction.Start(timerDuration = 20)
+                } else {
+                    TimerAction.None
+                }
             ArenaPhase.ChoosingClasses to ArenaPhase.Combat -> {
                 // TODO: Animation logic, start 15s turn timer
-                nextState
+                TimerAction.Start(timerDuration = 20)
             }
             ArenaPhase.Combat to ArenaPhase.Combat -> {
-                // TODO: If turn changed (new active player), start 5s or 15s timer.
-                // Else, preserve seconds from previousState.
-                nextState.copy(secondsRemaining = previousState?.secondsRemaining ?: 0)
+                if (previousState?.activePlayer != updatedArenaMatch.activePlayer) {
+                    // TODO: change timer duration based on type of roll (first roll choosing
+                    //  opponent, or simply follow-up to opponent's health)
+                    TimerAction.Start(timerDuration = 15)
+                } else {
+                    TimerAction.None
+                }
             }
-            ArenaPhase.Combat to ArenaPhase.Finished -> {
-                // TODO: Stop all timers, cleanup
-                nextState
-            }
-            else -> {
-                nextState.copy(secondsRemaining = previousState?.secondsRemaining ?: 0)
-            }
+            ArenaPhase.Combat to ArenaPhase.Finished -> TimerAction.Stop
+            else -> TimerAction.Stop
         }
     }
 
@@ -134,12 +158,12 @@ class ArenaScreenViewModel(
         }
     }
 
-    private suspend fun onWaitingForPlayersTimerExpiration() {
-        val loadedState = _uiStateFlow.value as? UiState.Loaded ?: return
+    private suspend fun onTimerExpiration() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
 
-        when (loadedState.data.phase) {
+        when (loadedState.phase) {
             ArenaPhase.WaitingForAllPlayers -> {
-                val playersJoined = loadedState.data.playerStatesMap.size
+                val playersJoined = loadedState.playerStatesMap.size
                 if (playersJoined < arguments.expectedNumberOfPlayers) {
                     _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
                 }

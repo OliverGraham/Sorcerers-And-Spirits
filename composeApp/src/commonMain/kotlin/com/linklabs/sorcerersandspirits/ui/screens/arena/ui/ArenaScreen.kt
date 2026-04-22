@@ -1,15 +1,18 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
@@ -23,12 +26,15 @@ internal fun ArenaScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // TODO Arena: CompositionLocalProvider
+    CompositionLocalProvider(
+        LocalArenaActions provides
+            ArenaActions(onChooseCharacterClass = viewModel::onChooseCharacterClass)
+    ) {
+        viewModel.eventChannelFlow.collectEvents()
+        val uiState by viewModel.uiStateFlow.collectAsState()
 
-    viewModel.eventChannelFlow.collectEvents()
-    val uiState by viewModel.uiStateFlow.collectAsState()
-
-    ArenaScreen(uiState = uiState, modifier = modifier)
+        ArenaScreen(uiState = uiState, modifier = modifier)
+    }
 }
 
 @Composable

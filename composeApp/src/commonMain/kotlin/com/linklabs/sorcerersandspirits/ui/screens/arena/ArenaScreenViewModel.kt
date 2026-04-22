@@ -6,9 +6,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 class ArenaScreenViewModel(
     private val arguments: ArenaScreenViewModelArguments,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
+    private val getUserIdUseCase: GetUserIdUseCase,
     private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
 
@@ -43,6 +45,9 @@ class ArenaScreenViewModel(
 
     init {
         viewModelScope.launch {
+            // TODO: Figure out better way for userId
+            val userId = getUserIdUseCase()
+
             coordinateArenaMatchUseCase(
                     arenaId = arguments.arenaId,
                     expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
@@ -59,6 +64,7 @@ class ArenaScreenViewModel(
                         getUpdatedState(
                             previousState = _uiStateFlow.getLoadedStateOrNull(),
                             updatedArenaMatch = updatedArenaMatch,
+                            userId = userId,
                         )
 
                     _uiStateFlow.value = UiState.Loaded(data = updatedArenaState)
@@ -93,6 +99,7 @@ class ArenaScreenViewModel(
     private fun getUpdatedState(
         previousState: ArenaState?,
         updatedArenaMatch: ArenaMatch,
+        userId: String?,
     ): ArenaState {
         val timerAction =
             determineTimerAction(
@@ -103,14 +110,20 @@ class ArenaScreenViewModel(
         return when (timerAction) {
             is TimerAction.Start -> {
                 arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
-                updatedArenaMatch.toState(secondsRemaining = timerAction.timerDuration)
+                updatedArenaMatch.toState(
+                    secondsRemaining = timerAction.timerDuration,
+                    userId = userId,
+                )
             }
             is TimerAction.Stop -> {
                 arenaTimer.stopTimer()
-                updatedArenaMatch.toState(secondsRemaining = 0)
+                updatedArenaMatch.toState(secondsRemaining = 0, userId = userId)
             }
             is TimerAction.None -> {
-                updatedArenaMatch.toState(secondsRemaining = previousState?.secondsRemaining ?: 0)
+                updatedArenaMatch.toState(
+                    secondsRemaining = previousState?.secondsRemaining ?: 0,
+                    userId = userId,
+                )
             }
         }
     }

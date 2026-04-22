@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.model
+package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass

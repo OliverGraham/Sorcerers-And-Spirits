@@ -3,9 +3,11 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.linklabs.sorcerersandspirits.domain.utilities.EmptyTwoArgumentLambda
 
 internal data class TavernActions(
-    val onSendChallengerNotifications: (TravelerState, Set<TravelerState>) -> Unit = { _, _ -> },
+    val onSendChallengerNotifications: (TravelerState, Set<TravelerState>) -> Unit =
+        EmptyTwoArgumentLambda,
     val onAcceptChallenge: (challengeId: String) -> Unit = {},
     val onDeclineChallenge: (challengeId: String) -> Unit = {},
     val onShowChallengeDialog: () -> Unit = {},

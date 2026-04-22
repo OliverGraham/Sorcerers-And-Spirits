@@ -22,6 +22,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,7 +35,7 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
-        sheetDragHandle = { SheetDragHandle(secondsRemaining = arenaState.secondsRemaining) },
+        sheetDragHandle = { ArenaMessageLogHandle(secondsRemaining = arenaState.secondsRemaining) },
         sheetContent = { ArenaMessageLog() },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
@@ -44,7 +46,7 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
 }
 
 @Composable
-private fun SheetDragHandle(secondsRemaining: Int, modifier: Modifier = Modifier) {
+private fun ArenaMessageLogHandle(secondsRemaining: Int, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth().padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

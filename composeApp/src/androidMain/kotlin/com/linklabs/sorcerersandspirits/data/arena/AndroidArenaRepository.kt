@@ -7,11 +7,13 @@ import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
+import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.getValueFlow
 import com.linklabs.sorcerersandspirits.data.runTransactionAwait
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaMessageLogEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,8 +22,40 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     private val arenaMatchesReference = database.reference.child(ARENA_MATCHES_PATH)
 
+    // TODO Arena: Cleanup, docstring
+    // Determine the next phase and active player
+    // If nextPlayerId is null, it means everyone has picked a class
+    override suspend fun chooseCharacterClass(
+        arenaId: String,
+        arenaPlayer: ArenaPlayer,
+        nextPlayerId: String?,
+    ) {
+        arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
+            val match =
+                currentData.getValue<ArenaMatchEntity>()
+                    ?: return@runTransactionAwait Transaction.abort()
+
+            val updatedPlayers = match.playerEntitiesMap.toMutableMap()
+            updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
+
+            val nextPhase =
+                if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
+
+            val updatedMatch =
+                match.copy(
+                    playerEntitiesMap = updatedPlayers,
+                    activePlayerUserId = nextPlayerId,
+                    phase = nextPhase,
+                )
+
+            currentData.value = updatedMatch
+            Transaction.success(currentData)
+        }
+    }
+
     /**
-     * Connects a user to the arena. Uses a transaction so the first player initializes the match.
+     * Connects a user to the arena. Uses a transaction so the first player initializes the match,
+     * and so gets the honor of being first in the game.
      */
     override suspend fun connectToArena(
         arenaId: String,
@@ -31,7 +65,11 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
             val match =
                 currentData.getValue<ArenaMatchEntity>()
-                    ?: ArenaMatchEntity(arenaId = arenaId, phase = ArenaPhase.WaitingForAllPlayers)
+                    ?: ArenaMatchEntity(
+                        arenaId = arenaId,
+                        phase = ArenaPhase.WaitingForAllPlayers,
+                        activePlayerUserId = userId,
+                    )
 
             val updatedPlayers = match.playerEntitiesMap.toMutableMap()
 
@@ -59,21 +97,13 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     }
 
     /** Updates a player's specific state (e.g., picking a class or taking damage). */
-    suspend fun updatePlayerState(
-        arenaId: String,
-        userId: String,
-        update: (ArenaPlayerEntity) -> ArenaPlayerEntity,
-    ) {
+    override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
             .child(arenaId)
-            .child("playerEntitiesMap")
-            .child(userId)
+            .child(ArenaMatchEntity.playerEntitiesMapName)
+            .child(arenaPlayer.userId)
             .runTransactionAwait { currentData ->
-                val player =
-                    currentData.getValue<ArenaPlayerEntity>()
-                        ?: return@runTransactionAwait Transaction.abort()
-
-                currentData.value = update(player)
+                currentData.value = arenaPlayer.toEntity()
                 Transaction.success(currentData)
             }
     }

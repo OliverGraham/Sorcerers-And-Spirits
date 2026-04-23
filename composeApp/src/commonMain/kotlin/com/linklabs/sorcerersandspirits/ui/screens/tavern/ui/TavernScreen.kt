@@ -26,10 +26,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCards
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActions
@@ -142,7 +142,7 @@ private fun SheetDragHandle(
 
 @Composable
 private fun ScreenContent(
-    characterClasses: List<CharacterClass>,
+    characterClasses: List<CharacterClassState>,
     padding: PaddingValues,
     modifier: Modifier = Modifier,
 ) {

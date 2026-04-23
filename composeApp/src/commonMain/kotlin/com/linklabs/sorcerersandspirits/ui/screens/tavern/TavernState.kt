@@ -9,14 +9,16 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
 @Immutable
 data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
     val challenge: ChallengeState?,
-    val characterClasses: List<CharacterClass> =
-        CharacterClass.getAllClasses(), // TODO: any reason to get from config?
+    val characterClasses: List<CharacterClassState> =
+        CharacterClass.getAllClasses().map { it.toState() }, // TODO: any reason to get from config?
 )
 
 @Immutable

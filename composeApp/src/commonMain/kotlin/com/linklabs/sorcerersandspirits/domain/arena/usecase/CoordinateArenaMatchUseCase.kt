@@ -6,7 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepo
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 
-class JoinArenaUseCase(
+class CoordinateArenaMatchUseCase(
     private val authenticationRepository: AuthenticationRepository,
     private val arenaRepository: ArenaRepository,
 ) {

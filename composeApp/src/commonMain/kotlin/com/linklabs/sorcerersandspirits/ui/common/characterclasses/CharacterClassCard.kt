@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,8 +25,24 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-fun CharacterClassCard(characterClass: CharacterClass, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth().height(height = 240.dp).padding(all = 8.dp)) {
+fun CharacterClassCard(
+    characterClass: CharacterClassState,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {},
+) {
+    val border =
+        if (isSelected) {
+            BorderStroke(width = 4.dp, color = MaterialTheme.colorScheme.primary)
+        } else {
+            null
+        }
+
+    OutlinedCard(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth().height(height = 240.dp).padding(all = 8.dp),
+        border = border ?: BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
         Column(
             modifier = Modifier.fillMaxSize().padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(space = 8.dp),
@@ -92,17 +109,23 @@ private fun Footer(armorClass: Int, hitPoints: Int, modifier: Modifier = Modifie
 @Preview(showBackground = true)
 @Composable
 private fun RogueCardPreview() {
-    SorcerersAndSpiritsTheme { CharacterClassCard(characterClass = CharacterClass.Rogue()) }
+    SorcerersAndSpiritsTheme {
+        CharacterClassCard(characterClass = CharacterClass.Rogue().toState())
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun MageCardPreview() {
-    SorcerersAndSpiritsTheme { CharacterClassCard(characterClass = CharacterClass.Mage()) }
+    SorcerersAndSpiritsTheme {
+        CharacterClassCard(characterClass = CharacterClass.Mage().toState())
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun PaladinCardPreview() {
-    SorcerersAndSpiritsTheme { CharacterClassCard(characterClass = CharacterClass.Paladin()) }
+    SorcerersAndSpiritsTheme {
+        CharacterClassCard(characterClass = CharacterClass.Paladin().toState())
+    }
 }

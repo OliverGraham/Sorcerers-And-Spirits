@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
+import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
@@ -14,7 +15,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallenger
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengerState
 
 internal class ChallengeHandler(
-    private val challengeTimer: ChallengeTimer,
+    private val challengeTimer: Timer,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
 ) {

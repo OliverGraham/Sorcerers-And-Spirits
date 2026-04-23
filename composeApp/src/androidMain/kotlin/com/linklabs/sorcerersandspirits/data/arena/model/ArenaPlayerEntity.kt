@@ -16,3 +16,10 @@ internal fun ArenaPlayerEntity.toDomain() =
         displayName = displayName,
         characterClass = characterClassEntity?.toDomain(),
     )
+
+internal fun ArenaPlayer.toEntity() =
+    ArenaPlayerEntity(
+        userId = userId,
+        displayName = displayName,
+        characterClassEntity = characterClass?.toEntity(),
+    )

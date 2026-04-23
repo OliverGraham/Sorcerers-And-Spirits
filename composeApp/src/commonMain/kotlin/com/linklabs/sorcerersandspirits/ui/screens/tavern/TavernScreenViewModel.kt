@@ -7,9 +7,9 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
+import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHandler
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeTimer
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.channels.Channel
@@ -94,7 +94,7 @@ class TavernScreenViewModel(
     private fun initializeChallengeHandler() =
         ChallengeHandler(
             challengeTimer =
-                ChallengeTimer(
+                Timer(
                     coroutineScope = viewModelScope,
                     onTimerTick = ::updateChallengeStateSeconds,
                     onTimerExpiration = ::declineChallenge,

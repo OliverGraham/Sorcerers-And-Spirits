@@ -1,6 +1,8 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.JoinArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
@@ -13,7 +15,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTraveler
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.factoryOf
@@ -25,24 +26,26 @@ val commonModule = module {
     initializeViewModels()
 }
 
+// TODO: Update Koin to use Compiler Plugin
+
 private fun Module.initializeUseCases() {
+    singleOf(::ChooseCharacterClassUseCase)
+    singleOf(::CoordinateArenaMatchUseCase)
     singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)
     singleOf(::GetProfileFlowUseCase)
     singleOf(::GetTavernDataFlowUseCase)
     singleOf(::GetUserIdUseCase)
     singleOf(::IsUserSignedInUseCase)
-    singleOf(::JoinArenaUseCase)
     singleOf(::SetCurrentTravelerAvailableUseCase)
     singleOf(::SendChallengeUseCase)
+    singleOf(::UpdateArenaPlayerUseCase)
     singleOf(::UpdateChallengerStatusUseCase)
     singleOf(::UpdateProfileDisplayNameUseCase)
 }
 
 private fun Module.initializeViewModels() {
     factoryOf(::AppViewModel)
-    factory { (arguments: ArenaScreenViewModelArguments) ->
-        ArenaScreenViewModel(arguments = arguments, joinArenaUseCase = get())
-    }
+    factoryOf(::ArenaScreenViewModel)
     factoryOf(::TavernScreenViewModel)
 }

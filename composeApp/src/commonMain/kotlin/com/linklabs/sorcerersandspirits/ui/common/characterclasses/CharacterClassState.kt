@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.model
+package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
@@ -45,7 +45,7 @@ sealed interface CharacterClassState {
     ) : CharacterClassState
 }
 
-internal fun CharacterClass?.toState() =
+internal fun CharacterClass.toState() =
     when (this) {
         is CharacterClass.Rogue ->
             CharacterClassState.Rogue(
@@ -74,5 +74,35 @@ internal fun CharacterClass?.toState() =
                 defensiveAbility = defensiveAbility,
                 className = className,
             )
-        null -> null
+    }
+
+internal fun CharacterClassState.toDomain() =
+    when (this) {
+        is CharacterClassState.Rogue ->
+            CharacterClass.Rogue(
+                hitPoints = hitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbility,
+                defensiveAbility = defensiveAbility,
+                className = className,
+            )
+        is CharacterClassState.Mage ->
+            CharacterClass.Mage(
+                hitPoints = hitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbility,
+                defensiveAbility = defensiveAbility,
+                className = className,
+            )
+        is CharacterClassState.Paladin ->
+            CharacterClass.Paladin(
+                hitPoints = hitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbility,
+                defensiveAbility = defensiveAbility,
+                className = className,
+            )
     }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 
 // TODO: Get random names from remote config
 private val randomNames =
@@ -55,6 +56,7 @@ private val randomNames =
         "an ash-covered drifter",
     )
 
+@KoinViewModel
 class AppViewModel(
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,

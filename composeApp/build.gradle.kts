@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.spotless)
+    alias(libs.plugins.koin.compiler)
 }
 
 kotlin {
@@ -60,9 +61,11 @@ kotlin {
             implementation(dependencyNotation = libs.androidx.navigation3.runtime)
             implementation(dependencyNotation = libs.androidx.navigation3.ui)
 
-            implementation(dependencyNotation = libs.koin.core)
-            implementation(dependencyNotation = libs.koin.compose)
+            implementation(dependencyNotation = project.dependencies.platform(libs.koin.bom))
             implementation(dependencyNotation = libs.koin.annotations)
+            implementation(dependencyNotation = libs.koin.compose)
+            implementation(dependencyNotation = libs.koin.compose.viewmodel)
+            implementation(dependencyNotation = libs.koin.core)
         }
         commonTest.dependencies {
             implementation(dependencyNotation = libs.kotlin.test)

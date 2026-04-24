@@ -16,13 +16,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
 @Composable
 internal fun ArenaScreen(
     arguments: ArenaScreenViewModelArguments,
-    viewModel: ArenaScreenViewModel = koinInject { parametersOf(arguments) },
+    viewModel: ArenaScreenViewModel = koinViewModel(parameters = { parametersOf(arguments) }),
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

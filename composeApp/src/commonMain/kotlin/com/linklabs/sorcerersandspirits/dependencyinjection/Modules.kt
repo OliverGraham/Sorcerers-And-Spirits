@@ -17,8 +17,8 @@ import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import org.koin.core.module.Module
-import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
+import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
 val commonModule = module {
@@ -45,7 +45,7 @@ private fun Module.initializeUseCases() {
 }
 
 private fun Module.initializeViewModels() {
-    factoryOf(::AppViewModel)
-    factoryOf(::ArenaScreenViewModel)
-    factoryOf(::TavernScreenViewModel)
+    viewModelOf(::AppViewModel)
+    viewModelOf(::ArenaScreenViewModel)
+    viewModelOf(::TavernScreenViewModel)
 }

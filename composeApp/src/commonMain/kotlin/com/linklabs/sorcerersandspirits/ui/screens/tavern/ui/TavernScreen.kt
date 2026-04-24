@@ -40,7 +40,7 @@ import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_martini
 import sorcerersandspirits.composeapp.generated.resources.ic_swords
@@ -48,7 +48,7 @@ import sorcerersandspirits.composeapp.generated.resources.ic_up_arrow
 
 @Composable
 internal fun TavernScreen(
-    viewModel: TavernScreenViewModel = koinInject(),
+    viewModel: TavernScreenViewModel = koinViewModel(),
     onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
     modifier: Modifier = Modifier,
 ) {

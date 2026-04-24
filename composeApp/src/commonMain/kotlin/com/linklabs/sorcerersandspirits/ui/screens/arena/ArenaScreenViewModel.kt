@@ -23,12 +23,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
+import org.koin.core.annotation.KoinViewModel
 
 // TODO Arena: As soon as possible, write tests for this behavior. DO NOT do like the other view
 //  model test, with all the Firebase craziness. Figure out another way that makes more sense
 
+@KoinViewModel
 class ArenaScreenViewModel(
-    private val arguments: ArenaScreenViewModelArguments,
+    @InjectedParam private val arguments: ArenaScreenViewModelArguments,
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,

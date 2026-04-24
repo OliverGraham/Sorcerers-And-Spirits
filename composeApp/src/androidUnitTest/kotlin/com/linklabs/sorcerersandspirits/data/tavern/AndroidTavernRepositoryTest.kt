@@ -18,8 +18,6 @@ import com.linklabs.sorcerersandspirits.data.model.ChallengerEntity
 import com.linklabs.sorcerersandspirits.data.model.TravelerEntity
 import com.linklabs.sorcerersandspirits.data.model.toDomain
 import com.linklabs.sorcerersandspirits.data.model.toEntity
-import com.linklabs.sorcerersandspirits.data.profile.toDomain
-import com.linklabs.sorcerersandspirits.data.profile.toEntity
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult

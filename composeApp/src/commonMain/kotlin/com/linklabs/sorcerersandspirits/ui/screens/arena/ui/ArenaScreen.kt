@@ -42,7 +42,9 @@ private fun ArenaScreen(uiState: UiState<ArenaState>, modifier: Modifier = Modif
     when (uiState) {
         // TODO Arena: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
+
         is UiState.Loaded -> LoadedArenaScreen(arenaState = uiState.data, modifier = modifier)
+
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }

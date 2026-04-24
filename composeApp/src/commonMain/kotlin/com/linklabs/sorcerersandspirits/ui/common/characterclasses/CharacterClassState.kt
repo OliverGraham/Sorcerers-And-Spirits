@@ -56,6 +56,7 @@ internal fun CharacterClass.toState() =
                 defensiveAbility = defensiveAbility,
                 className = className,
             )
+
         is CharacterClass.Mage ->
             CharacterClassState.Mage(
                 hitPoints = hitPoints,
@@ -65,6 +66,7 @@ internal fun CharacterClass.toState() =
                 defensiveAbility = defensiveAbility,
                 className = className,
             )
+
         is CharacterClass.Paladin ->
             CharacterClassState.Paladin(
                 hitPoints = hitPoints,
@@ -87,6 +89,7 @@ internal fun CharacterClassState.toDomain() =
                 defensiveAbility = defensiveAbility,
                 className = className,
             )
+
         is CharacterClassState.Mage ->
             CharacterClass.Mage(
                 hitPoints = hitPoints,
@@ -96,6 +99,7 @@ internal fun CharacterClassState.toDomain() =
                 defensiveAbility = defensiveAbility,
                 className = className,
             )
+
         is CharacterClassState.Paladin ->
             CharacterClass.Paladin(
                 hitPoints = hitPoints,

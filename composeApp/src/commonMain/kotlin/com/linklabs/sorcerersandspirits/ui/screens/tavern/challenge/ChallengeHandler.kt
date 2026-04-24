@@ -35,10 +35,12 @@ internal class ChallengeHandler(
         val result = sendChallengeUseCase(instigator = instigator, invitees = invitees)
         return when (result) {
             is SendChallengeResult.Success -> null
+
             is SendChallengeResult.NotEnoughChallengersAvailable ->
                 TavernEvent.NotEnoughChallengersAvailable(
                     challengerStates = result.unavailableChallengers.map { it.toChallengerState() }
                 )
+
             is SendChallengeResult.Failure -> TavernEvent.ShowChallengeSendFailed
         }
     }
@@ -51,13 +53,16 @@ internal class ChallengeHandler(
         when {
             previousChallengeState == null && updatedChallenge != null ->
                 handleChallengeStart(userId = userId, updatedChallenge = updatedChallenge)
+
             previousChallengeState != null && updatedChallenge != null ->
                 handleChallengeUpdate(
                     previousChallengeState = previousChallengeState,
                     updatedChallenge = updatedChallenge,
                     userId = userId,
                 )
+
             previousChallengeState != null && updatedChallenge == null -> handleChallengeFinish()
+
             else -> null
         }
 

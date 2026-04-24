@@ -76,7 +76,9 @@ private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Mod
     when (uiState) {
         // TODO: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
+
         is UiState.Loaded -> LoadedTavernScreen(tavernState = uiState.data, modifier = modifier)
+
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }
@@ -163,8 +165,10 @@ private fun Flow<TavernEvent>.collectEvents(
         collect { event ->
             when (event) {
                 is TavernEvent.NavigateToArena -> onNavigateToArena(event.arguments)
+
                 is TavernEvent.ShowChallengeSendFailed ->
                     println("TAVERN EVENT: ShowChallengeSendFailed")
+
                 is TavernEvent.NotEnoughChallengersAvailable ->
                     println("TAVERN EVENT: Show traveler unavailable")
             }

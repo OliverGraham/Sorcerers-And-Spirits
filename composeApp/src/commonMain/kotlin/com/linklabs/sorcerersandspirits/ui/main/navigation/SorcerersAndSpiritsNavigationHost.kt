@@ -33,6 +33,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
     when (val state = uiState) {
         // TODO: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
+
         is UiState.Loaded -> {
             val data = state.data
 
@@ -42,7 +43,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
                     onDismissRequest = {
-                        /** TODO: what to do here, show another dialog? Snack bar? Just exit app? */
+                        // TODO: what to do here, show another dialog? Snack bar? Just exit app?
                     },
                 )
             } else {
@@ -53,6 +54,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
                 )
             }
         }
+
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }

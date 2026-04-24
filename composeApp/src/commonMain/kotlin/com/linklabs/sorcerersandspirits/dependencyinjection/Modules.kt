@@ -26,8 +26,6 @@ val commonModule = module {
     initializeViewModels()
 }
 
-// TODO: Update Koin to use Compiler Plugin
-
 private fun Module.initializeUseCases() {
     singleOf(::ChooseCharacterClassUseCase)
     singleOf(::CoordinateArenaMatchUseCase)

@@ -21,11 +21,11 @@ import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.TopBar
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
-import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 internal fun SorcerersAndSpiritsNavigationHost(
-    viewModel: AppViewModel = koinInject(),
+    viewModel: AppViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()

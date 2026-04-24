@@ -18,7 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.KoinViewModel
 
+@KoinViewModel
 class TavernScreenViewModel(
     private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
     private val sendChallengeUseCase: SendChallengeUseCase,

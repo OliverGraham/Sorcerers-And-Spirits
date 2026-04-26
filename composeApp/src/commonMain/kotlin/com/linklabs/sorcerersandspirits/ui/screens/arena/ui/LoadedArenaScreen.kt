@@ -36,7 +36,7 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
         sheetDragHandle = { ArenaMessageLogHandle(secondsRemaining = arenaState.secondsRemaining) },
-        sheetContent = { ArenaMessageLog() },
+        sheetContent = { ArenaMessageLog(messages = arenaState.messages) },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
     }

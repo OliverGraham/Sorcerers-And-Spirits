@@ -1,11 +1,14 @@
 package com.linklabs.sorcerersandspirits.data.arena
 
+import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.getValue
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageType
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
@@ -15,9 +18,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaMessageLogEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+
+// TODO Arena: Update the slop
 
 class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
@@ -50,15 +54,84 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
         val nextPhase = if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
 
+        val (finalActivePlayerUserId, updatedMessages) =
+            generateCharacterSelectionMessages(
+                match = match,
+                updatedPlayers = updatedPlayers,
+                arenaPlayer = arenaPlayer,
+                nextPhase = nextPhase,
+                nextPlayerId = nextPlayerId,
+            )
+
         val updatedMatch =
             match.copy(
                 playerEntitiesMap = updatedPlayers,
-                activePlayerUserId = nextPlayerId,
+                activePlayerUserId = finalActivePlayerUserId,
                 phase = nextPhase,
+                messages = updatedMessages,
             )
 
         this.value = updatedMatch
         return Transaction.success(this)
+    }
+
+    private fun generateCharacterSelectionMessages(
+        match: ArenaMatchEntity,
+        updatedPlayers: Map<String, ArenaPlayerEntity>,
+        arenaPlayer: ArenaPlayer,
+        nextPhase: ArenaPhase,
+        nextPlayerId: String?,
+    ): Pair<String?, List<ArenaMessageEntity>> {
+        val messagesReference =
+            arenaMatchesReference.child(match.arenaId).child(ArenaMatchEntity.messagesName)
+
+        val selectionMessage =
+            ArenaMessageEntity(
+                id = messagesReference.addNewKey(),
+                type = ArenaMessageType.Generic,
+                message =
+                    "${arenaPlayer.displayName} selected ${arenaPlayer.characterClass?.className.orEmpty()}",
+            )
+
+        var finalActivePlayerUserId = nextPlayerId
+
+        val transitionMessages =
+            if (nextPhase == ArenaPhase.Combat) {
+                val firstPlayer =
+                    updatedPlayers.values.maxByOrNull { it.characterClassEntity?.speed ?: 0 }
+                finalActivePlayerUserId = firstPlayer?.userId
+
+                buildList {
+                    if (firstPlayer != null) {
+                        val className = firstPlayer.characterClassEntity?.className ?: "Player"
+                        add(
+                            ArenaMessageEntity(
+                                id = messagesReference.addNewKey(),
+                                type = ArenaMessageType.Generic,
+                                message = "It is now $className's turn!",
+                            )
+                        )
+                    }
+                    add(
+                        ArenaMessageEntity(
+                            id = messagesReference.addNewKey(),
+                            type = ArenaMessageType.Round,
+                            roundNumber = 1,
+                        )
+                    )
+                    add(
+                        ArenaMessageEntity(
+                            id = messagesReference.addNewKey(),
+                            type = ArenaMessageType.Generic,
+                            message = "Combat is now starting!",
+                        )
+                    )
+                }
+            } else {
+                emptyList()
+            }
+
+        return finalActivePlayerUserId to (transitionMessages + selectionMessage + match.messages)
     }
 
     /**
@@ -118,14 +191,11 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             }
     }
 
-    /** Adds a log entry (Attack, Class chosen, etc.) to the match. */
-    suspend fun addLogEntry(arenaId: String, log: ArenaMessageLogEntry) {
-        arenaMatchesReference.child(arenaId).child("logs").push().setValue(log)
-    }
-
     /** Streams the match document to all subscribers. */
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
         arenaMatchesReference.child(arenaId).getValueFlow<ArenaMatchEntity>().map { entity ->
             entity?.toDomain()
         }
+
+    private fun DatabaseReference.addNewKey() = push().key.orEmpty()
 }

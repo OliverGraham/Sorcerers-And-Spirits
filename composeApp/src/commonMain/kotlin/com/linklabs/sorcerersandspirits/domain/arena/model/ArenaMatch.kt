@@ -4,7 +4,7 @@ data class ArenaMatch(
     val phase: ArenaPhase,
     val playerMap: Map<String, ArenaPlayer>,
     val activePlayerUserId: String?,
-    // TODO Arena: Arena
+    val messages: List<ArenaMessage> = emptyList(),
 ) {
     val activePlayer = playerMap[activePlayerUserId]
 }

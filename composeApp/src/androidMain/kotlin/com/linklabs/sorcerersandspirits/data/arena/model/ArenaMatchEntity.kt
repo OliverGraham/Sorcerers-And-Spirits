@@ -10,10 +10,11 @@ data class ArenaMatchEntity(
     val phase: ArenaPhase = ArenaPhase.WaitingForAllPlayers,
     val activePlayerUserId: String? = null,
     val playerEntitiesMap: Map<String, ArenaPlayerEntity> = emptyMap(),
-    val logs: Map<String, ArenaMessageLogEntryEntity> = emptyMap(),
+    val messages: List<ArenaMessageEntity> = emptyList(),
 ) {
     companion object {
         val playerEntitiesMapName = ArenaMatchEntity::playerEntitiesMap.name
+        val messagesName = ArenaMatchEntity::messages.name
     }
 }
 
@@ -22,5 +23,5 @@ internal fun ArenaMatchEntity.toDomain() =
         phase = phase,
         playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
         activePlayerUserId = activePlayerUserId,
-        // TODO Arena: Logs
+        messages = messages.map { it.toDomain() },
     )

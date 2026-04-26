@@ -18,6 +18,7 @@ interface ArenaRepository {
         arenaId: String,
         expectedNumberOfPlayers: Int,
         userId: String,
+        displayName: String,
     ): Boolean
 
     fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?>

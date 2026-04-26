@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena
 
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.getValue
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
@@ -31,26 +32,33 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         nextPlayerId: String?,
     ) {
         arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
-            val match =
-                currentData.getValue<ArenaMatchEntity>()
-                    ?: return@runTransactionAwait Transaction.abort()
-
-            val updatedPlayers = match.playerEntitiesMap.toMutableMap()
-            updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
-
-            val nextPhase =
-                if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
-
-            val updatedMatch =
-                match.copy(
-                    playerEntitiesMap = updatedPlayers,
-                    activePlayerUserId = nextPlayerId,
-                    phase = nextPhase,
-                )
-
-            currentData.value = updatedMatch
-            Transaction.success(currentData)
+            currentData.chooseCharacterClassTransaction(
+                arenaPlayer = arenaPlayer,
+                nextPlayerId = nextPlayerId,
+            )
         }
+    }
+
+    private fun MutableData.chooseCharacterClassTransaction(
+        arenaPlayer: ArenaPlayer,
+        nextPlayerId: String?,
+    ): Transaction.Result {
+        val match = getValue<ArenaMatchEntity>() ?: return Transaction.abort()
+
+        val updatedPlayers = match.playerEntitiesMap.toMutableMap()
+        updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
+
+        val nextPhase = if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
+
+        val updatedMatch =
+            match.copy(
+                playerEntitiesMap = updatedPlayers,
+                activePlayerUserId = nextPlayerId,
+                phase = nextPhase,
+            )
+
+        this.value = updatedMatch
+        return Transaction.success(this)
     }
 
     /**
@@ -61,6 +69,7 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         arenaId: String,
         expectedNumberOfPlayers: Int,
         userId: String,
+        displayName: String,
     ) =
         arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
             val match =
@@ -74,7 +83,8 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             val updatedPlayers = match.playerEntitiesMap.toMutableMap()
 
             if (userId !in updatedPlayers) {
-                updatedPlayers[userId] = ArenaPlayerEntity(userId = userId)
+                updatedPlayers[userId] =
+                    ArenaPlayerEntity(displayName = displayName, userId = userId)
 
                 // Optional: Automatically log the joining event here if desired
                 // match.logs.put(UUID.randomUUID(), ArenaLogEntity(...))

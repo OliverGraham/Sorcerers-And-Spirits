@@ -55,6 +55,7 @@ kotlin {
             implementation(dependencyNotation = compose.ui)
             implementation(dependencyNotation = compose.components.resources)
             implementation(dependencyNotation = compose.components.uiToolingPreview)
+            implementation(dependencyNotation = compose.preview)
             implementation(dependencyNotation = libs.androidx.lifecycle.runtimeCompose)
             implementation(dependencyNotation = libs.androidx.lifecycle.viewmodelCompose)
             implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel.navigation3)

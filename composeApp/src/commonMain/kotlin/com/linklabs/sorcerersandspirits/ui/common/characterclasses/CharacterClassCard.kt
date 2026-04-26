@@ -29,6 +29,8 @@ fun CharacterClassCard(
     characterClass: CharacterClassState,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
+    enabled: Boolean = true,
+    selectedBy: String? = null,
     onClick: () -> Unit = {},
 ) {
     val border =
@@ -40,6 +42,7 @@ fun CharacterClassCard(
 
     OutlinedCard(
         onClick = onClick,
+        enabled = enabled,
         modifier = modifier.fillMaxWidth().height(height = 240.dp).padding(all = 8.dp),
         border = border ?: BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -47,6 +50,17 @@ fun CharacterClassCard(
             modifier = Modifier.fillMaxSize().padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(space = 8.dp),
         ) {
+            // TODO Arena: resource, update the slop
+            if (selectedBy != null) {
+                Text(
+                    text = "Chosen by: $selectedBy",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Center,
+                )
+            }
             Header(className = characterClass.className, classSpeed = characterClass.speed)
             Body(
                 offensiveAbility = characterClass.offensiveAbility,

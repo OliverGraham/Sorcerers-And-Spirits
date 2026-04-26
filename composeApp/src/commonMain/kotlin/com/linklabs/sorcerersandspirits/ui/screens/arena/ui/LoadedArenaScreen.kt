@@ -83,8 +83,11 @@ private fun ScreenContent(
                         characterClasses = CharacterClass.getAllClasses().map { it.toState() },
                     )
                 }
+
                 ArenaPhase.Combat -> ArenaCombat()
+
                 ArenaPhase.WaitingForAllPlayers -> ArenaWaitingForPlayers()
+
                 ArenaPhase.Finished -> {
                     // TODO Arena: figure out
                 }

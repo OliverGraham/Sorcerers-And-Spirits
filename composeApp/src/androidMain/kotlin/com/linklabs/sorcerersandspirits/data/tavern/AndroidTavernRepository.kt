@@ -198,6 +198,7 @@ class AndroidTavernRepository(
                 mailboxReference.removeValue().await()
                 upsertPresence(hasActiveChallenge = false)
             }
+
             challengeEntity.isExpired() -> {
                 expireChallenge(
                     challengeId = challengeId,
@@ -205,6 +206,7 @@ class AndroidTavernRepository(
                 )
                 upsertPresence(hasActiveChallenge = false)
             }
+
             else -> upsertPresence(hasActiveChallenge = true)
         }
     }
@@ -323,12 +325,14 @@ class AndroidTavernRepository(
 
         when (resolveChallengeState(challengeEntity = challengeEntity)) {
             ChallengeResolution.None -> Unit
+
             ChallengeResolution.Complete -> {
                 removeChallengeReferences(
                     challengeId = challengeId,
                     participantUserIds = participantUserIds,
                 )
             }
+
             ChallengeResolution.CancelInsufficientPlayers -> {
                 removeChallengeReferences(
                     challengeId = challengeId,

@@ -120,10 +120,12 @@ class ArenaScreenViewModel(
                     userId = userId,
                 )
             }
+
             is TimerAction.Stop -> {
                 arenaTimer.stopTimer()
                 updatedArenaMatch.toState(secondsRemaining = 0, userId = userId)
             }
+
             is TimerAction.None -> {
                 updatedArenaMatch.toState(
                     secondsRemaining = previousState?.secondsRemaining ?: 0,
@@ -142,20 +144,25 @@ class ArenaScreenViewModel(
 
         return when (previousPhase to currentPhase) {
             null to ArenaPhase.WaitingForAllPlayers -> TimerAction.Start(timerDuration = 20)
+
             ArenaPhase.WaitingForAllPlayers to ArenaPhase.WaitingForAllPlayers -> TimerAction.None
+
             null to ArenaPhase.ChoosingClasses,
             ArenaPhase.WaitingForAllPlayers to ArenaPhase.ChoosingClasses ->
                 TimerAction.Start(timerDuration = 20)
+
             ArenaPhase.ChoosingClasses to ArenaPhase.ChoosingClasses ->
                 if (previousState?.activePlayer != updatedArenaMatch.activePlayer) {
                     TimerAction.Start(timerDuration = 20)
                 } else {
                     TimerAction.None
                 }
+
             ArenaPhase.ChoosingClasses to ArenaPhase.Combat -> {
                 // TODO: Animation logic, start 15s turn timer
                 TimerAction.Start(timerDuration = 20)
             }
+
             ArenaPhase.Combat to ArenaPhase.Combat -> {
                 if (previousState?.activePlayer != updatedArenaMatch.activePlayer) {
                     // TODO: change timer duration based on type of roll (first roll choosing
@@ -165,7 +172,9 @@ class ArenaScreenViewModel(
                     TimerAction.None
                 }
             }
+
             ArenaPhase.Combat to ArenaPhase.Finished -> TimerAction.Stop
+
             else -> TimerAction.Stop
         }
     }
@@ -186,12 +195,15 @@ class ArenaScreenViewModel(
                     _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
                 }
             }
+
             ArenaPhase.ChoosingClasses -> {
                 // TODO
             }
+
             ArenaPhase.Combat -> {
                 // TODO
             }
+
             ArenaPhase.Finished -> {
                 // TODO
             }

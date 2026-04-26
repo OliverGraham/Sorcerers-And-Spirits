@@ -46,6 +46,7 @@ private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
                     onBack = { backStack.removeLastOrNull() },
                 )
             }
+
         else -> throw IllegalArgumentException("Unknown key: $this")
     }
 

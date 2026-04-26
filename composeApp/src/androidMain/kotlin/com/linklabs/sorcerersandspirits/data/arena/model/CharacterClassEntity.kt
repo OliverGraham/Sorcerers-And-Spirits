@@ -34,6 +34,7 @@ internal fun CharacterClassEntity.toDomain(): CharacterClass =
                 defensiveAbility = defensiveAbility.toDomain(),
                 className = className,
             )
+
         CharacterClassType.Mage ->
             CharacterClass.Mage(
                 hitPoints = hitPoints,
@@ -43,6 +44,7 @@ internal fun CharacterClassEntity.toDomain(): CharacterClass =
                 defensiveAbility = defensiveAbility.toDomain(),
                 className = className,
             )
+
         CharacterClassType.Paladin ->
             CharacterClass.Paladin(
                 hitPoints = hitPoints,
@@ -66,6 +68,7 @@ internal fun CharacterClass.toEntity(): CharacterClassEntity =
                 defensiveAbility = defensiveAbility.toEntity(),
                 className = className,
             )
+
         is CharacterClass.Mage ->
             CharacterClassEntity(
                 type = CharacterClassType.Mage,
@@ -76,6 +79,7 @@ internal fun CharacterClass.toEntity(): CharacterClassEntity =
                 defensiveAbility = defensiveAbility.toEntity(),
                 className = className,
             )
+
         is CharacterClass.Paladin ->
             CharacterClassEntity(
                 type = CharacterClassType.Paladin,

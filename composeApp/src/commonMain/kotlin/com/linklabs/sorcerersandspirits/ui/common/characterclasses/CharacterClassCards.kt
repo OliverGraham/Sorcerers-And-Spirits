@@ -20,6 +20,8 @@ fun CharacterClassCards(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
     selectedClass: CharacterClassState? = null,
+    unavailableClasses: List<CharacterClassState> = emptyList(),
+    classSelections: Map<CharacterClassState, String> = emptyMap(),
     onClassSelected: (CharacterClassState) -> Unit = {},
 ) {
     val count = characterClasses.size
@@ -36,6 +38,8 @@ fun CharacterClassCards(
         characterClasses = characterClasses,
         pagerState = pagerState,
         selectedClass = selectedClass,
+        unavailableClasses = unavailableClasses,
+        classSelections = classSelections,
         onClassSelected = onClassSelected,
         modifier = modifier,
     )
@@ -47,6 +51,8 @@ private fun CharacterClassCards(
     characterClasses: List<CharacterClassState>,
     pagerState: PagerState,
     selectedClass: CharacterClassState? = null,
+    unavailableClasses: List<CharacterClassState> = emptyList(),
+    classSelections: Map<CharacterClassState, String> = emptyMap(),
     onClassSelected: (CharacterClassState) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
@@ -63,6 +69,8 @@ private fun CharacterClassCards(
         CharacterClassCard(
             characterClass = characterClass,
             isSelected = characterClass == selectedClass,
+            enabled = characterClass !in unavailableClasses,
+            selectedBy = classSelections[characterClass],
             onClick = { onClassSelected(characterClass) },
         )
     }

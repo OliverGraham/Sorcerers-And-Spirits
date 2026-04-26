@@ -10,7 +10,7 @@
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>
     <string name="challenge_dialog_awaiting_responses">You are awaiting responses</string>
-    <string name="challenge_dialog_challenged_by">%s has challenged you!</string>
+    <string name="challenge_dialog_challenged_by">%1$s has challenged you!</string>
     <string name="challenge_dialog_button_decline">Decline</string>
     <string name="challenge_dialog_button_accept">Accept Challenge</string>
 </resources>

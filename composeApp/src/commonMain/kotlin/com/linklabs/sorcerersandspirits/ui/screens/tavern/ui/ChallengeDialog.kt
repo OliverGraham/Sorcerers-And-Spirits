@@ -47,31 +47,31 @@ internal fun ChallengeDialog(challengeState: ChallengeState, modifier: Modifier 
             tonalElevation = AlertDialogDefaults.TonalElevation,
             color = AlertDialogDefaults.containerColor,
         ) {
-            DialogContent(challengeState = challengeState)
+            challengeState.DialogContent()
         }
     }
 }
 
 @Composable
-private fun DialogContent(challengeState: ChallengeState, modifier: Modifier = Modifier) {
+private fun ChallengeState.DialogContent(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(all = 24.dp),
         verticalArrangement = Arrangement.spacedBy(space = 16.dp),
     ) {
-        val isThisUserTheInstigator = challengeState.isThisUserTheInstigator
+        val isThisUserTheInstigator = isThisUserTheInstigator
         HeaderSection(
-            formattedTimeRemaining = challengeState.formattedTimeRemaining,
-            isLessThanTenSeconds = challengeState.isLessThanTenSeconds,
+            formattedTimeRemaining = formattedTimeRemaining,
+            isLessThanTenSeconds = isLessThanTenSeconds,
             instigatorDisplayName =
-                challengeState.instigator?.displayName
+                instigator?.displayName
                     ?: stringResource(resource = Res.string.challenge_dialog_default_instigator),
             isThisUserTheInstigator = isThisUserTheInstigator,
         )
 
-        ChallengersList(challengerStates = challengeState.challengerStates)
+        ChallengersList(challengerStates = challengerStates)
 
         if (!isThisUserTheInstigator) {
-            ActionButtons(challengeId = challengeState.challengeId)
+            ActionButtons(challengeId = challengeId)
         }
     }
 }

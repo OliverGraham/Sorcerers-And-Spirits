@@ -81,6 +81,7 @@ private fun ScreenContent(
                         activePlayerState = arenaState.activePlayer,
                         isItThisUsersTurn = arenaState.isItThisUsersTurn,
                         characterClasses = CharacterClass.getAllClasses().map { it.toState() },
+                        allPlayerStates = arenaState.playerStatesMap.values.toList(),
                     )
                 }
 

@@ -28,7 +28,10 @@ internal fun ArenaScreen(
 ) {
     CompositionLocalProvider(
         LocalArenaActions provides
-            ArenaActions(onChooseCharacterClass = viewModel::onChooseCharacterClass)
+            ArenaActions(
+                onChooseCharacterClass = viewModel::onChooseCharacterClass,
+                onIncomingMessageHandled = viewModel::onIncomingMessageHandled,
+            )
     ) {
         viewModel.eventChannelFlow.collectEvents()
         val uiState by viewModel.uiStateFlow.collectAsState()

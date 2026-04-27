@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,13 +19,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDisplayText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,8 +40,13 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
-        sheetDragHandle = { ArenaMessageLogHandle(secondsRemaining = arenaState.secondsRemaining) },
-        sheetContent = { ArenaMessageLog(messages = arenaState.messages) },
+        sheetDragHandle = {
+            ArenaMessageLogHandle(
+                incomingMessage = arenaState.incomingMessage,
+                secondsRemaining = arenaState.secondsRemaining,
+            )
+        },
+        sheetContent = { ArenaMessageLog(messages = arenaState.messageHistory) },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
     }
@@ -46,7 +56,11 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
 }
 
 @Composable
-private fun ArenaMessageLogHandle(secondsRemaining: Int, modifier: Modifier = Modifier) {
+private fun ArenaMessageLogHandle(
+    incomingMessage: ArenaMessageState?,
+    secondsRemaining: Int,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier.fillMaxWidth().padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -60,8 +74,31 @@ private fun ArenaMessageLogHandle(secondsRemaining: Int, modifier: Modifier = Mo
                     animationSpec = tween(220, delayMillis = 90),
                 ) togetherWith scaleOut(animationSpec = tween(220))
             },
-        ) {
-            Text(text = "$secondsRemaining")
+        ) { seconds ->
+            Text(text = "$seconds")
+        }
+
+        Spacer(modifier = Modifier.weight(weight = 1f))
+
+        AnimatedContent(
+            targetState = incomingMessage,
+            transitionSpec = {
+                scaleIn(
+                    initialScale = 0.92f,
+                    animationSpec = tween(durationMillis = 1000, delayMillis = 90),
+                ) togetherWith scaleOut(animationSpec = tween(durationMillis = 1000))
+            },
+        ) { incomingMessage ->
+            if (incomingMessage != null) {
+                Text(text = incomingMessage.toDisplayText())
+            }
+
+            val onIncomingMessageHandled = ArenaActionsProvider.current.onIncomingMessageHandled
+            LaunchedEffect(key1 = transition.currentState, key2 = transition.targetState) {
+                if (transition.currentState == transition.targetState) {
+                    onIncomingMessageHandled()
+                }
+            }
         }
     }
 }

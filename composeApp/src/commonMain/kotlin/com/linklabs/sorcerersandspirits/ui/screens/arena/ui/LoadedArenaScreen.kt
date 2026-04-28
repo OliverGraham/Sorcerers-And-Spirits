@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -24,8 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.ui.common.WeightSpacer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDisplayText
 import kotlinx.coroutines.delay
@@ -39,7 +40,13 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
-        sheetDragHandle = { ArenaMessageLogHandle(arenaState = arenaState) },
+        sheetDragHandle = {
+            ArenaMessageLogHandle(
+                secondsRemaining = arenaState.secondsRemaining,
+                latestMessage = arenaState.latestMessage,
+                unhandledMessagesCount = arenaState.unhandledMessagesCount,
+            )
+        },
         sheetContent = { ArenaMessageLog(messages = arenaState.filteredMessages) },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
@@ -50,14 +57,18 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
 }
 
 @Composable
-private fun ArenaMessageLogHandle(arenaState: ArenaState, modifier: Modifier = Modifier) {
+private fun ArenaMessageLogHandle(
+    secondsRemaining: Int,
+    latestMessage: ArenaMessageState?,
+    unhandledMessagesCount: Int,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier.fillMaxWidth().padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
     ) {
         AnimatedContent(
-            targetState = arenaState.secondsRemaining,
+            targetState = secondsRemaining,
             transitionSpec = {
                 scaleIn(
                     initialScale = 0.92f,
@@ -68,10 +79,11 @@ private fun ArenaMessageLogHandle(arenaState: ArenaState, modifier: Modifier = M
             Text(text = "$seconds")
         }
 
+        WeightSpacer()
+
         // TODO Arena: Improve animation
         AnimatedContent(
-            targetState = arenaState.displayedMessage,
-            modifier = Modifier.weight(weight = 1f),
+            targetState = latestMessage,
             transitionSpec = {
                 scaleIn(
                     initialScale = 0.92f,
@@ -83,7 +95,7 @@ private fun ArenaMessageLogHandle(arenaState: ArenaState, modifier: Modifier = M
                 Text(text = displayedMessage.toDisplayText())
             }
 
-            if (arenaState.unhandledMessagesCount > 0) {
+            if (unhandledMessagesCount > 0) {
                 val onIncomingMessageHandled = ArenaActionsProvider.current.onIncomingMessageHandled
                 LaunchedEffect(key1 = transition.currentState, key2 = transition.targetState) {
                     if (transition.currentState == transition.targetState) {
@@ -93,6 +105,7 @@ private fun ArenaMessageLogHandle(arenaState: ArenaState, modifier: Modifier = M
                 }
             }
         }
+        WeightSpacer()
     }
 }
 

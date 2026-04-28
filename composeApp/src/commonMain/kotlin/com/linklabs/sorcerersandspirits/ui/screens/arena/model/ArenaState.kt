@@ -18,7 +18,7 @@ data class ArenaState(
     val userPlayer = playerStatesMap[userId]
     val isItThisUsersTurn = activePlayerUserId == userId
 
-    val displayedMessage =
+    val latestMessage =
         messages.getOrNull(
             index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
         )

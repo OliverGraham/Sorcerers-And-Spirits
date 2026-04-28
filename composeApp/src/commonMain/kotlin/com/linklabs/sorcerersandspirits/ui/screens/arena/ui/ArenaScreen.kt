@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -40,6 +41,7 @@ internal fun ArenaScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ArenaScreen(uiState: UiState<ArenaState>, modifier: Modifier = Modifier) {
     when (uiState) {

@@ -7,5 +7,5 @@ import androidx.compose.ui.Modifier
 
 @Composable
 internal fun RowScope.WeightSpacer(weight: Float = 1f, modifier: Modifier = Modifier) {
-    Spacer(modifier = modifier.weight(weight = 1f))
+    Spacer(modifier = modifier.weight(weight = weight))
 }

@@ -31,6 +31,20 @@ sealed interface ArenaMessageState {
     @Immutable data class Generic(override val id: String, val message: String) : ArenaMessageState
 }
 
+// TODO Arena: Use enums to then use string resources
+fun ArenaMessageState.toDisplayText(): String =
+    when (this) {
+        is ArenaMessageState.Round -> "ROUND $roundNumber"
+
+        is ArenaMessageState.Action ->
+            "$rollerName rolled $rollerValue against $defenderName's $rollTypeState"
+
+        is ArenaMessageState.Result ->
+            "$rollerName is now rolling against $defenderName's $rollTypeState!"
+
+        is ArenaMessageState.Generic -> message
+    }
+
 @Immutable
 enum class RollTypeState {
     Ability,

@@ -1,69 +1,53 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
+import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modifier) {
-    val scaffoldState = rememberBottomSheetScaffoldState()
-
+internal fun LoadedArenaScreen(
+    arenaState: ArenaState,
+    modifier: Modifier = Modifier,
+    scaffoldState: BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
+) {
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
-        sheetDragHandle = { ArenaMessageLogHandle(secondsRemaining = arenaState.secondsRemaining) },
-        sheetContent = { ArenaMessageLog(messages = arenaState.messages) },
+        sheetDragHandle = {
+            ArenaMessageLogHandle(
+                secondsRemaining = arenaState.secondsRemaining,
+                latestMessage = arenaState.latestMessage,
+                unhandledMessagesCount = arenaState.unhandledMessagesCount,
+            )
+        },
+        sheetContent = { ArenaMessageLog(messages = arenaState.filteredMessages) },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
     }
 
     // TODO Arena: Dialogs go here
     // TODO Arena: Dialog showing that going back will forfeit the game
-}
-
-@Composable
-private fun ArenaMessageLogHandle(secondsRemaining: Int, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier.fillMaxWidth().padding(all = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        AnimatedContent(
-            targetState = secondsRemaining,
-            transitionSpec = {
-                scaleIn(
-                    initialScale = 0.92f,
-                    animationSpec = tween(220, delayMillis = 90),
-                ) togetherWith scaleOut(animationSpec = tween(220))
-            },
-        ) {
-            Text(text = "$secondsRemaining")
-        }
-    }
 }
 
 @Composable
@@ -97,4 +81,29 @@ private fun ScreenContent(
     }
 }
 
-// TODO Arena: Previews
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun LoadedArenaScreenCollapsedPreview(
+    @PreviewParameter(ArenaStatePreviewParameterProvider::class) arenaState: ArenaState
+) {
+    SorcerersAndSpiritsTheme { LoadedArenaScreen(arenaState = arenaState) }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun LoadedArenaScreenExpandedPreview(
+    @PreviewParameter(ArenaStatePreviewParameterProvider::class) arenaState: ArenaState
+) {
+    SorcerersAndSpiritsTheme {
+        val expandedBottomSheetState =
+            rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
+
+        LoadedArenaScreen(
+            arenaState = arenaState,
+            scaffoldState =
+                rememberBottomSheetScaffoldState(bottomSheetState = expandedBottomSheetState),
+        )
+    }
+}

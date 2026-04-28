@@ -11,6 +11,7 @@ data class ArenaMatchEntity(
     val activePlayerUserId: String? = null,
     val playerEntitiesMap: Map<String, ArenaPlayerEntity> = emptyMap(),
     val messages: List<ArenaMessageEntity> = emptyList(),
+    val numberOfNewMessages: Int = 0,
 ) {
     companion object {
         val playerEntitiesMapName = ArenaMatchEntity::playerEntitiesMap.name
@@ -24,4 +25,5 @@ internal fun ArenaMatchEntity.toDomain() =
         playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
         activePlayerUserId = activePlayerUserId,
         messages = messages.map { it.toDomain() },
+        numberOfNewMessages = numberOfNewMessages,
     )

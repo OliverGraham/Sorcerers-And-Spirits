@@ -101,6 +101,14 @@ class ArenaScreenViewModel(
         }
     }
 
+    fun onIncomingMessageHandled() {
+        _uiStateFlow.updateLoaded { arenaState ->
+            if (arenaState.unhandledMessagesCount <= 0) return@updateLoaded arenaState
+
+            arenaState.copy(unhandledMessagesCount = arenaState.unhandledMessagesCount - 1)
+        }
+    }
+
     private fun getUpdatedState(
         previousState: ArenaState?,
         updatedArenaMatch: ArenaMatch,
@@ -112,26 +120,26 @@ class ArenaScreenViewModel(
                 updatedArenaMatch = updatedArenaMatch,
             )
 
+        val toUpdatedState: (secondsRemaining: Int) -> ArenaState = { secondsRemaining ->
+            updatedArenaMatch.toState(
+                previousUnhandledMessagesCount = previousState?.unhandledMessagesCount ?: 0,
+                secondsRemaining = secondsRemaining,
+                userId = userId,
+            )
+        }
+
         return when (timerAction) {
             is TimerAction.Start -> {
                 arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
-                updatedArenaMatch.toState(
-                    secondsRemaining = timerAction.timerDuration,
-                    userId = userId,
-                )
+                toUpdatedState(timerAction.timerDuration)
             }
 
             is TimerAction.Stop -> {
                 arenaTimer.stopTimer()
-                updatedArenaMatch.toState(secondsRemaining = 0, userId = userId)
+                toUpdatedState(0)
             }
 
-            is TimerAction.None -> {
-                updatedArenaMatch.toState(
-                    secondsRemaining = previousState?.secondsRemaining ?: 0,
-                    userId = userId,
-                )
-            }
+            is TimerAction.None -> toUpdatedState(previousState?.secondsRemaining ?: 0)
         }
     }
 

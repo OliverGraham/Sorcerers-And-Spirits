@@ -25,6 +25,7 @@ internal fun ArenaMessageLog(messages: List<ArenaMessageState>, modifier: Modifi
         modifier = modifier,
         contentPadding = PaddingValues(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+        reverseLayout = true,
     ) {
         items(items = messages, key = { messageState -> messageState.id }) { messageState ->
             ArenaMessageItem(messageState = messageState, modifier = Modifier.animateItem())

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,9 +26,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDisplayText
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,13 +39,8 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
         scaffoldState = scaffoldState,
         modifier = modifier.fillMaxSize(),
         sheetPeekHeight = 48.dp,
-        sheetDragHandle = {
-            ArenaMessageLogHandle(
-                incomingMessage = arenaState.incomingMessage,
-                secondsRemaining = arenaState.secondsRemaining,
-            )
-        },
-        sheetContent = { ArenaMessageLog(messages = arenaState.messageHistory) },
+        sheetDragHandle = { ArenaMessageLogHandle(arenaState = arenaState) },
+        sheetContent = { ArenaMessageLog(messages = arenaState.filteredMessages) },
     ) { paddingValues ->
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
     }
@@ -56,18 +50,14 @@ internal fun LoadedArenaScreen(arenaState: ArenaState, modifier: Modifier = Modi
 }
 
 @Composable
-private fun ArenaMessageLogHandle(
-    incomingMessage: ArenaMessageState?,
-    secondsRemaining: Int,
-    modifier: Modifier = Modifier,
-) {
+private fun ArenaMessageLogHandle(arenaState: ArenaState, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth().padding(all = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
         AnimatedContent(
-            targetState = secondsRemaining,
+            targetState = arenaState.secondsRemaining,
             transitionSpec = {
                 scaleIn(
                     initialScale = 0.92f,
@@ -78,25 +68,28 @@ private fun ArenaMessageLogHandle(
             Text(text = "$seconds")
         }
 
-        Spacer(modifier = Modifier.weight(weight = 1f))
-
+        // TODO Arena: Improve animation
         AnimatedContent(
-            targetState = incomingMessage,
+            targetState = arenaState.displayedMessage,
+            modifier = Modifier.weight(weight = 1f),
             transitionSpec = {
                 scaleIn(
                     initialScale = 0.92f,
                     animationSpec = tween(durationMillis = 1000, delayMillis = 90),
                 ) togetherWith scaleOut(animationSpec = tween(durationMillis = 1000))
             },
-        ) { incomingMessage ->
-            if (incomingMessage != null) {
-                Text(text = incomingMessage.toDisplayText())
+        ) { displayedMessage ->
+            if (displayedMessage != null) {
+                Text(text = displayedMessage.toDisplayText())
             }
 
-            val onIncomingMessageHandled = ArenaActionsProvider.current.onIncomingMessageHandled
-            LaunchedEffect(key1 = transition.currentState, key2 = transition.targetState) {
-                if (transition.currentState == transition.targetState) {
-                    onIncomingMessageHandled()
+            if (arenaState.unhandledMessagesCount > 0) {
+                val onIncomingMessageHandled = ArenaActionsProvider.current.onIncomingMessageHandled
+                LaunchedEffect(key1 = transition.currentState, key2 = transition.targetState) {
+                    if (transition.currentState == transition.targetState) {
+                        delay(timeMillis = 1000)
+                        onIncomingMessageHandled()
+                    }
                 }
             }
         }

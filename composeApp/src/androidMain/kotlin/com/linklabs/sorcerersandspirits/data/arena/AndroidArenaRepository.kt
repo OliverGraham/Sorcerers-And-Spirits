@@ -21,7 +21,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// TODO Arena: Update the slop
+// TODO Arena: Update the slop. Paginate messages and/or have a separate node for them to make more
+//  efficient
 
 class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
@@ -54,7 +55,7 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
         val nextPhase = if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
 
-        val (finalActivePlayerUserId, updatedMessages) =
+        val (finalActivePlayerUserId, updatedMessages, numberOfNewMessages) =
             generateCharacterSelectionMessages(
                 match = match,
                 updatedPlayers = updatedPlayers,
@@ -69,19 +70,21 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 activePlayerUserId = finalActivePlayerUserId,
                 phase = nextPhase,
                 messages = updatedMessages,
+                numberOfNewMessages = numberOfNewMessages,
             )
 
         this.value = updatedMatch
         return Transaction.success(this)
     }
 
+    // TODO Arena: return data class
     private fun generateCharacterSelectionMessages(
         match: ArenaMatchEntity,
         updatedPlayers: Map<String, ArenaPlayerEntity>,
         arenaPlayer: ArenaPlayer,
         nextPhase: ArenaPhase,
         nextPlayerId: String?,
-    ): Pair<String?, List<ArenaMessageEntity>> {
+    ): Triple<String?, List<ArenaMessageEntity>, Int> {
         val messagesReference =
             arenaMatchesReference.child(match.arenaId).child(ArenaMatchEntity.messagesName)
 
@@ -131,7 +134,13 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 emptyList()
             }
 
-        return finalActivePlayerUserId to (transitionMessages + selectionMessage + match.messages)
+        val newMessages = listOf(selectionMessage) + transitionMessages
+
+        return Triple(
+            first = finalActivePlayerUserId,
+            second = match.messages + newMessages,
+            third = newMessages.size,
+        )
     }
 
     /**

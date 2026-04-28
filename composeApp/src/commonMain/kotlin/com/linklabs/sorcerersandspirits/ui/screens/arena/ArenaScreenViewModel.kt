@@ -10,7 +10,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUs
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
@@ -102,14 +101,11 @@ class ArenaScreenViewModel(
         }
     }
 
-    // TODO Arena: is this correct
     fun onIncomingMessageHandled() {
         _uiStateFlow.updateLoaded { arenaState ->
-            arenaState.copy(
-                incomingMessages = arenaState.incomingMessages.drop(n = 1),
-                messageHistory =
-                    listOfNotNull(element = arenaState.incomingMessage) + arenaState.messageHistory,
-            )
+            if (arenaState.unhandledMessagesCount <= 0) return@updateLoaded arenaState
+
+            arenaState.copy(unhandledMessagesCount = arenaState.unhandledMessagesCount - 1)
         }
     }
 
@@ -124,13 +120,9 @@ class ArenaScreenViewModel(
                 updatedArenaMatch = updatedArenaMatch,
             )
 
-        val (incomingMessageStates, messageHistoryState) =
-            getUpdatedMessages(previousState = previousState, updatedArenaMatch = updatedArenaMatch)
-
         val toUpdatedState: (secondsRemaining: Int) -> ArenaState = { secondsRemaining ->
             updatedArenaMatch.toState(
-                incomingMessages = incomingMessageStates,
-                messageHistory = messageHistoryState,
+                previousUnhandledMessagesCount = previousState?.unhandledMessagesCount ?: 0,
                 secondsRemaining = secondsRemaining,
                 userId = userId,
             )
@@ -149,29 +141,6 @@ class ArenaScreenViewModel(
 
             is TimerAction.None -> toUpdatedState(previousState?.secondsRemaining ?: 0)
         }
-    }
-
-    // TODO Arena: Double check. Make data class for return value
-    private fun getUpdatedMessages(
-        previousState: ArenaState?,
-        updatedArenaMatch: ArenaMatch,
-    ): Pair<List<ArenaMessageState>, List<ArenaMessageState>> {
-        val seenMessageIds =
-            if (previousState == null) {
-                emptySet()
-            } else {
-                (previousState.messageHistory + previousState.incomingMessages)
-                    .map { it.id }
-                    .toSet()
-            }
-
-        val incomingMessageStates =
-            updatedArenaMatch.messages.filter { it.id !in seenMessageIds }.map { it.toState() }
-
-        return Pair(
-            first = incomingMessageStates,
-            second = previousState?.messageHistory ?: emptyList(),
-        )
     }
 
     private fun determineTimerAction(

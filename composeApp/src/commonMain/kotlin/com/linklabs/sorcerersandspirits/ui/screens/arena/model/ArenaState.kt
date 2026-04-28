@@ -8,8 +8,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 data class ArenaState(
     val phase: ArenaPhase,
     val playerStatesMap: Map<String, PlayerState>,
-    val incomingMessages: List<ArenaMessageState>,
-    val messageHistory: List<ArenaMessageState>,
+    val messages: List<ArenaMessageState>,
+    val unhandledMessagesCount: Int,
     val secondsRemaining: Int,
     private val userId: String?,
     private val activePlayerUserId: String?,
@@ -18,20 +18,25 @@ data class ArenaState(
     val userPlayer = playerStatesMap[userId]
     val isItThisUsersTurn = activePlayerUserId == userId
 
-    val incomingMessage = incomingMessages.firstOrNull()
+    val displayedMessage =
+        messages.getOrNull(
+            index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
+        )
+
+    val filteredMessages =
+        messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 }
 
 internal fun ArenaMatch.toState(
-    incomingMessages: List<ArenaMessageState>,
-    messageHistory: List<ArenaMessageState>,
+    previousUnhandledMessagesCount: Int,
     userId: String?,
     secondsRemaining: Int?,
 ) =
     ArenaState(
         phase = phase,
         playerStatesMap = playerMap.mapValues { it.value.toState() },
-        messageHistory = messageHistory,
-        incomingMessages = incomingMessages,
+        messages = messages.map { it.toState() },
+        unhandledMessagesCount = previousUnhandledMessagesCount + numberOfNewMessages,
         secondsRemaining = secondsRemaining ?: 0,
         activePlayerUserId = activePlayerUserId,
         userId = userId,

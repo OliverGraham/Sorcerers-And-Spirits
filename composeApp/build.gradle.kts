@@ -15,7 +15,7 @@ plugins {
 kotlin {
     androidTarget {
         compilerOptions {
-            jvmTarget.set(JvmTarget.JVM_11)
+            jvmTarget.set(JvmTarget.JVM_17)
         }
     }
 
@@ -33,11 +33,6 @@ kotlin {
         androidMain.dependencies {
             implementation(dependencyNotation = compose.preview)
             implementation(dependencyNotation = libs.androidx.activity.compose)
-
-            implementation(dependencyNotation = project.dependencies.platform(libs.firebase.bom))
-            implementation(dependencyNotation = libs.firebase.auth)
-            implementation(dependencyNotation = libs.firebase.firestore)
-            implementation(dependencyNotation = libs.firebase.database)
 
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)
@@ -61,6 +56,11 @@ kotlin {
             implementation(dependencyNotation = libs.androidx.lifecycle.viewmodel.navigation3)
             implementation(dependencyNotation = libs.androidx.navigation3.runtime)
             implementation(dependencyNotation = libs.androidx.navigation3.ui)
+
+            implementation(dependencyNotation = libs.firebase.gitlive.app)
+            implementation(dependencyNotation = libs.firebase.gitlive.auth)
+            implementation(dependencyNotation = libs.firebase.gitlive.database)
+            implementation(dependencyNotation = libs.firebase.gitlive.firestore)
 
             implementation(dependencyNotation = project.dependencies.platform(libs.koin.bom))
             implementation(dependencyNotation = libs.koin.annotations)
@@ -105,8 +105,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 

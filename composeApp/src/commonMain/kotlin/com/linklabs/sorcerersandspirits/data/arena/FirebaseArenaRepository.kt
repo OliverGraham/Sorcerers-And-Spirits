@@ -31,8 +31,9 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         arenaPlayer: ArenaPlayer,
         nextPlayerId: String?,
     ) {
-        arenaMatchesReference.child(arenaId).runTransaction(ArenaMatchEntity.serializer()) { match
-            ->
+        arenaMatchesReference.child(path = arenaId).runTransaction(
+            strategy = ArenaMatchEntity.serializer()
+        ) { match ->
             val updatedPlayers = match.playerEntitiesMap.toMutableMap()
             updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
 
@@ -71,7 +72,9 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         nextPlayerId: String?,
     ): Triple<String?, List<ArenaMessageEntity>, Int> {
         val messagesReference =
-            arenaMatchesReference.child(match.arenaId).child(ArenaMatchEntity.messagesName)
+            arenaMatchesReference
+                .child(path = match.arenaId)
+                .child(path = ArenaMatchEntity.messagesName)
 
         val selectionMessage =
             ArenaMessageEntity(
@@ -142,8 +145,8 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         displayName: String,
     ) =
         try {
-            arenaMatchesReference.child(arenaId).runTransaction(
-                ArenaMatchEntity.serializer().nullable
+            arenaMatchesReference.child(path = arenaId).runTransaction(
+                strategy = ArenaMatchEntity.serializer().nullable
             ) { existingMatch ->
                 val match =
                     existingMatch
@@ -176,15 +179,15 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
-            .child(arenaId)
-            .child(ArenaMatchEntity.playerEntitiesMapName)
-            .child(arenaPlayer.userId)
-            .setValue(arenaPlayer.toEntity())
+            .child(path = arenaId)
+            .child(path = ArenaMatchEntity.playerEntitiesMapName)
+            .child(path = arenaPlayer.userId)
+            .setValue(value = arenaPlayer.toEntity())
     }
 
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
         arenaMatchesReference
-            .child(arenaId)
+            .child(path = arenaId)
             .valueEvents
             .map { snapshot -> snapshot.value(ArenaMatchEntity.serializer().nullable)?.toDomain() }
             .distinctUntilChanged()

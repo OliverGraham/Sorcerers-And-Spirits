@@ -5,10 +5,10 @@ import kotlin.test.Test
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 
-// TODO: Maybe update the AI slop
+// TODO Tavern: Fix all these tests
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class AndroidTavernRepositoryTest {
+class FirebaseTavernRepositoryTest {
 
     @BeforeTest fun setUp() {}
 

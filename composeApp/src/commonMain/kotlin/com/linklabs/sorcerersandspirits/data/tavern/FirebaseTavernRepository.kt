@@ -88,7 +88,7 @@ class FirebaseTavernRepository(
                     syncTravelerPresenceOnConnect(
                         userId = userId,
                         displayName = displayName,
-                        travelerReference = travelerReference
+                        travelerReference = travelerReference,
                     )
                 }
                 .launchIn(scope = coroutineScope)
@@ -166,11 +166,11 @@ class FirebaseTavernRepository(
 
     @OptIn(ExperimentalTime::class)
     private suspend fun syncTravelerPresenceOnConnect(
-        userId: String, displayName: String, travelerReference: DatabaseReference
+        userId: String,
+        displayName: String,
+        travelerReference: DatabaseReference,
     ) {
-
         val mailboxReference = mailboxChallengesReference.child(userId)
-
 
         suspend fun upsertPresence(hasActiveChallenge: Boolean) {
             travelerReference.runTransaction(strategy = TravelerEntity.serializer().nullable) {

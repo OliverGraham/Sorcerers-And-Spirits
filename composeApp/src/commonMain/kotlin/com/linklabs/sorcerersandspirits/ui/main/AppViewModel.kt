@@ -70,6 +70,7 @@ class AppViewModel(
 
     init {
         viewModelScope.launch {
+            // TODO: if user isSignedIn but their profile doesn't exist, then the app will hang
             if (isUserSignedInUseCase()) {
                 collectScreenState()
             } else {

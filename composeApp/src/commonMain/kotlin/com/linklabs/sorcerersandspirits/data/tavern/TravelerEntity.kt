@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.data.model
+package com.linklabs.sorcerersandspirits.data.tavern
 
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler

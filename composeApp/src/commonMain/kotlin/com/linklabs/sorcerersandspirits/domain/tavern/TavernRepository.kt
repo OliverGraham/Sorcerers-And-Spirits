@@ -25,13 +25,6 @@ interface TavernRepository {
     suspend fun setTravelerAvailableIfPresent(userId: String)
 }
 
-/**
- * Copy of [TavernRepository], excluding the Flow and suspend functions (which iOS can't handle).
- */
-interface TavernRepositoryCopyForIOS {
-    fun aTravelerEntersTavern(traveler: Traveler)
-}
-
 sealed interface SendChallengeResult {
     data class Success(val challengeId: String) : SendChallengeResult
 

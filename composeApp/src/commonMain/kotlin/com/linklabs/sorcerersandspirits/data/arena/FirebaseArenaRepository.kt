@@ -1,70 +1,59 @@
 package com.linklabs.sorcerersandspirits.data.arena
 
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.MutableData
-import com.google.firebase.database.Transaction
-import com.google.firebase.database.getValue
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageType
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPhaseEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
-import com.linklabs.sorcerersandspirits.data.getValueFlow
-import com.linklabs.sorcerersandspirits.data.runTransactionAwait
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import dev.gitlive.firebase.database.DatabaseReference
+import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.builtins.nullable
 
 // TODO Arena: Update the slop. Paginate messages and/or have a separate node for them to make more
 //  efficient
 
-class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
+class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
-    private val arenaMatchesReference = database.reference.child(ARENA_MATCHES_PATH)
+    private val arenaMatchesReference = database.reference(ARENA_MATCHES_PATH)
 
     // TODO Arena: Cleanup, docstring
-    // Determine the next phase and active player
-    // If nextPlayerId is null, it means everyone has picked a class
     override suspend fun chooseCharacterClass(
         arenaId: String,
         arenaPlayer: ArenaPlayer,
         nextPlayerId: String?,
     ) {
-        arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
-            currentData.chooseCharacterClassTransaction(
-                arenaPlayer = arenaPlayer,
-                nextPlayerId = nextPlayerId,
-            )
-        }
-    }
+        arenaMatchesReference.child(path = arenaId).runTransaction(
+            strategy = ArenaMatchEntity.serializer()
+        ) { match ->
+            val updatedPlayers = match.playerEntitiesMap.toMutableMap()
+            updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
 
-    private fun MutableData.chooseCharacterClassTransaction(
-        arenaPlayer: ArenaPlayer,
-        nextPlayerId: String?,
-    ): Transaction.Result {
-        val match = getValue<ArenaMatchEntity>() ?: return Transaction.abort()
+            val nextPhase =
+                if (nextPlayerId == null) {
+                    ArenaPhaseEntity.Combat
+                } else {
+                    ArenaPhaseEntity.ChoosingClasses
+                }
 
-        val updatedPlayers = match.playerEntitiesMap.toMutableMap()
-        updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
+            val (finalActivePlayerUserId, updatedMessages, numberOfNewMessages) =
+                generateCharacterSelectionMessages(
+                    match = match,
+                    updatedPlayers = updatedPlayers,
+                    arenaPlayer = arenaPlayer,
+                    nextPhase = nextPhase,
+                    nextPlayerId = nextPlayerId,
+                )
 
-        val nextPhase = if (nextPlayerId == null) ArenaPhase.Combat else ArenaPhase.ChoosingClasses
-
-        val (finalActivePlayerUserId, updatedMessages, numberOfNewMessages) =
-            generateCharacterSelectionMessages(
-                match = match,
-                updatedPlayers = updatedPlayers,
-                arenaPlayer = arenaPlayer,
-                nextPhase = nextPhase,
-                nextPlayerId = nextPlayerId,
-            )
-
-        val updatedMatch =
             match.copy(
                 playerEntitiesMap = updatedPlayers,
                 activePlayerUserId = finalActivePlayerUserId,
@@ -72,9 +61,7 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 messages = updatedMessages,
                 numberOfNewMessages = numberOfNewMessages,
             )
-
-        this.value = updatedMatch
-        return Transaction.success(this)
+        }
     }
 
     // TODO Arena: return data class
@@ -82,11 +69,13 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         match: ArenaMatchEntity,
         updatedPlayers: Map<String, ArenaPlayerEntity>,
         arenaPlayer: ArenaPlayer,
-        nextPhase: ArenaPhase,
+        nextPhase: ArenaPhaseEntity,
         nextPlayerId: String?,
     ): Triple<String?, List<ArenaMessageEntity>, Int> {
         val messagesReference =
-            arenaMatchesReference.child(match.arenaId).child(ArenaMatchEntity.messagesName)
+            arenaMatchesReference
+                .child(path = match.arenaId)
+                .child(path = ArenaMatchEntity.messagesName)
 
         val selectionMessage =
             ArenaMessageEntity(
@@ -99,9 +88,10 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         var finalActivePlayerUserId = nextPlayerId
 
         val transitionMessages =
-            if (nextPhase == ArenaPhase.Combat) {
+            if (nextPhase == ArenaPhaseEntity.Combat) {
                 val firstPlayer =
                     updatedPlayers.values.maxByOrNull { it.characterClassEntity?.speed ?: 0 }
+
                 finalActivePlayerUserId = firstPlayer?.userId
 
                 buildList {
@@ -115,6 +105,7 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                             )
                         )
                     }
+
                     add(
                         ArenaMessageEntity(
                             id = messagesReference.addNewKey(),
@@ -122,6 +113,7 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                             roundNumber = 1,
                         )
                     )
+
                     add(
                         ArenaMessageEntity(
                             id = messagesReference.addNewKey(),
@@ -153,58 +145,59 @@ class AndroidArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         userId: String,
         displayName: String,
     ) =
-        arenaMatchesReference.child(arenaId).runTransactionAwait { currentData ->
-            val match =
-                currentData.getValue<ArenaMatchEntity>()
-                    ?: ArenaMatchEntity(
-                        arenaId = arenaId,
-                        phase = ArenaPhase.WaitingForAllPlayers,
-                        activePlayerUserId = userId,
-                    )
-
-            val updatedPlayers = match.playerEntitiesMap.toMutableMap()
-
-            if (userId !in updatedPlayers) {
-                updatedPlayers[userId] =
-                    ArenaPlayerEntity(displayName = displayName, userId = userId)
-
-                // Optional: Automatically log the joining event here if desired
-                // match.logs.put(UUID.randomUUID(), ArenaLogEntity(...))
+        try {
+            val arenaReference = arenaMatchesReference.child(path = arenaId)
+            val snapshot = arenaReference.valueEvents.first()
+            if (!snapshot.exists) {
+                arenaReference.setValue(
+                    strategy = ArenaMatchEntity.serializer().nullable,
+                    value =
+                        ArenaMatchEntity(
+                            arenaId = arenaId,
+                            phase = ArenaPhaseEntity.WaitingForAllPlayers,
+                            activePlayerUserId = userId,
+                        ),
+                )
             }
 
-            val arenaPhase =
-                if (updatedPlayers.size == expectedNumberOfPlayers) {
-                    ArenaPhase.ChoosingClasses
-                } else {
-                    ArenaPhase.WaitingForAllPlayers
+            arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch
+                ->
+                val updatedPlayers = existingMatch.playerEntitiesMap.toMutableMap()
+
+                if (userId !in updatedPlayers) {
+                    updatedPlayers[userId] =
+                        ArenaPlayerEntity(displayName = displayName, userId = userId)
                 }
 
-            currentData.value = match.copy(playerEntitiesMap = updatedPlayers, phase = arenaPhase)
-            Transaction.success(currentData)
+                val arenaPhase =
+                    if (updatedPlayers.size == expectedNumberOfPlayers) {
+                        ArenaPhaseEntity.ChoosingClasses
+                    } else {
+                        ArenaPhaseEntity.WaitingForAllPlayers
+                    }
+
+                existingMatch.copy(playerEntitiesMap = updatedPlayers, phase = arenaPhase)
+            }
+            true
+        } catch (_: Exception) {
+            false
         }
 
-    /** Updates the game phase using the Enum directly. */
-    suspend fun updateArenaPhase(arenaId: String, phase: ArenaPhase) {
-        arenaMatchesReference.child(arenaId).child("phase").setValue(phase)
-    }
-
-    /** Updates a player's specific state (e.g., picking a class or taking damage). */
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
-            .child(arenaId)
-            .child(ArenaMatchEntity.playerEntitiesMapName)
-            .child(arenaPlayer.userId)
-            .runTransactionAwait { currentData ->
-                currentData.value = arenaPlayer.toEntity()
-                Transaction.success(currentData)
-            }
+            .child(path = arenaId)
+            .child(path = ArenaMatchEntity.playerEntitiesMapName)
+            .child(path = arenaPlayer.userId)
+            .setValue(value = arenaPlayer.toEntity())
     }
 
-    /** Streams the match document to all subscribers. */
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
-        arenaMatchesReference.child(arenaId).getValueFlow<ArenaMatchEntity>().map { entity ->
-            entity?.toDomain()
-        }
+        arenaMatchesReference
+            .child(path = arenaId)
+            .valueEvents
+            .map { snapshot -> snapshot.value(ArenaMatchEntity.serializer().nullable)?.toDomain() }
+            .distinctUntilChanged()
 
-    private fun DatabaseReference.addNewKey() = push().key.orEmpty()
+    private fun DatabaseReference.addNewKey(): String =
+        push().key ?: error("Failed to generate Firebase push key")
 }

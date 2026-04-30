@@ -1,6 +1,5 @@
-package com.linklabs.sorcerersandspirits.data.model
+package com.linklabs.sorcerersandspirits.data.tavern
 
-import com.google.firebase.database.PropertyName
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -23,7 +22,7 @@ data class ChallengeEntity(
 data class ChallengerEntity(
     val userId: String = "",
     val displayName: String = "",
-    @get:PropertyName("isInstigator") val isInstigator: Boolean = false,
+    val isInstigator: Boolean = false,
     val status: ChallengerStatus = ChallengerStatus.Pending,
 ) {
     companion object {

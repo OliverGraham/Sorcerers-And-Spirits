@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
+import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
@@ -12,6 +13,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
@@ -35,6 +37,7 @@ val commonModule = module {
     single { Firebase.database }
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
+    singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
 }
 
 private fun Module.initializeUseCases() {

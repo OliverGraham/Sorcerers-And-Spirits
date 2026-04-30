@@ -8,25 +8,8 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
-        initialize()
+        InitializeKoinKt.initializeKoin()
         return true
-    }
-
-    private func initialize() {
-        let tavernStateFlowContainer = StateFlowContainer<Tavern>()
-        let iOSTavernRepository = IOSTavernRepositoryImplementation(stateFlowContainer: tavernStateFlowContainer)
-        let tavernRepository = IOSTavernRepositoryCoordinator(
-            stateFlowContainer: tavernStateFlowContainer,
-            tavernRepositoryCopyForIOS: iOSTavernRepository
-        )
-
-        InitializeKoinKt.initializeKoin(
-            authenticationRepository: IOSAuthenticationRepository(),
-            tavernRepository: tavernRepository,
-            travelerRepository: IOSTravelerRepository()
-        )
-
-        iOSTavernRepository.collectTavernFlow()
     }
 }
 

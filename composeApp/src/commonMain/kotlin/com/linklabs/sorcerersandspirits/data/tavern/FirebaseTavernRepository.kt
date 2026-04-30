@@ -239,10 +239,10 @@ class FirebaseTavernRepository(
             tavernTravelersReference.child(userId).runTransaction(
                 strategy = TravelerEntity.serializer().nullable
             ) { traveler ->
-                traveler ?: throw AbortTransactionException
+                traveler ?: throw AbortTransactionException()
 
                 if (traveler.tavernStatus != TavernStatus.Available) {
-                    throw AbortTransactionException
+                    throw AbortTransactionException()
                 }
 
                 traveler.copy(tavernStatus = TavernStatus.Busy)
@@ -312,7 +312,13 @@ class FirebaseTavernRepository(
         mailboxChallengesReference
             .child(userId)
             .valueEvents
-            .map { snapshot -> snapshot.value(strategy = String.serializer().nullable) }
+            .map { snapshot ->
+                if (snapshot.exists) {
+                    snapshot.value(strategy = String.serializer().nullable)
+                } else {
+                    null
+                }
+            }
             .distinctUntilChanged()
 
     private fun getChallengeFlow(challengeId: String): Flow<Challenge?> =
@@ -416,7 +422,7 @@ class FirebaseTavernRepository(
         CancelInsufficientPlayers,
     }
 
-    private object AbortTransactionException : RuntimeException()
+    private class AbortTransactionException : RuntimeException()
 
     companion object {
         const val CONNECTED_REFERENCE_PATH = ".info/connected"
@@ -459,5 +465,12 @@ internal fun String.toChallengesPath(): String = "$CHALLENGES_PATH/$this"
 
 internal fun String.toChallengeMailBoxesPath(): String = "$CHALLENGE_MAILBOXES_PATH/$this"
 
-private suspend inline fun <reified T> DatabaseReference.awaitNullableValue(): T? =
-    valueEvents.first().value<T?>()
+private suspend inline fun <reified T> DatabaseReference.awaitNullableValue(): T? {
+    val snapshot = valueEvents.first()
+
+    return if (snapshot.exists) {
+        snapshot.value<T>()
+    } else {
+        null
+    }
+}

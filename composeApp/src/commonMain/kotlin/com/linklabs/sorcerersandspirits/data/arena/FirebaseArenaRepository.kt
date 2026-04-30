@@ -4,17 +4,18 @@ import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageType
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPhaseEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
 
@@ -39,9 +40,9 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
             val nextPhase =
                 if (nextPlayerId == null) {
-                    ArenaPhase.Combat
+                    ArenaPhaseEntity.Combat
                 } else {
-                    ArenaPhase.ChoosingClasses
+                    ArenaPhaseEntity.ChoosingClasses
                 }
 
             val (finalActivePlayerUserId, updatedMessages, numberOfNewMessages) =
@@ -68,7 +69,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         match: ArenaMatchEntity,
         updatedPlayers: Map<String, ArenaPlayerEntity>,
         arenaPlayer: ArenaPlayer,
-        nextPhase: ArenaPhase,
+        nextPhase: ArenaPhaseEntity,
         nextPlayerId: String?,
     ): Triple<String?, List<ArenaMessageEntity>, Int> {
         val messagesReference =
@@ -87,7 +88,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         var finalActivePlayerUserId = nextPlayerId
 
         val transitionMessages =
-            if (nextPhase == ArenaPhase.Combat) {
+            if (nextPhase == ArenaPhaseEntity.Combat) {
                 val firstPlayer =
                     updatedPlayers.values.maxByOrNull { it.characterClassEntity?.speed ?: 0 }
 
@@ -145,18 +146,23 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         displayName: String,
     ) =
         try {
-            arenaMatchesReference.child(path = arenaId).runTransaction(
-                strategy = ArenaMatchEntity.serializer().nullable
-            ) { existingMatch ->
-                val match =
-                    existingMatch
-                        ?: ArenaMatchEntity(
+            val arenaReference = arenaMatchesReference.child(path = arenaId)
+            val snapshot = arenaReference.valueEvents.first()
+            if (!snapshot.exists) {
+                arenaReference.setValue(
+                    strategy = ArenaMatchEntity.serializer().nullable,
+                    value =
+                        ArenaMatchEntity(
                             arenaId = arenaId,
-                            phase = ArenaPhase.WaitingForAllPlayers,
+                            phase = ArenaPhaseEntity.WaitingForAllPlayers,
                             activePlayerUserId = userId,
-                        )
+                        ),
+                )
+            }
 
-                val updatedPlayers = match.playerEntitiesMap.toMutableMap()
+            arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch
+                ->
+                val updatedPlayers = existingMatch.playerEntitiesMap.toMutableMap()
 
                 if (userId !in updatedPlayers) {
                     updatedPlayers[userId] =
@@ -165,12 +171,12 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
                 val arenaPhase =
                     if (updatedPlayers.size == expectedNumberOfPlayers) {
-                        ArenaPhase.ChoosingClasses
+                        ArenaPhaseEntity.ChoosingClasses
                     } else {
-                        ArenaPhase.WaitingForAllPlayers
+                        ArenaPhaseEntity.WaitingForAllPlayers
                     }
 
-                match.copy(playerEntitiesMap = updatedPlayers, phase = arenaPhase)
+                existingMatch.copy(playerEntitiesMap = updatedPlayers, phase = arenaPhase)
             }
             true
         } catch (_: Exception) {

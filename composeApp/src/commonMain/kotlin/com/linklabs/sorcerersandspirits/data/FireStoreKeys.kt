@@ -1,6 +1,5 @@
 package com.linklabs.sorcerersandspirits.data
 
-// TODO: Does or can iOS use this?
 object FireStoreKeys {
     const val ARENA_MATCHES_PATH = "ArenaMatches"
     const val CHALLENGES_PATH = "Challenges"

@@ -20,11 +20,12 @@ import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
 
 // TODO Arena: Update the slop. Paginate messages and/or have a separate node for them to make more
-//  efficient
+//  efficient. Could also save all messages and get on demand, and only have the latest 30 or
+// something
 
 class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
-    private val arenaMatchesReference = database.reference(ARENA_MATCHES_PATH)
+    private val arenaMatchesReference = database.reference(path = ARENA_MATCHES_PATH)
 
     // TODO Arena: Cleanup, docstring
     override suspend fun chooseCharacterClass(

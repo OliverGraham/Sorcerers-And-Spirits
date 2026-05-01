@@ -4,6 +4,50 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 
+// TODO Arena: ArenaState should be a sealed interface, and then these properties can be
+// non-nullable
+
+@Immutable
+sealed interface ArenaState1 {
+    val messages: List<ArenaMessageState>
+    val unhandledMessagesCount: Int
+
+    data class WaitingForAllPlayers(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+    ) : ArenaState1
+
+    data class Active(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+        val phase: ActivePhase,
+        val activePlayer: PlayerState,
+        val userPlayer: PlayerState,
+        val otherPlayers: List<PlayerState>,
+        val secondsRemaining: Int,
+        val isItThisUsersTurn: Boolean,
+    ) : ArenaState1 {
+        val latestMessage =
+            messages.getOrNull(
+                index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
+            )
+
+        val filteredMessages =
+            messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
+    }
+
+    data class Finished(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+    ) : ArenaState1
+}
+
+@Immutable
+enum class ActivePhase {
+    ChoosingClasses,
+    Combat,
+}
+
 @Immutable
 data class ArenaState(
     val phase: ArenaPhase,

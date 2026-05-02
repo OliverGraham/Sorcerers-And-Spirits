@@ -33,6 +33,13 @@ internal fun ArenaPlayerEntity.toDomain() =
             ArenaPlayer.Unselected(userId = userId, displayName = displayName)
     }
 
+internal fun ArenaPlayerEntity.Selected.toDomain() =
+    ArenaPlayer.Selected(
+        userId = userId,
+        displayName = displayName,
+        characterClass = characterClassEntity.toDomain(),
+    )
+
 internal fun ArenaPlayer.toEntity() =
     when (this) {
         is ArenaPlayer.Selected ->

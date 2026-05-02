@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageType
-import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPhaseEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
@@ -30,109 +29,117 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     // TODO Arena: Cleanup, docstring
     override suspend fun chooseCharacterClass(
         arenaId: String,
-        arenaPlayer: ArenaPlayer,
-        nextPlayerId: String?,
+        selectedArenaPlayer: ArenaPlayer.Selected,
+        nextPlayerId: String,
     ) {
         arenaMatchesReference.child(path = arenaId).runTransaction(
             strategy = ArenaMatchEntity.serializer()
         ) { match ->
-            val updatedPlayers = match.playerEntitiesMap.toMutableMap()
-            updatedPlayers[arenaPlayer.userId] = arenaPlayer.toEntity()
-
-            val nextPhase =
-                if (nextPlayerId == null) {
-                    ArenaPhaseEntity.Combat
-                } else {
-                    ArenaPhaseEntity.ChoosingClasses
+            val playerEntitiesMap =
+                when (match) {
+                    is ArenaMatchEntity.WaitingForAllPlayers -> match.playerEntitiesMap
+                    is ArenaMatchEntity.ChoosingClasses -> match.playerEntitiesMap
+                    is ArenaMatchEntity.Combat -> match.playerEntitiesMap
+                    is ArenaMatchEntity.Finished -> emptyMap()
                 }
 
-            val (finalActivePlayerUserId, updatedMessages, numberOfNewMessages) =
+            val updatedPlayers = playerEntitiesMap.toMutableMap()
+            updatedPlayers[selectedArenaPlayer.userId] = selectedArenaPlayer.toEntity()
+
+            val (updatedMessages, numberOfNewMessages) =
                 generateCharacterSelectionMessages(
+                    arenaId = arenaId,
                     match = match,
                     updatedPlayers = updatedPlayers,
-                    arenaPlayer = arenaPlayer,
-                    nextPhase = nextPhase,
-                    nextPlayerId = nextPlayerId,
+                    selectedArenaPlayer = selectedArenaPlayer,
                 )
 
-            match.copy(
-                playerEntitiesMap = updatedPlayers,
-                activePlayerUserId = finalActivePlayerUserId,
-                phase = nextPhase,
-                messages = updatedMessages,
-                numberOfNewMessages = numberOfNewMessages,
-            )
+            val areAllSelected = updatedPlayers.values.all { it is ArenaPlayerEntity.Selected }
+
+            when {
+                match is ArenaMatchEntity.Finished ->
+                    ArenaMatchEntity.Finished(
+                        messages = updatedMessages,
+                        numberOfNewMessages = numberOfNewMessages,
+                    )
+
+                areAllSelected ->
+                    ArenaMatchEntity.Combat(
+                        playerEntitiesMap =
+                            updatedPlayers.mapValues { it.value as ArenaPlayerEntity.Selected },
+                        activePlayerUserId = nextPlayerId,
+                        messages = updatedMessages,
+                        numberOfNewMessages = numberOfNewMessages,
+                    )
+
+                else ->
+                    ArenaMatchEntity.ChoosingClasses(
+                        playerEntitiesMap = updatedPlayers,
+                        activePlayerUserId = nextPlayerId,
+                        messages = updatedMessages,
+                        numberOfNewMessages = numberOfNewMessages,
+                    )
+            }
         }
     }
 
     // TODO Arena: return data class
     private fun generateCharacterSelectionMessages(
+        arenaId: String,
         match: ArenaMatchEntity,
         updatedPlayers: Map<String, ArenaPlayerEntity>,
-        arenaPlayer: ArenaPlayer,
-        nextPhase: ArenaPhaseEntity,
-        nextPlayerId: String?,
-    ): Triple<String?, List<ArenaMessageEntity>, Int> {
+        selectedArenaPlayer: ArenaPlayer.Selected,
+    ): Pair<List<ArenaMessageEntity>, Int> {
         val messagesReference =
-            arenaMatchesReference
-                .child(path = match.arenaId)
-                .child(path = ArenaMatchEntity.messagesName)
+            arenaMatchesReference.child(path = arenaId).child(path = ArenaMatchEntity.messagesName)
 
         val selectionMessage =
             ArenaMessageEntity(
                 id = messagesReference.addNewKey(),
                 type = ArenaMessageType.Generic,
                 message =
-                    "${arenaPlayer.displayName} selected ${arenaPlayer.characterClass?.className.orEmpty()}",
+                    "${selectedArenaPlayer.displayName} selected ${selectedArenaPlayer.characterClass.className}",
             )
 
-        var finalActivePlayerUserId = nextPlayerId
+        val combatStartingMessages =
+            messagesReference.getCombatStartingMessages(playerEntities = updatedPlayers.values)
 
-        val transitionMessages =
-            if (nextPhase == ArenaPhaseEntity.Combat) {
-                val firstPlayer =
-                    updatedPlayers.values.maxByOrNull { it.characterClassEntity?.speed ?: 0 }
+        val newMessages = listOf(selectionMessage) + combatStartingMessages
+        return Pair(first = match.messages + newMessages, second = newMessages.size)
+    }
 
-                finalActivePlayerUserId = firstPlayer?.userId
+    private fun DatabaseReference.getCombatStartingMessages(
+        playerEntities: Collection<ArenaPlayerEntity>
+    ): List<ArenaMessageEntity> {
+        val selectedPlayers = playerEntities.filterIsInstance<ArenaPlayerEntity.Selected>()
+        val areAllSelected = selectedPlayers.size == playerEntities.size
 
-                buildList {
-                    if (firstPlayer != null) {
-                        val className = firstPlayer.characterClassEntity?.className ?: "Player"
-                        add(
-                            ArenaMessageEntity(
-                                id = messagesReference.addNewKey(),
-                                type = ArenaMessageType.Generic,
-                                message = "It is now $className's turn!",
-                            )
-                        )
-                    }
+        return if (areAllSelected) {
+            getAllSelectedMessages(selectedPlayers = selectedPlayers)
+        } else {
+            emptyList()
+        }
+    }
 
-                    add(
-                        ArenaMessageEntity(
-                            id = messagesReference.addNewKey(),
-                            type = ArenaMessageType.Round,
-                            roundNumber = 1,
-                        )
-                    )
+    private fun DatabaseReference.getAllSelectedMessages(
+        selectedPlayers: List<ArenaPlayerEntity.Selected>
+    ) = buildList {
+        add(
+            ArenaMessageEntity(
+                id = addNewKey(),
+                type = ArenaMessageType.Generic,
+                message = "Combat is now starting!",
+            )
+        )
+        add(ArenaMessageEntity(id = addNewKey(), type = ArenaMessageType.Round, roundNumber = 1))
 
-                    add(
-                        ArenaMessageEntity(
-                            id = messagesReference.addNewKey(),
-                            type = ArenaMessageType.Generic,
-                            message = "Combat is now starting!",
-                        )
-                    )
-                }
-            } else {
-                emptyList()
-            }
-
-        val newMessages = listOf(selectionMessage) + transitionMessages
-
-        return Triple(
-            first = finalActivePlayerUserId,
-            second = match.messages + newMessages,
-            third = newMessages.size,
+        val firstPlayer = selectedPlayers.maxBy { it.characterClassEntity.speed }
+        add(
+            ArenaMessageEntity(
+                id = addNewKey(),
+                type = ArenaMessageType.Generic,
+                message = "It is now ${firstPlayer.characterClassEntity.className}'s turn!",
+            )
         )
     }
 
@@ -149,35 +156,45 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         try {
             val arenaReference = arenaMatchesReference.child(path = arenaId)
             val snapshot = arenaReference.valueEvents.first()
+            val serializer = ArenaMatchEntity.serializer()
+
             if (!snapshot.exists) {
                 arenaReference.setValue(
-                    strategy = ArenaMatchEntity.serializer().nullable,
-                    value =
-                        ArenaMatchEntity(
-                            arenaId = arenaId,
-                            phase = ArenaPhaseEntity.WaitingForAllPlayers,
-                            activePlayerUserId = userId,
-                        ),
+                    strategy = serializer.nullable,
+                    value = ArenaMatchEntity.WaitingForAllPlayers(),
                 )
             }
 
-            arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch
-                ->
-                val updatedPlayers = existingMatch.playerEntitiesMap.toMutableMap()
+            arenaReference.runTransaction(strategy = serializer) { existingMatch ->
+                val playerEntitiesMap =
+                    when (existingMatch) {
+                        is ArenaMatchEntity.WaitingForAllPlayers -> existingMatch.playerEntitiesMap
+                        is ArenaMatchEntity.ChoosingClasses -> existingMatch.playerEntitiesMap
+                        is ArenaMatchEntity.Combat -> existingMatch.playerEntitiesMap
+                        is ArenaMatchEntity.Finished -> emptyMap()
+                    }
+
+                val updatedPlayers = playerEntitiesMap.toMutableMap()
 
                 if (userId !in updatedPlayers) {
                     updatedPlayers[userId] =
-                        ArenaPlayerEntity(displayName = displayName, userId = userId)
+                        ArenaPlayerEntity.Unselected(displayName = displayName, userId = userId)
                 }
 
-                val arenaPhase =
-                    if (updatedPlayers.size == expectedNumberOfPlayers) {
-                        ArenaPhaseEntity.ChoosingClasses
-                    } else {
-                        ArenaPhaseEntity.WaitingForAllPlayers
-                    }
-
-                existingMatch.copy(playerEntitiesMap = updatedPlayers, phase = arenaPhase)
+                if (updatedPlayers.size == expectedNumberOfPlayers) {
+                    ArenaMatchEntity.ChoosingClasses(
+                        playerEntitiesMap = updatedPlayers,
+                        activePlayerUserId = userId,
+                        messages = existingMatch.messages,
+                        numberOfNewMessages = 0,
+                    )
+                } else {
+                    ArenaMatchEntity.WaitingForAllPlayers(
+                        playerEntitiesMap = updatedPlayers,
+                        messages = existingMatch.messages,
+                        numberOfNewMessages = 0,
+                    )
+                }
             }
             true
         } catch (_: Exception) {
@@ -196,7 +213,9 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         arenaMatchesReference
             .child(path = arenaId)
             .valueEvents
-            .map { snapshot -> snapshot.value(ArenaMatchEntity.serializer().nullable)?.toDomain() }
+            .map { snapshot ->
+                snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
+            }
             .distinctUntilChanged()
 
     private fun DatabaseReference.addNewKey(): String =

@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
@@ -24,26 +23,58 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
                         ArenaMessageState.Generic(id = "1", message = "Spirit Walker chose Rogue")
                     )
             ),
-            getExampleArenaState(phase = ArenaPhase.Combat),
+            getExampleArenaState(),
+            getExampleChoosingClassesState(),
+            getExampleCombatState(),
         )
 
     private fun getExampleArenaState(
-        phase: ArenaPhase = ArenaPhase.ChoosingClasses,
-        playerStatesMap: Map<String, PlayerState> = getExamplePlayers(),
         messages: List<ArenaMessageState> = getExampleMessages(),
         unhandledMessagesCount: Int = 0,
         secondsRemaining: Int = 20,
-        userId: String? = "player1",
-        activePlayerUserId: String? = "player1",
     ) =
-        ArenaState(
-            phase = phase,
-            playerStatesMap = playerStatesMap,
+        ArenaState.WaitingForAllPlayers(
             messages = messages,
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = secondsRemaining,
-            userId = userId,
-            activePlayerUserId = activePlayerUserId,
+        )
+
+    private fun getExampleChoosingClassesState(
+        messages: List<ArenaMessageState> = getExampleMessages(),
+        unhandledMessagesCount: Int = 0,
+        secondsRemaining: Int = 20,
+        activePlayer: PlayerState = getExamplePlayers().values.first(),
+        userPlayer: PlayerState = getExamplePlayers().values.first(),
+        otherPlayers: List<PlayerState> = getExamplePlayers().values.drop(1),
+        isItThisUsersTurn: Boolean = true,
+    ) =
+        ArenaState.ChoosingClasses(
+            messages = messages,
+            unhandledMessagesCount = unhandledMessagesCount,
+            secondsRemaining = secondsRemaining,
+            activePlayer = activePlayer,
+            userPlayer = userPlayer,
+            otherPlayers = otherPlayers,
+            isItThisUsersTurn = isItThisUsersTurn,
+        )
+
+    private fun getExampleCombatState(
+        messages: List<ArenaMessageState> = getExampleMessages(),
+        unhandledMessagesCount: Int = 0,
+        secondsRemaining: Int = 20,
+        activePlayer: PlayerState.Selected = getExamplePlayers().values.first(),
+        userPlayer: PlayerState.Selected = getExamplePlayers().values.first(),
+        otherPlayers: List<PlayerState.Selected> = getExamplePlayers().values.drop(1),
+        isItThisUsersTurn: Boolean = true,
+    ) =
+        ArenaState.Combat(
+            messages = messages,
+            unhandledMessagesCount = unhandledMessagesCount,
+            secondsRemaining = secondsRemaining,
+            activePlayer = activePlayer,
+            userPlayer = userPlayer,
+            otherPlayers = otherPlayers,
+            isItThisUsersTurn = isItThisUsersTurn,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =
@@ -52,16 +83,16 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
     private fun getExamplePlayers() =
         mapOf(
             "player1" to
-                PlayerState(
+                PlayerState.Selected(
                     userId = "player1",
                     displayName = "Sorcerer Supreme",
-                    characterClassState = mageState,
+                    characterClass = mageState,
                 ),
             "player2" to
-                PlayerState(
+                PlayerState.Selected(
                     userId = "player2",
                     displayName = "Spirit Walker",
-                    characterClassState = rogueState,
+                    characterClass = rogueState,
                 ),
         )
 

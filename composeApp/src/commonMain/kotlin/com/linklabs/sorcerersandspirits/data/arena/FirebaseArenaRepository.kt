@@ -160,7 +160,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
             if (!snapshot.exists) {
                 arenaReference.setValue(
-                    strategy = serializer.nullable,
+                    strategy = serializer,
                     value = ArenaMatchEntity.WaitingForAllPlayers(),
                 )
             }

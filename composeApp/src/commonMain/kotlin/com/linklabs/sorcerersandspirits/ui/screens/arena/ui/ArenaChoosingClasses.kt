@@ -29,8 +29,8 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 @Composable
 internal fun ArenaChoosingClasses(
-    userPlayerState: PlayerState?,
-    activePlayerState: PlayerState?,
+    userPlayerState: PlayerState,
+    activePlayerState: PlayerState,
     isItThisUsersTurn: Boolean,
     characterClasses: List<CharacterClassState>,
     allPlayerStates: List<PlayerState>,
@@ -40,17 +40,20 @@ internal fun ArenaChoosingClasses(
     val unavailableClasses =
         remember(allPlayerStates, userPlayerState) {
             allPlayerStates
-                .filter { it.userId != userPlayerState?.userId }
-                .mapNotNull { it.characterClassState }
+                .filter { it.userId != userPlayerState.userId }
+                .mapNotNull { when (it) {
+                    is PlayerState.Selected -> it.characterClass
+                    is PlayerState.Unselected -> null
+                } }
         }
 
     val classSelections =
         remember(allPlayerStates) {
             allPlayerStates
-                .mapNotNull { player ->
-                    player.characterClassState?.let { it to player.displayName }
-                }
-                .toMap()
+                .filterIsInstance<PlayerState.Selected>()
+                .associate { player ->
+                    player.characterClass to player.displayName
+            }
         }
 
     Column(
@@ -64,7 +67,7 @@ internal fun ArenaChoosingClasses(
                 if (isItThisUsersTurn) {
                     "Choose Your Class"
                 } else {
-                    "${activePlayerState?.displayName ?: "Another player"} is choosing their class..."
+                    "${activePlayerState.displayName} is choosing their class..."
                 },
             style =
                 if (isItThisUsersTurn) {
@@ -94,7 +97,7 @@ internal fun ArenaChoosingClasses(
             Button(
                 onClick = {
                     val selected = selectedClass
-                    if (selected != null && userPlayerState != null) {
+                    if (selected != null) {
                         onClassConfirmed(userPlayerState, selected)
                         selectedClass = null
                     }
@@ -112,7 +115,7 @@ internal fun ArenaChoosingClasses(
 @Composable
 private fun ArenaChoosingClassesPreview() {
     SorcerersAndSpiritsTheme {
-        val mockPlayer = PlayerState(userId = "1", displayName = "", characterClassState = null)
+        val mockPlayer = PlayerState.Unselected(userId = "1", displayName = "")
         ArenaChoosingClasses(
             userPlayerState = mockPlayer,
             activePlayerState = mockPlayer,

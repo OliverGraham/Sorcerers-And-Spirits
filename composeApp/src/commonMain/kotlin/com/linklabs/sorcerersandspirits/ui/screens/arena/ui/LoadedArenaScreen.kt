@@ -16,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
@@ -57,23 +56,23 @@ private fun ScreenContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(paddingValues = paddingValues)) {
-        Crossfade(targetState = arenaState.phase) { phase ->
-            when (phase) {
-                ArenaPhase.ChoosingClasses -> {
+        Crossfade(targetState = arenaState) { state ->
+            when (state) {
+                is ArenaState.ChoosingClasses -> {
                     ArenaChoosingClasses(
-                        userPlayerState = arenaState.userPlayer,
-                        activePlayerState = arenaState.activePlayer,
-                        isItThisUsersTurn = arenaState.isItThisUsersTurn,
+                        userPlayerState = state.userPlayer,
+                        activePlayerState = state.activePlayer,
+                        isItThisUsersTurn = state.isItThisUsersTurn,
                         characterClasses = CharacterClass.getAllClasses().map { it.toState() },
-                        allPlayerStates = arenaState.playerStatesMap.values.toList(),
+                        allPlayerStates = listOf(state.userPlayer) + state.otherPlayers,
                     )
                 }
 
-                ArenaPhase.Combat -> ArenaCombat()
+                is ArenaState.Combat -> ArenaCombat()
 
-                ArenaPhase.WaitingForAllPlayers -> ArenaWaitingForPlayers()
+                is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
-                ArenaPhase.Finished -> {
+                is ArenaState.Finished -> {
                     // TODO Arena: figure out
                 }
             }

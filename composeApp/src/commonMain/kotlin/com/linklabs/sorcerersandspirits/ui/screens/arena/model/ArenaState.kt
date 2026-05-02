@@ -36,6 +36,7 @@ sealed interface ArenaState {
         override val isItThisUsersTurn: Boolean,
     ) : ActiveState
 
+    @Immutable
     data class Combat(
         override val messages: List<ArenaMessageState>,
         override val unhandledMessagesCount: Int,

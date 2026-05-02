@@ -12,10 +12,6 @@ sealed interface ArenaPlayer {
         val characterClass: CharacterClass,
     ) : ArenaPlayer
 
-    data class Unselected(
-        override val userId: String,
-        override val displayName: String,
-    ) : ArenaPlayer
+    data class Unselected(override val userId: String, override val displayName: String) :
+        ArenaPlayer
 }
-
-

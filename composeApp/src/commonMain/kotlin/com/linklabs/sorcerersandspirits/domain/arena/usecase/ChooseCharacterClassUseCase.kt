@@ -22,7 +22,8 @@ class ChooseCharacterClassUseCase(private val arenaRepository: ArenaRepository) 
         return if (unselected.isNotEmpty()) {
             unselected.random().userId
         } else {
-            selected.filterIsInstance<ArenaPlayer.Selected>()
+            selected
+                .filterIsInstance<ArenaPlayer.Selected>()
                 .maxBy { it.characterClass.speed }
                 .userId
         }

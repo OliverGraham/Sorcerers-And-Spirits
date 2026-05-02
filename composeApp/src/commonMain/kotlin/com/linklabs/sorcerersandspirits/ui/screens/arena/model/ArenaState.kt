@@ -10,9 +10,10 @@ sealed interface ArenaState {
     val secondsRemaining: Int
 
     val latestMessage: ArenaMessageState?
-        get() = messages.getOrNull(
-            index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
-        )
+        get() =
+            messages.getOrNull(
+                index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
+            )
 
     val filteredMessages: List<ArenaMessageState>
         get() = messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
@@ -86,6 +87,7 @@ internal fun ArenaMatch.toState(
                 secondsRemaining = seconds,
             )
         }
+
         is ArenaMatch.ChoosingClasses -> {
             val activePlayer = playerMap[activePlayerUserId]
             val userPlayer = playerMap[userId]
@@ -103,11 +105,13 @@ internal fun ArenaMatch.toState(
                     secondsRemaining = seconds,
                     activePlayer = activePlayer.toState(),
                     userPlayer = userPlayer.toState(),
-                    otherPlayers = playerMap.values.filter { it.userId != userId }.map { it.toState() },
+                    otherPlayers =
+                        playerMap.values.filter { it.userId != userId }.map { it.toState() },
                     isItThisUsersTurn = activePlayerUserId == userId,
                 )
             }
         }
+
         is ArenaMatch.Combat -> {
             val activePlayer = playerMap[activePlayerUserId]
             val userPlayer = playerMap[userId]
@@ -125,7 +129,10 @@ internal fun ArenaMatch.toState(
                     secondsRemaining = seconds,
                     activePlayer = activePlayer.toSelectedState(),
                     userPlayer = userPlayer.toSelectedState(),
-                    otherPlayers = playerMap.values.filter { it.userId != userId }.map { it.toSelectedState() } ,
+                    otherPlayers =
+                        playerMap.values
+                            .filter { it.userId != userId }
+                            .map { it.toSelectedState() },
                     isItThisUsersTurn = activePlayerUserId == userId,
                 )
             }

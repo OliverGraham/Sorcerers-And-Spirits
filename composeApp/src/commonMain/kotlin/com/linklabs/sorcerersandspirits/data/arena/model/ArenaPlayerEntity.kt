@@ -16,35 +16,32 @@ sealed interface ArenaPlayerEntity {
     ) : ArenaPlayerEntity
 
     @Serializable
-    data class Unselected(
-        override val userId: String,
-        override val displayName: String
-    ) : ArenaPlayerEntity
+    data class Unselected(override val userId: String, override val displayName: String) :
+        ArenaPlayerEntity
 }
 
+internal fun ArenaPlayerEntity.toDomain() =
+    when (this) {
+        is ArenaPlayerEntity.Selected ->
+            ArenaPlayer.Selected(
+                userId = userId,
+                displayName = displayName,
+                characterClass = characterClassEntity.toDomain(),
+            )
 
+        is ArenaPlayerEntity.Unselected ->
+            ArenaPlayer.Unselected(userId = userId, displayName = displayName)
+    }
 
-internal fun ArenaPlayerEntity.toDomain() = when (this) {
-    is ArenaPlayerEntity.Selected ->  ArenaPlayer.Selected(
-        userId = userId,
-        displayName = displayName,
-        characterClass = characterClassEntity.toDomain(),
-    )
-    is ArenaPlayerEntity.Unselected -> ArenaPlayer.Unselected(
-        userId = userId,
-        displayName = displayName,
-    )
-}
+internal fun ArenaPlayer.toEntity() =
+    when (this) {
+        is ArenaPlayer.Selected ->
+            ArenaPlayerEntity.Selected(
+                userId = userId,
+                displayName = displayName,
+                characterClassEntity = characterClass.toEntity(),
+            )
 
-internal fun ArenaPlayer.toEntity() = when (this) {
-    is ArenaPlayer.Selected -> ArenaPlayerEntity.Selected(
-        userId = userId,
-        displayName = displayName,
-        characterClassEntity = characterClass.toEntity(),
-    )
-    is ArenaPlayer.Unselected -> ArenaPlayerEntity.Unselected(
-        userId = userId,
-        displayName = displayName,
-    )
-}
-
+        is ArenaPlayer.Unselected ->
+            ArenaPlayerEntity.Unselected(userId = userId, displayName = displayName)
+    }

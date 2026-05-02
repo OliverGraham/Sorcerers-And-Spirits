@@ -2,86 +2,141 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
-
-// TODO Arena: ArenaState should be a sealed interface, and then these properties can be
-// non-nullable
 
 @Immutable
-sealed interface ArenaState1 {
+sealed interface ArenaState {
     val messages: List<ArenaMessageState>
     val unhandledMessagesCount: Int
+    val secondsRemaining: Int
 
-    data class WaitingForAllPlayers(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-    ) : ArenaState1
-
-    data class Active(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-        val phase: ActivePhase,
-        val activePlayer: PlayerState,
-        val userPlayer: PlayerState,
-        val otherPlayers: List<PlayerState>,
-        val secondsRemaining: Int,
-        val isItThisUsersTurn: Boolean,
-    ) : ArenaState1 {
-        val latestMessage =
-            messages.getOrNull(
-                index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
-            )
-
-        val filteredMessages =
-            messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
-    }
-
-    data class Finished(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-    ) : ArenaState1
-}
-
-@Immutable
-enum class ActivePhase {
-    ChoosingClasses,
-    Combat,
-}
-
-@Immutable
-data class ArenaState(
-    val phase: ArenaPhase,
-    val playerStatesMap: Map<String, PlayerState>,
-    val messages: List<ArenaMessageState>,
-    val unhandledMessagesCount: Int,
-    val secondsRemaining: Int,
-    private val userId: String?,
-    private val activePlayerUserId: String?,
-) {
-    val activePlayer = playerStatesMap[activePlayerUserId]
-    val userPlayer = playerStatesMap[userId]
-    val isItThisUsersTurn = activePlayerUserId == userId
-
-    val latestMessage =
-        messages.getOrNull(
+    val latestMessage: ArenaMessageState?
+        get() = messages.getOrNull(
             index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
         )
 
-    val filteredMessages =
-        messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
+    val filteredMessages: List<ArenaMessageState>
+        get() = messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
+
+    @Immutable
+    data class WaitingForAllPlayers(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+        override val secondsRemaining: Int,
+    ) : ArenaState
+
+    @Immutable
+    data class ChoosingClasses(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+        override val secondsRemaining: Int,
+        override val activePlayer: PlayerState,
+        override val userPlayer: PlayerState,
+        override val otherPlayers: List<PlayerState>,
+        override val isItThisUsersTurn: Boolean,
+    ) : ActiveState
+
+    data class Combat(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+        override val secondsRemaining: Int,
+        override val activePlayer: PlayerState.Selected,
+        override val userPlayer: PlayerState.Selected,
+        override val otherPlayers: List<PlayerState.Selected>,
+        override val isItThisUsersTurn: Boolean,
+    ) : ActiveState
+
+    @Immutable
+    data class Finished(
+        override val messages: List<ArenaMessageState>,
+        override val unhandledMessagesCount: Int,
+        override val secondsRemaining: Int = 0,
+    ) : ArenaState
 }
+
+@Immutable
+sealed interface ActiveState : ArenaState {
+    val activePlayer: PlayerState
+    val userPlayer: PlayerState
+    val otherPlayers: List<PlayerState>
+    val isItThisUsersTurn: Boolean
+}
+
+fun ArenaState.withSeconds(seconds: Int): ArenaState =
+    when (this) {
+        is ArenaState.WaitingForAllPlayers -> copy(secondsRemaining = seconds)
+        is ArenaState.ChoosingClasses -> copy(secondsRemaining = seconds)
+        is ArenaState.Combat -> copy(secondsRemaining = seconds)
+        is ArenaState.Finished -> copy(secondsRemaining = seconds)
+    }
 
 internal fun ArenaMatch.toState(
     previousUnhandledMessagesCount: Int,
     userId: String?,
     secondsRemaining: Int?,
-) =
-    ArenaState(
-        phase = phase,
-        playerStatesMap = playerMap.mapValues { it.value.toState() },
-        messages = messages.map { it.toState() },
-        unhandledMessagesCount = previousUnhandledMessagesCount + numberOfNewMessages,
-        secondsRemaining = secondsRemaining ?: 0,
-        activePlayerUserId = activePlayerUserId,
-        userId = userId,
-    )
+): ArenaState {
+    val messagesState = messages.map { it.toState() }
+    val unhandledMessagesCount = previousUnhandledMessagesCount + numberOfNewMessages
+    val seconds = secondsRemaining ?: 0
+
+    return when (this) {
+        is ArenaMatch.WaitingForAllPlayers -> {
+            ArenaState.WaitingForAllPlayers(
+                messages = messagesState,
+                unhandledMessagesCount = unhandledMessagesCount,
+                secondsRemaining = seconds,
+            )
+        }
+        is ArenaMatch.ChoosingClasses -> {
+            val activePlayer = playerMap[activePlayerUserId]
+            val userPlayer = playerMap[userId]
+
+            if (activePlayer == null || userPlayer == null) {
+                ArenaState.Finished(
+                    messages = messagesState,
+                    unhandledMessagesCount = unhandledMessagesCount,
+                    secondsRemaining = seconds,
+                )
+            } else {
+                ArenaState.ChoosingClasses(
+                    messages = messagesState,
+                    unhandledMessagesCount = unhandledMessagesCount,
+                    secondsRemaining = seconds,
+                    activePlayer = activePlayer.toState(),
+                    userPlayer = userPlayer.toState(),
+                    otherPlayers = playerMap.values.filter { it.userId != userId }.map { it.toState() },
+                    isItThisUsersTurn = activePlayerUserId == userId,
+                )
+            }
+        }
+        is ArenaMatch.Combat -> {
+            val activePlayer = playerMap[activePlayerUserId]
+            val userPlayer = playerMap[userId]
+
+            if (activePlayer == null || userPlayer == null) {
+                ArenaState.Finished(
+                    messages = messagesState,
+                    unhandledMessagesCount = unhandledMessagesCount,
+                    secondsRemaining = seconds,
+                )
+            } else {
+                ArenaState.Combat(
+                    messages = messagesState,
+                    unhandledMessagesCount = unhandledMessagesCount,
+                    secondsRemaining = seconds,
+                    activePlayer = activePlayer.toSelectedState(),
+                    userPlayer = userPlayer.toSelectedState(),
+                    otherPlayers = playerMap.values.filter { it.userId != userId }.map { it.toSelectedState() } ,
+                    isItThisUsersTurn = activePlayerUserId == userId,
+                )
+            }
+        }
+
+        is ArenaMatch.Finished -> {
+            ArenaState.Finished(
+                messages = messagesState,
+                unhandledMessagesCount = unhandledMessagesCount,
+                secondsRemaining = seconds,
+            )
+        }
+    }
+}

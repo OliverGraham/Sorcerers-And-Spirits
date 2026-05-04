@@ -41,18 +41,18 @@ internal fun ArenaChoosingClasses(
         remember(allPlayerStates, userPlayerState) {
             allPlayerStates
                 .filter { it.userId != userPlayerState.userId }
-                .mapNotNull { when (it) {
-                    is PlayerState.Selected -> it.characterClass
-                    is PlayerState.Unselected -> null
-                } }
+                .mapNotNull {
+                    when (it) {
+                        is PlayerState.Selected -> it.characterClass
+                        is PlayerState.Unselected -> null
+                    }
+                }
         }
 
     val classSelections =
         remember(allPlayerStates) {
-            allPlayerStates
-                .filterIsInstance<PlayerState.Selected>()
-                .associate { player ->
-                    player.characterClass to player.displayName
+            allPlayerStates.filterIsInstance<PlayerState.Selected>().associate { player ->
+                player.characterClass to player.displayName
             }
         }
 

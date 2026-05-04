@@ -10,6 +10,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
@@ -154,24 +155,18 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         displayName: String,
     ) =
         try {
-            val arenaReference = arenaMatchesReference.child(path = arenaId)
-            val snapshot = arenaReference.valueEvents.first()
-            val serializer = ArenaMatchEntity.serializer()
+            val strategy =
+                nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
 
-            if (!snapshot.exists) {
-                arenaReference.setValue(
-                    strategy = serializer,
-                    value = ArenaMatchEntity.WaitingForAllPlayers(),
-                )
-            }
-
-            arenaReference.runTransaction(strategy = serializer) { existingMatch ->
+            arenaMatchesReference.child(path = arenaId).runTransaction(strategy = strategy) {
+                existingMatch ->
                 val playerEntitiesMap =
                     when (existingMatch) {
                         is ArenaMatchEntity.WaitingForAllPlayers -> existingMatch.playerEntitiesMap
                         is ArenaMatchEntity.ChoosingClasses -> existingMatch.playerEntitiesMap
                         is ArenaMatchEntity.Combat -> existingMatch.playerEntitiesMap
                         is ArenaMatchEntity.Finished -> emptyMap()
+                        null -> emptyMap()
                     }
 
                 val updatedPlayers = playerEntitiesMap.toMutableMap()
@@ -185,13 +180,13 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     ArenaMatchEntity.ChoosingClasses(
                         playerEntitiesMap = updatedPlayers,
                         activePlayerUserId = userId,
-                        messages = existingMatch.messages,
+                        messages = existingMatch?.messages.orEmpty(),
                         numberOfNewMessages = 0,
                     )
                 } else {
                     ArenaMatchEntity.WaitingForAllPlayers(
                         playerEntitiesMap = updatedPlayers,
-                        messages = existingMatch.messages,
+                        messages = existingMatch?.messages.orEmpty(),
                         numberOfNewMessages = 0,
                     )
                 }
@@ -200,6 +195,22 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         } catch (_: Exception) {
             false
         }
+
+    private fun ArenaMatchEntity.connectToArenaUpdate() =
+        when (this) {
+            is ArenaMatchEntity.ChoosingClasses -> connectToArenaUpdate()
+            is ArenaMatchEntity.Combat -> connectToArenaUpdate()
+            is ArenaMatchEntity.Finished -> connectToArenaUpdate()
+            is ArenaMatchEntity.WaitingForAllPlayers -> connectToArenaUpdate()
+        }
+
+    private fun ArenaMatchEntity.ChoosingClasses.connectToArenaUpdate() {}
+
+    private fun ArenaMatchEntity.Combat.connectToArenaUpdate() {}
+
+    private fun ArenaMatchEntity.Finished.connectToArenaUpdate() = this
+
+    private fun ArenaMatchEntity.WaitingForAllPlayers.connectToArenaUpdate() {}
 
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference

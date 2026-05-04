@@ -1,9 +1,8 @@
 package com.linklabs.sorcerersandspirits
 
-import android.os.Build
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.nullable
 
-class AndroidPlatform : Platform {
-    override val name: String = "Android ${Build.VERSION.SDK_INT}"
-}
-
-actual fun getPlatform(): Platform = AndroidPlatform()
+actual fun <T : Any> nullOnTransactionDecodeCrashSerializer(
+    serializer: KSerializer<T>
+): KSerializer<T?> = serializer.nullable

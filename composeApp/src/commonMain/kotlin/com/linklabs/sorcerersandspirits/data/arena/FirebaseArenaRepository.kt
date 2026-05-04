@@ -2,26 +2,22 @@ package com.linklabs.sorcerersandspirits.data.arena
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageType
-import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
+import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
+import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
-import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
 
-// TODO Arena: Update the slop. Paginate messages and/or have a separate node for them to make more
+// TODO Arena: Paginate messages and/or have a separate node for them to make more
 //  efficient. Could also save all messages and get on demand, and only have the latest 30 or
-// something
+//  something
 
 class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
@@ -33,115 +29,12 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         selectedArenaPlayer: ArenaPlayer.Selected,
         nextPlayerId: String,
     ) {
-        arenaMatchesReference.child(path = arenaId).runTransaction(
-            strategy = ArenaMatchEntity.serializer()
-        ) { match ->
-            val playerEntitiesMap =
-                when (match) {
-                    is ArenaMatchEntity.WaitingForAllPlayers -> match.playerEntitiesMap
-                    is ArenaMatchEntity.ChoosingClasses -> match.playerEntitiesMap
-                    is ArenaMatchEntity.Combat -> match.playerEntitiesMap
-                    is ArenaMatchEntity.Finished -> emptyMap()
-                }
-
-            val updatedPlayers = playerEntitiesMap.toMutableMap()
-            updatedPlayers[selectedArenaPlayer.userId] = selectedArenaPlayer.toEntity()
-
-            val (updatedMessages, numberOfNewMessages) =
-                generateCharacterSelectionMessages(
-                    arenaId = arenaId,
-                    match = match,
-                    updatedPlayers = updatedPlayers,
-                    selectedArenaPlayer = selectedArenaPlayer,
-                )
-
-            val areAllSelected = updatedPlayers.values.all { it is ArenaPlayerEntity.Selected }
-
-            when {
-                match is ArenaMatchEntity.Finished ->
-                    ArenaMatchEntity.Finished(
-                        messages = updatedMessages,
-                        numberOfNewMessages = numberOfNewMessages,
-                    )
-
-                areAllSelected ->
-                    ArenaMatchEntity.Combat(
-                        playerEntitiesMap =
-                            updatedPlayers.mapValues { it.value as ArenaPlayerEntity.Selected },
-                        activePlayerUserId = nextPlayerId,
-                        messages = updatedMessages,
-                        numberOfNewMessages = numberOfNewMessages,
-                    )
-
-                else ->
-                    ArenaMatchEntity.ChoosingClasses(
-                        playerEntitiesMap = updatedPlayers,
-                        activePlayerUserId = nextPlayerId,
-                        messages = updatedMessages,
-                        numberOfNewMessages = numberOfNewMessages,
-                    )
-            }
-        }
-    }
-
-    // TODO Arena: return data class
-    private fun generateCharacterSelectionMessages(
-        arenaId: String,
-        match: ArenaMatchEntity,
-        updatedPlayers: Map<String, ArenaPlayerEntity>,
-        selectedArenaPlayer: ArenaPlayer.Selected,
-    ): Pair<List<ArenaMessageEntity>, Int> {
-        val messagesReference =
-            arenaMatchesReference.child(path = arenaId).child(path = ArenaMatchEntity.messagesName)
-
-        val selectionMessage =
-            ArenaMessageEntity(
-                id = messagesReference.addNewKey(),
-                type = ArenaMessageType.Generic,
-                message =
-                    "${selectedArenaPlayer.displayName} selected ${selectedArenaPlayer.characterClass.className}",
+        ChooseCharacterClass(
+                arenaReference = arenaMatchesReference.child(path = arenaId),
+                selectedArenaPlayer = selectedArenaPlayer,
+                nextPlayerId = nextPlayerId,
             )
-
-        val combatStartingMessages =
-            messagesReference.getCombatStartingMessages(playerEntities = updatedPlayers.values)
-
-        val newMessages = listOf(selectionMessage) + combatStartingMessages
-        return Pair(first = match.messages + newMessages, second = newMessages.size)
-    }
-
-    private fun DatabaseReference.getCombatStartingMessages(
-        playerEntities: Collection<ArenaPlayerEntity>
-    ): List<ArenaMessageEntity> {
-        val selectedPlayers = playerEntities.filterIsInstance<ArenaPlayerEntity.Selected>()
-        val areAllSelected = selectedPlayers.size == playerEntities.size
-
-        return if (areAllSelected) {
-            getAllSelectedMessages(selectedPlayers = selectedPlayers)
-        } else {
-            emptyList()
-        }
-    }
-
-    private fun DatabaseReference.getAllSelectedMessages(
-        selectedPlayers: List<ArenaPlayerEntity.Selected>
-    ) = buildList {
-        add(
-            ArenaMessageEntity(
-                id = addNewKey(),
-                type = ArenaMessageType.Generic,
-                message = "Combat is now starting!",
-            )
-        )
-        add(ArenaMessageEntity(id = addNewKey(), type = ArenaMessageType.Round, roundNumber = 1))
-
-        val firstPlayer = selectedPlayers.maxBy { it.characterClassEntity.speed }
-        add(
-            ArenaMessageEntity(
-                id = addNewKey(),
-                type = ArenaMessageType.Generic,
-                message = "It is now ${firstPlayer.characterClassEntity.className}'s turn!",
-            )
-        )
+            .invoke()
     }
 
     /**
@@ -154,63 +47,13 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         userId: String,
         displayName: String,
     ) =
-        try {
-            val strategy =
-                nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
-
-            arenaMatchesReference.child(path = arenaId).runTransaction(strategy = strategy) {
-                existingMatch ->
-                val playerEntitiesMap =
-                    when (existingMatch) {
-                        is ArenaMatchEntity.WaitingForAllPlayers -> existingMatch.playerEntitiesMap
-                        is ArenaMatchEntity.ChoosingClasses -> existingMatch.playerEntitiesMap
-                        is ArenaMatchEntity.Combat -> existingMatch.playerEntitiesMap
-                        is ArenaMatchEntity.Finished -> emptyMap()
-                        null -> emptyMap()
-                    }
-
-                val updatedPlayers = playerEntitiesMap.toMutableMap()
-
-                if (userId !in updatedPlayers) {
-                    updatedPlayers[userId] =
-                        ArenaPlayerEntity.Unselected(displayName = displayName, userId = userId)
-                }
-
-                if (updatedPlayers.size == expectedNumberOfPlayers) {
-                    ArenaMatchEntity.ChoosingClasses(
-                        playerEntitiesMap = updatedPlayers,
-                        activePlayerUserId = userId,
-                        messages = existingMatch?.messages.orEmpty(),
-                        numberOfNewMessages = 0,
-                    )
-                } else {
-                    ArenaMatchEntity.WaitingForAllPlayers(
-                        playerEntitiesMap = updatedPlayers,
-                        messages = existingMatch?.messages.orEmpty(),
-                        numberOfNewMessages = 0,
-                    )
-                }
-            }
-            true
-        } catch (_: Exception) {
-            false
-        }
-
-    private fun ArenaMatchEntity.connectToArenaUpdate() =
-        when (this) {
-            is ArenaMatchEntity.ChoosingClasses -> connectToArenaUpdate()
-            is ArenaMatchEntity.Combat -> connectToArenaUpdate()
-            is ArenaMatchEntity.Finished -> connectToArenaUpdate()
-            is ArenaMatchEntity.WaitingForAllPlayers -> connectToArenaUpdate()
-        }
-
-    private fun ArenaMatchEntity.ChoosingClasses.connectToArenaUpdate() {}
-
-    private fun ArenaMatchEntity.Combat.connectToArenaUpdate() {}
-
-    private fun ArenaMatchEntity.Finished.connectToArenaUpdate() = this
-
-    private fun ArenaMatchEntity.WaitingForAllPlayers.connectToArenaUpdate() {}
+        ConnectToArena(
+                arenaReference = arenaMatchesReference.child(path = arenaId),
+                expectedNumberOfPlayers = expectedNumberOfPlayers,
+                userId = userId,
+                displayName = displayName,
+            )
+            .invoke()
 
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
@@ -228,7 +71,4 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
             }
             .distinctUntilChanged()
-
-    private fun DatabaseReference.addNewKey(): String =
-        push().key ?: error("Failed to generate Firebase push key")
 }

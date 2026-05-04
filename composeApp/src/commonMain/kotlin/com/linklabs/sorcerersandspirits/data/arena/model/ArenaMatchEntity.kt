@@ -15,8 +15,8 @@ sealed interface ArenaMatchEntity {
     @Serializable
     @SerialName(value = WAITING_FOR_ALL_PLAYERS)
     data class WaitingForAllPlayers(
-        val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
-        override val messages: List<ArenaMessageEntity>,
+        val playerEntitiesMap: Map<String, ArenaPlayerEntity> = emptyMap(),
+        override val messages: List<ArenaMessageEntity> = emptyList(),
         override val numberOfNewMessages: Int = 0,
     ) : ArenaMatchEntity
 

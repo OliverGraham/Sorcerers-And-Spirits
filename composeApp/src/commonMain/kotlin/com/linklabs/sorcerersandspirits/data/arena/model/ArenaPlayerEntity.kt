@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -9,6 +10,7 @@ sealed interface ArenaPlayerEntity {
     val displayName: String
 
     @Serializable
+    @SerialName(value = SELECTED)
     data class Selected(
         override val userId: String,
         override val displayName: String,
@@ -16,8 +18,14 @@ sealed interface ArenaPlayerEntity {
     ) : ArenaPlayerEntity
 
     @Serializable
+    @SerialName(value = UNSELECTED)
     data class Unselected(override val userId: String, override val displayName: String) :
         ArenaPlayerEntity
+
+    companion object {
+        private const val SELECTED = "Selected"
+        private const val UNSELECTED = "Unselected"
+    }
 }
 
 internal fun ArenaPlayerEntity.toDomain() =

@@ -52,7 +52,7 @@ private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier
 @Composable
 private fun RoundMessage(state: ArenaMessageState.NewRound, modifier: Modifier = Modifier) {
     Text(
-        text = "ROUND ${state.roundNumber}",
+        text = state.getDisplayString(),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
@@ -68,7 +68,7 @@ private fun ChoseCharacterClassMessage(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = "${state.displayName} chose ${state.characterClassInfo.className}",
+        text = state.getDisplayString(),
         style = MaterialTheme.typography.bodyLarge,
         modifier = modifier.padding(vertical = 4.dp),
     )
@@ -80,7 +80,7 @@ private fun ConnectedToArenaMessage(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = "${state.displayName} joined the arena",
+        text = state.getDisplayString(),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.outline,
         modifier = modifier.padding(vertical = 2.dp),
@@ -90,7 +90,7 @@ private fun ConnectedToArenaMessage(
 @Composable
 private fun NewTurnMessage(state: ArenaMessageState.NewTurn, modifier: Modifier = Modifier) {
     Text(
-        text = "It's ${state.characterClassInfo.className}'s turn",
+        text = state.getDisplayString(),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.secondary,

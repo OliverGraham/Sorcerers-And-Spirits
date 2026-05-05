@@ -33,19 +33,6 @@ sealed interface ArenaMessageState {
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-// TODO Arena: Use enums to then use string resources
-fun ArenaMessageState.toDisplayText(): String =
-    when (this) {
-        is ArenaMessageState.NewRound -> "Round $roundNumber"
-
-        is ArenaMessageState.ChoseCharacterClass ->
-            "$displayName chose ${characterClassInfo.className}"
-
-        is ArenaMessageState.ConnectedToArena -> "$displayName joined the arena"
-
-        is ArenaMessageState.NewTurn -> "It's ${characterClassInfo.className}'s turn"
-    }
-
 fun ArenaMessageState.toDomain(): ArenaMessage =
     when (this) {
         is ArenaMessageState.NewRound ->

@@ -1,13 +1,10 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
-import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity.Companion.PHASE
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import dev.gitlive.firebase.FirebaseClassDiscriminator
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-@FirebaseClassDiscriminator(discriminator = PHASE)
 sealed interface ArenaMatchEntity {
     val messages: List<ArenaMessageEntity>
     val numberOfNewMessages: Int

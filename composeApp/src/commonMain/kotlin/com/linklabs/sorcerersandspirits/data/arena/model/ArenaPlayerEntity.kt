@@ -52,3 +52,10 @@ internal fun ArenaPlayer.toEntity() =
         is ArenaPlayer.Unselected ->
             ArenaPlayerEntity.Unselected(userId = userId, displayName = displayName)
     }
+
+internal fun ArenaPlayer.Selected.toSelectedEntity() =
+    ArenaPlayerEntity.Selected(
+        userId = userId,
+        displayName = displayName,
+        characterClassEntity = characterClass.toEntity(),
+    )

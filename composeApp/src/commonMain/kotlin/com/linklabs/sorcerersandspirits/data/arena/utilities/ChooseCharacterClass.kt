@@ -2,15 +2,14 @@ package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageType
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
 class ChooseCharacterClass(
     private val arenaReference: DatabaseReference,
-    private val selectedArenaPlayer: ArenaPlayer.Selected,
+    private val selectedArenaPlayer: ArenaPlayerEntity.Selected,
     private val nextPlayerId: String,
 ) {
 
@@ -42,7 +41,7 @@ class ChooseCharacterClass(
             )
 
         val updatedPlayers = playerEntitiesMap.toMutableMap()
-        updatedPlayers[selectedArenaPlayer.userId] = selectedArenaPlayer.toEntity()
+        updatedPlayers[selectedArenaPlayer.userId] = selectedArenaPlayer
 
         val areAllSelected = updatedPlayers.values.all { it is ArenaPlayerEntity.Selected }
 
@@ -69,7 +68,9 @@ class ChooseCharacterClass(
         val (updatedMessages, numberOfNewMessages) =
             messageGenerator.generateCombatStartingMessages(
                 startingCharacterClass =
-                    selectedPlayers.values.maxBy { it.characterClassEntity.speed }
+                    selectedPlayers.values
+                        .maxBy { it.characterClassEntity.speed }
+                        .characterClassEntity
             )
 
         return ArenaMatchEntity.Combat(
@@ -107,7 +108,7 @@ class ChooseCharacterClass(
         }
 
         fun generateCombatStartingMessages(
-            startingCharacterClass: ArenaPlayerEntity.Selected
+            startingCharacterClass: CharacterClassEntity
         ): Pair<List<ArenaMessageEntity>, Int> {
             val selectionMessage = messagesReference.generateCharacterSelectionMessage()
             val combatStartingMessages =
@@ -120,45 +121,31 @@ class ChooseCharacterClass(
         }
 
         private fun DatabaseReference.generateCharacterSelectionMessage() =
-            ArenaMessageEntity(
+            ArenaMessageEntity.ChoseCharacterClass(
                 id = addNewKey(),
-                type = ArenaMessageType.Generic,
-                message =
-                    "${selectedArenaPlayer.displayName} selected ${selectedArenaPlayer.characterClass.className}",
+                characterClassInfo =
+                    selectedArenaPlayer.characterClassEntity.toCharacterClassMessageInfoEntity(),
+                displayName = selectedArenaPlayer.displayName,
             )
 
         private fun DatabaseReference.generateInitialCombatRoundMessages(
-            startingCharacterClass: ArenaPlayerEntity.Selected
+            startingCharacterClass: CharacterClassEntity
         ) = buildList {
+            add(element = ArenaMessageEntity.NewRound(id = addNewKey(), roundNumber = 1))
             add(
                 element =
-                    ArenaMessageEntity(
+                    ArenaMessageEntity.NewTurn(
                         id = addNewKey(),
-                        type = ArenaMessageType.Generic,
-                        message = "Combat is now starting!",
-                    )
-            )
-            add(
-                element =
-                    ArenaMessageEntity(
-                        id = addNewKey(),
-                        type = ArenaMessageType.Round,
-                        roundNumber = 1,
-                    )
-            )
-
-            add(
-                element =
-                    ArenaMessageEntity(
-                        id = addNewKey(),
-                        type = ArenaMessageType.Generic,
-                        message =
-                            "It is now ${startingCharacterClass.characterClassEntity.className}'s turn!",
+                        characterClassInfo =
+                            startingCharacterClass.toCharacterClassMessageInfoEntity(),
                     )
             )
         }
 
         private fun DatabaseReference.addNewKey(): String =
             push().key ?: error("Failed to generate Firebase push key")
+
+        private fun CharacterClassEntity.toCharacterClassMessageInfoEntity() =
+            CharacterClassMessageInfoEntity(className = className, type = type)
     }
 }

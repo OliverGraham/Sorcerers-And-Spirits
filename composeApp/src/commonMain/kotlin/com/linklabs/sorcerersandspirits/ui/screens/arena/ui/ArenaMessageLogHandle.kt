@@ -81,7 +81,7 @@ private fun ArenaMessageLogHandlePreview() {
     SorcerersAndSpiritsTheme {
         ArenaMessageLogHandle(
             secondsRemaining = 15,
-            latestMessage = ArenaMessageState.Generic("1", "Let the battle begin!"),
+            latestMessage = ArenaMessageState.NewRound(id = "1", roundNumber = "1"),
             unhandledMessagesCount = 0,
         )
     }

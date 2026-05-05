@@ -2,116 +2,90 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
+import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 @Immutable
 sealed interface ArenaMessageState {
     val id: String
 
     @Immutable
-    data class Round(override val id: String, val roundNumber: String) : ArenaMessageState
+    data class NewRound(override val id: String, val roundNumber: String) : ArenaMessageState
 
     @Immutable
-    data class Action(
+    data class ChoseCharacterClass(
         override val id: String,
-        val rollerName: String,
-        val rollerValue: String,
-        val defenderName: String,
-        val rollTypeState: RollTypeState,
+        val displayName: String,
+        val characterClassInfo: CharacterClassMessageInfoState,
     ) : ArenaMessageState
 
     @Immutable
-    data class Result(
-        override val id: String,
-        val rollerName: String,
-        val defenderName: String,
-        val rollTypeState: RollTypeState,
-    ) : ArenaMessageState
+    data class ConnectedToArena(override val id: String, val displayName: String) :
+        ArenaMessageState
 
-    @Immutable data class Generic(override val id: String, val message: String) : ArenaMessageState
+    @Immutable
+    data class NewTurn(
+        override val id: String,
+        val characterClassInfo: CharacterClassMessageInfoState,
+    ) : ArenaMessageState
 }
+
+@Immutable
+data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
 // TODO Arena: Use enums to then use string resources
 fun ArenaMessageState.toDisplayText(): String =
     when (this) {
-        is ArenaMessageState.Round -> "ROUND $roundNumber"
+        is ArenaMessageState.NewRound -> "Round $roundNumber"
 
-        is ArenaMessageState.Action ->
-            "$rollerName rolled $rollerValue against $defenderName's $rollTypeState"
+        is ArenaMessageState.ChoseCharacterClass ->
+            "$displayName chose ${characterClassInfo.className}"
 
-        is ArenaMessageState.Result ->
-            "$rollerName is now rolling against $defenderName's $rollTypeState!"
+        is ArenaMessageState.ConnectedToArena -> "$displayName joined the arena"
 
-        is ArenaMessageState.Generic -> message
+        is ArenaMessageState.NewTurn -> "It's ${characterClassInfo.className}'s turn"
     }
-
-@Immutable
-enum class RollTypeState {
-    Ability,
-    ArmorClass,
-    Health,
-}
 
 fun ArenaMessageState.toDomain(): ArenaMessage =
     when (this) {
-        is ArenaMessageState.Round ->
-            ArenaMessage.Round(id = id, roundNumber = roundNumber.toIntOrNull() ?: 0)
+        is ArenaMessageState.NewRound ->
+            ArenaMessage.NewRound(id = id, roundNumber = roundNumber.toIntOrNull() ?: 0)
 
-        is ArenaMessageState.Action ->
-            ArenaMessage.Action(
+        is ArenaMessageState.ChoseCharacterClass ->
+            ArenaMessage.ChoseCharacterClass(
                 id = id,
-                rollerName = rollerName,
-                rollerValue = rollerValue.toIntOrNull() ?: 0,
-                defenderName = defenderName,
-                rollType = rollTypeState.toDomain(),
+                displayName = displayName,
+                characterClassInfo = characterClassInfo.toDomain(),
             )
 
-        is ArenaMessageState.Result ->
-            ArenaMessage.Result(
-                id = id,
-                rollerName = rollerName,
-                defenderName = defenderName,
-                rollType = rollTypeState.toDomain(),
-            )
+        is ArenaMessageState.ConnectedToArena ->
+            ArenaMessage.ConnectedToArena(id = id, displayName = displayName)
 
-        is ArenaMessageState.Generic -> ArenaMessage.Generic(id = id, message = message)
+        is ArenaMessageState.NewTurn ->
+            ArenaMessage.NewTurn(id = id, characterClassInfo = characterClassInfo.toDomain())
     }
 
 fun ArenaMessage.toState(): ArenaMessageState =
     when (this) {
-        is ArenaMessage.Round ->
-            ArenaMessageState.Round(id = id, roundNumber = roundNumber.toString())
+        is ArenaMessage.NewRound ->
+            ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
 
-        is ArenaMessage.Action ->
-            ArenaMessageState.Action(
+        is ArenaMessage.ChoseCharacterClass ->
+            ArenaMessageState.ChoseCharacterClass(
                 id = id,
-                rollerName = rollerName,
-                rollerValue = rollerValue.toString(),
-                defenderName = defenderName,
-                rollTypeState = rollType.toState(),
+                displayName = displayName,
+                characterClassInfo = characterClassInfo.toState(),
             )
 
-        is ArenaMessage.Result ->
-            ArenaMessageState.Result(
-                id = id,
-                rollerName = rollerName,
-                defenderName = defenderName,
-                rollTypeState = rollType.toState(),
-            )
+        is ArenaMessage.ConnectedToArena ->
+            ArenaMessageState.ConnectedToArena(id = id, displayName = displayName)
 
-        is ArenaMessage.Generic -> ArenaMessageState.Generic(id = id, message = message)
+        is ArenaMessage.NewTurn ->
+            ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
     }
 
-fun RollTypeState.toDomain(): RollType =
-    when (this) {
-        RollTypeState.Ability -> RollType.Ability
-        RollTypeState.ArmorClass -> RollType.ArmorClass
-        RollTypeState.Health -> RollType.Health
-    }
+private fun CharacterClassMessageInfoState.toDomain(): CharacterClassMessageInfo =
+    CharacterClassMessageInfo(className = className, type = type)
 
-fun RollType.toState(): RollTypeState =
-    when (this) {
-        RollType.Ability -> RollTypeState.Ability
-        RollType.ArmorClass -> RollTypeState.ArmorClass
-        RollType.Health -> RollTypeState.Health
-    }
+private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =
+    CharacterClassMessageInfoState(className = className, type = type)

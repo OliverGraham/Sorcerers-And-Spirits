@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
@@ -31,7 +32,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     ) {
         ChooseCharacterClass(
                 arenaReference = arenaMatchesReference.child(path = arenaId),
-                selectedArenaPlayer = selectedArenaPlayer,
+                selectedArenaPlayer = selectedArenaPlayer.toSelectedEntity(),
                 nextPlayerId = nextPlayerId,
             )
             .invoke()

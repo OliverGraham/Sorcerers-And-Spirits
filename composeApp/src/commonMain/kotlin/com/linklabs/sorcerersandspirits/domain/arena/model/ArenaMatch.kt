@@ -12,6 +12,7 @@ sealed interface ArenaMatch {
     data class ChoosingClasses(
         override val messages: List<ArenaMessage>,
         override val numberOfNewMessages: Int,
+        val activePlayer: ArenaPlayer,
         val activePlayerUserId: String,
         val playerMap: Map<String, ArenaPlayer>,
     ) : ArenaMatch
@@ -19,6 +20,7 @@ sealed interface ArenaMatch {
     data class Combat(
         override val messages: List<ArenaMessage>,
         override val numberOfNewMessages: Int,
+        val activePlayer: ArenaPlayer.Selected,
         val activePlayerUserId: String,
         val playerMap: Map<String, ArenaPlayer.Selected>,
     ) : ArenaMatch

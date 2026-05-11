@@ -63,6 +63,9 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
             userPlayer = userPlayer,
             otherPlayers = otherPlayers,
             isItThisUsersTurn = isItThisUsersTurn,
+            selectedClass = null,
+            unavailableClasses = emptyList(),
+            classSelections = emptyMap(),
         )
 
     private fun getExampleCombatState(

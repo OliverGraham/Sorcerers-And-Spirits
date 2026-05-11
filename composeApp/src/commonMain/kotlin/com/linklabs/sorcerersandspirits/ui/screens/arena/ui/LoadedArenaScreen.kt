@@ -56,15 +56,11 @@ private fun ScreenContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(paddingValues = paddingValues)) {
-        Crossfade(targetState = arenaState) { state ->
-            when (state) {
+        Crossfade(targetState = arenaState::class) { _ ->
+            when (arenaState) {
                 is ArenaState.ChoosingClasses -> {
-                    ArenaChoosingClasses(
-                        userPlayerState = state.userPlayer,
-                        activePlayerState = state.activePlayer,
-                        isItThisUsersTurn = state.isItThisUsersTurn,
-                        characterClasses = CharacterClass.getAllClasses().map { it.toState() },
-                        allPlayerStates = listOf(state.userPlayer) + state.otherPlayers,
+                    arenaState.ArenaChoosingClasses(
+                        characterClasses = CharacterClass.getAllClasses().map { it.toState() }
                     )
                 }
 

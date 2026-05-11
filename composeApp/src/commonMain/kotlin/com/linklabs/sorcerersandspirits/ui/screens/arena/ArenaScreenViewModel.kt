@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
@@ -16,8 +15,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSeconds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSelectedClass
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -57,7 +57,7 @@ class ArenaScreenViewModel(
     init {
         viewModelScope.launch {
             // TODO: Figure out better way for userId
-            val userId = getUserIdUseCase()
+            val userId = getUserIdUseCase().orEmpty()
 
             coordinateArenaMatchUseCase(
                     arenaId = arguments.arenaId,
@@ -71,15 +71,26 @@ class ArenaScreenViewModel(
                         return@collect
                     }
 
-                    val updatedArenaState =
-                        getUpdatedState(
+                    val updatedArenaStateUpdate =
+                        updatedArenaMatch.toUpdatedState(
                             previousState = _uiStateFlow.getLoadedStateOrNull(),
-                            updatedArenaMatch = updatedArenaMatch,
                             userId = userId,
                         )
 
-                    _uiStateFlow.value = UiState.Loaded(data = updatedArenaState)
+                    handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
+
+                    _uiStateFlow.value = UiState.Loaded(data = updatedArenaStateUpdate.nextState)
                 }
+        }
+    }
+
+    fun onSelectCharacterClass(characterClassState: CharacterClassState) {
+        _uiStateFlow.updateLoaded { arenaState ->
+            if (arenaState is ArenaState.ChoosingClasses) {
+                arenaState.withSelectedClass(selectedClass = characterClassState)
+            } else {
+                arenaState
+            }
         }
     }
 
@@ -100,6 +111,14 @@ class ArenaScreenViewModel(
                 selectedArenaPlayer = selectedArenaPlayer,
                 allPlayers = allPlayers,
             )
+
+            _uiStateFlow.updateLoaded { arenaState ->
+                if (arenaState is ArenaState.ChoosingClasses) {
+                    arenaState.copy(selectedClass = null)
+                } else {
+                    arenaState
+                }
+            }
         }
     }
 
@@ -123,71 +142,17 @@ class ArenaScreenViewModel(
         }
     }
 
-    private fun getUpdatedState(
-        previousState: ArenaState?,
-        updatedArenaMatch: ArenaMatch,
-        userId: String?,
-    ): ArenaState {
-        val nextState =
-            updatedArenaMatch.toState(
-                previousUnhandledMessagesCount = previousState?.unhandledMessagesCount ?: 0,
-                userId = userId,
-                secondsRemaining = 0,
-            )
+    private fun handleTimerAction(timerAction: TimerAction) {
+        when (timerAction) {
+            is TimerAction.Start -> arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
 
-        return when (
-            val timerAction = determineTimerAction(previous = previousState, next = nextState)
-        ) {
-            is TimerAction.Start -> {
-                arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
-                nextState.withSeconds(seconds = timerAction.timerDuration)
-            }
-
-            is TimerAction.Stop -> {
-                arenaTimer.stopTimer()
-                nextState.withSeconds(seconds = 0)
-            }
+            is TimerAction.Stop -> arenaTimer.stopTimer()
 
             is TimerAction.None -> {
-                nextState.withSeconds(seconds = previousState?.secondsRemaining ?: 0)
+                /* No changes needed */
             }
         }
     }
-
-    private fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
-        when (next) {
-            is ArenaState.WaitingForAllPlayers -> {
-                if (previous == null) TimerAction.Start(timerDuration = 20) else TimerAction.None
-            }
-
-            is ArenaState.ChoosingClasses -> {
-                // Restart timer only when first entering the selection phase
-                // TODO: Animation logic, start 15s turn timer
-                if (previous !is ArenaState.ChoosingClasses) {
-                    TimerAction.Start(timerDuration = 15)
-                } else {
-                    TimerAction.None
-                }
-            }
-
-            is ArenaState.Combat -> {
-                // Check turn change using the shared 'Active' interface
-                val turnChanged =
-                    previous is ActiveState &&
-                        previous.activePlayer.userId != next.activePlayer.userId
-                // TODO: Turn changes based on roll type and abilities, etc.
-                //  change timer duration based on type of roll (first roll choosing
-                //  opponent, or simply follow-up to opponent's health)
-
-                if (previous !is ArenaState.Combat || turnChanged) {
-                    TimerAction.Start(timerDuration = 20)
-                } else {
-                    TimerAction.None
-                }
-            }
-
-            is ArenaState.Finished -> TimerAction.Stop
-        }
 
     private fun updateArenaStateSeconds(secondsRemaining: Int) {
         _uiStateFlow.updateLoaded { arenaState ->

@@ -10,10 +10,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -24,38 +20,15 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 @Composable
-internal fun ArenaChoosingClasses(
-    userPlayerState: PlayerState,
-    activePlayerState: PlayerState,
-    isItThisUsersTurn: Boolean,
+internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
     characterClasses: List<CharacterClassState>,
-    allPlayerStates: List<PlayerState>,
     modifier: Modifier = Modifier,
 ) {
-    // TODO Arena: these states should come from view model
-    val unavailableClasses =
-        remember(allPlayerStates, userPlayerState) {
-            allPlayerStates
-                .filter { it.userId != userPlayerState.userId }
-                .mapNotNull {
-                    when (it) {
-                        is PlayerState.Selected -> it.characterClass
-                        is PlayerState.Unselected -> null
-                    }
-                }
-        }
-
-    val classSelections =
-        remember(allPlayerStates) {
-            allPlayerStates.filterIsInstance<PlayerState.Selected>().associate { player ->
-                player.characterClass to player.displayName
-            }
-        }
-
     Column(
         modifier = modifier.fillMaxSize().padding(vertical = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -67,7 +40,7 @@ internal fun ArenaChoosingClasses(
                 if (isItThisUsersTurn) {
                     "Choose Your Class"
                 } else {
-                    "${activePlayerState.displayName} is choosing their class..."
+                    "${activePlayer.displayName} is choosing their class..."
                 },
             style =
                 if (isItThisUsersTurn) {
@@ -79,15 +52,16 @@ internal fun ArenaChoosingClasses(
             modifier = Modifier.padding(bottom = 24.dp).padding(horizontal = 32.dp),
         )
 
-        var selectedClass by remember { mutableStateOf<CharacterClassState?>(null) }
-        val onClassConfirmed = ArenaActionsProvider.current.onChooseCharacterClass
+        val actions = ArenaActionsProvider.current
+        val onClassConfirmed = actions.onChooseCharacterClass
+        val onClassSelectedAction = actions.onSelectCharacterClass
 
         CharacterClassCards(
             characterClasses = characterClasses,
             selectedClass = selectedClass,
             unavailableClasses = unavailableClasses,
             classSelections = classSelections,
-            onClassSelected = { if (isItThisUsersTurn) selectedClass = it },
+            onClassSelected = { if (isItThisUsersTurn) onClassSelectedAction(it) },
             modifier = Modifier.weight(weight = 1f),
         )
 
@@ -96,10 +70,8 @@ internal fun ArenaChoosingClasses(
 
             Button(
                 onClick = {
-                    val selected = selectedClass
-                    if (selected != null) {
-                        onClassConfirmed(userPlayerState, selected)
-                        selectedClass = null
+                    if (selectedClass != null) {
+                        onClassConfirmed(userPlayer, selectedClass)
                     }
                 },
                 enabled = selectedClass != null,
@@ -115,13 +87,23 @@ internal fun ArenaChoosingClasses(
 @Composable
 private fun ArenaChoosingClassesPreview() {
     SorcerersAndSpiritsTheme {
-        val mockPlayer = PlayerState.Unselected(userId = "1", displayName = "")
-        ArenaChoosingClasses(
-            userPlayerState = mockPlayer,
-            activePlayerState = mockPlayer,
-            isItThisUsersTurn = true,
-            characterClasses = CharacterClass.getAllClasses().map { it.toState() },
-            allPlayerStates = listOf(mockPlayer),
+        val mockPlayer = PlayerState.Unselected(userId = "1", displayName = "Player")
+        val mockState =
+            ArenaState.ChoosingClasses(
+                messages = emptyList(),
+                unhandledMessagesCount = 0,
+                secondsRemaining = 15,
+                activePlayer = mockPlayer,
+                userPlayer = mockPlayer,
+                otherPlayers = emptyList(),
+                isItThisUsersTurn = true,
+                selectedClass = null,
+                unavailableClasses = emptyList(),
+                classSelections = emptyMap(),
+            )
+
+        mockState.ArenaChoosingClasses(
+            characterClasses = CharacterClass.getAllClasses().map { it.toState() }
         )
     }
 }

@@ -64,21 +64,39 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 numberOfNewMessages = numberOfNewMessages,
             )
 
-        is ArenaMatchEntity.ChoosingClasses ->
-            ArenaMatch.ChoosingClasses(
-                playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
-                messages = messages,
-                numberOfNewMessages = numberOfNewMessages,
-                activePlayerUserId = activePlayerUserId,
-            )
+        is ArenaMatchEntity.ChoosingClasses -> {
+            val playerMap = playerEntitiesMap.mapValues { it.value.toDomain() }
 
-        is ArenaMatchEntity.Combat ->
-            ArenaMatch.Combat(
-                playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
-                messages = messages,
-                numberOfNewMessages = numberOfNewMessages,
-                activePlayerUserId = activePlayerUserId,
-            )
+            val activePlayer = playerMap[activePlayerUserId]
+            if (activePlayer == null) {
+                ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
+            } else {
+                ArenaMatch.ChoosingClasses(
+                    playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
+                    messages = messages,
+                    numberOfNewMessages = numberOfNewMessages,
+                    activePlayerUserId = activePlayerUserId,
+                    activePlayer = activePlayer,
+                )
+            }
+        }
+
+        is ArenaMatchEntity.Combat -> {
+            val playerMap = playerEntitiesMap.mapValues { it.value.toDomain() }
+
+            val activePlayer = playerMap[activePlayerUserId]
+            if (activePlayer == null) {
+                ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
+            } else {
+                ArenaMatch.Combat(
+                    playerMap = playerMap,
+                    messages = messages,
+                    numberOfNewMessages = numberOfNewMessages,
+                    activePlayerUserId = activePlayerUserId,
+                    activePlayer = activePlayer,
+                )
+            }
+        }
 
         is ArenaMatchEntity.Finished ->
             ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)

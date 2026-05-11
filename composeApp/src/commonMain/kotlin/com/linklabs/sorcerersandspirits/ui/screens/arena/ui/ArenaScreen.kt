@@ -30,6 +30,7 @@ internal fun ArenaScreen(
     CompositionLocalProvider(
         LocalArenaActions provides
             ArenaActions(
+                onSelectCharacterClass = viewModel::onSelectCharacterClass,
                 onChooseCharacterClass = viewModel::onChooseCharacterClass,
                 onIncomingMessageHandled = viewModel::onIncomingMessageHandled,
             )

@@ -17,5 +17,5 @@
     <string name="arena_message_round">ROUND %1$s</string>
     <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>
-    <string name="arena_message_new_turn">It\'s %1$s\'s turn</string>
+    <string name="arena_message_new_turn">It's %1$s's turn</string>
 </resources>

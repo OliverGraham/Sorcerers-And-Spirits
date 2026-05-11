@@ -23,6 +23,9 @@ sealed interface ArenaMatch {
         val activePlayer: ArenaPlayer.Selected,
         val activePlayerUserId: String,
         val playerMap: Map<String, ArenaPlayer.Selected>,
+        val pendingRollType: RollType,
+        val pendingTargetUserId: String?,
+        val turnOrder: List<String>,
     ) : ArenaMatch
 
     data class Finished(

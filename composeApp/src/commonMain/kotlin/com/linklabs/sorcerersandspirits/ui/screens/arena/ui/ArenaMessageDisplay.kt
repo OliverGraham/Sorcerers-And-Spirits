@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.runtime.Composable
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -30,4 +31,17 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 resource = Res.string.arena_message_new_turn,
                 characterClassInfo.className,
             )
+
+        is ArenaMessageState.DiceRoll -> "$rollerDisplayName rolled $rollValue for $rollType"
+
+        is ArenaMessageState.AttackResult -> {
+            val action = if (rollType == RollType.ArmorClass) "attack" else "kill"
+            val result = if (isHit) "HIT!" else "MISS"
+            "$attackerDisplayName's $action against $targetDisplayName: $result"
+        }
+
+        is ArenaMessageState.TargetDead ->
+            "$targetDisplayName has been defeated by $killerDisplayName!"
+
+        is ArenaMessageState.GameFinished -> "GAME OVER! $winnerDisplayName is the Champion!"
     }

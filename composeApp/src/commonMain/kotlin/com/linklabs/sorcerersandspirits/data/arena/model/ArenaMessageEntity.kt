@@ -34,9 +34,37 @@ sealed interface ArenaMessageEntity {
         val characterClassInfo: CharacterClassMessageInfoEntity,
     ) : ArenaMessageEntity
 
-    // TODO Arena: Rolling, ability, etc. messages
-    //     Action,
-    //     Result,
+    @Serializable
+    @SerialName(value = DICE_ROLL)
+    data class DiceRoll(
+        override val id: String,
+        val rollerDisplayName: String,
+        val rollValue: Int,
+        val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+    ) : ArenaMessageEntity
+
+    @Serializable
+    @SerialName(value = ATTACK_RESULT)
+    data class AttackResult(
+        override val id: String,
+        val attackerDisplayName: String,
+        val targetDisplayName: String,
+        val isHit: Boolean,
+        val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+    ) : ArenaMessageEntity
+
+    @Serializable
+    @SerialName(value = TARGET_DEAD)
+    data class TargetDead(
+        override val id: String,
+        val targetDisplayName: String,
+        val killerDisplayName: String,
+    ) : ArenaMessageEntity
+
+    @Serializable
+    @SerialName(value = GAME_FINISHED)
+    data class GameFinished(override val id: String, val winnerDisplayName: String) :
+        ArenaMessageEntity
 
     companion object {
         private const val ARENA_MESSAGE = "ArenaMessage"
@@ -44,6 +72,10 @@ sealed interface ArenaMessageEntity {
         private const val CONNECTED_TO_ARENA = "ConnectedToArena"
         private const val NEW_ROUND = "NewRound"
         private const val NEW_TURN = "NewTurn"
+        private const val DICE_ROLL = "DiceRoll"
+        private const val ATTACK_RESULT = "AttackResult"
+        private const val TARGET_DEAD = "TargetDead"
+        private const val GAME_FINISHED = "GameFinished"
     }
 }
 
@@ -66,6 +98,33 @@ fun ArenaMessageEntity.toDomain(): ArenaMessage =
 
         is ArenaMessageEntity.NewTurn ->
             ArenaMessage.NewTurn(id = id, characterClassInfo = characterClassInfo.toDomain())
+
+        is ArenaMessageEntity.DiceRoll ->
+            ArenaMessage.DiceRoll(
+                id = id,
+                rollerDisplayName = rollerDisplayName,
+                rollValue = rollValue,
+                rollType = rollType,
+            )
+
+        is ArenaMessageEntity.AttackResult ->
+            ArenaMessage.AttackResult(
+                id = id,
+                attackerDisplayName = attackerDisplayName,
+                targetDisplayName = targetDisplayName,
+                isHit = isHit,
+                rollType = rollType,
+            )
+
+        is ArenaMessageEntity.TargetDead ->
+            ArenaMessage.TargetDead(
+                id = id,
+                targetDisplayName = targetDisplayName,
+                killerDisplayName = killerDisplayName,
+            )
+
+        is ArenaMessageEntity.GameFinished ->
+            ArenaMessage.GameFinished(id = id, winnerDisplayName = winnerDisplayName)
     }
 
 private fun CharacterClassMessageInfoEntity.toDomain() =

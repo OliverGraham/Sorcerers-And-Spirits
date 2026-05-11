@@ -17,6 +17,29 @@ sealed interface ArenaMessage {
 
     data class NewTurn(override val id: String, val characterClassInfo: CharacterClassMessageInfo) :
         ArenaMessage
+
+    data class DiceRoll(
+        override val id: String,
+        val rollerDisplayName: String,
+        val rollValue: Int,
+        val rollType: RollType,
+    ) : ArenaMessage
+
+    data class AttackResult(
+        override val id: String,
+        val attackerDisplayName: String,
+        val targetDisplayName: String,
+        val isHit: Boolean,
+        val rollType: RollType,
+    ) : ArenaMessage
+
+    data class TargetDead(
+        override val id: String,
+        val targetDisplayName: String,
+        val killerDisplayName: String,
+    ) : ArenaMessage
+
+    data class GameFinished(override val id: String, val winnerDisplayName: String) : ArenaMessage
 }
 
 data class CharacterClassMessageInfo(val className: String, val type: CharacterClassType)

@@ -85,6 +85,10 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
             userPlayer = userPlayer,
             otherPlayers = otherPlayers,
             isItThisUsersTurn = isItThisUsersTurn,
+            pendingRollType =
+                com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
+            pendingTargetUserId = null,
+            turnOrder = listOf("player1", "player2"),
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

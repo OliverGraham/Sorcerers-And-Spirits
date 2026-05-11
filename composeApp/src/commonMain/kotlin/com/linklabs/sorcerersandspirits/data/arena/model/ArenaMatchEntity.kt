@@ -33,6 +33,10 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val activePlayerUserId: String,
+        val pendingRollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType =
+            com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
+        val pendingTargetUserId: String? = null,
+        val turnOrder: List<String> = emptyList(),
     ) : ArenaMatchEntity
 
     @Serializable
@@ -94,6 +98,9 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                     numberOfNewMessages = numberOfNewMessages,
                     activePlayerUserId = activePlayerUserId,
                     activePlayer = activePlayer,
+                    pendingRollType = pendingRollType,
+                    pendingTargetUserId = pendingTargetUserId,
+                    turnOrder = turnOrder,
                 )
             }
         }

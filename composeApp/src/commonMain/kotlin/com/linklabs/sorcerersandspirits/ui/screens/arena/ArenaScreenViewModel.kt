@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
@@ -38,6 +39,7 @@ class ArenaScreenViewModel(
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
+    private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
 
@@ -139,6 +141,41 @@ class ArenaScreenViewModel(
                 is ArenaState.Finished ->
                     arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
             }
+        }
+    }
+
+    fun onAttack(targetUserId: String) {
+        _uiStateFlow.updateLoaded { arenaState ->
+            if (arenaState is ArenaState.Combat && arenaState.isItThisUsersTurn) {
+                // For simplified rules, we can't change targets once a kill roll is pending
+                if (
+                    arenaState.pendingRollType ==
+                        com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass
+                ) {
+                    arenaState.copy(pendingTargetUserId = targetUserId)
+                } else {
+                    arenaState
+                }
+            } else {
+                arenaState
+            }
+        }
+    }
+
+    fun onRollDice() {
+        viewModelScope.launch {
+            val loadedState =
+                _uiStateFlow.getLoadedStateOrNull() as? ArenaState.Combat ?: return@launch
+            if (!loadedState.isItThisUsersTurn) return@launch
+
+            val targetUserId = loadedState.pendingTargetUserId ?: return@launch
+
+            performCombatActionUseCase(
+                arenaId = arguments.arenaId,
+                attackerUserId = loadedState.userPlayer.userId,
+                targetUserId = targetUserId,
+                rollType = loadedState.pendingRollType,
+            )
         }
     }
 

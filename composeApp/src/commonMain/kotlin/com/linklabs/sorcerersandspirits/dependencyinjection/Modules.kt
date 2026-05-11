@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -68,6 +69,7 @@ private fun Module.initializeUseCases() {
     singleOf(::GetTavernDataFlowUseCase)
     singleOf(::GetUserIdUseCase)
     singleOf(::IsUserSignedInUseCase)
+    singleOf(::PerformCombatActionUseCase)
     singleOf(::SetCurrentTravelerAvailableUseCase)
     singleOf(::SendChallengeUseCase)
     singleOf(::UpdateArenaPlayerUseCase)

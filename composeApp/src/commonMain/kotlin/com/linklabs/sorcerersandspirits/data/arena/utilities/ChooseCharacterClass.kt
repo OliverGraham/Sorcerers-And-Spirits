@@ -78,6 +78,10 @@ class ChooseCharacterClass(
             activePlayerUserId = nextPlayerId,
             messages = updatedMessages,
             numberOfNewMessages = numberOfNewMessages,
+            turnOrder =
+                selectedPlayers.values
+                    .sortedByDescending { it.characterClassEntity.speed }
+                    .map { it.userId },
         )
     }
 

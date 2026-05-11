@@ -50,6 +50,9 @@ sealed interface ArenaState {
         override val userPlayer: PlayerState.Selected,
         override val otherPlayers: List<PlayerState.Selected>,
         override val isItThisUsersTurn: Boolean,
+        val pendingRollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+        val pendingTargetUserId: String?,
+        val turnOrder: List<String>,
     ) : ActiveState
 
     @Immutable
@@ -144,6 +147,9 @@ internal fun ArenaMatch.toUpdatedState(
                                 .filter { player -> player.userId != userId }
                                 .map { player -> player.toSelectedState() },
                         isItThisUsersTurn = activePlayerUserId == userId,
+                        pendingRollType = pendingRollType,
+                        pendingTargetUserId = pendingTargetUserId,
+                        turnOrder = turnOrder,
                     )
                 }
             }

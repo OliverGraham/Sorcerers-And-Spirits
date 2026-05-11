@@ -64,6 +64,22 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .setValue(value = arenaPlayer.toEntity())
     }
 
+    override suspend fun performCombatAction(
+        arenaId: String,
+        attackerUserId: String,
+        targetUserId: String,
+        rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+    ) {
+        com.linklabs.sorcerersandspirits.data.arena.utilities
+            .PerformCombatAction(
+                arenaReference = arenaMatchesReference.child(path = arenaId),
+                attackerUserId = attackerUserId,
+                targetUserId = targetUserId,
+                rollType = rollType,
+            )
+            .invoke()
+    }
+
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
         arenaMatchesReference
             .child(path = arenaId)

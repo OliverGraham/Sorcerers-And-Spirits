@@ -34,7 +34,12 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
-            text = if (isItThisUsersTurn) "Your Turn!" else "${activePlayer.displayName}'s Turn",
+            text =
+                if (isItThisUsersTurn) {
+                    "Your Turn!"
+                } else {
+                    "${activePlayer.characterClass.className}'s Turn"
+                },
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 8.dp),
         )
@@ -71,11 +76,7 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
                 CharacterClassCard(
                     characterClass = player.characterClass,
                     isSelected = isTargeted || activePlayer.userId == player.userId,
-                    enabled =
-                        isItThisUsersTurn &&
-                            pendingRollType ==
-                                com.linklabs.sorcerersandspirits.domain.arena.model.RollType
-                                    .ArmorClass,
+                    enabled = isItThisUsersTurn && pendingTargetUserId == null,
                     selectedBy = if (isTargeted) "TARGETED" else player.displayName,
                     onClick = {
                         if (isItThisUsersTurn) {

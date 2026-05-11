@@ -32,7 +32,7 @@ sealed interface ArenaMessageState {
     @Immutable
     data class DiceRoll(
         override val id: String,
-        val rollerDisplayName: String,
+        val rollerClassName: String,
         val rollValue: Int,
         val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
     ) : ArenaMessageState
@@ -40,8 +40,8 @@ sealed interface ArenaMessageState {
     @Immutable
     data class AttackResult(
         override val id: String,
-        val attackerDisplayName: String,
-        val targetDisplayName: String,
+        val attackerClassName: String,
+        val targetClassName: String,
         val isHit: Boolean,
         val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
     ) : ArenaMessageState
@@ -49,12 +49,12 @@ sealed interface ArenaMessageState {
     @Immutable
     data class TargetDead(
         override val id: String,
-        val targetDisplayName: String,
-        val killerDisplayName: String,
+        val targetClassName: String,
+        val killerClassName: String,
     ) : ArenaMessageState
 
     @Immutable
-    data class GameFinished(override val id: String, val winnerDisplayName: String) :
+    data class GameFinished(override val id: String, val winnerClassName: String) :
         ArenaMessageState
 }
 
@@ -82,7 +82,7 @@ fun ArenaMessageState.toDomain(): ArenaMessage =
         is ArenaMessageState.DiceRoll ->
             ArenaMessage.DiceRoll(
                 id = id,
-                rollerDisplayName = rollerDisplayName,
+                rollerClassName = rollerClassName,
                 rollValue = rollValue,
                 rollType = rollType,
             )
@@ -90,8 +90,8 @@ fun ArenaMessageState.toDomain(): ArenaMessage =
         is ArenaMessageState.AttackResult ->
             ArenaMessage.AttackResult(
                 id = id,
-                attackerDisplayName = attackerDisplayName,
-                targetDisplayName = targetDisplayName,
+                attackerClassName = attackerClassName,
+                targetClassName = targetClassName,
                 isHit = isHit,
                 rollType = rollType,
             )
@@ -99,12 +99,12 @@ fun ArenaMessageState.toDomain(): ArenaMessage =
         is ArenaMessageState.TargetDead ->
             ArenaMessage.TargetDead(
                 id = id,
-                targetDisplayName = targetDisplayName,
-                killerDisplayName = killerDisplayName,
+                targetClassName = targetClassName,
+                killerClassName = killerClassName,
             )
 
         is ArenaMessageState.GameFinished ->
-            ArenaMessage.GameFinished(id = id, winnerDisplayName = winnerDisplayName)
+            ArenaMessage.GameFinished(id = id, winnerClassName = winnerClassName)
     }
 
 fun ArenaMessage.toState(): ArenaMessageState =
@@ -128,7 +128,7 @@ fun ArenaMessage.toState(): ArenaMessageState =
         is ArenaMessage.DiceRoll ->
             ArenaMessageState.DiceRoll(
                 id = id,
-                rollerDisplayName = rollerDisplayName,
+                rollerClassName = rollerClassName,
                 rollValue = rollValue,
                 rollType = rollType,
             )
@@ -136,8 +136,8 @@ fun ArenaMessage.toState(): ArenaMessageState =
         is ArenaMessage.AttackResult ->
             ArenaMessageState.AttackResult(
                 id = id,
-                attackerDisplayName = attackerDisplayName,
-                targetDisplayName = targetDisplayName,
+                attackerClassName = attackerClassName,
+                targetClassName = targetClassName,
                 isHit = isHit,
                 rollType = rollType,
             )
@@ -145,12 +145,12 @@ fun ArenaMessage.toState(): ArenaMessageState =
         is ArenaMessage.TargetDead ->
             ArenaMessageState.TargetDead(
                 id = id,
-                targetDisplayName = targetDisplayName,
-                killerDisplayName = killerDisplayName,
+                targetClassName = targetClassName,
+                killerClassName = killerClassName,
             )
 
         is ArenaMessage.GameFinished ->
-            ArenaMessageState.GameFinished(id = id, winnerDisplayName = winnerDisplayName)
+            ArenaMessageState.GameFinished(id = id, winnerClassName = winnerClassName)
     }
 
 private fun CharacterClassMessageInfoState.toDomain(): CharacterClassMessageInfo =

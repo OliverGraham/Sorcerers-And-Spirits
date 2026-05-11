@@ -38,7 +38,7 @@ sealed interface ArenaMessageEntity {
     @SerialName(value = DICE_ROLL)
     data class DiceRoll(
         override val id: String,
-        val rollerDisplayName: String,
+        val rollerClassName: String,
         val rollValue: Int,
         val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
     ) : ArenaMessageEntity
@@ -47,8 +47,8 @@ sealed interface ArenaMessageEntity {
     @SerialName(value = ATTACK_RESULT)
     data class AttackResult(
         override val id: String,
-        val attackerDisplayName: String,
-        val targetDisplayName: String,
+        val attackerClassName: String,
+        val targetClassName: String,
         val isHit: Boolean,
         val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
     ) : ArenaMessageEntity
@@ -57,13 +57,13 @@ sealed interface ArenaMessageEntity {
     @SerialName(value = TARGET_DEAD)
     data class TargetDead(
         override val id: String,
-        val targetDisplayName: String,
-        val killerDisplayName: String,
+        val targetClassName: String,
+        val killerClassName: String,
     ) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = GAME_FINISHED)
-    data class GameFinished(override val id: String, val winnerDisplayName: String) :
+    data class GameFinished(override val id: String, val winnerClassName: String) :
         ArenaMessageEntity
 
     companion object {
@@ -102,7 +102,7 @@ fun ArenaMessageEntity.toDomain(): ArenaMessage =
         is ArenaMessageEntity.DiceRoll ->
             ArenaMessage.DiceRoll(
                 id = id,
-                rollerDisplayName = rollerDisplayName,
+                rollerClassName = rollerClassName,
                 rollValue = rollValue,
                 rollType = rollType,
             )
@@ -110,8 +110,8 @@ fun ArenaMessageEntity.toDomain(): ArenaMessage =
         is ArenaMessageEntity.AttackResult ->
             ArenaMessage.AttackResult(
                 id = id,
-                attackerDisplayName = attackerDisplayName,
-                targetDisplayName = targetDisplayName,
+                attackerClassName = attackerClassName,
+                targetClassName = targetClassName,
                 isHit = isHit,
                 rollType = rollType,
             )
@@ -119,12 +119,12 @@ fun ArenaMessageEntity.toDomain(): ArenaMessage =
         is ArenaMessageEntity.TargetDead ->
             ArenaMessage.TargetDead(
                 id = id,
-                targetDisplayName = targetDisplayName,
-                killerDisplayName = killerDisplayName,
+                targetClassName = targetClassName,
+                killerClassName = killerClassName,
             )
 
         is ArenaMessageEntity.GameFinished ->
-            ArenaMessage.GameFinished(id = id, winnerDisplayName = winnerDisplayName)
+            ArenaMessage.GameFinished(id = id, winnerClassName = winnerClassName)
     }
 
 private fun CharacterClassMessageInfoEntity.toDomain() =

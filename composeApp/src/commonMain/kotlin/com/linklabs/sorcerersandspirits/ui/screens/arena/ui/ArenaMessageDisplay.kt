@@ -32,16 +32,15 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 characterClassInfo.className,
             )
 
-        is ArenaMessageState.DiceRoll -> "$rollerDisplayName rolled $rollValue for $rollType"
+        is ArenaMessageState.DiceRoll -> "$rollerClassName rolled $rollValue for $rollType"
 
         is ArenaMessageState.AttackResult -> {
             val action = if (rollType == RollType.ArmorClass) "attack" else "kill"
             val result = if (isHit) "HIT!" else "MISS"
-            "$attackerDisplayName's $action against $targetDisplayName: $result"
+            "$attackerClassName's $action against $targetClassName: $result"
         }
 
-        is ArenaMessageState.TargetDead ->
-            "$targetDisplayName has been defeated by $killerDisplayName!"
+        is ArenaMessageState.TargetDead -> "$targetClassName has been defeated by $killerClassName!"
 
-        is ArenaMessageState.GameFinished -> "GAME OVER! $winnerDisplayName is the Champion!"
+        is ArenaMessageState.GameFinished -> "GAME OVER! $winnerClassName is the Champion!"
     }

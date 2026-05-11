@@ -147,11 +147,8 @@ class ArenaScreenViewModel(
     fun onAttack(targetUserId: String) {
         _uiStateFlow.updateLoaded { arenaState ->
             if (arenaState is ArenaState.Combat && arenaState.isItThisUsersTurn) {
-                // For simplified rules, we can't change targets once a kill roll is pending
-                if (
-                    arenaState.pendingRollType ==
-                        com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass
-                ) {
+                // Once a target is chosen, it's locked until turn end or target defeated
+                if (arenaState.pendingTargetUserId == null) {
                     arenaState.copy(pendingTargetUserId = targetUserId)
                 } else {
                     arenaState

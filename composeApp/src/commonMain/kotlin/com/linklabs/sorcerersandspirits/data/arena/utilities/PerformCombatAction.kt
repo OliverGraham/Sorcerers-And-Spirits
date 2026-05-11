@@ -34,7 +34,7 @@ class PerformCombatAction(
         updatedMessages.add(
             ArenaMessageEntity.DiceRoll(
                 id = messagesReference.addNewKey(),
-                rollerDisplayName = attacker.displayName,
+                rollerClassName = attacker.characterClassEntity.className,
                 rollValue = diceResult,
                 rollType = rollType,
             )
@@ -75,8 +75,8 @@ class PerformCombatAction(
         updatedMessages.add(
             ArenaMessageEntity.AttackResult(
                 id = messagesReference.addNewKey(),
-                attackerDisplayName = attacker.displayName,
-                targetDisplayName = target.displayName,
+                attackerClassName = attacker.characterClassEntity.className,
+                targetClassName = target.characterClassEntity.className,
                 isHit = isHit,
                 rollType = RollType.ArmorClass,
             )
@@ -106,8 +106,8 @@ class PerformCombatAction(
         updatedMessages.add(
             ArenaMessageEntity.AttackResult(
                 id = messagesReference.addNewKey(),
-                attackerDisplayName = attacker.displayName,
-                targetDisplayName = target.displayName,
+                attackerClassName = attacker.characterClassEntity.className,
+                targetClassName = target.characterClassEntity.className,
                 isHit = isDead,
                 rollType = RollType.Health,
             )
@@ -119,8 +119,8 @@ class PerformCombatAction(
             updatedMessages.add(
                 ArenaMessageEntity.TargetDead(
                     id = messagesReference.addNewKey(),
-                    targetDisplayName = target.displayName,
-                    killerDisplayName = attacker.displayName,
+                    targetClassName = target.characterClassEntity.className,
+                    killerClassName = attacker.characterClassEntity.className,
                 )
             )
         }
@@ -139,7 +139,7 @@ class PerformCombatAction(
                 updatedMessages.add(
                     ArenaMessageEntity.GameFinished(
                         id = messagesReference.addNewKey(),
-                        winnerDisplayName = winner.displayName,
+                        winnerClassName = winner.characterClassEntity.className,
                     )
                 )
             }

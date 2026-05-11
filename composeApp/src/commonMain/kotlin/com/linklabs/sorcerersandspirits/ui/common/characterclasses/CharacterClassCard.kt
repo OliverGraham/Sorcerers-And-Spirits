@@ -124,7 +124,7 @@ private fun Footer(armorClass: Int, hitPoints: Int, modifier: Modifier = Modifie
 @Composable
 private fun RogueCardPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCard(characterClass = CharacterClass.Rogue().toState())
+        CharacterClassCard(characterClass = CharacterClass.getRogue().toState())
     }
 }
 
@@ -132,7 +132,7 @@ private fun RogueCardPreview() {
 @Composable
 private fun MageCardPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCard(characterClass = CharacterClass.Mage().toState())
+        CharacterClassCard(characterClass = CharacterClass.getMage().toState())
     }
 }
 
@@ -140,6 +140,6 @@ private fun MageCardPreview() {
 @Composable
 private fun PaladinCardPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCard(characterClass = CharacterClass.Paladin().toState())
+        CharacterClassCard(characterClass = CharacterClass.getPaladin().toState())
     }
 }

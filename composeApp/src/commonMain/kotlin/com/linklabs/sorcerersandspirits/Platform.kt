@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits
 
-interface Platform {
-    val name: String
-}
+import kotlinx.serialization.KSerializer
 
-expect fun getPlatform(): Platform
+expect fun <T : Any> nullOnTransactionDecodeCrashSerializer(
+    serializer: KSerializer<T>
+): KSerializer<T?>

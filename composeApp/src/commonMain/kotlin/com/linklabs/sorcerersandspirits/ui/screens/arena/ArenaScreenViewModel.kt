@@ -2,19 +2,22 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPhase
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ActiveState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSeconds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSelectedClass
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -54,7 +57,7 @@ class ArenaScreenViewModel(
     init {
         viewModelScope.launch {
             // TODO: Figure out better way for userId
-            val userId = getUserIdUseCase()
+            val userId = getUserIdUseCase().orEmpty()
 
             coordinateArenaMatchUseCase(
                     arenaId = arguments.arenaId,
@@ -68,36 +71,54 @@ class ArenaScreenViewModel(
                         return@collect
                     }
 
-                    val updatedArenaState =
-                        getUpdatedState(
+                    val updatedArenaStateUpdate =
+                        updatedArenaMatch.toUpdatedState(
                             previousState = _uiStateFlow.getLoadedStateOrNull(),
-                            updatedArenaMatch = updatedArenaMatch,
                             userId = userId,
                         )
 
-                    _uiStateFlow.value = UiState.Loaded(data = updatedArenaState)
+                    handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
+
+                    _uiStateFlow.value = UiState.Loaded(data = updatedArenaStateUpdate.nextState)
                 }
+        }
+    }
+
+    fun onSelectCharacterClass(characterClassState: CharacterClassState) {
+        _uiStateFlow.updateLoaded { arenaState ->
+            if (arenaState is ArenaState.ChoosingClasses) {
+                arenaState.withSelectedClass(selectedClass = characterClassState)
+            } else {
+                arenaState
+            }
         }
     }
 
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
-            val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
+            val loadedState = _uiStateFlow.getLoadedStateOrNull() as? ActiveState ?: return@launch
 
-            val nextPlayerId =
-                loadedState.playerStatesMap.values
-                    .filterNot { it == playerState }
-                    .filter { it.characterClassState == null }
-                    .randomOrNull()
-                    ?.userId
-
-            val arenaPlayer = playerState.copy(characterClassState = characterClassState).toDomain()
+            val selectedArenaPlayer =
+                ArenaPlayer.Selected(
+                    userId = playerState.userId,
+                    displayName = playerState.displayName,
+                    characterClass = characterClassState.toDomain(),
+                )
+            val allPlayers = loadedState.otherPlayers.map { it.toDomain() } + selectedArenaPlayer
 
             chooseCharacterClassUseCase(
                 arenaId = arguments.arenaId,
-                arenaPlayer = arenaPlayer,
-                nextPlayerId = nextPlayerId,
+                selectedArenaPlayer = selectedArenaPlayer,
+                allPlayers = allPlayers,
             )
+
+            _uiStateFlow.updateLoaded { arenaState ->
+                if (arenaState is ArenaState.ChoosingClasses) {
+                    arenaState.copy(selectedClass = null)
+                } else {
+                    arenaState
+                }
+            }
         }
     }
 
@@ -105,114 +126,57 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { arenaState ->
             if (arenaState.unhandledMessagesCount <= 0) return@updateLoaded arenaState
 
-            arenaState.copy(unhandledMessagesCount = arenaState.unhandledMessagesCount - 1)
+            val nextUnhandledCount = arenaState.unhandledMessagesCount - 1
+            when (arenaState) {
+                is ArenaState.WaitingForAllPlayers ->
+                    arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
+
+                is ArenaState.ChoosingClasses ->
+                    arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
+
+                is ArenaState.Combat -> arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
+
+                is ArenaState.Finished ->
+                    arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
+            }
         }
     }
 
-    private fun getUpdatedState(
-        previousState: ArenaState?,
-        updatedArenaMatch: ArenaMatch,
-        userId: String?,
-    ): ArenaState {
-        val timerAction =
-            determineTimerAction(
-                previousState = previousState,
-                updatedArenaMatch = updatedArenaMatch,
-            )
+    private fun handleTimerAction(timerAction: TimerAction) {
+        when (timerAction) {
+            is TimerAction.Start -> arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
 
-        val toUpdatedState: (secondsRemaining: Int) -> ArenaState = { secondsRemaining ->
-            updatedArenaMatch.toState(
-                previousUnhandledMessagesCount = previousState?.unhandledMessagesCount ?: 0,
-                secondsRemaining = secondsRemaining,
-                userId = userId,
-            )
-        }
+            is TimerAction.Stop -> arenaTimer.stopTimer()
 
-        return when (timerAction) {
-            is TimerAction.Start -> {
-                arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
-                toUpdatedState(timerAction.timerDuration)
+            is TimerAction.None -> {
+                /* No changes needed */
             }
-
-            is TimerAction.Stop -> {
-                arenaTimer.stopTimer()
-                toUpdatedState(0)
-            }
-
-            is TimerAction.None -> toUpdatedState(previousState?.secondsRemaining ?: 0)
-        }
-    }
-
-    private fun determineTimerAction(
-        previousState: ArenaState?,
-        updatedArenaMatch: ArenaMatch,
-    ): TimerAction {
-        val previousPhase = previousState?.phase
-        val currentPhase = updatedArenaMatch.phase
-
-        return when (previousPhase to currentPhase) {
-            null to ArenaPhase.WaitingForAllPlayers -> TimerAction.Start(timerDuration = 20)
-
-            ArenaPhase.WaitingForAllPlayers to ArenaPhase.WaitingForAllPlayers -> TimerAction.None
-
-            null to ArenaPhase.ChoosingClasses,
-            ArenaPhase.WaitingForAllPlayers to ArenaPhase.ChoosingClasses ->
-                TimerAction.Start(timerDuration = 20)
-
-            ArenaPhase.ChoosingClasses to ArenaPhase.ChoosingClasses ->
-                if (previousState?.activePlayer != updatedArenaMatch.activePlayer) {
-                    TimerAction.Start(timerDuration = 20)
-                } else {
-                    TimerAction.None
-                }
-
-            ArenaPhase.ChoosingClasses to ArenaPhase.Combat -> {
-                // TODO: Animation logic, start 15s turn timer
-                TimerAction.Start(timerDuration = 20)
-            }
-
-            ArenaPhase.Combat to ArenaPhase.Combat -> {
-                if (previousState?.activePlayer != updatedArenaMatch.activePlayer) {
-                    // TODO: change timer duration based on type of roll (first roll choosing
-                    //  opponent, or simply follow-up to opponent's health)
-                    TimerAction.Start(timerDuration = 15)
-                } else {
-                    TimerAction.None
-                }
-            }
-
-            ArenaPhase.Combat to ArenaPhase.Finished -> TimerAction.Stop
-
-            else -> TimerAction.Stop
         }
     }
 
     private fun updateArenaStateSeconds(secondsRemaining: Int) {
         _uiStateFlow.updateLoaded { arenaState ->
-            arenaState.copy(secondsRemaining = secondsRemaining)
+            arenaState.withSeconds(seconds = secondsRemaining)
         }
     }
 
     private suspend fun onTimerExpiration() {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
 
-        when (loadedState.phase) {
-            ArenaPhase.WaitingForAllPlayers -> {
-                val playersJoined = loadedState.playerStatesMap.size
-                if (playersJoined < arguments.expectedNumberOfPlayers) {
-                    _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
-                }
+        when (loadedState) {
+            is ArenaState.WaitingForAllPlayers -> {
+                _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
             }
 
-            ArenaPhase.ChoosingClasses -> {
+            is ArenaState.ChoosingClasses -> {
                 // TODO
             }
 
-            ArenaPhase.Combat -> {
+            is ArenaState.Combat -> {
                 // TODO
             }
 
-            ArenaPhase.Finished -> {
+            is ArenaState.Finished -> {
                 // TODO
             }
         }

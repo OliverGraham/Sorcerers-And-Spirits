@@ -8,8 +8,8 @@ interface ArenaRepository {
 
     suspend fun chooseCharacterClass(
         arenaId: String,
-        arenaPlayer: ArenaPlayer,
-        nextPlayerId: String?,
+        selectedArenaPlayer: ArenaPlayer.Selected,
+        nextPlayerId: String,
     )
 
     suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer)

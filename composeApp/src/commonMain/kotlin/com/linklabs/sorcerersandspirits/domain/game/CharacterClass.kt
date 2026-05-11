@@ -1,61 +1,73 @@
 package com.linklabs.sorcerersandspirits.domain.game
 
-sealed interface CharacterClass {
-    val hitPoints: Int
-    val armorClass: Int
-    val speed: Int
-    val offensiveAbility: OffensiveAbility
-    val defensiveAbility: DefensiveAbility
-    val className: String
+import kotlin.Int
 
-    data class Rogue(
-        override val hitPoints: Int = 6,
-        override val armorClass: Int = 5,
-        override val speed: Int = 8,
-        override val offensiveAbility: OffensiveAbility = OffensiveAbility.KillingMomentum,
-        override val defensiveAbility: DefensiveAbility = DefensiveAbility.Anticipation,
-        override val className: String = ROGUE,
-    ) : CharacterClass
-
-    data class Mage(
-        override val hitPoints: Int = 4,
-        override val armorClass: Int = 4,
-        override val speed: Int = 2,
-        override val offensiveAbility: OffensiveAbility = OffensiveAbility.SpellNova,
-        override val defensiveAbility: DefensiveAbility = DefensiveAbility.Blink,
-        override val className: String = MAGE,
-    ) : CharacterClass
-
-    data class Paladin(
-        override val hitPoints: Int = 7,
-        override val armorClass: Int = 7,
-        override val speed: Int = 1,
-        override val offensiveAbility: OffensiveAbility = OffensiveAbility.ReflectiveShield,
-        override val defensiveAbility: DefensiveAbility = DefensiveAbility.HolyPrayer,
-        override val className: String = PALADIN,
-    ) : CharacterClass
+data class CharacterClass(
+    val type: CharacterClassType,
+    val hitPoints: Int,
+    val armorClass: Int,
+    val speed: Int,
+    val offensiveAbility: OffensiveAbility,
+    val defensiveAbility: DefensiveAbility,
+) {
+    val className = type.name
 
     companion object {
-        fun getAllClasses() = listOf(Rogue(), Mage(), Paladin())
+        fun getAllClasses() = listOf(getRogue(), getMage(), getPaladin())
 
-        private const val ROGUE = "Rogue"
-        private const val MAGE = "Mage"
-        private const val PALADIN = "Paladin"
+        fun getRogue() =
+            CharacterClass(
+                type = CharacterClassType.Rogue,
+                hitPoints = 6,
+                armorClass = 5,
+                speed = 8,
+                offensiveAbility = OffensiveAbility.KillingMomentum,
+                defensiveAbility = DefensiveAbility.Anticipation,
+            )
+
+        fun getMage() =
+            CharacterClass(
+                type = CharacterClassType.Mage,
+                hitPoints = 4,
+                armorClass = 4,
+                speed = 2,
+                offensiveAbility = OffensiveAbility.SpellNova,
+                defensiveAbility = DefensiveAbility.Blink,
+            )
+
+        fun getPaladin() =
+            CharacterClass(
+                type = CharacterClassType.Paladin,
+                hitPoints = 7,
+                armorClass = 7,
+                speed = 1,
+                offensiveAbility = OffensiveAbility.ReflectiveShield,
+                defensiveAbility = DefensiveAbility.HolyPrayer,
+            )
+
+        fun fromType(type: CharacterClassType) =
+            when (type) {
+                CharacterClassType.Rogue -> getRogue()
+                CharacterClassType.Mage -> getMage()
+                CharacterClassType.Paladin -> getPaladin()
+            }
     }
 }
 
-sealed interface OffensiveAbility {
-    data object KillingMomentum : OffensiveAbility
-
-    data object SpellNova : OffensiveAbility
-
-    data object ReflectiveShield : OffensiveAbility
+enum class CharacterClassType {
+    Rogue,
+    Mage,
+    Paladin,
 }
 
-sealed interface DefensiveAbility {
-    data object Anticipation : DefensiveAbility
+enum class OffensiveAbility {
+    KillingMomentum,
+    SpellNova,
+    ReflectiveShield,
+}
 
-    data object Blink : DefensiveAbility
-
-    data object HolyPrayer : DefensiveAbility
+enum class DefensiveAbility {
+    Anticipation,
+    Blink,
+    HolyPrayer,
 }

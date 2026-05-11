@@ -18,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.WeightSpacer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDisplayText
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.delay
 
@@ -58,7 +57,7 @@ internal fun ArenaMessageLogHandle(
             },
         ) { displayedMessage ->
             if (displayedMessage != null) {
-                Text(text = displayedMessage.toDisplayText())
+                Text(text = displayedMessage.getDisplayString())
             }
 
             if (unhandledMessagesCount > 0) {
@@ -81,7 +80,7 @@ private fun ArenaMessageLogHandlePreview() {
     SorcerersAndSpiritsTheme {
         ArenaMessageLogHandle(
             secondsRemaining = 15,
-            latestMessage = ArenaMessageState.Generic("1", "Let the battle begin!"),
+            latestMessage = ArenaMessageState.NewRound(id = "1", roundNumber = "1"),
             unhandledMessagesCount = 0,
         )
     }

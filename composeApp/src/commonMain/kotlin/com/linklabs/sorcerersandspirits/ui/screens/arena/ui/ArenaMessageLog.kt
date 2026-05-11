@@ -14,8 +14,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollTypeState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -36,17 +37,22 @@ internal fun ArenaMessageLog(messages: List<ArenaMessageState>, modifier: Modifi
 @Composable
 private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier = Modifier) {
     when (messageState) {
-        is ArenaMessageState.Round -> RoundMessage(messageState, modifier)
-        is ArenaMessageState.Action -> ActionMessage(messageState, modifier)
-        is ArenaMessageState.Result -> ResultMessage(messageState, modifier)
-        is ArenaMessageState.Generic -> GenericMessage(messageState, modifier)
+        is ArenaMessageState.NewRound -> RoundMessage(state = messageState, modifier = modifier)
+
+        is ArenaMessageState.ChoseCharacterClass ->
+            ChoseCharacterClassMessage(state = messageState, modifier = modifier)
+
+        is ArenaMessageState.ConnectedToArena ->
+            ConnectedToArenaMessage(state = messageState, modifier = modifier)
+
+        is ArenaMessageState.NewTurn -> NewTurnMessage(state = messageState, modifier = modifier)
     }
 }
 
 @Composable
-private fun RoundMessage(state: ArenaMessageState.Round, modifier: Modifier = Modifier) {
+private fun RoundMessage(state: ArenaMessageState.NewRound, modifier: Modifier = Modifier) {
     Text(
-        text = "ROUND ${state.roundNumber}",
+        text = state.getDisplayString(),
         style = MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = MaterialTheme.colorScheme.primary,
@@ -57,37 +63,38 @@ private fun RoundMessage(state: ArenaMessageState.Round, modifier: Modifier = Mo
 }
 
 @Composable
-private fun ActionMessage(state: ArenaMessageState.Action, modifier: Modifier = Modifier) {
+private fun ChoseCharacterClassMessage(
+    state: ArenaMessageState.ChoseCharacterClass,
+    modifier: Modifier = Modifier,
+) {
     Text(
-        text =
-            "${state.rollerName} rolled ${state.rollerValue} against ${state.defenderName}'s ${state.rollTypeState}",
+        text = state.getDisplayString(),
         style = MaterialTheme.typography.bodyLarge,
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.padding(vertical = 4.dp),
     )
 }
 
 @Composable
-private fun ResultMessage(state: ArenaMessageState.Result, modifier: Modifier = Modifier) {
+private fun ConnectedToArenaMessage(
+    state: ArenaMessageState.ConnectedToArena,
+    modifier: Modifier = Modifier,
+) {
     Text(
-        text =
-            "${state.rollerName} is now rolling against ${state.defenderName}'s ${state.rollTypeState}!",
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.primary,
+        text = state.getDisplayString(),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.outline,
+        modifier = modifier.padding(vertical = 2.dp),
+    )
+}
+
+@Composable
+private fun NewTurnMessage(state: ArenaMessageState.NewTurn, modifier: Modifier = Modifier) {
+    Text(
+        text = state.getDisplayString(),
+        style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth(),
-    )
-}
-
-@Composable
-private fun GenericMessage(state: ArenaMessageState.Generic, modifier: Modifier = Modifier) {
-    Text(
-        text = state.message,
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-        textAlign = TextAlign.Center,
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = modifier.padding(vertical = 8.dp),
     )
 }
 
@@ -96,28 +103,20 @@ private fun GenericMessage(state: ArenaMessageState.Generic, modifier: Modifier 
 private fun ArenaMessageLogPreview() {
     SorcerersAndSpiritsTheme {
         val displayName = "A Mysterious Traveler"
-        val classNameAttacker = "Rogue"
-        val classNameDefender = "Paladin"
+        val rogueInfo = CharacterClassMessageInfoState("Rogue", CharacterClassType.Rogue)
+        val paladinInfo = CharacterClassMessageInfoState("Paladin", CharacterClassType.Paladin)
+
         ArenaMessageLog(
             messages =
                 listOf(
-                    ArenaMessageState.Result(
-                        id = "6",
-                        rollerName = classNameAttacker,
-                        defenderName = classNameDefender,
-                        rollTypeState = RollTypeState.Health,
+                    ArenaMessageState.NewTurn(id = "4", characterClassInfo = rogueInfo),
+                    ArenaMessageState.NewRound(id = "3", roundNumber = "1"),
+                    ArenaMessageState.ChoseCharacterClass(
+                        id = "2",
+                        displayName = displayName,
+                        characterClassInfo = paladinInfo,
                     ),
-                    ArenaMessageState.Action(
-                        id = "5",
-                        rollerName = classNameAttacker,
-                        rollerValue = "12",
-                        defenderName = classNameDefender,
-                        rollTypeState = RollTypeState.ArmorClass,
-                    ),
-                    ArenaMessageState.Generic("4", "It is now $classNameAttacker's turn!"),
-                    ArenaMessageState.Round("3", "1"),
-                    ArenaMessageState.Generic("2", "Combat is now starting!"),
-                    ArenaMessageState.Generic("1", "$displayName selected $classNameAttacker"),
+                    ArenaMessageState.ConnectedToArena(id = "1", displayName = displayName),
                 )
         )
     }

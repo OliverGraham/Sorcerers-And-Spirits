@@ -13,4 +13,9 @@
     <string name="challenge_dialog_challenged_by">%1$s has challenged you!</string>
     <string name="challenge_dialog_button_decline">Decline</string>
     <string name="challenge_dialog_button_accept">Accept Challenge</string>
+
+    <string name="arena_message_round">ROUND %1$s</string>
+    <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
+    <string name="arena_message_joined_arena">%1$s joined the arena</string>
+    <string name="arena_message_new_turn">It's %1$s's turn</string>
 </resources>

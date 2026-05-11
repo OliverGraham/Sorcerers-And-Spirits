@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 internal data class ArenaActions(
+    val onSelectCharacterClass: (CharacterClassState) -> Unit = {},
     val onChooseCharacterClass: (PlayerState, CharacterClassState) -> Unit = EmptyTwoArgumentLambda,
     val onIncomingMessageHandled: () -> Unit = {},
 )

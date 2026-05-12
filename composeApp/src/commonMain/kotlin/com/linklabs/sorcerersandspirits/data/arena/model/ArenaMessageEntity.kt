@@ -1,7 +1,9 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -40,7 +42,7 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val rollerClassName: String,
         val rollValue: Int,
-        val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+        val rollType: RollType,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -50,7 +52,7 @@ sealed interface ArenaMessageEntity {
         val attackerClassName: String,
         val targetClassName: String,
         val isHit: Boolean,
-        val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+        val rollType: RollType,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -67,7 +69,6 @@ sealed interface ArenaMessageEntity {
         ArenaMessageEntity
 
     companion object {
-        private const val ARENA_MESSAGE = "ArenaMessage"
         private const val CHOOSE_CHARACTER_CLASS = "ChoseCharacterClass"
         private const val CONNECTED_TO_ARENA = "ConnectedToArena"
         private const val NEW_ROUND = "NewRound"
@@ -82,25 +83,29 @@ sealed interface ArenaMessageEntity {
 @Serializable
 data class CharacterClassMessageInfoEntity(val className: String, val type: CharacterClassType)
 
-fun ArenaMessageEntity.toDomain(): ArenaMessage =
+fun ArenaMessageEntity.toDomain(): IncomingArenaMessage =
     when (this) {
         is ArenaMessageEntity.ChoseCharacterClass ->
-            ArenaMessage.ChoseCharacterClass(
+            IncomingArenaMessage.ChoseCharacterClass(
                 id = id,
                 displayName = displayName,
                 characterClassInfo = characterClassInfo.toDomain(),
             )
 
         is ArenaMessageEntity.ConnectedToArena ->
-            ArenaMessage.ConnectedToArena(id = id, displayName = displayName)
+            IncomingArenaMessage.ConnectedToArena(id = id, displayName = displayName)
 
-        is ArenaMessageEntity.NewRound -> ArenaMessage.NewRound(id = id, roundNumber = roundNumber)
+        is ArenaMessageEntity.NewRound ->
+            IncomingArenaMessage.NewRound(id = id, roundNumber = roundNumber)
 
         is ArenaMessageEntity.NewTurn ->
-            ArenaMessage.NewTurn(id = id, characterClassInfo = characterClassInfo.toDomain())
+            IncomingArenaMessage.NewTurn(
+                id = id,
+                characterClassInfo = characterClassInfo.toDomain(),
+            )
 
         is ArenaMessageEntity.DiceRoll ->
-            ArenaMessage.DiceRoll(
+            IncomingArenaMessage.DiceRoll(
                 id = id,
                 rollerClassName = rollerClassName,
                 rollValue = rollValue,
@@ -108,7 +113,7 @@ fun ArenaMessageEntity.toDomain(): ArenaMessage =
             )
 
         is ArenaMessageEntity.AttackResult ->
-            ArenaMessage.AttackResult(
+            IncomingArenaMessage.AttackResult(
                 id = id,
                 attackerClassName = attackerClassName,
                 targetClassName = targetClassName,
@@ -117,15 +122,110 @@ fun ArenaMessageEntity.toDomain(): ArenaMessage =
             )
 
         is ArenaMessageEntity.TargetDead ->
-            ArenaMessage.TargetDead(
+            IncomingArenaMessage.TargetDead(
                 id = id,
                 targetClassName = targetClassName,
                 killerClassName = killerClassName,
             )
 
         is ArenaMessageEntity.GameFinished ->
-            ArenaMessage.GameFinished(id = id, winnerClassName = winnerClassName)
+            IncomingArenaMessage.GameFinished(id = id, winnerClassName = winnerClassName)
     }
 
 private fun CharacterClassMessageInfoEntity.toDomain() =
     CharacterClassMessageInfo(className = className, type = type)
+
+internal fun IncomingArenaMessage.toEntity(): ArenaMessageEntity =
+    when (this) {
+        is IncomingArenaMessage.ChoseCharacterClass ->
+            ArenaMessageEntity.ChoseCharacterClass(
+                id = id,
+                displayName = displayName,
+                characterClassInfo = characterClassInfo.toEntity(),
+            )
+
+        is IncomingArenaMessage.ConnectedToArena ->
+            ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
+
+        is IncomingArenaMessage.NewRound ->
+            ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
+
+        is IncomingArenaMessage.NewTurn ->
+            ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
+
+        is IncomingArenaMessage.DiceRoll ->
+            ArenaMessageEntity.DiceRoll(
+                id = id,
+                rollerClassName = rollerClassName,
+                rollValue = rollValue,
+                rollType = rollType,
+            )
+
+        is IncomingArenaMessage.AttackResult ->
+            ArenaMessageEntity.AttackResult(
+                id = id,
+                attackerClassName = attackerClassName,
+                targetClassName = targetClassName,
+                isHit = isHit,
+                rollType = rollType,
+            )
+
+        is IncomingArenaMessage.TargetDead ->
+            ArenaMessageEntity.TargetDead(
+                id = id,
+                targetClassName = targetClassName,
+                killerClassName = killerClassName,
+            )
+
+        is IncomingArenaMessage.GameFinished ->
+            ArenaMessageEntity.GameFinished(id = id, winnerClassName = winnerClassName)
+    }
+
+internal fun OutgoingArenaMessage.toEntity(id: String): ArenaMessageEntity =
+    when (this) {
+        is OutgoingArenaMessage.ChoseCharacterClass ->
+            ArenaMessageEntity.ChoseCharacterClass(
+                id = id,
+                displayName = displayName,
+                characterClassInfo = characterClassInfo.toEntity(),
+            )
+
+        is OutgoingArenaMessage.ConnectedToArena ->
+            ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
+
+        is OutgoingArenaMessage.NewRound ->
+            ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
+
+        is OutgoingArenaMessage.NewTurn ->
+            ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
+
+        is OutgoingArenaMessage.DiceRoll ->
+            ArenaMessageEntity.DiceRoll(
+                id = id,
+                rollerClassName = rollerClassName,
+                rollValue = rollValue,
+                rollType = rollType,
+            )
+
+        is OutgoingArenaMessage.AttackResult ->
+            ArenaMessageEntity.AttackResult(
+                id = id,
+                attackerClassName = attackerClassName,
+                targetClassName = targetClassName,
+                isHit = isHit,
+                rollType = rollType,
+            )
+
+        is OutgoingArenaMessage.TargetDead ->
+            ArenaMessageEntity.TargetDead(
+                id = id,
+                targetClassName = targetClassName,
+                killerClassName = killerClassName,
+            )
+
+        is OutgoingArenaMessage.GameFinished ->
+            ArenaMessageEntity.GameFinished(id = id, winnerClassName = winnerClassName)
+    }
+
+private fun CharacterClassMessageInfo.toEntity() =
+    CharacterClassMessageInfoEntity(className = className, type = type)

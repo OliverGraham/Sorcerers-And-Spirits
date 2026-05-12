@@ -146,7 +146,6 @@ private fun ArenaCombatYourTurnPreview() {
                 pendingRollType =
                     com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
                 pendingTargetUserId = null,
-                turnOrder = listOf("1", "2"),
             )
             .ArenaCombat()
     }
@@ -174,7 +173,6 @@ private fun ArenaCombatEnemyTurnPreview() {
                 pendingRollType =
                     com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
                 pendingTargetUserId = null,
-                turnOrder = listOf("1", "2"),
             )
             .ArenaCombat()
     }

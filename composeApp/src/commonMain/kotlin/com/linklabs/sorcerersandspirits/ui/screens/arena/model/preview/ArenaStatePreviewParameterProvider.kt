@@ -88,7 +88,6 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
             pendingRollType =
                 com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
             pendingTargetUserId = null,
-            turnOrder = listOf("player1", "player2"),
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

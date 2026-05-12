@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
@@ -56,6 +57,8 @@ class ArenaScreenViewModel(
             onTimerExpiration = ::onTimerExpiration,
         )
 
+    private var currentArenaMatch: ArenaMatch? = null
+
     init {
         viewModelScope.launch {
             // TODO: Figure out better way for userId
@@ -72,6 +75,8 @@ class ArenaScreenViewModel(
                         _uiStateFlow.value = UiState.Error
                         return@collect
                     }
+
+                    currentArenaMatch = updatedArenaMatch
 
                     val updatedArenaStateUpdate =
                         updatedArenaMatch.toUpdatedState(
@@ -166,9 +171,11 @@ class ArenaScreenViewModel(
             if (!loadedState.isItThisUsersTurn) return@launch
 
             val targetUserId = loadedState.pendingTargetUserId ?: return@launch
+            val currentMatch = currentArenaMatch ?: return@launch
 
             performCombatActionUseCase(
                 arenaId = arguments.arenaId,
+                currentMatch = currentMatch,
                 attackerUserId = loadedState.userPlayer.userId,
                 targetUserId = targetUserId,
                 rollType = loadedState.pendingRollType,

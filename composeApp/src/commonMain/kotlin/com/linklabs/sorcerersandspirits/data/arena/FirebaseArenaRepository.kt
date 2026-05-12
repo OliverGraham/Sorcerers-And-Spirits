@@ -10,21 +10,18 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
 
-// TODO Arena: Paginate messages and/or have a separate node for them to make more
-//  efficient. Could also save all messages and get on demand, and only have the latest 30 or
-//  something
-
 class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     private val arenaMatchesReference = database.reference(path = ARENA_MATCHES_PATH)
 
-    // TODO Arena: Cleanup, docstring
     override suspend fun chooseCharacterClass(
         arenaId: String,
         selectedArenaPlayer: ArenaPlayer.Selected,
@@ -38,10 +35,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .invoke()
     }
 
-    /**
-     * Connects a user to the arena. Uses a transaction so the first player initializes the match,
-     * and so gets the honor of being first in the game.
-     */
     override suspend fun connectToArena(
         arenaId: String,
         expectedNumberOfPlayers: Int,
@@ -64,20 +57,84 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .setValue(value = arenaPlayer.toEntity())
     }
 
-    override suspend fun performCombatAction(
-        arenaId: String,
-        attackerUserId: String,
-        targetUserId: String,
-        rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
-    ) {
-        com.linklabs.sorcerersandspirits.data.arena.utilities
-            .PerformCombatAction(
-                arenaReference = arenaMatchesReference.child(path = arenaId),
-                attackerUserId = attackerUserId,
-                targetUserId = targetUserId,
-                rollType = rollType,
-            )
-            .invoke()
+    override suspend fun applyCombatResult(arenaId: String, result: CombatResult) {
+        val arenaReference = arenaMatchesReference.child(path = arenaId)
+        val strategy = ArenaMatchEntity.serializer()
+
+        arenaReference.runTransaction(strategy = strategy) { existingMatch ->
+            if (existingMatch !is ArenaMatchEntity.Combat) return@runTransaction existingMatch
+
+            val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+            val newMessages =
+                result.messages.map { outgoingMessage ->
+                    val messageId =
+                        messagesReference.push().key
+                            ?: error("Failed to generate Firebase push key")
+                    outgoingMessage.toEntity(id = messageId)
+                }
+            val allMessages = existingMatch.messages + newMessages
+
+            when (result) {
+                is CombatResult.Miss -> {
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        activePlayerUserId = result.nextActivePlayerId,
+                        pendingRollType = RollType.ArmorClass,
+                        pendingTargetUserId = null,
+                    )
+                }
+
+                is CombatResult.Hit -> {
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        pendingRollType = RollType.Health,
+                        pendingTargetUserId = result.targetId,
+                    )
+                }
+
+                is CombatResult.DamageDealt -> {
+                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
+                    val target = updatedPlayerMap[result.targetId]!!
+                    updatedPlayerMap[result.targetId] =
+                        target.copy(
+                            characterClassEntity =
+                                target.characterClassEntity.copy(hitPoints = result.newHp)
+                        )
+
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        playerEntitiesMap = updatedPlayerMap,
+                        activePlayerUserId = result.nextActivePlayerId,
+                        pendingRollType = RollType.ArmorClass,
+                        pendingTargetUserId = null,
+                    )
+                }
+
+                is CombatResult.TargetDefeated -> {
+                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
+                    updatedPlayerMap.remove(result.defeatedPlayerId)
+
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        playerEntitiesMap = updatedPlayerMap,
+                        activePlayerUserId = result.nextActivePlayerId,
+                        pendingRollType = RollType.ArmorClass,
+                        pendingTargetUserId = null,
+                    )
+                }
+
+                is CombatResult.Victory -> {
+                    ArenaMatchEntity.Finished(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                    )
+                }
+            }
+        }
     }
 
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =

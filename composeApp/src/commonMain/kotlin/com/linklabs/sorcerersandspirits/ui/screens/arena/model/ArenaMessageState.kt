@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 @Immutable
@@ -61,71 +61,25 @@ sealed interface ArenaMessageState {
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-fun ArenaMessageState.toDomain(): ArenaMessage =
+fun IncomingArenaMessage.toState(): ArenaMessageState =
     when (this) {
-        is ArenaMessageState.NewRound ->
-            ArenaMessage.NewRound(id = id, roundNumber = roundNumber.toIntOrNull() ?: 0)
-
-        is ArenaMessageState.ChoseCharacterClass ->
-            ArenaMessage.ChoseCharacterClass(
-                id = id,
-                displayName = displayName,
-                characterClassInfo = characterClassInfo.toDomain(),
-            )
-
-        is ArenaMessageState.ConnectedToArena ->
-            ArenaMessage.ConnectedToArena(id = id, displayName = displayName)
-
-        is ArenaMessageState.NewTurn ->
-            ArenaMessage.NewTurn(id = id, characterClassInfo = characterClassInfo.toDomain())
-
-        is ArenaMessageState.DiceRoll ->
-            ArenaMessage.DiceRoll(
-                id = id,
-                rollerClassName = rollerClassName,
-                rollValue = rollValue,
-                rollType = rollType,
-            )
-
-        is ArenaMessageState.AttackResult ->
-            ArenaMessage.AttackResult(
-                id = id,
-                attackerClassName = attackerClassName,
-                targetClassName = targetClassName,
-                isHit = isHit,
-                rollType = rollType,
-            )
-
-        is ArenaMessageState.TargetDead ->
-            ArenaMessage.TargetDead(
-                id = id,
-                targetClassName = targetClassName,
-                killerClassName = killerClassName,
-            )
-
-        is ArenaMessageState.GameFinished ->
-            ArenaMessage.GameFinished(id = id, winnerClassName = winnerClassName)
-    }
-
-fun ArenaMessage.toState(): ArenaMessageState =
-    when (this) {
-        is ArenaMessage.NewRound ->
+        is IncomingArenaMessage.NewRound ->
             ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
 
-        is ArenaMessage.ChoseCharacterClass ->
+        is IncomingArenaMessage.ChoseCharacterClass ->
             ArenaMessageState.ChoseCharacterClass(
                 id = id,
                 displayName = displayName,
                 characterClassInfo = characterClassInfo.toState(),
             )
 
-        is ArenaMessage.ConnectedToArena ->
+        is IncomingArenaMessage.ConnectedToArena ->
             ArenaMessageState.ConnectedToArena(id = id, displayName = displayName)
 
-        is ArenaMessage.NewTurn ->
+        is IncomingArenaMessage.NewTurn ->
             ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
 
-        is ArenaMessage.DiceRoll ->
+        is IncomingArenaMessage.DiceRoll ->
             ArenaMessageState.DiceRoll(
                 id = id,
                 rollerClassName = rollerClassName,
@@ -133,7 +87,7 @@ fun ArenaMessage.toState(): ArenaMessageState =
                 rollType = rollType,
             )
 
-        is ArenaMessage.AttackResult ->
+        is IncomingArenaMessage.AttackResult ->
             ArenaMessageState.AttackResult(
                 id = id,
                 attackerClassName = attackerClassName,
@@ -142,19 +96,16 @@ fun ArenaMessage.toState(): ArenaMessageState =
                 rollType = rollType,
             )
 
-        is ArenaMessage.TargetDead ->
+        is IncomingArenaMessage.TargetDead ->
             ArenaMessageState.TargetDead(
                 id = id,
                 targetClassName = targetClassName,
                 killerClassName = killerClassName,
             )
 
-        is ArenaMessage.GameFinished ->
+        is IncomingArenaMessage.GameFinished ->
             ArenaMessageState.GameFinished(id = id, winnerClassName = winnerClassName)
     }
-
-private fun CharacterClassMessageInfoState.toDomain(): CharacterClassMessageInfo =
-    CharacterClassMessageInfo(className = className, type = type)
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =
     CharacterClassMessageInfoState(className = className, type = type)

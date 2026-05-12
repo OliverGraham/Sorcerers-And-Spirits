@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
@@ -67,10 +68,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
             val newMessages =
                 result.messages.map { outgoingMessage ->
-                    val messageId =
-                        messagesReference.push().key
-                            ?: error("Failed to generate Firebase push key")
-                    outgoingMessage.toEntity(id = messageId)
+                    outgoingMessage.toEntity(id = messagesReference.addNewKey())
                 }
             val allMessages = existingMatch.messages + newMessages
 

@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -85,8 +86,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
             userPlayer = userPlayer,
             otherPlayers = otherPlayers,
             isItThisUsersTurn = isItThisUsersTurn,
-            pendingRollType =
-                com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
+            pendingRollType = RollType.ArmorClass,
             pendingTargetUserId = null,
         )
 

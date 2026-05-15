@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -34,8 +35,7 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val activePlayerUserId: String,
-        val pendingRollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType =
-            com.linklabs.sorcerersandspirits.domain.arena.model.RollType.ArmorClass,
+        val pendingRollType: RollType = RollType.ArmorClass,
         val pendingTargetUserId: String? = null,
     ) : ArenaMatchEntity
 

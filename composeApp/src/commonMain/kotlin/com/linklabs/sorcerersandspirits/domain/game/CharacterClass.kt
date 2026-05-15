@@ -15,6 +15,8 @@ data class CharacterClass(
     companion object {
         fun getAllClasses() = listOf(getRogue(), getMage(), getPaladin())
 
+        // TODO: Get CharacterClass values from RemoteConfig
+
         fun getRogue() =
             CharacterClass(
                 type = CharacterClassType.Rogue,

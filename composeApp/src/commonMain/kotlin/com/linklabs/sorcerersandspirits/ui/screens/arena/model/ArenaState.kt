@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 
 @Immutable
@@ -50,7 +51,7 @@ sealed interface ArenaState {
         override val userPlayer: PlayerState.Selected,
         override val otherPlayers: List<PlayerState.Selected>,
         override val isItThisUsersTurn: Boolean,
-        val pendingRollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+        val pendingRollType: RollType,
         val pendingTargetUserId: String?,
     ) : ActiveState
 
@@ -110,13 +111,17 @@ internal fun ArenaMatch.toUpdatedState(
                 } else {
                     val (unavailable, selections) =
                         playerMap.prepareClassSelectionInfo(userId = userId)
+                    val activePlayerState = activePlayer.toState()
+                    val userPlayerState = userPlayer.toState()
+                    val otherPlayersState = playerMap.getOtherPlayers(userId = userId)
+
                     ArenaState.ChoosingClasses(
                         messages = messages,
                         unhandledMessagesCount = unhandledMessagesCount,
                         secondsRemaining = previousSeconds,
-                        activePlayer = activePlayer.toState(),
-                        userPlayer = userPlayer.toState(),
-                        otherPlayers = playerMap.getOtherPlayers(userId = userId),
+                        activePlayer = activePlayerState,
+                        userPlayer = userPlayerState,
+                        otherPlayers = otherPlayersState,
                         isItThisUsersTurn = activePlayerUserId == userId,
                         unavailableClasses = unavailable,
                         classSelections = selections,
@@ -135,16 +140,20 @@ internal fun ArenaMatch.toUpdatedState(
                         secondsRemaining = 0,
                     )
                 } else {
+                    val activePlayerState = activePlayer.toSelectedState()
+                    val userPlayerState = userPlayer.toSelectedState()
+                    val otherPlayersState =
+                        playerMap.values
+                            .filter { player -> player.userId != userId }
+                            .map { player -> player.toSelectedState() }
+
                     ArenaState.Combat(
                         messages = messages,
                         unhandledMessagesCount = unhandledMessagesCount,
                         secondsRemaining = previousSeconds,
-                        activePlayer = activePlayer.toSelectedState(),
-                        userPlayer = userPlayer.toSelectedState(),
-                        otherPlayers =
-                            playerMap.values
-                                .filter { player -> player.userId != userId }
-                                .map { player -> player.toSelectedState() },
+                        activePlayer = activePlayerState,
+                        userPlayer = userPlayerState,
+                        otherPlayers = otherPlayersState,
                         isItThisUsersTurn = activePlayerUserId == userId,
                         pendingRollType = pendingRollType,
                         pendingTargetUserId = pendingTargetUserId,
@@ -193,21 +202,19 @@ private fun Map<String, ArenaPlayer>.getOtherPlayers(userId: String): List<Playe
 
 private fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
     when (next) {
-        is ArenaState.WaitingForAllPlayers -> {
+        is ArenaState.WaitingForAllPlayers ->
             if (previous == null) {
                 TimerAction.Start(timerDuration = 20)
             } else {
                 TimerAction.None
             }
-        }
 
-        is ArenaState.ChoosingClasses -> {
+        is ArenaState.ChoosingClasses ->
             if (previous !is ArenaState.ChoosingClasses) {
                 TimerAction.Start(timerDuration = 15)
             } else {
                 TimerAction.None
             }
-        }
 
         is ArenaState.Combat -> {
             val turnChanged =

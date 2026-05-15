@@ -60,9 +60,8 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     override suspend fun applyCombatResult(arenaId: String, result: CombatResult) {
         val arenaReference = arenaMatchesReference.child(path = arenaId)
-        val strategy = ArenaMatchEntity.serializer()
 
-        arenaReference.runTransaction(strategy = strategy) { existingMatch ->
+        arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
             if (existingMatch !is ArenaMatchEntity.Combat) return@runTransaction existingMatch
 
             val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)

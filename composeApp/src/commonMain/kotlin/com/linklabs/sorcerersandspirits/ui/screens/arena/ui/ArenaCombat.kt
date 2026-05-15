@@ -43,16 +43,12 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(
-            targetState = this@ArenaCombat,
-            contentKey = { it.activePlayer.userId },
-            label = "ArenaCombatTransition",
-        ) { combat ->
+        AnimatedContent(targetState = activePlayer.userId, label = "ArenaCombatTransition") { _ ->
             SharedTransitionProvider(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,
             ) {
-                combat.CombatContent()
+                CombatContent()
             }
         }
     }

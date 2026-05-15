@@ -6,8 +6,8 @@ import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
 
 /**
- * Connects a user to the arena. Uses a transaction so the first player initializes the match,
- * and so gets the honor of being first in the game.
+ * Connects a user to the arena. Uses a transaction so the first player initializes the match, and
+ * so gets the honor of being first in the game.
  */
 class ConnectToArena(
     private val arenaReference: DatabaseReference,

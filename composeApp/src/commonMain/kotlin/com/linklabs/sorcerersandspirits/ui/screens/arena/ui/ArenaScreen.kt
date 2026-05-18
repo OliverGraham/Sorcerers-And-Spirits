@@ -13,6 +13,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActions
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
@@ -43,15 +44,7 @@ internal fun ArenaScreen(
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
             )
     ) {
-        val navigationEventState =
-            rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
-
-        NavigationBackHandler(
-            state = navigationEventState,
-            isBackEnabled = true,
-            onBackCompleted = viewModel::onTryLeaveArena,
-        )
-
+        InterceptBackNavigationToShowForfeitDialog()
         viewModel.eventChannelFlow.collectEvents(onBack = onBack)
         val uiState by viewModel.uiStateFlow.collectAsState()
 
@@ -86,4 +79,15 @@ private fun Flow<ArenaEvent>.collectEvents(onBack: () -> Unit) {
             }
         }
     }
+}
+
+@Composable
+private fun InterceptBackNavigationToShowForfeitDialog() {
+    val navigationEventState = rememberNavigationEventState(currentInfo = NavigationEventInfo.None)
+
+    NavigationBackHandler(
+        state = navigationEventState,
+        isBackEnabled = true,
+        onBackCompleted = ArenaActionsProvider.current.onTryLeaveArena,
+    )
 }

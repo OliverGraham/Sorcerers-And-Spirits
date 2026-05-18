@@ -47,11 +47,10 @@ sealed interface ArenaMatchEntity {
     ) : ArenaMatchEntity
 
     companion object {
-        const val PHASE = "type" // GitLive default for polymorphic serialization
-        const val WAITING_FOR_ALL_PLAYERS = "WaitingForAllPlayers"
-        const val CHOOSING_CLASSES = "ChoosingClasses"
-        const val COMBAT = "Combat"
-        const val FINISHED = "Finished"
+        private const val WAITING_FOR_ALL_PLAYERS = "WaitingForAllPlayers"
+        private const val CHOOSING_CLASSES = "ChoosingClasses"
+        private const val COMBAT = "Combat"
+        private const val FINISHED = "Finished"
 
         val playerEntitiesMapName = ChoosingClasses::playerEntitiesMap.name
         val messagesName = ArenaMatchEntity::messages.name

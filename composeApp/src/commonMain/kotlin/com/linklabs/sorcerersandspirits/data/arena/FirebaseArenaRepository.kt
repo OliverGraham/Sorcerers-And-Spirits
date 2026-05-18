@@ -62,6 +62,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .setValue(value = arenaPlayer.toEntity())
     }
 
+    // TODO Arena: Look at this, refactor
     override suspend fun applyCombatResult(arenaId: String, result: CombatResult) {
         val arenaReference = arenaMatchesReference.child(path = arenaId)
 

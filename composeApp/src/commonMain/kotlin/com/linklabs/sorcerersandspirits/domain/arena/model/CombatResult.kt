@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
+// TODO Arena: Look at this - seems good but double check
 sealed interface CombatResult {
     val messages: List<OutgoingArenaMessage>
     val messageStartIndex: Int

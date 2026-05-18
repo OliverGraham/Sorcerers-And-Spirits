@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatc
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
@@ -17,6 +18,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withForfeitDialog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSeconds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSelectedClass
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -40,6 +42,7 @@ class ArenaScreenViewModel(
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
+    private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
     private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
 
@@ -183,6 +186,28 @@ class ArenaScreenViewModel(
                 messageStartIndex = loadedState.messages.size,
             )
         }
+    }
+
+    fun onTryLeaveArena() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+
+        if (loadedState is ArenaState.Finished) {
+            onConfirmLeaveArena()
+        } else {
+            _uiStateFlow.updateLoaded { arenaState -> arenaState.withForfeitDialog(show = true) }
+        }
+    }
+
+    fun onConfirmLeaveArena() {
+        viewModelScope.launch {
+            setCurrentTravelerAvailableUseCase()
+            _uiStateFlow.updateLoaded { arenaState -> arenaState.withForfeitDialog(show = false) }
+            _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+        }
+    }
+
+    fun onDismissForfeitDialog() {
+        _uiStateFlow.updateLoaded { arenaState -> arenaState.withForfeitDialog(show = false) }
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {

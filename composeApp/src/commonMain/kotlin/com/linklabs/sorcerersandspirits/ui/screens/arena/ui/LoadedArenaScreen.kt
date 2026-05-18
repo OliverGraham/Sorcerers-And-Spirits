@@ -45,8 +45,9 @@ internal fun LoadedArenaScreen(
         ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
     }
 
-    // TODO Arena: Dialogs go here
-    // TODO Arena: Dialog showing that going back will forfeit the game
+    if (arenaState.showForfeitDialog) {
+        ForfeitDialog()
+    }
 }
 
 @Composable

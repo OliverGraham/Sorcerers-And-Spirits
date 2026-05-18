@@ -11,6 +11,7 @@ sealed interface ArenaState {
     val messages: List<ArenaMessageState>
     val unhandledMessagesCount: Int
     val secondsRemaining: Int
+    val showForfeitDialog: Boolean
 
     val latestMessage: ArenaMessageState?
         get() =
@@ -26,6 +27,7 @@ sealed interface ArenaState {
         override val messages: List<ArenaMessageState>,
         override val unhandledMessagesCount: Int,
         override val secondsRemaining: Int,
+        override val showForfeitDialog: Boolean = false,
     ) : ArenaState
 
     @Immutable
@@ -33,6 +35,7 @@ sealed interface ArenaState {
         override val messages: List<ArenaMessageState>,
         override val unhandledMessagesCount: Int,
         override val secondsRemaining: Int,
+        override val showForfeitDialog: Boolean = false,
         override val activePlayer: PlayerState,
         override val userPlayer: PlayerState,
         override val otherPlayers: List<PlayerState>,
@@ -47,6 +50,7 @@ sealed interface ArenaState {
         override val messages: List<ArenaMessageState>,
         override val unhandledMessagesCount: Int,
         override val secondsRemaining: Int,
+        override val showForfeitDialog: Boolean = false,
         override val activePlayer: PlayerState.Selected,
         override val userPlayer: PlayerState.Selected,
         override val otherPlayers: List<PlayerState.Selected>,
@@ -60,6 +64,7 @@ sealed interface ArenaState {
         override val messages: List<ArenaMessageState>,
         override val unhandledMessagesCount: Int,
         override val secondsRemaining: Int = 0,
+        override val showForfeitDialog: Boolean = false,
     ) : ArenaState
 }
 
@@ -79,6 +84,14 @@ fun ArenaState.withSeconds(seconds: Int): ArenaState =
         is ArenaState.Finished -> copy(secondsRemaining = seconds)
     }
 
+fun ArenaState.withForfeitDialog(show: Boolean): ArenaState =
+    when (this) {
+        is ArenaState.WaitingForAllPlayers -> copy(showForfeitDialog = show)
+        is ArenaState.ChoosingClasses -> copy(showForfeitDialog = show)
+        is ArenaState.Combat -> copy(showForfeitDialog = show)
+        is ArenaState.Finished -> copy(showForfeitDialog = show)
+    }
+
 fun ArenaState.ChoosingClasses.withSelectedClass(
     selectedClass: CharacterClassState?
 ): ArenaState.ChoosingClasses = copy(selectedClass = selectedClass)
@@ -90,6 +103,7 @@ internal fun ArenaMatch.toUpdatedState(
     val messages = messages.map { message -> message.toState() }
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
+    val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 
     val nextState =
         when (this) {
@@ -98,6 +112,7 @@ internal fun ArenaMatch.toUpdatedState(
                     messages = messages,
                     unhandledMessagesCount = unhandledMessagesCount,
                     secondsRemaining = previousSeconds,
+                    showForfeitDialog = previousShowForfeitDialog,
                 )
 
             is ArenaMatch.ChoosingClasses -> {
@@ -107,6 +122,7 @@ internal fun ArenaMatch.toUpdatedState(
                         messages = messages,
                         unhandledMessagesCount = unhandledMessagesCount,
                         secondsRemaining = 0,
+                        showForfeitDialog = previousShowForfeitDialog,
                     )
                 } else {
                     val (unavailable, selections) =
@@ -119,6 +135,7 @@ internal fun ArenaMatch.toUpdatedState(
                         messages = messages,
                         unhandledMessagesCount = unhandledMessagesCount,
                         secondsRemaining = previousSeconds,
+                        showForfeitDialog = previousShowForfeitDialog,
                         activePlayer = activePlayerState,
                         userPlayer = userPlayerState,
                         otherPlayers = otherPlayersState,
@@ -138,6 +155,7 @@ internal fun ArenaMatch.toUpdatedState(
                         messages = messages,
                         unhandledMessagesCount = unhandledMessagesCount,
                         secondsRemaining = 0,
+                        showForfeitDialog = previousShowForfeitDialog,
                     )
                 } else {
                     val activePlayerState = activePlayer.toSelectedState()
@@ -151,6 +169,7 @@ internal fun ArenaMatch.toUpdatedState(
                         messages = messages,
                         unhandledMessagesCount = unhandledMessagesCount,
                         secondsRemaining = previousSeconds,
+                        showForfeitDialog = previousShowForfeitDialog,
                         activePlayer = activePlayerState,
                         userPlayer = userPlayerState,
                         otherPlayers = otherPlayersState,
@@ -166,6 +185,7 @@ internal fun ArenaMatch.toUpdatedState(
                     messages = messages,
                     unhandledMessagesCount = unhandledMessagesCount,
                     secondsRemaining = 0,
+                    showForfeitDialog = previousShowForfeitDialog,
                 )
         }
 

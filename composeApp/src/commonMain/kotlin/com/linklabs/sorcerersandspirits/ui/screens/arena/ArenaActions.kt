@@ -14,6 +14,9 @@ internal data class ArenaActions(
     val onAttack: (targetUserId: String) -> Unit = {},
     val onUseAbility: (abilityName: String) -> Unit = {},
     val onRollDice: () -> Unit = {},
+    val onTryLeaveArena: () -> Unit = {},
+    val onConfirmLeaveArena: () -> Unit = {},
+    val onDismissForfeitDialog: () -> Unit = {},
 )
 
 internal val LocalArenaActions = staticCompositionLocalOf { ArenaActions() }

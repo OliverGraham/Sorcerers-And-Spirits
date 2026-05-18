@@ -9,12 +9,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,51 +27,81 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+// TODO: Update Slop
+
 @Composable
 fun CharacterClassCard(
     characterClass: CharacterClassState,
     modifier: Modifier = Modifier,
     isSelected: Boolean = false,
+    isActive: Boolean = false,
     enabled: Boolean = true,
     selectedBy: String? = null,
     onClick: () -> Unit = {},
 ) {
-    val border =
-        if (isSelected) {
-            BorderStroke(width = 4.dp, color = MaterialTheme.colorScheme.primary)
-        } else {
-            null
+    val borderColor =
+        when {
+            isActive -> Color(0xFFFFD700)
+
+            // Golden for active
+            isSelected -> MaterialTheme.colorScheme.primary
+
+            else -> MaterialTheme.colorScheme.outlineVariant
         }
 
-    OutlinedCard(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.fillMaxWidth().height(height = 240.dp).padding(all = 8.dp),
-        border = border ?: BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize().padding(all = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+    val borderWidth = if (isActive || isSelected) 4.dp else 1.dp
+
+    val cardModifier =
+        modifier
+            .fillMaxWidth()
+            .then(if (isActive) Modifier.height(320.dp) else Modifier.height(240.dp))
+            .padding(all = 8.dp)
+
+    if (isActive) {
+        ElevatedCard(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = cardModifier,
+            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
         ) {
-            // TODO Arena: resource, update the slop
-            if (selectedBy != null) {
-                Text(
-                    text = "Chosen by: $selectedBy",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center,
-                )
-            }
-            Header(className = characterClass.className, classSpeed = characterClass.speed)
-            Body(
-                offensiveAbility = characterClass.offensiveAbility,
-                defensiveAbility = characterClass.defensiveAbility,
-                modifier = Modifier.weight(weight = 1f),
-            )
-            Footer(armorClass = characterClass.armorClass, hitPoints = characterClass.hitPoints)
+            CardContent(selectedBy, characterClass)
         }
+    } else {
+        OutlinedCard(
+            onClick = onClick,
+            enabled = enabled,
+            modifier = cardModifier,
+            border = BorderStroke(width = borderWidth, color = borderColor),
+        ) {
+            CardContent(selectedBy, characterClass)
+        }
+    }
+}
+
+@Composable
+private fun CardContent(selectedBy: String?, characterClass: CharacterClassState) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(all = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+    ) {
+        // TODO Arena: resource, update the slop
+        if (selectedBy != null) {
+            Text(
+                text = "Chosen by: $selectedBy",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+            )
+        }
+        Header(className = characterClass.className, classSpeed = characterClass.speed)
+        Body(
+            offensiveAbility = characterClass.offensiveAbility,
+            defensiveAbility = characterClass.defensiveAbility,
+            modifier = Modifier.weight(weight = 1f),
+        )
+        Footer(armorClass = characterClass.armorClass, hitPoints = characterClass.hitPoints)
     }
 }
 

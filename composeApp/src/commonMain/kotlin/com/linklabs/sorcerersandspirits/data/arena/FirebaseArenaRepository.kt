@@ -7,9 +7,12 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -24,7 +27,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     private val arenaMatchesReference = database.reference(path = ARENA_MATCHES_PATH)
 
-    // TODO Arena: Cleanup, docstring
     override suspend fun chooseCharacterClass(
         arenaId: String,
         selectedArenaPlayer: ArenaPlayer.Selected,
@@ -38,10 +40,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .invoke()
     }
 
-    /**
-     * Connects a user to the arena. Uses a transaction so the first player initializes the match,
-     * and so gets the honor of being first in the game.
-     */
     override suspend fun connectToArena(
         arenaId: String,
         expectedNumberOfPlayers: Int,
@@ -62,6 +60,83 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .child(path = ArenaMatchEntity.playerEntitiesMapName)
             .child(path = arenaPlayer.userId)
             .setValue(value = arenaPlayer.toEntity())
+    }
+
+    // TODO Arena: Look at this, refactor
+    override suspend fun applyCombatResult(arenaId: String, result: CombatResult) {
+        val arenaReference = arenaMatchesReference.child(path = arenaId)
+
+        arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
+            if (existingMatch !is ArenaMatchEntity.Combat) return@runTransaction existingMatch
+
+            val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+            val newMessages =
+                result.messages.map { outgoingMessage ->
+                    outgoingMessage.toEntity(id = messagesReference.addNewKey())
+                }
+            val allMessages = existingMatch.messages + newMessages
+
+            when (result) {
+                is CombatResult.Miss -> {
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        activePlayerUserId = result.nextActivePlayerId,
+                        pendingRollType = RollType.ArmorClass,
+                        pendingTargetUserId = null,
+                    )
+                }
+
+                is CombatResult.Hit -> {
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        pendingRollType = RollType.Health,
+                        pendingTargetUserId = result.targetId,
+                    )
+                }
+
+                is CombatResult.DamageDealt -> {
+                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
+                    val target = updatedPlayerMap[result.targetId]!!
+                    updatedPlayerMap[result.targetId] =
+                        target.copy(
+                            characterClassEntity =
+                                target.characterClassEntity.copy(hitPoints = result.newHp)
+                        )
+
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        playerEntitiesMap = updatedPlayerMap,
+                        activePlayerUserId = result.nextActivePlayerId,
+                        pendingRollType = RollType.ArmorClass,
+                        pendingTargetUserId = null,
+                    )
+                }
+
+                is CombatResult.TargetDefeated -> {
+                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
+                    updatedPlayerMap.remove(result.defeatedPlayerId)
+
+                    existingMatch.copy(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                        playerEntitiesMap = updatedPlayerMap,
+                        activePlayerUserId = result.nextActivePlayerId,
+                        pendingRollType = RollType.ArmorClass,
+                        pendingTargetUserId = null,
+                    )
+                }
+
+                is CombatResult.Victory -> {
+                    ArenaMatchEntity.Finished(
+                        messages = allMessages,
+                        numberOfNewMessages = newMessages.size,
+                    )
+                }
+            }
+        }
     }
 
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =

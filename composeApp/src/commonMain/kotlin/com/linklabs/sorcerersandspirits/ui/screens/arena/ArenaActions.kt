@@ -11,6 +11,9 @@ internal data class ArenaActions(
     val onSelectCharacterClass: (CharacterClassState) -> Unit = {},
     val onChooseCharacterClass: (PlayerState, CharacterClassState) -> Unit = EmptyTwoArgumentLambda,
     val onIncomingMessageHandled: () -> Unit = {},
+    val onAttack: (targetUserId: String) -> Unit = {},
+    val onUseAbility: (abilityName: String) -> Unit = {},
+    val onRollDice: () -> Unit = {},
 )
 
 internal val LocalArenaActions = staticCompositionLocalOf { ArenaActions() }

@@ -1,6 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -33,6 +35,8 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val activePlayerUserId: String,
+        val pendingRollType: RollType = RollType.ArmorClass,
+        val pendingTargetUserId: String? = null,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -43,7 +47,6 @@ sealed interface ArenaMatchEntity {
     ) : ArenaMatchEntity
 
     companion object {
-        private const val PHASE = "phase"
         private const val WAITING_FOR_ALL_PLAYERS = "WaitingForAllPlayers"
         private const val CHOOSING_CLASSES = "ChoosingClasses"
         private const val COMBAT = "Combat"
@@ -94,11 +97,56 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                     numberOfNewMessages = numberOfNewMessages,
                     activePlayerUserId = activePlayerUserId,
                     activePlayer = activePlayer,
+                    pendingRollType = pendingRollType,
+                    pendingTargetUserId = pendingTargetUserId,
                 )
             }
         }
 
         is ArenaMatchEntity.Finished ->
             ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
+    }
+}
+
+internal fun ArenaMatch.toEntity(
+    newMessages: List<OutgoingArenaMessage>,
+    addNewMessageKey: () -> String,
+): ArenaMatchEntity {
+    val existingMessages = messages.map { it.toEntity() }
+    val mappedNewMessages = newMessages.map { it.toEntity(id = addNewMessageKey()) }
+    val allMessages = existingMessages + mappedNewMessages
+
+    return when (this) {
+        is ArenaMatch.WaitingForAllPlayers ->
+            ArenaMatchEntity.WaitingForAllPlayers(
+                messages = allMessages,
+                numberOfNewMessages = mappedNewMessages.size,
+                playerEntitiesMap = emptyMap(), // TODO: Update if needed
+            )
+
+        is ArenaMatch.ChoosingClasses ->
+            ArenaMatchEntity.ChoosingClasses(
+                messages = allMessages,
+                numberOfNewMessages = mappedNewMessages.size,
+                playerEntitiesMap = playerMap.mapValues { it.value.toEntity() },
+                activePlayerUserId = activePlayerUserId,
+            )
+
+        is ArenaMatch.Combat ->
+            ArenaMatchEntity.Combat(
+                messages = allMessages,
+                numberOfNewMessages = mappedNewMessages.size,
+                playerEntitiesMap =
+                    playerMap.mapValues { it.value.toEntity() as ArenaPlayerEntity.Selected },
+                activePlayerUserId = activePlayerUserId,
+                pendingRollType = pendingRollType,
+                pendingTargetUserId = pendingTargetUserId,
+            )
+
+        is ArenaMatch.Finished ->
+            ArenaMatchEntity.Finished(
+                messages = allMessages,
+                numberOfNewMessages = mappedNewMessages.size,
+            )
     }
 }

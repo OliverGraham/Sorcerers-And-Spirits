@@ -46,7 +46,21 @@ private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier
             ConnectedToArenaMessage(state = messageState, modifier = modifier)
 
         is ArenaMessageState.NewTurn -> NewTurnMessage(state = messageState, modifier = modifier)
+
+        is ArenaMessageState.AttackResult,
+        is ArenaMessageState.DiceRoll,
+        is ArenaMessageState.GameFinished,
+        is ArenaMessageState.TargetDead -> DefaultMessage(state = messageState, modifier = modifier)
     }
+}
+
+@Composable
+private fun DefaultMessage(state: ArenaMessageState, modifier: Modifier = Modifier) {
+    Text(
+        text = state.getDisplayString(),
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = modifier.padding(vertical = 4.dp),
+    )
 }
 
 @Composable

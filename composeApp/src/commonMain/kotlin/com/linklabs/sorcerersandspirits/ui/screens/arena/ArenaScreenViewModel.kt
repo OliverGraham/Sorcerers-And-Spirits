@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
@@ -38,6 +39,7 @@ class ArenaScreenViewModel(
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
+    private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
 
@@ -139,6 +141,47 @@ class ArenaScreenViewModel(
                 is ArenaState.Finished ->
                     arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
             }
+        }
+    }
+
+    fun onAttack(targetUserId: String) {
+        _uiStateFlow.updateLoaded { arenaState ->
+            if (arenaState is ArenaState.Combat && arenaState.isItThisUsersTurn) {
+                // Once a target is chosen, it's locked until turn end or target defeated
+                if (arenaState.pendingTargetUserId == null) {
+                    arenaState.copy(pendingTargetUserId = targetUserId)
+                } else {
+                    arenaState
+                }
+            } else {
+                arenaState
+            }
+        }
+    }
+
+    fun onRollDice() {
+        viewModelScope.launch {
+            val loadedState =
+                _uiStateFlow.getLoadedStateOrNull() as? ArenaState.Combat ?: return@launch
+            if (!loadedState.isItThisUsersTurn) return@launch
+
+            val targetUserId = loadedState.pendingTargetUserId ?: return@launch
+
+            // TODO Arena: Clean this slop
+            val playerMap =
+                (loadedState.otherPlayers + loadedState.userPlayer).associate { playerState ->
+                    playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
+                }
+
+            performCombatActionUseCase(
+                arenaId = arguments.arenaId,
+                activePlayerUserId = loadedState.activePlayer.userId,
+                playerMap = playerMap,
+                attackerUserId = loadedState.userPlayer.userId,
+                targetUserId = targetUserId,
+                rollType = loadedState.pendingRollType,
+                messageStartIndex = loadedState.messages.size,
+            )
         }
     }
 

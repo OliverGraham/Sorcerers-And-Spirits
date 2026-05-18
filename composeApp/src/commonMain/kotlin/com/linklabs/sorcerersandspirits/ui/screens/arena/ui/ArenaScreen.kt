@@ -33,6 +33,8 @@ internal fun ArenaScreen(
                 onSelectCharacterClass = viewModel::onSelectCharacterClass,
                 onChooseCharacterClass = viewModel::onChooseCharacterClass,
                 onIncomingMessageHandled = viewModel::onIncomingMessageHandled,
+                onAttack = viewModel::onAttack,
+                onRollDice = viewModel::onRollDice,
             )
     ) {
         viewModel.eventChannelFlow.collectEvents()

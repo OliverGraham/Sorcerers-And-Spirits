@@ -64,7 +64,7 @@ private fun ScreenContent(
                     )
                 }
 
-                is ArenaState.Combat -> ArenaCombat()
+                is ArenaState.Combat -> arenaState.ArenaCombat()
 
                 is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

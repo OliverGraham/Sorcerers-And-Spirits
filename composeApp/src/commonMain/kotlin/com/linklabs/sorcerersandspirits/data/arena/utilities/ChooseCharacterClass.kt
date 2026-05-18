@@ -142,9 +142,6 @@ class ChooseCharacterClass(
             )
         }
 
-        private fun DatabaseReference.addNewKey(): String =
-            push().key ?: error("Failed to generate Firebase push key")
-
         private fun CharacterClassEntity.toCharacterClassMessageInfoEntity() =
             CharacterClassMessageInfoEntity(className = className, type = type)
     }

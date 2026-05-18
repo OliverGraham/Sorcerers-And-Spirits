@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
@@ -9,23 +8,24 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import kotlin.random.Random
 
+// TODO Arena: Clean this slop
 class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     suspend operator fun invoke(
         arenaId: String,
-        currentMatch: ArenaMatch,
+        activePlayerUserId: String,
+        playerMap: Map<String, ArenaPlayer.Selected>,
         attackerUserId: String,
         targetUserId: String,
         rollType: RollType,
+        messageStartIndex: Int,
     ) {
-        if (currentMatch !is ArenaMatch.Combat) return
-        if (currentMatch.activePlayerUserId != attackerUserId) return
+        if (activePlayerUserId != attackerUserId) return
 
         val diceResult = Random.nextInt(from = 1, until = 7) + Random.nextInt(from = 1, until = 7)
-        val attacker = currentMatch.playerMap[attackerUserId] ?: return
-        val target = currentMatch.playerMap[targetUserId] ?: return
+        val attacker = playerMap[attackerUserId] ?: return
+        val target = playerMap[targetUserId] ?: return
 
         val newMessages = mutableListOf<OutgoingArenaMessage>()
-        val messageStartIndex = currentMatch.messages.size
 
         newMessages.add(
             OutgoingArenaMessage.DiceRoll(
@@ -39,7 +39,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
             when (rollType) {
                 RollType.ArmorClass ->
                     handleArmorClassRoll(
-                        match = currentMatch,
+                        activePlayerUserId = activePlayerUserId,
+                        playerMap = playerMap,
                         diceResult = diceResult,
                         attacker = attacker,
                         target = target,
@@ -49,7 +50,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
                 RollType.Health ->
                     handleHealthRoll(
-                        match = currentMatch,
+                        activePlayerUserId = activePlayerUserId,
+                        playerMap = playerMap,
                         diceResult = diceResult,
                         attacker = attacker,
                         target = target,
@@ -64,7 +66,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     }
 
     private fun handleArmorClassRoll(
-        match: ArenaMatch.Combat,
+        activePlayerUserId: String,
+        playerMap: Map<String, ArenaPlayer.Selected>,
         diceResult: Int,
         attacker: ArenaPlayer.Selected,
         target: ArenaPlayer.Selected,
@@ -89,8 +92,14 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 targetId = target.userId,
             )
         } else {
-            val nextPlayerId = determineNextPlayerId(match = match)
-            newMessages.add(generateNewTurnMessage(match = match, nextPlayerId = nextPlayerId))
+            val nextPlayerId =
+                determineNextPlayerId(
+                    activePlayerUserId = activePlayerUserId,
+                    playerMap = playerMap,
+                )
+            newMessages.add(
+                generateNewTurnMessage(playerMap = playerMap, nextPlayerId = nextPlayerId)
+            )
             CombatResult.Miss(
                 messages = newMessages,
                 messageStartIndex = messageStartIndex,
@@ -100,7 +109,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     }
 
     private fun handleHealthRoll(
-        match: ArenaMatch.Combat,
+        activePlayerUserId: String,
+        playerMap: Map<String, ArenaPlayer.Selected>,
         diceResult: Int,
         attacker: ArenaPlayer.Selected,
         target: ArenaPlayer.Selected,
@@ -119,7 +129,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         )
 
         return if (isDead) {
-            val updatedPlayerMap = match.playerMap.toMutableMap()
+            val updatedPlayerMap = playerMap.toMutableMap()
             updatedPlayerMap.remove(target.userId)
 
             newMessages.add(
@@ -145,10 +155,13 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 )
             } else {
                 val nextPlayerId =
-                    determineNextPlayerId(match = match.copy(playerMap = updatedPlayerMap))
+                    determineNextPlayerId(
+                        activePlayerUserId = activePlayerUserId,
+                        playerMap = updatedPlayerMap,
+                    )
                 newMessages.add(
                     generateNewTurnMessage(
-                        match = match.copy(playerMap = updatedPlayerMap),
+                        playerMap = updatedPlayerMap,
                         nextPlayerId = nextPlayerId,
                     )
                 )
@@ -161,8 +174,14 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
             }
         } else {
             val newHp = target.characterClass.hitPoints - diceResult
-            val nextPlayerId = determineNextPlayerId(match = match)
-            newMessages.add(generateNewTurnMessage(match = match, nextPlayerId = nextPlayerId))
+            val nextPlayerId =
+                determineNextPlayerId(
+                    activePlayerUserId = activePlayerUserId,
+                    playerMap = playerMap,
+                )
+            newMessages.add(
+                generateNewTurnMessage(playerMap = playerMap, nextPlayerId = nextPlayerId)
+            )
             CombatResult.DamageDealt(
                 messages = newMessages,
                 messageStartIndex = messageStartIndex,
@@ -173,17 +192,20 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         }
     }
 
-    private fun determineNextPlayerId(match: ArenaMatch.Combat): String =
-        match.playerMap.values
-            .filter { player -> player.userId != match.activePlayerUserId }
+    private fun determineNextPlayerId(
+        activePlayerUserId: String,
+        playerMap: Map<String, ArenaPlayer.Selected>,
+    ): String =
+        playerMap.values
+            .filter { player -> player.userId != activePlayerUserId }
             .maxBy { player -> player.characterClass.speed }
             .userId
 
     private fun generateNewTurnMessage(
-        match: ArenaMatch.Combat,
+        playerMap: Map<String, ArenaPlayer.Selected>,
         nextPlayerId: String,
     ): OutgoingArenaMessage {
-        val nextPlayer = match.playerMap[nextPlayerId]!!
+        val nextPlayer = playerMap[nextPlayerId]!!
         return OutgoingArenaMessage.NewTurn(
             characterClassInfo =
                 CharacterClassMessageInfo(

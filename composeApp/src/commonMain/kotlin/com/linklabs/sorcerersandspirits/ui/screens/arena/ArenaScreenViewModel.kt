@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
@@ -57,8 +56,6 @@ class ArenaScreenViewModel(
             onTimerExpiration = ::onTimerExpiration,
         )
 
-    private var currentArenaMatch: ArenaMatch? = null
-
     init {
         viewModelScope.launch {
             // TODO: Figure out better way for userId
@@ -75,8 +72,6 @@ class ArenaScreenViewModel(
                         _uiStateFlow.value = UiState.Error
                         return@collect
                     }
-
-                    currentArenaMatch = updatedArenaMatch
 
                     val updatedArenaStateUpdate =
                         updatedArenaMatch.toUpdatedState(
@@ -171,14 +166,21 @@ class ArenaScreenViewModel(
             if (!loadedState.isItThisUsersTurn) return@launch
 
             val targetUserId = loadedState.pendingTargetUserId ?: return@launch
-            val currentMatch = currentArenaMatch ?: return@launch
+
+            // TODO Arena: Clean this slop
+            val playerMap =
+                (loadedState.otherPlayers + loadedState.userPlayer).associate { playerState ->
+                    playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
+                }
 
             performCombatActionUseCase(
                 arenaId = arguments.arenaId,
-                currentMatch = currentMatch,
+                activePlayerUserId = loadedState.activePlayer.userId,
+                playerMap = playerMap,
                 attackerUserId = loadedState.userPlayer.userId,
                 targetUserId = targetUserId,
                 rollType = loadedState.pendingRollType,
+                messageStartIndex = loadedState.messages.size,
             )
         }
     }

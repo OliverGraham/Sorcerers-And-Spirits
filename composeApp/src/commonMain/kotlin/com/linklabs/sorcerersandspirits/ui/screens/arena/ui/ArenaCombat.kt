@@ -67,6 +67,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
         item(key = GRID_CARDS_KEY) {
             GridCards(
                 otherPlayers = otherPlayers,
+                userPlayerId = userPlayer.userId,
                 isItThisUsersTurn = isItThisUsersTurn,
                 pendingTargetUserId = pendingTargetUserId,
             )
@@ -104,6 +105,7 @@ private fun ActivePlayerCard(
 @Composable
 private fun GridCards(
     otherPlayers: List<PlayerState.Selected>,
+    userPlayerId: String,
     isItThisUsersTurn: Boolean,
     pendingTargetUserId: String?,
     modifier: Modifier = Modifier,
@@ -118,6 +120,7 @@ private fun GridCards(
         items(items = otherPlayers, key = { it.userId }) { otherPlayer ->
             GridPlayerCard(
                 otherPlayer = otherPlayer,
+                isUser = otherPlayer.userId == userPlayerId,
                 isItThisUsersTurn = isItThisUsersTurn,
                 pendingTargetUserId = pendingTargetUserId,
             )
@@ -128,6 +131,7 @@ private fun GridCards(
 @Composable
 private fun GridPlayerCard(
     otherPlayer: PlayerState.Selected,
+    isUser: Boolean,
     isItThisUsersTurn: Boolean,
     pendingTargetUserId: String?,
     modifier: Modifier = Modifier,
@@ -138,11 +142,16 @@ private fun GridPlayerCard(
     CharacterClassCard(
         characterClass = otherPlayer.characterClass,
         isSelected = isTargeted,
-        enabled = isItThisUsersTurn && pendingTargetUserId == null,
-        selectedBy = if (isTargeted) "TARGETED" else otherPlayer.displayName,
+        enabled = isItThisUsersTurn && pendingTargetUserId == null && !isUser,
+        selectedBy =
+            when {
+                isTargeted -> "TARGETED"
+                isUser -> "You"
+                else -> otherPlayer.displayName
+            },
         modifier = modifier.sharedBounds(key = otherPlayer.userId),
         onClick = {
-            if (isItThisUsersTurn) {
+            if (isItThisUsersTurn && !isUser) {
                 onAttack(otherPlayer.userId)
             }
         },
@@ -219,15 +228,18 @@ private fun ArenaCombatEnemyTurnPreview() {
     SorcerersAndSpiritsTheme {
         val rogue = CharacterClass.getRogue().toState()
         val mage = CharacterClass.getMage().toState()
+        val paladin = CharacterClass.getPaladin().toState()
         val userPlayer =
             PlayerState.Selected(userId = "1", displayName = "User", characterClass = rogue)
-        val otherPlayer =
-            PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
+        val enemy1 =
+            PlayerState.Selected(userId = "2", displayName = "Enemy 1", characterClass = mage)
+        val enemy2 =
+            PlayerState.Selected(userId = "3", displayName = "Enemy 2", characterClass = paladin)
 
         ArenaState.Combat(
-                activePlayer = otherPlayer,
+                activePlayer = enemy1,
                 userPlayer = userPlayer,
-                otherPlayers = listOf(otherPlayer),
+                otherPlayers = listOf(userPlayer, enemy2),
                 isItThisUsersTurn = false,
                 pendingRollType = RollType.ArmorClass,
                 pendingTargetUserId = null,

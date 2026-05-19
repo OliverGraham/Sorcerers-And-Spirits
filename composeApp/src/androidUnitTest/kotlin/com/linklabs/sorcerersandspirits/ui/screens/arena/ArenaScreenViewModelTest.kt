@@ -4,8 +4,9 @@ import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -21,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
-import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
@@ -33,11 +33,12 @@ class ArenaScreenViewModelTest {
 
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase = mockk()
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase = mockk()
+    private val exitArenaUseCase: ExitArenaUseCase = mockk(relaxed = true)
     private val getUserIdUseCase: GetUserIdUseCase = mockk()
     private val performCombatActionUseCase: PerformCombatActionUseCase = mockk()
+    private val removeArenaMatchUseCase: RemoveArenaMatchUseCase = mockk(relaxed = true)
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase =
         mockk(relaxed = true)
-    private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase = mockk()
 
     private val arguments =
         ArenaScreenViewModelArguments(arenaId = "test_arena", expectedNumberOfPlayers = 2)
@@ -60,10 +61,11 @@ class ArenaScreenViewModelTest {
             arguments = arguments,
             chooseCharacterClassUseCase = chooseCharacterClassUseCase,
             coordinateArenaMatchUseCase = coordinateArenaMatchUseCase,
+            exitArenaUseCase = exitArenaUseCase,
             getUserIdUseCase = getUserIdUseCase,
             performCombatActionUseCase = performCombatActionUseCase,
+            removeArenaMatchUseCase = removeArenaMatchUseCase,
             setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
-            updateArenaPlayerUseCase = updateArenaPlayerUseCase,
         )
 
     @Test
@@ -91,29 +93,6 @@ class ArenaScreenViewModelTest {
     }
 
     @Test
-    fun `onTryLeaveArena confirms leave when state is Finished`() = runTest {
-        arenaMatchFlow.value = ArenaMatch.Finished(messages = emptyList(), numberOfNewMessages = 0)
-        val viewModel = createViewModel()
-
-        viewModel.uiStateFlow.test {
-            // Loading
-            awaitItem()
-            // Loaded
-            awaitItem()
-
-            viewModel.onTryLeaveArena()
-
-            // confirmLeaveArena updates state by calling updateLoaded (showForfeitDialog = false)
-            // But if it doesn't change, we skip emission check.
-
-            cancelAndIgnoreRemainingEvents()
-        }
-
-        advanceUntilIdle()
-        coVerify { setCurrentTravelerAvailableUseCase() }
-    }
-
-    @Test
     fun `onConfirmLeaveArena calls use case and hides dialog`() = runTest {
         arenaMatchFlow.value =
             ArenaMatch.WaitingForAllPlayers(messages = emptyList(), numberOfNewMessages = 0)
@@ -134,8 +113,7 @@ class ArenaScreenViewModelTest {
             cancelAndIgnoreRemainingEvents()
         }
 
-        advanceUntilIdle()
-        coVerify { setCurrentTravelerAvailableUseCase() }
+        coVerify { exitArenaUseCase(arenaId = arguments.arenaId) }
     }
 
     @Test

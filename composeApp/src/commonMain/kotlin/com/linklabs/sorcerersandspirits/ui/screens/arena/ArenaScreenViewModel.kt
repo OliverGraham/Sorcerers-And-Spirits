@@ -2,12 +2,13 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
@@ -23,6 +24,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,11 +41,11 @@ class ArenaScreenViewModel(
     @InjectedParam private val arguments: ArenaScreenViewModelArguments,
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
+    private val exitArenaUseCase: ExitArenaUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
-    private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
@@ -59,42 +61,22 @@ class ArenaScreenViewModel(
             onTimerExpiration = ::onTimerExpiration,
         )
 
+    private var screenStateFlowJob: Job? = null
+
     init {
-        viewModelScope.launch {
-            // TODO: Figure out better way for userId
-            val userId = getUserIdUseCase().orEmpty()
+        screenStateFlowJob =
+            viewModelScope.launch {
+                // TODO: Figure out better way for userId
+                val userId = getUserIdUseCase().orEmpty()
 
-            coordinateArenaMatchUseCase(
-                    arenaId = arguments.arenaId,
-                    expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
-                )
-                .collect { updatedArenaMatch ->
-                    if (updatedArenaMatch == null) {
-                        // TODO Arena: Probably show message briefly and then navigate back, with
-                        //  cleanup, since if this is null then there was some problem
-                        _uiStateFlow.value = UiState.Error
-                        return@collect
+                coordinateArenaMatchUseCase(
+                        arenaId = arguments.arenaId,
+                        expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
+                    )
+                    .collect { updatedArenaMatch ->
+                        updatedArenaMatch.updateScreenState(userId = userId)
                     }
-
-                    val updatedArenaStateUpdate =
-                        updatedArenaMatch.toUpdatedState(
-                            previousState = _uiStateFlow.getLoadedStateOrNull(),
-                            userId = userId,
-                        )
-
-                    handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
-
-                    val nextState = updatedArenaStateUpdate.nextState
-                    _uiStateFlow.value = UiState.Loaded(data = nextState)
-
-                    if (nextState.arenaState == ArenaState.Finished) {
-                        // TODO Arena: How to handle profile stats
-                        setCurrentTravelerAvailableUseCase()
-                        removeArenaMatchUseCase(arenaId = arguments.arenaId)
-                        _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
-                    }
-                }
-        }
+            }
     }
 
     fun onSelectCharacterClass(characterClassState: CharacterClassState) {
@@ -174,7 +156,7 @@ class ArenaScreenViewModel(
 
             // TODO Arena: Clean this slop
             val playerMap =
-                (arenaState.otherPlayers + arenaState.userPlayer).associate { playerState ->
+                (arenaState.otherPlayers + arenaState.activePlayer).associate { playerState ->
                     playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
                 }
 
@@ -191,21 +173,17 @@ class ArenaScreenViewModel(
     }
 
     fun onTryLeaveArena() {
-        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-
-        if (loadedState.arenaState is ArenaState.Finished) {
-            onConfirmLeaveArena()
-        } else {
-            _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
-        }
+        _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
     }
 
     // TODO Arena: Need a leave that updates stats with a forfeit, and one that triggers when game
     //  is finished
 
     fun onConfirmLeaveArena() {
+        screenStateFlowJob?.cancel()
+
         viewModelScope.launch {
-            setCurrentTravelerAvailableUseCase()
+            exitArenaUseCase(arenaId = arguments.arenaId)
             _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }
@@ -213,6 +191,30 @@ class ArenaScreenViewModel(
 
     fun onDismissForfeitDialog() {
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
+    }
+
+    private suspend fun ArenaMatch?.updateScreenState(userId: String) {
+        if (this == null) {
+            // TODO Arena: Probably show message briefly and then navigate back, with
+            //  cleanup, since if this is null then there was some problem
+            _uiStateFlow.value = UiState.Error
+            return
+        }
+
+        val updatedArenaStateUpdate =
+            toUpdatedState(previousState = _uiStateFlow.getLoadedStateOrNull(), userId = userId)
+
+        handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
+
+        val nextState = updatedArenaStateUpdate.nextState
+        _uiStateFlow.value = UiState.Loaded(data = nextState)
+
+        if (nextState.arenaState == ArenaState.Finished) {
+            // TODO Arena: How to handle profile stats
+            setCurrentTravelerAvailableUseCase()
+            removeArenaMatchUseCase(arenaId = arguments.arenaId)
+            _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+        }
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {

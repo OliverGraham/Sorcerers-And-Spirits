@@ -31,8 +31,6 @@ internal fun ArenaScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    InterceptBackNavigationToShowForfeitDialog()
-
     CompositionLocalProvider(
         LocalArenaActions provides
             ArenaActions(
@@ -46,6 +44,8 @@ internal fun ArenaScreen(
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
             )
     ) {
+        InterceptBackNavigationToShowForfeitDialog()
+
         viewModel.eventChannelFlow.collectEvents(onBack = onBack)
         val uiState by viewModel.uiStateFlow.collectAsState()
 

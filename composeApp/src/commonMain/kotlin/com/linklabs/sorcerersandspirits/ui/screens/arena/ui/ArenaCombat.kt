@@ -202,9 +202,6 @@ private fun ArenaCombatYourTurnPreview() {
             PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
 
         ArenaState.Combat(
-                messages = emptyList(),
-                unhandledMessagesCount = 0,
-                secondsRemaining = 15,
                 activePlayer = userPlayer,
                 userPlayer = userPlayer,
                 otherPlayers = listOf(otherPlayer),
@@ -228,9 +225,6 @@ private fun ArenaCombatEnemyTurnPreview() {
             PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
 
         ArenaState.Combat(
-                messages = emptyList(),
-                unhandledMessagesCount = 0,
-                secondsRemaining = 8,
                 activePlayer = otherPlayer,
                 userPlayer = userPlayer,
                 otherPlayers = listOf(otherPlayer),

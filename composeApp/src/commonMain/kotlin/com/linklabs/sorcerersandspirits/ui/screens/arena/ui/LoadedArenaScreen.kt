@@ -18,6 +18,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -25,7 +26,7 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LoadedArenaScreen(
-    arenaState: ArenaState,
+    screenState: ArenaScreenState,
     modifier: Modifier = Modifier,
     scaffoldState: BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
 ) {
@@ -35,18 +36,19 @@ internal fun LoadedArenaScreen(
         sheetPeekHeight = 48.dp,
         sheetDragHandle = {
             ArenaMessageLogHandle(
-                secondsRemaining = arenaState.secondsRemaining,
-                latestMessage = arenaState.latestMessage,
-                unhandledMessagesCount = arenaState.unhandledMessagesCount,
+                secondsRemaining = screenState.secondsRemaining,
+                latestMessage = screenState.latestMessage,
+                unhandledMessagesCount = screenState.unhandledMessagesCount,
             )
         },
-        sheetContent = { ArenaMessageLog(messages = arenaState.filteredMessages) },
+        sheetContent = { ArenaMessageLog(messages = screenState.filteredMessages) },
     ) { paddingValues ->
-        ScreenContent(arenaState = arenaState, paddingValues = paddingValues)
+        ScreenContent(arenaState = screenState.arenaState, paddingValues = paddingValues)
     }
 
-    // TODO Arena: Dialogs go here
-    // TODO Arena: Dialog showing that going back will forfeit the game
+    if (screenState.showForfeitDialog) {
+        ForfeitDialog()
+    }
 }
 
 @Composable
@@ -68,9 +70,8 @@ private fun ScreenContent(
 
                 is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
-                is ArenaState.Finished -> {
-                    // TODO Arena: figure out
-                }
+                // TODO Arena: Add some sort of message / UI / something for when the game ends
+                is ArenaState.Finished -> {}
             }
         }
     }
@@ -80,23 +81,23 @@ private fun ScreenContent(
 @Preview
 @Composable
 private fun LoadedArenaScreenCollapsedPreview(
-    @PreviewParameter(ArenaStatePreviewParameterProvider::class) arenaState: ArenaState
+    @PreviewParameter(ArenaStatePreviewParameterProvider::class) screenState: ArenaScreenState
 ) {
-    SorcerersAndSpiritsTheme { LoadedArenaScreen(arenaState = arenaState) }
+    SorcerersAndSpiritsTheme { LoadedArenaScreen(screenState = screenState) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun LoadedArenaScreenExpandedPreview(
-    @PreviewParameter(ArenaStatePreviewParameterProvider::class) arenaState: ArenaState
+    @PreviewParameter(ArenaStatePreviewParameterProvider::class) screenState: ArenaScreenState
 ) {
     SorcerersAndSpiritsTheme {
         val expandedBottomSheetState =
             rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
 
         LoadedArenaScreen(
-            arenaState = arenaState,
+            screenState = screenState,
             scaffoldState =
                 rememberBottomSheetScaffoldState(bottomSheetState = expandedBottomSheetState),
         )

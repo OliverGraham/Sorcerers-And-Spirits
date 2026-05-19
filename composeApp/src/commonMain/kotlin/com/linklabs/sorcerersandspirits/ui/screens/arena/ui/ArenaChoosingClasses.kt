@@ -90,9 +90,6 @@ private fun ArenaChoosingClassesPreview() {
         val mockPlayer = PlayerState.Unselected(userId = "1", displayName = "Player")
         val mockState =
             ArenaState.ChoosingClasses(
-                messages = emptyList(),
-                unhandledMessagesCount = 0,
-                secondsRemaining = 15,
                 activePlayer = mockPlayer,
                 userPlayer = mockPlayer,
                 otherPlayers = emptyList(),

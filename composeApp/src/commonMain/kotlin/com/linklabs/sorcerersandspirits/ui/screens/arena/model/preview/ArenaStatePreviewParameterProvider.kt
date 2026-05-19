@@ -7,20 +7,22 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 // TODO Arena: update when state changes to use enums to determine the text (using resources)
 
-class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> {
+class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenState> {
     private val classStates = createExampleCharacterClassStates()
     private val mageState = classStates.first { it.type == CharacterClassType.Mage }
     private val rogueState = classStates.first { it.type == CharacterClassType.Rogue }
 
-    override val values: Sequence<ArenaState> =
+    override val values: Sequence<ArenaScreenState> =
         sequenceOf(
-            getExampleArenaState(
+            getExampleScreenState(
+                arenaState = getExampleArenaState(),
                 messages =
                     listOf(
                         ArenaMessageState.ChoseCharacterClass(
@@ -29,37 +31,37 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
                             characterClassInfo =
                                 CharacterClassMessageInfoState("Rogue", CharacterClassType.Rogue),
                         )
-                    )
+                    ),
             ),
-            getExampleArenaState(),
-            getExampleChoosingClassesState(),
-            getExampleCombatState(),
+            getExampleScreenState(arenaState = getExampleArenaState()),
+            getExampleScreenState(arenaState = getExampleChoosingClassesState()),
+            getExampleScreenState(arenaState = getExampleCombatState()),
         )
 
-    private fun getExampleArenaState(
+    private fun getExampleScreenState(
+        arenaState: ArenaState,
         messages: List<ArenaMessageState> = getExampleMessages(),
         unhandledMessagesCount: Int = 0,
         secondsRemaining: Int = 20,
+        showForfeitDialog: Boolean = false,
     ) =
-        ArenaState.WaitingForAllPlayers(
+        ArenaScreenState(
             messages = messages,
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = secondsRemaining,
+            showForfeitDialog = showForfeitDialog,
+            arenaState = arenaState,
         )
 
+    private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers
+
     private fun getExampleChoosingClassesState(
-        messages: List<ArenaMessageState> = getExampleMessages(),
-        unhandledMessagesCount: Int = 0,
-        secondsRemaining: Int = 20,
         activePlayer: PlayerState = getExamplePlayers().values.first(),
         userPlayer: PlayerState = getExamplePlayers().values.first(),
         otherPlayers: List<PlayerState> = getExamplePlayers().values.drop(1),
         isItThisUsersTurn: Boolean = true,
     ) =
         ArenaState.ChoosingClasses(
-            messages = messages,
-            unhandledMessagesCount = unhandledMessagesCount,
-            secondsRemaining = secondsRemaining,
             activePlayer = activePlayer,
             userPlayer = userPlayer,
             otherPlayers = otherPlayers,
@@ -70,18 +72,12 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaState> 
         )
 
     private fun getExampleCombatState(
-        messages: List<ArenaMessageState> = getExampleMessages(),
-        unhandledMessagesCount: Int = 0,
-        secondsRemaining: Int = 20,
         activePlayer: PlayerState.Selected = getExamplePlayers().values.first(),
         userPlayer: PlayerState.Selected = getExamplePlayers().values.first(),
         otherPlayers: List<PlayerState.Selected> = getExamplePlayers().values.drop(1),
         isItThisUsersTurn: Boolean = true,
     ) =
         ArenaState.Combat(
-            messages = messages,
-            unhandledMessagesCount = unhandledMessagesCount,
-            secondsRemaining = secondsRemaining,
             activePlayer = activePlayer,
             userPlayer = userPlayer,
             otherPlayers = otherPlayers,

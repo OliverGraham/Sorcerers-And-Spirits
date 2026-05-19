@@ -7,11 +7,13 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 
 @Immutable
-sealed interface ArenaState {
-    val messages: List<ArenaMessageState>
-    val unhandledMessagesCount: Int
-    val secondsRemaining: Int
-    val showForfeitDialog: Boolean
+data class ArenaScreenState(
+    val messages: List<ArenaMessageState>,
+    val unhandledMessagesCount: Int,
+    val secondsRemaining: Int,
+    val showForfeitDialog: Boolean,
+    val arenaState: ArenaState,
+) {
 
     val latestMessage: ArenaMessageState?
         get() =
@@ -21,21 +23,15 @@ sealed interface ArenaState {
 
     val filteredMessages: List<ArenaMessageState>
         get() = messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
+}
 
-    @Immutable
-    data class WaitingForAllPlayers(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-        override val secondsRemaining: Int,
-        override val showForfeitDialog: Boolean = false,
-    ) : ArenaState
+@Immutable
+sealed interface ArenaState {
+
+    @Immutable data object WaitingForAllPlayers : ArenaState
 
     @Immutable
     data class ChoosingClasses(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-        override val secondsRemaining: Int,
-        override val showForfeitDialog: Boolean = false,
         override val activePlayer: PlayerState,
         override val userPlayer: PlayerState,
         override val otherPlayers: List<PlayerState>,
@@ -47,10 +43,6 @@ sealed interface ArenaState {
 
     @Immutable
     data class Combat(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-        override val secondsRemaining: Int,
-        override val showForfeitDialog: Boolean = false,
         override val activePlayer: PlayerState.Selected,
         override val userPlayer: PlayerState.Selected,
         override val otherPlayers: List<PlayerState.Selected>,
@@ -59,13 +51,7 @@ sealed interface ArenaState {
         val pendingTargetUserId: String?,
     ) : ActiveState
 
-    @Immutable
-    data class Finished(
-        override val messages: List<ArenaMessageState>,
-        override val unhandledMessagesCount: Int,
-        override val secondsRemaining: Int = 0,
-        override val showForfeitDialog: Boolean = false,
-    ) : ArenaState
+    @Immutable data object Finished : ArenaState
 }
 
 @Immutable
@@ -76,28 +62,8 @@ sealed interface ActiveState : ArenaState {
     val isItThisUsersTurn: Boolean
 }
 
-fun ArenaState.withSeconds(seconds: Int): ArenaState =
-    when (this) {
-        is ArenaState.WaitingForAllPlayers -> copy(secondsRemaining = seconds)
-        is ArenaState.ChoosingClasses -> copy(secondsRemaining = seconds)
-        is ArenaState.Combat -> copy(secondsRemaining = seconds)
-        is ArenaState.Finished -> copy(secondsRemaining = seconds)
-    }
-
-fun ArenaState.withForfeitDialog(show: Boolean): ArenaState =
-    when (this) {
-        is ArenaState.WaitingForAllPlayers -> copy(showForfeitDialog = show)
-        is ArenaState.ChoosingClasses -> copy(showForfeitDialog = show)
-        is ArenaState.Combat -> copy(showForfeitDialog = show)
-        is ArenaState.Finished -> copy(showForfeitDialog = show)
-    }
-
-fun ArenaState.ChoosingClasses.withSelectedClass(
-    selectedClass: CharacterClassState?
-): ArenaState.ChoosingClasses = copy(selectedClass = selectedClass)
-
 internal fun ArenaMatch.toUpdatedState(
-    previousState: ArenaState?,
+    previousState: ArenaScreenState?,
     userId: String,
 ): ArenaStateUpdate {
     val messages = messages.map { message -> message.toState() }
@@ -105,25 +71,14 @@ internal fun ArenaMatch.toUpdatedState(
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 
-    val nextState =
+    val nextArenaState =
         when (this) {
-            is ArenaMatch.WaitingForAllPlayers ->
-                ArenaState.WaitingForAllPlayers(
-                    messages = messages,
-                    unhandledMessagesCount = unhandledMessagesCount,
-                    secondsRemaining = previousSeconds,
-                    showForfeitDialog = previousShowForfeitDialog,
-                )
+            is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
 
             is ArenaMatch.ChoosingClasses -> {
                 val userPlayer = playerMap[userId]
                 if (userPlayer == null) {
-                    ArenaState.Finished(
-                        messages = messages,
-                        unhandledMessagesCount = unhandledMessagesCount,
-                        secondsRemaining = 0,
-                        showForfeitDialog = previousShowForfeitDialog,
-                    )
+                    ArenaState.Finished
                 } else {
                     val (unavailable, selections) =
                         playerMap.prepareClassSelectionInfo(userId = userId)
@@ -132,10 +87,6 @@ internal fun ArenaMatch.toUpdatedState(
                     val otherPlayersState = playerMap.getOtherPlayers(userId = userId)
 
                     ArenaState.ChoosingClasses(
-                        messages = messages,
-                        unhandledMessagesCount = unhandledMessagesCount,
-                        secondsRemaining = previousSeconds,
-                        showForfeitDialog = previousShowForfeitDialog,
                         activePlayer = activePlayerState,
                         userPlayer = userPlayerState,
                         otherPlayers = otherPlayersState,
@@ -143,7 +94,8 @@ internal fun ArenaMatch.toUpdatedState(
                         unavailableClasses = unavailable,
                         classSelections = selections,
                         selectedClass =
-                            (previousState as? ArenaState.ChoosingClasses)?.selectedClass,
+                            (previousState?.arenaState as? ArenaState.ChoosingClasses)
+                                ?.selectedClass,
                     )
                 }
             }
@@ -151,12 +103,7 @@ internal fun ArenaMatch.toUpdatedState(
             is ArenaMatch.Combat -> {
                 val userPlayer = playerMap[userId]
                 if (userPlayer == null) {
-                    ArenaState.Finished(
-                        messages = messages,
-                        unhandledMessagesCount = unhandledMessagesCount,
-                        secondsRemaining = 0,
-                        showForfeitDialog = previousShowForfeitDialog,
-                    )
+                    ArenaState.Finished
                 } else {
                     val activePlayerState = activePlayer.toSelectedState()
                     val userPlayerState = userPlayer.toSelectedState()
@@ -166,10 +113,6 @@ internal fun ArenaMatch.toUpdatedState(
                             .map { player -> player.toSelectedState() }
 
                     ArenaState.Combat(
-                        messages = messages,
-                        unhandledMessagesCount = unhandledMessagesCount,
-                        secondsRemaining = previousSeconds,
-                        showForfeitDialog = previousShowForfeitDialog,
                         activePlayer = activePlayerState,
                         userPlayer = userPlayerState,
                         otherPlayers = otherPlayersState,
@@ -180,21 +123,28 @@ internal fun ArenaMatch.toUpdatedState(
                 }
             }
 
-            is ArenaMatch.Finished ->
-                ArenaState.Finished(
-                    messages = messages,
-                    unhandledMessagesCount = unhandledMessagesCount,
-                    secondsRemaining = 0,
-                    showForfeitDialog = previousShowForfeitDialog,
-                )
+            is ArenaMatch.Finished -> ArenaState.Finished
         }
 
-    val timerAction = determineTimerAction(previous = previousState, next = nextState)
+    val nextScreenState =
+        ArenaScreenState(
+            messages = messages,
+            unhandledMessagesCount = unhandledMessagesCount,
+            secondsRemaining = previousSeconds,
+            showForfeitDialog = previousShowForfeitDialog,
+            arenaState = nextArenaState,
+        )
+
+    val timerAction =
+        determineTimerAction(previous = previousState?.arenaState, next = nextArenaState)
     val finalState =
         when (timerAction) {
-            is TimerAction.Start -> nextState.withSeconds(seconds = timerAction.timerDuration)
-            TimerAction.Stop -> nextState.withSeconds(seconds = 0)
-            TimerAction.None -> nextState
+            is TimerAction.Start ->
+                nextScreenState.copy(secondsRemaining = timerAction.timerDuration)
+
+            TimerAction.Stop -> nextScreenState.copy(secondsRemaining = 0)
+
+            TimerAction.None -> nextScreenState
         }
 
     return ArenaStateUpdate(nextState = finalState, timerAction = timerAction)
@@ -249,4 +199,4 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
         is ArenaState.Finished -> TimerAction.Stop
     }
 
-data class ArenaStateUpdate(val nextState: ArenaState, val timerAction: TimerAction)
+data class ArenaStateUpdate(val nextState: ArenaScreenState, val timerAction: TimerAction)

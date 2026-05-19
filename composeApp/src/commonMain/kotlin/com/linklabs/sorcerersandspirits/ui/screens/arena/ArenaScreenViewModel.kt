@@ -13,14 +13,12 @@ import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ActiveState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withForfeitDialog
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSeconds
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.withSelectedClass
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -49,7 +47,7 @@ class ArenaScreenViewModel(
     private val _eventChannelFlow = Channel<ArenaEvent>()
     val eventChannelFlow = _eventChannelFlow.receiveAsFlow()
 
-    private val _uiStateFlow = MutableStateFlow<UiState<ArenaState>>(value = UiState.Loading)
+    private val _uiStateFlow = MutableStateFlow<UiState<ArenaScreenState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
     private val arenaTimer =
@@ -84,24 +82,32 @@ class ArenaScreenViewModel(
 
                     handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 
-                    _uiStateFlow.value = UiState.Loaded(data = updatedArenaStateUpdate.nextState)
+                    val nextState = updatedArenaStateUpdate.nextState
+                    _uiStateFlow.value = UiState.Loaded(data = nextState)
+
+                    if (nextState.arenaState == ArenaState.Finished) {
+                        // TODO Arena: Need to delete ArenaMatch in RTDB when it's over
+                        setCurrentTravelerAvailableUseCase()
+                        _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+                    }
                 }
         }
     }
 
     fun onSelectCharacterClass(characterClassState: CharacterClassState) {
-        _uiStateFlow.updateLoaded { arenaState ->
-            if (arenaState is ArenaState.ChoosingClasses) {
-                arenaState.withSelectedClass(selectedClass = characterClassState)
-            } else {
-                arenaState
-            }
+        _uiStateFlow.updateLoaded { screenState ->
+            val arenaState =
+                screenState.arenaState as? ArenaState.ChoosingClasses
+                    ?: return@updateLoaded screenState
+
+            screenState.copy(arenaState = arenaState.copy(selectedClass = characterClassState))
         }
     }
 
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
-            val loadedState = _uiStateFlow.getLoadedStateOrNull() as? ActiveState ?: return@launch
+            val arenaState =
+                _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ActiveState ?: return@launch
 
             val selectedArenaPlayer =
                 ArenaPlayer.Selected(
@@ -109,7 +115,7 @@ class ArenaScreenViewModel(
                     displayName = playerState.displayName,
                     characterClass = characterClassState.toDomain(),
                 )
-            val allPlayers = loadedState.otherPlayers.map { it.toDomain() } + selectedArenaPlayer
+            val allPlayers = arenaState.otherPlayers.map { it.toDomain() } + selectedArenaPlayer
 
             chooseCharacterClassUseCase(
                 arenaId = arguments.arenaId,
@@ -117,72 +123,65 @@ class ArenaScreenViewModel(
                 allPlayers = allPlayers,
             )
 
-            _uiStateFlow.updateLoaded { arenaState ->
-                if (arenaState is ArenaState.ChoosingClasses) {
-                    arenaState.copy(selectedClass = null)
-                } else {
-                    arenaState
-                }
+            _uiStateFlow.updateLoaded { screenState ->
+                val nextArenaState =
+                    if (screenState.arenaState is ArenaState.ChoosingClasses) {
+                        screenState.arenaState.copy(selectedClass = null)
+                    } else {
+                        screenState.arenaState
+                    }
+                screenState.copy(arenaState = nextArenaState)
             }
         }
     }
 
     fun onIncomingMessageHandled() {
-        _uiStateFlow.updateLoaded { arenaState ->
-            if (arenaState.unhandledMessagesCount <= 0) return@updateLoaded arenaState
+        _uiStateFlow.updateLoaded { screenState ->
+            if (screenState.unhandledMessagesCount <= 0) return@updateLoaded screenState
 
-            val nextUnhandledCount = arenaState.unhandledMessagesCount - 1
-            when (arenaState) {
-                is ArenaState.WaitingForAllPlayers ->
-                    arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
-
-                is ArenaState.ChoosingClasses ->
-                    arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
-
-                is ArenaState.Combat -> arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
-
-                is ArenaState.Finished ->
-                    arenaState.copy(unhandledMessagesCount = nextUnhandledCount)
-            }
+            screenState.copy(unhandledMessagesCount = screenState.unhandledMessagesCount - 1)
         }
     }
 
     fun onAttack(targetUserId: String) {
-        _uiStateFlow.updateLoaded { arenaState ->
+        _uiStateFlow.updateLoaded { screenState ->
+            val arenaState = screenState.arenaState
             if (arenaState is ArenaState.Combat && arenaState.isItThisUsersTurn) {
                 // Once a target is chosen, it's locked until turn end or target defeated
                 if (arenaState.pendingTargetUserId == null) {
-                    arenaState.copy(pendingTargetUserId = targetUserId)
+                    screenState.copy(
+                        arenaState = arenaState.copy(pendingTargetUserId = targetUserId)
+                    )
                 } else {
-                    arenaState
+                    screenState
                 }
             } else {
-                arenaState
+                screenState
             }
         }
     }
 
     fun onRollDice() {
         viewModelScope.launch {
-            val loadedState =
-                _uiStateFlow.getLoadedStateOrNull() as? ArenaState.Combat ?: return@launch
-            if (!loadedState.isItThisUsersTurn) return@launch
+            val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
+            val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
+            if (!arenaState.isItThisUsersTurn) return@launch
 
-            val targetUserId = loadedState.pendingTargetUserId ?: return@launch
+            val targetUserId = arenaState.pendingTargetUserId ?: return@launch
 
             // TODO Arena: Clean this slop
             val playerMap =
-                (loadedState.otherPlayers + loadedState.userPlayer).associate { playerState ->
+                (arenaState.otherPlayers + arenaState.userPlayer).associate { playerState ->
                     playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
                 }
 
             performCombatActionUseCase(
                 arenaId = arguments.arenaId,
-                activePlayerUserId = loadedState.activePlayer.userId,
+                activePlayerUserId = arenaState.activePlayer.userId,
                 playerMap = playerMap,
-                attackerUserId = loadedState.userPlayer.userId,
+                attackerUserId = arenaState.userPlayer.userId,
                 targetUserId = targetUserId,
-                rollType = loadedState.pendingRollType,
+                rollType = arenaState.pendingRollType,
                 messageStartIndex = loadedState.messages.size,
             )
         }
@@ -191,23 +190,26 @@ class ArenaScreenViewModel(
     fun onTryLeaveArena() {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
 
-        if (loadedState is ArenaState.Finished) {
+        if (loadedState.arenaState is ArenaState.Finished) {
             onConfirmLeaveArena()
         } else {
-            _uiStateFlow.updateLoaded { arenaState -> arenaState.withForfeitDialog(show = true) }
+            _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
         }
     }
+
+    // TODO Arena: Need a leave that updates stats with a forfeit, and one that triggers when game
+    //  is finished
 
     fun onConfirmLeaveArena() {
         viewModelScope.launch {
             setCurrentTravelerAvailableUseCase()
-            _uiStateFlow.updateLoaded { arenaState -> arenaState.withForfeitDialog(show = false) }
+            _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }
     }
 
     fun onDismissForfeitDialog() {
-        _uiStateFlow.updateLoaded { arenaState -> arenaState.withForfeitDialog(show = false) }
+        _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {
@@ -223,15 +225,15 @@ class ArenaScreenViewModel(
     }
 
     private fun updateArenaStateSeconds(secondsRemaining: Int) {
-        _uiStateFlow.updateLoaded { arenaState ->
-            arenaState.withSeconds(seconds = secondsRemaining)
+        _uiStateFlow.updateLoaded { screenState ->
+            screenState.copy(secondsRemaining = secondsRemaining)
         }
     }
 
     private suspend fun onTimerExpiration() {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
 
-        when (loadedState) {
+        when (loadedState.arenaState) {
             is ArenaState.WaitingForAllPlayers -> {
                 _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
             }

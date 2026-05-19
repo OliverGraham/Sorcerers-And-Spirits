@@ -18,7 +18,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
 import org.koin.compose.viewmodel.koinViewModel
@@ -31,6 +31,8 @@ internal fun ArenaScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    InterceptBackNavigationToShowForfeitDialog()
+
     CompositionLocalProvider(
         LocalArenaActions provides
             ArenaActions(
@@ -44,7 +46,6 @@ internal fun ArenaScreen(
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
             )
     ) {
-        InterceptBackNavigationToShowForfeitDialog()
         viewModel.eventChannelFlow.collectEvents(onBack = onBack)
         val uiState by viewModel.uiStateFlow.collectAsState()
 
@@ -54,12 +55,12 @@ internal fun ArenaScreen(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ArenaScreen(uiState: UiState<ArenaState>, modifier: Modifier = Modifier) {
+private fun ArenaScreen(uiState: UiState<ArenaScreenState>, modifier: Modifier = Modifier) {
     when (uiState) {
         // TODO Arena: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
 
-        is UiState.Loaded -> LoadedArenaScreen(arenaState = uiState.data, modifier = modifier)
+        is UiState.Loaded -> LoadedArenaScreen(screenState = uiState.data, modifier = modifier)
 
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }

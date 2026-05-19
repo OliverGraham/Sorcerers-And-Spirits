@@ -4,7 +4,9 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
 @Immutable
 data class ArenaScreenState(
@@ -14,15 +16,15 @@ data class ArenaScreenState(
     val showForfeitDialog: Boolean,
     val arenaState: ArenaState,
 ) {
+    val latestMessage: ArenaMessageState? =
+        messages.getOrNull(
+            index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
+        )
 
-    val latestMessage: ArenaMessageState?
-        get() =
-            messages.getOrNull(
-                index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
-            )
+    val filteredMessages: List<ArenaMessageState> =
+        messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
-    val filteredMessages: List<ArenaMessageState>
-        get() = messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
+    val characterClasses = CharacterClass.getAllClasses().map { it.toState() }
 }
 
 @Immutable

@@ -147,4 +147,12 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
             }
             .distinctUntilChanged()
+
+    override suspend fun removeArenaMatch(arenaId: String) {
+        arenaMatchesReference.child(path = arenaId).runTransaction(
+            strategy = ArenaMatchEntity.serializer().nullable
+        ) {
+            null
+        }
+    }
 }

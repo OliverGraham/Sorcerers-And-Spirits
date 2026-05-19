@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.UpdateArenaPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -40,6 +41,7 @@ class ArenaScreenViewModel(
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
+    private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
     private val updateArenaPlayerUseCase: UpdateArenaPlayerUseCase,
 ) : ViewModel() {
@@ -86,8 +88,9 @@ class ArenaScreenViewModel(
                     _uiStateFlow.value = UiState.Loaded(data = nextState)
 
                     if (nextState.arenaState == ArenaState.Finished) {
-                        // TODO Arena: Need to delete ArenaMatch in RTDB when it's over
+                        // TODO Arena: How to handle profile stats
                         setCurrentTravelerAvailableUseCase()
+                        removeArenaMatchUseCase(arenaId = arguments.arenaId)
                         _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
                     }
                 }

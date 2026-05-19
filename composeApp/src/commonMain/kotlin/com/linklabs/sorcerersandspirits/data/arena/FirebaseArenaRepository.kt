@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
@@ -47,12 +48,11 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         displayName: String,
     ) =
         ConnectToArena(
-                arenaReference = arenaMatchesReference.child(path = arenaId),
                 expectedNumberOfPlayers = expectedNumberOfPlayers,
                 userId = userId,
                 displayName = displayName,
             )
-            .invoke()
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
 
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
@@ -154,5 +154,10 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         ) {
             null
         }
+    }
+
+    override suspend fun exitArena(arenaId: String, userId: String) {
+        ExitArena(userId = userId)
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 }

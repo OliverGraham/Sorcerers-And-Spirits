@@ -9,13 +9,12 @@ import dev.gitlive.firebase.database.DatabaseReference
  * Connects a user to the arena. Uses a transaction so the first player initializes the match, and
  * so gets the honor of being first in the game.
  */
-class ConnectToArena(
-    private val arenaReference: DatabaseReference,
+internal class ConnectToArena(
     private val expectedNumberOfPlayers: Int,
     private val userId: String,
     private val displayName: String,
 ) {
-    suspend operator fun invoke(): Boolean =
+    suspend operator fun invoke(arenaReference: DatabaseReference): Boolean =
         try {
             val strategy =
                 nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())

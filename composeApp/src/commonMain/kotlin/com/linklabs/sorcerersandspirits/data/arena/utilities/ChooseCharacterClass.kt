@@ -67,10 +67,7 @@ class ChooseCharacterClass(
     ): ArenaMatchEntity.Combat {
         val (updatedMessages, numberOfNewMessages) =
             messageGenerator.generateCombatStartingMessages(
-                startingCharacterClass =
-                    selectedPlayers.values
-                        .maxBy { it.characterClassEntity.speed }
-                        .characterClassEntity
+                startingCharacterClass = selectedPlayers.getFastestPlayer().characterClassEntity
             )
 
         return ArenaMatchEntity.Combat(

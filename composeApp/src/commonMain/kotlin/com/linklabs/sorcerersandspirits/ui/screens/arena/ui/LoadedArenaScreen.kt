@@ -1,6 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,12 +19,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+
+private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +47,11 @@ internal fun LoadedArenaScreen(
         },
         sheetContent = { ArenaMessageLog(messages = screenState.filteredMessages) },
     ) { paddingValues ->
-        ScreenContent(arenaState = screenState.arenaState, paddingValues = paddingValues)
+        ScreenContent(
+            arenaState = screenState.arenaState,
+            characterClasses = screenState.characterClasses,
+            paddingValues = paddingValues,
+        )
     }
 
     if (screenState.showForfeitDialog) {
@@ -54,25 +62,40 @@ internal fun LoadedArenaScreen(
 @Composable
 private fun ScreenContent(
     arenaState: ArenaState,
+    characterClasses: List<CharacterClassState>,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize().padding(paddingValues = paddingValues)) {
-        Crossfade(targetState = arenaState::class) { _ ->
-            when (arenaState) {
-                is ArenaState.ChoosingClasses -> {
-                    arenaState.ArenaChoosingClasses(
-                        characterClasses = CharacterClass.getAllClasses().map { it.toState() }
-                    )
-                }
+        val transition =
+            updateTransition(targetState = arenaState, label = ARENA_STATE_TRANSITION_LABEL)
 
-                is ArenaState.Combat -> arenaState.ArenaCombat()
+        ArenaStateContent(transitionState = transition, characterClasses = characterClasses)
+    }
+}
 
-                is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
-
-                // TODO Arena: Add some sort of message / UI / something for when the game ends
-                is ArenaState.Finished -> {}
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+private fun ArenaStateContent(
+    transitionState: Transition<ArenaState>,
+    characterClasses: List<CharacterClassState>,
+    modifier: Modifier = Modifier,
+) {
+    transitionState.Crossfade(
+        contentKey = { arenaState -> arenaState::class },
+        modifier = modifier,
+    ) { arenaState ->
+        when (arenaState) {
+            is ArenaState.ChoosingClasses -> {
+                arenaState.ArenaChoosingClasses(characterClasses = characterClasses)
             }
+
+            is ArenaState.Combat -> arenaState.ArenaCombat()
+
+            is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
+
+            // TODO Arena: Add some sort of message / UI / something for when the game ends
+            is ArenaState.Finished -> {}
         }
     }
 }

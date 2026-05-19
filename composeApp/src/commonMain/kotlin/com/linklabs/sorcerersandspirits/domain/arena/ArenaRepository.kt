@@ -25,4 +25,6 @@ interface ArenaRepository {
     ): Boolean
 
     fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?>
+
+    suspend fun removeArenaMatch(arenaId: String)
 }

@@ -86,7 +86,7 @@ internal fun ArenaMatch.toUpdatedState(
                         playerMap.prepareClassSelectionInfo(userId = userId)
                     val activePlayerState = activePlayer.toState()
                     val userPlayerState = userPlayer.toState()
-                    val otherPlayersState = playerMap.getOtherPlayers(userId = userId)
+                    val otherPlayersState = playerMap.getOtherPlayers(activePlayerUserId = activePlayerUserId)
 
                     ArenaState.ChoosingClasses(
                         activePlayer = activePlayerState,
@@ -111,7 +111,7 @@ internal fun ArenaMatch.toUpdatedState(
                     val userPlayerState = userPlayer.toSelectedState()
                     val otherPlayersState =
                         playerMap.values
-                            .filter { player -> player.userId != userId }
+                            .filter { player -> player.userId != activePlayerUserId }
                             .map { player -> player.toSelectedState() }
 
                     ArenaState.Combat(
@@ -169,8 +169,8 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
-private fun Map<String, ArenaPlayer>.getOtherPlayers(userId: String): List<PlayerState> =
-    values.filter { player -> player.userId != userId }.map { player -> player.toState() }
+private fun Map<String, ArenaPlayer>.getOtherPlayers(activePlayerUserId: String): List<PlayerState> =
+    values.filter { player -> player.userId != activePlayerUserId }.map { player -> player.toState() }
 
 private fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
     when (next) {

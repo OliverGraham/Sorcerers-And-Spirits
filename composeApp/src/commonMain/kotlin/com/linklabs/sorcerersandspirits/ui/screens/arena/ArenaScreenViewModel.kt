@@ -156,7 +156,7 @@ class ArenaScreenViewModel(
 
             // TODO Arena: Clean this slop
             val playerMap =
-                (arenaState.otherPlayers + arenaState.userPlayer).associate { playerState ->
+                (arenaState.otherPlayers + arenaState.activePlayer).associate { playerState ->
                     playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
                 }
 

@@ -46,15 +46,19 @@ internal class ExitArena(private val userId: String) {
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(messages = messages, numberOfNewMessages = 0)
                 } else {
+                    val activePlayerUserId = turnInfoEntity.activePlayerUserId
+
                     val nextActivePlayerId =
                         if (activePlayerUserId == userId) {
                             updatedPlayers.getFastestPlayer().userId
                         } else {
                             activePlayerUserId
                         }
+
                     copy(
                         playerEntitiesMap = updatedPlayers,
-                        activePlayerUserId = nextActivePlayerId,
+                        turnInfoEntity =
+                            turnInfoEntity.copy(activePlayerUserId = nextActivePlayerId),
                     )
                 }
             }

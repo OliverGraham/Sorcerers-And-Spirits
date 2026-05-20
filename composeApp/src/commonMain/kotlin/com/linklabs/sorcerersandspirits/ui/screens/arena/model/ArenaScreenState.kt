@@ -51,7 +51,10 @@ sealed interface ArenaState {
         override val isItThisUsersTurn: Boolean,
         val pendingRollType: RollType,
         val pendingTargetUserId: String?,
+        val turnInfo: TurnInfoState,
     ) : ActiveState
+
+    @Immutable data object UserPlayerKnockedOut : ArenaState
 
     @Immutable data object Finished : ArenaState
 }
@@ -78,37 +81,35 @@ internal fun ArenaMatch.toUpdatedState(
             is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
 
             is ArenaMatch.ChoosingClasses -> {
-                val userPlayer = playerMap[userId]
-                if (userPlayer == null) {
-                    ArenaState.Finished
-                } else {
-                    val (unavailable, selections) =
-                        playerMap.prepareClassSelectionInfo(userId = userId)
-                    val activePlayerState = activePlayer.toState()
-                    val userPlayerState = userPlayer.toState()
-                    val otherPlayersState = playerMap.getOtherPlayers(activePlayerUserId = activePlayerUserId)
+                // TODO Arena: Handle this nullability better
+                val userPlayer = playerMap[userId]!!
 
-                    ArenaState.ChoosingClasses(
-                        activePlayer = activePlayerState,
-                        userPlayer = userPlayerState,
-                        otherPlayers = otherPlayersState,
-                        isItThisUsersTurn = activePlayerUserId == userId,
-                        unavailableClasses = unavailable,
-                        classSelections = selections,
-                        selectedClass =
-                            (previousState?.arenaState as? ArenaState.ChoosingClasses)
-                                ?.selectedClass,
-                    )
-                }
+                val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
+                val activePlayerState = activePlayer.toState()
+                val userPlayerState = userPlayer.toState()
+                val otherPlayersState =
+                    playerMap.getOtherPlayers(activePlayerUserId = activePlayerUserId)
+
+                ArenaState.ChoosingClasses(
+                    activePlayer = activePlayerState,
+                    userPlayer = userPlayerState,
+                    otherPlayers = otherPlayersState,
+                    isItThisUsersTurn = activePlayerUserId == userId,
+                    unavailableClasses = unavailable,
+                    classSelections = selections,
+                    selectedClass =
+                        (previousState?.arenaState as? ArenaState.ChoosingClasses)?.selectedClass,
+                )
             }
 
             is ArenaMatch.Combat -> {
                 val userPlayer = playerMap[userId]
                 if (userPlayer == null) {
-                    ArenaState.Finished
+                    ArenaState.UserPlayerKnockedOut
                 } else {
                     val activePlayerState = activePlayer.toSelectedState()
                     val userPlayerState = userPlayer.toSelectedState()
+                    val activePlayerUserId = turnInfo.activePlayerUserId
                     val otherPlayersState =
                         playerMap.values
                             .filter { player -> player.userId != activePlayerUserId }
@@ -121,6 +122,7 @@ internal fun ArenaMatch.toUpdatedState(
                         isItThisUsersTurn = activePlayerUserId == userId,
                         pendingRollType = pendingRollType,
                         pendingTargetUserId = pendingTargetUserId,
+                        turnInfo = turnInfo.toState(),
                     )
                 }
             }
@@ -139,6 +141,7 @@ internal fun ArenaMatch.toUpdatedState(
 
     val timerAction =
         determineTimerAction(previous = previousState?.arenaState, next = nextArenaState)
+
     val finalState =
         when (timerAction) {
             is TimerAction.Start ->
@@ -169,8 +172,12 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
-private fun Map<String, ArenaPlayer>.getOtherPlayers(activePlayerUserId: String): List<PlayerState> =
-    values.filter { player -> player.userId != activePlayerUserId }.map { player -> player.toState() }
+private fun Map<String, ArenaPlayer>.getOtherPlayers(
+    activePlayerUserId: String
+): List<PlayerState> =
+    values
+        .filter { player -> player.userId != activePlayerUserId }
+        .map { player -> player.toState() }
 
 private fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
     when (next) {
@@ -198,6 +205,7 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
             }
         }
 
+        is ArenaState.UserPlayerKnockedOut,
         is ArenaState.Finished -> TimerAction.Stop
     }
 

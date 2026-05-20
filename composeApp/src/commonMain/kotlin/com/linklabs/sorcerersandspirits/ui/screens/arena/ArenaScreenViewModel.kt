@@ -162,12 +162,11 @@ class ArenaScreenViewModel(
 
             performCombatActionUseCase(
                 arenaId = arguments.arenaId,
-                activePlayerUserId = arenaState.activePlayer.userId,
                 playerMap = playerMap,
                 attackerUserId = arenaState.userPlayer.userId,
                 targetUserId = targetUserId,
                 rollType = arenaState.pendingRollType,
-                messageStartIndex = loadedState.messages.size,
+                turnInfo = arenaState.turnInfo.toDomain(),
             )
         }
     }
@@ -215,6 +214,13 @@ class ArenaScreenViewModel(
             removeArenaMatchUseCase(arenaId = arguments.arenaId)
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }
+
+        // TODO Arena: next state UserKnockedOut -> ask if they want to observe & play in another
+        //  match, or leave
+        //  update stats only after all matches
+        //  Match 1 to n
+        //  Round 1 to n
+        //  Turn 1 to n
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {
@@ -248,6 +254,10 @@ class ArenaScreenViewModel(
             }
 
             is ArenaState.Combat -> {
+                // TODO
+            }
+
+            is ArenaState.UserPlayerKnockedOut -> {
                 // TODO
             }
 

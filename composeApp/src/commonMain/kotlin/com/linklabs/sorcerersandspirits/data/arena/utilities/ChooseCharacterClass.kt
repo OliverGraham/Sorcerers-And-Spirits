@@ -5,9 +5,10 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.TurnInfoEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
-class ChooseCharacterClass(
+internal class ChooseCharacterClass(
     private val arenaReference: DatabaseReference,
     private val selectedArenaPlayer: ArenaPlayerEntity.Selected,
     private val nextPlayerId: String,
@@ -72,9 +73,14 @@ class ChooseCharacterClass(
 
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = selectedPlayers,
-            activePlayerUserId = nextPlayerId,
             messages = updatedMessages,
             numberOfNewMessages = numberOfNewMessages,
+            turnInfoEntity =
+                TurnInfoEntity(
+                    activePlayerUserId = nextPlayerId,
+                    actedThisRoundUserIds = emptySet(),
+                    roundNumber = 1,
+                ),
         )
     }
 

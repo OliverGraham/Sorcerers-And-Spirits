@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TurnInfoState
 
 // TODO Arena: update when state changes to use enums to determine the text (using resources)
 
@@ -84,6 +85,12 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             isItThisUsersTurn = isItThisUsersTurn,
             pendingRollType = RollType.ArmorClass,
             pendingTargetUserId = null,
+            turnInfo =
+                TurnInfoState(
+                    activePlayerUserId = "",
+                    actedThisRoundUserIds = emptySet(),
+                    roundNumber = 1,
+                ),
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

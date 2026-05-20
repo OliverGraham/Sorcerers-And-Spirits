@@ -77,28 +77,28 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             val allMessages = existingMatch.messages + newMessages
 
             when (result) {
-                is CombatResult.Miss -> {
+                is CombatResult.Miss ->
                     existingMatch.copy(
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
-                        activePlayerUserId = result.nextActivePlayerId,
+                        turnInfoEntity = result.nextTurnInfo.toEntity(),
                         pendingRollType = RollType.ArmorClass,
                         pendingTargetUserId = null,
                     )
-                }
 
-                is CombatResult.Hit -> {
+                is CombatResult.Hit ->
                     existingMatch.copy(
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
                         pendingRollType = RollType.Health,
                         pendingTargetUserId = result.targetId,
                     )
-                }
 
                 is CombatResult.DamageDealt -> {
                     val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
-                    val target = updatedPlayerMap[result.targetId]!!
+                    val target =
+                        updatedPlayerMap[result.targetId] ?: return@runTransaction existingMatch
+
                     updatedPlayerMap[result.targetId] =
                         target.copy(
                             characterClassEntity =
@@ -109,7 +109,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
                         playerEntitiesMap = updatedPlayerMap,
-                        activePlayerUserId = result.nextActivePlayerId,
+                        turnInfoEntity = result.nextTurnInfo.toEntity(),
                         pendingRollType = RollType.ArmorClass,
                         pendingTargetUserId = null,
                     )
@@ -123,18 +123,17 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
                         playerEntitiesMap = updatedPlayerMap,
-                        activePlayerUserId = result.nextActivePlayerId,
+                        turnInfoEntity = result.nextTurnInfo.toEntity(),
                         pendingRollType = RollType.ArmorClass,
                         pendingTargetUserId = null,
                     )
                 }
 
-                is CombatResult.Victory -> {
+                is CombatResult.Victory ->
                     ArenaMatchEntity.Finished(
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
                     )
-                }
             }
         }
     }

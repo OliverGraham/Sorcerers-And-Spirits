@@ -21,10 +21,10 @@ sealed interface ArenaMatch {
         override val messages: List<IncomingArenaMessage>,
         override val numberOfNewMessages: Int,
         val activePlayer: ArenaPlayer.Selected,
-        val activePlayerUserId: String,
         val playerMap: Map<String, ArenaPlayer.Selected>,
         val pendingRollType: RollType,
         val pendingTargetUserId: String?,
+        val turnInfo: TurnInfo,
     ) : ArenaMatch
 
     data class Finished(

@@ -62,6 +62,23 @@ enum class CharacterClassType {
     Paladin,
 }
 
+// TODO replace enum class OffensiveAbility and enum class DefensiveAbility with these definitions
+/*
+sealed interface Ability
+sealed interface ActivatedAbility : Ability
+sealed interface DefensiveAbility : Ability
+sealed interface OffensiveAbility : Ability
+sealed interface PassiveAbility : Ability
+
+data object KillingMomentum : OffensiveAbility, PassiveAbility
+data object SpellNova : OffensiveAbility, PassiveAbility
+data object ReflectiveShield : OffensiveAbility, PassiveAbility
+
+data object Blink: DefensiveAbility, PassiveAbility
+
+data object PrepareAnAttack : OffensiveAbility, ActivatedAbility
+*/
+
 enum class OffensiveAbility {
     KillingMomentum,
     SpellNova,

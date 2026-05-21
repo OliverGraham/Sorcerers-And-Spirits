@@ -73,9 +73,3 @@ sealed interface OutgoingArenaMessage {
 }
 
 data class CharacterClassMessageInfo(val className: String, val type: CharacterClassType)
-
-enum class RollType {
-    Ability,
-    ArmorClass,
-    Health,
-}

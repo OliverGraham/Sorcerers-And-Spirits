@@ -50,6 +50,7 @@ sealed interface ArenaState {
         override val playerMap: Map<UserId, PlayerState.Selected>,
         override val userPlayerId: String,
         val turnInfo: TurnInfoState,
+        val currentDiceRoll: DiceRollState?,
     ) : ActiveState {
         override val activePlayerUserId = turnInfo.activePlayerUserId
         val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
@@ -105,6 +106,7 @@ internal fun ArenaMatch.toUpdatedState(
                         playerMap = playerMap.mapValues { it.value.toSelectedState() },
                         userPlayerId = userId,
                         turnInfo = turnInfo.toState(),
+                        currentDiceRoll = currentDiceRoll?.toState(),
                     )
                 }
             }

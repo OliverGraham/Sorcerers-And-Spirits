@@ -81,6 +81,7 @@ internal class ChooseCharacterClass(
                     actedThisRoundUserIds = emptySet(),
                     roundNumber = 1,
                 ),
+            currentDiceRollEntity = null,
         )
     }
 

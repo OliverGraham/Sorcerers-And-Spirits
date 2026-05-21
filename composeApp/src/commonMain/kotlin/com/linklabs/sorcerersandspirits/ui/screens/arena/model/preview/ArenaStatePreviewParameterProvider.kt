@@ -83,6 +83,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
                     actedThisRoundUserIds = emptySet(),
                     roundNumber = 1,
                 ),
+            currentDiceRoll = null,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

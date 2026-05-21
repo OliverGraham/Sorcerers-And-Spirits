@@ -34,6 +34,7 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val turnInfoEntity: TurnInfoEntity,
+        val currentDiceRollEntity: DiceRollEntity?,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -96,6 +97,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                     numberOfNewMessages = numberOfNewMessages,
                     activePlayer = activePlayer,
                     turnInfo = turnInfoEntity.toDomain(),
+                    currentDiceRoll = currentDiceRollEntity?.toDomain(),
                 )
             }
         }
@@ -136,6 +138,7 @@ internal fun ArenaMatch.toEntity(
                 playerEntitiesMap =
                     playerMap.mapValues { it.value.toEntity() as ArenaPlayerEntity.Selected },
                 turnInfoEntity = turnInfo.toEntity(),
+                currentDiceRollEntity = currentDiceRoll?.toEntity(),
             )
 
         is ArenaMatch.Finished ->

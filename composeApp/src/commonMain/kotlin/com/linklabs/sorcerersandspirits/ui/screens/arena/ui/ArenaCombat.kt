@@ -41,7 +41,7 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 // TODO Arena: Lots of slop to update
 
-private const val ARENA_COMBAT_TRANSITION_LABEL = "ArenaCombatTransition"
+private const val TRANSITION_LABEL = "ArenaCombatTransition"
 private const val GRID_CARDS_KEY = "GridCardsKey"
 private const val ROLL_DICE_KEY = "RollDiceKey"
 
@@ -49,8 +49,7 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = activePlayerUserId, label = ARENA_COMBAT_TRANSITION_LABEL) { _
-            ->
+        AnimatedContent(targetState = activePlayerUserId, label = TRANSITION_LABEL) { _ ->
             SharedTransitionProvider(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,

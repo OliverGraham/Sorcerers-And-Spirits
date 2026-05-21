@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.runtime.Composable
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollTypeState
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_message_chose_character_class
@@ -35,9 +35,12 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.DiceRoll -> {
             val typeStr =
                 when (rollType) {
-                    is RollType.AbilityRoll -> "ability (${rollType.ability::class.simpleName})"
-                    RollType.ArmorClassRoll -> "Armor Class"
-                    RollType.HealthRoll -> "Health"
+                    is RollTypeState.AbilityRoll ->
+                        "ability (${rollType.ability::class.simpleName})"
+
+                    RollTypeState.ArmorClassRoll -> "Armor Class"
+
+                    RollTypeState.HealthRoll -> "Health"
                 }
             "$rollerClassName rolled $rollValue for $typeStr"
         }
@@ -45,9 +48,9 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.AttackResult -> {
             val action =
                 when (rollType) {
-                    is RollType.AbilityRoll -> "ability usage"
-                    RollType.ArmorClassRoll -> "attack"
-                    RollType.HealthRoll -> "kill"
+                    is RollTypeState.AbilityRoll -> "ability usage"
+                    RollTypeState.ArmorClassRoll -> "attack"
+                    RollTypeState.HealthRoll -> "kill"
                 }
             val result = if (isHit) "HIT!" else "MISS"
             "$attackerClassName's $action against $targetClassName: $result"

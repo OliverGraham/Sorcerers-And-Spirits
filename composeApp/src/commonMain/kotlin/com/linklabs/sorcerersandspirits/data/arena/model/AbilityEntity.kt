@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.game.Ability
 import com.linklabs.sorcerersandspirits.domain.game.Anticipation
 import com.linklabs.sorcerersandspirits.domain.game.Blink
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -13,23 +14,49 @@ import kotlinx.serialization.Serializable
 
 @Serializable sealed interface AbilityEntity
 
+@Serializable sealed interface ActivatedAbilityEntity : AbilityEntity
+
 @Serializable sealed interface DefensiveAbilityEntity : AbilityEntity
 
 @Serializable sealed interface OffensiveAbilityEntity : AbilityEntity
 
-@Serializable data object KillingMomentumEntity : OffensiveAbilityEntity
+@Serializable sealed interface PassiveAbilityEntity : AbilityEntity
 
-@Serializable data object SpellNovaEntity : OffensiveAbilityEntity
+@Serializable data object KillingMomentumEntity : OffensiveAbilityEntity, PassiveAbilityEntity
 
-@Serializable data object ReflectiveShieldEntity : OffensiveAbilityEntity
+@Serializable data object SpellNovaEntity : OffensiveAbilityEntity, PassiveAbilityEntity
 
-@Serializable data object BlinkEntity : DefensiveAbilityEntity
+@Serializable data object ReflectiveShieldEntity : OffensiveAbilityEntity, PassiveAbilityEntity
 
-@Serializable data object AnticipationEntity : DefensiveAbilityEntity
+@Serializable data object BlinkEntity : DefensiveAbilityEntity, PassiveAbilityEntity
 
-@Serializable data object HolyPrayerEntity : DefensiveAbilityEntity
+@Serializable data object AnticipationEntity : DefensiveAbilityEntity, PassiveAbilityEntity
 
-@Serializable data object PrepareAnAttackEntity : OffensiveAbilityEntity
+@Serializable data object HolyPrayerEntity : DefensiveAbilityEntity, PassiveAbilityEntity
+
+@Serializable data object PrepareAnAttackEntity : OffensiveAbilityEntity, ActivatedAbilityEntity
+
+internal fun Ability.toEntity() =
+    when (this) {
+        PrepareAnAttack -> PrepareAnAttackEntity
+        Anticipation -> AnticipationEntity
+        Blink -> BlinkEntity
+        HolyPrayer -> HolyPrayerEntity
+        KillingMomentum -> KillingMomentumEntity
+        ReflectiveShield -> ReflectiveShieldEntity
+        SpellNova -> SpellNovaEntity
+    }
+
+internal fun AbilityEntity.toDomain() =
+    when (this) {
+        PrepareAnAttackEntity -> PrepareAnAttack
+        AnticipationEntity -> Anticipation
+        BlinkEntity -> Blink
+        HolyPrayerEntity -> HolyPrayer
+        KillingMomentumEntity -> KillingMomentum
+        ReflectiveShieldEntity -> ReflectiveShield
+        SpellNovaEntity -> SpellNova
+    }
 
 internal fun OffensiveAbility.toEntity(): OffensiveAbilityEntity =
     when (this) {

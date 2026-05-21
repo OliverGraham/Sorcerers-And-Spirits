@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -42,7 +41,7 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val rollerClassName: String,
         val rollValue: Int,
-        val rollType: RollType,
+        val rollType: RollTypeEntity,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -52,7 +51,7 @@ sealed interface ArenaMessageEntity {
         val attackerClassName: String,
         val targetClassName: String,
         val isHit: Boolean,
-        val rollType: RollType,
+        val rollType: RollTypeEntity,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -109,7 +108,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage =
                 id = id,
                 rollerClassName = rollerClassName,
                 rollValue = rollValue,
-                rollType = rollType,
+                rollType = rollType.toDomain(),
             )
 
         is ArenaMessageEntity.AttackResult ->
@@ -118,7 +117,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage =
                 attackerClassName = attackerClassName,
                 targetClassName = targetClassName,
                 isHit = isHit,
-                rollType = rollType,
+                rollType = rollType.toDomain(),
             )
 
         is ArenaMessageEntity.TargetDead ->
@@ -158,7 +157,7 @@ internal fun IncomingArenaMessage.toEntity(): ArenaMessageEntity =
                 id = id,
                 rollerClassName = rollerClassName,
                 rollValue = rollValue,
-                rollType = rollType,
+                rollType = rollType.toEntity(),
             )
 
         is IncomingArenaMessage.AttackResult ->
@@ -167,7 +166,7 @@ internal fun IncomingArenaMessage.toEntity(): ArenaMessageEntity =
                 attackerClassName = attackerClassName,
                 targetClassName = targetClassName,
                 isHit = isHit,
-                rollType = rollType,
+                rollType = rollType.toEntity(),
             )
 
         is IncomingArenaMessage.TargetDead ->
@@ -204,7 +203,7 @@ internal fun OutgoingArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 rollerClassName = rollerClassName,
                 rollValue = rollValue,
-                rollType = rollType,
+                rollType = rollType.toEntity(),
             )
 
         is OutgoingArenaMessage.AttackResult ->
@@ -213,7 +212,7 @@ internal fun OutgoingArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 attackerClassName = attackerClassName,
                 targetClassName = targetClassName,
                 isHit = isHit,
-                rollType = rollType,
+                rollType = rollType.toEntity(),
             )
 
         is OutgoingArenaMessage.TargetDead ->

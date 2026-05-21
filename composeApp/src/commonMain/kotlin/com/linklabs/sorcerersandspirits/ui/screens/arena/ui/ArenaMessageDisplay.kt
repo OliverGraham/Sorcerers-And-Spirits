@@ -32,10 +32,23 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 characterClassInfo.className,
             )
 
-        is ArenaMessageState.DiceRoll -> "$rollerClassName rolled $rollValue for $rollType"
+        is ArenaMessageState.DiceRoll -> {
+            val typeStr =
+                when (rollType) {
+                    is RollType.AbilityRoll -> "ability (${rollType.ability::class.simpleName})"
+                    RollType.ArmorClassRoll -> "Armor Class"
+                    RollType.HealthRoll -> "Health"
+                }
+            "$rollerClassName rolled $rollValue for $typeStr"
+        }
 
         is ArenaMessageState.AttackResult -> {
-            val action = if (rollType == RollType.ArmorClass) "attack" else "kill"
+            val action =
+                when (rollType) {
+                    is RollType.AbilityRoll -> "ability usage"
+                    RollType.ArmorClassRoll -> "attack"
+                    RollType.HealthRoll -> "kill"
+                }
             val result = if (isHit) "HIT!" else "MISS"
             "$attackerClassName's $action against $targetClassName: $result"
         }

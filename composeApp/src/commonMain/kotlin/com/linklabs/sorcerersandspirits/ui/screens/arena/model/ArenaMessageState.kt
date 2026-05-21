@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 @Immutable
@@ -34,7 +35,7 @@ sealed interface ArenaMessageState {
         override val id: String,
         val rollerClassName: String,
         val rollValue: Int,
-        val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+        val rollType: RollType,
     ) : ArenaMessageState
 
     @Immutable
@@ -43,7 +44,7 @@ sealed interface ArenaMessageState {
         val attackerClassName: String,
         val targetClassName: String,
         val isHit: Boolean,
-        val rollType: com.linklabs.sorcerersandspirits.domain.arena.model.RollType,
+        val rollType: RollType,
     ) : ArenaMessageState
 
     @Immutable

@@ -40,7 +40,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
         val result =
             when (rollType) {
-                RollType.ArmorClass ->
+                RollType.ArmorClassRoll ->
                     handleArmorClassRoll(
                         turnInfo = turnInfo,
                         playerMap = playerMap,
@@ -50,7 +50,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                         newMessages = newMessages,
                     )
 
-                RollType.Health ->
+                RollType.HealthRoll ->
                     handleHealthRoll(
                         turnInfo = turnInfo,
                         playerMap = playerMap,
@@ -60,7 +60,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                         newMessages = newMessages,
                     )
 
-                RollType.Ability -> return
+                is RollType.AbilityRoll -> return
             }
 
         arenaRepository.applyCombatResult(arenaId = arenaId, result = result)
@@ -82,7 +82,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                     attackerClassName = attacker.characterClass.className,
                     targetClassName = target.characterClass.className,
                     isHit = isHit,
-                    rollType = RollType.ArmorClass,
+                    rollType = RollType.ArmorClassRoll,
                 )
         )
 
@@ -117,7 +117,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                     attackerClassName = attacker.characterClass.className,
                     targetClassName = target.characterClass.className,
                     isHit = isDead,
-                    rollType = RollType.Health,
+                    rollType = RollType.HealthRoll,
                 )
         )
 

@@ -95,7 +95,8 @@ private fun ArenaStateContent(
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
             is ArenaState.UserPlayerKnockedOut -> {
-                // TODO Arena: show dialog asking if they want to see, or keep observing the match
+                // TODO Arena: show dialog asking if they want to exit, or keep observing the match
+                //  and therefore join the match
             }
 
             // TODO Arena: Add some sort of message / UI / something for when the game ends

@@ -63,7 +63,7 @@ class PerformCombatActionUseCaseTest {
             playerMap = playerMap,
             attackerUserId = rogue.userId,
             targetUserId = paladin.userId,
-            rollType = RollType.ArmorClass,
+            rollType = RollType.ArmorClassRoll,
             turnInfo = turnInfo,
         )
 
@@ -97,7 +97,7 @@ class PerformCombatActionUseCaseTest {
             playerMap = playerMap,
             attackerUserId = rogue.userId,
             targetUserId = paladin.userId,
-            rollType = RollType.ArmorClass,
+            rollType = RollType.ArmorClassRoll,
             turnInfo = turnInfo,
         )
 
@@ -129,7 +129,7 @@ class PerformCombatActionUseCaseTest {
             playerMap = playerMap,
             attackerUserId = rogue.userId,
             targetUserId = mage.userId,
-            rollType = RollType.Health,
+            rollType = RollType.HealthRoll,
             turnInfo = turnInfo,
         )
 
@@ -163,7 +163,7 @@ class PerformCombatActionUseCaseTest {
             playerMap = playerMap,
             attackerUserId = paladin.userId,
             targetUserId = mage.userId,
-            rollType = RollType.Health,
+            rollType = RollType.HealthRoll,
             turnInfo = turnInfo,
         )
 
@@ -198,7 +198,7 @@ class PerformCombatActionUseCaseTest {
             playerMap = survivorsMap,
             attackerUserId = rogue.userId,
             targetUserId = paladin.userId,
-            rollType = RollType.Health,
+            rollType = RollType.HealthRoll,
             turnInfo = turnInfo,
         )
 

@@ -1,9 +1,12 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
-// TODO: RollType.Ability needs to be changed to sealed interface Ability
+import com.linklabs.sorcerersandspirits.domain.game.Ability
 
-enum class RollType {
-    Ability,
-    ArmorClass,
-    Health,
+sealed interface RollType {
+
+    data class AbilityRoll(val ability: Ability) : RollType
+
+    data object ArmorClassRoll : RollType
+
+    data object HealthRoll : RollType
 }

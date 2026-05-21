@@ -81,8 +81,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
                         turnInfoEntity = result.nextTurnInfo.toEntity(),
-                        pendingRollType = RollType.ArmorClass,
-                        pendingTargetUserId = null,
                     )
 
                 is CombatResult.Hit ->

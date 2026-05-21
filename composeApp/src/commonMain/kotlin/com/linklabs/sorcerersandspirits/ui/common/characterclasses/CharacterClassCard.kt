@@ -136,8 +136,14 @@ private fun Body(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(text = "Offense: $offensiveAbility", style = MaterialTheme.typography.bodyMedium)
-        Text(text = "Defense: $defensiveAbility", style = MaterialTheme.typography.bodyMedium)
+        Text(
+            text = "Offense: ${offensiveAbility::class.simpleName}",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Text(
+            text = "Defense: ${defensiveAbility::class.simpleName}",
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 

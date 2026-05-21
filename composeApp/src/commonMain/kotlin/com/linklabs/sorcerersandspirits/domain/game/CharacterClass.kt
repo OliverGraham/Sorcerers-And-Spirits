@@ -23,8 +23,8 @@ data class CharacterClass(
                 hitPoints = 6,
                 armorClass = 5,
                 speed = 8,
-                offensiveAbility = OffensiveAbility.KillingMomentum,
-                defensiveAbility = DefensiveAbility.Anticipation,
+                offensiveAbility = KillingMomentum,
+                defensiveAbility = Anticipation,
             )
 
         fun getMage() =
@@ -33,8 +33,8 @@ data class CharacterClass(
                 hitPoints = 4,
                 armorClass = 4,
                 speed = 2,
-                offensiveAbility = OffensiveAbility.SpellNova,
-                defensiveAbility = DefensiveAbility.Blink,
+                offensiveAbility = SpellNova,
+                defensiveAbility = Blink,
             )
 
         fun getPaladin() =
@@ -43,8 +43,8 @@ data class CharacterClass(
                 hitPoints = 7,
                 armorClass = 7,
                 speed = 1,
-                offensiveAbility = OffensiveAbility.ReflectiveShield,
-                defensiveAbility = DefensiveAbility.HolyPrayer,
+                offensiveAbility = ReflectiveShield,
+                defensiveAbility = HolyPrayer,
             )
 
         fun fromType(type: CharacterClassType) =
@@ -62,31 +62,28 @@ enum class CharacterClassType {
     Paladin,
 }
 
-// TODO replace enum class OffensiveAbility and enum class DefensiveAbility with these definitions
-/*
+// TODO: I hate this
+
 sealed interface Ability
+
 sealed interface ActivatedAbility : Ability
+
 sealed interface DefensiveAbility : Ability
+
 sealed interface OffensiveAbility : Ability
+
 sealed interface PassiveAbility : Ability
 
 data object KillingMomentum : OffensiveAbility, PassiveAbility
+
 data object SpellNova : OffensiveAbility, PassiveAbility
+
 data object ReflectiveShield : OffensiveAbility, PassiveAbility
 
-data object Blink: DefensiveAbility, PassiveAbility
+data object Anticipation : DefensiveAbility, PassiveAbility
+
+data object Blink : DefensiveAbility, PassiveAbility
+
+data object HolyPrayer : DefensiveAbility, PassiveAbility
 
 data object PrepareAnAttack : OffensiveAbility, ActivatedAbility
-*/
-
-enum class OffensiveAbility {
-    KillingMomentum,
-    SpellNova,
-    ReflectiveShield,
-}
-
-enum class DefensiveAbility {
-    Anticipation,
-    Blink,
-    HolyPrayer,
-}

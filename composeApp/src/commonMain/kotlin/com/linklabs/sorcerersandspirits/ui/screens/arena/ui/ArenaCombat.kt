@@ -19,24 +19,29 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCard
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.RollDiceArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TurnInfoState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 // TODO Arena: Lots of slop to update
 
+private const val ARENA_COMBAT_TRANSITION_LABEL = "ArenaCombatTransition"
 private const val GRID_CARDS_KEY = "GridCardsKey"
 private const val ROLL_DICE_KEY = "RollDiceKey"
 
@@ -44,7 +49,8 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = activePlayer.userId, label = "ArenaCombatTransition") { _ ->
+        AnimatedContent(targetState = activePlayerUserId, label = ARENA_COMBAT_TRANSITION_LABEL) { _
+            ->
             SharedTransitionProvider(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,
@@ -57,30 +63,34 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
+    var rollDiceArguments by remember { mutableStateOf<RollDiceArguments?>(value = null) }
+
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item(key = activePlayer.userId) {
-            ActivePlayerCard(activePlayer = activePlayer, isItThisUsersTurn = isItThisUsersTurn)
+        item(key = activePlayerUserId) {
+            ActivePlayerCard(
+                activePlayer = playerMap.getValue(key = activePlayerUserId),
+                isItThisUsersTurn = isItThisUsersTurn,
+            )
         }
 
         item(key = GRID_CARDS_KEY) {
             GridCards(
-                otherPlayers = otherPlayers,
-                userPlayerId = userPlayer.userId,
+                otherPlayers = otherPlayers.values.toList(),
+                userPlayerId = userPlayerId,
                 isItThisUsersTurn = isItThisUsersTurn,
-                pendingTargetUserId = pendingTargetUserId,
+                targetedOpponentId = rollDiceArguments?.opponentUserId,
+                onUpdateTargetedOpponentId = { opponentId ->
+                    rollDiceArguments = rollDiceArguments?.copy(opponentUserId = opponentId)
+                },
             )
         }
 
         if (isItThisUsersTurn) {
             item(key = ROLL_DICE_KEY) {
-                RollDiceSection(
-                    pendingRollType = pendingRollType,
-                    otherPlayers = otherPlayers,
-                    pendingTargetUserId = pendingTargetUserId,
-                )
+                RollDiceSection(otherPlayers = otherPlayers, rollDiceArguments = rollDiceArguments)
             }
         }
     }
@@ -108,7 +118,8 @@ private fun GridCards(
     otherPlayers: List<PlayerState.Selected>,
     userPlayerId: String,
     isItThisUsersTurn: Boolean,
-    pendingTargetUserId: String?,
+    targetedOpponentId: String?,
+    onUpdateTargetedOpponentId: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -123,7 +134,8 @@ private fun GridCards(
                 otherPlayer = otherPlayer,
                 isUser = otherPlayer.userId == userPlayerId,
                 isItThisUsersTurn = isItThisUsersTurn,
-                pendingTargetUserId = pendingTargetUserId,
+                targetedOpponentId = targetedOpponentId,
+                onUpdateTargetedOpponentId = onUpdateTargetedOpponentId,
             )
         }
     }
@@ -134,54 +146,48 @@ private fun GridPlayerCard(
     otherPlayer: PlayerState.Selected,
     isUser: Boolean,
     isItThisUsersTurn: Boolean,
-    pendingTargetUserId: String?,
+    targetedOpponentId: String?,
+    onUpdateTargetedOpponentId: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isTargeted = otherPlayer.userId == pendingTargetUserId
-    val onAttack = ArenaActionsProvider.current.onAttack
+    val isTargeted = otherPlayer.userId == targetedOpponentId
 
     CharacterClassCard(
         characterClass = otherPlayer.characterClass,
         isSelected = isTargeted,
-        enabled = isItThisUsersTurn && pendingTargetUserId == null && !isUser,
-        selectedBy =
-            when {
-                isTargeted -> "TARGETED"
-                isUser -> "You"
-                else -> otherPlayer.displayName
-            },
+        enabled = isItThisUsersTurn && targetedOpponentId == null && !isUser,
+        selectedBy = otherPlayer.displayName,
         modifier = modifier.sharedBounds(key = otherPlayer.userId),
-        onClick = {
-            if (isItThisUsersTurn && !isUser) {
-                onAttack(otherPlayer.userId)
-            }
-        },
+        onClick = { onUpdateTargetedOpponentId(otherPlayer.userId) },
     )
 }
 
 @Composable
 private fun RollDiceSection(
-    pendingRollType: RollType?,
-    otherPlayers: List<PlayerState.Selected>,
-    pendingTargetUserId: String?,
+    otherPlayers: Map<UserId, PlayerState.Selected>,
+    rollDiceArguments: RollDiceArguments?,
 ) {
-    val buttonText =
-        when (pendingRollType) {
-            RollType.ArmorClass ->
-                "Roll to Hit (AC: ${otherPlayers.find { it.userId == pendingTargetUserId }?.characterClass?.armorClass ?: "?"})"
+    // TODO: Figure out correct way
+    val buttonText = "Roll Dice"
 
-            RollType.Health ->
-                "Roll for KILL! (HP: ${otherPlayers.find { it.userId == pendingTargetUserId }?.characterClass?.hitPoints ?: "?"})"
+    /*
+    when (pendingRollType) {
+        RollType.ArmorClass ->
+            "Roll to Hit (AC: ${otherPlayers[targetedOpponentId]?.characterClass?.armorClass ?: "?"})"
 
-            else -> "Roll Dice"
-        }
+        RollType.Health ->
+            "Roll for KILL! (HP: ${otherPlayers[targetedOpponentId]?.characterClass?.hitPoints ?: "?"})"
+
+        else -> "Roll Dice"
+    }
+     */
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        if (pendingTargetUserId == null) {
+        if (rollDiceArguments?.opponentUserId == null) {
             Text(
                 text = "Tap an enemy card to select your target",
                 style = MaterialTheme.typography.bodyMedium,
@@ -191,8 +197,8 @@ private fun RollDiceSection(
 
         val onRollDice = ArenaActionsProvider.current.onRollDice
         Button(
-            onClick = onRollDice,
-            enabled = pendingTargetUserId != null,
+            onClick = { onRollDice },
+            enabled = rollDiceArguments?.opponentUserId != null,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(text = buttonText)
@@ -210,22 +216,6 @@ private fun ArenaCombatYourTurnPreview() {
             PlayerState.Selected(userId = "1", displayName = "User", characterClass = rogue)
         val otherPlayer =
             PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
-
-        ArenaState.Combat(
-                activePlayer = userPlayer,
-                userPlayer = userPlayer,
-                otherPlayers = listOf(otherPlayer),
-                isItThisUsersTurn = true,
-                pendingRollType = RollType.ArmorClass,
-                pendingTargetUserId = null,
-                turnInfo =
-                    TurnInfoState(
-                        activePlayerUserId = "",
-                        actedThisRoundUserIds = emptySet(),
-                        roundNumber = 1,
-                    ),
-            )
-            .ArenaCombat()
     }
 }
 
@@ -242,21 +232,5 @@ private fun ArenaCombatEnemyTurnPreview() {
             PlayerState.Selected(userId = "2", displayName = "Enemy 1", characterClass = mage)
         val enemy2 =
             PlayerState.Selected(userId = "3", displayName = "Enemy 2", characterClass = paladin)
-
-        ArenaState.Combat(
-                activePlayer = enemy1,
-                userPlayer = userPlayer,
-                otherPlayers = listOf(userPlayer, enemy2),
-                isItThisUsersTurn = false,
-                pendingRollType = RollType.ArmorClass,
-                pendingTargetUserId = null,
-                turnInfo =
-                    TurnInfoState(
-                        activePlayerUserId = "",
-                        actedThisRoundUserIds = emptySet(),
-                        roundNumber = 1,
-                    ),
-            )
-            .ArenaCombat()
     }
 }

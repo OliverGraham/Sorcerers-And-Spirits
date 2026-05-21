@@ -13,7 +13,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -90,8 +89,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     existingMatch.copy(
                         messages = allMessages,
                         numberOfNewMessages = newMessages.size,
-                        pendingRollType = RollType.Health,
-                        pendingTargetUserId = result.targetId,
                     )
 
                 is CombatResult.DamageDealt -> {
@@ -110,8 +107,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                         numberOfNewMessages = newMessages.size,
                         playerEntitiesMap = updatedPlayerMap,
                         turnInfoEntity = result.nextTurnInfo.toEntity(),
-                        pendingRollType = RollType.ArmorClass,
-                        pendingTargetUserId = null,
                     )
                 }
 
@@ -124,8 +119,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                         numberOfNewMessages = newMessages.size,
                         playerEntitiesMap = updatedPlayerMap,
                         turnInfoEntity = result.nextTurnInfo.toEntity(),
-                        pendingRollType = RollType.ArmorClass,
-                        pendingTargetUserId = null,
                     )
                 }
 

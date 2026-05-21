@@ -3,8 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
@@ -34,25 +34,27 @@ sealed interface ArenaState {
 
     @Immutable
     data class ChoosingClasses(
-        override val activePlayer: PlayerState,
-        override val userPlayer: PlayerState,
-        override val otherPlayers: List<PlayerState>,
-        override val isItThisUsersTurn: Boolean,
+        override val playerMap: Map<UserId, PlayerState>,
+        override val userPlayerId: String,
+        override val activePlayerUserId: String,
         val selectedClass: CharacterClassState?,
         val unavailableClasses: List<CharacterClassState>,
         val classSelections: Map<CharacterClassState, String>,
-    ) : ActiveState
+    ) : ActiveState {
+        val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
+        val isItThisUsersTurn = activePlayerUserId == userPlayerId
+    }
 
     @Immutable
     data class Combat(
-        override val activePlayer: PlayerState.Selected,
-        override val userPlayer: PlayerState.Selected,
-        override val otherPlayers: List<PlayerState.Selected>,
-        override val isItThisUsersTurn: Boolean,
-        val pendingRollType: RollType,
-        val pendingTargetUserId: String?,
+        override val playerMap: Map<UserId, PlayerState.Selected>,
+        override val userPlayerId: String,
         val turnInfo: TurnInfoState,
-    ) : ActiveState
+    ) : ActiveState {
+        override val activePlayerUserId = turnInfo.activePlayerUserId
+        val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
+        val isItThisUsersTurn = activePlayerUserId == userPlayerId
+    }
 
     @Immutable data object UserPlayerKnockedOut : ArenaState
 
@@ -61,10 +63,9 @@ sealed interface ArenaState {
 
 @Immutable
 sealed interface ActiveState : ArenaState {
-    val activePlayer: PlayerState
-    val userPlayer: PlayerState
-    val otherPlayers: List<PlayerState>
-    val isItThisUsersTurn: Boolean
+    val playerMap: Map<UserId, PlayerState>
+    val userPlayerId: String
+    val activePlayerUserId: String
 }
 
 internal fun ArenaMatch.toUpdatedState(
@@ -81,20 +82,12 @@ internal fun ArenaMatch.toUpdatedState(
             is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
 
             is ArenaMatch.ChoosingClasses -> {
-                // TODO Arena: Handle this nullability better
-                val userPlayer = playerMap[userId]!!
-
                 val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
-                val activePlayerState = activePlayer.toState()
-                val userPlayerState = userPlayer.toState()
-                val otherPlayersState =
-                    playerMap.getOtherPlayers(activePlayerUserId = activePlayerUserId)
 
                 ArenaState.ChoosingClasses(
-                    activePlayer = activePlayerState,
-                    userPlayer = userPlayerState,
-                    otherPlayers = otherPlayersState,
-                    isItThisUsersTurn = activePlayerUserId == userId,
+                    playerMap = playerMap.mapValues { it.value.toState() },
+                    activePlayerUserId = activePlayer.userId,
+                    userPlayerId = userId,
                     unavailableClasses = unavailable,
                     classSelections = selections,
                     selectedClass =
@@ -103,25 +96,14 @@ internal fun ArenaMatch.toUpdatedState(
             }
 
             is ArenaMatch.Combat -> {
+                // TODO: Pass along UserPlayerKnockedOut?
                 val userPlayer = playerMap[userId]
                 if (userPlayer == null) {
                     ArenaState.UserPlayerKnockedOut
                 } else {
-                    val activePlayerState = activePlayer.toSelectedState()
-                    val userPlayerState = userPlayer.toSelectedState()
-                    val activePlayerUserId = turnInfo.activePlayerUserId
-                    val otherPlayersState =
-                        playerMap.values
-                            .filter { player -> player.userId != activePlayerUserId }
-                            .map { player -> player.toSelectedState() }
-
                     ArenaState.Combat(
-                        activePlayer = activePlayerState,
-                        userPlayer = userPlayerState,
-                        otherPlayers = otherPlayersState,
-                        isItThisUsersTurn = activePlayerUserId == userId,
-                        pendingRollType = pendingRollType,
-                        pendingTargetUserId = pendingTargetUserId,
+                        playerMap = playerMap.mapValues { it.value.toSelectedState() },
+                        userPlayerId = userId,
                         turnInfo = turnInfo.toState(),
                     )
                 }
@@ -172,13 +154,6 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
-private fun Map<String, ArenaPlayer>.getOtherPlayers(
-    activePlayerUserId: String
-): List<PlayerState> =
-    values
-        .filter { player -> player.userId != activePlayerUserId }
-        .map { player -> player.toState() }
-
 private fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
     when (next) {
         is ArenaState.WaitingForAllPlayers ->
@@ -197,7 +172,9 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
 
         is ArenaState.Combat -> {
             val turnChanged =
-                previous is ActiveState && previous.activePlayer.userId != next.activePlayer.userId
+                previous is ArenaState.Combat &&
+                    previous.turnInfo.roundNumber != next.turnInfo.roundNumber
+
             if (previous !is ArenaState.Combat || turnChanged) {
                 TimerAction.Start(timerDuration = 20)
             } else {

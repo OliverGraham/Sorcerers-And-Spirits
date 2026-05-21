@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -34,8 +33,6 @@ sealed interface ArenaMatchEntity {
         override val messages: List<ArenaMessageEntity>,
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
-        val pendingRollType: RollType = RollType.ArmorClass,
-        val pendingTargetUserId: String? = null,
         val turnInfoEntity: TurnInfoEntity,
     ) : ArenaMatchEntity
 
@@ -88,6 +85,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
         is ArenaMatchEntity.Combat -> {
             val playerMap = playerEntitiesMap.mapValues { it.value.toDomain() }
 
+            // TODO Arena: ArenaMatch.UserPlayerKnockedOut should here instead?
             val activePlayer = playerMap[turnInfoEntity.activePlayerUserId]
             if (activePlayer == null) {
                 ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
@@ -97,8 +95,6 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                     messages = messages,
                     numberOfNewMessages = numberOfNewMessages,
                     activePlayer = activePlayer,
-                    pendingRollType = pendingRollType,
-                    pendingTargetUserId = pendingTargetUserId,
                     turnInfo = turnInfoEntity.toDomain(),
                 )
             }
@@ -139,8 +135,6 @@ internal fun ArenaMatch.toEntity(
                 numberOfNewMessages = mappedNewMessages.size,
                 playerEntitiesMap =
                     playerMap.mapValues { it.value.toEntity() as ArenaPlayerEntity.Selected },
-                pendingRollType = pendingRollType,
-                pendingTargetUserId = pendingTargetUserId,
                 turnInfoEntity = turnInfo.toEntity(),
             )
 

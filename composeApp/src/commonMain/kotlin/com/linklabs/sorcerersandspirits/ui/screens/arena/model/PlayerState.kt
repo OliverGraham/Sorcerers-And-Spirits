@@ -6,6 +6,8 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
+// TODO: Add isThisPlayerTheUser ???
+
 @Immutable
 sealed interface PlayerState {
     val userId: String
@@ -55,3 +57,10 @@ internal fun PlayerState.toDomain() =
         is PlayerState.Unselected ->
             ArenaPlayer.Unselected(userId = userId, displayName = displayName)
     }
+
+internal fun PlayerState.Selected.toDomain() =
+    ArenaPlayer.Selected(
+        userId = userId,
+        displayName = displayName,
+        characterClass = characterClass.toDomain(),
+    )

@@ -22,8 +22,6 @@ sealed interface ArenaMatch {
         override val numberOfNewMessages: Int,
         val activePlayer: ArenaPlayer.Selected,
         val playerMap: Map<String, ArenaPlayer.Selected>,
-        val pendingRollType: RollType,
-        val pendingTargetUserId: String?,
         val turnInfo: TurnInfo,
     ) : ArenaMatch
 

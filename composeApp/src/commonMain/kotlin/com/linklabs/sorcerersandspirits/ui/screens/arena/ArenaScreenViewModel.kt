@@ -14,7 +14,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTraveler
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ActiveState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -92,7 +91,8 @@ class ArenaScreenViewModel(
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
             val arenaState =
-                _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ActiveState ?: return@launch
+                _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.ChoosingClasses
+                    ?: return@launch
 
             val selectedArenaPlayer =
                 ArenaPlayer.Selected(
@@ -100,12 +100,12 @@ class ArenaScreenViewModel(
                     displayName = playerState.displayName,
                     characterClass = characterClassState.toDomain(),
                 )
-            val allPlayers = arenaState.otherPlayers.map { it.toDomain() } + selectedArenaPlayer
 
             chooseCharacterClassUseCase(
                 arenaId = arguments.arenaId,
                 selectedArenaPlayer = selectedArenaPlayer,
-                allPlayers = allPlayers,
+                allPlayers =
+                    arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
             )
 
             _uiStateFlow.updateLoaded { screenState ->
@@ -129,43 +129,20 @@ class ArenaScreenViewModel(
     }
 
     fun onAttack(targetUserId: String) {
-        _uiStateFlow.updateLoaded { screenState ->
-            val arenaState = screenState.arenaState
-            if (arenaState is ArenaState.Combat && arenaState.isItThisUsersTurn) {
-                // Once a target is chosen, it's locked until turn end or target defeated
-                if (arenaState.pendingTargetUserId == null) {
-                    screenState.copy(
-                        arenaState = arenaState.copy(pendingTargetUserId = targetUserId)
-                    )
-                } else {
-                    screenState
-                }
-            } else {
-                screenState
-            }
-        }
+        println("ArenaScreenViewModel - onAttack() Called")
     }
 
-    fun onRollDice() {
+    fun onRollDice(rollDiceArguments: RollDiceArguments) {
         viewModelScope.launch {
             val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
             val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
-            if (!arenaState.isItThisUsersTurn) return@launch
-
-            val targetUserId = arenaState.pendingTargetUserId ?: return@launch
-
-            // TODO Arena: Clean this slop
-            val playerMap =
-                (arenaState.otherPlayers + arenaState.activePlayer).associate { playerState ->
-                    playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
-                }
 
             performCombatActionUseCase(
                 arenaId = arguments.arenaId,
-                playerMap = playerMap,
-                attackerUserId = arenaState.userPlayer.userId,
-                targetUserId = targetUserId,
-                rollType = arenaState.pendingRollType,
+                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
+                attackerUserId = arenaState.userPlayerId,
+                targetUserId = rollDiceArguments.opponentUserId,
+                rollType = rollDiceArguments.rollType,
                 turnInfo = arenaState.turnInfo.toDomain(),
             )
         }

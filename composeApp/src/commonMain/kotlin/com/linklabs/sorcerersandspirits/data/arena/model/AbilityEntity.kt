@@ -39,7 +39,7 @@ import kotlinx.serialization.Serializable
 internal fun Ability.toEntity() =
     when (this) {
         PrepareAnAttack -> PrepareAnAttackEntity
-        Anticipation -> AnticipationEntity
+        is Anticipation -> AnticipationEntity
         Blink -> BlinkEntity
         HolyPrayer -> HolyPrayerEntity
         KillingMomentum -> KillingMomentumEntity
@@ -50,7 +50,7 @@ internal fun Ability.toEntity() =
 internal fun AbilityEntity.toDomain() =
     when (this) {
         PrepareAnAttackEntity -> PrepareAnAttack
-        AnticipationEntity -> Anticipation
+        AnticipationEntity -> Anticipation()
         BlinkEntity -> Blink
         HolyPrayerEntity -> HolyPrayer
         KillingMomentumEntity -> KillingMomentum
@@ -84,6 +84,6 @@ internal fun OffensiveAbilityEntity.toDomain(): OffensiveAbility =
 internal fun DefensiveAbilityEntity.toDomain(): DefensiveAbility =
     when (this) {
         is BlinkEntity -> Blink
-        is AnticipationEntity -> Anticipation
+        is AnticipationEntity -> Anticipation()
         is HolyPrayerEntity -> HolyPrayer
     }

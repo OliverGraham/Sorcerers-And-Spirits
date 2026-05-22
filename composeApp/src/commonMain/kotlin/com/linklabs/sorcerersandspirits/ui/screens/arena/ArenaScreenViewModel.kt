@@ -142,7 +142,7 @@ class ArenaScreenViewModel(
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 attackerUserId = arenaState.userPlayerId,
                 targetUserId = rollDiceArguments.opponentUserId,
-                rollType = rollDiceArguments.rollType,
+                newRollType = rollDiceArguments.newRollType.toDomain(),
                 turnInfo = arenaState.turnInfo.toDomain(),
             )
         }

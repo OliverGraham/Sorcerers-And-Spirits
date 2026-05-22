@@ -36,7 +36,9 @@ import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.RollDiceArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollTypeState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 // TODO Arena: Lots of slop to update
@@ -62,7 +64,8 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
-    var rollDiceArguments by remember { mutableStateOf<RollDiceArguments?>(value = null) }
+    var targetedOpponentUserId by remember(key1 = activePlayerUserId) { mutableStateOf(value = "") }
+    var isTargetLocked by remember(key1 = activePlayerUserId) { mutableStateOf(value = false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(all = 16.dp),
@@ -80,16 +83,20 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
                 otherPlayers = otherPlayers.values.toList(),
                 userPlayerId = userPlayerId,
                 isItThisUsersTurn = isItThisUsersTurn,
-                targetedOpponentId = rollDiceArguments?.opponentUserId,
-                onUpdateTargetedOpponentId = { opponentId ->
-                    rollDiceArguments = rollDiceArguments?.copy(opponentUserId = opponentId)
-                },
+                isTargetLocked = isTargetLocked,
+                targetedOpponentUserId = targetedOpponentUserId,
+                onUpdateTargetedOpponentId = { opponentId -> targetedOpponentUserId = opponentId },
             )
         }
 
         if (isItThisUsersTurn) {
             item(key = ROLL_DICE_KEY) {
-                RollDiceSection(otherPlayers = otherPlayers, rollDiceArguments = rollDiceArguments)
+                RollDiceSection(
+                    otherPlayers = otherPlayers,
+                    currentDiceRoll = currentDiceRoll,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    updateIsTargetLocked = { isTargetLocked = true },
+                )
             }
         }
     }
@@ -117,7 +124,8 @@ private fun GridCards(
     otherPlayers: List<PlayerState.Selected>,
     userPlayerId: String,
     isItThisUsersTurn: Boolean,
-    targetedOpponentId: String?,
+    isTargetLocked: Boolean,
+    targetedOpponentUserId: String?,
     onUpdateTargetedOpponentId: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -133,7 +141,8 @@ private fun GridCards(
                 otherPlayer = otherPlayer,
                 isUser = otherPlayer.userId == userPlayerId,
                 isItThisUsersTurn = isItThisUsersTurn,
-                targetedOpponentId = targetedOpponentId,
+                isTargetLocked = isTargetLocked,
+                targetedOpponentUserId = targetedOpponentUserId,
                 onUpdateTargetedOpponentId = onUpdateTargetedOpponentId,
             )
         }
@@ -145,16 +154,15 @@ private fun GridPlayerCard(
     otherPlayer: PlayerState.Selected,
     isUser: Boolean,
     isItThisUsersTurn: Boolean,
-    targetedOpponentId: String?,
+    isTargetLocked: Boolean,
+    targetedOpponentUserId: String?,
     onUpdateTargetedOpponentId: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val isTargeted = otherPlayer.userId == targetedOpponentId
-
     CharacterClassCard(
         characterClass = otherPlayer.characterClass,
-        isSelected = isTargeted,
-        enabled = isItThisUsersTurn && targetedOpponentId == null && !isUser,
+        isSelected = targetedOpponentUserId == otherPlayer.userId,
+        enabled = isItThisUsersTurn && !isTargetLocked && !isUser,
         selectedBy = otherPlayer.displayName,
         modifier = modifier.sharedBounds(key = otherPlayer.userId),
         onClick = { onUpdateTargetedOpponentId(otherPlayer.userId) },
@@ -164,21 +172,23 @@ private fun GridPlayerCard(
 @Composable
 private fun RollDiceSection(
     otherPlayers: Map<UserId, PlayerState.Selected>,
-    rollDiceArguments: RollDiceArguments?,
+    currentDiceRoll: DiceRollState?,
+    targetedOpponentUserId: String,
+    updateIsTargetLocked: () -> Unit,
 ) {
-    // TODO: Figure out correct way
-    val buttonText = "Roll Dice"
+    /* TODO: This is incorrect - update in a good way
+    val buttonText =
+        when (rollDiceArguments?.rollType) {
+            RollType.ArmorClassRoll ->
+                "Roll to Hit (AC: ${otherPlayers[targetedOpponentId]?.characterClass?.armorClass ?: "?"})"
 
-    /*
-    when (pendingRollType) {
-        RollType.ArmorClass ->
-            "Roll to Hit (AC: ${otherPlayers[targetedOpponentId]?.characterClass?.armorClass ?: "?"})"
+            RollType.HealthRoll ->
+                "Roll for Damage (HP: ${otherPlayers[targetedOpponentId]?.characterClass?.hitPoints ?: "?"})"
 
-        RollType.Health ->
-            "Roll for KILL! (HP: ${otherPlayers[targetedOpponentId]?.characterClass?.hitPoints ?: "?"})"
+            is RollType.AbilityRoll -> "Roll for Ability"
 
-        else -> "Roll Dice"
-    }
+            else -> "Roll Dice"
+        }
      */
 
     Column(
@@ -186,7 +196,7 @@ private fun RollDiceSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        if (rollDiceArguments?.opponentUserId == null) {
+        if (targetedOpponentUserId.isEmpty()) {
             Text(
                 text = "Tap an enemy card to select your target",
                 style = MaterialTheme.typography.bodyMedium,
@@ -194,14 +204,41 @@ private fun RollDiceSection(
             )
         }
 
+        // TODO will need new button to use ability (Necro, Bard?, Gambler, Dualist, Illusionist)
+        //  it will simply pass along the ActivatedAbility type found from the button
+
         val onRollDice = ArenaActionsProvider.current.onRollDice
         Button(
-            onClick = { onRollDice },
-            enabled = rollDiceArguments?.opponentUserId != null,
+            onClick = {
+                updateIsTargetLocked()
+                onRollDice(
+                    RollDiceArguments(
+                        opponentUserId = targetedOpponentUserId,
+                        newRollType = currentDiceRoll.previousToNextNonAbilityRoll(),
+                    )
+                )
+            },
+            enabled = targetedOpponentUserId.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(text = buttonText)
+            Text(text = "Roll")
         }
+    }
+}
+
+/**
+ * When clicking the normal attack button, if the previous roll was [RollTypeState.ArmorClassRoll],
+ * then the next roll must be [RollTypeState.HealthRoll]. In all other cases, the previous roll is
+ * ignored, and thus it means a [RollTypeState.ArmorClassRoll] is now happening.
+ */
+private fun DiceRollState?.previousToNextNonAbilityRoll(): RollTypeState {
+    if (this == null) return RollTypeState.ArmorClassRoll
+
+    return when (rollType) {
+        is RollTypeState.ArmorClassRoll -> RollTypeState.HealthRoll
+
+        is RollTypeState.HealthRoll,
+        is RollTypeState.AbilityRoll -> RollTypeState.ArmorClassRoll
     }
 }
 

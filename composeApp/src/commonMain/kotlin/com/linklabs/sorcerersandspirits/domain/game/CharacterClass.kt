@@ -24,7 +24,7 @@ data class CharacterClass(
                 armorClass = 5,
                 speed = 8,
                 offensiveAbility = KillingMomentum,
-                defensiveAbility = Anticipation,
+                defensiveAbility = Anticipation(),
             )
 
         fun getMage() =
@@ -80,7 +80,7 @@ data object SpellNova : OffensiveAbility, PassiveAbility
 
 data object ReflectiveShield : OffensiveAbility, PassiveAbility
 
-data object Anticipation : DefensiveAbility, PassiveAbility
+data class Anticipation(val counters: Int = 0) : DefensiveAbility, PassiveAbility
 
 data object Blink : DefensiveAbility, PassiveAbility
 

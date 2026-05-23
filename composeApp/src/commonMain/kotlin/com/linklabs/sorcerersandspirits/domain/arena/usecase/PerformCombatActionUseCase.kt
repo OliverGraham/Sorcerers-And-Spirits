@@ -9,12 +9,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.arena.model.TurnInfo
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.ActivatedAbility
-import com.linklabs.sorcerersandspirits.domain.game.Anticipation
-import com.linklabs.sorcerersandspirits.domain.game.Blink
-import com.linklabs.sorcerersandspirits.domain.game.HolyPrayer
-import com.linklabs.sorcerersandspirits.domain.game.KillingMomentum
-import com.linklabs.sorcerersandspirits.domain.game.PrepareAnAttack
-import com.linklabs.sorcerersandspirits.domain.game.SpellNova
+import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlin.random.Random
 
 data class CombatActionArguments(
@@ -26,14 +22,17 @@ data class CombatActionArguments(
 ) {
     val attackerOffensiveAbility = attacker.characterClass.offensiveAbility
     val attackerDefensiveAbility = attacker.characterClass.defensiveAbility
-    val defenderOffensiveAbility = attacker.characterClass.offensiveAbility
-    val defenderDefensiveAbility = attacker.characterClass.defensiveAbility
+    val defenderOffensiveAbility = defender.characterClass.offensiveAbility
+    val defenderDefensiveAbility = defender.characterClass.defensiveAbility
 }
 
 // TODO Arena: Clean this slop - need to reduce number of arguments. An idea is map to CombatResult,
 //  and then make the list of messages based on that, instead of that horrible mix.
 class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
+    // TODO Saturday: Need to figure out what all needs to be passed along to data layer
+    //  What was rolled, who is involved, abilities used, the outcome.
+    //  Lots of new message types I think?
     suspend operator fun invoke(arguments: CombatActionArguments, newRollType: RollType) {
         arguments.handleRoll(newRollType = newRollType)
     }
@@ -48,9 +47,9 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
 
-        if (attackerOffensiveAbility == SpellNova) {
+        if (attackerOffensiveAbility == OffensiveAbility.SpellPotency) {
             if (firstDie == secondDie) {
-                return // TODO handle SpellNova
+                return // TODO handle SpellPotency
             }
         }
 
@@ -67,9 +66,15 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val activatedAbility = rollType.ability as? ActivatedAbility ?: return
 
         when (activatedAbility) {
-            PrepareAnAttack -> {
+            OffensiveAbility.PrepareAttack -> {
                 // TODO: I think it's roll a 10, 11 or 12 to instant-kill opponent?
             }
+
+            is OffensiveAbility.AllIn -> TODO()
+
+            is OffensiveAbility.Impersonate -> TODO()
+
+            is OffensiveAbility.SummonMinion -> TODO()
         }
     }
 
@@ -83,11 +88,11 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
     private fun CombatActionArguments.resolveArmorClassHit(firstDie: Int, secondDie: Int) {
         when (defenderDefensiveAbility) {
-            is Blink -> {
+            is DefensiveAbility.Teleport -> {
                 if (firstDie + secondDie >= defender.characterClass.armorClass) {
-                    // TODO: handle Blink
+                    // TODO: handle Teleport
                 } else {
-                    // TODO: Resolve normal AC hit
+                    // TODO: Resolve normal AC miss
                 }
             }
 
@@ -103,12 +108,12 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
     private fun CombatActionArguments.resolveArmorClassMiss(firstDie: Int, secondDie: Int) {
         // No other class does anything after a miss to their AC right?
-        if (defenderDefensiveAbility is Anticipation) {
-            val anticipationCounters = defenderDefensiveAbility.counters
-            if (anticipationCounters < 2) {
-                // TODO: Add Anticipation counter
+        if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
+            val armorBonus = defenderDefensiveAbility.armorBonus
+            if (armorBonus < 2) {
+                // TODO: Add armorBonus
             } else {
-                // TODO: Add message stating Rogue has max Anticipation
+                // TODO: Add message stating Rogue has max Dodge
             }
         }
 
@@ -121,37 +126,30 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
     private fun CombatActionArguments.handleHealthRoll(firstDie: Int, secondDie: Int) {
         if (firstDie + secondDie >= defender.characterClass.hitPoints) {
-            resolveHealthKill(firstDie = firstDie, secondDie = secondDie)
+            resolveKnockout(firstDie = firstDie, secondDie = secondDie)
         } else {
-            resolveHealthHit(firstDie = firstDie, secondDie = secondDie)
+            resolveDamage(firstDie = firstDie, secondDie = secondDie)
         }
 
         // TODO: Bard's Encore
     }
 
-    private fun CombatActionArguments.resolveHealthKill(firstDie: Int, secondDie: Int) {
-        if (defenderDefensiveAbility == HolyPrayer) {
-            // TODO: Handle Paladin bubble - if survive, then come back here and handle regularly
+    private fun CombatActionArguments.resolveKnockout(firstDie: Int, secondDie: Int) {
+        if (defenderDefensiveAbility is DefensiveAbility.HolyShield) {
+            if (!defenderDefensiveAbility.usedThisMatch) {
+                // TODO: Handle Paladin bubble - if survive, then come back here and handle
+                // regularly
+            }
         }
 
-        if (attackerOffensiveAbility == KillingMomentum) {
+        if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
             // TODO: Handle KillingMomentum - carry +1 from doubles if applicable
         }
 
         // TODO: otherwise, normal character knock out
     }
 
-    private fun CombatActionArguments.resolveHealthHit(firstDie: Int, secondDie: Int) {
-        // No other class does anything after a miss to their AC right?
-        if (defenderDefensiveAbility is Anticipation) {
-            val anticipationCounters = defenderDefensiveAbility.counters
-            if (anticipationCounters < 2) {
-                // TODO: Add Anticipation counter
-            } else {
-                // TODO: Add message stating Rogue has max Anticipation
-            }
-        }
-
+    private fun CombatActionArguments.resolveDamage(firstDie: Int, secondDie: Int) {
         when (attackerOffensiveAbility) {
             // TODO: Gambler could have another turn
             // TODO: Necro could have another turn

@@ -13,18 +13,78 @@ data class CharacterClass(
     val className = type.name
 
     companion object {
-        fun getAllClasses() = listOf(getRogue(), getMage(), getPaladin())
+        fun getAllClasses() =
+            listOf(
+                getRogue(),
+                getGambler(),
+                getDuelist(),
+                getNecromancer(),
+                getBard(),
+                getIllusionist(),
+                getMage(),
+                getPaladin(),
+            )
 
         // TODO: Get CharacterClass values from RemoteConfig
 
         fun getRogue() =
             CharacterClass(
                 type = CharacterClassType.Rogue,
-                hitPoints = 6,
-                armorClass = 5,
+                hitPoints = 5,
+                armorClass = 6,
                 speed = 8,
-                offensiveAbility = KillingMomentum,
-                defensiveAbility = Anticipation(),
+                offensiveAbility = OffensiveAbility.KillingMomentum,
+                defensiveAbility = DefensiveAbility.Dodge(),
+            )
+
+        fun getGambler() =
+            CharacterClass(
+                type = CharacterClassType.Gambler,
+                hitPoints = 3,
+                armorClass = 4,
+                speed = 7,
+                offensiveAbility = OffensiveAbility.AllIn(),
+                defensiveAbility = DefensiveAbility.LuckyCoin,
+            )
+
+        fun getDuelist() =
+            CharacterClass(
+                type = CharacterClassType.Duelist,
+                hitPoints = 4,
+                armorClass = 4,
+                speed = 6,
+                offensiveAbility = OffensiveAbility.PrepareAttack,
+                defensiveAbility = DefensiveAbility.Riposte,
+            )
+
+        fun getNecromancer() =
+            CharacterClass(
+                type = CharacterClassType.Necromancer,
+                hitPoints = 7,
+                armorClass = 7,
+                speed = 5,
+                offensiveAbility = OffensiveAbility.SummonMinion(),
+                defensiveAbility = DefensiveAbility.None,
+            )
+
+        fun getBard() =
+            CharacterClass(
+                type = CharacterClassType.Bard,
+                hitPoints = 5,
+                armorClass = 5,
+                speed = 4,
+                offensiveAbility = OffensiveAbility.Encore,
+                defensiveAbility = DefensiveAbility.Persuade,
+            )
+
+        fun getIllusionist() =
+            CharacterClass(
+                type = CharacterClassType.Illusionist,
+                hitPoints = 5,
+                armorClass = 5,
+                speed = 3,
+                offensiveAbility = OffensiveAbility.Impersonate(),
+                defensiveAbility = DefensiveAbility.MirrorImage(),
             )
 
         fun getMage() =
@@ -33,8 +93,8 @@ data class CharacterClass(
                 hitPoints = 4,
                 armorClass = 4,
                 speed = 2,
-                offensiveAbility = SpellNova,
-                defensiveAbility = Blink,
+                offensiveAbility = OffensiveAbility.SpellPotency,
+                defensiveAbility = DefensiveAbility.Teleport,
             )
 
         fun getPaladin() =
@@ -43,13 +103,18 @@ data class CharacterClass(
                 hitPoints = 7,
                 armorClass = 7,
                 speed = 1,
-                offensiveAbility = ReflectiveShield,
-                defensiveAbility = HolyPrayer,
+                offensiveAbility = OffensiveAbility.None,
+                defensiveAbility = DefensiveAbility.HolyShield(),
             )
 
         fun fromType(type: CharacterClassType) =
             when (type) {
                 CharacterClassType.Rogue -> getRogue()
+                CharacterClassType.Gambler -> getGambler()
+                CharacterClassType.Duelist -> getDuelist()
+                CharacterClassType.Necromancer -> getNecromancer()
+                CharacterClassType.Bard -> getBard()
+                CharacterClassType.Illusionist -> getIllusionist()
                 CharacterClassType.Mage -> getMage()
                 CharacterClassType.Paladin -> getPaladin()
             }
@@ -58,32 +123,11 @@ data class CharacterClass(
 
 enum class CharacterClassType {
     Rogue,
+    Gambler,
+    Duelist,
+    Necromancer,
+    Bard,
+    Illusionist,
     Mage,
     Paladin,
 }
-
-// TODO: I hate this
-
-sealed interface Ability
-
-sealed interface ActivatedAbility : Ability
-
-sealed interface DefensiveAbility : Ability
-
-sealed interface OffensiveAbility : Ability
-
-sealed interface PassiveAbility : Ability
-
-data object KillingMomentum : OffensiveAbility, PassiveAbility
-
-data object SpellNova : OffensiveAbility, PassiveAbility
-
-data object ReflectiveShield : OffensiveAbility, PassiveAbility
-
-data class Anticipation(val counters: Int = 0) : DefensiveAbility, PassiveAbility
-
-data object Blink : DefensiveAbility, PassiveAbility
-
-data object HolyPrayer : DefensiveAbility, PassiveAbility
-
-data object PrepareAnAttack : OffensiveAbility, ActivatedAbility

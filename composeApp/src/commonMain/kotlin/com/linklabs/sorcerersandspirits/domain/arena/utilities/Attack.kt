@@ -35,14 +35,14 @@ internal class Attack(
         // TODO: return Updates
         val updates = arguments.handleArmorClassRoll()
 
-        // TODO: return Results using class-wide state and Updates
+        // TODO: return RollOutcome using class-wide state and Updates
     }
 
     fun handleHealthRoll(): RollOutcome {
         // TODO: return Updates
         val updates = arguments.handleHealthRoll()
 
-        // TODO: return Results using class-wide state and Updates
+        // TODO: return RollOutcome using class-wide state and Updates
     }
 
     private fun CombatActionArguments.handleArmorClassRoll(): RollOutcome =

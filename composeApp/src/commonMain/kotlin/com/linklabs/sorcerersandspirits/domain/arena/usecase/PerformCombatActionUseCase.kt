@@ -34,101 +34,84 @@ data class CombatActionArguments(
 class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
     suspend operator fun invoke(arguments: CombatActionArguments, currentStep: CombatStep) {
-        val results = resolveStep(arguments = arguments, step = currentStep)
+        val results = arguments.resolveStep(step = currentStep)
 
         // This results variable is intended for the repository call in the future.
         println(message = "Combat results: $results")
     }
 
-    private fun resolveStep(arguments: CombatActionArguments, step: CombatStep): RollOutcome =
+    private fun CombatActionArguments.resolveStep(step: CombatStep): RollOutcome =
         when (step) {
-            is CombatStep.ArmorClassRoll -> handleArmorClassRoll(arguments = arguments)
-
-            is CombatStep.HealthRoll -> handleHealthRoll(arguments = arguments)
-
-            is CombatStep.AbilityRoll ->
-                handleAbilityRoll(arguments = arguments, purpose = step.purpose)
-
-            is CombatStep.Resolution -> handleResolution(arguments = arguments)
+            is CombatStep.ArmorClassRoll -> handleArmorClassRoll()
+            is CombatStep.HealthRoll -> handleHealthRoll()
+            is CombatStep.AbilityRoll -> handleAbilityRoll(purpose = step.purpose)
+            is CombatStep.Resolution -> handleResolution()
         }
 
-    private fun handleArmorClassRoll(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleArmorClassRoll(): RollOutcome {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
-        val attack = Attack(firstDie = firstDie, secondDie = secondDie, arguments = arguments)
+        val attack = Attack(firstDie = firstDie, secondDie = secondDie, arguments = this)
         return attack.handleArmorClassRoll()
     }
 
-    private fun handleHealthRoll(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleHealthRoll(): RollOutcome {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
-        val attack = Attack(firstDie = firstDie, secondDie = secondDie, arguments = arguments)
+        val attack = Attack(firstDie = firstDie, secondDie = secondDie, arguments = this)
         return attack.handleHealthRoll()
     }
 
-    private fun handleAbilityRoll(
-        arguments: CombatActionArguments,
-        purpose: RollPurpose,
-    ): RollOutcome =
+    private fun CombatActionArguments.handleAbilityRoll(purpose: RollPurpose): RollOutcome =
         when (purpose) {
-            is RollPurpose.TeleportDefenderEscape ->
-                handleTeleportDefenderEscape(arguments = arguments)
+            is RollPurpose.TeleportDefenderEscape -> handleTeleportDefenderEscape()
 
             is RollPurpose.TeleportAttackerChase ->
-                handleTeleportAttackerChase(
-                    arguments = arguments,
-                    defenderRoll = purpose.defenderRoll,
-                )
+                handleTeleportAttackerChase(defenderRoll = purpose.defenderRoll)
 
-            is RollPurpose.RiposteCounter -> handleRiposteCounter(arguments = arguments)
+            is RollPurpose.RiposteCounter -> handleRiposteCounter()
 
-            is RollPurpose.PersuadeStopOrRedirect ->
-                handlePersuadeStopOrRedirect(arguments = arguments)
+            is RollPurpose.PersuadeStopOrRedirect -> handlePersuadeStopOrRedirect()
 
-            is RollPurpose.LuckyCoinArmorBonus -> handleLuckyCoinArmorBonus(arguments = arguments)
+            is RollPurpose.LuckyCoinArmorBonus -> handleLuckyCoinArmorBonus()
 
-            is RollPurpose.LuckyCoinReflect -> handleLuckyCoinReflect(arguments = arguments)
+            is RollPurpose.LuckyCoinReflect -> handleLuckyCoinReflect()
 
-            is RollPurpose.AllInOutcome -> handleAllInOutcome(arguments = arguments)
+            is RollPurpose.AllInOutcome -> handleAllInOutcome()
 
-            is RollPurpose.SummonMinionRoll -> handleSummonMinionRoll(arguments = arguments)
+            is RollPurpose.SummonMinionRoll -> handleSummonMinionRoll()
 
-            is RollPurpose.PrepareAttackRoll -> handlePrepareAttackRoll(arguments = arguments)
+            is RollPurpose.PrepareAttackRoll -> handlePrepareAttackRoll()
 
-            is RollPurpose.EncoreCheck -> handleEncoreCheck(arguments = arguments)
+            is RollPurpose.EncoreCheck -> handleEncoreCheck()
 
-            is RollPurpose.HolyShieldSurvival -> handleHolyShieldSurvival(arguments = arguments)
+            is RollPurpose.HolyShieldSurvival -> handleHolyShieldSurvival()
 
-            is RollPurpose.HolyShieldRetaliation ->
-                handleHolyShieldRetaliation(arguments = arguments)
+            is RollPurpose.HolyShieldRetaliation -> handleHolyShieldRetaliation()
 
-            is RollPurpose.MirrorImageChoice ->
-                handleMirrorImageChoice(arguments = arguments, purpose = purpose)
+            is RollPurpose.MirrorImageChoice -> handleMirrorImageChoice(purpose = purpose)
 
-            is RollPurpose.MirrorImageReroll ->
-                handleMirrorImageReroll(arguments = arguments, purpose = purpose)
+            is RollPurpose.MirrorImageReroll -> handleMirrorImageReroll(purpose = purpose)
 
-            is RollPurpose.ImpersonateChoice -> handleImpersonateChoice(arguments = arguments)
+            is RollPurpose.ImpersonateChoice -> handleImpersonateChoice()
         }
 
-    private fun handleMirrorImageChoice(
-        arguments: CombatActionArguments,
-        purpose: RollPurpose.MirrorImageChoice,
+    private fun CombatActionArguments.handleMirrorImageChoice(
+        purpose: RollPurpose.MirrorImageChoice
     ): RollOutcome {
         // This is a decision step, if it's called it means the UI just wants to stay in this state
-        // or it was triggered by a roll that hasn't happened yet.
+        // or, it was triggered by a roll that hasn't happened yet.
         // Usually, the UI will call invoke with MirrorImageReroll or HealthRoll.
         return RollOutcome(
             messages = emptyList(),
-            updatedPlayerMap = arguments.playerMap,
-            nextActivePlayerUserId = arguments.defender.userId,
+            updatedPlayerMap = playerMap,
+            nextActivePlayerUserId = defender.userId,
             nextStep = CombatStep.AbilityRoll(purpose = purpose),
         )
     }
 
-    private fun handleMirrorImageReroll(
-        arguments: CombatActionArguments,
-        purpose: RollPurpose.MirrorImageReroll,
+    private fun CombatActionArguments.handleMirrorImageReroll(
+        purpose: RollPurpose.MirrorImageReroll
     ): RollOutcome {
         val roll = roll1D6() - 1
 
@@ -137,34 +120,31 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
         val messages =
             listOf(
-                OutgoingMessage.MirrorImage(
-                    illusionistUserId = arguments.defender.userId,
-                    triggered = true,
-                )
+                OutgoingMessage.MirrorImage(illusionistUserId = defender.userId, triggered = true)
             )
 
-        val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie, arguments = arguments)
+        val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie, arguments = this)
 
         return attack.resolveAfterMirrorImage(extraMessages = messages)
     }
 
-    private fun handleImpersonateChoice(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleImpersonateChoice(): RollOutcome {
         // Implementation for Impersonate choice
         // For now, let's just transition to the next step (e.g. Resolution or AC Roll)
         return RollOutcome(
             messages = emptyList(),
-            updatedPlayerMap = arguments.playerMap,
-            nextActivePlayerUserId = arguments.attacker.userId,
+            updatedPlayerMap = playerMap,
+            nextActivePlayerUserId = attacker.userId,
             nextStep = CombatStep.Resolution,
         )
     }
 
-    private fun handleTeleportDefenderEscape(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleTeleportDefenderEscape(): RollOutcome {
         val roll = roll1D6()
         return RollOutcome(
             messages = emptyList(),
-            updatedPlayerMap = arguments.playerMap,
-            nextActivePlayerUserId = arguments.attacker.userId,
+            updatedPlayerMap = playerMap,
+            nextActivePlayerUserId = attacker.userId,
             nextStep =
                 CombatStep.AbilityRoll(
                     purpose = RollPurpose.TeleportAttackerChase(defenderRoll = roll)
@@ -172,35 +152,32 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         )
     }
 
-    private fun handleTeleportAttackerChase(
-        arguments: CombatActionArguments,
-        defenderRoll: Int,
-    ): RollOutcome {
+    private fun CombatActionArguments.handleTeleportAttackerChase(defenderRoll: Int): RollOutcome {
         val attackerRoll = roll1D6()
         val escaped = defenderRoll > attackerRoll
 
         val messages =
             mutableListOf<OutgoingMessage>(
                 OutgoingMessage.Teleport(
-                    mageUserId = arguments.defender.userId,
-                    attackerUserId = arguments.attacker.userId,
+                    mageUserId = defender.userId,
+                    attackerUserId = attacker.userId,
                     escaped = escaped,
                 )
             )
 
         return if (escaped) {
-            resolveTurnEnd(arguments = arguments, extraMessages = messages)
+            resolveTurnEnd(extraMessages = messages)
         } else {
             RollOutcome(
                 messages = messages,
-                updatedPlayerMap = arguments.playerMap,
-                nextActivePlayerUserId = arguments.attacker.userId,
+                updatedPlayerMap = playerMap,
+                nextActivePlayerUserId = attacker.userId,
                 nextStep = CombatStep.HealthRoll,
             )
         }
     }
 
-    private fun handleRiposteCounter(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleRiposteCounter(): RollOutcome {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
         val total = firstDie + secondDie
@@ -209,8 +186,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val messages =
             mutableListOf<OutgoingMessage>(
                 OutgoingMessage.Riposte(
-                    duelistUserId = arguments.defender.userId,
-                    attackerUserId = arguments.attacker.userId,
+                    duelistUserId = defender.userId,
+                    attackerUserId = attacker.userId,
                     triggered = triggered,
                 )
             )
@@ -219,21 +196,21 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
             // Flip attack: Defender now attacks Attacker
             RollOutcome(
                 messages = messages,
-                updatedPlayerMap = arguments.playerMap,
-                nextActivePlayerUserId = arguments.defender.userId,
+                updatedPlayerMap = playerMap,
+                nextActivePlayerUserId = defender.userId,
                 nextStep = CombatStep.ArmorClassRoll,
             )
         } else {
             RollOutcome(
                 messages = messages,
-                updatedPlayerMap = arguments.playerMap,
-                nextActivePlayerUserId = arguments.attacker.userId,
+                updatedPlayerMap = playerMap,
+                nextActivePlayerUserId = attacker.userId,
                 nextStep = CombatStep.HealthRoll,
             )
         }
     }
 
-    private fun handlePersuadeStopOrRedirect(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handlePersuadeStopOrRedirect(): RollOutcome {
         val roll = roll1D6()
         val outcome =
             when (roll) {
@@ -245,21 +222,20 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val messages =
             mutableListOf<OutgoingMessage>(
                 OutgoingMessage.Persuade(
-                    bardUserId = arguments.defender.userId,
-                    attackerUserId = arguments.attacker.userId,
+                    bardUserId = defender.userId,
+                    attackerUserId = attacker.userId,
                     outcome = outcome,
                 )
             )
 
         return when (outcome) {
-            PersuadeOutcome.Stopped ->
-                resolveTurnEnd(arguments = arguments, extraMessages = messages)
+            PersuadeOutcome.Stopped -> resolveTurnEnd(extraMessages = messages)
 
             PersuadeOutcome.Redirected -> {
                 RollOutcome(
                     messages = messages,
-                    updatedPlayerMap = arguments.playerMap,
-                    nextActivePlayerUserId = arguments.attacker.userId,
+                    updatedPlayerMap = playerMap,
+                    nextActivePlayerUserId = attacker.userId,
                     nextStep = CombatStep.Resolution, // Attacker needs to pick new target
                 )
             }
@@ -267,18 +243,17 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
             PersuadeOutcome.Failed -> {
                 RollOutcome(
                     messages = messages,
-                    updatedPlayerMap = arguments.playerMap,
-                    nextActivePlayerUserId = arguments.attacker.userId,
+                    updatedPlayerMap = playerMap,
+                    nextActivePlayerUserId = attacker.userId,
                     nextStep = CombatStep.HealthRoll,
                 )
             }
         }
     }
 
-    private fun handleLuckyCoinArmorBonus(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleLuckyCoinArmorBonus(): RollOutcome {
         val roll = roll1D6()
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val defender = arguments.defender
+        val updatedPlayerMap = playerMap.toMutableMap()
 
         val newAc = defender.characterClass.armorClass + roll
         updatedPlayerMap[defender.userId] =
@@ -305,21 +280,20 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 listOf(
                     OutgoingMessage.LuckyCoin(
                         gamblerUserId = defender.userId,
-                        attackerUserId = arguments.attacker.userId,
+                        attackerUserId = attacker.userId,
                         armorBonus = roll,
                         reflectDamage = 0,
                     )
                 ),
             updatedPlayerMap = updatedPlayerMap,
-            nextActivePlayerUserId = arguments.attacker.userId,
+            nextActivePlayerUserId = attacker.userId,
             nextStep = CombatStep.HealthRoll,
         )
     }
 
-    private fun handleLuckyCoinReflect(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleLuckyCoinReflect(): RollOutcome {
         val damage = roll1D6()
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val attacker = arguments.attacker
+        val updatedPlayerMap = playerMap.toMutableMap()
 
         val newHp = (attacker.characterClass.hitPoints - damage).coerceAtLeast(minimumValue = 0)
         updatedPlayerMap[attacker.userId] =
@@ -328,7 +302,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val messages =
             listOf(
                 OutgoingMessage.LuckyCoin(
-                    gamblerUserId = arguments.defender.userId,
+                    gamblerUserId = defender.userId,
                     attackerUserId = attacker.userId,
                     armorBonus = 6, // We know it was a 6 to get here
                     reflectDamage = damage,
@@ -338,12 +312,12 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         return RollOutcome(
             messages = messages,
             updatedPlayerMap = updatedPlayerMap,
-            nextActivePlayerUserId = arguments.attacker.userId,
+            nextActivePlayerUserId = attacker.userId,
             nextStep = CombatStep.HealthRoll,
         )
     }
 
-    private fun handleAllInOutcome(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleAllInOutcome(): RollOutcome {
         val roll = roll1D6()
         val outcome =
             when (roll) {
@@ -355,8 +329,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 else -> AllInOutcome.NoEffect
             }
 
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val attacker = arguments.attacker
+        val updatedPlayerMap = playerMap.toMutableMap()
         val messages =
             mutableListOf<OutgoingMessage>(
                 OutgoingMessage.AllIn(gamblerUserId = attacker.userId, outcome = outcome)
@@ -366,11 +339,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
             AllInOutcome.KnockoutSelf -> {
                 updatedPlayerMap[attacker.userId] =
                     attacker.copy(characterClass = attacker.characterClass.copy(hitPoints = 0))
-                resolveTurnEnd(
-                    arguments = arguments,
-                    updatedMap = updatedPlayerMap,
-                    extraMessages = messages,
-                )
+                resolveTurnEnd(updatedMap = updatedPlayerMap, extraMessages = messages)
             }
 
             AllInOutcome.DoubleAttack -> {
@@ -396,7 +365,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         }
     }
 
-    private fun handleSummonMinionRoll(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleSummonMinionRoll(): RollOutcome {
         val roll = roll1D6()
         val outcome =
             when (roll) {
@@ -413,8 +382,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 else -> SummonOutcome.Fizzle
             }
 
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val necro = arguments.attacker
+        val updatedPlayerMap = playerMap.toMutableMap()
+        val necro = attacker
         val messages =
             mutableListOf<OutgoingMessage>(
                 OutgoingMessage.SummonMinion(necroUserId = necro.userId, outcome = outcome)
@@ -455,14 +424,10 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                     )
             )
 
-        return resolveTurnEnd(
-            arguments = arguments,
-            updatedMap = updatedPlayerMap,
-            extraMessages = messages,
-        )
+        return resolveTurnEnd(updatedMap = updatedPlayerMap, extraMessages = messages)
     }
 
-    private fun handlePrepareAttackRoll(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handlePrepareAttackRoll(): RollOutcome {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
         val total = firstDie + secondDie
@@ -470,12 +435,11 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         var success = total in 10..12
 
         // Paladin special rule: 12 stops Duelist's Prepare Attack.
-        if (total == 12 && arguments.defenderDefensiveAbility is DefensiveAbility.HolyShield) {
+        if (total == 12 && defenderDefensiveAbility is DefensiveAbility.HolyShield) {
             success = false
         }
 
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val defender = arguments.defender
+        val updatedPlayerMap = playerMap.toMutableMap()
 
         if (success) {
             updatedPlayerMap[defender.userId] =
@@ -485,51 +449,42 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val messages =
             listOf(
                 OutgoingMessage.PrepareAttack(
-                    duelistUserId = arguments.attacker.userId,
+                    duelistUserId = attacker.userId,
                     targetUserId = defender.userId,
                     success = success,
                 )
             )
 
-        return resolveTurnEnd(
-            arguments = arguments,
-            updatedMap = updatedPlayerMap,
-            extraMessages = messages,
-        )
+        return resolveTurnEnd(updatedMap = updatedPlayerMap, extraMessages = messages)
     }
 
-    private fun handleEncoreCheck(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleEncoreCheck(): RollOutcome {
         val roll = roll1D6()
         val triggered = roll in 5..6
 
         val messages =
-            listOf(
-                OutgoingMessage.Encore(
-                    bardUserId = arguments.attacker.userId,
-                    triggered = triggered,
-                )
-            )
+            listOf(OutgoingMessage.Encore(bardUserId = attacker.userId, triggered = triggered))
 
         return if (triggered) {
             RollOutcome(
                 messages = messages,
-                updatedPlayerMap = arguments.playerMap,
-                nextActivePlayerUserId = arguments.attacker.userId,
+                updatedPlayerMap = playerMap,
+                nextActivePlayerUserId = attacker.userId,
                 nextStep = CombatStep.Resolution, // Attack again
             )
         } else {
-            resolveTurnEnd(arguments = arguments, extraMessages = messages)
+            resolveTurnEnd(extraMessages = messages)
         }
     }
 
-    private fun handleHolyShieldSurvival(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleHolyShieldSurvival(): RollOutcome {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
         val total = firstDie + secondDie
         val survived = total in 10..12
 
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val paladin = arguments.defender
+        val updatedPlayerMap = playerMap.toMutableMap()
+        val paladin = defender
 
         return if (survived) {
             updatedPlayerMap[paladin.userId] =
@@ -560,18 +515,13 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                         retaliationDamage = 0,
                     )
                 )
-            resolveTurnEnd(
-                arguments = arguments,
-                updatedMap = updatedPlayerMap,
-                extraMessages = messages,
-            )
+            resolveTurnEnd(updatedMap = updatedPlayerMap, extraMessages = messages)
         }
     }
 
-    private fun handleHolyShieldRetaliation(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleHolyShieldRetaliation(): RollOutcome {
         val damage = roll1D6()
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val attacker = arguments.attacker
+        val updatedPlayerMap = playerMap.toMutableMap()
 
         val newHp = (attacker.characterClass.hitPoints - damage).coerceAtLeast(minimumValue = 0)
         updatedPlayerMap[attacker.userId] =
@@ -580,43 +530,38 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         val messages =
             listOf(
                 OutgoingMessage.HolyShield(
-                    paladinUserId = arguments.defender.userId,
+                    paladinUserId = defender.userId,
                     survived = true,
                     retaliationDamage = damage,
                 )
             )
 
-        return resolveTurnEnd(
-            arguments = arguments,
-            updatedMap = updatedPlayerMap,
-            extraMessages = messages,
-        )
+        return resolveTurnEnd(updatedMap = updatedPlayerMap, extraMessages = messages)
     }
 
-    private fun handleResolution(arguments: CombatActionArguments): RollOutcome {
+    private fun CombatActionArguments.handleResolution(): RollOutcome {
         // Usually transitions to AC roll for the attacker
         return RollOutcome(
             messages = emptyList(),
-            updatedPlayerMap = arguments.playerMap,
-            nextActivePlayerUserId = arguments.attacker.userId,
+            updatedPlayerMap = playerMap,
+            nextActivePlayerUserId = attacker.userId,
             nextStep = CombatStep.ArmorClassRoll,
         )
     }
 
-    private fun resolveTurnEnd(
-        arguments: CombatActionArguments,
+    private fun CombatActionArguments.resolveTurnEnd(
         updatedMap: Map<String, ArenaPlayer.Selected>? = null,
         extraMessages: List<OutgoingMessage> = emptyList(),
     ): RollOutcome {
-        val mapToUse = updatedMap ?: arguments.playerMap
+        val mapToUse = updatedMap ?: playerMap
         val tempUpdatedMap = mapToUse.toMutableMap()
 
         // Mark current attacker as acted
-        val attacker = tempUpdatedMap[arguments.attacker.userId]
-        if (attacker != null) {
-            tempUpdatedMap[arguments.attacker.userId] =
-                attacker.copy(
-                    characterClass = attacker.characterClass.copy(hasActedThisRound = true)
+        val attackerPlayer = tempUpdatedMap[attacker.userId]
+        if (attackerPlayer != null) {
+            tempUpdatedMap[attacker.userId] =
+                attackerPlayer.copy(
+                    characterClass = attackerPlayer.characterClass.copy(hasActedThisRound = true)
                 )
         }
 
@@ -635,14 +580,12 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                         characterClass = player.characterClass.copy(hasActedThisRound = false)
                     )
             }
-            messages.add(
-                element = OutgoingMessage.NewRound(roundNumber = arguments.roundNumber + 1)
-            )
+            messages.add(element = OutgoingMessage.NewRound(roundNumber = roundNumber + 1))
 
             val fastest =
                 tempUpdatedMap.values
                     .filter { it.characterClass.hitPoints > 0 }
-                    .maxByOrNull { it.characterClass.speed } ?: arguments.attacker
+                    .maxByOrNull { it.characterClass.speed } ?: attacker
 
             val characterClassInfo =
                 CharacterClassMessageInfo(

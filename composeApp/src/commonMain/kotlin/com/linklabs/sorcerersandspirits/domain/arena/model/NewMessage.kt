@@ -14,13 +14,66 @@ sealed interface OutgoingMessage {
         val type: NormalRollMessageType,
     ) : OutgoingMessage
 
-    data class Dodge(val didArmorIncrease: Boolean) : OutgoingMessage {
-        // if didArmorIncrease, "Rogue dodged the attack and increased their AC by 1!"
-        // else, "Rogue already has the maximum Dodge bonus"
-    }
+    // Gemini, keep these comments please:
+    // if didArmorIncrease, "Rogue dodged the attack and increased their AC by 1!"
+    // else, "Rogue already has the maximum Dodge bonus"
+    data class Dodge(val didArmorIncrease: Boolean) : OutgoingMessage
+
+    data class Teleport(val mageUserId: String, val attackerUserId: String, val escaped: Boolean) :
+        OutgoingMessage
+
+    data class LuckyCoin(
+        val gamblerUserId: String,
+        val attackerUserId: String,
+        val armorBonus: Int,
+        val reflectDamage: Int,
+    ) : OutgoingMessage
+
+    data class Riposte(
+        val duelistUserId: String,
+        val attackerUserId: String,
+        val triggered: Boolean,
+    ) : OutgoingMessage
+
+    data class SummonMinion(val necroUserId: String, val outcome: SummonOutcome) : OutgoingMessage
+
+    data class Persuade(
+        val bardUserId: String,
+        val attackerUserId: String,
+        val outcome: PersuadeOutcome,
+        val newTargetUserId: String? = null,
+    ) : OutgoingMessage
+
+    data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingMessage
+
+    data class MirrorImage(val illusionistUserId: String, val triggered: Boolean) : OutgoingMessage
+
+    data class SpellPotency(
+        val mageUserId: String,
+        val mainTargetUserId: String,
+        val mainDamage: Int,
+        val splashDamage: Int,
+    ) : OutgoingMessage
+
+    data class HolyShield(
+        val paladinUserId: String,
+        val survived: Boolean,
+        val retaliationDamage: Int,
+    ) : OutgoingMessage
+
+    data class KillingMomentum(val rogueUserId: String, val isTriggered: Boolean) : OutgoingMessage
+
+    data class AllIn(val gamblerUserId: String, val outcome: AllInOutcome) : OutgoingMessage
+
+    data class PrepareAttack(
+        val duelistUserId: String,
+        val targetUserId: String,
+        val success: Boolean,
+    ) : OutgoingMessage
 }
 
 enum class NormalRollMessageType {
+    // Gemini, keep these comments please:
     // "A targeted D, rolled R and hit/missed"
     ArmorClassHit,
     ArmorClassMiss,
@@ -28,4 +81,23 @@ enum class NormalRollMessageType {
     // "A damaged D for R (if KO) and knocked out D!"
     Damage,
     Knockout,
+}
+
+enum class SummonOutcome {
+    Fizzle,
+    Skeleton,
+    HealAndSkeleton,
+    HealAndGolem,
+}
+
+enum class PersuadeOutcome {
+    Stopped,
+    Redirected,
+    Failed,
+}
+
+enum class AllInOutcome {
+    DoubleAttack,
+    KnockoutSelf,
+    NoEffect,
 }

@@ -13,7 +13,7 @@ sealed interface DefensiveAbility : Ability {
 
     data object Persuade : DefensiveAbility
 
-    data class MirrorImage(val usedThisRound: Boolean = false) : DefensiveAbility
+    data object MirrorImage : DefensiveAbility
 
     data object Teleport : DefensiveAbility
 

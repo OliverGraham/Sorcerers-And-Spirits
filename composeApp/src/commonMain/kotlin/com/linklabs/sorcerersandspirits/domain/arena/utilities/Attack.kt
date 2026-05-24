@@ -205,10 +205,8 @@ internal class Attack(
 
     private fun CombatActionArguments.resolveSpellPotency(): Updates {
         val splashDamage = diceTotal / 2
-
         applyFullDamageToDefender()
         applySplashDamage(splashDamage = splashDamage)
-
         addSpellPotencyMessage(splashDamage = splashDamage)
 
         return resolveTurnEnd()

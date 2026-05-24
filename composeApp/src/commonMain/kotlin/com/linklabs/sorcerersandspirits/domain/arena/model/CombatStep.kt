@@ -35,8 +35,13 @@ sealed interface RollPurpose {
 
     data object HolyShieldRetaliation : RollPurpose
 
-    // TODO: They need to be given the option to reroll
-    data object MirrorImageReroll : RollPurpose
+    data class MirrorImageChoice(val firstDie: Int, val secondDie: Int) : RollPurpose
+
+    data class MirrorImageReroll(
+        val firstDie: Int,
+        val secondDie: Int,
+        val dieIndexToReplace: Int,
+    ) : RollPurpose
 
     data object ImpersonateChoice : RollPurpose
 }

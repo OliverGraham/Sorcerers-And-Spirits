@@ -128,7 +128,7 @@ Illusionist:
 - Offensive: Impersonate
     - Copy an offensive SPC ability from a living opponent until end of match or until another is chosen.
 - Defensive: Mirror Image
-    - Once per attack phase, reroll 1d6 and give the result -1.
+    - Once per attack phase, reroll 1d6 and give the result -1. Result can be 0.
     - Not usable on SPC damage.
 
 Mage:

@@ -96,24 +96,38 @@ internal class Attack(
             }
 
             is DefensiveAbility.MirrorImage -> {
-                // TODO: This logic needs to be updated - This defensive ability can be used an
-                //  unlimited number of times
-                if (!defenderDefensiveAbility.usedThisRound) {
-                    RollOutcome.Results(
-                        messages = messages,
-                        updatedPlayerMap = updatedPlayerMap,
-                        nextActivePlayerUserId = defender.userId,
-                        nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.MirrorImageReroll),
-                    )
-                } else {
-                    resolveArmorClassHitSuccess()
-                }
+                RollOutcome.Results(
+                    messages = messages,
+                    updatedPlayerMap = updatedPlayerMap,
+                    nextActivePlayerUserId = defender.userId,
+                    nextStep =
+                        CombatStep.AbilityRoll(
+                            purpose =
+                                RollPurpose.MirrorImageChoice(
+                                    firstDie = firstDie,
+                                    secondDie = secondDie,
+                                )
+                        ),
+                )
             }
 
             else -> resolveArmorClassHitSuccess()
         }
 
-    private fun CombatActionArguments.resolveArmorClassHitSuccess(): RollOutcome {
+    fun resolveAfterMirrorImage(extraMessages: List<OutgoingMessage>): RollOutcome {
+        messages.addAll(extraMessages)
+        return if (diceTotal >= arguments.defender.characterClass.armorClass) {
+            // It still hits!
+            arguments.addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
+            arguments.resolveArmorClassHitSuccess()
+        } else {
+            // It's now a miss!
+            arguments.addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
+            arguments.resolveArmorClassMiss()
+        }
+    }
+
+    internal fun CombatActionArguments.resolveArmorClassHitSuccess(): RollOutcome {
         if (attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie) {
             return resolveSpellPotency()
         }

@@ -105,10 +105,51 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
             is RollPurpose.HolyShieldRetaliation ->
                 handleHolyShieldRetaliation(arguments = arguments)
 
-            is RollPurpose.MirrorImageReroll -> handleMirrorImageReroll(arguments = arguments)
+            is RollPurpose.MirrorImageChoice ->
+                handleMirrorImageChoice(arguments = arguments, purpose = purpose)
+
+            is RollPurpose.MirrorImageReroll ->
+                handleMirrorImageReroll(arguments = arguments, purpose = purpose)
 
             is RollPurpose.ImpersonateChoice -> handleImpersonateChoice(arguments = arguments)
         }
+
+    private fun handleMirrorImageChoice(
+        arguments: CombatActionArguments,
+        purpose: RollPurpose.MirrorImageChoice,
+    ): RollOutcome.Results {
+        // This is a decision step, if it's called it means the UI just wants to stay in this state
+        // or it was triggered by a roll that hasn't happened yet.
+        // Usually, the UI will call invoke with MirrorImageReroll or HealthRoll.
+        return RollOutcome.Results(
+            messages = emptyList(),
+            updatedPlayerMap = arguments.playerMap,
+            nextActivePlayerUserId = arguments.defender.userId,
+            nextStep = CombatStep.AbilityRoll(purpose = purpose),
+        )
+    }
+
+    private fun handleMirrorImageReroll(
+        arguments: CombatActionArguments,
+        purpose: RollPurpose.MirrorImageReroll,
+    ): RollOutcome.Results {
+        val roll = roll1D6() - 1
+
+        val newFirstDie = if (purpose.dieIndexToReplace == 1) roll else purpose.firstDie
+        val newSecondDie = if (purpose.dieIndexToReplace == 2) roll else purpose.secondDie
+
+        val messages =
+            listOf(
+                OutgoingMessage.MirrorImage(
+                    illusionistUserId = arguments.defender.userId,
+                    triggered = true,
+                )
+            )
+
+        val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie, arguments = arguments)
+
+        return attack.resolveAfterMirrorImage(extraMessages = messages) as RollOutcome.Results
+    }
 
     private fun handleImpersonateChoice(arguments: CombatActionArguments): RollOutcome.Results {
         // Implementation for Impersonate choice
@@ -551,46 +592,6 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                     retaliationDamage = damage,
                 )
             )
-
-        return resolveTurnEnd(
-            arguments = arguments,
-            updatedMap = updatedPlayerMap,
-            extraMessages = messages,
-        )
-    }
-
-    private fun handleMirrorImageReroll(arguments: CombatActionArguments): RollOutcome.Results {
-        val roll = roll1D6()
-        // Reroll result is -1 as per AGENTS.md
-        val modifiedRoll = (roll - 1).coerceAtLeast(minimumValue = 1)
-
-        val messages =
-            listOf(
-                OutgoingMessage.MirrorImage(
-                    illusionistUserId = arguments.defender.userId,
-                    triggered = true,
-                )
-            )
-
-        // TODO: MirrorImage can be used an infinite number of times per round, per match.
-        // Obviously,
-        //  it can only be used a single time when an attacker is attacking (they only get one
-        // reroll per time they're attacked )
-        val updatedPlayerMap = arguments.playerMap.toMutableMap()
-        val defender = arguments.defender
-        val currentAbility =
-            defender.characterClass.defensiveAbility as DefensiveAbility.MirrorImage
-        updatedPlayerMap[defender.userId] =
-            defender.copy(
-                characterClass =
-                    defender.characterClass.copy(
-                        defensiveAbility = currentAbility.copy(usedThisRound = true)
-                    )
-            )
-
-        // Since we're keeping it simple, let's assume the reroll happened and we proceed.
-        // In a more complex state, we'd re-evaluate the hit with the modified roll.
-        println(message = "Mirror Image modified roll: $modifiedRoll")
 
         return resolveTurnEnd(
             arguments = arguments,

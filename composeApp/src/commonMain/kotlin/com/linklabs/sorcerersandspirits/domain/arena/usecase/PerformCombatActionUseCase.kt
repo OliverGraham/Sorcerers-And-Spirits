@@ -92,8 +92,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
             is RollPurpose.MirrorImageChoice -> handleMirrorImageChoice(purpose = purpose)
 
-            is RollPurpose.MirrorImagePass ->
-                handleMirrorImagePass(triggeredByArmorRoll = purpose.triggeredByArmorRoll)
+            is RollPurpose.MirrorImagePass -> handleMirrorImagePass(purpose = purpose)
 
             is RollPurpose.MirrorImageReroll -> handleMirrorImageReroll(purpose = purpose)
 
@@ -116,7 +115,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     }
 
     private fun CombatActionArguments.handleMirrorImagePass(
-        triggeredByArmorRoll: Boolean
+        purpose: RollPurpose.MirrorImagePass
     ): RollOutcome {
         // If the Illusionist chooses not to reroll, the hit/damage stands and combat resumes.
         val messages =
@@ -127,7 +126,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 )
             )
 
-        return if (triggeredByArmorRoll) {
+        return if (purpose.triggeredByArmorRoll) {
             // Hit stands, move to damage roll
             RollOutcome(
                 messages = messages,
@@ -136,10 +135,9 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 nextStep = CombatStep.HealthRoll,
             )
         } else {
-            // TODO: What is happening here?
-
-            // Damage roll stands, finalize resolution
-            val attack = Attack(firstDie = 0, secondDie = 0, arguments = this)
+            // Damage roll stands, finalize resolution using original dice
+            val attack =
+                Attack(firstDie = purpose.firstDie, secondDie = purpose.secondDie, arguments = this)
             val finalOutcome = attack.resumeHealthRollResolution()
             finalOutcome.copy(messages = messages + finalOutcome.messages)
         }
@@ -150,8 +148,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     ): RollOutcome {
         val roll = roll1D6() - 1
 
-        val newFirstDie = if (purpose.dieIndexToReplace == 1) roll else purpose.firstDie
-        val newSecondDie = if (purpose.dieIndexToReplace == 2) roll else purpose.secondDie
+        val newFirstDie = if (purpose.rerollFirstDie) roll else purpose.firstDie
+        val newSecondDie = if (!purpose.rerollFirstDie) roll else purpose.secondDie
 
         val messages =
             listOf(

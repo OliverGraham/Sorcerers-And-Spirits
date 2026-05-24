@@ -7,11 +7,23 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.arena.model.TurnInfo
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.Attack
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.ActivatedAbility
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlin.random.Random
+
+// TODO: Sealed interface? Could be initial attack vs a reaction, like Mage's teleport:
+//  Rogue attacks Mage and breaks armor -> Signal sent for Mage to be nextActiveUserId, and
+//   to only be able to roll 1d6. This result is then sent back to RTDB and emitted -> Rogue
+//   rolls 1d6 -> emitted with outcome of the two rolls and next step (is Rogue attacking or did
+// Mage)
+//   get away
+
+sealed interface CombatAction {
+
+    data class Normal
+}
 
 data class CombatActionArguments(
     val arenaId: String,
@@ -24,16 +36,19 @@ data class CombatActionArguments(
     val attackerDefensiveAbility = attacker.characterClass.defensiveAbility
     val defenderOffensiveAbility = defender.characterClass.offensiveAbility
     val defenderDefensiveAbility = defender.characterClass.defensiveAbility
+
+    val roundNumber = turnInfo.roundNumber
 }
 
 // TODO Arena: Clean this slop - need to reduce number of arguments. An idea is map to CombatResult,
 //  and then make the list of messages based on that, instead of that horrible mix.
 class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
-    // TODO Saturday: Need to figure out what all needs to be passed along to data layer
-    //  What was rolled, who is involved, abilities used, the outcome.
-    //  Lots of new message types I think?
+    private val messages = mutableListOf<OutgoingArenaMessage>()
+
     suspend operator fun invoke(arguments: CombatActionArguments, newRollType: RollType) {
+        messages.clear()
+
         arguments.handleRoll(newRollType = newRollType)
     }
 
@@ -52,12 +67,10 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
                 return // TODO handle SpellPotency
             }
         }
-
+        val attack = Attack(firstDie = firstDie, secondDie = secondDie, arguments = this)
         when (newRollType) {
-            is RollType.ArmorClassRoll ->
-                handleArmorClassRoll(firstDie = firstDie, secondDie = secondDie)
-
-            is RollType.HealthRoll -> handleHealthRoll(firstDie = firstDie, secondDie = secondDie)
+            is RollType.ArmorClassRoll -> attack.handleArmorClassRoll()
+            is RollType.HealthRoll -> attack.handleHealthRoll()
         }
     }
 
@@ -65,6 +78,7 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     private fun CombatActionArguments.handleAbilityRoll(rollType: RollType.AbilityRoll) {
         val activatedAbility = rollType.ability as? ActivatedAbility ?: return
 
+        // TODO: Need to indicate Player has acted this round (except for Impersonate)
         when (activatedAbility) {
             OffensiveAbility.PrepareAttack -> {
                 // TODO: I think it's roll a 10, 11 or 12 to instant-kill opponent?
@@ -78,84 +92,8 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         }
     }
 
-    private fun CombatActionArguments.handleArmorClassRoll(firstDie: Int, secondDie: Int) {
-        if (firstDie + secondDie >= defender.characterClass.armorClass) {
-            resolveArmorClassHit(firstDie = firstDie, secondDie = secondDie)
-        } else {
-            resolveArmorClassMiss(firstDie = firstDie, secondDie = secondDie)
-        }
-    }
-
-    private fun CombatActionArguments.resolveArmorClassHit(firstDie: Int, secondDie: Int) {
-        when (defenderDefensiveAbility) {
-            is DefensiveAbility.Teleport -> {
-                if (firstDie + secondDie >= defender.characterClass.armorClass) {
-                    // TODO: handle Teleport
-                } else {
-                    // TODO: Resolve normal AC miss
-                }
-            }
-
-            // TODO: Gambler ability (can't remember)
-            // TODO: Duelist Riposte
-            // TODO: Bard Persuade
-            // TODO: Illusionist reroll option (is this truly everywhere?)
-            else -> {
-                // TODO: Resolve normal AC hit
-            }
-        }
-    }
-
-    private fun CombatActionArguments.resolveArmorClassMiss(firstDie: Int, secondDie: Int) {
-        // No other class does anything after a miss to their AC right?
-        if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
-            val armorBonus = defenderDefensiveAbility.armorBonus
-            if (armorBonus < 2) {
-                // TODO: Add armorBonus
-            } else {
-                // TODO: Add message stating Rogue has max Dodge
-            }
-        }
-
-        when (attackerOffensiveAbility) {
-            // TODO: Gambler could have another turn
-            // TODO: Necro could have another turn
-            else -> {}
-        }
-    }
-
-    private fun CombatActionArguments.handleHealthRoll(firstDie: Int, secondDie: Int) {
-        if (firstDie + secondDie >= defender.characterClass.hitPoints) {
-            resolveKnockout(firstDie = firstDie, secondDie = secondDie)
-        } else {
-            resolveDamage(firstDie = firstDie, secondDie = secondDie)
-        }
-
-        // TODO: Bard's Encore
-    }
-
-    private fun CombatActionArguments.resolveKnockout(firstDie: Int, secondDie: Int) {
-        if (defenderDefensiveAbility is DefensiveAbility.HolyShield) {
-            if (!defenderDefensiveAbility.usedThisMatch) {
-                // TODO: Handle Paladin bubble - if survive, then come back here and handle
-                // regularly
-            }
-        }
-
-        if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
-            // TODO: Handle KillingMomentum - carry +1 from doubles if applicable
-        }
-
-        // TODO: otherwise, normal character knock out
-    }
-
-    private fun CombatActionArguments.resolveDamage(firstDie: Int, secondDie: Int) {
-        when (attackerOffensiveAbility) {
-            // TODO: Gambler could have another turn
-            // TODO: Necro could have another turn
-            else -> {}
-        }
-    }
+    // TODO: This style? No, because some abilities can miss and should use normal miss
+    private inner class ActivatedAbilityHandler(private val arguments: CombatActionArguments)
 
     suspend operator fun invoke(
         arenaId: String,

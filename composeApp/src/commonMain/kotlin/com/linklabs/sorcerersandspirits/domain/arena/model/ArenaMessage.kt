@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
+// TODO: RollType in full is not necessary in the message - come up with another way
+
 sealed interface IncomingArenaMessage {
     val id: String
 

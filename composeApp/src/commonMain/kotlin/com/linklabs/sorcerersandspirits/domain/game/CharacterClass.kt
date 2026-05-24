@@ -9,6 +9,7 @@ data class CharacterClass(
     val speed: Int,
     val offensiveAbility: OffensiveAbility,
     val defensiveAbility: DefensiveAbility,
+    val hasActedThisRound: Boolean = false,
 ) {
     val className = type.name
 

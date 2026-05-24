@@ -12,15 +12,12 @@ import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
-// TODO: Does this still need to be a sealed interface?
-sealed interface RollOutcome {
-    data class Results(
-        val messages: List<OutgoingMessage>,
-        val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
-        val nextActivePlayerUserId: String,
-        val nextStep: CombatStep,
-    ) : RollOutcome
-}
+data class RollOutcome(
+    val messages: List<OutgoingMessage>,
+    val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
+    val nextActivePlayerUserId: String,
+    val nextStep: CombatStep,
+)
 
 internal class Attack(
     private val firstDie: Int,
@@ -60,7 +57,7 @@ internal class Attack(
     private fun CombatActionArguments.resolveArmorClassHit(): RollOutcome =
         when (defenderDefensiveAbility) {
             is DefensiveAbility.Teleport -> {
-                RollOutcome.Results(
+                RollOutcome(
                     messages = messages,
                     updatedPlayerMap = updatedPlayerMap,
                     nextActivePlayerUserId = defender.userId,
@@ -69,7 +66,7 @@ internal class Attack(
             }
 
             is DefensiveAbility.Riposte -> {
-                RollOutcome.Results(
+                RollOutcome(
                     messages = messages,
                     updatedPlayerMap = updatedPlayerMap,
                     nextActivePlayerUserId = defender.userId,
@@ -78,7 +75,7 @@ internal class Attack(
             }
 
             is DefensiveAbility.Persuade -> {
-                RollOutcome.Results(
+                RollOutcome(
                     messages = messages,
                     updatedPlayerMap = updatedPlayerMap,
                     nextActivePlayerUserId = defender.userId,
@@ -87,7 +84,7 @@ internal class Attack(
             }
 
             is DefensiveAbility.LuckyCoin -> {
-                RollOutcome.Results(
+                RollOutcome(
                     messages = messages,
                     updatedPlayerMap = updatedPlayerMap,
                     nextActivePlayerUserId = defender.userId,
@@ -96,7 +93,7 @@ internal class Attack(
             }
 
             is DefensiveAbility.MirrorImage -> {
-                RollOutcome.Results(
+                RollOutcome(
                     messages = messages,
                     updatedPlayerMap = updatedPlayerMap,
                     nextActivePlayerUserId = defender.userId,
@@ -132,7 +129,7 @@ internal class Attack(
             return resolveSpellPotency()
         }
 
-        return RollOutcome.Results(
+        return RollOutcome(
             messages = messages,
             updatedPlayerMap = updatedPlayerMap,
             nextActivePlayerUserId = attacker.userId,
@@ -218,7 +215,7 @@ internal class Attack(
             defenderDefensiveAbility is DefensiveAbility.HolyShield &&
                 !defenderDefensiveAbility.usedThisMatch
         ) {
-            return RollOutcome.Results(
+            return RollOutcome(
                 messages = messages,
                 updatedPlayerMap = updatedPlayerMap,
                 nextActivePlayerUserId = defender.userId,
@@ -238,7 +235,7 @@ internal class Attack(
                         isTriggered = true,
                     )
             )
-            return RollOutcome.Results(
+            return RollOutcome(
                 messages = messages,
                 updatedPlayerMap = updatedPlayerMap,
                 nextActivePlayerUserId = attacker.userId,
@@ -255,7 +252,7 @@ internal class Attack(
         }
 
         if (attackerOffensiveAbility == OffensiveAbility.Encore) {
-            return RollOutcome.Results(
+            return RollOutcome(
                 messages = messages,
                 updatedPlayerMap = updatedPlayerMap,
                 nextActivePlayerUserId = attacker.userId,
@@ -282,7 +279,7 @@ internal class Attack(
                 calculateNextPlayer() ?: arguments.attacker // Fallback should not happen
             fastestNextRound.characterClass.addNewTurnMessage()
 
-            return RollOutcome.Results(
+            return RollOutcome(
                 messages = messages,
                 updatedPlayerMap = updatedPlayerMap,
                 nextActivePlayerUserId = fastestNextRound.userId,
@@ -292,7 +289,7 @@ internal class Attack(
 
         nextPlayer.characterClass.addNewTurnMessage()
 
-        return RollOutcome.Results(
+        return RollOutcome(
             messages = messages,
             updatedPlayerMap = updatedPlayerMap,
             nextActivePlayerUserId = nextPlayer.userId,

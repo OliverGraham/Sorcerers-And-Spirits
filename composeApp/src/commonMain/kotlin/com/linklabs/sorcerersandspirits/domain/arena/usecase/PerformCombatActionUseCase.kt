@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
+import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.PersuadeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.model.RollPurpose
@@ -91,6 +92,9 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
             is RollPurpose.MirrorImageChoice -> handleMirrorImageChoice(purpose = purpose)
 
+            is RollPurpose.MirrorImagePass ->
+                handleMirrorImagePass(triggeredByArmorRoll = purpose.triggeredByArmorRoll)
+
             is RollPurpose.MirrorImageReroll -> handleMirrorImageReroll(purpose = purpose)
 
             is RollPurpose.ImpersonateChoice -> handleImpersonateChoice()
@@ -99,15 +103,46 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
     private fun CombatActionArguments.handleMirrorImageChoice(
         purpose: RollPurpose.MirrorImageChoice
     ): RollOutcome {
-        // This is a decision step, if it's called it means the UI just wants to stay in this state
-        // or, it was triggered by a roll that hasn't happened yet.
-        // Usually, the UI will call invoke with MirrorImageReroll or HealthRoll.
+        // This is a decision step where the Illusionist chooses whether to reroll a die or pass.
+        // Returning the same state allows the UI to display the choice and wait for user input.
+        // To exit this state, the UI should call invoke with either MirrorImagePass or
+        // MirrorImageReroll.
         return RollOutcome(
             messages = emptyList(),
             updatedPlayerMap = playerMap,
             nextActivePlayerUserId = defender.userId,
             nextStep = CombatStep.AbilityRoll(purpose = purpose),
         )
+    }
+
+    private fun CombatActionArguments.handleMirrorImagePass(
+        triggeredByArmorRoll: Boolean
+    ): RollOutcome {
+        // If the Illusionist chooses not to reroll, the hit/damage stands and combat resumes.
+        val messages =
+            listOf(
+                OutgoingMessage.MirrorImage(
+                    illusionistUserId = defender.userId,
+                    status = MirrorImageStatus.Passed,
+                )
+            )
+
+        return if (triggeredByArmorRoll) {
+            // Hit stands, move to damage roll
+            RollOutcome(
+                messages = messages,
+                updatedPlayerMap = playerMap,
+                nextActivePlayerUserId = attacker.userId,
+                nextStep = CombatStep.HealthRoll,
+            )
+        } else {
+            // TODO: What is happening here?
+
+            // Damage roll stands, finalize resolution
+            val attack = Attack(firstDie = 0, secondDie = 0, arguments = this)
+            val finalOutcome = attack.resumeHealthRollResolution()
+            finalOutcome.copy(messages = messages + finalOutcome.messages)
+        }
     }
 
     private fun CombatActionArguments.handleMirrorImageReroll(
@@ -120,12 +155,19 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
 
         val messages =
             listOf(
-                OutgoingMessage.MirrorImage(illusionistUserId = defender.userId, triggered = true)
+                OutgoingMessage.MirrorImage(
+                    illusionistUserId = defender.userId,
+                    status = MirrorImageStatus.Rerolled,
+                )
             )
 
         val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie, arguments = this)
 
-        return attack.resolveAfterMirrorImage(extraMessages = messages)
+        return if (purpose.triggeredByArmorRoll) {
+            attack.resolveAfterMirrorImageArmorRoll(extraMessages = messages)
+        } else {
+            attack.resolveAfterMirrorImageHealthRoll(extraMessages = messages)
+        }
     }
 
     private fun CombatActionArguments.handleImpersonateChoice(): RollOutcome {

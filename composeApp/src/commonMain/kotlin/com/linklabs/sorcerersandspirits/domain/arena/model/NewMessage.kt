@@ -46,7 +46,8 @@ sealed interface OutgoingMessage {
 
     data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingMessage
 
-    data class MirrorImage(val illusionistUserId: String, val triggered: Boolean) : OutgoingMessage
+    data class MirrorImage(val illusionistUserId: String, val status: MirrorImageStatus) :
+        OutgoingMessage
 
     data class SpellPotency(
         val mageUserId: String,
@@ -100,4 +101,10 @@ enum class AllInOutcome {
     DoubleAttack,
     KnockoutSelf,
     NoEffect,
+}
+
+enum class MirrorImageStatus {
+    Pondering,
+    Passed,
+    Rerolled,
 }

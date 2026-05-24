@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.utilities
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
+import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.RollPurpose
@@ -29,7 +30,7 @@ internal class Attack(
 
     private val diceTotal = firstDie + secondDie
 
-    private data class Updates(val nextActivePlayerUserId: String, val nextStep: CombatStep)
+    internal data class Updates(val nextActivePlayerUserId: String, val nextStep: CombatStep)
 
     fun handleArmorClassRoll(): RollOutcome {
         val updates = arguments.handleArmorClassRoll()
@@ -93,6 +94,13 @@ internal class Attack(
             }
 
             is DefensiveAbility.MirrorImage -> {
+                messages.add(
+                    element =
+                        OutgoingMessage.MirrorImage(
+                            illusionistUserId = defender.userId,
+                            status = MirrorImageStatus.Pondering,
+                        )
+                )
                 Updates(
                     nextActivePlayerUserId = defender.userId,
                     nextStep =
@@ -101,6 +109,7 @@ internal class Attack(
                                 RollPurpose.MirrorImageChoice(
                                     firstDie = firstDie,
                                     secondDie = secondDie,
+                                    triggeredByArmorRoll = true,
                                 )
                         ),
                 )
@@ -109,8 +118,11 @@ internal class Attack(
             else -> resolveArmorClassHitSuccess()
         }
 
-    fun resolveAfterMirrorImage(extraMessages: List<OutgoingMessage>): RollOutcome {
+    fun resolveAfterMirrorImageArmorRoll(extraMessages: List<OutgoingMessage>): RollOutcome {
         messages.addAll(extraMessages)
+
+        markMirrorImageAsUsed()
+
         val updates =
             if (diceTotal >= arguments.defender.characterClass.armorClass) {
                 // It still hits!
@@ -130,7 +142,60 @@ internal class Attack(
         )
     }
 
-    private fun CombatActionArguments.resolveArmorClassHitSuccess(): Updates {
+    fun resolveAfterMirrorImageHealthRoll(extraMessages: List<OutgoingMessage>): RollOutcome {
+        messages.addAll(extraMessages)
+
+        markMirrorImageAsUsed()
+
+        val updates =
+            if (diceTotal >= arguments.defender.characterClass.hitPoints) {
+                arguments.addNormalRollMessage(type = NormalRollMessageType.Knockout)
+                arguments.resolveKnockout()
+            } else {
+                arguments.addNormalRollMessage(type = NormalRollMessageType.Damage)
+                arguments.resolveDamage()
+            }
+
+        return RollOutcome(
+            messages = messages,
+            updatedPlayerMap = updatedPlayerMap,
+            nextActivePlayerUserId = updates.nextActivePlayerUserId,
+            nextStep = updates.nextStep,
+        )
+    }
+
+    private fun markMirrorImageAsUsed() {
+        val defender = updatedPlayerMap.getValue(key = arguments.defender.userId)
+        val currentAbility =
+            defender.characterClass.defensiveAbility as DefensiveAbility.MirrorImage
+        updatedPlayerMap[defender.userId] =
+            defender.copy(
+                characterClass =
+                    defender.characterClass.copy(
+                        defensiveAbility = currentAbility.copy(usedThisAttack = true)
+                    )
+            )
+    }
+
+    fun resumeHealthRollResolution(): RollOutcome {
+        val updates =
+            if (diceTotal >= arguments.defender.characterClass.hitPoints) {
+                arguments.addNormalRollMessage(type = NormalRollMessageType.Knockout)
+                arguments.resolveKnockout()
+            } else {
+                arguments.addNormalRollMessage(type = NormalRollMessageType.Damage)
+                arguments.resolveDamage()
+            }
+
+        return RollOutcome(
+            messages = messages,
+            updatedPlayerMap = updatedPlayerMap,
+            nextActivePlayerUserId = updates.nextActivePlayerUserId,
+            nextStep = updates.nextStep,
+        )
+    }
+
+    internal fun CombatActionArguments.resolveArmorClassHitSuccess(): Updates {
         if (attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie) {
             return resolveSpellPotency()
         }
@@ -204,16 +269,44 @@ internal class Attack(
         }
     }
 
-    private fun CombatActionArguments.handleHealthRoll(): Updates =
-        if (diceTotal >= defender.characterClass.hitPoints) {
+    // TODO: Update this, come on
+
+    private fun CombatActionArguments.handleHealthRoll(): Updates {
+        val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
+        val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
+
+        if (!mirrorImageUsed && mirrorImage != null) {
+            messages.add(
+                element =
+                    OutgoingMessage.MirrorImage(
+                        illusionistUserId = defender.userId,
+                        status = MirrorImageStatus.Pondering,
+                    )
+            )
+            return Updates(
+                nextActivePlayerUserId = defender.userId,
+                nextStep =
+                    CombatStep.AbilityRoll(
+                        purpose =
+                            RollPurpose.MirrorImageChoice(
+                                firstDie = firstDie,
+                                secondDie = secondDie,
+                                triggeredByArmorRoll = false,
+                            )
+                    ),
+            )
+        }
+
+        return if (diceTotal >= defender.characterClass.hitPoints) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
             resolveKnockout()
         } else {
             addNormalRollMessage(type = NormalRollMessageType.Damage)
             resolveDamage()
         }
+    }
 
-    private fun CombatActionArguments.resolveKnockout(): Updates {
+    internal fun CombatActionArguments.resolveKnockout(): Updates {
         if (
             defenderDefensiveAbility is DefensiveAbility.HolyShield &&
                 !defenderDefensiveAbility.usedThisMatch
@@ -245,7 +338,7 @@ internal class Attack(
         return resolveTurnEnd()
     }
 
-    private fun CombatActionArguments.resolveDamage(): Updates {
+    internal fun CombatActionArguments.resolveDamage(): Updates {
         if (attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie) {
             return resolveSpellPotency()
         }
@@ -309,8 +402,22 @@ internal class Attack(
 
     private fun resetAllPlayersActed() {
         updatedPlayerMap.entries.forEach { (userId, player) ->
+            val defensiveAbility = player.characterClass.defensiveAbility
+            val updatedDefensiveAbility =
+                if (defensiveAbility is DefensiveAbility.MirrorImage) {
+                    defensiveAbility.copy(usedThisAttack = false)
+                } else {
+                    defensiveAbility
+                }
+
             updatedPlayerMap[userId] =
-                player.copy(characterClass = player.characterClass.copy(hasActedThisRound = false))
+                player.copy(
+                    characterClass =
+                        player.characterClass.copy(
+                            hasActedThisRound = false,
+                            defensiveAbility = updatedDefensiveAbility,
+                        )
+                )
         }
     }
 

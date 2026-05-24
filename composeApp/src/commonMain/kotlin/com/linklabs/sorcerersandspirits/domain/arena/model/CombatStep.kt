@@ -35,12 +35,19 @@ sealed interface RollPurpose {
 
     data object HolyShieldRetaliation : RollPurpose
 
-    data class MirrorImageChoice(val firstDie: Int, val secondDie: Int) : RollPurpose
+    data class MirrorImageChoice(
+        val firstDie: Int,
+        val secondDie: Int,
+        val triggeredByArmorRoll: Boolean,
+    ) : RollPurpose
+
+    data class MirrorImagePass(val triggeredByArmorRoll: Boolean) : RollPurpose
 
     data class MirrorImageReroll(
         val firstDie: Int,
         val secondDie: Int,
-        val dieIndexToReplace: Int,
+        val dieIndexToReplace: Int, // TODO: Don't use an index - simply replace by property name
+        val triggeredByArmorRoll: Boolean,
     ) : RollPurpose
 
     data object ImpersonateChoice : RollPurpose

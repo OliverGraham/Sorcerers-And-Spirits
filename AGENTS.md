@@ -90,17 +90,17 @@ Gambler:
           or 4, there's no effect.
 - Defensive: Lucky Coin
     - When attacked and armor is broken, add 1d6 to Armor until turn end.
-      - On 6, deal 1d6 damage to attacker.
+        - On 6, deal 1d6 damage to attacker.
 
 Duelist:
 
 - Offensive: Prepare Attack
     - Activated.
     - Roll 2d6.
-      - 10, 11 or 12 K.O.s the target.
+        - 10, 11 or 12 K.O.s the target.
 - Defensive: Riposte
     - When opponent passes your armor, roll 2d6.
-      - on 6, 7 or 8, Duelist turns the attack around so defender attacks opponent instead.
+        - on 6, 7 or 8, Duelist turns the attack around so defender attacks opponent instead.
 
 Necromancer:
 
@@ -126,9 +126,12 @@ Bard:
 Illusionist:
 
 - Offensive: Impersonate
-    - Copy an offensive SPC ability from a living opponent until end of match or until another is chosen.
+    - Copy an offensive SPC ability from a living opponent until end of match or until another is
+      chosen.
 - Defensive: Mirror Image
-    - Once per attack phase, reroll 1d6 and give the result -1. Result can be 0.
+    - Once per attack phase, reroll 1d6 and give the result -1. Result can be 0. This reroll can be
+      done during ArmorClass rolls or Damage rolls against the defender who has the MirrorImage
+      ability
     - Not usable on SPC damage.
 
 Mage:
@@ -144,9 +147,11 @@ Paladin:
 
 - Defensive: Holy Shield
     - Once per match, when K.O.'d, roll 2d6.
-      - On 10, 11 or 12 Paladin survive with 1 Health, otherwise no effect and Paladin is KnockedOut.
-        - If Paladin survives, roll 1d6 damage to attacker (no ArmorClass roll - this damage is unblockable and goes directly to attacker's health).
-      - Also: 12 stops Duelist's Prepare Attack.
+        - On 10, 11 or 12 Paladin survive with 1 Health, otherwise no effect and Paladin is
+          KnockedOut.
+            - If Paladin survives, roll 1d6 damage to attacker (no ArmorClass roll - this damage is
+              unblockable and goes directly to attacker's health).
+        - Also: 12 stops Duelist's Prepare Attack.
 
 Recommended modeling direction:
 Do not model the active roll only as RollType.

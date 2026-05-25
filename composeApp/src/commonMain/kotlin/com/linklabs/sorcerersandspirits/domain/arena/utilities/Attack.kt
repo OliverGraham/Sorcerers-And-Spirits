@@ -163,9 +163,9 @@ internal class PerformCombatAction(
         val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie)
 
         return if (purpose.triggeredByArmorRoll) {
-            attack.resolveAfterMirrorImageArmorRoll(extraMessages = messages)
+            attack.resolveAfterMirrorImageArmorRoll()
         } else {
-            attack.resolveAfterMirrorImageHealthRoll(extraMessages = messages)
+            attack.resolveAfterMirrorImageHealthRoll()
         }
     }
 
@@ -203,7 +203,7 @@ internal class PerformCombatAction(
             )
 
         return if (escaped) {
-            resolveTurnEnd(extraMessages = messages)
+            resolveTurnEnd()
         } else {
             Updates(nextActivePlayerUserId = attacker.userId, nextStep = CombatStep.HealthRoll)
         }
@@ -253,7 +253,7 @@ internal class PerformCombatAction(
             )
 
         return when (outcome) {
-            PersuadeOutcome.Stopped -> resolveTurnEnd(extraMessages = messages)
+            PersuadeOutcome.Stopped -> resolveTurnEnd()
 
             PersuadeOutcome.Redirected -> {
                 Updates(
@@ -347,7 +347,7 @@ internal class PerformCombatAction(
             AllInOutcome.KnockoutSelf -> {
                 updatedPlayerMap[attacker.userId] =
                     attacker.copy(characterClass = attacker.characterClass.copy(hitPoints = 0))
-                resolveTurnEnd(extraMessages = messages)
+                resolveTurnEnd()
             }
 
             AllInOutcome.DoubleAttack -> {
@@ -430,7 +430,7 @@ internal class PerformCombatAction(
                     )
             )
 
-        return resolveTurnEnd(extraMessages = messages)
+        return resolveTurnEnd()
     }
 
     private fun handlePrepareAttackRoll(): Updates {
@@ -461,7 +461,7 @@ internal class PerformCombatAction(
                 )
             )
 
-        return resolveTurnEnd(extraMessages = messages)
+        return resolveTurnEnd()
     }
 
     private fun handleEncoreCheck(): Updates {
@@ -477,7 +477,7 @@ internal class PerformCombatAction(
                 nextStep = CombatStep.Resolution, // Attack again
             )
         } else {
-            resolveTurnEnd(extraMessages = messages)
+            resolveTurnEnd()
         }
     }
 
@@ -516,7 +516,7 @@ internal class PerformCombatAction(
                         retaliationDamage = 0,
                     )
                 )
-            resolveTurnEnd(extraMessages = messages)
+            resolveTurnEnd()
         }
     }
 
@@ -536,7 +536,7 @@ internal class PerformCombatAction(
                 )
             )
 
-        return resolveTurnEnd(extraMessages = messages)
+        return resolveTurnEnd()
     }
 
     private fun handleResolution(): Updates {
@@ -549,7 +549,7 @@ internal class PerformCombatAction(
     }
 
     // TODO: Add messages - don't pass them in
-    private fun resolveTurnEnd(extraMessages: List<OutgoingMessage> = emptyList()): Updates {
+    private fun resolveTurnEnd(): Updates {
         // Mark current attacker as acted
         val attackerPlayer = updatedPlayerMap[attacker.userId]
         if (attackerPlayer != null) {
@@ -564,7 +564,6 @@ internal class PerformCombatAction(
         val candidates = livingPlayers.filter { !it.characterClass.hasActedThisRound }
 
         val nextPlayer = candidates.maxByOrNull { it.characterClass.speed }
-        val messages = extraMessages.toMutableList()
 
         return if (nextPlayer == null) {
             // New Round
@@ -710,8 +709,8 @@ internal class PerformCombatAction(
                 else -> resolveArmorClassHitSuccess()
             }
 
-        fun resolveAfterMirrorImageArmorRoll(extraMessages: List<OutgoingMessage>): Updates {
-            messages.addAll(extraMessages)
+        fun resolveAfterMirrorImageArmorRoll(): Updates {
+            // TODO: Messages
 
             markMirrorImageAsUsed()
 
@@ -726,9 +725,8 @@ internal class PerformCombatAction(
             }
         }
 
-        fun resolveAfterMirrorImageHealthRoll(extraMessages: List<OutgoingMessage>): Updates {
+        fun resolveAfterMirrorImageHealthRoll(): Updates {
             // TODO: messages
-            messages.addAll(extraMessages)
 
             markMirrorImageAsUsed()
 

@@ -127,13 +127,13 @@ internal class PerformCombatAction(
     private fun handleMirrorImagePass(purpose: RollPurpose.MirrorImagePass): Updates {
         // If the Illusionist chooses not to reroll, the hit/damage stands and combat resumes.
         // TODO: Messages
-        val messages =
-            listOf(
+        messages.add(
+            element =
                 OutgoingMessage.MirrorImage(
                     illusionistUserId = defender.userId,
                     status = MirrorImageStatus.Passed,
                 )
-            )
+        )
 
         return if (purpose.triggeredByArmorRoll) {
             // Hit stands, move to damage roll
@@ -152,13 +152,13 @@ internal class PerformCombatAction(
         val newSecondDie = if (!purpose.rerollFirstDie) roll else purpose.secondDie
 
         // TODO: Add message
-        val messages =
-            listOf(
+        messages.add(
+            element =
                 OutgoingMessage.MirrorImage(
                     illusionistUserId = defender.userId,
                     status = MirrorImageStatus.Rerolled,
                 )
-            )
+        )
 
         val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie)
 
@@ -192,15 +192,14 @@ internal class PerformCombatAction(
         val attackerRoll = roll1D6()
         val escaped = defenderRoll > attackerRoll
 
-        // TODO: Add messages
-        val messages =
-            mutableListOf<OutgoingMessage>(
+        messages.add(
+            element =
                 OutgoingMessage.Teleport(
                     mageUserId = defender.userId,
                     attackerUserId = attacker.userId,
                     escaped = escaped,
                 )
-            )
+        )
 
         return if (escaped) {
             resolveTurnEnd()
@@ -215,15 +214,14 @@ internal class PerformCombatAction(
         val total = firstDie + secondDie
         val triggered = total in 6..8
 
-        // TODO: Add message
-        val messages =
-            mutableListOf<OutgoingMessage>(
+        messages.add(
+            element =
                 OutgoingMessage.Riposte(
                     duelistUserId = defender.userId,
                     attackerUserId = attacker.userId,
                     triggered = triggered,
                 )
-            )
+        )
 
         return if (triggered) {
             // Flip attack: Defender now attacks Attacker
@@ -242,15 +240,14 @@ internal class PerformCombatAction(
                 else -> PersuadeOutcome.Failed
             }
 
-        // TODO: Add message
-        val messages =
-            mutableListOf<OutgoingMessage>(
+        messages.add(
+            element =
                 OutgoingMessage.Persuade(
                     bardUserId = defender.userId,
                     attackerUserId = attacker.userId,
                     outcome = outcome,
                 )
-            )
+        )
 
         return when (outcome) {
             PersuadeOutcome.Stopped -> resolveTurnEnd()
@@ -283,16 +280,15 @@ internal class PerformCombatAction(
             )
         }
 
-        // TODO: Add message
-        val messages =
-            listOf(
+        messages.add(
+            element =
                 OutgoingMessage.LuckyCoin(
                     gamblerUserId = defender.userId,
                     attackerUserId = attacker.userId,
                     armorBonus = roll,
                     reflectDamage = 0,
                 )
-            )
+        )
 
         // Re-evaluate AC roll with new AC
         // This is tricky. For simplicity, let's assume it still hits if the original roll was high
@@ -311,16 +307,15 @@ internal class PerformCombatAction(
         updatedPlayerMap[attacker.userId] =
             attacker.copy(characterClass = attacker.characterClass.copy(hitPoints = newHp))
 
-        // TODO: add message
-        val messages =
-            listOf(
+        messages.add(
+            element =
                 OutgoingMessage.LuckyCoin(
                     gamblerUserId = defender.userId,
                     attackerUserId = attacker.userId,
                     armorBonus = 6, // We know it was a 6 to get here
                     reflectDamage = damage,
                 )
-            )
+        )
 
         return Updates(nextActivePlayerUserId = attacker.userId, nextStep = CombatStep.HealthRoll)
     }
@@ -337,11 +332,9 @@ internal class PerformCombatAction(
                 else -> AllInOutcome.NoEffect
             }
 
-        // TODO: Add message
-        val messages =
-            mutableListOf<OutgoingMessage>(
-                OutgoingMessage.AllIn(gamblerUserId = attacker.userId, outcome = outcome)
-            )
+        messages.add(
+            element = OutgoingMessage.AllIn(gamblerUserId = attacker.userId, outcome = outcome)
+        )
 
         return when (outcome) {
             AllInOutcome.KnockoutSelf -> {
@@ -390,10 +383,9 @@ internal class PerformCombatAction(
             }
 
         val necro = attacker
-        val messages =
-            mutableListOf<OutgoingMessage>(
-                OutgoingMessage.SummonMinion(necroUserId = necro.userId, outcome = outcome)
-            )
+        messages.add(
+            element = OutgoingMessage.SummonMinion(necroUserId = necro.userId, outcome = outcome)
+        )
 
         // Apply effects
         val currentAbility = necro.characterClass.offensiveAbility as OffensiveAbility.SummonMinion
@@ -452,14 +444,14 @@ internal class PerformCombatAction(
                 defender.copy(characterClass = defender.characterClass.copy(hitPoints = 0))
         }
 
-        val messages =
-            listOf(
+        messages.add(
+            element =
                 OutgoingMessage.PrepareAttack(
                     duelistUserId = attacker.userId,
                     targetUserId = defender.userId,
                     success = success,
                 )
-            )
+        )
 
         return resolveTurnEnd()
     }
@@ -468,8 +460,9 @@ internal class PerformCombatAction(
         val roll = roll1D6()
         val triggered = roll in 5..6
 
-        val messages =
-            listOf(OutgoingMessage.Encore(bardUserId = attacker.userId, triggered = triggered))
+        messages.add(
+            element = OutgoingMessage.Encore(bardUserId = attacker.userId, triggered = triggered)
+        )
 
         return if (triggered) {
             Updates(
@@ -508,14 +501,15 @@ internal class PerformCombatAction(
         } else {
             updatedPlayerMap[paladin.userId] =
                 paladin.copy(characterClass = paladin.characterClass.copy(hitPoints = 0))
-            val messages =
-                listOf(
+
+            messages.add(
+                element =
                     OutgoingMessage.HolyShield(
                         paladinUserId = paladin.userId,
                         survived = false,
                         retaliationDamage = 0,
                     )
-                )
+            )
             resolveTurnEnd()
         }
     }
@@ -527,14 +521,14 @@ internal class PerformCombatAction(
         updatedPlayerMap[attacker.userId] =
             attacker.copy(characterClass = attacker.characterClass.copy(hitPoints = newHp))
 
-        val messages =
-            listOf(
+        messages.add(
+            element =
                 OutgoingMessage.HolyShield(
                     paladinUserId = defender.userId,
                     survived = true,
                     retaliationDamage = damage,
                 )
-            )
+        )
 
         return resolveTurnEnd()
     }

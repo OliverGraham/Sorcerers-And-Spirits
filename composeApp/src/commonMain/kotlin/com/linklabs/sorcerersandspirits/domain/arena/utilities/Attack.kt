@@ -41,6 +41,8 @@ internal class PerformCombatAction(
 
     val roundNumber = arguments.roundNumber
 
+    // TODO: To reduce insanity, move abilities to separate files with some sort update lambda?
+
     operator fun invoke(): RollOutcome {
         val updates = resolveStep(step = currentStep)
 
@@ -151,7 +153,6 @@ internal class PerformCombatAction(
         val newFirstDie = if (purpose.rerollFirstDie) roll else purpose.firstDie
         val newSecondDie = if (!purpose.rerollFirstDie) roll else purpose.secondDie
 
-        // TODO: Add message
         messages.add(
             element =
                 OutgoingMessage.MirrorImage(
@@ -444,6 +445,7 @@ internal class PerformCombatAction(
                 defender.copy(characterClass = defender.characterClass.copy(hitPoints = 0))
         }
 
+        // TODO: message needs the roll, both dice. So do all messages
         messages.add(
             element =
                 OutgoingMessage.PrepareAttack(
@@ -597,21 +599,31 @@ internal class PerformCombatAction(
         }
     }
 
+    // TODO: Need to change name of this class and figure out the difference between
+    //  what's in here vs what's above
+
     private inner class Attack(private val firstDie: Int, private val secondDie: Int) {
 
         private val diceTotal = firstDie + secondDie
+        val isSpellPotencyTrigger =
+            attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie
 
-        fun handleArmorClassRoll(): Updates =
-            if (diceTotal >= defender.characterClass.armorClass) {
+        fun handleArmorClassRoll(): Updates {
+            if (isSpellPotencyTrigger) return resolveSpellPotency()
+
+            return if (diceTotal >= defender.characterClass.armorClass) {
                 addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
                 resolveArmorClassHit()
             } else {
                 addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
                 resolveArmorClassMiss()
             }
+        }
 
         // TODO: Update this
         fun handleHealthRoll(): Updates {
+            if (isSpellPotencyTrigger) return resolveSpellPotency()
+
             val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
             val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
 
@@ -700,7 +712,11 @@ internal class PerformCombatAction(
                     )
                 }
 
-                else -> resolveArmorClassHitSuccess()
+                else ->
+                    Updates(
+                        nextActivePlayerUserId = attacker.userId,
+                        nextStep = CombatStep.HealthRoll,
+                    )
             }
 
         fun resolveAfterMirrorImageArmorRoll(): Updates {
@@ -711,7 +727,7 @@ internal class PerformCombatAction(
             return if (diceTotal >= defender.characterClass.armorClass) {
                 // It still hits!
                 addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
-                resolveArmorClassHitSuccess()
+                resolveArmorClassHit()
             } else {
                 // It's now a miss!
                 addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
@@ -749,19 +765,6 @@ internal class PerformCombatAction(
                 addNormalRollMessage(type = NormalRollMessageType.Damage)
                 resolveDamage()
             }
-
-        private fun resolveArmorClassHitSuccess(): Updates {
-            if (
-                attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie
-            ) {
-                return resolveSpellPotency()
-            }
-
-            return Updates(
-                nextActivePlayerUserId = attacker.userId,
-                nextStep = CombatStep.HealthRoll,
-            )
-        }
 
         private fun resolveSpellPotency(): Updates {
             val splashDamage = diceTotal / 2
@@ -861,12 +864,6 @@ internal class PerformCombatAction(
         }
 
         private fun resolveDamage(): Updates {
-            if (
-                attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie
-            ) {
-                return resolveSpellPotency()
-            }
-
             if (attackerOffensiveAbility == OffensiveAbility.Encore) {
                 return Updates(
                     nextActivePlayerUserId = attacker.userId,

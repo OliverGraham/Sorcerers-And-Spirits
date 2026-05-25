@@ -13,11 +13,6 @@ data class CombatActionArguments(
     val playerMap: Map<String, ArenaPlayer.Selected>,
     val turnInfo: TurnInfo,
 ) {
-    val attackerOffensiveAbility = attacker.characterClass.offensiveAbility
-    val attackerDefensiveAbility = attacker.characterClass.defensiveAbility
-    val defenderOffensiveAbility = defender.characterClass.offensiveAbility
-    val defenderDefensiveAbility = defender.characterClass.defensiveAbility
-
     val roundNumber = turnInfo.roundNumber
 }
 

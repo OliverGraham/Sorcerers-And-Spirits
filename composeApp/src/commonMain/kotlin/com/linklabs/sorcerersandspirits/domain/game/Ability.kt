@@ -17,6 +17,7 @@ sealed interface DefensiveAbility : Ability {
 
     data object Teleport : DefensiveAbility
 
+    // TODO: perhaps needs to know here that Duelist used PrepareAttack
     data class HolyShield(val usedThisMatch: Boolean = false) : DefensiveAbility
 
     data object None : DefensiveAbility
@@ -25,7 +26,8 @@ sealed interface DefensiveAbility : Ability {
 sealed interface OffensiveAbility : Ability {
     data object KillingMomentum : OffensiveAbility
 
-    data class AllIn(val hasAnotherAttack: Boolean = false) : OffensiveAbility, ActivatedAbility
+    data class AllIn(val hasAnotherAttack: Boolean = false, val usedThisTurn: Boolean = false) :
+        OffensiveAbility, ActivatedAbility
 
     data object PrepareAttack : OffensiveAbility, ActivatedAbility
 

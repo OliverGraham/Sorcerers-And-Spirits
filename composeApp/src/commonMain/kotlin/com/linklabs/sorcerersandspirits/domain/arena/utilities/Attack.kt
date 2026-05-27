@@ -2,16 +2,13 @@ package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
 import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.PersuadeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.model.RollPurpose
-import com.linklabs.sorcerersandspirits.domain.arena.model.SummonOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CombatActionArguments
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
@@ -28,7 +25,11 @@ internal class PerformCombatAction(
     private val currentStep: CombatStep,
 ) {
 
-    private data class Updates(val nextActivePlayerUserId: String, val nextStep: CombatStep)
+    data class Updates(
+        val nextActivePlayerUserId: String,
+        val nextStep: CombatStep,
+        val isNewTurn: Boolean = false,
+    )
 
     private val messages = mutableListOf<OutgoingMessage>()
     private val updatedPlayerMap = arguments.playerMap.toMutableMap()
@@ -43,6 +44,7 @@ internal class PerformCombatAction(
 
     // TODO: To reduce insanity, move abilities to separate files with some sort update lambda?
 
+    // TODO: if isNewTurn is true, call resolveTurnEnd() before return RollOutcome
     operator fun invoke(): RollOutcome {
         val updates = resolveStep(step = currentStep)
 
@@ -52,30 +54,6 @@ internal class PerformCombatAction(
             nextActivePlayerUserId = updates.nextActivePlayerUserId,
             nextStep = updates.nextStep,
         )
-    }
-
-    private fun resolveStep(step: CombatStep): Updates =
-        when (step) {
-            is CombatStep.ArmorClassRoll -> handleArmorClassRoll()
-            is CombatStep.HealthRoll -> handleHealthRoll()
-            is CombatStep.AbilityRoll -> handleAbilityRoll(purpose = step.purpose)
-            is CombatStep.Resolution -> handleResolution()
-        }
-
-    private fun handleArmorClassRoll(): Updates {
-        val firstDie = roll1D6()
-        val secondDie = roll1D6()
-        val attack = Attack(firstDie = firstDie, secondDie = secondDie)
-
-        return attack.handleArmorClassRoll()
-    }
-
-    private fun handleHealthRoll(): Updates {
-        val firstDie = roll1D6()
-        val secondDie = roll1D6()
-        val attack = Attack(firstDie = firstDie, secondDie = secondDie)
-
-        return attack.handleHealthRoll()
     }
 
     private fun handleAbilityRoll(purpose: RollPurpose): Updates =
@@ -142,8 +120,8 @@ internal class PerformCombatAction(
             Updates(nextActivePlayerUserId = attacker.userId, nextStep = CombatStep.HealthRoll)
         } else {
             // Damage roll stands, finalize resolution using original dice
-            val attack = Attack(firstDie = purpose.firstDie, secondDie = purpose.secondDie)
-            attack.resumeHealthRollResolution()
+            val dice = Dice(firstDie = purpose.firstDie, secondDie = purpose.secondDie)
+            dice.resumeHealthRollResolution()
         }
     }
 
@@ -161,12 +139,12 @@ internal class PerformCombatAction(
                 )
         )
 
-        val attack = Attack(firstDie = newFirstDie, secondDie = newSecondDie)
+        val dice = Dice(firstDie = newFirstDie, secondDie = newSecondDie)
 
         return if (purpose.triggeredByArmorRoll) {
-            attack.resolveAfterMirrorImageArmorRoll()
+            dice.resolveAfterMirrorImageArmorRoll()
         } else {
-            attack.resolveAfterMirrorImageHealthRoll()
+            dice.resolveAfterMirrorImageHealthRoll()
         }
     }
 
@@ -321,142 +299,7 @@ internal class PerformCombatAction(
         return Updates(nextActivePlayerUserId = attacker.userId, nextStep = CombatStep.HealthRoll)
     }
 
-    private fun handleAllInOutcome(): Updates {
-        val roll = roll1D6()
-        val outcome =
-            when (roll) {
-                1 -> AllInOutcome.KnockoutSelf
-
-                5,
-                6 -> AllInOutcome.DoubleAttack
-
-                else -> AllInOutcome.NoEffect
-            }
-
-        messages.add(
-            element = OutgoingMessage.AllIn(gamblerUserId = attacker.userId, outcome = outcome)
-        )
-
-        return when (outcome) {
-            AllInOutcome.KnockoutSelf -> {
-                updatedPlayerMap[attacker.userId] =
-                    attacker.copy(characterClass = attacker.characterClass.copy(hitPoints = 0))
-                resolveTurnEnd()
-            }
-
-            AllInOutcome.DoubleAttack -> {
-                // TODO: Yes, need to implement a way to signify this character can attack twice
-                //  now
-                // Stay active for an attack? Or just continue to next step?
-                // AGENTS.md says "attacks twice this round".
-                Updates(
-                    nextActivePlayerUserId = attacker.userId,
-                    nextStep = CombatStep.Resolution, // Ready to pick first target
-                )
-            }
-
-            AllInOutcome.NoEffect -> {
-                // TODO: Now continue with normal attack phase -
-                //  Player can choose target to attack as normal
-                Updates(
-                    nextActivePlayerUserId = attacker.userId,
-                    nextStep = CombatStep.Resolution, // Can still perform normal attack?
-                )
-            }
-        }
-    }
-
-    private fun handleSummonMinionRoll(): Updates {
-        val roll = roll1D6()
-        val outcome =
-            when (roll) {
-                1 -> SummonOutcome.Fizzle
-
-                2,
-                3 -> SummonOutcome.Skeleton
-
-                4,
-                5 -> SummonOutcome.HealAndSkeleton
-
-                6 -> SummonOutcome.HealAndGolem
-
-                else -> SummonOutcome.Fizzle
-            }
-
-        val necro = attacker
-        messages.add(
-            element = OutgoingMessage.SummonMinion(necroUserId = necro.userId, outcome = outcome)
-        )
-
-        // Apply effects
-        val currentAbility = necro.characterClass.offensiveAbility as OffensiveAbility.SummonMinion
-        var newSkeletonCount = currentAbility.skeletonCount
-        var newGolemCount = currentAbility.golemCount
-        var newHp = necro.characterClass.hitPoints
-
-        when (outcome) {
-            SummonOutcome.Fizzle -> {}
-
-            SummonOutcome.Skeleton -> newSkeletonCount++
-
-            SummonOutcome.HealAndSkeleton -> {
-                newSkeletonCount++
-                newHp = 7 // Necro max HP
-            }
-
-            SummonOutcome.HealAndGolem -> {
-                newGolemCount++
-                newHp = 7
-            }
-        }
-
-        updatedPlayerMap[necro.userId] =
-            necro.copy(
-                characterClass =
-                    necro.characterClass.copy(
-                        hitPoints = newHp,
-                        offensiveAbility =
-                            currentAbility.copy(
-                                skeletonCount = newSkeletonCount,
-                                golemCount = newGolemCount,
-                            ),
-                    )
-            )
-
-        return resolveTurnEnd()
-    }
-
-    private fun handlePrepareAttackRoll(): Updates {
-        val firstDie = roll1D6()
-        val secondDie = roll1D6()
-        val total = firstDie + secondDie
-
-        var success = total in 10..12
-
-        // TODO: THis is wrong. If Paladin rolls a 12 in response to Duelist's Prepare Attack, then
-        //  and only then, is it stopped
-        // Paladin special rule: 12 stops Duelist's Prepare Attack.
-        if (total == 12 && defenderDefensiveAbility is DefensiveAbility.HolyShield) {
-            success = false
-        }
-
-        if (success) {
-            updatedPlayerMap[defender.userId] =
-                defender.copy(characterClass = defender.characterClass.copy(hitPoints = 0))
-        }
-
-        // TODO: message needs the roll, both dice. So do all messages
-        messages.add(
-            element =
-                OutgoingMessage.PrepareAttack(
-                    duelistUserId = attacker.userId,
-                    targetUserId = defender.userId,
-                    success = success,
-                )
-        )
-
-        return resolveTurnEnd()
-    }
+    private fun handleSummonMinionRoll(): Updates {}
 
     private fun handleEncoreCheck(): Updates {
         val roll = roll1D6()
@@ -544,420 +387,110 @@ internal class PerformCombatAction(
         )
     }
 
-    // TODO: Add messages - don't pass them in
-    private fun resolveTurnEnd(): Updates {
-        // Mark current attacker as acted
-        val attackerPlayer = updatedPlayerMap[attacker.userId]
-        if (attackerPlayer != null) {
-            updatedPlayerMap[attacker.userId] =
-                attackerPlayer.copy(
-                    characterClass = attackerPlayer.characterClass.copy(hasActedThisRound = true)
-                )
-        }
-
-        val livingPlayers = updatedPlayerMap.values.filter { it.characterClass.hitPoints > 0 }
-
-        val candidates = livingPlayers.filter { !it.characterClass.hasActedThisRound }
-
-        val nextPlayer = candidates.maxByOrNull { it.characterClass.speed }
-
-        return if (nextPlayer == null) {
-            // New Round
-            updatedPlayerMap.entries.forEach { (userId, player) ->
-                updatedPlayerMap[userId] =
-                    player.copy(
-                        characterClass = player.characterClass.copy(hasActedThisRound = false)
-                    )
-            }
-            messages.add(element = OutgoingMessage.NewRound(roundNumber = roundNumber + 1))
-
-            val fastest =
-                updatedPlayerMap.values
-                    .filter { it.characterClass.hitPoints > 0 }
-                    .maxByOrNull { it.characterClass.speed } ?: attacker
-
-            val characterClassInfo =
-                CharacterClassMessageInfo(
-                    className = fastest.characterClass.className,
-                    type = fastest.characterClass.type,
-                )
-            messages.add(element = OutgoingMessage.NewTurn(characterClassInfo = characterClassInfo))
-
-            Updates(nextActivePlayerUserId = fastest.userId, nextStep = CombatStep.ArmorClassRoll)
-        } else {
-            val characterClassInfo =
-                CharacterClassMessageInfo(
-                    className = nextPlayer.characterClass.className,
-                    type = nextPlayer.characterClass.type,
-                )
-            messages.add(element = OutgoingMessage.NewTurn(characterClassInfo = characterClassInfo))
-
-            Updates(
-                nextActivePlayerUserId = nextPlayer.userId,
-                nextStep = CombatStep.ArmorClassRoll,
-            )
-        }
-    }
-
     // TODO: Need to change name of this class and figure out the difference between
     //  what's in here vs what's above
 
-    private inner class Attack(private val firstDie: Int, private val secondDie: Int) {
+    data class Dice(val firstDie: Int, val secondDie: Int) {
+        val diceTotal = firstDie + secondDie
+    }
 
-        private val diceTotal = firstDie + secondDie
-        val isSpellPotencyTrigger =
-            attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie
+    private fun Dice.isSpellPotencyTrigger() =
+        attackerOffensiveAbility == OffensiveAbility.SpellPotency && firstDie == secondDie
 
-        fun handleArmorClassRoll(): Updates {
-            if (isSpellPotencyTrigger) return resolveSpellPotency()
+    fun Dice.handleArmorClassRoll(): Updates {
+        if (isSpellPotencyTrigger()) return resolveSpellPotency()
 
-            return if (diceTotal >= defender.characterClass.armorClass) {
-                addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
-                resolveArmorClassHit()
-            } else {
-                addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
-                resolveArmorClassMiss()
-            }
-        }
-
-        // TODO: Update this
-        fun handleHealthRoll(): Updates {
-            if (isSpellPotencyTrigger) return resolveSpellPotency()
-
-            val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
-            val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
-
-            if (!mirrorImageUsed && mirrorImage != null) {
-                messages.add(
-                    element =
-                        OutgoingMessage.MirrorImage(
-                            illusionistUserId = defender.userId,
-                            status = MirrorImageStatus.Pondering,
-                        )
-                )
-                return Updates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep =
-                        CombatStep.AbilityRoll(
-                            purpose =
-                                RollPurpose.MirrorImageChoice(
-                                    firstDie = firstDie,
-                                    secondDie = secondDie,
-                                    triggeredByArmorRoll = false,
-                                )
-                        ),
-                )
-            }
-
-            return if (diceTotal >= defender.characterClass.hitPoints) {
-                addNormalRollMessage(type = NormalRollMessageType.Knockout)
-                resolveKnockout()
-            } else {
-                addNormalRollMessage(type = NormalRollMessageType.Damage)
-                resolveDamage()
-            }
-        }
-
-        private fun resolveArmorClassHit(): Updates =
-            when (defenderDefensiveAbility) {
-                is DefensiveAbility.Teleport -> {
-                    Updates(
-                        nextActivePlayerUserId = defender.userId,
-                        nextStep =
-                            CombatStep.AbilityRoll(purpose = RollPurpose.TeleportDefenderEscape),
-                    )
-                }
-
-                is DefensiveAbility.Riposte -> {
-                    Updates(
-                        nextActivePlayerUserId = defender.userId,
-                        nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.RiposteCounter),
-                    )
-                }
-
-                is DefensiveAbility.Persuade -> {
-                    Updates(
-                        nextActivePlayerUserId = defender.userId,
-                        nextStep =
-                            CombatStep.AbilityRoll(purpose = RollPurpose.PersuadeStopOrRedirect),
-                    )
-                }
-
-                is DefensiveAbility.LuckyCoin -> {
-                    Updates(
-                        nextActivePlayerUserId = defender.userId,
-                        nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.LuckyCoinArmorBonus),
-                    )
-                }
-
-                is DefensiveAbility.MirrorImage -> {
-                    messages.add(
-                        element =
-                            OutgoingMessage.MirrorImage(
-                                illusionistUserId = defender.userId,
-                                status = MirrorImageStatus.Pondering,
-                            )
-                    )
-                    Updates(
-                        nextActivePlayerUserId = defender.userId,
-                        nextStep =
-                            CombatStep.AbilityRoll(
-                                purpose =
-                                    RollPurpose.MirrorImageChoice(
-                                        firstDie = firstDie,
-                                        secondDie = secondDie,
-                                        triggeredByArmorRoll = true,
-                                    )
-                            ),
-                    )
-                }
-
-                else ->
-                    Updates(
-                        nextActivePlayerUserId = attacker.userId,
-                        nextStep = CombatStep.HealthRoll,
-                    )
-            }
-
-        fun resolveAfterMirrorImageArmorRoll(): Updates {
-            // TODO: Messages
-
-            markMirrorImageAsUsed()
-
-            return if (diceTotal >= defender.characterClass.armorClass) {
-                // It still hits!
-                addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
-                resolveArmorClassHit()
-            } else {
-                // It's now a miss!
-                addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
-                resolveArmorClassMiss()
-            }
-        }
-
-        fun resolveAfterMirrorImageHealthRoll(): Updates {
-            // TODO: messages
-
-            markMirrorImageAsUsed()
-
-            return resumeHealthRollResolution()
-        }
-
-        // TODO: This seems like it's not working? Double check
-        private fun markMirrorImageAsUsed() {
-            val currentAbility =
-                defender.characterClass.defensiveAbility as DefensiveAbility.MirrorImage
-
-            updatedPlayerMap[defender.userId] =
-                defender.copy(
-                    characterClass =
-                        defender.characterClass.copy(
-                            defensiveAbility = currentAbility.copy(usedThisAttack = true)
-                        )
-                )
-        }
-
-        fun resumeHealthRollResolution(): Updates =
-            if (diceTotal >= defender.characterClass.hitPoints) {
-                addNormalRollMessage(type = NormalRollMessageType.Knockout)
-                resolveKnockout()
-            } else {
-                addNormalRollMessage(type = NormalRollMessageType.Damage)
-                resolveDamage()
-            }
-
-        private fun resolveSpellPotency(): Updates {
-            val splashDamage = diceTotal / 2
-            applyFullDamageToDefender()
-            applySplashDamage(splashDamage = splashDamage)
-            addSpellPotencyMessage(splashDamage = splashDamage)
-
-            return resolveTurnEnd()
-        }
-
-        private fun applyFullDamageToDefender() {
-            val newHp = defender.characterClass.hitPoints - diceTotal
-            updatedPlayerMap[defender.userId] =
-                defender.copy(characterClass = defender.characterClass.copy(hitPoints = newHp))
-        }
-
-        private fun applySplashDamage(splashDamage: Int) {
-            updatedPlayerMap.values
-                .filter { it.userId != attacker.userId && it.userId != defender.userId }
-                .filter { it.characterClass.hitPoints > 0 }
-                .forEach { player ->
-                    val newHp = player.characterClass.hitPoints - splashDamage
-                    updatedPlayerMap[player.userId] =
-                        player.copy(characterClass = player.characterClass.copy(hitPoints = newHp))
-                }
-        }
-
-        private fun addSpellPotencyMessage(splashDamage: Int) {
-            messages.add(
-                element =
-                    OutgoingMessage.SpellPotency(
-                        mageUserId = attacker.userId,
-                        mainTargetUserId = defender.userId,
-                        mainDamage = diceTotal,
-                        splashDamage = splashDamage,
-                    )
-            )
-        }
-
-        private fun resolveArmorClassMiss(): Updates {
-            if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
-                resolveDodge()
-            }
-
-            return resolveTurnEnd()
-        }
-
-        private fun resolveDodge() {
-            val dodge = defenderDefensiveAbility as DefensiveAbility.Dodge
-            if (dodge.armorBonus < 2) {
-                // TODO in UI layer: Add ability and AC together to get end result
-                val updatedDodge = dodge.copy(armorBonus = dodge.armorBonus + 1)
-                val updatedDefenderClass =
-                    defender.characterClass.copy(defensiveAbility = updatedDodge)
-                val updatedDefender = defender.copy(characterClass = updatedDefenderClass)
-                updatedPlayerMap[defender.userId] = updatedDefender
-
-                messages.add(element = OutgoingMessage.Dodge(didArmorIncrease = true))
-            } else {
-                messages.add(element = OutgoingMessage.Dodge(didArmorIncrease = false))
-            }
-        }
-
-        // TODO: Update this, come on
-
-        private fun resolveKnockout(): Updates {
-            if (
-                defenderDefensiveAbility is DefensiveAbility.HolyShield &&
-                    !defenderDefensiveAbility.usedThisMatch
-            ) {
-                // TODO: Message?
-                return Updates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.HolyShieldSurvival),
-                )
-            }
-
-            val newHp = defender.characterClass.hitPoints - diceTotal
-            val updatedDefenderClass = defender.characterClass.copy(hitPoints = newHp)
-            updatedPlayerMap[defender.userId] = defender.copy(characterClass = updatedDefenderClass)
-
-            if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
-                messages.add(
-                    element =
-                        OutgoingMessage.KillingMomentum(
-                            rogueUserId = attacker.userId,
-                            isTriggered = true,
-                        )
-                )
-                return Updates(
-                    nextActivePlayerUserId = attacker.userId,
-                    nextStep = CombatStep.Resolution,
-                )
-            }
-
-            return resolveTurnEnd()
-        }
-
-        private fun resolveDamage(): Updates {
-            if (attackerOffensiveAbility == OffensiveAbility.Encore) {
-                return Updates(
-                    nextActivePlayerUserId = attacker.userId,
-                    nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.EncoreCheck),
-                )
-            }
-
-            return resolveTurnEnd()
-        }
-
-        private fun resolveTurnEnd(): Updates {
-            markAttackerAsActed()
-
-            val nextPlayer = calculateNextPlayerInRound()
-
-            if (nextPlayer == null) {
-                val newRoundNumber = roundNumber + 1
-                resetAllPlayersActed()
-                messages.add(element = OutgoingMessage.NewRound(roundNumber = newRoundNumber))
-
-                val fastestNextRound = calculateFastestLivingPlayer()
-                fastestNextRound.characterClass.addNewTurnMessage()
-
-                return Updates(
-                    nextActivePlayerUserId = fastestNextRound.userId,
-                    nextStep = CombatStep.ArmorClassRoll,
-                )
-            }
-
-            nextPlayer.characterClass.addNewTurnMessage()
-
-            return Updates(
-                nextActivePlayerUserId = nextPlayer.userId,
-                nextStep = CombatStep.ArmorClassRoll,
-            )
-        }
-
-        private fun markAttackerAsActed() {
-            updatedPlayerMap[attacker.userId] =
-                attacker.copy(
-                    characterClass = attacker.characterClass.copy(hasActedThisRound = true)
-                )
-        }
-
-        private fun calculateNextPlayerInRound(): ArenaPlayer.Selected? {
-            val livingPlayers = updatedPlayerMap.values.filter { it.characterClass.hitPoints > 0 }
-            val candidates = livingPlayers.filter { !it.characterClass.hasActedThisRound }
-
-            return candidates.maxByOrNull { it.characterClass.speed }
-        }
-
-        private fun calculateFastestLivingPlayer(): ArenaPlayer.Selected {
-            val livingPlayers = updatedPlayerMap.values.filter { it.characterClass.hitPoints > 0 }
-
-            return livingPlayers.maxBy { it.characterClass.speed }
-        }
-
-        private fun resetAllPlayersActed() {
-            updatedPlayerMap.entries.forEach { (userId, player) ->
-                val defensiveAbility = player.characterClass.defensiveAbility
-                val updatedDefensiveAbility =
-                    if (defensiveAbility is DefensiveAbility.MirrorImage) {
-                        defensiveAbility.copy(usedThisAttack = false)
-                    } else {
-                        defensiveAbility
-                    }
-
-                updatedPlayerMap[userId] =
-                    player.copy(
-                        characterClass =
-                            player.characterClass.copy(
-                                hasActedThisRound = false,
-                                defensiveAbility = updatedDefensiveAbility,
-                            )
-                    )
-            }
-        }
-
-        private fun addNormalRollMessage(type: NormalRollMessageType) {
-            messages.add(
-                element =
-                    OutgoingMessage.NormalRoll(
-                        attackerUserId = attacker.userId,
-                        defenderUserId = defender.userId,
-                        firstDie = firstDie,
-                        secondDie = secondDie,
-                        type = type,
-                    )
-            )
-        }
-
-        private fun CharacterClass.addNewTurnMessage() {
-            val characterClassInfo = CharacterClassMessageInfo(className = className, type = type)
-            messages.add(element = OutgoingMessage.NewTurn(characterClassInfo = characterClassInfo))
+        return if (diceTotal >= defender.characterClass.armorClass) {
+            addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
+            resolveArmorClassHit()
+        } else {
+            addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
+            resolveArmorClassMiss()
         }
     }
+
+    // TODO: Update this
+    fun Dice.handleHealthRoll(): Updates {
+        if (isSpellPotencyTrigger()) return resolveSpellPotency()
+
+        val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
+        val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
+
+        if (!mirrorImageUsed && mirrorImage != null) {
+            messages.add(
+                element =
+                    OutgoingMessage.MirrorImage(
+                        illusionistUserId = defender.userId,
+                        status = MirrorImageStatus.Pondering,
+                    )
+            )
+            return Updates(
+                nextActivePlayerUserId = defender.userId,
+                nextStep =
+                    CombatStep.AbilityRoll(
+                        purpose =
+                            RollPurpose.MirrorImageChoice(
+                                firstDie = firstDie,
+                                secondDie = secondDie,
+                                triggeredByArmorRoll = false,
+                            )
+                    ),
+            )
+        }
+
+        return if (diceTotal >= defender.characterClass.hitPoints) {
+            addNormalRollMessage(type = NormalRollMessageType.Knockout)
+            resolveKnockout()
+        } else {
+            addNormalRollMessage(type = NormalRollMessageType.Damage)
+            resolveDamage()
+        }
+    }
+
+    fun Dice.resolveAfterMirrorImageArmorRoll(): Updates {
+        // TODO: Messages
+
+        markMirrorImageAsUsed()
+
+        return if (diceTotal >= defender.characterClass.armorClass) {
+            // It still hits!
+            addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
+            resolveArmorClassHit()
+        } else {
+            // It's now a miss!
+            addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
+            resolveArmorClassMiss()
+        }
+    }
+
+    fun Dice.resolveAfterMirrorImageHealthRoll(): Updates {
+        // TODO: messages
+
+        markMirrorImageAsUsed()
+
+        return resumeHealthRollResolution()
+    }
+
+    // TODO: This seems like it's not working? Double check
+    private fun markMirrorImageAsUsed() {
+        val currentAbility =
+            defender.characterClass.defensiveAbility as DefensiveAbility.MirrorImage
+
+        updatedPlayerMap[defender.userId] =
+            defender.copy(
+                characterClass =
+                    defender.characterClass.copy(
+                        defensiveAbility = currentAbility.copy(usedThisAttack = true)
+                    )
+            )
+    }
+
+    fun Dice.resumeHealthRollResolution(): Updates =
+        if (diceTotal >= defender.characterClass.hitPoints) {
+            addNormalRollMessage(type = NormalRollMessageType.Knockout)
+            resolveKnockout()
+        } else {
+            addNormalRollMessage(type = NormalRollMessageType.Damage)
+            resolveDamage()
+        }
 }

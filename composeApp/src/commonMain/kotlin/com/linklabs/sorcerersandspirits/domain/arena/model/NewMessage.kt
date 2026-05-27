@@ -1,5 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+
 sealed interface OutgoingMessage {
 
     data class NewRound(val roundNumber: Int) : OutgoingMessage
@@ -35,7 +37,7 @@ sealed interface OutgoingMessage {
         val triggered: Boolean,
     ) : OutgoingMessage
 
-    data class SummonMinion(val necroUserId: String, val outcome: SummonOutcome) : OutgoingMessage
+    data class SummonMinion(val necroUserId: String, val singleDie) : OutgoingMessage
 
     data class Persuade(
         val bardUserId: String,
@@ -45,6 +47,9 @@ sealed interface OutgoingMessage {
     ) : OutgoingMessage
 
     data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingMessage
+
+    data class Impersonate(val illusionistUserId: String, val impersonateAbility: OffensiveAbility.Impersonate) :
+        OutgoingMessage
 
     data class MirrorImage(val illusionistUserId: String, val status: MirrorImageStatus) :
         OutgoingMessage
@@ -64,12 +69,14 @@ sealed interface OutgoingMessage {
 
     data class KillingMomentum(val rogueUserId: String, val isTriggered: Boolean) : OutgoingMessage
 
-    data class AllIn(val gamblerUserId: String, val outcome: AllInOutcome) : OutgoingMessage
+    data class AllIn(val gamblerUserId: String, val singleDie: Int) : OutgoingMessage
 
     data class PrepareAttack(
         val duelistUserId: String,
         val targetUserId: String,
-        val success: Boolean,
+        val firstDie: Int,
+        val secondDie: Int,
+        val isSuccessful: Boolean,
     ) : OutgoingMessage
 }
 

@@ -13,6 +13,8 @@ data class CharacterClass(
 ) {
     val className = type.name
 
+    fun isConscious() = hitPoints > 0
+
     companion object {
         fun getAllClasses() =
             listOf(

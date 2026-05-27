@@ -1,11 +1,12 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.DodgeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -23,7 +24,7 @@ class NormalAttackRoll(
     private val attackerOffensiveAbility = attacker.characterClass.offensiveAbility
     private val defenderDefensiveAbility = defender.characterClass.defensiveAbility
 
-    fun handleRoll(combatStep: CombatStep.NormalAttackRoll): CombatActionUpdates {
+    fun handleRoll(currentAction: CurrentCombatAction.NormalAttackRoll): CombatActionUpdates {
         val isSpellPotencyRoll =
             attackerOffensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
         if (isSpellPotencyRoll) {
@@ -31,9 +32,9 @@ class NormalAttackRoll(
                 .invoke()
         }
 
-        return when (combatStep) {
-            CombatStep.NormalAttackRoll.ArmorClassRoll -> handleArmorClassRoll()
-            CombatStep.NormalAttackRoll.HealthRoll -> handleHealthRoll()
+        return when (currentAction) {
+            CurrentCombatAction.NormalAttackRoll.ArmorClassRoll -> handleArmorClassRoll()
+            CurrentCombatAction.NormalAttackRoll.HealthRoll -> handleHealthRoll()
         }
     }
 
@@ -63,9 +64,9 @@ class NormalAttackRoll(
             return CombatActionUpdates(
                 nextActivePlayerUserId = defender.userId,
                 nextStep =
-                    CombatStep.AbilityRoll(
+                    NextCombatAction.AbilityRoll(
                         purpose =
-                            RollPurpose.MirrorImageChoice(
+                            AbilityRollPurpose.Passive.Reaction.MirrorImage(
                                 firstDie = firstDie,
                                 secondDie = secondDie,
                                 triggeredByArmorRoll = false,
@@ -93,7 +94,10 @@ class NormalAttackRoll(
             // TODO: Message?
             return CombatActionUpdates(
                 nextActivePlayerUserId = defender.userId,
-                nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.HolyShieldSurvival),
+                nextStep =
+                    NextCombatAction.AbilityRoll(
+                        purpose = AbilityRollPurpose.Passive.Reaction.HolyShield
+                    ),
             )
         }
 
@@ -112,7 +116,7 @@ class NormalAttackRoll(
 
             return CombatActionUpdates(
                 nextActivePlayerUserId = attacker.userId,
-                nextStep = CombatStep.NormalAttackRoll.ArmorClassRoll,
+                nextStep = NextCombatAction.NormalAttackRoll.ArmorClassRoll,
             )
         }
 
@@ -123,7 +127,10 @@ class NormalAttackRoll(
         if (attackerOffensiveAbility == OffensiveAbility.Encore) {
             return CombatActionUpdates(
                 nextActivePlayerUserId = attacker.userId,
-                nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.EncoreCheck),
+                nextStep =
+                    NextCombatAction.AbilityRoll(
+                        purpose = AbilityRollPurpose.Passive.Outcome.Encore
+                    ),
             )
         }
 
@@ -139,25 +146,37 @@ class NormalAttackRoll(
             is DefensiveAbility.Teleport ->
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
-                    nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.TeleportDefenderEscape),
+                    nextStep =
+                        NextCombatAction.AbilityRoll(
+                            purpose = AbilityRollPurpose.Passive.Reaction.Teleport
+                        ),
                 )
 
             is DefensiveAbility.Riposte ->
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
-                    nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.RiposteCounter),
+                    nextStep =
+                        NextCombatAction.AbilityRoll(
+                            purpose = AbilityRollPurpose.Passive.Reaction.Riposte
+                        ),
                 )
 
             is DefensiveAbility.Persuade ->
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
-                    nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.PersuadeStopOrRedirect),
+                    nextStep =
+                        NextCombatAction.AbilityRoll(
+                            purpose = AbilityRollPurpose.Passive.Reaction.Persuade
+                        ),
                 )
 
             is DefensiveAbility.LuckyCoin ->
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
-                    nextStep = CombatStep.AbilityRoll(purpose = RollPurpose.LuckyCoinArmorBonus),
+                    nextStep =
+                        NextCombatAction.AbilityRoll(
+                            purpose = AbilityRollPurpose.Passive.Reaction.LuckyCoin
+                        ),
                 )
 
             is DefensiveAbility.MirrorImage -> {
@@ -173,9 +192,9 @@ class NormalAttackRoll(
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
                     nextStep =
-                        CombatStep.AbilityRoll(
+                        NextCombatAction.AbilityRoll(
                             purpose =
-                                RollPurpose.MirrorImageChoice(
+                                AbilityRollPurpose.Passive.Reaction.MirrorImage(
                                     firstDie = firstDie,
                                     secondDie = secondDie,
                                     triggeredByArmorRoll = true,
@@ -186,7 +205,11 @@ class NormalAttackRoll(
 
             is DefensiveAbility.Dodge,
             is DefensiveAbility.HolyShield,
-            is DefensiveAbility.None -> combatMutations.resolveTurnEnd()
+            is DefensiveAbility.None ->
+                CombatActionUpdates(
+                    nextActivePlayerUserId = attacker.userId,
+                    nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                )
         }
 
     /**

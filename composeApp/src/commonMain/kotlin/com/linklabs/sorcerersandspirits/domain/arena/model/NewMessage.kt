@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
+// TODO: These all need dice rolls to convey to users
 sealed interface OutgoingMessage {
 
     data class NewRound(val roundNumber: Int) : OutgoingMessage
@@ -37,7 +38,7 @@ sealed interface OutgoingMessage {
         val triggered: Boolean,
     ) : OutgoingMessage
 
-    data class SummonMinion(val necroUserId: String, val singleDie) : OutgoingMessage
+    data class SummonMinion(val necroUserId: String, val singleDie: Int) : OutgoingMessage
 
     data class Persuade(
         val bardUserId: String,
@@ -48,8 +49,10 @@ sealed interface OutgoingMessage {
 
     data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingMessage
 
-    data class Impersonate(val illusionistUserId: String, val impersonateAbility: OffensiveAbility.Impersonate) :
-        OutgoingMessage
+    data class Impersonate(
+        val illusionistUserId: String,
+        val impersonateAbility: OffensiveAbility.Impersonate,
+    ) : OutgoingMessage
 
     data class MirrorImage(val illusionistUserId: String, val status: MirrorImageStatus) :
         OutgoingMessage

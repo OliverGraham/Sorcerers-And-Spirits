@@ -1,0 +1,48 @@
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
+
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.PersuadeOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
+
+class PersuadeReaction(private val combatMutations: CombatMutations) {
+    operator fun invoke(): CombatActionUpdates {
+        val roll = roll1D6()
+        val outcome =
+            when (roll) {
+                5 -> PersuadeOutcome.Stopped
+                6 -> PersuadeOutcome.Redirected
+                else -> PersuadeOutcome.Failed
+            }
+
+        combatMutations.addMessage(
+            message =
+                OutgoingMessage.Persuade(
+                    bardUserId = combatMutations.defenderUserId,
+                    attackerUserId = combatMutations.attackerUserId,
+                    outcome = outcome,
+                )
+        )
+
+        return when (outcome) {
+            PersuadeOutcome.Stopped -> combatMutations.resolveTurnEnd()
+
+            PersuadeOutcome.Redirected -> {
+                // Attacker needs to pick new target. We return Idle so they can choose.
+                CombatActionUpdates(
+                    nextActivePlayerUserId = combatMutations.attackerUserId,
+                    nextStep = NextCombatAction.Idle,
+                )
+            }
+
+            PersuadeOutcome.Failed -> {
+                CombatActionUpdates(
+                    nextActivePlayerUserId = combatMutations.attackerUserId,
+                    nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                )
+            }
+        }
+    }
+}

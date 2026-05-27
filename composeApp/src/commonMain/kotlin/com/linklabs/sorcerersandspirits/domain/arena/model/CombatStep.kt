@@ -2,24 +2,31 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-sealed interface CombatStep {
-
-    data object TakeAction : CombatStep
-
-    sealed interface NormalAttackRoll : CombatStep {
+/** Action the user is taking (UI -> Domain -> Data) */
+sealed interface CurrentCombatAction {
+    sealed interface NormalAttackRoll : CurrentCombatAction {
         data object ArmorClassRoll : NormalAttackRoll
 
         data object HealthRoll : NormalAttackRoll
     }
 
-    data class AbilityRoll(val purpose: AbilityRollPurpose) : CombatStep
+    data class AbilityRoll(val purpose: AbilityRollPurpose) : CurrentCombatAction
 }
 
-// TODO: sealed interface like-ability-types, for organization
-//  Also, these should be two types - one for when first attacked, and then other for the outcome
-//    which means 1st is written in RTDB and control is to defender -> they roll and outcome is
-// written
-//    in RTDB which dictates next actions, etc.
+/** The next action for the user (Data -> Domain -> UI) */
+sealed interface NextCombatAction {
+
+    data object Idle : NextCombatAction
+
+    sealed interface NormalAttackRoll : NextCombatAction {
+        data object ArmorClassRoll : NormalAttackRoll
+
+        data object HealthRoll : NormalAttackRoll
+    }
+
+    data class AbilityRoll(val purpose: AbilityRollPurpose) : NextCombatAction
+}
+
 sealed interface AbilityRollPurpose {
 
     // someone attacks Gambler -> Gambler reacts if AC broken (ReactionType) -> If ReactionType,

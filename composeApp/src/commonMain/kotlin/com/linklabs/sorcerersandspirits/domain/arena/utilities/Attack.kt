@@ -1,9 +1,8 @@
 package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
 import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.PersuadeOutcome
@@ -17,7 +16,7 @@ data class RollOutcome(
     val messages: List<OutgoingMessage>,
     val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
     val nextActivePlayerUserId: String,
-    val nextStep: CombatStep,
+    val nextStep: NextCombatAction,
 )
 
 internal class PerformCombatAction(

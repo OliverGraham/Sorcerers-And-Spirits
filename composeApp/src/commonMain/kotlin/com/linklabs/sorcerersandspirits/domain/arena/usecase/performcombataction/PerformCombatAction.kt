@@ -1,21 +1,31 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.AllInActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.LuckyCoinOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.LuckyCoinReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImagePassOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageRerollOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportReaction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.RollOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
-data class CombatActionUpdates(val nextActivePlayerUserId: String, val nextStep: CombatStep)
+data class CombatActionUpdates(val nextActivePlayerUserId: String, val nextStep: NextCombatAction)
 
-class PerformCombatAction(
-    private val arguments: CombatActionArguments,
-    private val currentStep: CombatStep,
-) {
+class PerformCombatAction(private val arguments: CombatActionArguments) {
     private val combatMutations =
         CombatMutations(
             updatedPlayerMap = arguments.playerMap.toMutableMap(),
@@ -24,8 +34,8 @@ class PerformCombatAction(
             roundNumber = arguments.roundNumber,
         )
 
-    operator fun invoke(): RollOutcome {
-        val updates = resolveStep(step = currentStep)
+    operator fun invoke(currentAction: CurrentCombatAction): RollOutcome {
+        val updates = resolveAction(action = currentAction)
         val updatedProperties = combatMutations.getUpdatedProperties()
 
         return RollOutcome(
@@ -36,14 +46,13 @@ class PerformCombatAction(
         )
     }
 
-    private fun resolveStep(step: CombatStep) =
-        when (step) {
-            is CombatStep.NormalAttackRoll -> step.handleNormalRoll()
-            is CombatStep.AbilityRoll -> step.purpose.handleAbilityRoll()
-            is CombatStep.TakeAction -> step.
+    private fun resolveAction(action: CurrentCombatAction) =
+        when (action) {
+            is CurrentCombatAction.NormalAttackRoll -> action.handleNormalRoll()
+            is CurrentCombatAction.AbilityRoll -> action.purpose.handleAbilityRoll()
         }
 
-    private fun CombatStep.NormalAttackRoll.handleNormalRoll(): CombatActionUpdates {
+    private fun CurrentCombatAction.NormalAttackRoll.handleNormalRoll(): CombatActionUpdates {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
 
@@ -56,7 +65,7 @@ class PerformCombatAction(
                 defender = arguments.defender,
             )
 
-        return normalAttackRoll.handleRoll(combatStep = this)
+        return normalAttackRoll.handleRoll(currentAction = this)
     }
 
     private fun AbilityRollPurpose.handleAbilityRoll(): CombatActionUpdates =
@@ -95,21 +104,62 @@ class PerformCombatAction(
 
     private fun AbilityRollPurpose.Passive.Reaction.handleReaction(): CombatActionUpdates =
         when (this) {
-            is AbilityRollPurpose.Passive.Reaction.HolyShield -> TODO()
-            is AbilityRollPurpose.Passive.Reaction.LuckyCoin -> TODO()
-            is AbilityRollPurpose.Passive.Reaction.MirrorImage -> TODO()
-            is AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
-            is AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
-            is AbilityRollPurpose.Passive.Reaction.Teleport -> TODO()
+            is AbilityRollPurpose.Passive.Reaction.HolyShield ->
+                HolyShieldReaction(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Reaction.LuckyCoin ->
+                LuckyCoinReaction(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Reaction.MirrorImage ->
+                MirrorImageReaction(
+                        combatMutations = combatMutations,
+                        firstDie = firstDie,
+                        secondDie = secondDie,
+                        triggeredByArmorRoll = triggeredByArmorRoll,
+                    )
+                    .invoke()
+
+            is AbilityRollPurpose.Passive.Reaction.Persuade ->
+                PersuadeReaction(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Reaction.Riposte ->
+                RiposteReaction(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Reaction.Teleport ->
+                TeleportReaction(combatMutations).invoke()
         }
 
     private fun AbilityRollPurpose.Passive.Outcome.handleOutcome(): CombatActionUpdates =
         when (this) {
-            is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
-            is AbilityRollPurpose.Passive.Outcome.HolyShield -> TODO()
-            is AbilityRollPurpose.Passive.Outcome.LuckyCoin -> TODO()
-            is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
-            is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll -> TODO()
-            is AbilityRollPurpose.Passive.Outcome.Teleport -> TODO()
+            is AbilityRollPurpose.Passive.Outcome.Encore -> EncoreOutcome(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Outcome.HolyShield ->
+                HolyShieldOutcome(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Outcome.LuckyCoin ->
+                LuckyCoinOutcome(combatMutations).invoke()
+
+            is AbilityRollPurpose.Passive.Outcome.MirrorImagePass ->
+                MirrorImagePassOutcome(
+                        combatMutations = combatMutations,
+                        firstDie = firstDie,
+                        secondDie = secondDie,
+                        triggeredByArmorRoll = triggeredByArmorRoll,
+                    )
+                    .invoke()
+
+            is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll ->
+                MirrorImageRerollOutcome(
+                        combatMutations = combatMutations,
+                        firstDie = firstDie,
+                        secondDie = secondDie,
+                        rerollFirstDie = rerollFirstDie,
+                        triggeredByArmorRoll = triggeredByArmorRoll,
+                    )
+                    .invoke()
+
+            is AbilityRollPurpose.Passive.Outcome.Teleport ->
+                TeleportOutcome(combatMutations = combatMutations, defenderRoll = defenderRoll)
+                    .invoke()
         }
 }

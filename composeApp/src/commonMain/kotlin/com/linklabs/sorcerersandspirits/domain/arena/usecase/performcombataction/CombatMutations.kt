@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -56,7 +56,7 @@ class CombatMutations(
     }
 
     fun endPhaseOnSameUserTurn(userId: String) =
-        CombatActionUpdates(nextActivePlayerUserId = userId, nextStep = CombatStep.TakeAction)
+        CombatActionUpdates(nextActivePlayerUserId = userId, nextStep = NextCombatAction.Idle)
 
     // TODO: This can't be called for everything - what if is the Gambler who has two attacks?
     //  Figure out as it happens
@@ -76,7 +76,7 @@ class CombatMutations(
 
             return CombatActionUpdates(
                 nextActivePlayerUserId = fastestNextRound.userId,
-                nextStep = CombatStep.NormalAttackRoll.ArmorClassRoll,
+                nextStep = NextCombatAction.Idle,
             )
         }
 
@@ -84,7 +84,7 @@ class CombatMutations(
 
         return CombatActionUpdates(
             nextActivePlayerUserId = nextPlayer.userId,
-            nextStep = CombatStep.NormalAttackRoll.ArmorClassRoll,
+            nextStep = NextCombatAction.Idle,
         )
     }
 

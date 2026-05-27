@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatStep
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
@@ -36,7 +36,7 @@ internal class AllInActivated(
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = attackerUserId,
-                    nextStep = CombatStep.TakeAction,
+                    nextStep = NextCombatAction.Idle,
                 )
             }
 
@@ -47,7 +47,7 @@ internal class AllInActivated(
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = attackerUserId,
-                    nextStep = CombatStep.TakeAction,
+                    nextStep = NextCombatAction.Idle,
                 )
             }
         }

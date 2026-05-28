@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import kotlinx.coroutines.flow.Flow
 
 interface ArenaRepository {
@@ -15,7 +15,7 @@ interface ArenaRepository {
 
     suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer)
 
-    suspend fun applyCombatResult(arenaId: String, result: CombatResult)
+    suspend fun applyCombatResult(arenaId: String, result: RollOutcome)
 
     suspend fun connectToArena(
         arenaId: String,

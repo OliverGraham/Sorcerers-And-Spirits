@@ -9,10 +9,9 @@ class PerformCombatActionUseCase(private val arenaRepository: ArenaRepository) {
         arguments: CombatActionArguments,
         currentAction: CurrentCombatAction,
     ) {
-        val results =
+        val outcome =
             PerformCombatAction(arguments = arguments).invoke(currentAction = currentAction)
 
-        // This results variable is intended for the repository call in the future.
-        println(message = "Combat results: $results")
+        arenaRepository.applyCombatResult(arenaId = arguments.arenaId, result = outcome)
     }
 }

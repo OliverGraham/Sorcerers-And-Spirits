@@ -2,10 +2,9 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.arena.model.TurnInfo
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import io.mockk.coEvery
 import io.mockk.mockk
@@ -54,7 +53,7 @@ class PerformCombatActionUseCaseTest {
         // Given
         val diceRollValue = 6
         val useCase = PerformCombatActionUseCase(repository)
-        val resultSlot = slot<CombatResult>()
+        val resultSlot = slot<RollOutcome>()
         coEvery { repository.applyCombatResult(any(), capture(resultSlot)) } returns Unit
 
         val turnInfo =
@@ -88,7 +87,7 @@ class PerformCombatActionUseCaseTest {
         // Given
         val diceRollValue = 8
         val useCase = PerformCombatActionUseCase(repository, diceRoller = { diceRollValue })
-        val resultSlot = slot<CombatResult>()
+        val resultSlot = slot<RollOutcome>()
         coEvery { repository.applyCombatResult(any(), capture(resultSlot)) } returns Unit
 
         val turnInfo =
@@ -120,7 +119,7 @@ class PerformCombatActionUseCaseTest {
         // Given
         val diceRollValue = 5
         val useCase = PerformCombatActionUseCase(repository, diceRoller = { diceRollValue })
-        val resultSlot = slot<CombatResult>()
+        val resultSlot = slot<RollOutcome>()
         coEvery { repository.applyCombatResult(any(), capture(resultSlot)) } returns Unit
 
         val turnInfo =
@@ -154,7 +153,7 @@ class PerformCombatActionUseCaseTest {
         // Given
         val diceRollValue = 10
         val useCase = PerformCombatActionUseCase(repository, diceRoller = { diceRollValue })
-        val resultSlot = slot<CombatResult>()
+        val resultSlot = slot<RollOutcome>()
         coEvery { repository.applyCombatResult(any(), capture(resultSlot)) } returns Unit
 
         val turnInfo =
@@ -189,7 +188,7 @@ class PerformCombatActionUseCaseTest {
         val survivorsMap = mapOf(rogue.userId to rogue, paladin.userId to paladin)
         val diceRollValue = 10
         val useCase = PerformCombatActionUseCase(repository, diceRoller = { diceRollValue })
-        val resultSlot = slot<CombatResult>()
+        val resultSlot = slot<RollOutcome>()
         coEvery { repository.applyCombatResult(any(), capture(resultSlot)) } returns Unit
 
         val turnInfo =

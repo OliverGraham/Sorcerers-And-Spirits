@@ -2,10 +2,11 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
+// TODO: FIX
 internal class TeleportOutcome(
     private val combatMutator: CombatMutator,
     private val defenderRoll: Int,
@@ -14,21 +15,14 @@ internal class TeleportOutcome(
         val attackerRoll = roll1D6()
         val escaped = defenderRoll > attackerRoll
 
-        combatMutator.addMessage(
-            message =
-                OutgoingMessage.Teleport(
-                    mageUserId = combatMutator.defenderUserId,
-                    attackerUserId = combatMutator.attackerUserId,
-                    escaped = escaped,
-                )
-        )
+        combatMutator.addMessage(message = OutgoingMessage.Teleport.Trigger)
 
         return if (escaped) {
             combatMutator.resolveTurnEnd()
         } else {
             CombatActionUpdates(
                 nextActivePlayerUserId = combatMutator.attackerUserId,
-                nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                nextStep = NextCombatAction.NormalAttackRoll.Health,
             )
         }
     }

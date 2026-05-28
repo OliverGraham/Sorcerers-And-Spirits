@@ -12,7 +12,6 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
@@ -64,9 +63,8 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     // TODO Arena: Look at this, refactor
     override suspend fun applyCombatResult(arenaId: String, result: RollOutcome) {
-        // TODO: Adapt this to RollOutcome
-
         val arenaReference = arenaMatchesReference.child(path = arenaId)
+
         arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
             if (existingMatch !is ArenaMatchEntity.Combat) return@runTransaction existingMatch
 
@@ -77,64 +75,13 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 }
             val allMessages = existingMatch.messages + newMessages
 
-            when (result.nextStep) {
-                is NextCombatAction.AbilityRoll -> TODO()
-                is NextCombatAction.Idle -> TODO()
-                is NextCombatAction.NormalAttackRoll.ArmorClass -> TODO()
-                is NextCombatAction.NormalAttackRoll.Health -> TODO()
-            }
-
-            when (result) {
-                is CombatResult.Miss ->
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        turnInfoEntity = result.nextTurnInfo.toEntity(),
-                    )
-
-                is CombatResult.Hit ->
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                    )
-
-                is CombatResult.DamageDealt -> {
-                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
-                    val target =
-                        updatedPlayerMap[result.targetId] ?: return@runTransaction existingMatch
-
-                    updatedPlayerMap[result.targetId] =
-                        target.copy(
-                            characterClassEntity =
-                                target.characterClassEntity.copy(hitPoints = result.newHp)
-                        )
-
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        playerEntitiesMap = updatedPlayerMap,
-                        turnInfoEntity = result.nextTurnInfo.toEntity(),
-                    )
-                }
-
-                is CombatResult.TargetDefeated -> {
-                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
-                    updatedPlayerMap.remove(result.defeatedPlayerId)
-
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        playerEntitiesMap = updatedPlayerMap,
-                        turnInfoEntity = result.nextTurnInfo.toEntity(),
-                    )
-                }
-
-                is CombatResult.Victory ->
-                    ArenaMatchEntity.Finished(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                    )
-            }
+            existingMatch.copy(
+                messages = allMessages,
+                numberOfNewMessages = newMessages.size,
+                playerEntitiesMap =
+                    result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
+                nextCombatActionEntity = result.nextStep.toEntity(),
+            )
         }
     }
 

@@ -33,6 +33,7 @@ sealed interface ArenaMatchEntity {
         override val messages: List<ArenaMessageEntity>,
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
+        val nextCombatActionEntity: NextCombatActionEntity,
     ) : ArenaMatchEntity
 
     @Serializable

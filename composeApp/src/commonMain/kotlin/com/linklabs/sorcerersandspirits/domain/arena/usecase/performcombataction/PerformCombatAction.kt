@@ -1,39 +1,26 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.AllInActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldReaction
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.LuckyCoinOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.LuckyCoinReaction
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImagePassOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageReaction
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageRerollOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeReaction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteReaction
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.mirrorimage.MirrorImagePassOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.mirrorimage.MirrorImageReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.mirrorimage.MirrorImageRerollOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TeleportOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TeleportReaction
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
-import com.linklabs.sorcerersandspirits.domain.utilities.UserId
-
-data class RollOutcome(
-    val messages: List<OutgoingMessage>,
-    val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
-    val nextActivePlayerUserId: String,
-    val nextStep: NextCombatAction,
-)
-
-data class CombatActionUpdates(val nextActivePlayerUserId: String, val nextStep: NextCombatAction)
 
 class PerformCombatAction(private val arguments: CombatActionArguments) {
 

@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator

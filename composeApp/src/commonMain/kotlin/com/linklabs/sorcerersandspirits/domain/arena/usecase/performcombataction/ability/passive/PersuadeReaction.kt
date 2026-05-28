@@ -3,11 +3,12 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.PersuadeOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
-class PersuadeReaction(private val combatMutations: CombatMutations) {
+// TODO: FIX
+internal class PersuadeReaction(private val combatMutator: CombatMutator) {
     operator fun invoke(): CombatActionUpdates {
         val roll = roll1D6()
         val outcome =
@@ -17,30 +18,23 @@ class PersuadeReaction(private val combatMutations: CombatMutations) {
                 else -> PersuadeOutcome.Failed
             }
 
-        combatMutations.addMessage(
-            message =
-                OutgoingMessage.Persuade(
-                    bardUserId = combatMutations.defenderUserId,
-                    attackerUserId = combatMutations.attackerUserId,
-                    outcome = outcome,
-                )
-        )
+        combatMutator.addMessage(message = OutgoingMessage.Persuade.Trigger)
 
         return when (outcome) {
-            PersuadeOutcome.Stopped -> combatMutations.resolveTurnEnd()
+            PersuadeOutcome.Stopped -> combatMutator.resolveTurnEnd()
 
             PersuadeOutcome.Redirected -> {
                 // Attacker needs to pick new target. We return Idle so they can choose.
                 CombatActionUpdates(
-                    nextActivePlayerUserId = combatMutations.attackerUserId,
+                    nextActivePlayerUserId = combatMutator.attackerUserId,
                     nextStep = NextCombatAction.Idle,
                 )
             }
 
             PersuadeOutcome.Failed -> {
                 CombatActionUpdates(
-                    nextActivePlayerUserId = combatMutations.attackerUserId,
-                    nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                    nextActivePlayerUserId = combatMutator.attackerUserId,
+                    nextStep = NextCombatAction.NormalAttackRoll.Health,
                 )
             }
         }

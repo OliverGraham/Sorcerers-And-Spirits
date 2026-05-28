@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
-// TODO Arena: Look at this - seems good but double check
+// TODO Replace with RollOutcome
 sealed interface CombatResult {
     val messages: List<OutgoingArenaMessage>
     val nextTurnInfo: TurnInfo?

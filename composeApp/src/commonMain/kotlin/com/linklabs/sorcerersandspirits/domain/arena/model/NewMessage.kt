@@ -42,7 +42,7 @@ sealed interface OutgoingMessage {
     sealed interface Riposte : OutgoingMessage {
         data object Trigger : Riposte
 
-        data class EnGarde(val firstDie: Int, val secondDie: Int)
+        data class EnGarde(val firstDie: Int, val secondDie: Int) : Riposte
     }
 
     data class SummonMinion(val necroUserId: String, val singleDie: Int) : OutgoingMessage

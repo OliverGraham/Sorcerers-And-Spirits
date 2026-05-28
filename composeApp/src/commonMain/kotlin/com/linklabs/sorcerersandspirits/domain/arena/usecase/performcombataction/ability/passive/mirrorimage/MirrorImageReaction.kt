@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.mirrorimage
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction

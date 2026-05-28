@@ -1,79 +1,70 @@
-package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.mirrorimage
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
 // TODO: Huh? - this is so wrong
-class MirrorImagePassOutcome(
-    private val combatMutations: CombatMutations,
+internal class MirrorImagePassOutcome(
+    private val combatMutator: CombatMutator,
     private val firstDie: Int,
     private val secondDie: Int,
     private val triggeredByArmorRoll: Boolean,
 ) {
     operator fun invoke(): CombatActionUpdates {
-        combatMutations.addMessage(
-            message =
-                OutgoingMessage.MirrorImage(
-                    illusionistUserId = combatMutations.defenderUserId,
-                    status = MirrorImageStatus.Passed,
-                )
-        )
+        combatMutator.addMessage(message = OutgoingMessage.MirrorImage.Pass)
 
-        combatMutations.markMirrorImageAsUsed()
+        combatMutator.markMirrorImageAsUsed()
 
         return if (triggeredByArmorRoll) {
             // Hit stands, move to damage roll
             CombatActionUpdates(
-                nextActivePlayerUserId = combatMutations.attackerUserId,
-                nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                nextActivePlayerUserId = combatMutator.attackerUserId,
+                nextStep = NextCombatAction.NormalAttackRoll.Health,
             )
         } else {
             // Damage roll stands
             val diceTotal = firstDie + secondDie
-            val defenderHp = combatMutations.getDefenderHp()
+            val defenderHp = combatMutator.getDefenderHp()
 
             if (diceTotal >= defenderHp) {
-                combatMutations.addNormalRollMessage(
-                    attackerUserId = combatMutations.attackerUserId,
-                    defenderUserId = combatMutations.defenderUserId,
+                combatMutator.addNormalRollMessage(
+                    attackerUserId = combatMutator.attackerUserId,
+                    defenderUserId = combatMutator.defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     type = NormalRollMessageType.Knockout,
                 )
-                combatMutations.updateDefenderClass { it.copy(hitPoints = 0) }
-                combatMutations.resolveTurnEnd()
+                combatMutator.updateDefenderClass { it.copy(hitPoints = 0) }
+                combatMutator.resolveTurnEnd()
             } else {
-                combatMutations.addNormalRollMessage(
-                    attackerUserId = combatMutations.attackerUserId,
-                    defenderUserId = combatMutations.defenderUserId,
+                combatMutator.addNormalRollMessage(
+                    attackerUserId = combatMutator.attackerUserId,
+                    defenderUserId = combatMutator.defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     type = NormalRollMessageType.Damage,
                 )
-                combatMutations.updateDefenderClass {
-                    it.copy(hitPoints = it.hitPoints - diceTotal)
-                }
-                combatMutations.resolveTurnEnd()
+                combatMutator.updateDefenderClass { it.copy(hitPoints = it.hitPoints - diceTotal) }
+                combatMutator.resolveTurnEnd()
             }
         }
     }
 
-    private fun CombatMutations.markMirrorImageAsUsed() {
+    private fun CombatMutator.markMirrorImageAsUsed() {
         updateDefenderClass { playerClass ->
             val mirrorImage = playerClass.defensiveAbility as DefensiveAbility.MirrorImage
             playerClass.copy(defensiveAbility = mirrorImage.copy(usedThisAttack = true))
         }
     }
 
-    private fun CombatMutations.getDefenderHp(): Int =
+    private fun CombatMutator.getDefenderHp(): Int =
         updatedPlayerMap.getValue(defenderUserId).characterClass.hitPoints
 
-    private fun CombatMutations.addNormalRollMessage(
+    private fun CombatMutator.addNormalRollMessage(
         attackerUserId: String,
         defenderUserId: String,
         firstDie: Int,

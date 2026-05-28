@@ -2,24 +2,19 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
-class RiposteReaction(private val combatMutations: CombatMutations) {
+internal class RiposteReaction(private val combatMutator: CombatMutator) {
     operator fun invoke(): CombatActionUpdates {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
         val total = firstDie + secondDie
         val triggered = total in 6..8
 
-        combatMutations.addMessage(
-            message =
-                OutgoingMessage.Riposte(
-                    duelistUserId = combatMutations.defenderUserId,
-                    attackerUserId = combatMutations.attackerUserId,
-                    triggered = triggered,
-                )
+        combatMutator.addMessage(
+            message = OutgoingMessage.Riposte.EnGarde(firstDie = firstDie, secondDie = secondDie)
         )
 
         return if (triggered) {
@@ -28,13 +23,13 @@ class RiposteReaction(private val combatMutations: CombatMutations) {
             // But wait, the combat state machine expects current attacker/defender.
             // If Riposte triggers, the original defender becomes the attacker.
             CombatActionUpdates(
-                nextActivePlayerUserId = combatMutations.defenderUserId,
-                nextStep = NextCombatAction.NormalAttackRoll.ArmorClassRoll,
+                nextActivePlayerUserId = combatMutator.defenderUserId,
+                nextStep = NextCombatAction.NormalAttackRoll.ArmorClass,
             )
         } else {
             CombatActionUpdates(
-                nextActivePlayerUserId = combatMutations.attackerUserId,
-                nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                nextActivePlayerUserId = combatMutator.attackerUserId,
+                nextStep = NextCombatAction.NormalAttackRoll.Health,
             )
         }
     }

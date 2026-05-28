@@ -1,14 +1,14 @@
-package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
-class HolyShieldReaction(private val combatMutations: CombatMutations) {
+internal class HolyShieldReaction(private val combatMutator: CombatMutator) {
     operator fun invoke(): CombatActionUpdates {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
@@ -16,43 +16,42 @@ class HolyShieldReaction(private val combatMutations: CombatMutations) {
         val survived = total in 10..12
 
         return if (survived) {
-            combatMutations.updateDefenderClass { playerClass ->
+            combatMutator.updateDefenderClass { playerClass ->
                 val holyShield = playerClass.defensiveAbility as DefensiveAbility.HolyShield
                 playerClass.copy(
                     hitPoints = 1,
                     defensiveAbility = holyShield.copy(usedThisMatch = true),
                 )
             }
-            combatMutations.addMessage(
+            combatMutator.addMessage(
                 message =
-                    OutgoingMessage.HolyShield(
-                        paladinUserId = combatMutations.defenderUserId,
+                    OutgoingMessage.HolyShield.Survival(
+                        paladinUserId = combatMutator.defenderUserId,
                         firstDie = firstDie,
                         secondDie = secondDie,
-                        survived = true,
+                        didSurvive = true,
                     )
             )
             CombatActionUpdates(
-                nextActivePlayerUserId = combatMutations.defenderUserId,
+                nextActivePlayerUserId = combatMutator.defenderUserId,
                 nextStep =
                     NextCombatAction.AbilityRoll(
-                        purpose = AbilityRollPurpose.Passive.Outcome.HolyShield
+                        purpose = AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect
                     ),
             )
         } else {
-            combatMutations.updateDefenderClass { it.copy(hitPoints = 0) }
+            combatMutator.updateDefenderClass { it.copy(hitPoints = 0) }
 
-            combatMutations.addMessage(
+            combatMutator.addMessage(
                 message =
-                    OutgoingMessage.HolyShield(
-                        paladinUserId = combatMutations.defenderUserId,
+                    OutgoingMessage.HolyShield.Survival(
+                        paladinUserId = combatMutator.defenderUserId,
                         firstDie = firstDie,
                         secondDie = secondDie,
-                        survived = false,
-                        retaliationDamage = 0,
+                        didSurvive = false,
                     )
             )
-            combatMutations.resolveTurnEnd()
+            combatMutator.resolveTurnEnd()
         }
     }
 }

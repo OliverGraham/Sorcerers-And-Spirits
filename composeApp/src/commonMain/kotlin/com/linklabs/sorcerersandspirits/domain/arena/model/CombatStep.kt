@@ -5,9 +5,9 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 /** Action the user is taking (UI -> Domain -> Data) */
 sealed interface CurrentCombatAction {
     sealed interface NormalAttackRoll : CurrentCombatAction {
-        data object ArmorClassRoll : NormalAttackRoll
+        data object ArmorClass : NormalAttackRoll
 
-        data object HealthRoll : NormalAttackRoll
+        data object Health : NormalAttackRoll
     }
 
     data class AbilityRoll(val purpose: AbilityRollPurpose) : CurrentCombatAction
@@ -19,46 +19,16 @@ sealed interface NextCombatAction {
     data object Idle : NextCombatAction
 
     sealed interface NormalAttackRoll : NextCombatAction {
-        data object ArmorClassRoll : NormalAttackRoll
+        data object ArmorClass : NormalAttackRoll
 
-        data object HealthRoll : NormalAttackRoll
+        data object Health : NormalAttackRoll
     }
 
     data class AbilityRoll(val purpose: AbilityRollPurpose) : NextCombatAction
 }
 
-// TODO: Could be AbilityRollPurpose.ActualAbilityNameType.Type
-//  Model by choice - when a user has input, then there must be a data class/object
-
-sealed interface AbilityAction {
-    // TODO: teleport could have both parties involved roll simultaneously, for example
-    //  Activated as written
-    //  Passive
-    //      Ability and sealed interfaces for each step
-
-    sealed interface Teleport {
-        data class Start(val attackerUserId: String, val defenderUserId: String) : Teleport
-
-        // TODO: pair of Roll? When both come into in the use case, then good?
-        data class Roll(
-            // TODO: Like this?
-            val userId: String,
-            val singleDie: Int,
-        )
-
-        // TODO: result is not a choice, so can be determined by data around it. Write to RTDB, then
-        //  Result would be a type that comes from Data -> Domain -> UI and part of ArenaMatchFlow
-        //  So this would be another type entirely? Since it should never go into this use case.
-    }
-}
-
-sealed interface AbilityResult
-
 sealed interface AbilityRollPurpose {
 
-    // someone attacks Gambler -> Gambler reacts if AC broken (ReactionType) -> If ReactionType,
-    // then
-    // Gambler rolls a die and die outcome (OutcomeType) -> Outcome and turn resolultion
     sealed interface Activated : AbilityRollPurpose {
         data class AllIn(val allInAbility: OffensiveAbility.AllIn) : Activated
 
@@ -107,7 +77,11 @@ sealed interface AbilityRollPurpose {
             data class Teleport(val defenderRoll: Int) : Outcome
 
             // TODO: All these need state to be passed through, likely
-            data object LuckyCoin : Outcome
+            sealed interface LuckyCoin : Outcome {
+                data object ArmorClass : LuckyCoin
+
+                data object Reflect : LuckyCoin
+            }
 
             sealed interface HolyShield : Outcome {
                 data object Survival : HolyShield
@@ -132,51 +106,4 @@ sealed interface AbilityRollPurpose {
             ) : Outcome
         }
     }
-}
-
-sealed interface RollPurpose {
-    data object TeleportDefenderEscape : RollPurpose
-
-    data class TeleportAttackerChase(val defenderRoll: Int) : RollPurpose
-
-    data object RiposteCounter : RollPurpose
-
-    data object PersuadeStopOrRedirect : RollPurpose
-
-    data object LuckyCoinArmorBonus : RollPurpose
-
-    data object LuckyCoinReflect : RollPurpose
-
-    data object AllInOutcome : RollPurpose
-
-    data object SummonMinionRoll : RollPurpose
-
-    data object PrepareAttackRoll : RollPurpose
-
-    data object EncoreCheck : RollPurpose
-
-    data object HolyShieldSurvival : RollPurpose
-
-    data object HolyShieldRetaliation : RollPurpose
-
-    data class MirrorImageChoice(
-        val firstDie: Int,
-        val secondDie: Int,
-        val triggeredByArmorRoll: Boolean,
-    ) : RollPurpose
-
-    data class MirrorImagePass(
-        val firstDie: Int,
-        val secondDie: Int,
-        val triggeredByArmorRoll: Boolean,
-    ) : RollPurpose
-
-    data class MirrorImageReroll(
-        val firstDie: Int,
-        val secondDie: Int,
-        val rerollFirstDie: Boolean,
-        val triggeredByArmorRoll: Boolean,
-    ) : RollPurpose
-
-    data object ImpersonateChoice : RollPurpose
 }

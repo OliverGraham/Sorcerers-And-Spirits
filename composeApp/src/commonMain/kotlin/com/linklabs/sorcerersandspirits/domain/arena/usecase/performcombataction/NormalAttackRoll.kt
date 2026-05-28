@@ -6,8 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.DodgeOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.SpellPotencyRoll
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.DodgeOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -28,8 +28,8 @@ internal class NormalAttackRoll(
         if (updatesFromSpellPotency != null) return updatesFromSpellPotency
 
         return when (currentAction) {
-            CurrentCombatAction.NormalAttackRoll.ArmorClassRoll -> handleArmorClassRoll()
-            CurrentCombatAction.NormalAttackRoll.HealthRoll -> handleHealthRoll()
+            CurrentCombatAction.NormalAttackRoll.ArmorClass -> handleArmorClassRoll()
+            CurrentCombatAction.NormalAttackRoll.Health -> handleHealthRoll()
         }
     }
 
@@ -117,7 +117,7 @@ internal class NormalAttackRoll(
 
             return CombatActionUpdates(
                 nextActivePlayerUserId = attacker.userId,
-                nextStep = NextCombatAction.NormalAttackRoll.ArmorClassRoll,
+                nextStep = NextCombatAction.NormalAttackRoll.ArmorClass,
             )
         }
 
@@ -215,7 +215,7 @@ internal class NormalAttackRoll(
             is DefensiveAbility.None ->
                 CombatActionUpdates(
                     nextActivePlayerUserId = attacker.userId,
-                    nextStep = NextCombatAction.NormalAttackRoll.HealthRoll,
+                    nextStep = NextCombatAction.NormalAttackRoll.Health,
                 )
         }
 

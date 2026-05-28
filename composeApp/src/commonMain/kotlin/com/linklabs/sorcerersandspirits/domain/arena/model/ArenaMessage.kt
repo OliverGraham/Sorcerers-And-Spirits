@@ -2,8 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
-// TODO: RollType in full is not necessary in the message - come up with another way
-
 sealed interface IncomingArenaMessage {
     val id: String
 
@@ -44,34 +42,6 @@ sealed interface IncomingArenaMessage {
 
     data class GameFinished(override val id: String, val winnerClassName: String) :
         IncomingArenaMessage
-}
-
-sealed interface OutgoingArenaMessage {
-    data class ChoseCharacterClass(
-        val displayName: String,
-        val characterClassInfo: CharacterClassMessageInfo,
-    ) : OutgoingArenaMessage
-
-    data class ConnectedToArena(val displayName: String) : OutgoingArenaMessage
-
-    data class NewRound(val roundNumber: Int) : OutgoingArenaMessage
-
-    data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : OutgoingArenaMessage
-
-    data class DiceRoll(val rollerClassName: String, val rollValue: Int, val rollType: RollType) :
-        OutgoingArenaMessage
-
-    data class AttackResult(
-        val attackerClassName: String,
-        val targetClassName: String,
-        val isHit: Boolean,
-        val rollType: RollType,
-    ) : OutgoingArenaMessage
-
-    data class TargetDead(val targetClassName: String, val killerClassName: String) :
-        OutgoingArenaMessage
-
-    data class GameFinished(val winnerClassName: String) : OutgoingArenaMessage
 }
 
 data class CharacterClassMessageInfo(val className: String, val type: CharacterClassType)

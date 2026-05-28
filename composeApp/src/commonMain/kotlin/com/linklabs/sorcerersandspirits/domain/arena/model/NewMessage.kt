@@ -4,6 +4,13 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 sealed interface OutgoingMessage {
 
+    data class ChoseCharacterClass(
+        val displayName: String,
+        val characterClassInfo: CharacterClassMessageInfo,
+    ) : OutgoingMessage
+
+    data class ConnectedToArena(val displayName: String) : OutgoingMessage
+
     data class NewRound(val roundNumber: Int) : OutgoingMessage
 
     data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : OutgoingMessage
@@ -112,27 +119,9 @@ enum class NormalRollMessageType {
     Knockout,
 }
 
-enum class SummonOutcome {
-    Fizzle,
-    Skeleton,
-    HealAndSkeleton,
-    HealAndGolem,
-}
-
+// TODO: Remove
 enum class PersuadeOutcome {
     Stopped,
     Redirected,
     Failed,
-}
-
-enum class AllInOutcome {
-    DoubleAttack,
-    KnockoutSelf,
-    NoEffect,
-}
-
-enum class MirrorImageStatus {
-    Pondering,
-    Passed,
-    Rerolled,
 }

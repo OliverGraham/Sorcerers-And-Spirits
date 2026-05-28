@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -67,6 +67,10 @@ sealed interface ArenaMessageEntity {
     data class GameFinished(override val id: String, val winnerClassName: String) :
         ArenaMessageEntity
 
+    @Serializable
+    @SerialName(value = COMBAT_LOG)
+    data class CombatLog(override val id: String, val text: String) : ArenaMessageEntity
+
     companion object {
         private const val CHOOSE_CHARACTER_CLASS = "ChoseCharacterClass"
         private const val CONNECTED_TO_ARENA = "ConnectedToArena"
@@ -76,6 +80,7 @@ sealed interface ArenaMessageEntity {
         private const val ATTACK_RESULT = "AttackResult"
         private const val TARGET_DEAD = "TargetDead"
         private const val GAME_FINISHED = "GameFinished"
+        private const val COMBAT_LOG = "CombatLog"
     }
 }
 
@@ -129,6 +134,8 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage =
 
         is ArenaMessageEntity.GameFinished ->
             IncomingArenaMessage.GameFinished(id = id, winnerClassName = winnerClassName)
+
+        else -> IncomingArenaMessage.ConnectedToArena(id = id, displayName = "UNKNOWN_MESSAGE_TYPE")
     }
 
 private fun CharacterClassMessageInfoEntity.toDomain() =
@@ -180,50 +187,27 @@ internal fun IncomingArenaMessage.toEntity(): ArenaMessageEntity =
             ArenaMessageEntity.GameFinished(id = id, winnerClassName = winnerClassName)
     }
 
-internal fun OutgoingArenaMessage.toEntity(id: String): ArenaMessageEntity =
+internal fun OutgoingMessage.toEntity(id: String): ArenaMessageEntity =
     when (this) {
-        is OutgoingArenaMessage.ChoseCharacterClass ->
+        is OutgoingMessage.ChoseCharacterClass ->
             ArenaMessageEntity.ChoseCharacterClass(
                 id = id,
                 displayName = displayName,
                 characterClassInfo = characterClassInfo.toEntity(),
             )
 
-        is OutgoingArenaMessage.ConnectedToArena ->
+        is OutgoingMessage.ConnectedToArena ->
             ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
 
-        is OutgoingArenaMessage.NewRound ->
+        is OutgoingMessage.NewRound ->
             ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
 
-        is OutgoingArenaMessage.NewTurn ->
+        is OutgoingMessage.NewTurn ->
             ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
 
-        is OutgoingArenaMessage.DiceRoll ->
-            ArenaMessageEntity.DiceRoll(
-                id = id,
-                rollerClassName = rollerClassName,
-                rollValue = rollValue,
-                nextCombatActionEntity = rollType.toEntity(),
-            )
-
-        is OutgoingArenaMessage.AttackResult ->
-            ArenaMessageEntity.AttackResult(
-                id = id,
-                attackerClassName = attackerClassName,
-                targetClassName = targetClassName,
-                isHit = isHit,
-                nextCombatActionEntity = rollType.toEntity(),
-            )
-
-        is OutgoingArenaMessage.TargetDead ->
-            ArenaMessageEntity.TargetDead(
-                id = id,
-                targetClassName = targetClassName,
-                killerClassName = killerClassName,
-            )
-
-        is OutgoingArenaMessage.GameFinished ->
-            ArenaMessageEntity.GameFinished(id = id, winnerClassName = winnerClassName)
+        // Mapping new OutgoingMessage types to a generic CombatLog for now,
+        // until ArenaMessageEntity and IncomingArenaMessage are fully refactored.
+        else -> ArenaMessageEntity.CombatLog(id = id, text = this.toString())
     }
 
 private fun CharacterClassMessageInfo.toEntity() =

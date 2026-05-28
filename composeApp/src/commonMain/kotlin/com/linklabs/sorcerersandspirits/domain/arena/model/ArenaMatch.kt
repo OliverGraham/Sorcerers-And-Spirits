@@ -1,7 +1,5 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceRoll
-
 sealed interface ArenaMatch {
     val messages: List<IncomingArenaMessage>
     val numberOfNewMessages: Int
@@ -24,8 +22,7 @@ sealed interface ArenaMatch {
         override val numberOfNewMessages: Int,
         val activePlayer: ArenaPlayer.Selected,
         val playerMap: Map<String, ArenaPlayer.Selected>,
-        val turnInfo: TurnInfo,
-        val currentDiceRoll: DiceRoll?,
+        val nextCombatAction: NextCombatAction,
     ) : ArenaMatch
 
     data class Finished(

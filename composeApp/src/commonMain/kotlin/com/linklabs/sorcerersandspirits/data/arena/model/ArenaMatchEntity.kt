@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -34,6 +33,7 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val nextCombatActionEntity: NextCombatActionEntity,
+        val nextActivePlayerUserId: String,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -86,7 +86,8 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
             val playerMap = playerEntitiesMap.mapValues { it.value.toDomain() }
 
             // TODO Arena: ArenaMatch.UserPlayerKnockedOut should here instead?
-            val activePlayer = playerMap[turnInfoEntity.activePlayerUserId]
+            //  This currently can never happen - so there will be another way
+            val activePlayer = playerMap[nextActivePlayerUserId]
             if (activePlayer == null) {
                 ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
             } else {
@@ -95,8 +96,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                     messages = messages,
                     numberOfNewMessages = numberOfNewMessages,
                     activePlayer = activePlayer,
-                    turnInfo = turnInfoEntity.toDomain(),
-                    currentDiceRoll = currentDiceRollEntity?.toDomain(),
+                    nextCombatAction = nextCombatActionEntity.toDomain(),
                 )
             }
         }
@@ -106,6 +106,8 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
     }
 }
 
+// TODO: Hmmm
+/*
 internal fun ArenaMatch.toEntity(
     newMessages: List<OutgoingArenaMessage>,
     addNewMessageKey: () -> String,
@@ -136,8 +138,7 @@ internal fun ArenaMatch.toEntity(
                 numberOfNewMessages = mappedNewMessages.size,
                 playerEntitiesMap =
                     playerMap.mapValues { it.value.toEntity() as ArenaPlayerEntity.Selected },
-                turnInfoEntity = turnInfo.toEntity(),
-                currentDiceRollEntity = currentDiceRoll?.toEntity(),
+                nextActivePlayerUserId = nextActivePlayerUserId,
             )
 
         is ArenaMatch.Finished ->
@@ -147,3 +148,4 @@ internal fun ArenaMatch.toEntity(
             )
     }
 }
+*/

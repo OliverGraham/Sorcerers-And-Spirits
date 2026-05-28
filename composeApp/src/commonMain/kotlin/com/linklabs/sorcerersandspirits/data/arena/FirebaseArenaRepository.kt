@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
@@ -65,7 +66,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         val arenaReference = arenaMatchesReference.child(path = arenaId)
 
         // TODO: Adapt this to RollOutcome
-        /*
+
         arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
             if (existingMatch !is ArenaMatchEntity.Combat) return@runTransaction existingMatch
 
@@ -128,7 +129,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     )
             }
         }
-         */
     }
 
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =

@@ -7,19 +7,19 @@ import kotlinx.serialization.Serializable
 data class DiceRollEntity(
     val attackDice: List<Int>,
     val doublesBonusDie: Int?,
-    val rollTypeEntity: RollTypeEntity,
+    val nextCombatActionEntity: NextCombatActionEntity,
 )
 
 internal fun DiceRollEntity.toDomain(): DiceRoll =
     DiceRoll(
         attackDice = attackDice,
         doublesBonusDie = doublesBonusDie,
-        rollType = rollTypeEntity.toDomain(),
+        rollType = nextCombatActionEntity.toDomain(),
     )
 
 internal fun DiceRoll.toEntity(): DiceRollEntity =
     DiceRollEntity(
         attackDice = attackDice,
         doublesBonusDie = doublesBonusDie,
-        rollTypeEntity = rollType.toEntity(),
+        nextCombatActionEntity = rollType.toEntity(),
     )

@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-// TODO: These all need dice rolls to convey to users
 sealed interface OutgoingMessage {
 
     data class NewRound(val roundNumber: Int) : OutgoingMessage
@@ -17,9 +16,6 @@ sealed interface OutgoingMessage {
         val type: NormalRollMessageType,
     ) : OutgoingMessage
 
-    // Gemini, keep these comments please:
-    // if didArmorIncrease, "Rogue dodged the attack and increased their AC by 1!"
-    // else, "Rogue already has the maximum Dodge bonus"
     data class Dodge(val didArmorIncrease: Boolean) : OutgoingMessage
 
     sealed interface Teleport : OutgoingMessage {

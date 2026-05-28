@@ -3,17 +3,17 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class AllInActivated(
-    private val combatMutations: CombatMutations,
+    private val combatMutator: CombatMutator,
     private val allIn: OffensiveAbility.AllIn,
 ) {
-    operator fun invoke() = combatMutations.handleOutcome()
+    operator fun invoke() = combatMutator.handleOutcome()
 
-    private fun CombatMutations.handleOutcome(): CombatActionUpdates {
+    private fun CombatMutator.handleOutcome(): CombatActionUpdates {
         val singleDie = roll1D6()
         addMessage(
             message = OutgoingMessage.AllIn(gamblerUserId = attackerUserId, singleDie = singleDie)

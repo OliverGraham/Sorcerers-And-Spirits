@@ -12,7 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-class NormalAttackRoll(
+internal class NormalAttackRoll(
     private val combatMutator: CombatMutator,
     private val firstDie: Int,
     private val secondDie: Int,
@@ -38,7 +38,7 @@ class NormalAttackRoll(
             attackerOffensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
 
         return if (isSpellPotencyRoll) {
-            SpellPotencyRoll(combatMutations = combatMutations, diceTotal = diceTotal).invoke()
+            SpellPotencyRoll(combatMutator = combatMutator, diceTotal = diceTotal).invoke()
         } else {
             null
         }
@@ -59,7 +59,7 @@ class NormalAttackRoll(
         val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
 
         if (!mirrorImageUsed && mirrorImage != null) {
-            combatMutations.addMessage(message = OutgoingMessage.MirrorImage.Trigger)
+            combatMutator.addMessage(message = OutgoingMessage.MirrorImage.Trigger)
 
             return CombatActionUpdates(
                 nextActivePlayerUserId = defender.userId,
@@ -91,7 +91,7 @@ class NormalAttackRoll(
             defenderDefensiveAbility is DefensiveAbility.HolyShield &&
                 !defenderDefensiveAbility.usedThisMatch
         ) {
-            combatMutations.addMessage(message = OutgoingMessage.HolyShield.Trigger)
+            combatMutator.addMessage(message = OutgoingMessage.HolyShield.Trigger)
 
             return CombatActionUpdates(
                 nextActivePlayerUserId = defender.userId,
@@ -102,12 +102,12 @@ class NormalAttackRoll(
             )
         }
 
-        combatMutations.updateDefenderClass { defenderClass ->
+        combatMutator.updateDefenderClass { defenderClass ->
             defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
         }
 
         if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
-            combatMutations.addMessage(
+            combatMutator.addMessage(
                 message =
                     OutgoingMessage.KillingMomentum(
                         rogueUserId = attacker.userId,
@@ -121,7 +121,7 @@ class NormalAttackRoll(
             )
         }
 
-        return combatMutations.resolveTurnEnd()
+        return combatMutator.resolveTurnEnd()
     }
 
     private fun resolveDamage(): CombatActionUpdates {
@@ -136,7 +136,7 @@ class NormalAttackRoll(
             )
         }
 
-        return combatMutations.resolveTurnEnd()
+        return combatMutator.resolveTurnEnd()
     }
 
     /**
@@ -146,7 +146,7 @@ class NormalAttackRoll(
     private fun resolveArmorClassHit(): CombatActionUpdates =
         when (defenderDefensiveAbility) {
             is DefensiveAbility.Teleport -> {
-                combatMutations.addMessage(message = OutgoingMessage.Teleport.Trigger)
+                combatMutator.addMessage(message = OutgoingMessage.Teleport.Trigger)
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
@@ -158,7 +158,7 @@ class NormalAttackRoll(
             }
 
             is DefensiveAbility.Riposte -> {
-                combatMutations.addMessage(message = OutgoingMessage.Riposte.Trigger)
+                combatMutator.addMessage(message = OutgoingMessage.Riposte.Trigger)
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
@@ -170,7 +170,7 @@ class NormalAttackRoll(
             }
 
             is DefensiveAbility.Persuade -> {
-                combatMutations.addMessage(message = OutgoingMessage.Persuade.Trigger)
+                combatMutator.addMessage(message = OutgoingMessage.Persuade.Trigger)
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
@@ -182,7 +182,7 @@ class NormalAttackRoll(
             }
 
             is DefensiveAbility.LuckyCoin -> {
-                combatMutations.addMessage(message = OutgoingMessage.LuckyCoin.Trigger)
+                combatMutator.addMessage(message = OutgoingMessage.LuckyCoin.Trigger)
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
@@ -194,7 +194,7 @@ class NormalAttackRoll(
             }
 
             is DefensiveAbility.MirrorImage -> {
-                combatMutations.addMessage(message = OutgoingMessage.MirrorImage.Trigger)
+                combatMutator.addMessage(message = OutgoingMessage.MirrorImage.Trigger)
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
@@ -225,15 +225,15 @@ class NormalAttackRoll(
      */
     private fun resolveArmorClassMiss(): CombatActionUpdates {
         if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
-            DodgeOutcome(combatMutations = combatMutations, dodge = defenderDefensiveAbility)
+            DodgeOutcome(combatMutator = combatMutator, dodge = defenderDefensiveAbility)
                 .applyOutcome()
         }
 
-        return combatMutations.resolveTurnEnd()
+        return combatMutator.resolveTurnEnd()
     }
 
     private fun addNormalRollMessage(type: NormalRollMessageType) {
-        combatMutations.addMessage(
+        combatMutator.addMessage(
             message =
                 OutgoingMessage.NormalRoll(
                     attackerUserId = attacker.userId,

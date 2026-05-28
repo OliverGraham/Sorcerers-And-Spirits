@@ -3,10 +3,10 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
-class MirrorImageReaction(
-    private val combatMutations: CombatMutations,
+internal class MirrorImageReaction(
+    private val combatMutator: CombatMutator,
     private val firstDie: Int,
     private val secondDie: Int,
     private val triggeredByArmorRoll: Boolean,
@@ -15,7 +15,7 @@ class MirrorImageReaction(
         // Wait for user choice: Reroll or Pass.
         // Returning current state to show options in UI.
         return CombatActionUpdates(
-            nextActivePlayerUserId = combatMutations.defenderUserId,
+            nextActivePlayerUserId = combatMutator.defenderUserId,
             nextStep =
                 NextCombatAction.AbilityRoll(
                     purpose =

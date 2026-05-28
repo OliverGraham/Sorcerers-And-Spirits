@@ -1,18 +1,18 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
-class DodgeOutcome(
-    private val combatMutations: CombatMutations,
+internal class DodgeOutcome(
+    private val combatMutator: CombatMutator,
     private val dodge: DefensiveAbility.Dodge,
 ) {
     fun applyOutcome() {
-        combatMutations.applyOutcome()
+        combatMutator.applyOutcome()
     }
 
-    private fun CombatMutations.applyOutcome() {
+    private fun CombatMutator.applyOutcome() {
         val didArmorIncrease = dodge.armorBonus < 2
 
         if (didArmorIncrease) {

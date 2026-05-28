@@ -2,17 +2,17 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-class SummonMinionActivated(
-    private val combatMutations: CombatMutations,
+internal class SummonMinionActivated(
+    private val combatMutator: CombatMutator,
     private val summonMinionAbility: OffensiveAbility.SummonMinion,
 ) {
-    operator fun invoke() = combatMutations.summonMinionOutcome()
+    operator fun invoke() = combatMutator.summonMinionOutcome()
 
-    private fun CombatMutations.summonMinionOutcome(): CombatActionUpdates {
+    private fun CombatMutator.summonMinionOutcome(): CombatActionUpdates {
         val singleDie = roll1D6()
 
         addMessage(

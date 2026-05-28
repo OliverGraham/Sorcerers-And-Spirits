@@ -2,16 +2,16 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class ImpersonateActivated(
-    private val combatMutations: CombatMutations,
+    private val combatMutator: CombatMutator,
     private val impersonateAbility: OffensiveAbility.Impersonate,
 ) {
-    operator fun invoke() = combatMutations.impersonateOutcome()
+    operator fun invoke() = combatMutator.impersonateOutcome()
 
-    private fun CombatMutations.impersonateOutcome(): CombatActionUpdates {
+    private fun CombatMutator.impersonateOutcome(): CombatActionUpdates {
         addMessage(
             message =
                 OutgoingMessage.Impersonate(

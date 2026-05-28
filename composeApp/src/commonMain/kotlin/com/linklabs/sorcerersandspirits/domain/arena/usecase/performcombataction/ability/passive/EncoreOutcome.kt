@@ -3,18 +3,18 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
-class EncoreOutcome(private val combatMutations: CombatMutations) {
+internal class EncoreOutcome(private val combatMutator: CombatMutator) {
     operator fun invoke(): CombatActionUpdates {
         val roll = roll1D6()
         val triggered = roll in 5..6
 
-        combatMutations.addMessage(
+        combatMutator.addMessage(
             message =
                 OutgoingMessage.Encore(
-                    bardUserId = combatMutations.attackerUserId,
+                    bardUserId = combatMutator.attackerUserId,
                     triggered = triggered,
                 )
         )
@@ -22,11 +22,11 @@ class EncoreOutcome(private val combatMutations: CombatMutations) {
         return if (triggered) {
             // Attack again. Return Idle so attacker can choose action.
             CombatActionUpdates(
-                nextActivePlayerUserId = combatMutations.attackerUserId,
+                nextActivePlayerUserId = combatMutator.attackerUserId,
                 nextStep = NextCombatAction.Idle,
             )
         } else {
-            combatMutations.resolveTurnEnd()
+            combatMutator.resolveTurnEnd()
         }
     }
 }

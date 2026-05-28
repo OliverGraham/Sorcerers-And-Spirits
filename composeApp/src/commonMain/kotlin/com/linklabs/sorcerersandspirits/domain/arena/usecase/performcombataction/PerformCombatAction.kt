@@ -22,7 +22,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteReaction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportReaction
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
@@ -37,8 +37,8 @@ data class CombatActionUpdates(val nextActivePlayerUserId: String, val nextStep:
 
 class PerformCombatAction(private val arguments: CombatActionArguments) {
 
-    private val combatMutations =
-        CombatMutations(
+    private val combatMutator =
+        CombatMutator(
             updatedPlayerMap = arguments.playerMap.toMutableMap(),
             attackerUserId = arguments.attacker.userId,
             defenderUserId = arguments.defender.userId,
@@ -47,7 +47,7 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
 
     operator fun invoke(currentAction: CurrentCombatAction): RollOutcome {
         val updates = resolveAction(action = currentAction)
-        val updatedProperties = combatMutations.getUpdatedProperties()
+        val updatedProperties = combatMutator.getUpdatedProperties()
 
         return RollOutcome(
             messages = updatedProperties.messages,
@@ -69,7 +69,7 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
 
         val normalAttackRoll =
             NormalAttackRoll(
-                combatMutations = combatMutations,
+                combatMutator = combatMutator,
                 firstDie = firstDie,
                 secondDie = secondDie,
                 attacker = arguments.attacker,
@@ -93,21 +93,21 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
     private fun AbilityRollPurpose.Activated.handleActivated(): CombatActionUpdates =
         when (this) {
             is AbilityRollPurpose.Activated.AllIn ->
-                AllInActivated(combatMutations = combatMutations, allIn = allInAbility).invoke()
+                AllInActivated(combatMutator = combatMutator, allIn = allInAbility).invoke()
 
             is AbilityRollPurpose.Activated.Impersonate ->
                 ImpersonateActivated(
-                        combatMutations = combatMutations,
+                        combatMutator = combatMutator,
                         impersonateAbility = impersonateAbility,
                     )
                     .invoke()
 
             is AbilityRollPurpose.Activated.PrepareAttack ->
-                PrepareAttackActivated(combatMutations = combatMutations).invoke()
+                PrepareAttackActivated(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Activated.SummonMinion ->
                 SummonMinionActivated(
-                        combatMutations = combatMutations,
+                        combatMutator = combatMutator,
                         summonMinionAbility = summonMinionAbility,
                     )
                     .invoke()
@@ -116,14 +116,14 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
     private fun AbilityRollPurpose.Passive.Reaction.handleReaction(): CombatActionUpdates =
         when (this) {
             is AbilityRollPurpose.Passive.Reaction.HolyShield ->
-                HolyShieldReaction(combatMutations = combatMutations).invoke()
+                HolyShieldReaction(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.Reaction.LuckyCoin ->
-                LuckyCoinReaction(combatMutations = combatMutations).invoke()
+                LuckyCoinReaction(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.Reaction.MirrorImage ->
                 MirrorImageReaction(
-                        combatMutations = combatMutations,
+                        combatMutator = combatMutator,
                         firstDie = firstDie,
                         secondDie = secondDie,
                         triggeredByArmorRoll = triggeredByArmorRoll,
@@ -131,35 +131,35 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
                     .invoke()
 
             is AbilityRollPurpose.Passive.Reaction.Persuade ->
-                PersuadeReaction(combatMutations = combatMutations).invoke()
+                PersuadeReaction(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.Reaction.Riposte ->
-                RiposteReaction(combatMutations = combatMutations).invoke()
+                RiposteReaction(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.Reaction.Teleport ->
-                TeleportReaction(combatMutations = combatMutations).invoke()
+                TeleportReaction(combatMutator = combatMutator).invoke()
         }
 
     private fun AbilityRollPurpose.Passive.Outcome.handleOutcome(): CombatActionUpdates =
         when (this) {
             is AbilityRollPurpose.Passive.Outcome.Encore ->
-                EncoreOutcome(combatMutations = combatMutations).invoke()
+                EncoreOutcome(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.Outcome.HolyShield ->
                 when (this) {
                     is AbilityRollPurpose.Passive.Outcome.HolyShield.Survival ->
-                        HolyShieldOutcome(combatMutations = combatMutations).invoke()
+                        HolyShieldOutcome(combatMutator = combatMutator).invoke()
 
                     is AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect ->
-                        HolyShieldOutcome(combatMutations = combatMutations).invoke()
+                        HolyShieldOutcome(combatMutator = combatMutator).invoke()
                 }
 
             is AbilityRollPurpose.Passive.Outcome.LuckyCoin ->
-                LuckyCoinOutcome(combatMutations = combatMutations).invoke()
+                LuckyCoinOutcome(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass ->
                 MirrorImagePassOutcome(
-                        combatMutations = combatMutations,
+                        combatMutator = combatMutator,
                         firstDie = firstDie,
                         secondDie = secondDie,
                         triggeredByArmorRoll = triggeredByArmorRoll,
@@ -168,7 +168,7 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll ->
                 MirrorImageRerollOutcome(
-                        combatMutations = combatMutations,
+                        combatMutator = combatMutator,
                         firstDie = firstDie,
                         secondDie = secondDie,
                         rerollFirstDie = rerollFirstDie,
@@ -177,7 +177,6 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
                     .invoke()
 
             is AbilityRollPurpose.Passive.Outcome.Teleport ->
-                TeleportOutcome(combatMutations = combatMutations, defenderRoll = defenderRoll)
-                    .invoke()
+                TeleportOutcome(combatMutator = combatMutator, defenderRoll = defenderRoll).invoke()
         }
 }

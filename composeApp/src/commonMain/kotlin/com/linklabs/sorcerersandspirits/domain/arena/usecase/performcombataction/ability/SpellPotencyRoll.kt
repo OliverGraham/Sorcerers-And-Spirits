@@ -2,14 +2,17 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 // TODO: Docstring, etc.
-class SpellPotencyRoll(private val combatMutations: CombatMutations, private val diceTotal: Int) {
+internal class SpellPotencyRoll(
+    private val combatMutator: CombatMutator,
+    private val diceTotal: Int,
+) {
 
-    operator fun invoke() = combatMutations.resolveSpellPotency()
+    operator fun invoke() = combatMutator.resolveSpellPotency()
 
-    private fun CombatMutations.resolveSpellPotency(): CombatActionUpdates {
+    private fun CombatMutator.resolveSpellPotency(): CombatActionUpdates {
         val splashDamage = diceTotal / 2
         applyFullDamageToDefender()
         applySplashDamage(splashDamage = splashDamage)
@@ -18,13 +21,13 @@ class SpellPotencyRoll(private val combatMutations: CombatMutations, private val
         return resolveTurnEnd()
     }
 
-    private fun CombatMutations.applyFullDamageToDefender() {
+    private fun CombatMutator.applyFullDamageToDefender() {
         updateDefenderClass { defender ->
             defender.copy(hitPoints = defender.hitPoints - diceTotal)
         }
     }
 
-    private fun CombatMutations.applySplashDamage(splashDamage: Int) {
+    private fun CombatMutator.applySplashDamage(splashDamage: Int) {
         updatedPlayerMap.values
             .filter { it.userId != attackerUserId && it.userId != defenderUserId }
             .filter { it.characterClass.isConscious() }
@@ -35,7 +38,7 @@ class SpellPotencyRoll(private val combatMutations: CombatMutations, private val
             }
     }
 
-    private fun CombatMutations.addSpellPotencyMessage(splashDamage: Int) {
+    private fun CombatMutator.addSpellPotencyMessage(splashDamage: Int) {
         addMessage(
             message =
                 OutgoingMessage.SpellPotency(

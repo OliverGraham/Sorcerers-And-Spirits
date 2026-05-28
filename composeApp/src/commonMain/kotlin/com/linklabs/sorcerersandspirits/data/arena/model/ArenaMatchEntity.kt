@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -108,7 +108,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
 }
 
 internal fun ArenaMatch.toEntity(
-    newMessages: List<OutgoingMessage>,
+    newMessages: List<OutgoingArenaMessage>,
     addNewMessageKey: () -> String,
 ): ArenaMatchEntity {
     val existingMessages = messages.map { it.toEntity() }

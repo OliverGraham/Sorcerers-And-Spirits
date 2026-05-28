@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.PersuadeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
@@ -18,7 +18,7 @@ internal class PersuadeReaction(private val combatMutator: CombatMutator) {
                 else -> PersuadeOutcome.Failed
             }
 
-        combatMutator.addMessage(message = OutgoingMessage.Persuade.Trigger)
+        combatMutator.addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
 
         return when (outcome) {
             PersuadeOutcome.Stopped -> combatMutator.resolveTurnEnd()

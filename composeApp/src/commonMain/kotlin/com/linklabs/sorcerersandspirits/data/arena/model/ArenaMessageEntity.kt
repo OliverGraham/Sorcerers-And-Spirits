@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -187,25 +187,25 @@ internal fun IncomingArenaMessage.toEntity(): ArenaMessageEntity =
             ArenaMessageEntity.GameFinished(id = id, winnerClassName = winnerClassName)
     }
 
-internal fun OutgoingMessage.toEntity(id: String): ArenaMessageEntity =
+internal fun OutgoingArenaMessage.toEntity(id: String): ArenaMessageEntity =
     when (this) {
-        is OutgoingMessage.ChoseCharacterClass ->
+        is OutgoingArenaMessage.ChoseCharacterClass ->
             ArenaMessageEntity.ChoseCharacterClass(
                 id = id,
                 displayName = displayName,
                 characterClassInfo = characterClassInfo.toEntity(),
             )
 
-        is OutgoingMessage.ConnectedToArena ->
+        is OutgoingArenaMessage.ConnectedToArena ->
             ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
 
-        is OutgoingMessage.NewRound ->
+        is OutgoingArenaMessage.NewRound ->
             ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
 
-        is OutgoingMessage.NewTurn ->
+        is OutgoingArenaMessage.NewTurn ->
             ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
 
-        // Mapping new OutgoingMessage types to a generic CombatLog for now,
+        // Mapping new OutgoingArenaMessage types to a generic CombatLog for now,
         // until ArenaMessageEntity and IncomingArenaMessage are fully refactored.
         else -> ArenaMessageEntity.CombatLog(id = id, text = this.toString())
     }

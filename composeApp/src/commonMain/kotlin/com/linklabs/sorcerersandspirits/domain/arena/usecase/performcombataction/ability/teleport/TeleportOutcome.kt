@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
@@ -15,7 +15,7 @@ internal class TeleportOutcome(
         val attackerRoll = roll1D6()
         val escaped = defenderRoll > attackerRoll
 
-        combatMutator.addMessage(message = OutgoingMessage.Teleport.Trigger)
+        combatMutator.addMessage(message = OutgoingArenaMessage.Teleport.Trigger)
 
         return if (escaped) {
             combatMutator.resolveTurnEnd()

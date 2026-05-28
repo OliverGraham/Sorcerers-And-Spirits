@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
@@ -23,7 +23,10 @@ internal class MirrorImageRerollOutcome(
 
         combatMutator.addMessage(
             message =
-                OutgoingMessage.MirrorImage.Reroll(firstDie = newFirstDie, secondDie = newSecondDie)
+                OutgoingArenaMessage.MirrorImage.Reroll(
+                    firstDie = newFirstDie,
+                    secondDie = newSecondDie,
+                )
         )
 
         combatMutator.markMirrorImageAsUsed()
@@ -100,7 +103,7 @@ internal class MirrorImageRerollOutcome(
     ) {
         addMessage(
             message =
-                OutgoingMessage.NormalRoll(
+                OutgoingArenaMessage.NormalRoll(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                     firstDie = firstDie,

@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
@@ -17,7 +17,7 @@ internal class LuckyCoinOutcome(private val combatMutator: CombatMutator) {
 
         combatMutator.addMessage(
             message =
-                OutgoingMessage.LuckyCoin(
+                OutgoingArenaMessage.LuckyCoin(
                     gamblerUserId = combatMutator.defenderUserId,
                     attackerUserId = combatMutator.attackerUserId,
                     armorBonus = 6, // We know it was a 6 to get here

@@ -3,7 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -15,7 +15,7 @@ internal class CombatMutator(
     val defenderUserId: UserId,
     val updatedPlayerMap: MutableMap<UserId, ArenaPlayer.Selected>,
     private val roundNumber: Int,
-    private val messages: MutableList<OutgoingMessage> = mutableListOf(),
+    private val messages: MutableList<OutgoingArenaMessage> = mutableListOf(),
 ) {
     fun getUpdatedProperties() =
         CombatMutations(updatedPlayerMap = updatedPlayerMap, messages = messages)
@@ -47,7 +47,7 @@ internal class CombatMutator(
         updateDefenderClass { defender -> defender.copy(hitPoints = hitPoints) }
     }
 
-    fun addMessage(message: OutgoingMessage) {
+    fun addMessage(message: OutgoingArenaMessage) {
         messages.add(element = message)
     }
 
@@ -65,7 +65,7 @@ internal class CombatMutator(
         if (nextPlayer == null) {
             val newRoundNumber = roundNumber + 1
             resetAllPlayersActed()
-            messages.add(element = OutgoingMessage.NewRound(roundNumber = newRoundNumber))
+            messages.add(element = OutgoingArenaMessage.NewRound(roundNumber = newRoundNumber))
 
             val fastestNextRound = calculateFastestLivingPlayer()
             fastestNextRound.characterClass.addNewTurnMessage()
@@ -120,6 +120,8 @@ internal class CombatMutator(
 
     private fun CharacterClass.addNewTurnMessage() {
         val characterClassInfo = CharacterClassMessageInfo(className = className, type = type)
-        messages.add(element = OutgoingMessage.NewTurn(characterClassInfo = characterClassInfo))
+        messages.add(
+            element = OutgoingArenaMessage.NewTurn(characterClassInfo = characterClassInfo)
+        )
     }
 }

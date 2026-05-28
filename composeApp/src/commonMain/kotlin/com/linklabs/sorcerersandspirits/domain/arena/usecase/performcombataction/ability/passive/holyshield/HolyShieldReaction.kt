@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
@@ -25,7 +25,7 @@ internal class HolyShieldReaction(private val combatMutator: CombatMutator) {
             }
             combatMutator.addMessage(
                 message =
-                    OutgoingMessage.HolyShield.Survival(
+                    OutgoingArenaMessage.HolyShield.Survival(
                         paladinUserId = combatMutator.defenderUserId,
                         firstDie = firstDie,
                         secondDie = secondDie,
@@ -44,7 +44,7 @@ internal class HolyShieldReaction(private val combatMutator: CombatMutator) {
 
             combatMutator.addMessage(
                 message =
-                    OutgoingMessage.HolyShield.Survival(
+                    OutgoingArenaMessage.HolyShield.Survival(
                         paladinUserId = combatMutator.defenderUserId,
                         firstDie = firstDie,
                         secondDie = secondDie,

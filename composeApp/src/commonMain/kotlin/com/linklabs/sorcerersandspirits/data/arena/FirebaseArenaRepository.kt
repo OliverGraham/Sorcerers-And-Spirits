@@ -71,8 +71,8 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
             val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
             val newMessages =
-                result.messages.map { outgoingMessage ->
-                    outgoingMessage.toEntity(id = messagesReference.addNewKey())
+                result.messages.map { OutgoingArenaMessage ->
+                    OutgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
                 }
             val allMessages = existingMatch.messages + newMessages
 

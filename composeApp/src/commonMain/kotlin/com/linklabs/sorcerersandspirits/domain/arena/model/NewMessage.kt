@@ -22,30 +22,39 @@ sealed interface OutgoingMessage {
     // else, "Rogue already has the maximum Dodge bonus"
     data class Dodge(val didArmorIncrease: Boolean) : OutgoingMessage
 
-    data class Teleport(val mageUserId: String, val attackerUserId: String, val escaped: Boolean) :
-        OutgoingMessage
+    sealed interface Teleport : OutgoingMessage {
+        data object Trigger : Teleport
 
-    data class LuckyCoin(
-        val gamblerUserId: String,
-        val attackerUserId: String,
-        val armorBonus: Int,
-        val reflectDamage: Int,
-    ) : OutgoingMessage
+        data class Roll(val userId: String, val singleDie: Int) : Teleport
 
-    data class Riposte(
-        val duelistUserId: String,
-        val attackerUserId: String,
-        val triggered: Boolean,
-    ) : OutgoingMessage
+        data class Result(val didDefenderEscape: Boolean) : Teleport
+    }
+
+    sealed interface LuckyCoin : OutgoingMessage {
+
+        data object Trigger : LuckyCoin
+
+        data class ArmorClassRoll(val singleDie: Int) : LuckyCoin
+
+        data class ReflectRoll(val singleDie: Int) : LuckyCoin
+    }
+
+    sealed interface Riposte : OutgoingMessage {
+        data object Trigger : Riposte
+
+        data class EnGarde(val firstDie: Int, val secondDie: Int)
+    }
 
     data class SummonMinion(val necroUserId: String, val singleDie: Int) : OutgoingMessage
 
-    data class Persuade(
-        val bardUserId: String,
-        val attackerUserId: String,
-        val outcome: PersuadeOutcome,
-        val newTargetUserId: String? = null,
-    ) : OutgoingMessage
+    sealed interface Persuade : OutgoingMessage {
+
+        data object Trigger : Persuade
+
+        data object Lull : Persuade
+
+        data class Charm(val charmedPlayerUserId: String) : Persuade
+    }
 
     data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingMessage
 
@@ -54,8 +63,13 @@ sealed interface OutgoingMessage {
         val impersonateAbility: OffensiveAbility.Impersonate,
     ) : OutgoingMessage
 
-    data class MirrorImage(val illusionistUserId: String, val status: MirrorImageStatus) :
-        OutgoingMessage
+    sealed interface MirrorImage : OutgoingMessage {
+        data object Trigger : MirrorImage
+
+        data object Pass : MirrorImage
+
+        data class Reroll(val firstDie: Int, val secondDie: Int) : MirrorImage
+    }
 
     data class SpellPotency(
         val mageUserId: String,
@@ -64,11 +78,19 @@ sealed interface OutgoingMessage {
         val splashDamage: Int,
     ) : OutgoingMessage
 
-    data class HolyShield(
-        val paladinUserId: String,
-        val survived: Boolean,
-        val retaliationDamage: Int,
-    ) : OutgoingMessage
+    sealed interface HolyShield : OutgoingMessage {
+
+        data object Trigger : HolyShield
+
+        data class Survival(
+            val paladinUserId: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val didSurvive: Boolean,
+        ) : HolyShield
+
+        data class Reflect(val paladinUserId: String, val singleDie: Int) : HolyShield
+    }
 
     data class KillingMomentum(val rogueUserId: String, val isTriggered: Boolean) : OutgoingMessage
 

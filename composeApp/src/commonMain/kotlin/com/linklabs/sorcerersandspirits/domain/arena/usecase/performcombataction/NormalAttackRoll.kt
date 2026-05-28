@@ -3,18 +3,17 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageStatus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.DodgeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.SpellPotencyRoll
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility.Dodge
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 class NormalAttackRoll(
-    private val combatMutations: CombatMutations,
+    private val combatMutator: CombatMutator,
     private val firstDie: Int,
     private val secondDie: Int,
     private val attacker: ArenaPlayer.Selected,
@@ -25,16 +24,23 @@ class NormalAttackRoll(
     private val defenderDefensiveAbility = defender.characterClass.defensiveAbility
 
     fun handleRoll(currentAction: CurrentCombatAction.NormalAttackRoll): CombatActionUpdates {
-        val isSpellPotencyRoll =
-            attackerOffensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
-        if (isSpellPotencyRoll) {
-            return SpellPotencyRoll(combatMutations = combatMutations, diceTotal = diceTotal)
-                .invoke()
-        }
+        val updatesFromSpellPotency = handleSpellPotencyIfApplicable()
+        if (updatesFromSpellPotency != null) return updatesFromSpellPotency
 
         return when (currentAction) {
             CurrentCombatAction.NormalAttackRoll.ArmorClassRoll -> handleArmorClassRoll()
             CurrentCombatAction.NormalAttackRoll.HealthRoll -> handleHealthRoll()
+        }
+    }
+
+    private fun handleSpellPotencyIfApplicable(): CombatActionUpdates? {
+        val isSpellPotencyRoll =
+            attackerOffensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
+
+        return if (isSpellPotencyRoll) {
+            SpellPotencyRoll(combatMutations = combatMutations, diceTotal = diceTotal).invoke()
+        } else {
+            null
         }
     }
 
@@ -53,13 +59,7 @@ class NormalAttackRoll(
         val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
 
         if (!mirrorImageUsed && mirrorImage != null) {
-            combatMutations.addMessage(
-                message =
-                    OutgoingMessage.MirrorImage(
-                        illusionistUserId = defender.userId,
-                        status = MirrorImageStatus.Pondering,
-                    )
-            )
+            combatMutations.addMessage(message = OutgoingMessage.MirrorImage.Trigger)
 
             return CombatActionUpdates(
                 nextActivePlayerUserId = defender.userId,
@@ -91,7 +91,8 @@ class NormalAttackRoll(
             defenderDefensiveAbility is DefensiveAbility.HolyShield &&
                 !defenderDefensiveAbility.usedThisMatch
         ) {
-            // TODO: Message?
+            combatMutations.addMessage(message = OutgoingMessage.HolyShield.Trigger)
+
             return CombatActionUpdates(
                 nextActivePlayerUserId = defender.userId,
                 nextStep =
@@ -125,6 +126,7 @@ class NormalAttackRoll(
 
     private fun resolveDamage(): CombatActionUpdates {
         if (attackerOffensiveAbility == OffensiveAbility.Encore) {
+            // TODO: Message
             return CombatActionUpdates(
                 nextActivePlayerUserId = attacker.userId,
                 nextStep =
@@ -143,7 +145,9 @@ class NormalAttackRoll(
      */
     private fun resolveArmorClassHit(): CombatActionUpdates =
         when (defenderDefensiveAbility) {
-            is DefensiveAbility.Teleport ->
+            is DefensiveAbility.Teleport -> {
+                combatMutations.addMessage(message = OutgoingMessage.Teleport.Trigger)
+
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
                     nextStep =
@@ -151,8 +155,11 @@ class NormalAttackRoll(
                             purpose = AbilityRollPurpose.Passive.Reaction.Teleport
                         ),
                 )
+            }
 
-            is DefensiveAbility.Riposte ->
+            is DefensiveAbility.Riposte -> {
+                combatMutations.addMessage(message = OutgoingMessage.Riposte.Trigger)
+
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
                     nextStep =
@@ -160,8 +167,11 @@ class NormalAttackRoll(
                             purpose = AbilityRollPurpose.Passive.Reaction.Riposte
                         ),
                 )
+            }
 
-            is DefensiveAbility.Persuade ->
+            is DefensiveAbility.Persuade -> {
+                combatMutations.addMessage(message = OutgoingMessage.Persuade.Trigger)
+
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
                     nextStep =
@@ -169,8 +179,11 @@ class NormalAttackRoll(
                             purpose = AbilityRollPurpose.Passive.Reaction.Persuade
                         ),
                 )
+            }
 
-            is DefensiveAbility.LuckyCoin ->
+            is DefensiveAbility.LuckyCoin -> {
+                combatMutations.addMessage(message = OutgoingMessage.LuckyCoin.Trigger)
+
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,
                     nextStep =
@@ -178,16 +191,10 @@ class NormalAttackRoll(
                             purpose = AbilityRollPurpose.Passive.Reaction.LuckyCoin
                         ),
                 )
+            }
 
             is DefensiveAbility.MirrorImage -> {
-                // TODO: update
-                combatMutations.addMessage(
-                    message =
-                        OutgoingMessage.MirrorImage(
-                            illusionistUserId = defender.userId,
-                            status = MirrorImageStatus.Pondering,
-                        )
-                )
+                combatMutations.addMessage(message = OutgoingMessage.MirrorImage.Trigger)
 
                 CombatActionUpdates(
                     nextActivePlayerUserId = defender.userId,

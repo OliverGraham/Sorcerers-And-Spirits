@@ -5,7 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 

@@ -27,6 +27,33 @@ sealed interface NextCombatAction {
     data class AbilityRoll(val purpose: AbilityRollPurpose) : NextCombatAction
 }
 
+// TODO: Could be AbilityRollPurpose.ActualAbilityNameType.Type
+//  Model by choice - when a user has input, then there must be a data class/object
+
+sealed interface AbilityAction {
+    // TODO: teleport could have both parties involved roll simultaneously, for example
+    //  Activated as written
+    //  Passive
+    //      Ability and sealed interfaces for each step
+
+    sealed interface Teleport {
+        data class Start(val attackerUserId: String, val defenderUserId: String) : Teleport
+
+        // TODO: pair of Roll? When both come into in the use case, then good?
+        data class Roll(
+            // TODO: Like this?
+            val userId: String,
+            val singleDie: Int,
+        )
+
+        // TODO: result is not a choice, so can be determined by data around it. Write to RTDB, then
+        //  Result would be a type that comes from Data -> Domain -> UI and part of ArenaMatchFlow
+        //  So this would be another type entirely? Since it should never go into this use case.
+    }
+}
+
+sealed interface AbilityResult
+
 sealed interface AbilityRollPurpose {
 
     // someone attacks Gambler -> Gambler reacts if AC broken (ReactionType) -> If ReactionType,
@@ -82,7 +109,11 @@ sealed interface AbilityRollPurpose {
             // TODO: All these need state to be passed through, likely
             data object LuckyCoin : Outcome
 
-            data object HolyShield : Outcome
+            sealed interface HolyShield : Outcome {
+                data object Survival : HolyShield
+
+                data object Reflect : HolyShield
+            }
 
             data object Encore : Outcome
 

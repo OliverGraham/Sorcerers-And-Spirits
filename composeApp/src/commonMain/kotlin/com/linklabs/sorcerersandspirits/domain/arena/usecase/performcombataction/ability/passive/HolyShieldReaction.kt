@@ -4,7 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
@@ -23,6 +23,15 @@ class HolyShieldReaction(private val combatMutations: CombatMutations) {
                     defensiveAbility = holyShield.copy(usedThisMatch = true),
                 )
             }
+            combatMutations.addMessage(
+                message =
+                    OutgoingMessage.HolyShield(
+                        paladinUserId = combatMutations.defenderUserId,
+                        firstDie = firstDie,
+                        secondDie = secondDie,
+                        survived = true,
+                    )
+            )
             CombatActionUpdates(
                 nextActivePlayerUserId = combatMutations.defenderUserId,
                 nextStep =
@@ -37,6 +46,8 @@ class HolyShieldReaction(private val combatMutations: CombatMutations) {
                 message =
                     OutgoingMessage.HolyShield(
                         paladinUserId = combatMutations.defenderUserId,
+                        firstDie = firstDie,
+                        secondDie = secondDie,
                         survived = false,
                         retaliationDamage = 0,
                     )

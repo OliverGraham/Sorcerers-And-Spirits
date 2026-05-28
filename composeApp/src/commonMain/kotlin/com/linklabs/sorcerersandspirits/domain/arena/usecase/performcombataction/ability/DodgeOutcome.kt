@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
 class DodgeOutcome(

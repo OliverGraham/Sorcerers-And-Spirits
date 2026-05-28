@@ -3,7 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 class TeleportReaction(private val combatMutations: CombatMutations) {

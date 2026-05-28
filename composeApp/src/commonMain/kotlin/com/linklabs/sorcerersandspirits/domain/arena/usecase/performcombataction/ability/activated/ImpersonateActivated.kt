@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatMutations
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutations
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class ImpersonateActivated(

@@ -1,20 +1,16 @@
-package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingMessage
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import kotlin.collections.set
 
-data class CombatMutationss(
-    val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
-    val messages: List<OutgoingMessage>,
-)
-
-class CombatMutations(
+internal class CombatMutator(
     val attackerUserId: UserId,
     val defenderUserId: UserId,
     val updatedPlayerMap: MutableMap<UserId, ArenaPlayer.Selected>,
@@ -22,7 +18,7 @@ class CombatMutations(
     private val messages: MutableList<OutgoingMessage> = mutableListOf(),
 ) {
     fun getUpdatedProperties() =
-        CombatMutationss(updatedPlayerMap = updatedPlayerMap, messages = messages)
+        CombatMutations(updatedPlayerMap = updatedPlayerMap, messages = messages)
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
         val current = updatedPlayerMap.getValue(key = userId)

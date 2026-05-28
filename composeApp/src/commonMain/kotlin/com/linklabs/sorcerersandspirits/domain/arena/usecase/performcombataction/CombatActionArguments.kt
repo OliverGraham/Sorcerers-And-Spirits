@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.TurnInfo
 
 data class CombatActionArguments(
     val arenaId: String,

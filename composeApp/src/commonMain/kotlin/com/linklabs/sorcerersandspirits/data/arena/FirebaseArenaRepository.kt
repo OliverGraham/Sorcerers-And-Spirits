@@ -12,6 +12,7 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
@@ -75,6 +76,13 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
                 }
             val allMessages = existingMatch.messages + newMessages
+
+            when (result.nextStep) {
+                is NextCombatAction.AbilityRoll -> TODO()
+                is NextCombatAction.Idle -> TODO()
+                is NextCombatAction.NormalAttackRoll.ArmorClass -> TODO()
+                is NextCombatAction.NormalAttackRoll.Health -> TODO()
+            }
 
             when (result) {
                 is CombatResult.Miss ->

@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.TurnInfo
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass

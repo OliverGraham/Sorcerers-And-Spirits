@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClas
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -137,6 +138,13 @@ class ArenaScreenViewModel(
             val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
             val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
 
+            val combatActionArguments = CombatActionArguments(
+                arenaId = arguments.arenaId,
+                attacker = ,
+                defender = ,
+                playerMap = ,
+                roundNumber = ,
+            )
             performCombatActionUseCase(
                 arenaId = arguments.arenaId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
@@ -193,11 +201,7 @@ class ArenaScreenViewModel(
         }
 
         // TODO Arena: next state UserKnockedOut -> ask if they want to observe & play in another
-        //  match, or leave
-        //  update stats only after all matches
-        //  Match 1 to n
-        //  Round 1 to n
-        //  Turn 1 to n
+        //  match, or leave. Update stats only after all matches
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {

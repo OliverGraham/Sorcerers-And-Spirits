@@ -7,7 +7,5 @@ data class CombatActionArguments(
     val attacker: ArenaPlayer.Selected,
     val defender: ArenaPlayer.Selected,
     val playerMap: Map<String, ArenaPlayer.Selected>,
-    val turnInfo: TurnInfo,
-) {
-    val roundNumber = turnInfo.roundNumber
-}
+    val roundNumber: Int,
+)

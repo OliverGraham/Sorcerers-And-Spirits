@@ -174,16 +174,8 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
             }
 
         is ArenaState.Combat -> {
-            // TODO: Update things in CombatAction use case in order to know if new TURN
-            val turnChanged = false
-            // previous is ArenaState.Combat &&
-            //     previous.turnInfo.roundNumber != next.turnInfo.roundNumber
-
-            if (previous !is ArenaState.Combat || turnChanged) {
-                TimerAction.Start(timerDuration = 20)
-            } else {
-                TimerAction.None
-            }
+            // TODO: Hmm, how should timers be started? Based on NextCombatAction?
+            TimerAction.Start(timerDuration = 20)
         }
 
         is ArenaState.UserPlayerKnockedOut,

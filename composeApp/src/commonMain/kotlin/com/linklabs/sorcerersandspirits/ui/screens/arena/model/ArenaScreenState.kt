@@ -50,6 +50,7 @@ sealed interface ArenaState {
         override val playerMap: Map<UserId, PlayerState.Selected>,
         override val userPlayerId: String,
         override val activePlayerUserId: String,
+        val nextCombatAction: NextCombatActionState,
         val roundNumber: Int,
         val isNewRound: Boolean,
     ) : ActiveState {
@@ -106,6 +107,7 @@ internal fun ArenaMatch.toUpdatedState(
                         playerMap = playerMap.mapValues { it.value.toSelectedState() },
                         userPlayerId = userId,
                         activePlayerUserId = activePlayer.userId,
+                        nextCombatAction = nextCombatAction.toState(),
                         roundNumber = roundNumber,
                         isNewRound = isNewRound,
                     )

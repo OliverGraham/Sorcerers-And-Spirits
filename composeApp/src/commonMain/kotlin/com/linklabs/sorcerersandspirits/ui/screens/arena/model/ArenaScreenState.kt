@@ -49,10 +49,10 @@ sealed interface ArenaState {
     data class Combat(
         override val playerMap: Map<UserId, PlayerState.Selected>,
         override val userPlayerId: String,
-        val turnInfo: TurnInfoState,
-        val currentDiceRoll: DiceRollState?,
+        override val activePlayerUserId: String,
+        val roundNumber: Int,
+        val isNewRound: Boolean,
     ) : ActiveState {
-        override val activePlayerUserId = turnInfo.activePlayerUserId
         val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
         val isItThisUsersTurn = activePlayerUserId == userPlayerId
     }
@@ -105,8 +105,9 @@ internal fun ArenaMatch.toUpdatedState(
                     ArenaState.Combat(
                         playerMap = playerMap.mapValues { it.value.toSelectedState() },
                         userPlayerId = userId,
-                        turnInfo = turnInfo.toState(),
-                        currentDiceRoll = currentDiceRoll?.toState(),
+                        activePlayerUserId = activePlayer.userId,
+                        roundNumber = roundNumber,
+                        isNewRound = isNewRound,
                     )
                 }
             }
@@ -173,9 +174,10 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
             }
 
         is ArenaState.Combat -> {
-            val turnChanged =
-                previous is ArenaState.Combat &&
-                    previous.turnInfo.roundNumber != next.turnInfo.roundNumber
+            // TODO: Update things in CombatAction use case in order to know if new TURN
+            val turnChanged = false
+            // previous is ArenaState.Combat &&
+            //     previous.turnInfo.roundNumber != next.turnInfo.roundNumber
 
             if (previous !is ArenaState.Combat || turnChanged) {
                 TimerAction.Start(timerDuration = 20)

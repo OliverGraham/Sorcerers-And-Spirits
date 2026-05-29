@@ -28,34 +28,6 @@ sealed interface ArenaMessageState {
         override val id: String,
         val characterClassInfo: CharacterClassMessageInfoState,
     ) : ArenaMessageState
-
-    @Immutable
-    data class DiceRoll(
-        override val id: String,
-        val rollerClassName: String,
-        val rollValue: Int,
-        val rollType: RollTypeState,
-    ) : ArenaMessageState
-
-    @Immutable
-    data class AttackResult(
-        override val id: String,
-        val attackerClassName: String,
-        val targetClassName: String,
-        val isHit: Boolean,
-        val rollType: RollTypeState,
-    ) : ArenaMessageState
-
-    @Immutable
-    data class TargetDead(
-        override val id: String,
-        val targetClassName: String,
-        val killerClassName: String,
-    ) : ArenaMessageState
-
-    @Immutable
-    data class GameFinished(override val id: String, val winnerClassName: String) :
-        ArenaMessageState
 }
 
 @Immutable
@@ -79,32 +51,57 @@ fun IncomingArenaMessage.toState(): ArenaMessageState =
         is IncomingArenaMessage.NewTurn ->
             ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
 
-        is IncomingArenaMessage.DiceRoll ->
-            ArenaMessageState.DiceRoll(
-                id = id,
-                rollerClassName = rollerClassName,
-                rollValue = rollValue,
-                rollType = rollType.toState(),
-            )
+        is IncomingArenaMessage.AllIn -> TODO()
 
-        is IncomingArenaMessage.AttackResult ->
-            ArenaMessageState.AttackResult(
-                id = id,
-                attackerClassName = attackerClassName,
-                targetClassName = targetClassName,
-                isHit = isHit,
-                rollType = rollType.toState(),
-            )
+        is IncomingArenaMessage.Dodge -> TODO()
 
-        is IncomingArenaMessage.TargetDead ->
-            ArenaMessageState.TargetDead(
-                id = id,
-                targetClassName = targetClassName,
-                killerClassName = killerClassName,
-            )
+        is IncomingArenaMessage.Encore -> TODO()
 
-        is IncomingArenaMessage.GameFinished ->
-            ArenaMessageState.GameFinished(id = id, winnerClassName = winnerClassName)
+        is IncomingArenaMessage.HolyShield.Reflect -> TODO()
+
+        is IncomingArenaMessage.HolyShield.Survival -> TODO()
+
+        is IncomingArenaMessage.HolyShield.Trigger -> TODO()
+
+        is IncomingArenaMessage.Impersonate -> TODO()
+
+        is IncomingArenaMessage.KillingMomentum -> TODO()
+
+        is IncomingArenaMessage.LuckyCoin.ArmorClassRoll -> TODO()
+
+        is IncomingArenaMessage.LuckyCoin.ReflectRoll -> TODO()
+
+        is IncomingArenaMessage.LuckyCoin.Trigger -> TODO()
+
+        is IncomingArenaMessage.MirrorImage.Pass -> TODO()
+
+        is IncomingArenaMessage.MirrorImage.Reroll -> TODO()
+
+        is IncomingArenaMessage.MirrorImage.Trigger -> TODO()
+
+        is IncomingArenaMessage.NormalRoll -> TODO()
+
+        is IncomingArenaMessage.Persuade.Charm -> TODO()
+
+        is IncomingArenaMessage.Persuade.Lull -> TODO()
+
+        is IncomingArenaMessage.Persuade.Trigger -> TODO()
+
+        is IncomingArenaMessage.PrepareAttack -> TODO()
+
+        is IncomingArenaMessage.Riposte.EnGarde -> TODO()
+
+        is IncomingArenaMessage.Riposte.Trigger -> TODO()
+
+        is IncomingArenaMessage.SpellPotency -> TODO()
+
+        is IncomingArenaMessage.SummonMinion -> TODO()
+
+        is IncomingArenaMessage.Teleport.Result -> TODO()
+
+        is IncomingArenaMessage.Teleport.Roll -> TODO()
+
+        is IncomingArenaMessage.Teleport.Trigger -> TODO()
     }
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =

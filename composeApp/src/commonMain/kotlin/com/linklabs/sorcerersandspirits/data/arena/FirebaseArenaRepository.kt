@@ -73,14 +73,16 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 result.messages.map { outgoingArenaMessage ->
                     outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
                 }
-            val allMessages = existingMatch.messages + newMessages
 
-            existingMatch.copy(
-                messages = allMessages,
+            ArenaMatchEntity.Combat(
+                messages = existingMatch.messages + newMessages,
                 numberOfNewMessages = newMessages.size,
                 playerEntitiesMap =
                     result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
-                nextCombatActionEntity = result.nextStep.toEntity(),
+                nextCombatActionEntity = result.nextCombatAction.toEntity(),
+                nextActivePlayerUserId = result.nextActivePlayerUserId,
+                roundNumber = result.roundNumber,
+                isNewRound = result.isNewRound,
             )
         }
     }

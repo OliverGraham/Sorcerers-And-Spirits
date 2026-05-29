@@ -33,15 +33,14 @@ class PerformCombatAction(private val arguments: CombatActionArguments) {
         )
 
     operator fun invoke(currentAction: CurrentCombatAction): RollOutcome {
+        // TODO: Have everything set the state in combatMutator
         val updates = resolveAction(action = currentAction)
-        val updatedProperties = combatMutator.getUpdatedProperties()
 
-        return RollOutcome(
-            messages = updatedProperties.messages,
-            updatedPlayerMap = updatedProperties.updatedPlayerMap,
+        combatMutator.setCombatActionUpdates(
             nextActivePlayerUserId = updates.nextActivePlayerUserId,
-            nextStep = updates.nextStep,
+            nextCombatAction = updates.nextStep,
         )
+        return combatMutator.getOutcome()
     }
 
     private fun resolveAction(action: CurrentCombatAction) =

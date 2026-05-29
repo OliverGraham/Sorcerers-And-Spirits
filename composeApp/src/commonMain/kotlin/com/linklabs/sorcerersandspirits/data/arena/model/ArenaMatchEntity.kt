@@ -34,6 +34,8 @@ sealed interface ArenaMatchEntity {
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val nextCombatActionEntity: NextCombatActionEntity,
         val nextActivePlayerUserId: String,
+        val roundNumber: Int,
+        val isNewRound: Boolean,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -97,6 +99,8 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                     numberOfNewMessages = numberOfNewMessages,
                     activePlayer = activePlayer,
                     nextCombatAction = nextCombatActionEntity.toDomain(),
+                    roundNumber = roundNumber,
+                    isNewRound = isNewRound,
                 )
             }
         }

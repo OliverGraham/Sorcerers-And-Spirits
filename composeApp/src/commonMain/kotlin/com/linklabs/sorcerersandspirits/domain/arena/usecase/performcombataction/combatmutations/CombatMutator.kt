@@ -4,11 +4,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
-import kotlin.collections.set
 
 internal class CombatMutator(
     val attackerUserId: UserId,
@@ -17,8 +16,24 @@ internal class CombatMutator(
     private val roundNumber: Int,
     private val messages: MutableList<OutgoingArenaMessage> = mutableListOf(),
 ) {
-    fun getUpdatedProperties() =
-        CombatMutations(updatedPlayerMap = updatedPlayerMap, messages = messages)
+    private lateinit var nextActivePlayerUserId: String
+    private lateinit var nextCombatAction: NextCombatAction
+    private var updatedRoundNumber: Int? = null
+
+    fun setCombatActionUpdates(nextActivePlayerUserId: String, nextCombatAction: NextCombatAction) {
+        this.nextActivePlayerUserId = nextActivePlayerUserId
+        this.nextCombatAction = nextCombatAction
+    }
+
+    fun getOutcome() =
+        RollOutcome(
+            updatedPlayerMap = updatedPlayerMap,
+            messages = messages,
+            nextActivePlayerUserId = nextActivePlayerUserId,
+            nextCombatAction = nextCombatAction,
+            roundNumber = updatedRoundNumber ?: roundNumber,
+            isNewRound = updatedRoundNumber != null,
+        )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
         val current = updatedPlayerMap.getValue(key = userId)
@@ -64,6 +79,8 @@ internal class CombatMutator(
 
         if (nextPlayer == null) {
             val newRoundNumber = roundNumber + 1
+            updatedRoundNumber = newRoundNumber
+
             resetAllPlayersActed()
             messages.add(element = OutgoingArenaMessage.NewRound(roundNumber = newRoundNumber))
 

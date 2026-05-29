@@ -23,6 +23,8 @@ sealed interface ArenaMatch {
         val activePlayer: ArenaPlayer.Selected,
         val playerMap: Map<String, ArenaPlayer.Selected>,
         val nextCombatAction: NextCombatAction,
+        val roundNumber: Int,
+        val isNewRound: Boolean,
     ) : ArenaMatch
 
     data class Finished(

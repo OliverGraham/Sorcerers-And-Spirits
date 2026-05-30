@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -13,14 +12,14 @@ internal class AllInActivated(
 ) {
     operator fun invoke() = combatMutator.handleOutcome()
 
-    private fun CombatMutator.handleOutcome(): CombatActionUpdates {
+    private fun CombatMutator.handleOutcome() {
         val singleDie = roll1D6()
         addMessage(
             message =
                 OutgoingArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = singleDie)
         )
 
-        return when (singleDie) {
+        when (singleDie) {
             1 -> {
                 updateAttackerClass { attacker -> attacker.copy(hitPoints = 0) }
 
@@ -35,9 +34,8 @@ internal class AllInActivated(
                     )
                 }
 
-                CombatActionUpdates(
-                    nextActivePlayerUserId = attackerUserId,
-                    nextStep = NextCombatAction.Idle,
+                setNextCombatAction(
+                    nextAction = NextCombatAction.Idle(activeUserId = attackerUserId)
                 )
             }
 
@@ -46,9 +44,8 @@ internal class AllInActivated(
                     attacker.copy(offensiveAbility = allIn.copy(usedThisTurn = true))
                 }
 
-                CombatActionUpdates(
-                    nextActivePlayerUserId = attackerUserId,
-                    nextStep = NextCombatAction.Idle,
+                setNextCombatAction(
+                    nextAction = NextCombatAction.Idle(activeUserId = attackerUserId)
                 )
             }
         }

@@ -50,7 +50,6 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
     private fun AbilityRollPurpose.handleAbilityRoll() =
         when (this) {
             is AbilityRollPurpose.Activated -> handleActivated()
-
             is AbilityRollPurpose.Passive -> handlePassive()
         }
 
@@ -79,20 +78,31 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
 
     private fun AbilityRollPurpose.Passive.handlePassive() {
         when (this) {
-            is AbilityRollPurpose.Passive.Teleport -> HandleTeleport(
-                combatMutator = combatMutator, rollingDieUserId = arguments.userId
-            )
+            is AbilityRollPurpose.Passive.Teleport ->
+                HandleTeleport(combatMutator = combatMutator, rollingDieUserId = arguments.userId)
+
             AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
+
             AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect -> TODO()
+
             AbilityRollPurpose.Passive.Outcome.HolyShield.Survival -> TODO()
+
             AbilityRollPurpose.Passive.Outcome.LuckyCoin.ArmorClass -> TODO()
+
             AbilityRollPurpose.Passive.Outcome.LuckyCoin.Reflect -> TODO()
+
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
+
             is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll -> TODO()
+
             AbilityRollPurpose.Passive.Reaction.HolyShield -> TODO()
+
             AbilityRollPurpose.Passive.Reaction.LuckyCoin -> TODO()
+
             is AbilityRollPurpose.Passive.Reaction.MirrorImage -> TODO()
+
             AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
+
             AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
         }
     }

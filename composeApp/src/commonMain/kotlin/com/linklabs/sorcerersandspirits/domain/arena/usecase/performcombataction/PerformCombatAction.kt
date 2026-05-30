@@ -7,7 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldHandler
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldWrath
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
@@ -138,7 +137,7 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
                 HolyShieldHandler(combatMutator = combatMutator).attemptPrayer()
 
             is AbilityRollPurpose.Passive.HolyShield.Wrath ->
-                HolyShieldWrath(combatMutator = combatMutator).invoke()
+                HolyShieldHandler(combatMutator = combatMutator).wrathRoll()
         }
     }
 }

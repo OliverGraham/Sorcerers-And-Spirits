@@ -16,6 +16,8 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
     fun attemptPrayer() = combatMutator.attemptPrayer()
 
+    fun wrathRoll() = combatMutator.wrathRoll()
+
     private fun CombatMutator.triggerHolyShield(holyShield: DefensiveAbility.HolyShield) {
         addMessage(message = OutgoingArenaMessage.HolyShield.Trigger)
 
@@ -31,7 +33,6 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
                 )
         )
     }
-
 
     private fun CombatMutator.attemptPrayer() {
         val firstDie = roll1D6()
@@ -74,6 +75,42 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
                 TriggerKillingMomentum(combatMutator = this).invoke()
 
             OffensiveAbility.Encore -> {
+                // TODO Encore
+            }
+
+            else -> resolveTurnEnd()
+        }
+    }
+
+    private fun CombatMutator.wrathRoll() {
+        val wrathDamage = roll1D6()
+
+        addMessage(
+            message =
+                OutgoingArenaMessage.HolyShield.Wrath(
+                    paladinUserId = defenderUserId,
+                    attackerUserId =
+                        attackerUserId, // TODO SpellPotency - what if is splash damage?
+                    singleDie = wrathDamage,
+                )
+        )
+
+        updateDefenderClass { defender ->
+            defender.copy(hitPoints = defender.hitPoints - wrathDamage)
+        }
+
+        resolveWrath()
+    }
+
+    private fun CombatMutator.resolveWrath() {
+        val isAttackerConscious = getAttacker().isConscious()
+        val attackerAbility = getAttackerOffensiveAbility()
+
+        when {
+            isAttackerConscious && attackerAbility == OffensiveAbility.KillingMomentum ->
+                TriggerKillingMomentum(combatMutator = this).invoke()
+
+            isAttackerConscious && attackerAbility == OffensiveAbility.Encore -> {
                 // TODO Encore
             }
 

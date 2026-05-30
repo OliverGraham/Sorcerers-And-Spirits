@@ -4,28 +4,28 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 /** Action the user is taking (UI -> Domain -> Data) */
 sealed interface CurrentCombatAction {
-    sealed interface NormalAttackRoll : CurrentCombatAction {
-        data object ArmorClass : NormalAttackRoll
-
-        data object Health : NormalAttackRoll
-    }
+    data class NormalAttack(val roll: NormalAttackRoll) : CurrentCombatAction
 
     data class AbilityRoll(val purpose: AbilityRollPurpose) : CurrentCombatAction
+}
+
+sealed interface NormalAttackRoll {
+    data class ArmorClass(val attackerUserId: String, val defenderUserId: String) : NormalAttackRoll
+
+    data class Health(val attackerUserId: String, val defenderUserId: String) : NormalAttackRoll
 }
 
 /** The next action for the user (Data -> Domain -> UI) */
 sealed interface NextCombatAction {
 
-    data object Idle : NextCombatAction
+    data class Idle(val activeUserId: String) : NextCombatAction
 
-    sealed interface NormalAttackRoll : NextCombatAction {
-        data object ArmorClass : NormalAttackRoll
-
-        data object Health : NormalAttackRoll
-    }
+    data class NormalAttack(val roll: NormalAttackRoll) : NextCombatAction
 
     data class AbilityRoll(val purpose: AbilityRollPurpose) : NextCombatAction
 }
+
+data class SingleDieRoll(val userId: String, val roll: Int? = null)
 
 sealed interface AbilityRollPurpose {
 
@@ -41,6 +41,21 @@ sealed interface AbilityRollPurpose {
 
     sealed interface Passive : AbilityRollPurpose {
 
+        data class Teleport(
+            val attackerDieRoll: SingleDieRoll,
+            val defenderDieRoll: SingleDieRoll,
+        ) : Reaction {
+            companion object {
+
+                /** On first break of Mage's ArmorClass, each roll is null and blah blah */
+                fun getPreRolledState(attackerUserId: String, defenderUserId: String) =
+                    Teleport(
+                        attackerDieRoll = SingleDieRoll(userId = attackerUserId),
+                        defenderDieRoll = SingleDieRoll(userId = defenderUserId),
+                    )
+            }
+        }
+
         /**
          * A NormalAttack against ArmorClass can trigger one of these, and then the flow of combat
          * changes such that the defender is now Active and they will resolve their ability
@@ -48,7 +63,6 @@ sealed interface AbilityRollPurpose {
         sealed interface Reaction : Passive {
 
             // If someone attacks MAge, then this would signal that now the Mage is going to roll
-            data object Teleport : Reaction
 
             data object Riposte : Reaction
 
@@ -72,9 +86,6 @@ sealed interface AbilityRollPurpose {
          * rolls, the combat outcome can be determined
          */
         sealed interface Outcome : Passive {
-
-            // And then here, the Mage's roll would be compared to the attacker's
-            data class Teleport(val defenderRoll: Int) : Outcome
 
             // TODO: All these need state to be passed through, likely
             sealed interface LuckyCoin : Outcome {

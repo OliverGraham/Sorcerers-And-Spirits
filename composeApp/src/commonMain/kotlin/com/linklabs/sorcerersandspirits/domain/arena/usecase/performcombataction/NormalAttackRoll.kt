@@ -10,9 +10,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.TriggerHolyShield
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.triggerHolyShieldIfApplicable
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -103,7 +104,8 @@ internal class NormalAttackRoll(
             defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
         }
 
-        val isHolyShieldTriggered = handleHolyShieldIfApplicable()
+        val isHolyShieldTriggered =
+            triggerHolyShieldIfApplicable(defenderDefensiveAbility = defenderDefensiveAbility)
         if (isHolyShieldTriggered) return
 
         // TODO KillingMomentum
@@ -143,15 +145,9 @@ internal class NormalAttackRoll(
                 NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.Persuade)
             }
 
-            is DefensiveAbility.LuckyCoin -> {
-                addMessage(message = OutgoingArenaMessage.LuckyCoin.Trigger)
-
-                // nextActivePlayerUserId = defender.userId,
-                // nextStep =
-                NextCombatAction.AbilityRoll(
-                    purpose = AbilityRollPurpose.Passive.Reaction.LuckyCoin
-                )
-            }
+            is DefensiveAbility.LuckyCoin ->
+                LuckyCoinHandler(combatMutator = this, attackerRollTotal = diceTotal)
+                    .triggerLuckyCoin()
 
             is DefensiveAbility.MirrorImage -> {
                 // TODO MirrorImage
@@ -208,17 +204,5 @@ internal class NormalAttackRoll(
                     type = type,
                 )
         )
-    }
-
-    private fun CombatMutator.handleHolyShieldIfApplicable(): Boolean {
-        val shouldTriggerHolyShield =
-            defenderDefensiveAbility is DefensiveAbility.HolyShield &&
-                !defenderDefensiveAbility.usedThisMatch
-
-        if (shouldTriggerHolyShield) {
-            TriggerHolyShield(combatMutator = this, holyShield = defenderDefensiveAbility)
-        }
-
-        return shouldTriggerHolyShield
     }
 }

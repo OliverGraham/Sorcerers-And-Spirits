@@ -37,6 +37,12 @@ internal class CombatMutator(
 
     fun getAttacker() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
 
+    val attacker
+        get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
+
+    val defender
+        get() = updatedPlayerMap.getValue(key = defenderUserId).characterClass
+
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
         val current = updatedPlayerMap.getValue(key = userId)
         updatedPlayerMap[userId] = transform(current)

@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.AttemptHolyShieldPrayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldWrath
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
@@ -85,6 +86,8 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
 
             is AbilityRollPurpose.Passive.HolyShield -> handleHolyShield()
 
+            is AbilityRollPurpose.Passive.LuckyCoin -> handleLuckyCoin()
+
             is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect -> TODO()
@@ -108,6 +111,24 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
 
             is AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
+        }
+    }
+
+    private fun AbilityRollPurpose.Passive.LuckyCoin.handleLuckyCoin() {
+        when (this) {
+            is AbilityRollPurpose.Passive.LuckyCoin.Flip ->
+                LuckyCoinHandler(
+                        combatMutator = combatMutator,
+                        attackerRollTotal = this.attackerRollTotal,
+                    )
+                    .flipLuckyCoin()
+
+            is AbilityRollPurpose.Passive.LuckyCoin.HighRoller ->
+                LuckyCoinHandler(
+                        combatMutator = combatMutator,
+                        attackerRollTotal = this.attackerRollTotal,
+                    )
+                    .handleHighRoller()
         }
     }
 

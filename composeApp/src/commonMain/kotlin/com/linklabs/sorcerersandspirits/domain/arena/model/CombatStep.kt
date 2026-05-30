@@ -56,14 +56,21 @@ sealed interface AbilityRollPurpose {
             }
         }
 
-        // TODO HolyShield - do the userIds need to be passed in?
         sealed interface HolyShield : Passive {
-            data class Prayer(val userId: String) : HolyShield
+            data class Prayer(val activeUserId: String) : HolyShield
 
-            data class Wrath(val userId: String) : HolyShield
+            data class Wrath(val activeUserId: String) : HolyShield
         }
 
+        sealed interface LuckyCoin : Passive {
+            data class Flip(val attackerRollTotal: Int, val activeUserId: String) : LuckyCoin
 
+            data class HighRoller(
+                val attackerUserId: String,
+                val attackerRollTotal: Int,
+                val activeUserId: String,
+            ) : LuckyCoin
+        }
 
         /**
          * A NormalAttack against ArmorClass can trigger one of these, and then the flow of combat

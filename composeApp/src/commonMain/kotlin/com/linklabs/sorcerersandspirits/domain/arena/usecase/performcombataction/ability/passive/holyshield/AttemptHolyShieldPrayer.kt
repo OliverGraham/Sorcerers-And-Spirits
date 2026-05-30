@@ -38,7 +38,8 @@ internal class AttemptHolyShieldPrayer(private val combatMutator: CombatMutator)
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose = AbilityRollPurpose.Passive.HolyShield.Wrath(userId = defenderUserId)
+                    purpose =
+                        AbilityRollPurpose.Passive.HolyShield.Wrath(activeUserId = defenderUserId)
                 )
         )
     }

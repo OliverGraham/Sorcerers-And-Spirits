@@ -33,13 +33,16 @@ sealed interface OutgoingArenaMessage {
         data class Result(val didDefenderEscape: Boolean) : Teleport
     }
 
+    // TODO LuckyCoin is this the right approach for messages?
     sealed interface LuckyCoin : OutgoingArenaMessage {
 
         data object Trigger : LuckyCoin
 
-        data class ArmorClassRoll(val singleDie: Int) : LuckyCoin
+        data class Flip(val singleDie: Int, val didStopAttack: Boolean) : LuckyCoin
 
-        data class ReflectRoll(val singleDie: Int) : LuckyCoin
+        data class HighRollerTrigger(val targetUserId: String) : LuckyCoin
+
+        data class HighRollerDamage(val singleDie: Int, val isKnockout: Boolean) : LuckyCoin
     }
 
     sealed interface Riposte : OutgoingArenaMessage {

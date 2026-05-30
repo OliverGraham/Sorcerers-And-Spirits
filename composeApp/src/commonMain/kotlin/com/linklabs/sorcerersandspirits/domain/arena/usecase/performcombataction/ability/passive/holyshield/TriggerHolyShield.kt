@@ -19,8 +19,12 @@ internal class TriggerHolyShield(
             defender.copy(defensiveAbility = holyShield.copy(usedThisMatch = true))
         }
 
-        NextCombatAction.AbilityRoll(
-            purpose = AbilityRollPurpose.Passive.HolyShield.Prayer(userId = defenderUserId)
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose =
+                        AbilityRollPurpose.Passive.HolyShield.Prayer(activeUserId = defenderUserId)
+                )
         )
     }
 }

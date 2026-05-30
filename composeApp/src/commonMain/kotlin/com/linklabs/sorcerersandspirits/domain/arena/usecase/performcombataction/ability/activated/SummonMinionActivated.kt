@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -12,7 +11,7 @@ internal class SummonMinionActivated(
 ) {
     operator fun invoke() = combatMutator.summonMinionOutcome()
 
-    private fun CombatMutator.summonMinionOutcome(): CombatActionUpdates {
+    private fun CombatMutator.summonMinionOutcome() {
         val singleDie = roll1D6()
 
         addMessage(
@@ -54,6 +53,6 @@ internal class SummonMinionActivated(
             attacker.copy(hitPoints = newHp, offensiveAbility = updatedSummonMinionAbility)
         }
 
-        return resolveTurnEnd()
+        resolveTurnEnd()
     }
 }

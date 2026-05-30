@@ -13,6 +13,7 @@ internal class CombatMutator(
     val attackerUserId: UserId,
     val defenderUserId: UserId,
     val updatedPlayerMap: MutableMap<UserId, ArenaPlayer.Selected>,
+    val originalTurnUserId: String,
     private val roundNumber: Int,
     private val messages: MutableList<OutgoingArenaMessage> = mutableListOf(),
 ) {
@@ -74,10 +75,8 @@ internal class CombatMutator(
         messages.add(element = message)
     }
 
-    // TODO: This can't be called for everything - what if is the Gambler who has two attacks?
-    //  Figure out as it happens
     fun resolveTurnEnd() {
-        updatePlayerClass(userId = attackerUserId) { it.copy(hasActedThisRound = true) }
+        updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
 
         // TODO: Refactor this - get next player, etc.
         val nextPlayer = calculateNextPlayerInRound()

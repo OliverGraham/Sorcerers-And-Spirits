@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
@@ -14,15 +15,14 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.triggerHolyShieldIfApplicable
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class NormalAttackRoll(
     private val firstDie: Int,
     private val secondDie: Int,
-    private val attacker: ArenaPlayer.Selected,
-    private val defender: ArenaPlayer.Selected,
+    attacker: ArenaPlayer.Selected,
+    defender: ArenaPlayer.Selected,
 ) {
     private val diceTotal = firstDie + secondDie
     private val attackerOffensiveAbility = attacker.characterClass.offensiveAbility
@@ -54,7 +54,7 @@ internal class NormalAttackRoll(
     }
 
     private fun CombatMutator.handleArmorClassRoll() =
-        if (diceTotal >= defender.characterClass.armorClass) {
+        if (diceTotal >= defender.armorClass) {
             addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
             resolveArmorClassHit()
         } else {
@@ -91,7 +91,7 @@ internal class NormalAttackRoll(
             return
         }
 
-        return if (diceTotal >= defender.characterClass.hitPoints) {
+        return if (diceTotal >= defender.hitPoints) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
             resolveKnockout()
         } else {
@@ -133,13 +133,8 @@ internal class NormalAttackRoll(
         when (defenderDefensiveAbility) {
             is DefensiveAbility.Teleport -> TriggerTeleport(combatMutator = this).invoke()
 
-            is DefensiveAbility.Riposte -> {
-                addMessage(message = OutgoingArenaMessage.Riposte.Trigger)
-
-                // nextActivePlayerUserId = defender.userId,
-                // nextStep =
-                NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.Riposte)
-            }
+            is DefensiveAbility.Riposte ->
+                RiposteHandler(combatMutator = this, attackerRollTotal = diceTotal).triggerRiposte()
 
             is DefensiveAbility.Persuade -> {
                 addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
@@ -201,8 +196,8 @@ internal class NormalAttackRoll(
         addMessage(
             message =
                 OutgoingArenaMessage.NormalRoll(
-                    attackerUserId = attacker.userId,
-                    defenderUserId = defender.userId,
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     type = type,

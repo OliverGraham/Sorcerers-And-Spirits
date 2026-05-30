@@ -1,0 +1,69 @@
+package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
+
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
+
+internal class RiposteHandler(
+    private val combatMutator: CombatMutator,
+    private val attackerRollTotal: Int,
+) {
+    fun triggerRiposte() = combatMutator.triggerRiposte()
+
+    fun rollRiposte() = combatMutator.rollRiposte()
+
+    private fun CombatMutator.triggerRiposte() {
+        addMessage(message = OutgoingArenaMessage.Riposte.Trigger)
+
+        val purpose = AbilityRollPurpose.Passive.Riposte(attackerRollTotal = attackerRollTotal)
+        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+    }
+
+    private fun CombatMutator.rollRiposte() {
+        val firstDie = roll1D6()
+        val secondDie = roll1D6()
+        val isSuccessful = firstDie + secondDie in SUCCESS_RANGE
+
+        addMessage(
+            message =
+                OutgoingArenaMessage.Riposte.EnGarde(
+                    firstDie = firstDie,
+                    secondDie = secondDie,
+                    isSuccessful = isSuccessful,
+                )
+        )
+
+        if (isSuccessful) {
+            handleSuccess()
+        } else {
+            handleFailure()
+        }
+    }
+
+    /** Duelist is now attacking the attacker - swapping attacker and defender should do it? */
+    private fun CombatMutator.handleSuccess() {
+        val armorClassRoll =
+            NormalAttackRoll.ArmorClass(
+                attackerUserId = defenderUserId,
+                defenderUserId = attackerUserId,
+                originalTurnUserId = attackerUserId,
+            )
+        setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = armorClassRoll))
+    }
+
+    private fun CombatMutator.handleFailure() {
+        val healthRoll =
+            NormalAttackRoll.Health(
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+            )
+        setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = healthRoll))
+    }
+
+    companion object {
+        private val SUCCESS_RANGE = 6..8
+    }
+}

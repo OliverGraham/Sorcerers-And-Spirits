@@ -48,7 +48,8 @@ sealed interface OutgoingArenaMessage {
     sealed interface Riposte : OutgoingArenaMessage {
         data object Trigger : Riposte
 
-        data class EnGarde(val firstDie: Int, val secondDie: Int) : Riposte
+        data class EnGarde(val firstDie: Int, val secondDie: Int, val isSuccessful: Boolean) :
+            Riposte
     }
 
     data class SummonMinion(val necroUserId: String, val singleDie: Int) : OutgoingArenaMessage

@@ -9,4 +9,5 @@ data class CombatActionArguments(
     val defender: ArenaPlayer.Selected,
     val playerMap: Map<String, ArenaPlayer.Selected>,
     val roundNumber: Int,
+    val originalTurnUserId: String,
 )

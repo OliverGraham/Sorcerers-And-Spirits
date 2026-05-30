@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
@@ -20,6 +21,7 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             attackerUserId = arguments.attacker.userId,
             defenderUserId = arguments.defender.userId,
             roundNumber = arguments.roundNumber,
+            originalTurnUserId = arguments.originalTurnUserId,
         )
 
     operator fun invoke(currentAction: CurrentCombatAction): RollOutcome {
@@ -87,6 +89,10 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
 
             is AbilityRollPurpose.Passive.LuckyCoin -> handleLuckyCoin()
 
+            is AbilityRollPurpose.Passive.Riposte ->
+                RiposteHandler(combatMutator = combatMutator, attackerRollTotal = attackerRollTotal)
+                    .rollRiposte()
+
             is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
@@ -96,8 +102,6 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is AbilityRollPurpose.Passive.Reaction.MirrorImage -> TODO()
 
             is AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
-
-            is AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
         }
     }
 

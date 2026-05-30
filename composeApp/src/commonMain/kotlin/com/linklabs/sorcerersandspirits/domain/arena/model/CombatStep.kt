@@ -10,7 +10,11 @@ sealed interface CurrentCombatAction {
 }
 
 sealed interface NormalAttackRoll {
-    data class ArmorClass(val attackerUserId: String, val defenderUserId: String) : NormalAttackRoll
+    data class ArmorClass(
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val originalTurnUserId: String = attackerUserId,
+    ) : NormalAttackRoll
 
     data class Health(val attackerUserId: String, val defenderUserId: String) : NormalAttackRoll
 }
@@ -51,6 +55,8 @@ sealed interface AbilityRollPurpose {
             ) : LuckyCoin
         }
 
+        data class Riposte(val attackerRollTotal: Int) : Passive
+
         data class Teleport(
             val attackerDieRoll: SingleDieRoll,
             val defenderDieRoll: SingleDieRoll,
@@ -77,8 +83,6 @@ sealed interface AbilityRollPurpose {
          * changes such that the defender is now Active and they will resolve their ability
          */
         sealed interface Reaction : Passive {
-
-            data object Riposte : Reaction
 
             // TODO: Fix Persuade
             data object Persuade : Reaction

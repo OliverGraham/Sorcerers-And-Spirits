@@ -4,17 +4,17 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.DodgeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class NormalAttackRoll(
-    private val combatMutator: CombatMutator,
     private val firstDie: Int,
     private val secondDie: Int,
     private val attacker: ArenaPlayer.Selected,
@@ -24,28 +24,32 @@ internal class NormalAttackRoll(
     private val attackerOffensiveAbility = attacker.characterClass.offensiveAbility
     private val defenderDefensiveAbility = defender.characterClass.defensiveAbility
 
-    fun handleRoll(currentAction: CurrentCombatAction.NormalAttackRoll): CombatActionUpdates {
-        val updatesFromSpellPotency = handleSpellPotencyIfApplicable()
-        if (updatesFromSpellPotency != null) return updatesFromSpellPotency
+    fun handleRoll(currentAction: CurrentCombatAction.NormalAttack, combatMutator: CombatMutator) {
+        combatMutator.handleRoll(currentAction = currentAction)
+    }
 
-        return when (currentAction) {
-            CurrentCombatAction.NormalAttackRoll.ArmorClass -> handleArmorClassRoll()
-            CurrentCombatAction.NormalAttackRoll.Health -> handleHealthRoll()
+    private fun CombatMutator.handleRoll(currentAction: CurrentCombatAction.NormalAttack) {
+        val isSpellPotencyRoll = handleSpellPotencyIfApplicable()
+        if (isSpellPotencyRoll) return
+
+        when (currentAction.roll) {
+            is NormalAttackRoll.ArmorClass -> handleArmorClassRoll()
+            is NormalAttackRoll.Health -> handleHealthRoll()
         }
     }
 
-    private fun handleSpellPotencyIfApplicable(): CombatActionUpdates? {
+    private fun CombatMutator.handleSpellPotencyIfApplicable(): Boolean {
         val isSpellPotencyRoll =
             attackerOffensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
 
-        return if (isSpellPotencyRoll) {
-            SpellPotencyRoll(combatMutator = combatMutator, diceTotal = diceTotal).invoke()
-        } else {
-            null
+        if (isSpellPotencyRoll) {
+            SpellPotencyRoll(combatMutator = this, diceTotal = diceTotal).invoke()
         }
+
+        return isSpellPotencyRoll
     }
 
-    private fun handleArmorClassRoll(): CombatActionUpdates =
+    private fun CombatMutator.handleArmorClassRoll() =
         if (diceTotal >= defender.characterClass.armorClass) {
             addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
             resolveArmorClassHit()
@@ -54,25 +58,22 @@ internal class NormalAttackRoll(
             resolveArmorClassMiss()
         }
 
-    private fun handleHealthRoll(): CombatActionUpdates {
+    private fun CombatMutator.handleHealthRoll() {
         // TODO: Update this MirrorImage handling
         val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
         val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
 
         if (!mirrorImageUsed && mirrorImage != null) {
-            combatMutator.addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
+            addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
 
-            return CombatActionUpdates(
-                nextActivePlayerUserId = defender.userId,
-                nextStep =
-                    NextCombatAction.AbilityRoll(
-                        purpose =
-                            AbilityRollPurpose.Passive.Reaction.MirrorImage(
-                                firstDie = firstDie,
-                                secondDie = secondDie,
-                                triggeredByArmorRoll = false,
-                            )
-                    ),
+            // nextActivePlayerUserId = defender.userId,
+            NextCombatAction.AbilityRoll(
+                purpose =
+                    AbilityRollPurpose.Passive.Reaction.MirrorImage(
+                        firstDie = firstDie,
+                        secondDie = secondDie,
+                        triggeredByArmorRoll = false,
+                    )
             )
         }
 
@@ -87,64 +88,55 @@ internal class NormalAttackRoll(
 
     // TODO: Update this, come on
 
-    private fun resolveKnockout(): CombatActionUpdates {
+    private fun CombatMutator.resolveKnockout() {
         if (
             defenderDefensiveAbility is DefensiveAbility.HolyShield &&
                 !defenderDefensiveAbility.usedThisMatch
         ) {
-            combatMutator.addMessage(message = OutgoingArenaMessage.HolyShield.Trigger)
+            addMessage(message = OutgoingArenaMessage.HolyShield.Trigger)
 
-            return CombatActionUpdates(
-                nextActivePlayerUserId = defender.userId,
-                nextStep =
-                    NextCombatAction.AbilityRoll(
-                        purpose = AbilityRollPurpose.Passive.Reaction.HolyShield
-                    ),
-            )
+            // nextActivePlayerUserId = defender.userId,
+            NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.HolyShield)
         }
 
-        combatMutator.updateDefenderClass { defenderClass ->
+        updateDefenderClass { defenderClass ->
             defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
         }
 
         if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
-            combatMutator.addMessage(
+            addMessage(
                 message =
                     OutgoingArenaMessage.KillingMomentum(
-                        rogueUserId = attacker.userId,
+                        rogueUserId = attackerUserId,
                         isTriggered = true,
                     )
             )
 
-            return CombatActionUpdates(
-                nextActivePlayerUserId = attacker.userId,
-                nextStep = NextCombatAction.NormalAttackRoll.ArmorClass,
-            )
+            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = attackerUserId))
+            return
         }
 
-        return combatMutator.resolveTurnEnd()
+        resolveTurnEnd()
     }
 
-    private fun resolveDamage(): CombatActionUpdates {
+    private fun CombatMutator.resolveDamage() {
         if (attackerOffensiveAbility == OffensiveAbility.Encore) {
             // TODO: Message
-            return CombatActionUpdates(
-                nextActivePlayerUserId = attacker.userId,
-                nextStep =
-                    NextCombatAction.AbilityRoll(
-                        purpose = AbilityRollPurpose.Passive.Outcome.Encore
-                    ),
-            )
+
+            // nextActivePlayerUserId = attacker.userId,
+            NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Outcome.Encore)
+
+            return
         }
 
-        return combatMutator.resolveTurnEnd()
+        resolveTurnEnd()
     }
 
     /**
      * This is when an attacker first attacks a class with a relevant defensive ability, and so
      * control goes to the defender to roll or handle their ability
      */
-    private fun resolveArmorClassHit(): CombatActionUpdates =
+    private fun CombatMutator.resolveArmorClassHit() {
         when (defenderDefensiveAbility) {
             is DefensiveAbility.Teleport -> {
                 combatMutator.addMessage(message = OutgoingArenaMessage.Teleport.Trigger)
@@ -159,82 +151,76 @@ internal class NormalAttackRoll(
             }
 
             is DefensiveAbility.Riposte -> {
-                combatMutator.addMessage(message = OutgoingArenaMessage.Riposte.Trigger)
+                addMessage(message = OutgoingArenaMessage.Riposte.Trigger)
 
-                CombatActionUpdates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep =
-                        NextCombatAction.AbilityRoll(
-                            purpose = AbilityRollPurpose.Passive.Reaction.Riposte
-                        ),
-                )
+                // nextActivePlayerUserId = defender.userId,
+                // nextStep =
+                NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.Riposte)
             }
 
             is DefensiveAbility.Persuade -> {
-                combatMutator.addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
+                addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
 
-                CombatActionUpdates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep =
-                        NextCombatAction.AbilityRoll(
-                            purpose = AbilityRollPurpose.Passive.Reaction.Persuade
-                        ),
-                )
+                // nextActivePlayerUserId = defender.userId,
+                // nextStep =
+                NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.Persuade)
             }
 
             is DefensiveAbility.LuckyCoin -> {
-                combatMutator.addMessage(message = OutgoingArenaMessage.LuckyCoin.Trigger)
+                addMessage(message = OutgoingArenaMessage.LuckyCoin.Trigger)
 
-                CombatActionUpdates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep =
-                        NextCombatAction.AbilityRoll(
-                            purpose = AbilityRollPurpose.Passive.Reaction.LuckyCoin
-                        ),
+                // nextActivePlayerUserId = defender.userId,
+                // nextStep =
+                NextCombatAction.AbilityRoll(
+                    purpose = AbilityRollPurpose.Passive.Reaction.LuckyCoin
                 )
             }
 
             is DefensiveAbility.MirrorImage -> {
-                combatMutator.addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
+                addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
 
-                CombatActionUpdates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep =
-                        NextCombatAction.AbilityRoll(
-                            purpose =
-                                AbilityRollPurpose.Passive.Reaction.MirrorImage(
-                                    firstDie = firstDie,
-                                    secondDie = secondDie,
-                                    triggeredByArmorRoll = true,
-                                )
-                        ),
+                // nextActivePlayerUserId = defender.userId,
+                // nextStep =
+                NextCombatAction.AbilityRoll(
+                    purpose =
+                        AbilityRollPurpose.Passive.Reaction.MirrorImage(
+                            firstDie = firstDie,
+                            secondDie = secondDie,
+                            triggeredByArmorRoll = true,
+                        )
                 )
             }
 
             is DefensiveAbility.Dodge,
             is DefensiveAbility.HolyShield,
             is DefensiveAbility.None ->
-                CombatActionUpdates(
-                    nextActivePlayerUserId = attacker.userId,
-                    nextStep = NextCombatAction.NormalAttackRoll.Health,
+                setNextCombatAction(
+                    nextAction =
+                        NextCombatAction.NormalAttack(
+                            roll =
+                                NormalAttackRoll.Health(
+                                    attackerUserId = attackerUserId,
+                                    defenderUserId = defenderUserId,
+                                )
+                        )
                 )
         }
+    }
 
     /**
      * [DefensiveAbility.Dodge] currently is the only ability that triggers on an ArmorClass miss,
      * so is checked and handled before ending the turn.
      */
-    private fun resolveArmorClassMiss(): CombatActionUpdates {
+    private fun CombatMutator.resolveArmorClassMiss() {
         if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
-            DodgeOutcome(combatMutator = combatMutator, dodge = defenderDefensiveAbility)
-                .applyOutcome()
+            DodgeOutcome(combatMutator = this, dodge = defenderDefensiveAbility).applyOutcome()
         }
 
-        return combatMutator.resolveTurnEnd()
+        resolveTurnEnd()
     }
 
-    private fun addNormalRollMessage(type: NormalRollMessageType) {
-        combatMutator.addMessage(
+    private fun CombatMutator.addNormalRollMessage(type: NormalRollMessageType) {
+        addMessage(
             message =
                 OutgoingArenaMessage.NormalRoll(
                     attackerUserId = attacker.userId,

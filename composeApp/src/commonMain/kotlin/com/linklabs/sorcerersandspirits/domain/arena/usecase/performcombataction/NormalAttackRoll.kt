@@ -7,8 +7,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.DodgeOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -59,7 +60,7 @@ internal class NormalAttackRoll(
         }
 
     private fun CombatMutator.handleHealthRoll() {
-        // TODO: Update this MirrorImage handling
+        // TODO MirrorImage
         val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
         val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
 
@@ -77,6 +78,16 @@ internal class NormalAttackRoll(
             )
         }
 
+        // TODO Encore
+        if (attackerOffensiveAbility == OffensiveAbility.Encore) {
+            // TODO: Message
+
+            // nextActivePlayerUserId = attacker.userId,
+            NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Outcome.Encore)
+
+            return
+        }
+
         return if (diceTotal >= defender.characterClass.hitPoints) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
             resolveKnockout()
@@ -86,9 +97,8 @@ internal class NormalAttackRoll(
         }
     }
 
-    // TODO: Update this, come on
-
     private fun CombatMutator.resolveKnockout() {
+        // TODO HolyShield
         if (
             defenderDefensiveAbility is DefensiveAbility.HolyShield &&
                 !defenderDefensiveAbility.usedThisMatch
@@ -104,15 +114,7 @@ internal class NormalAttackRoll(
         }
 
         if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
-            addMessage(
-                message =
-                    OutgoingArenaMessage.KillingMomentum(
-                        rogueUserId = attackerUserId,
-                        isTriggered = true,
-                    )
-            )
-
-            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = attackerUserId))
+            TriggerKillingMomentum(combatMutator = this).invoke()
             return
         }
 
@@ -120,15 +122,6 @@ internal class NormalAttackRoll(
     }
 
     private fun CombatMutator.resolveDamage() {
-        if (attackerOffensiveAbility == OffensiveAbility.Encore) {
-            // TODO: Message
-
-            // nextActivePlayerUserId = attacker.userId,
-            NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Outcome.Encore)
-
-            return
-        }
-
         resolveTurnEnd()
     }
 
@@ -167,6 +160,7 @@ internal class NormalAttackRoll(
             }
 
             is DefensiveAbility.MirrorImage -> {
+                // TODO MirrorImage
                 addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
 
                 // nextActivePlayerUserId = defender.userId,
@@ -203,7 +197,7 @@ internal class NormalAttackRoll(
      */
     private fun CombatMutator.resolveArmorClassMiss() {
         if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
-            DodgeOutcome(combatMutator = this, dodge = defenderDefensiveAbility).applyOutcome()
+            TriggerDodge(combatMutator = this, dodge = defenderDefensiveAbility).invoke()
         }
 
         resolveTurnEnd()

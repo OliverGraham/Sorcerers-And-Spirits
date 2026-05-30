@@ -16,20 +16,17 @@ internal class CombatMutator(
     private val roundNumber: Int,
     private val messages: MutableList<OutgoingArenaMessage> = mutableListOf(),
 ) {
-    private lateinit var nextActivePlayerUserId: String
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
 
-    fun setCombatActionUpdates(nextActivePlayerUserId: String, nextCombatAction: NextCombatAction) {
-        this.nextActivePlayerUserId = nextActivePlayerUserId
-        this.nextCombatAction = nextCombatAction
+    fun setNextCombatAction(nextAction: NextCombatAction) {
+        nextCombatAction = nextAction
     }
 
     fun getOutcome() =
         RollOutcome(
             updatedPlayerMap = updatedPlayerMap,
             messages = messages,
-            nextActivePlayerUserId = nextActivePlayerUserId,
             nextCombatAction = nextCombatAction,
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
@@ -66,12 +63,9 @@ internal class CombatMutator(
         messages.add(element = message)
     }
 
-    fun endPhaseOnSameUserTurn(userId: String) =
-        CombatActionUpdates(nextActivePlayerUserId = userId, nextStep = NextCombatAction.Idle)
-
     // TODO: This can't be called for everything - what if is the Gambler who has two attacks?
     //  Figure out as it happens
-    fun resolveTurnEnd(): CombatActionUpdates {
+    fun resolveTurnEnd() {
         updatePlayerClass(userId = attackerUserId) { it.copy(hasActedThisRound = true) }
 
         // TODO: Refactor this - get next player, etc.
@@ -87,18 +81,15 @@ internal class CombatMutator(
             val fastestNextRound = calculateFastestLivingPlayer()
             fastestNextRound.characterClass.addNewTurnMessage()
 
-            return CombatActionUpdates(
-                nextActivePlayerUserId = fastestNextRound.userId,
-                nextStep = NextCombatAction.Idle,
+            setNextCombatAction(
+                nextAction = NextCombatAction.Idle(activeUserId = fastestNextRound.userId)
             )
+            return
         }
 
         nextPlayer.characterClass.addNewTurnMessage()
 
-        return CombatActionUpdates(
-            nextActivePlayerUserId = nextPlayer.userId,
-            nextStep = NextCombatAction.Idle,
-        )
+        setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = nextPlayer.userId))
     }
 
     private fun calculateNextPlayerInRound(): ArenaPlayer.Selected? {

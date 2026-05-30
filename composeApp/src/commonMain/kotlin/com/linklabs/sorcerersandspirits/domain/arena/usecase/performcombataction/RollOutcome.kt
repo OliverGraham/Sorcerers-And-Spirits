@@ -8,7 +8,6 @@ import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 data class RollOutcome(
     val messages: List<OutgoingArenaMessage>,
     val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
-    val nextActivePlayerUserId: String,
     val nextCombatAction: NextCombatAction,
     val roundNumber: Int,
     val isNewRound: Boolean,

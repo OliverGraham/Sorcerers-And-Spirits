@@ -81,29 +81,29 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is AbilityRollPurpose.Passive.Teleport ->
                 HandleTeleport(combatMutator = combatMutator, rollingDieUserId = arguments.userId)
 
-            AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
+            is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
 
-            AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect -> TODO()
+            is AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect -> TODO()
 
-            AbilityRollPurpose.Passive.Outcome.HolyShield.Survival -> TODO()
+            is AbilityRollPurpose.Passive.Outcome.HolyShield.Survival -> TODO()
 
-            AbilityRollPurpose.Passive.Outcome.LuckyCoin.ArmorClass -> TODO()
+            is AbilityRollPurpose.Passive.Outcome.LuckyCoin.ArmorClass -> TODO()
 
-            AbilityRollPurpose.Passive.Outcome.LuckyCoin.Reflect -> TODO()
+            is AbilityRollPurpose.Passive.Outcome.LuckyCoin.Reflect -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll -> TODO()
 
-            AbilityRollPurpose.Passive.Reaction.HolyShield -> TODO()
+            is AbilityRollPurpose.Passive.Reaction.HolyShield -> TODO()
 
-            AbilityRollPurpose.Passive.Reaction.LuckyCoin -> TODO()
+            is AbilityRollPurpose.Passive.Reaction.LuckyCoin -> TODO()
 
             is AbilityRollPurpose.Passive.Reaction.MirrorImage -> TODO()
 
-            AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
+            is AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
 
-            AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
+            is AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
         }
     }
 }

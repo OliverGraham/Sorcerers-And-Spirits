@@ -138,17 +138,7 @@ internal class NormalAttackRoll(
      */
     private fun CombatMutator.resolveArmorClassHit() {
         when (defenderDefensiveAbility) {
-            is DefensiveAbility.Teleport -> {
-                combatMutator.addMessage(message = OutgoingArenaMessage.Teleport.Trigger)
-
-                CombatActionUpdates(
-                    nextActivePlayerUserId = defender.userId,
-                    nextStep =
-                        NextCombatAction.AbilityRoll(
-                            purpose = AbilityRollPurpose.Passive.Reaction.Teleport
-                        ),
-                )
-            }
+            is DefensiveAbility.Teleport -> TriggerTeleport(combatMutator = this).invoke()
 
             is DefensiveAbility.Riposte -> {
                 addMessage(message = OutgoingArenaMessage.Riposte.Trigger)

@@ -6,6 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.AttemptHolyShieldPrayer
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldWrath
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
@@ -81,6 +83,8 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is AbilityRollPurpose.Passive.Teleport ->
                 HandleTeleport(combatMutator = combatMutator, rollingDieUserId = arguments.userId)
 
+            is AbilityRollPurpose.Passive.HolyShield -> handleHolyShield()
+
             is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect -> TODO()
@@ -104,6 +108,17 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
 
             is AbilityRollPurpose.Passive.Reaction.Riposte -> TODO()
+        }
+    }
+
+    /** Moves from one state to another... */
+    private fun AbilityRollPurpose.Passive.HolyShield.handleHolyShield() {
+        when (this) {
+            is AbilityRollPurpose.Passive.HolyShield.Trigger ->
+                AttemptHolyShieldPrayer(combatMutator = combatMutator).invoke()
+
+            is AbilityRollPurpose.Passive.HolyShield.Wrath ->
+                HolyShieldWrath(combatMutator = combatMutator).invoke()
         }
     }
 }

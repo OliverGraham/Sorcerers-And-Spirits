@@ -44,7 +44,7 @@ sealed interface AbilityRollPurpose {
         data class Teleport(
             val attackerDieRoll: SingleDieRoll,
             val defenderDieRoll: SingleDieRoll,
-        ) : Reaction {
+        ) : Passive {
             companion object {
 
                 /** On first break of Mage's ArmorClass, each roll is null and blah blah */
@@ -54,6 +54,13 @@ sealed interface AbilityRollPurpose {
                         defenderDieRoll = SingleDieRoll(userId = defenderUserId),
                     )
             }
+        }
+
+        // TODO HolyShield - do the userIds need to be passed in?
+        sealed interface HolyShield : Passive {
+            data class Trigger(val userId: String) : HolyShield
+
+            data class Wrath(val userId: String) : HolyShield
         }
 
         /**

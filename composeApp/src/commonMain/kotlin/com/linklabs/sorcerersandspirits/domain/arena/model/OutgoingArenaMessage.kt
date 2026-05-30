@@ -85,18 +85,18 @@ sealed interface OutgoingArenaMessage {
 
         data object Trigger : HolyShield
 
-        data class Survival(
-            val paladinUserId: String,
-            val firstDie: Int,
-            val secondDie: Int,
-            val didSurvive: Boolean,
-        ) : HolyShield
+        data class Prayer(val firstDie: Int, val secondDie: Int, val didSurvive: Boolean) :
+            HolyShield
 
-        data class Reflect(val paladinUserId: String, val singleDie: Int) : HolyShield
+        data class Wrath(
+            val paladinUserId: String,
+            val attackerUserId: String,
+            val singleDie: Int,
+        ) : HolyShield
     }
 
-    data class KillingMomentum(val rogueUserId: String, val isTriggered: Boolean) :
-        OutgoingArenaMessage
+    // TODO KillingMomentum - maybe a message when Rogue does damage but doesn't kill?
+    data object KillingMomentum : OutgoingArenaMessage
 
     data class AllIn(val gamblerUserId: String, val singleDie: Int) : OutgoingArenaMessage
 

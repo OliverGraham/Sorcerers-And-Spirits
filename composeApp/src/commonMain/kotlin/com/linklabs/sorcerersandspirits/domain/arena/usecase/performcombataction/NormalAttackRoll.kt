@@ -10,6 +10,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.TriggerHolyShield
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -98,21 +99,14 @@ internal class NormalAttackRoll(
     }
 
     private fun CombatMutator.resolveKnockout() {
-        // TODO HolyShield
-        if (
-            defenderDefensiveAbility is DefensiveAbility.HolyShield &&
-                !defenderDefensiveAbility.usedThisMatch
-        ) {
-            addMessage(message = OutgoingArenaMessage.HolyShield.Trigger)
-
-            // nextActivePlayerUserId = defender.userId,
-            NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.HolyShield)
-        }
-
         updateDefenderClass { defenderClass ->
             defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
         }
 
+        val isHolyShieldTriggered = handleHolyShieldIfApplicable()
+        if (isHolyShieldTriggered) return
+
+        // TODO KillingMomentum
         if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
             TriggerKillingMomentum(combatMutator = this).invoke()
             return
@@ -214,5 +208,17 @@ internal class NormalAttackRoll(
                     type = type,
                 )
         )
+    }
+
+    private fun CombatMutator.handleHolyShieldIfApplicable(): Boolean {
+        val shouldTriggerHolyShield =
+            defenderDefensiveAbility is DefensiveAbility.HolyShield &&
+                !defenderDefensiveAbility.usedThisMatch
+
+        if (shouldTriggerHolyShield) {
+            TriggerHolyShield(combatMutator = this, holyShield = defenderDefensiveAbility)
+        }
+
+        return shouldTriggerHolyShield
     }
 }

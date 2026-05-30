@@ -1,14 +1,13 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatActionUpdates
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 internal class PrepareAttackActivated(private val combatMutator: CombatMutator) {
     operator fun invoke() = combatMutator.prepareAttackOutcome()
 
-    private fun CombatMutator.prepareAttackOutcome(): CombatActionUpdates {
+    private fun CombatMutator.prepareAttackOutcome() {
         val firstDie = roll1D6()
         val secondDie = roll1D6()
         val isSuccessful = firstDie + secondDie in 10..12
@@ -28,6 +27,6 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                 )
         )
 
-        return resolveTurnEnd()
+        resolveTurnEnd()
     }
 }

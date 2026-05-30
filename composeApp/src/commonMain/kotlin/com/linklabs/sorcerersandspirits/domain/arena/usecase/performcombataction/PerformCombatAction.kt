@@ -6,7 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.AttemptHolyShieldPrayer
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldWrath
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
@@ -135,7 +135,7 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
     private fun AbilityRollPurpose.Passive.HolyShield.handleHolyShield() {
         when (this) {
             is AbilityRollPurpose.Passive.HolyShield.Prayer ->
-                AttemptHolyShieldPrayer(combatMutator = combatMutator).invoke()
+                HolyShieldHandler(combatMutator = combatMutator).attemptPrayer()
 
             is AbilityRollPurpose.Passive.HolyShield.Wrath ->
                 HolyShieldWrath(combatMutator = combatMutator).invoke()

@@ -10,6 +10,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
@@ -104,9 +105,12 @@ internal class NormalAttackRoll(
             defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
         }
 
-        val isHolyShieldTriggered =
-            triggerHolyShieldIfApplicable(defenderDefensiveAbility = defenderDefensiveAbility)
-        if (isHolyShieldTriggered) return
+        val wasHolyShieldTriggered =
+            HolyShieldHandler.triggerHolyShieldIfApplicable(
+                combatMutator = this,
+                defenderDefensiveAbility = defender.defensiveAbility,
+            )
+        if (wasHolyShieldTriggered) return
 
         // TODO KillingMomentum
         if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {

@@ -111,10 +111,9 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
         }
     }
 
-    /** Moves from one state to another... */
     private fun AbilityRollPurpose.Passive.HolyShield.handleHolyShield() {
         when (this) {
-            is AbilityRollPurpose.Passive.HolyShield.Trigger ->
+            is AbilityRollPurpose.Passive.HolyShield.Prayer ->
                 AttemptHolyShieldPrayer(combatMutator = combatMutator).invoke()
 
             is AbilityRollPurpose.Passive.HolyShield.Wrath ->

@@ -20,7 +20,7 @@ internal class TriggerHolyShield(
         }
 
         NextCombatAction.AbilityRoll(
-            purpose = AbilityRollPurpose.Passive.HolyShield.Trigger(userId = defenderUserId)
+            purpose = AbilityRollPurpose.Passive.HolyShield.Prayer(userId = defenderUserId)
         )
     }
 }

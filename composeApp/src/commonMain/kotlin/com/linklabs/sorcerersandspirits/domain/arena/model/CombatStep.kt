@@ -58,10 +58,12 @@ sealed interface AbilityRollPurpose {
 
         // TODO HolyShield - do the userIds need to be passed in?
         sealed interface HolyShield : Passive {
-            data class Trigger(val userId: String) : HolyShield
+            data class Prayer(val userId: String) : HolyShield
 
             data class Wrath(val userId: String) : HolyShield
         }
+
+
 
         /**
          * A NormalAttack against ArmorClass can trigger one of these, and then the flow of combat
@@ -93,6 +95,8 @@ sealed interface AbilityRollPurpose {
          * rolls, the combat outcome can be determined
          */
         sealed interface Outcome : Passive {
+
+            // TODO LuckyCoin SATURDAY TOMORROW
 
             // TODO: All these need state to be passed through, likely
             sealed interface LuckyCoin : Outcome {

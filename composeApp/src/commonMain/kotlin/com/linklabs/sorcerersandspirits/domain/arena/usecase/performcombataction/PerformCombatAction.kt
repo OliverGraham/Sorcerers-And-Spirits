@@ -89,21 +89,9 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
 
             is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
 
-            is AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect -> TODO()
-
-            is AbilityRollPurpose.Passive.Outcome.HolyShield.Survival -> TODO()
-
-            is AbilityRollPurpose.Passive.Outcome.LuckyCoin.ArmorClass -> TODO()
-
-            is AbilityRollPurpose.Passive.Outcome.LuckyCoin.Reflect -> TODO()
-
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll -> TODO()
-
-            is AbilityRollPurpose.Passive.Reaction.HolyShield -> TODO()
-
-            is AbilityRollPurpose.Passive.Reaction.LuckyCoin -> TODO()
 
             is AbilityRollPurpose.Passive.Reaction.MirrorImage -> TODO()
 

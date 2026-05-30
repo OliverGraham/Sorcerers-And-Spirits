@@ -41,6 +41,16 @@ sealed interface AbilityRollPurpose {
 
     sealed interface Passive : AbilityRollPurpose {
 
+        sealed interface LuckyCoin : Passive {
+            data class Flip(val attackerRollTotal: Int, val activeUserId: String) : LuckyCoin
+
+            data class HighRoller(
+                val attackerUserId: String,
+                val attackerRollTotal: Int,
+                val activeUserId: String,
+            ) : LuckyCoin
+        }
+
         data class Teleport(
             val attackerDieRoll: SingleDieRoll,
             val defenderDieRoll: SingleDieRoll,
@@ -62,32 +72,16 @@ sealed interface AbilityRollPurpose {
             data class Wrath(val activeUserId: String) : HolyShield
         }
 
-        sealed interface LuckyCoin : Passive {
-            data class Flip(val attackerRollTotal: Int, val activeUserId: String) : LuckyCoin
-
-            data class HighRoller(
-                val attackerUserId: String,
-                val attackerRollTotal: Int,
-                val activeUserId: String,
-            ) : LuckyCoin
-        }
-
         /**
          * A NormalAttack against ArmorClass can trigger one of these, and then the flow of combat
          * changes such that the defender is now Active and they will resolve their ability
          */
         sealed interface Reaction : Passive {
 
-            // If someone attacks MAge, then this would signal that now the Mage is going to roll
-
             data object Riposte : Reaction
 
             // TODO: Fix Persuade
             data object Persuade : Reaction
-
-            data object LuckyCoin : Reaction
-
-            data object HolyShield : Reaction
 
             data class MirrorImage(
                 val firstDie: Int,
@@ -102,21 +96,6 @@ sealed interface AbilityRollPurpose {
          * rolls, the combat outcome can be determined
          */
         sealed interface Outcome : Passive {
-
-            // TODO LuckyCoin SATURDAY TOMORROW
-
-            // TODO: All these need state to be passed through, likely
-            sealed interface LuckyCoin : Outcome {
-                data object ArmorClass : LuckyCoin
-
-                data object Reflect : LuckyCoin
-            }
-
-            sealed interface HolyShield : Outcome {
-                data object Survival : HolyShield
-
-                data object Reflect : HolyShield
-            }
 
             data object Encore : Outcome
 

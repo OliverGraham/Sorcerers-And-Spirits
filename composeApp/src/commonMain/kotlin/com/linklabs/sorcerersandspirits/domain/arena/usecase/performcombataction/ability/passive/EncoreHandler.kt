@@ -31,7 +31,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         )
 
         if (isSuccessful) {
-            resolveTurnEnd()
+            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = attackerUserId))
         } else {
             val healthRoll =
                 NormalAttackRoll.Health(

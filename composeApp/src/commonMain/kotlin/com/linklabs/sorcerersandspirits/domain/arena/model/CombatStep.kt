@@ -57,6 +57,20 @@ sealed interface AbilityRollPurpose {
 
         data class Riposte(val attackerRollTotal: Int) : Passive
 
+        sealed interface Persuade : Passive {
+            data class StrumLute(val attackerRollTotal: Int, val bardUserId: String) : Persuade
+
+            // TODO Persuade: In UI - need to pass in selectedCharmTargetUserId so the
+            // defenderUserId
+            //  is Bard's selected target
+            data class Charm(
+                val attackerUserId: String,
+                val bardUserId: String,
+                val charmTargetUserIds: Set<String>,
+                val selectedCharmTargetUserId: String? = null,
+            ) : Persuade
+        }
+
         data class Teleport(
             val attackerDieRoll: SingleDieRoll,
             val defenderDieRoll: SingleDieRoll,
@@ -83,9 +97,6 @@ sealed interface AbilityRollPurpose {
          * changes such that the defender is now Active and they will resolve their ability
          */
         sealed interface Reaction : Passive {
-
-            // TODO: Fix Persuade
-            data object Persuade : Reaction
 
             data class MirrorImage(
                 val firstDie: Int,

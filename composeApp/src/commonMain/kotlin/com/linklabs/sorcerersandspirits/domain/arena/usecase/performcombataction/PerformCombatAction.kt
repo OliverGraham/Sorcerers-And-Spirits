@@ -6,12 +6,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 internal class PerformCombatAction(private val arguments: CombatActionArguments) {
 
@@ -32,24 +32,16 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
 
     private fun resolveAction(action: CurrentCombatAction) =
         when (action) {
-            is CurrentCombatAction.NormalAttack -> action.handleNormalRoll()
+            is CurrentCombatAction.NormalAttack ->
+                NormalAttackRollHandler.handleNormalRoll(
+                    attacker = arguments.attacker.characterClass,
+                    defender = arguments.defender.characterClass,
+                    currentAction = action,
+                    combatMutator = combatMutator,
+                )
+
             is CurrentCombatAction.AbilityRoll -> action.purpose.handleAbilityRoll()
         }
-
-    private fun CurrentCombatAction.NormalAttack.handleNormalRoll() {
-        val firstDie = roll1D6()
-        val secondDie = roll1D6()
-
-        val normalAttackRoll =
-            NormalAttackRoll(
-                firstDie = firstDie,
-                secondDie = secondDie,
-                attacker = arguments.attacker,
-                defender = arguments.defender,
-            )
-
-        normalAttackRoll.handleRoll(currentAction = this, combatMutator = combatMutator)
-    }
 
     private fun AbilityRollPurpose.handleAbilityRoll() =
         when (this) {
@@ -93,6 +85,8 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
                 RiposteHandler(combatMutator = combatMutator, attackerRollTotal = attackerRollTotal)
                     .rollRiposte()
 
+            is AbilityRollPurpose.Passive.Persuade -> handlePersuade()
+
             is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
@@ -100,8 +94,6 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll -> TODO()
 
             is AbilityRollPurpose.Passive.Reaction.MirrorImage -> TODO()
-
-            is AbilityRollPurpose.Passive.Reaction.Persuade -> TODO()
         }
     }
 
@@ -120,6 +112,16 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
                         attackerRollTotal = this.attackerRollTotal,
                     )
                     .handleHighRoller()
+        }
+    }
+
+    private fun AbilityRollPurpose.Passive.Persuade.handlePersuade() {
+        when (this) {
+            is AbilityRollPurpose.Passive.Persuade.StrumLute ->
+                PersuadeHandler(combatMutator = combatMutator).strumLute()
+
+            is AbilityRollPurpose.Passive.Persuade.Charm ->
+                PersuadeHandler(combatMutator = combatMutator).charm(charm = this)
         }
     }
 

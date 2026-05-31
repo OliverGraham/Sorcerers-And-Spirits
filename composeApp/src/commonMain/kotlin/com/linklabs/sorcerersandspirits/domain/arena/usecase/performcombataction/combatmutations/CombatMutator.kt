@@ -44,6 +44,9 @@ internal class CombatMutator(
     val defender
         get() = updatedPlayerMap.getValue(key = defenderUserId).characterClass
 
+    val consciousPlayers
+        get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
+
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
         val current = updatedPlayerMap.getValue(key = userId)
         updatedPlayerMap[userId] = transform(current)

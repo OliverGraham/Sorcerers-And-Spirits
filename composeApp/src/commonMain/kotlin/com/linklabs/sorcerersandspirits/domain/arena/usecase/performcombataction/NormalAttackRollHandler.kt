@@ -1,12 +1,12 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
@@ -15,18 +15,20 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.luckycoin.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.TriggerTeleport
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-internal class NormalAttackRoll(
+internal class NormalAttackRollHandler(
     private val firstDie: Int,
     private val secondDie: Int,
-    attacker: ArenaPlayer.Selected,
-    defender: ArenaPlayer.Selected,
+    attacker: CharacterClass,
+    defender: CharacterClass,
 ) {
     private val diceTotal = firstDie + secondDie
-    private val attackerOffensiveAbility = attacker.characterClass.offensiveAbility
-    private val defenderDefensiveAbility = defender.characterClass.defensiveAbility
+    private val attackerOffensiveAbility = attacker.offensiveAbility
+    private val defenderDefensiveAbility = defender.defensiveAbility
 
     fun handleRoll(currentAction: CurrentCombatAction.NormalAttack, combatMutator: CombatMutator) {
         combatMutator.handleRoll(currentAction = currentAction)
@@ -136,13 +138,8 @@ internal class NormalAttackRoll(
             is DefensiveAbility.Riposte ->
                 RiposteHandler(combatMutator = this, attackerRollTotal = diceTotal).triggerRiposte()
 
-            is DefensiveAbility.Persuade -> {
-                addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
-
-                // nextActivePlayerUserId = defender.userId,
-                // nextStep =
-                NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Reaction.Persuade)
-            }
+            is DefensiveAbility.Persuade ->
+                PersuadeHandler(combatMutator = this).triggerPersuade(attackerRollTotal = diceTotal)
 
             is DefensiveAbility.LuckyCoin ->
                 LuckyCoinHandler(combatMutator = this, attackerRollTotal = diceTotal)
@@ -203,5 +200,30 @@ internal class NormalAttackRoll(
                     type = type,
                 )
         )
+    }
+
+    companion object {
+        fun handleNormalRoll(
+            attacker: CharacterClass,
+            defender: CharacterClass,
+            currentAction: CurrentCombatAction.NormalAttack,
+            combatMutator: CombatMutator,
+        ) {
+            val firstDie = roll1D6()
+            val secondDie = roll1D6()
+
+            val normalAttackRollHandler =
+                NormalAttackRollHandler(
+                    firstDie = firstDie,
+                    secondDie = secondDie,
+                    attacker = attacker,
+                    defender = defender,
+                )
+
+            normalAttackRollHandler.handleRoll(
+                currentAction = currentAction,
+                combatMutator = combatMutator,
+            )
+        }
     }
 }

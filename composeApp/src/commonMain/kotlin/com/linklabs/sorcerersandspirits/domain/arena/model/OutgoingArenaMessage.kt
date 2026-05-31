@@ -58,9 +58,13 @@ sealed interface OutgoingArenaMessage {
 
         data object Trigger : Persuade
 
+        data class StrumLute(val diceRoll: Int, val isSuccessful: Boolean) : Persuade
+
+        data object CharmActivation : Persuade
+
         data object Lull : Persuade
 
-        data class Charm(val charmedPlayerUserId: String) : Persuade
+        data class Charm(val attackerUserId: String, val defenderUserId: String) : Persuade
     }
 
     data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingArenaMessage

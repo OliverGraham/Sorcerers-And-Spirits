@@ -67,7 +67,11 @@ sealed interface OutgoingArenaMessage {
         data class Charm(val attackerUserId: String, val defenderUserId: String) : Persuade
     }
 
-    data class Encore(val bardUserId: String, val triggered: Boolean) : OutgoingArenaMessage
+    sealed interface Encore : OutgoingArenaMessage {
+        data object Trigger : Encore
+
+        data class Roll(val encoreDie: Int, val isSuccessful: Boolean) : OutgoingArenaMessage
+    }
 
     data class Impersonate(
         val illusionistUserId: String,

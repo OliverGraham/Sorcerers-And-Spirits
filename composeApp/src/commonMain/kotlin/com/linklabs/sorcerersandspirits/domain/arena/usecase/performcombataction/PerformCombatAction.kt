@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.PrepareAttackActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.holyshield.HolyShieldHandler
@@ -87,7 +88,8 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
 
             is AbilityRollPurpose.Passive.Persuade -> handlePersuade()
 
-            is AbilityRollPurpose.Passive.Outcome.Encore -> TODO()
+            is AbilityRollPurpose.Passive.Encore ->
+                EncoreHandler(combatMutator = combatMutator).rollEncore()
 
             is AbilityRollPurpose.Passive.Outcome.MirrorImagePass -> TODO()
 

@@ -70,6 +70,8 @@ sealed interface AbilityRollPurpose {
             ) : Persuade
         }
 
+        data class Encore(val activeUserId: String) : Outcome
+
         data class Teleport(
             val attackerDieRoll: SingleDieRoll,
             val defenderDieRoll: SingleDieRoll,
@@ -110,8 +112,6 @@ sealed interface AbilityRollPurpose {
          * rolls, the combat outcome can be determined
          */
         sealed interface Outcome : Passive {
-
-            data object Encore : Outcome
 
             // TODO: and these should be consolidated or be sealed
             data class MirrorImagePass(

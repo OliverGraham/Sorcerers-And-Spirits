@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
@@ -83,16 +84,6 @@ internal class NormalAttackRollHandler(
             )
         }
 
-        // TODO Encore
-        if (attackerOffensiveAbility == OffensiveAbility.Encore) {
-            // TODO: Message
-
-            // nextActivePlayerUserId = attacker.userId,
-            NextCombatAction.AbilityRoll(purpose = AbilityRollPurpose.Passive.Outcome.Encore)
-
-            return
-        }
-
         return if (diceTotal >= defender.hitPoints) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
             resolveKnockout()
@@ -120,10 +111,24 @@ internal class NormalAttackRollHandler(
             return
         }
 
+        val wasEncoreTriggered =
+            EncoreHandler.triggerEncoreIfApplicable(
+                combatMutator = this,
+                offensiveAbility = attackerOffensiveAbility,
+            )
+        if (wasEncoreTriggered) return
+
         resolveTurnEnd()
     }
 
     private fun CombatMutator.resolveDamage() {
+        val wasEncoreTriggered =
+            EncoreHandler.triggerEncoreIfApplicable(
+                combatMutator = this,
+                offensiveAbility = attackerOffensiveAbility,
+            )
+        if (wasEncoreTriggered) return
+
         resolveTurnEnd()
     }
 

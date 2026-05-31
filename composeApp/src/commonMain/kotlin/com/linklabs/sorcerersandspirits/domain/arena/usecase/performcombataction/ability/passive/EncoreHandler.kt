@@ -45,6 +45,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     companion object {
         private val ENCORE_SUCCESS_RANGE = 5..6
 
+        // TODO Encore - there might be other places where Encore could be triggered?
         fun triggerEncoreIfApplicable(
             combatMutator: CombatMutator,
             offensiveAbility: OffensiveAbility,

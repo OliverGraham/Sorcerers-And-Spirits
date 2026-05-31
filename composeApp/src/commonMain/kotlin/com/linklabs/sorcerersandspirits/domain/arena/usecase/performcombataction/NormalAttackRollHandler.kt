@@ -1,12 +1,13 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreHandler
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
@@ -66,23 +67,9 @@ internal class NormalAttackRollHandler(
         }
 
     private fun CombatMutator.handleHealthRoll() {
-        // TODO MirrorImage
-        val mirrorImage = defenderDefensiveAbility as? DefensiveAbility.MirrorImage
-        val mirrorImageUsed = mirrorImage?.usedThisAttack ?: false
-
-        if (!mirrorImageUsed && mirrorImage != null) {
-            addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
-
-            // nextActivePlayerUserId = defender.userId,
-            NextCombatAction.AbilityRoll(
-                purpose =
-                    AbilityRollPurpose.Passive.Reaction.MirrorImage(
-                        firstDie = firstDie,
-                        secondDie = secondDie,
-                        triggeredByArmorRoll = false,
-                    )
-            )
-        }
+        val wasMirrorImageTriggered =
+            triggerMirrorImageIfApplicable(attackType = NormalAttackType.Health)
+        if (wasMirrorImageTriggered) return
 
         return if (diceTotal >= defender.hitPoints) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
@@ -151,35 +138,30 @@ internal class NormalAttackRollHandler(
                     .triggerLuckyCoin()
 
             is DefensiveAbility.MirrorImage -> {
-                // TODO MirrorImage
-                addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
+                val wasMirrorImageTriggered =
+                    triggerMirrorImageIfApplicable(attackType = NormalAttackType.ArmorClass)
+                if (wasMirrorImageTriggered) return
 
-                // nextActivePlayerUserId = defender.userId,
-                // nextStep =
-                NextCombatAction.AbilityRoll(
-                    purpose =
-                        AbilityRollPurpose.Passive.Reaction.MirrorImage(
-                            firstDie = firstDie,
-                            secondDie = secondDie,
-                            triggeredByArmorRoll = true,
-                        )
-                )
+                setNextActionToHealthAttack()
             }
 
             is DefensiveAbility.Dodge,
             is DefensiveAbility.HolyShield,
-            is DefensiveAbility.None ->
-                setNextCombatAction(
-                    nextAction =
-                        NextCombatAction.NormalAttack(
-                            roll =
-                                NormalAttackRoll.Health(
-                                    attackerUserId = attackerUserId,
-                                    defenderUserId = defenderUserId,
-                                )
+            is DefensiveAbility.None -> setNextActionToHealthAttack()
+        }
+    }
+
+    private fun CombatMutator.setNextActionToHealthAttack() {
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll =
+                        NormalAttackRoll.Health(
+                            attackerUserId = attackerUserId,
+                            defenderUserId = defenderUserId,
                         )
                 )
-        }
+        )
     }
 
     /**
@@ -205,6 +187,24 @@ internal class NormalAttackRollHandler(
                     type = type,
                 )
         )
+    }
+
+    private fun CombatMutator.triggerMirrorImageIfApplicable(
+        attackType: NormalAttackType
+    ): Boolean {
+        val mirrorImage =
+            MirrorImageHandler.getUnusedMirrorImageAbility(ability = defenderDefensiveAbility)
+                ?: return false
+
+        MirrorImageHandler(combatMutator = this)
+            .triggerMirrorImage(
+                firstDie = firstDie,
+                secondDie = secondDie,
+                attackType = attackType,
+                mirrorImageDefensiveAbility = mirrorImage,
+            )
+
+        return true
     }
 
     companion object {

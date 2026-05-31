@@ -78,12 +78,15 @@ sealed interface OutgoingArenaMessage {
         val impersonateAbility: OffensiveAbility.Impersonate,
     ) : OutgoingArenaMessage
 
+    // TODO MirrorImage
     sealed interface MirrorImage : OutgoingArenaMessage {
         data object Trigger : MirrorImage
 
         data object Pass : MirrorImage
 
         data class Reroll(val firstDie: Int, val secondDie: Int) : MirrorImage
+
+        data class TemptFate(val rerolledMirrorImageDie: MirrorImageDie) : MirrorImage
     }
 
     data class SpellPotency(

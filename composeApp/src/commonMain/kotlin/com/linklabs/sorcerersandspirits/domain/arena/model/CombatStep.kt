@@ -1,6 +1,9 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+
+// TODO: Reorganize file
 
 /** Action the user is taking (UI -> Domain -> Data) */
 sealed interface CurrentCombatAction {
@@ -70,7 +73,7 @@ sealed interface AbilityRollPurpose {
             ) : Persuade
         }
 
-        data class Encore(val activeUserId: String) : Outcome
+        data class Encore(val activeUserId: String) : Passive
 
         data class Teleport(
             val attackerDieRoll: SingleDieRoll,
@@ -93,39 +96,24 @@ sealed interface AbilityRollPurpose {
             data class Wrath(val activeUserId: String) : HolyShield
         }
 
-        /**
-         * A NormalAttack against ArmorClass can trigger one of these, and then the flow of combat
-         * changes such that the defender is now Active and they will resolve their ability
-         */
-        sealed interface Reaction : Passive {
-
-            data class MirrorImage(
-                val firstDie: Int,
-                val secondDie: Int,
-                val triggeredByArmorRoll: Boolean,
-            ) : Reaction
-        }
-
-        /**
-         * This is what happens after the [Reaction]. For example, if a Mage Teleports as an initial
-         * reaction, then here that will continue and now the Attacker will roll and with those two
-         * rolls, the combat outcome can be determined
-         */
-        sealed interface Outcome : Passive {
-
-            // TODO: and these should be consolidated or be sealed
-            data class MirrorImagePass(
-                val firstDie: Int,
-                val secondDie: Int,
-                val triggeredByArmorRoll: Boolean,
-            ) : Outcome
-
-            data class MirrorImageReroll(
-                val firstDie: Int,
-                val secondDie: Int,
-                val rerollFirstDie: Boolean,
-                val triggeredByArmorRoll: Boolean,
-            ) : Outcome
+        data class MirrorImage(
+            val firstDie: MirrorImageDie,
+            val secondDie: MirrorImageDie,
+            val attackType: NormalAttackType,
+            val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
+        ) : Passive {
+            val isReroll = firstDie.isRerolled || secondDie.isRerolled
         }
     }
+}
+
+data class MirrorImageDie(val originalRoll: Int, val reroll: Int? = null) {
+    val isRerolled = reroll != null
+    val finalValue = if (reroll == null) originalRoll else reroll - 1
+}
+
+// TODO: Refactor this - don't want the sealed interface type and an enum
+enum class NormalAttackType {
+    ArmorClass,
+    Health,
 }

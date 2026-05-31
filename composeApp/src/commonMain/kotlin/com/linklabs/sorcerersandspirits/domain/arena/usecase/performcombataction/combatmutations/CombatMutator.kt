@@ -9,6 +9,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
+// TODO: Could consolidate some abilities here? Like anytime attacker does damage, try Encore
+
 internal class CombatMutator(
     val attackerUserId: UserId,
     val defenderUserId: UserId,

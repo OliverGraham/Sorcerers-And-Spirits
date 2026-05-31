@@ -61,8 +61,7 @@ sealed interface AbilityRollPurpose {
             data class StrumLute(val attackerRollTotal: Int, val bardUserId: String) : Persuade
 
             // TODO Persuade: In UI - need to pass in selectedCharmTargetUserId so the
-            // defenderUserId
-            //  is Bard's selected target
+            //  defenderUserId is Bard's selected target
             data class Charm(
                 val attackerUserId: String,
                 val bardUserId: String,

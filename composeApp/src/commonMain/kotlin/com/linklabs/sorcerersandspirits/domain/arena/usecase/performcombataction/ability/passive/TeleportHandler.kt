@@ -1,10 +1,10 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.SingleDieRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
@@ -13,7 +13,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
     fun triggerTeleport() = combatMutator.triggerTeleport()
 
-    fun handleTeleport(teleport: AbilityRollPurpose.Passive.Teleport, userId: String) =
+    fun handleTeleport(teleport: AbilityAction.Passive.Teleport, userId: String) =
         combatMutator.handleTeleport(teleport = teleport, userId = userId)
 
     private fun CombatMutator.triggerTeleport() {
@@ -23,7 +23,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
             nextAction =
                 NextCombatAction.AbilityRoll(
                     purpose =
-                        AbilityRollPurpose.Passive.Teleport.getPreRolledState(
+                        AbilityAction.Passive.Teleport.getPreRolledState(
                             attackerUserId = attackerUserId,
                             defenderUserId = defenderUserId,
                         )
@@ -32,7 +32,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleTeleport(
-        teleport: AbilityRollPurpose.Passive.Teleport,
+        teleport: AbilityAction.Passive.Teleport,
         userId: String,
     ) {
         val updatedTeleport =
@@ -42,7 +42,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleUpdatedTeleport(
-        updatedTeleport: AbilityRollPurpose.Passive.Teleport
+        updatedTeleport: AbilityAction.Passive.Teleport
     ) {
         val attackerRoll = updatedTeleport.attackerDieRoll.roll
         val defenderRoll = updatedTeleport.defenderDieRoll.roll
@@ -61,44 +61,41 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rollCurrentUserDieOrNull(
-        teleport: AbilityRollPurpose.Passive.Teleport,
+        teleport: AbilityAction.Passive.Teleport,
         rollingUserId: String,
     ) =
         when {
             canUserRollThisDie(
-                singleDieRoll = teleport.attackerDieRoll,
+                teleportDie = teleport.attackerDieRoll,
                 rollingUserId = rollingUserId,
             ) ->
                 teleport.copy(
-                    attackerDieRoll = rollAndMessage(singleDieRoll = teleport.attackerDieRoll)
+                    attackerDieRoll = rollAndMessage(teleportDie = teleport.attackerDieRoll)
                 )
 
             canUserRollThisDie(
-                singleDieRoll = teleport.defenderDieRoll,
+                teleportDie = teleport.defenderDieRoll,
                 rollingUserId = rollingUserId,
             ) ->
                 teleport.copy(
-                    defenderDieRoll = rollAndMessage(singleDieRoll = teleport.defenderDieRoll)
+                    defenderDieRoll = rollAndMessage(teleportDie = teleport.defenderDieRoll)
                 )
 
             else -> null
         }
 
-    private fun canUserRollThisDie(singleDieRoll: SingleDieRoll, rollingUserId: String) =
-        singleDieRoll.roll == null && singleDieRoll.userId == rollingUserId
+    private fun canUserRollThisDie(teleportDie: TeleportDie, rollingUserId: String) =
+        teleportDie.roll == null && teleportDie.userId == rollingUserId
 
-    private fun CombatMutator.rollAndMessage(singleDieRoll: SingleDieRoll): SingleDieRoll {
+    private fun CombatMutator.rollAndMessage(teleportDie: TeleportDie): TeleportDie {
         val newRoll = roll1D6()
 
         addMessage(
             message =
-                OutgoingArenaMessage.Teleport.Roll(
-                    userId = singleDieRoll.userId,
-                    singleDie = newRoll,
-                )
+                OutgoingArenaMessage.Teleport.Roll(userId = teleportDie.userId, singleDie = newRoll)
         )
 
-        return singleDieRoll.copy(roll = newRoll)
+        return teleportDie.copy(roll = newRoll)
     }
 
     private fun CombatMutator.handleTeleportSuccess() {

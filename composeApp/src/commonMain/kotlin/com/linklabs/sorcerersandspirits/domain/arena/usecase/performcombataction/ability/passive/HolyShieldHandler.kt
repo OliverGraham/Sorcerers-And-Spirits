@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
@@ -27,8 +27,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose =
-                        AbilityRollPurpose.Passive.HolyShield.Prayer(activeUserId = defenderUserId)
+                    purpose = AbilityAction.Passive.HolyShield.Prayer(activeUserId = defenderUserId)
                 )
         )
     }
@@ -60,8 +59,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose =
-                        AbilityRollPurpose.Passive.HolyShield.Wrath(activeUserId = defenderUserId)
+                    purpose = AbilityAction.Passive.HolyShield.Wrath(activeUserId = defenderUserId)
                 )
         )
     }

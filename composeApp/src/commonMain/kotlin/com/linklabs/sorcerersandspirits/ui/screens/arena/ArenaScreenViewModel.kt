@@ -8,7 +8,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClas
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -138,6 +137,8 @@ class ArenaScreenViewModel(
             val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
             val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
 
+            // TODO Update later, after test in Domain
+            /*
             val combatActionArguments = CombatActionArguments(
                 arenaId = arguments.arenaId,
                 attacker = ,
@@ -153,6 +154,7 @@ class ArenaScreenViewModel(
                 newRollType = rollDiceArguments.newRollType.toDomain(),
                 turnInfo = arenaState.turnInfo.toDomain(),
             )
+             */
         }
     }
 

@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 
 @Immutable
@@ -107,40 +107,34 @@ internal fun NextCombatAction.toState(): NextCombatActionState =
             NextCombatActionState.AbilityRoll(action = purpose.toState())
     }
 
-internal fun AbilityRollPurpose.toState(): AbilityActionState =
+internal fun AbilityAction.toState(): AbilityActionState =
     when (this) {
-        is AbilityRollPurpose.Activated ->
+        is AbilityAction.Activated ->
             when (this) {
-                is AbilityRollPurpose.Activated.AllIn -> AbilityActionState.Activated.AllIn
-
-                is AbilityRollPurpose.Activated.SummonMinion ->
-                    AbilityActionState.Activated.SummonMinion
-
-                AbilityRollPurpose.Activated.PrepareAttack ->
-                    AbilityActionState.Activated.PrepareAttack
-
-                is AbilityRollPurpose.Activated.Impersonate ->
-                    AbilityActionState.Activated.Impersonate
+                is AbilityAction.Activated.AllIn -> AbilityActionState.Activated.AllIn
+                is AbilityAction.Activated.SummonMinion -> AbilityActionState.Activated.SummonMinion
+                AbilityAction.Activated.PrepareAttack -> AbilityActionState.Activated.PrepareAttack
+                is AbilityAction.Activated.Impersonate -> AbilityActionState.Activated.Impersonate
             }
 
-        is AbilityRollPurpose.Passive.Reaction ->
+        is AbilityAction.Passive.Reaction ->
             when (this) {
-                AbilityRollPurpose.Passive.Reaction.Teleport ->
+                AbilityAction.Passive.Reaction.Teleport ->
                     AbilityActionState.Passive.Reaction.Teleport
 
-                AbilityRollPurpose.Passive.Reaction.Riposte ->
+                AbilityAction.Passive.Reaction.Riposte ->
                     AbilityActionState.Passive.Reaction.Riposte
 
-                AbilityRollPurpose.Passive.Reaction.Persuade ->
+                AbilityAction.Passive.Reaction.Persuade ->
                     AbilityActionState.Passive.Reaction.Persuade
 
-                AbilityRollPurpose.Passive.Reaction.LuckyCoin ->
+                AbilityAction.Passive.Reaction.LuckyCoin ->
                     AbilityActionState.Passive.Reaction.LuckyCoin
 
-                AbilityRollPurpose.Passive.Reaction.HolyShield ->
+                AbilityAction.Passive.Reaction.HolyShield ->
                     AbilityActionState.Passive.Reaction.HolyShield
 
-                is AbilityRollPurpose.Passive.Reaction.MirrorImage ->
+                is AbilityAction.Passive.Reaction.MirrorImage ->
                     AbilityActionState.Passive.Reaction.MirrorImage(
                         firstDie = firstDie,
                         secondDie = secondDie,
@@ -148,34 +142,33 @@ internal fun AbilityRollPurpose.toState(): AbilityActionState =
                     )
             }
 
-        is AbilityRollPurpose.Passive.Outcome ->
+        is AbilityAction.Passive.Outcome ->
             when (this) {
-                is AbilityRollPurpose.Passive.Outcome.Teleport ->
+                is AbilityAction.Passive.Outcome.Teleport ->
                     AbilityActionState.Passive.Outcome.Teleport(defenderRoll = defenderRoll)
 
-                AbilityRollPurpose.Passive.Outcome.LuckyCoin.ArmorClass ->
+                AbilityAction.Passive.Outcome.LuckyCoin.ArmorClass ->
                     AbilityActionState.Passive.Outcome.LuckyCoin.ArmorClass
 
-                AbilityRollPurpose.Passive.Outcome.LuckyCoin.Reflect ->
+                AbilityAction.Passive.Outcome.LuckyCoin.Reflect ->
                     AbilityActionState.Passive.Outcome.LuckyCoin.Reflect
 
-                AbilityRollPurpose.Passive.Outcome.HolyShield.Survival ->
+                AbilityAction.Passive.Outcome.HolyShield.Survival ->
                     AbilityActionState.Passive.Outcome.HolyShield.Survival
 
-                AbilityRollPurpose.Passive.Outcome.HolyShield.Reflect ->
+                AbilityAction.Passive.Outcome.HolyShield.Reflect ->
                     AbilityActionState.Passive.Outcome.HolyShield.Reflect
 
-                AbilityRollPurpose.Passive.Outcome.Encore ->
-                    AbilityActionState.Passive.Outcome.Encore
+                AbilityAction.Passive.Outcome.Encore -> AbilityActionState.Passive.Outcome.Encore
 
-                is AbilityRollPurpose.Passive.Outcome.MirrorImagePass ->
+                is AbilityAction.Passive.Outcome.MirrorImagePass ->
                     AbilityActionState.Passive.Outcome.MirrorImagePass(
                         firstDie = firstDie,
                         secondDie = secondDie,
                         triggeredByArmorRoll = triggeredByArmorRoll,
                     )
 
-                is AbilityRollPurpose.Passive.Outcome.MirrorImageReroll ->
+                is AbilityAction.Passive.Outcome.MirrorImageReroll ->
                     AbilityActionState.Passive.Outcome.MirrorImageReroll(
                         firstDie = firstDie,
                         secondDie = secondDie,

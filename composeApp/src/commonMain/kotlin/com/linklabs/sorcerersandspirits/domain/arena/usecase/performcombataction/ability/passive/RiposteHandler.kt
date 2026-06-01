@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
@@ -18,7 +18,7 @@ internal class RiposteHandler(
     private fun CombatMutator.triggerRiposte() {
         addMessage(message = OutgoingArenaMessage.Riposte.Trigger)
 
-        val purpose = AbilityRollPurpose.Passive.Riposte(attackerRollTotal = attackerRollTotal)
+        val purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
         setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
     }
 

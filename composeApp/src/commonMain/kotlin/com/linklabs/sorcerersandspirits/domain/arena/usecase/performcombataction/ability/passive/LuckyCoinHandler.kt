@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
@@ -21,7 +21,7 @@ internal class LuckyCoinHandler(
         addMessage(message = OutgoingArenaMessage.LuckyCoin.Trigger)
 
         val purpose =
-            AbilityRollPurpose.Passive.LuckyCoin.Flip(
+            AbilityAction.Passive.LuckyCoin.Flip(
                 attackerRollTotal = attackerRollTotal,
                 activeUserId = defenderUserId,
             )
@@ -46,7 +46,7 @@ internal class LuckyCoinHandler(
         )
 
         val purpose =
-            AbilityRollPurpose.Passive.LuckyCoin.HighRoller(
+            AbilityAction.Passive.LuckyCoin.HighRoller(
                 attackerUserId = attackerUserId,
                 attackerRollTotal = attackerRollTotal,
                 activeUserId = defenderUserId,

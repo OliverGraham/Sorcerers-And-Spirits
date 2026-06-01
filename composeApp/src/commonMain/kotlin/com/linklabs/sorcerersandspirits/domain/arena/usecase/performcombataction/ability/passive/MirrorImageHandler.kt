@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
-import com.linklabs.sorcerersandspirits.domain.arena.model.MirrorImageDie
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.MirrorImageDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
@@ -24,7 +24,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
         )
 
-    fun temptFate(mirrorImage: AbilityRollPurpose.Passive.MirrorImage) {
+    fun temptFate(mirrorImage: AbilityAction.Passive.MirrorImage) {
         if (mirrorImage.isReroll) {
             combatMutator.handleReroll(mirrorImage = mirrorImage)
         } else {
@@ -41,7 +41,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
 
         val purpose =
-            AbilityRollPurpose.Passive.MirrorImage(
+            AbilityAction.Passive.MirrorImage(
                 firstDie = MirrorImageDie(originalRoll = firstDie),
                 secondDie = MirrorImageDie(originalRoll = secondDie),
                 attackType = attackType,
@@ -51,7 +51,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
     }
 
-    private fun CombatMutator.handleReroll(mirrorImage: AbilityRollPurpose.Passive.MirrorImage) {
+    private fun CombatMutator.handleReroll(mirrorImage: AbilityAction.Passive.MirrorImage) {
         updateDefenderClass { defender ->
             defender.copy(
                 defensiveAbility =
@@ -106,7 +106,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    private fun CombatMutator.handlePass(mirrorImage: AbilityRollPurpose.Passive.MirrorImage) {
+    private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {
         // TODO message and continue attack
 
         val totalRoll = mirrorImage.firstDie.finalValue + mirrorImage.secondDie.finalValue

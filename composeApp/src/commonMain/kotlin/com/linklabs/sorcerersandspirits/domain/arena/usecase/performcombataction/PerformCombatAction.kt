@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.AllInActivated
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.ImpersonateActivated
@@ -45,28 +45,28 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             is CurrentCombatAction.AbilityRoll -> action.purpose.handleAbilityRoll()
         }
 
-    private fun AbilityRollPurpose.handleAbilityRoll() =
+    private fun AbilityAction.handleAbilityRoll() =
         when (this) {
-            is AbilityRollPurpose.Activated -> handleActivated()
-            is AbilityRollPurpose.Passive -> handlePassive()
+            is AbilityAction.Activated -> handleActivated()
+            is AbilityAction.Passive -> handlePassive()
         }
 
-    private fun AbilityRollPurpose.Activated.handleActivated() =
+    private fun AbilityAction.Activated.handleActivated() =
         when (this) {
-            is AbilityRollPurpose.Activated.AllIn ->
+            is AbilityAction.Activated.AllIn ->
                 AllInActivated(combatMutator = combatMutator, allIn = allInAbility).invoke()
 
-            is AbilityRollPurpose.Activated.Impersonate ->
+            is AbilityAction.Activated.Impersonate ->
                 ImpersonateActivated(
                         combatMutator = combatMutator,
                         impersonateAbility = impersonateAbility,
                     )
                     .invoke()
 
-            is AbilityRollPurpose.Activated.PrepareAttack ->
+            is AbilityAction.Activated.PrepareAttack ->
                 PrepareAttackActivated(combatMutator = combatMutator).invoke()
 
-            is AbilityRollPurpose.Activated.SummonMinion ->
+            is AbilityAction.Activated.SummonMinion ->
                 SummonMinionActivated(
                         combatMutator = combatMutator,
                         summonMinionAbility = summonMinionAbility,
@@ -74,40 +74,40 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
                     .invoke()
         }
 
-    private fun AbilityRollPurpose.Passive.handlePassive() {
+    private fun AbilityAction.Passive.handlePassive() {
         when (this) {
-            is AbilityRollPurpose.Passive.Teleport ->
+            is AbilityAction.Passive.Teleport ->
                 TeleportHandler(combatMutator = combatMutator)
                     .handleTeleport(teleport = this, userId = arguments.userId)
 
-            is AbilityRollPurpose.Passive.HolyShield -> handleHolyShield()
+            is AbilityAction.Passive.HolyShield -> handleHolyShield()
 
-            is AbilityRollPurpose.Passive.LuckyCoin -> handleLuckyCoin()
+            is AbilityAction.Passive.LuckyCoin -> handleLuckyCoin()
 
-            is AbilityRollPurpose.Passive.Riposte ->
+            is AbilityAction.Passive.Riposte ->
                 RiposteHandler(combatMutator = combatMutator, attackerRollTotal = attackerRollTotal)
                     .rollRiposte()
 
-            is AbilityRollPurpose.Passive.Persuade -> handlePersuade()
+            is AbilityAction.Passive.Persuade -> handlePersuade()
 
-            is AbilityRollPurpose.Passive.Encore ->
+            is AbilityAction.Passive.Encore ->
                 EncoreHandler(combatMutator = combatMutator).rollEncore()
 
-            is AbilityRollPurpose.Passive.MirrorImage ->
+            is AbilityAction.Passive.MirrorImage ->
                 MirrorImageHandler(combatMutator = combatMutator).temptFate(mirrorImage = this)
         }
     }
 
-    private fun AbilityRollPurpose.Passive.LuckyCoin.handleLuckyCoin() {
+    private fun AbilityAction.Passive.LuckyCoin.handleLuckyCoin() {
         when (this) {
-            is AbilityRollPurpose.Passive.LuckyCoin.Flip ->
+            is AbilityAction.Passive.LuckyCoin.Flip ->
                 LuckyCoinHandler(
                         combatMutator = combatMutator,
                         attackerRollTotal = this.attackerRollTotal,
                     )
                     .flipLuckyCoin()
 
-            is AbilityRollPurpose.Passive.LuckyCoin.HighRoller ->
+            is AbilityAction.Passive.LuckyCoin.HighRoller ->
                 LuckyCoinHandler(
                         combatMutator = combatMutator,
                         attackerRollTotal = this.attackerRollTotal,
@@ -116,22 +116,22 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
         }
     }
 
-    private fun AbilityRollPurpose.Passive.Persuade.handlePersuade() {
+    private fun AbilityAction.Passive.Persuade.handlePersuade() {
         when (this) {
-            is AbilityRollPurpose.Passive.Persuade.StrumLute ->
+            is AbilityAction.Passive.Persuade.StrumLute ->
                 PersuadeHandler(combatMutator = combatMutator).strumLute()
 
-            is AbilityRollPurpose.Passive.Persuade.Charm ->
+            is AbilityAction.Passive.Persuade.Charm ->
                 PersuadeHandler(combatMutator = combatMutator).charm(charm = this)
         }
     }
 
-    private fun AbilityRollPurpose.Passive.HolyShield.handleHolyShield() {
+    private fun AbilityAction.Passive.HolyShield.handleHolyShield() {
         when (this) {
-            is AbilityRollPurpose.Passive.HolyShield.Prayer ->
+            is AbilityAction.Passive.HolyShield.Prayer ->
                 HolyShieldHandler(combatMutator = combatMutator).attemptPrayer()
 
-            is AbilityRollPurpose.Passive.HolyShield.Wrath ->
+            is AbilityAction.Passive.HolyShield.Wrath ->
                 HolyShieldHandler(combatMutator = combatMutator).wrathRoll()
         }
     }

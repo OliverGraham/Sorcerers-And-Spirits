@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
@@ -16,13 +16,13 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
     fun strumLute() = combatMutator.strumLute()
 
-    fun charm(charm: AbilityRollPurpose.Passive.Persuade.Charm) = combatMutator.charm(charm = charm)
+    fun charm(charm: AbilityAction.Passive.Persuade.Charm) = combatMutator.charm(charm = charm)
 
     private fun CombatMutator.triggerPersuade(attackerRollTotal: Int) {
         addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
 
         val purpose =
-            AbilityRollPurpose.Passive.Persuade.StrumLute(
+            AbilityAction.Passive.Persuade.StrumLute(
                 attackerRollTotal = attackerRollTotal,
                 bardUserId = defenderUserId,
             )
@@ -83,7 +83,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         addMessage(message = OutgoingArenaMessage.Persuade.CharmActivation)
 
         val purpose =
-            AbilityRollPurpose.Passive.Persuade.Charm(
+            AbilityAction.Passive.Persuade.Charm(
                 attackerUserId = attackerUserId,
                 bardUserId = defenderUserId,
                 charmTargetUserIds = charmTargetUserIds,
@@ -92,7 +92,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
     }
 
-    private fun CombatMutator.charm(charm: AbilityRollPurpose.Passive.Persuade.Charm) {
+    private fun CombatMutator.charm(charm: AbilityAction.Passive.Persuade.Charm) {
         val selectedCharmTargetUserId = charm.selectedCharmTargetUserId ?: return
 
         // TODO Persuade: "Under Bard's control, $Attacker attacks $Defender!"

@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityRollPurpose
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
@@ -17,7 +17,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.triggerEncore() {
         addMessage(message = OutgoingArenaMessage.Encore.Trigger)
 
-        val purpose = AbilityRollPurpose.Passive.Encore(activeUserId = attackerUserId)
+        val purpose = AbilityAction.Passive.Encore(activeUserId = attackerUserId)
         setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
     }
 

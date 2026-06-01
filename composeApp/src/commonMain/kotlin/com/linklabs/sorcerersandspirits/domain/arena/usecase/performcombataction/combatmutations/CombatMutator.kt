@@ -3,9 +3,11 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
@@ -32,6 +34,8 @@ internal class CombatMutator(
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
+        nextAction.resetMirrorImageIfApplicable()
+
         nextCombatAction = nextAction
     }
 
@@ -78,61 +82,68 @@ internal class CombatMutator(
     fun resolveTurnEnd() {
         updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
 
-        // TODO: Refactor this - get next player, etc.
         val nextPlayer = calculateNextPlayerInRound()
-
-        if (nextPlayer == null) {
-            val newRoundNumber = roundNumber + 1
-            updatedRoundNumber = newRoundNumber
-
-            resetAllPlayersActed()
-            messages.add(element = OutgoingArenaMessage.NewRound(roundNumber = newRoundNumber))
-
-            val fastestNextRound = calculateFastestLivingPlayer()
-            fastestNextRound.characterClass.addNewTurnMessage()
-
+        if (nextPlayer != null) {
+            nextPlayer.characterClass.addNewTurnMessage()
             setNextCombatAction(
-                nextAction = NextCombatAction.Idle(activeUserId = fastestNextRound.userId)
+                nextAction = NextCombatAction.Idle(activeUserId = nextPlayer.userId)
             )
-            return
+        } else {
+            goToNextRound()
         }
+    }
 
-        nextPlayer.characterClass.addNewTurnMessage()
+    private fun goToNextRound() {
+        val newRoundNumber = roundNumber + 1
+        updatedRoundNumber = newRoundNumber
 
-        setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = nextPlayer.userId))
+        resetAllPlayersActed()
+        messages.add(element = OutgoingArenaMessage.NewRound(roundNumber = newRoundNumber))
+
+        val fastestPlayerNextRound = consciousPlayers.maxBy { it.characterClass.speed }
+        fastestPlayerNextRound.characterClass.addNewTurnMessage()
+
+        setNextCombatAction(
+            nextAction = NextCombatAction.Idle(activeUserId = fastestPlayerNextRound.userId)
+        )
     }
 
     private fun calculateNextPlayerInRound(): ArenaPlayer.Selected? {
-        val livingPlayers = updatedPlayerMap.values.filter { it.characterClass.hitPoints > 0 }
-        val candidates = livingPlayers.filter { !it.characterClass.hasActedThisRound }
+        val candidates = consciousPlayers.filter { !it.characterClass.hasActedThisRound }
 
         return candidates.maxByOrNull { it.characterClass.speed }
     }
 
-    private fun calculateFastestLivingPlayer(): ArenaPlayer.Selected {
-        val livingPlayers = updatedPlayerMap.values.filter { it.characterClass.hitPoints > 0 }
-
-        return livingPlayers.maxBy { it.characterClass.speed }
+    private fun resetAllPlayersActed() {
+        consciousPlayers.forEach { player ->
+            updatePlayerClass(userId = player.userId) { characterClass ->
+                characterClass.copy(hasActedThisRound = false)
+            }
+        }
     }
 
-    private fun resetAllPlayersActed() {
-        updatedPlayerMap.keys.forEach { userId ->
-            updatePlayerClass(userId) { characterClass ->
+    /**
+     * Resets Mirror Image unless the next action is the Health roll of the same attack.
+     *
+     * Mirror Image can be used once across the full attack attempt against Illusionist:
+     * Armor roll first, then Health roll only if armor passes.
+     *
+     * So AC -> Health must preserve `usedThisAttack`.
+     * Any other transition means that attack attempt ended or a new one is starting,
+     * so Mirror Image becomes available again.
+     */
+    private fun NextCombatAction.resetMirrorImageIfApplicable() {
+        if (this is NextCombatAction.NormalAttack && this.roll is NormalAttackRoll.Health) return
 
-                // TODO: Move this to MirrorImage updater thingy itself
-                val updatedDefensiveAbility =
-                    when (val defensiveAbility = characterClass.defensiveAbility) {
-                        is DefensiveAbility.MirrorImage ->
-                            defensiveAbility.copy(usedThisAttack = false)
+        val illusionistPlayer =
+            consciousPlayers
+                .firstOrNull { it.characterClass.type == CharacterClassType.Illusionist }
+                ?: return
 
-                        else -> defensiveAbility
-                    }
+        val mirrorImage = illusionistPlayer.characterClass.defensiveAbility as? DefensiveAbility.MirrorImage ?: return
 
-                characterClass.copy(
-                    hasActedThisRound = false,
-                    defensiveAbility = updatedDefensiveAbility,
-                )
-            }
+        updatePlayerClass(userId = illusionistPlayer.userId) { illusionist ->
+            illusionist.copy(defensiveAbility = mirrorImage.copy(usedThisAttack = false))
         }
     }
 

@@ -86,7 +86,9 @@ sealed interface OutgoingArenaMessage {
 
         data class Reroll(val firstDie: Int, val secondDie: Int) : MirrorImage
 
-        data class TemptFate(val rerolledMirrorImageDie: MirrorImageDie) : MirrorImage
+        data class TemptFate(
+            val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie
+        ) : MirrorImage
     }
 
     data class SpellPotency(
@@ -133,11 +135,4 @@ enum class NormalRollMessageType {
     // "A damaged D for R (if KO) and knocked out D!"
     Damage,
     Knockout,
-}
-
-// TODO: Remove
-enum class PersuadeOutcome {
-    Stopped,
-    Redirected,
-    Failed,
 }

@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
@@ -99,11 +100,21 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.handleHealthAttack(totalRoll: Int) {
         updateDefenderClass { defender.copy(hitPoints = defender.hitPoints - totalRoll) }
 
-        if (defender.isConscious()) {
-            // Ill is alive - Encore
-        } else {
-            // Ill is dead - Encore, KM
+        if (!defender.isConscious()) {
+            if (attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
+                TriggerKillingMomentum(combatMutator = this).invoke()
+                return
+            }
         }
+
+        val wasEncoreTriggered =
+            EncoreHandler.triggerEncoreIfApplicable(
+                combatMutator = this,
+                offensiveAbility = attacker.offensiveAbility,
+            )
+        if (wasEncoreTriggered) return
+
+        resolveTurnEnd()
     }
 
     private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {

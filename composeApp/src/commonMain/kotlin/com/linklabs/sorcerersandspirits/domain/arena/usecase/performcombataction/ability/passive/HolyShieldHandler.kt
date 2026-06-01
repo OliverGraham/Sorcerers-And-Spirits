@@ -71,9 +71,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             OffensiveAbility.KillingMomentum ->
                 TriggerKillingMomentum(combatMutator = this).invoke()
 
-            OffensiveAbility.Encore -> {
-                // TODO Encore
-            }
+            OffensiveAbility.Encore -> EncoreHandler(combatMutator = combatMutator).triggerEncore()
 
             else -> resolveTurnEnd()
         }
@@ -107,9 +105,8 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             isAttackerConscious && attackerAbility == OffensiveAbility.KillingMomentum ->
                 TriggerKillingMomentum(combatMutator = this).invoke()
 
-            isAttackerConscious && attackerAbility == OffensiveAbility.Encore -> {
-                // TODO Encore
-            }
+            isAttackerConscious && attackerAbility == OffensiveAbility.Encore ->
+                EncoreHandler(combatMutator = combatMutator).triggerEncore()
 
             else -> resolveTurnEnd()
         }

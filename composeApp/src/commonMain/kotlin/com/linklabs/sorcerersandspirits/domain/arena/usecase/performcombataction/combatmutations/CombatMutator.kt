@@ -22,6 +22,15 @@ internal class CombatMutator(
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
 
+    val attacker
+        get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
+
+    val defender
+        get() = updatedPlayerMap.getValue(key = defenderUserId).characterClass
+
+    val consciousPlayers
+        get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
+
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextCombatAction = nextAction
     }
@@ -34,20 +43,6 @@ internal class CombatMutator(
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
         )
-
-    fun getAttackerOffensiveAbility() =
-        updatedPlayerMap.getValue(key = attackerUserId).characterClass.offensiveAbility
-
-    fun getAttacker() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
-
-    val attacker
-        get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
-
-    val defender
-        get() = updatedPlayerMap.getValue(key = defenderUserId).characterClass
-
-    val consciousPlayers
-        get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
         val current = updatedPlayerMap.getValue(key = userId)

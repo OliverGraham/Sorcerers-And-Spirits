@@ -102,8 +102,8 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.resolveWrath() {
-        val isAttackerConscious = getAttacker().isConscious()
-        val attackerAbility = getAttackerOffensiveAbility()
+        val isAttackerConscious = attacker.isConscious()
+        val attackerAbility = attacker.offensiveAbility
 
         when {
             isAttackerConscious && attackerAbility == OffensiveAbility.KillingMomentum ->

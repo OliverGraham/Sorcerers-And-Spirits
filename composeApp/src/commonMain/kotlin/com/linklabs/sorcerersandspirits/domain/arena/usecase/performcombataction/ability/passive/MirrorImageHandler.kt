@@ -68,6 +68,8 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 }
             }
 
+        // TODO MirrorImage - message could be combined with more properties to have a single
+        //  message for the "Illusionist tempts fate, rerolls a die and {AC outcome || HP outcome}"
         addMessage(
             message =
                 OutgoingArenaMessage.MirrorImage.TemptFate(rerolledMirrorImageDie = rerolledDie)

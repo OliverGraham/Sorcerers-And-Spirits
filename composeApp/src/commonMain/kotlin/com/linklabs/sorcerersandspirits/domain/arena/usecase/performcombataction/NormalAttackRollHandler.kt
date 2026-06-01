@@ -18,19 +18,11 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-internal class NormalAttackRollHandler(
-    private val firstDie: Int,
-    private val secondDie: Int,
-    attacker: CharacterClass,
-    defender: CharacterClass,
-) {
+internal class NormalAttackRollHandler(private val firstDie: Int, private val secondDie: Int) {
     private val diceTotal = firstDie + secondDie
-    private val attackerOffensiveAbility = attacker.offensiveAbility
-    private val defenderDefensiveAbility = defender.defensiveAbility
 
     fun handleRoll(currentAction: CurrentCombatAction.NormalAttack, combatMutator: CombatMutator) {
         combatMutator.handleRoll(currentAction = currentAction)
@@ -48,7 +40,7 @@ internal class NormalAttackRollHandler(
 
     private fun CombatMutator.handleSpellPotencyIfApplicable(): Boolean {
         val isSpellPotencyRoll =
-            attackerOffensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
+            attacker.offensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
 
         if (isSpellPotencyRoll) {
             SpellPotencyRoll(combatMutator = this, diceTotal = diceTotal).invoke()
@@ -93,7 +85,7 @@ internal class NormalAttackRollHandler(
         if (wasHolyShieldTriggered) return
 
         // TODO KillingMomentum
-        if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
+        if (attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
             TriggerKillingMomentum(combatMutator = this).invoke()
             return
         }
@@ -101,7 +93,7 @@ internal class NormalAttackRollHandler(
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,
-                offensiveAbility = attackerOffensiveAbility,
+                offensiveAbility = attacker.offensiveAbility,
             )
         if (wasEncoreTriggered) return
 
@@ -112,7 +104,7 @@ internal class NormalAttackRollHandler(
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,
-                offensiveAbility = attackerOffensiveAbility,
+                offensiveAbility = attacker.offensiveAbility,
             )
         if (wasEncoreTriggered) return
 
@@ -124,7 +116,7 @@ internal class NormalAttackRollHandler(
      * control goes to the defender to roll or handle their ability
      */
     private fun CombatMutator.resolveArmorClassHit() {
-        when (defenderDefensiveAbility) {
+        when (defender.defensiveAbility) {
             is DefensiveAbility.Teleport -> TeleportHandler(combatMutator = this).triggerTeleport()
 
             is DefensiveAbility.Riposte ->
@@ -169,8 +161,9 @@ internal class NormalAttackRollHandler(
      * so is checked and handled before ending the turn.
      */
     private fun CombatMutator.resolveArmorClassMiss() {
-        if (defenderDefensiveAbility is DefensiveAbility.Dodge) {
-            TriggerDodge(combatMutator = this, dodge = defenderDefensiveAbility).invoke()
+        val defensiveAbility = defender.defensiveAbility
+        if (defensiveAbility is DefensiveAbility.Dodge) {
+            TriggerDodge(combatMutator = this, dodge = defensiveAbility).invoke()
         }
 
         resolveTurnEnd()
@@ -193,7 +186,7 @@ internal class NormalAttackRollHandler(
         attackType: NormalAttackType
     ): Boolean {
         val mirrorImage =
-            MirrorImageHandler.getUnusedMirrorImageAbility(ability = defenderDefensiveAbility)
+            MirrorImageHandler.getUnusedMirrorImageAbility(ability = defender.defensiveAbility)
                 ?: return false
 
         MirrorImageHandler(combatMutator = this)
@@ -209,8 +202,6 @@ internal class NormalAttackRollHandler(
 
     companion object {
         fun handleNormalRoll(
-            attacker: CharacterClass,
-            defender: CharacterClass,
             currentAction: CurrentCombatAction.NormalAttack,
             combatMutator: CombatMutator,
         ) {
@@ -218,12 +209,7 @@ internal class NormalAttackRollHandler(
             val secondDie = roll1D6()
 
             val normalAttackRollHandler =
-                NormalAttackRollHandler(
-                    firstDie = firstDie,
-                    secondDie = secondDie,
-                    attacker = attacker,
-                    defender = defender,
-                )
+                NormalAttackRollHandler(firstDie = firstDie, secondDie = secondDie)
 
             normalAttackRollHandler.handleRoll(
                 currentAction = currentAction,

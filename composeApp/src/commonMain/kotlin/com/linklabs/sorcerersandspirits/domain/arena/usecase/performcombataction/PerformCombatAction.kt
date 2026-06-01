@@ -27,7 +27,6 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
         )
 
     operator fun invoke(currentAction: CurrentCombatAction): RollOutcome {
-        // TODO: Have everything set the state in combatMutator
         resolveAction(action = currentAction)
         return combatMutator.getOutcome()
     }
@@ -36,8 +35,6 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
         when (action) {
             is CurrentCombatAction.NormalAttack ->
                 NormalAttackRollHandler.handleNormalRoll(
-                    attacker = arguments.attacker.characterClass,
-                    defender = arguments.defender.characterClass,
                     currentAction = action,
                     combatMutator = combatMutator,
                 )

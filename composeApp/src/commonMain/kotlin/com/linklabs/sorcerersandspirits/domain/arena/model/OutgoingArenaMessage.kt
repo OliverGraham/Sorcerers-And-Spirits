@@ -23,6 +23,8 @@ sealed interface OutgoingArenaMessage {
         val type: NormalRollMessageType,
     ) : OutgoingArenaMessage
 
+    data object KillingMomentum : OutgoingArenaMessage
+
     data class Dodge(val didArmorIncrease: Boolean) : OutgoingArenaMessage
 
     sealed interface Teleport : OutgoingArenaMessage {
@@ -111,9 +113,6 @@ sealed interface OutgoingArenaMessage {
             val singleDie: Int,
         ) : HolyShield
     }
-
-    // TODO KillingMomentum - maybe a message when Rogue does damage but doesn't kill?
-    data object KillingMomentum : OutgoingArenaMessage
 
     data class AllIn(val gamblerUserId: String, val singleDie: Int) : OutgoingArenaMessage
 

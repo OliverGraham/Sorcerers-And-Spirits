@@ -125,22 +125,23 @@ internal class CombatMutator(
     /**
      * Resets Mirror Image unless the next action is the Health roll of the same attack.
      *
-     * Mirror Image can be used once across the full attack attempt against Illusionist:
-     * Armor roll first, then Health roll only if armor passes.
+     * Mirror Image can be used once across the full attack attempt against Illusionist: Armor roll
+     * first, then Health roll only if armor passes.
      *
-     * So AC -> Health must preserve `usedThisAttack`.
-     * Any other transition means that attack attempt ended or a new one is starting,
-     * so Mirror Image becomes available again.
+     * So AC -> Health must preserve `usedThisAttack`. Any other transition means that attack
+     * attempt ended or a new one is starting, so Mirror Image becomes available again.
      */
     private fun NextCombatAction.resetMirrorImageIfApplicable() {
         if (this is NextCombatAction.NormalAttack && this.roll is NormalAttackRoll.Health) return
 
         val illusionistPlayer =
-            consciousPlayers
-                .firstOrNull { it.characterClass.type == CharacterClassType.Illusionist }
-                ?: return
+            consciousPlayers.firstOrNull {
+                it.characterClass.type == CharacterClassType.Illusionist
+            } ?: return
 
-        val mirrorImage = illusionistPlayer.characterClass.defensiveAbility as? DefensiveAbility.MirrorImage ?: return
+        val mirrorImage =
+            illusionistPlayer.characterClass.defensiveAbility as? DefensiveAbility.MirrorImage
+                ?: return
 
         updatePlayerClass(userId = illusionistPlayer.userId) { illusionist ->
             illusionist.copy(defensiveAbility = mirrorImage.copy(usedThisAttack = false))

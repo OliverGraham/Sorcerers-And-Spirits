@@ -12,7 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.teleport.HandleTeleport
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 internal class PerformCombatAction(private val arguments: CombatActionArguments) {
@@ -77,7 +77,8 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
     private fun AbilityRollPurpose.Passive.handlePassive() {
         when (this) {
             is AbilityRollPurpose.Passive.Teleport ->
-                HandleTeleport(combatMutator = combatMutator, rollingDieUserId = arguments.userId)
+                TeleportHandler(combatMutator = combatMutator)
+                    .handleTeleport(teleport = this, userId = arguments.userId)
 
             is AbilityRollPurpose.Passive.HolyShield -> handleHolyShield()
 

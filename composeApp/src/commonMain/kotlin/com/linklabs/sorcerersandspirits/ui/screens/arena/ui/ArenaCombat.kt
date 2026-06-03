@@ -36,6 +36,8 @@ import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.RollDiceArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NextCombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
@@ -91,7 +93,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
             item(key = ROLL_DICE_KEY) {
                 RollDiceSection(
                     otherPlayers = otherPlayers,
-                    currentDiceRoll = currentDiceRoll,
+                    nextCombatAction = nextCombatAction,
                     targetedOpponentUserId = targetedOpponentUserId,
                     updateIsTargetLocked = { isTargetLocked = true },
                 )
@@ -170,24 +172,25 @@ private fun GridPlayerCard(
 @Composable
 private fun RollDiceSection(
     otherPlayers: Map<UserId, PlayerState.Selected>,
-    currentDiceRoll: DiceRollState?,
+    nextCombatAction: NextCombatActionState,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
 ) {
-    /* TODO: This is incorrect - update in a good way
     val buttonText =
-        when (rollDiceArguments?.rollType) {
-            RollType.ArmorClassRoll ->
-                "Roll to Hit (AC: ${otherPlayers[targetedOpponentId]?.characterClass?.armorClass ?: "?"})"
+        when (nextCombatAction) {
+            is NextCombatActionState.NormalAttack ->
+                when (nextCombatAction.roll) {
+                    NormalAttackRollState.ArmorClass ->
+                        "Roll to Hit (AC: ${otherPlayers[targetedOpponentUserId]?.characterClass?.armorClass ?: "?"})"
 
-            RollType.HealthRoll ->
-                "Roll for Damage (HP: ${otherPlayers[targetedOpponentId]?.characterClass?.hitPoints ?: "?"})"
+                    NormalAttackRollState.Health ->
+                        "Roll for Damage (HP: ${otherPlayers[targetedOpponentUserId]?.characterClass?.hitPoints ?: "?"})"
+                }
 
-            is RollType.AbilityRoll -> "Roll for Ability"
+            is NextCombatActionState.AbilityRoll -> "Roll for Ability"
 
             else -> "Roll Dice"
         }
-     */
 
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
@@ -209,34 +212,13 @@ private fun RollDiceSection(
         Button(
             onClick = {
                 updateIsTargetLocked()
-                onRollDice(
-                    RollDiceArguments(
-                        opponentUserId = targetedOpponentUserId,
-                        newRollType = currentDiceRoll.previousToNextNonAbilityRoll(),
-                    )
-                )
+                onRollDice(RollDiceArguments(opponentUserId = targetedOpponentUserId))
             },
             enabled = targetedOpponentUserId.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(text = "Roll")
+            Text(text = buttonText)
         }
-    }
-}
-
-/**
- * When clicking the normal attack button, if the previous roll was [RollTypeState.ArmorClassRoll],
- * then the next roll must be [RollTypeState.HealthRoll]. In all other cases, the previous roll is
- * ignored, and thus it means a [RollTypeState.ArmorClassRoll] is now happening.
- */
-private fun DiceRollState?.previousToNextNonAbilityRoll(): RollTypeState {
-    if (this == null) return RollTypeState.ArmorClassRoll
-
-    return when (rollType) {
-        is RollTypeState.ArmorClassRoll -> RollTypeState.HealthRoll
-
-        is RollTypeState.HealthRoll,
-        is RollTypeState.AbilityRoll -> RollTypeState.ArmorClassRoll
     }
 }
 

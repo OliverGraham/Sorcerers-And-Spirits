@@ -20,8 +20,8 @@ class ArenaMatchEntityExtensionsTest {
                     hitPoints = 10,
                     armorClass = 10,
                     speed = speed,
-                    offensiveAbility = KillingMomentumEntity,
-                    defensiveAbility = AnticipationEntity,
+                    offensiveAbility = OffensiveAbilityEntity.KillingMomentum,
+                    defensiveAbility = DefensiveAbilityEntity.Dodge(armorBonus = 0),
                 ),
         )
 

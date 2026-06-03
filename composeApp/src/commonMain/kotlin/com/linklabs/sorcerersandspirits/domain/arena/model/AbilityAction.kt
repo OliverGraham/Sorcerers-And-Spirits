@@ -40,21 +40,7 @@ sealed interface AbilityAction {
 
         data object Encore : Passive
 
-        data class Teleport(val attackerDieRoll: TeleportDie, val defenderDieRoll: TeleportDie) :
-            Passive {
-
-            data class TeleportDie(val userId: String, val roll: Int? = null)
-
-            companion object {
-
-                /** On first break of Mage's ArmorClass, each roll is null and blah blah */
-                fun getPreRolledState(attackerUserId: String, defenderUserId: String) =
-                    Teleport(
-                        attackerDieRoll = TeleportDie(userId = attackerUserId),
-                        defenderDieRoll = TeleportDie(userId = defenderUserId),
-                    )
-            }
-        }
+        data class Teleport(val attackerRoll: Int? = null, val defenderRoll: Int? = null) : Passive
 
         data class MirrorImage(
             val firstDie: MirrorImageDie,

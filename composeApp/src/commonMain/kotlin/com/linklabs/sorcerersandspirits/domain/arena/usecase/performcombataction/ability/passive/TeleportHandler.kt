@@ -26,7 +26,8 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                         AbilityAction.Passive.Teleport.getPreRolledState(
                             attackerUserId = attackerUserId,
                             defenderUserId = defenderUserId,
-                        )
+                        ),
+                    activeUserIds = setOf(attackerUserId, defenderUserId),
                 )
         )
     }
@@ -55,7 +56,11 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
             }
         } else {
             setNextCombatAction(
-                nextAction = NextCombatAction.AbilityRoll(purpose = updatedTeleport)
+                nextAction =
+                    NextCombatAction.AbilityRoll(
+                        purpose = updatedTeleport,
+                        activeUserIds = setOf(attackerUserId, defenderUserId),
+                    )
             )
         }
     }
@@ -114,7 +119,8 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                         NormalAttackRoll.Health(
                             attackerUserId = attackerUserId,
                             defenderUserId = defenderUserId,
-                        )
+                        ),
+                    activeUserIds = setOf(attackerUserId),
                 )
         )
     }

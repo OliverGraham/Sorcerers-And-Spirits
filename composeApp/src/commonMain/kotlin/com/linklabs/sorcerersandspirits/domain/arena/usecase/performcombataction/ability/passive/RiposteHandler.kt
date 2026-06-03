@@ -19,7 +19,13 @@ internal class RiposteHandler(
         addMessage(message = OutgoingArenaMessage.Riposte.Trigger)
 
         val purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.rollRiposte() {
@@ -51,7 +57,13 @@ internal class RiposteHandler(
                 defenderUserId = attackerUserId,
                 originalTurnUserId = attackerUserId,
             )
-        setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = armorClassRoll))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll = armorClassRoll,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.handleFailure() {
@@ -60,7 +72,13 @@ internal class RiposteHandler(
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
             )
-        setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = healthRoll))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll = healthRoll,
+                    activeUserIds = setOf(attackerUserId),
+                )
+        )
     }
 
     companion object {

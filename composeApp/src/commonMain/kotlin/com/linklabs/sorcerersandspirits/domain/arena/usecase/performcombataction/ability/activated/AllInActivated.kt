@@ -35,7 +35,7 @@ internal class AllInActivated(
                 }
 
                 setNextCombatAction(
-                    nextAction = NextCombatAction.Idle(activeUserId = attackerUserId)
+                    nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
                 )
             }
 
@@ -45,7 +45,7 @@ internal class AllInActivated(
                 }
 
                 setNextCombatAction(
-                    nextAction = NextCombatAction.Idle(activeUserId = attackerUserId)
+                    nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
                 )
             }
         }

@@ -20,13 +20,15 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.triggerLuckyCoin() {
         addMessage(message = OutgoingArenaMessage.LuckyCoin.Trigger)
 
-        val purpose =
-            AbilityAction.Passive.LuckyCoin.Flip(
-                attackerRollTotal = attackerRollTotal,
-                activeUserId = defenderUserId,
-            )
+        val purpose = AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = attackerRollTotal)
 
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.flipLuckyCoin() {
@@ -49,10 +51,15 @@ internal class LuckyCoinHandler(
             AbilityAction.Passive.LuckyCoin.HighRoller(
                 attackerUserId = attackerUserId,
                 attackerRollTotal = attackerRollTotal,
-                activeUserId = defenderUserId,
             )
 
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.handleHighRoller() {
@@ -125,6 +132,12 @@ internal class LuckyCoinHandler(
                 defenderUserId = defenderUserId,
             )
 
-        setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = healthRoll))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll = healthRoll,
+                    activeUserIds = setOf(attackerUserId),
+                )
+        )
     }
 }

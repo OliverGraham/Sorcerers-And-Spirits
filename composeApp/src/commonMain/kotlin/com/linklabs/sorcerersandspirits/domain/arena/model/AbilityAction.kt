@@ -18,31 +18,27 @@ sealed interface AbilityAction {
     sealed interface Passive : AbilityAction {
 
         sealed interface LuckyCoin : Passive {
-            data class Flip(val attackerRollTotal: Int, val activeUserId: String) : LuckyCoin
+            data class Flip(val attackerRollTotal: Int) : LuckyCoin
 
-            data class HighRoller(
-                val attackerUserId: String,
-                val attackerRollTotal: Int,
-                val activeUserId: String,
-            ) : LuckyCoin
+            data class HighRoller(val attackerUserId: String, val attackerRollTotal: Int) :
+                LuckyCoin
         }
 
         data class Riposte(val attackerRollTotal: Int) : Passive
 
         sealed interface Persuade : Passive {
-            data class StrumLute(val attackerRollTotal: Int, val bardUserId: String) : Persuade
+            data class StrumLute(val attackerRollTotal: Int) : Persuade
 
             // TODO Persuade: In UI - need to pass in selectedCharmTargetUserId so the
             //  defenderUserId is Bard's selected target
             data class Charm(
                 val attackerUserId: String,
-                val bardUserId: String,
                 val charmTargetUserIds: Set<String>,
                 val selectedCharmTargetUserId: String? = null,
             ) : Persuade
         }
 
-        data class Encore(val activeUserId: String) : Passive
+        data object Encore : Passive
 
         data class Teleport(val attackerDieRoll: TeleportDie, val defenderDieRoll: TeleportDie) :
             Passive {
@@ -60,12 +56,6 @@ sealed interface AbilityAction {
             }
         }
 
-        sealed interface HolyShield : Passive {
-            data class Prayer(val activeUserId: String) : HolyShield
-
-            data class Wrath(val activeUserId: String) : HolyShield
-        }
-
         data class MirrorImage(
             val firstDie: MirrorImageDie,
             val secondDie: MirrorImageDie,
@@ -78,6 +68,12 @@ sealed interface AbilityAction {
                 val isRerolled = reroll != null
                 val finalValue = if (reroll == null) originalRoll else reroll - 1
             }
+        }
+
+        sealed interface HolyShield : Passive {
+            data object Prayer : HolyShield
+
+            data object Wrath : HolyShield
         }
     }
 }

@@ -151,7 +151,8 @@ internal class NormalAttackRollHandler(private val firstDie: Int, private val se
                         NormalAttackRoll.Health(
                             attackerUserId = attackerUserId,
                             defenderUserId = defenderUserId,
-                        )
+                        ),
+                    activeUserIds = setOf(attackerUserId),
                 )
         )
     }

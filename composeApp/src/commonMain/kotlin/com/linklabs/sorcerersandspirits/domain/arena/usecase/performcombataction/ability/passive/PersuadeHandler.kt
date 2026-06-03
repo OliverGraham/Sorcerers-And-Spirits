@@ -22,11 +22,14 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
 
         val purpose =
-            AbilityAction.Passive.Persuade.StrumLute(
-                attackerRollTotal = attackerRollTotal,
-                bardUserId = defenderUserId,
-            )
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+            AbilityAction.Passive.Persuade.StrumLute(attackerRollTotal = attackerRollTotal)
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.strumLute() {
@@ -53,7 +56,13 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
                 defenderUserId = defenderUserId,
             )
 
-        setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = healthAttackRoll))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll = healthAttackRoll,
+                    activeUserIds = setOf(attackerUserId),
+                )
+        )
     }
 
     private fun CombatMutator.handleStrumLuteSuccess(persuadeDie: Int) {
@@ -85,11 +94,16 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         val purpose =
             AbilityAction.Passive.Persuade.Charm(
                 attackerUserId = attackerUserId,
-                bardUserId = defenderUserId,
                 charmTargetUserIds = charmTargetUserIds,
             )
 
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.charm(charm: AbilityAction.Passive.Persuade.Charm) {
@@ -110,8 +124,6 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
                 defenderUserId = selectedCharmTargetUserId,
             )
         NormalAttackRollHandler.handleNormalRoll(
-            attacker = attacker,
-            defender = defender,
             currentAction = CurrentCombatAction.NormalAttack(roll = armorClassAttackRoll),
             combatMutator = combatMutator,
         )

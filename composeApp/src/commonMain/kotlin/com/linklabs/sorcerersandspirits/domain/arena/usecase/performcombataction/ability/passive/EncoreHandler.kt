@@ -17,8 +17,14 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.triggerEncore() {
         addMessage(message = OutgoingArenaMessage.Encore.Trigger)
 
-        val purpose = AbilityAction.Passive.Encore(activeUserId = attackerUserId)
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+        val purpose = AbilityAction.Passive.Encore
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(attackerUserId),
+                )
+        )
     }
 
     private fun CombatMutator.rollEncore() {
@@ -31,14 +37,22 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         )
 
         if (isSuccessful) {
-            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = attackerUserId))
+            setNextCombatAction(
+                nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
+            )
         } else {
             val healthRoll =
                 NormalAttackRoll.Health(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                 )
-            setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = healthRoll))
+            setNextCombatAction(
+                nextAction =
+                    NextCombatAction.NormalAttack(
+                        roll = healthRoll,
+                        activeUserIds = setOf(attackerUserId),
+                    )
+            )
         }
     }
 

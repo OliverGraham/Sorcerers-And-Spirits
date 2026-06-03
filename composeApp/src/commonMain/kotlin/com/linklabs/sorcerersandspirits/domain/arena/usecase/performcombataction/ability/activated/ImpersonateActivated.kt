@@ -22,6 +22,8 @@ internal class ImpersonateActivated(
 
         updateAttackerClass { attacker -> attacker.copy(offensiveAbility = impersonateAbility) }
 
-        setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserId = attackerUserId))
+        setNextCombatAction(
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
+        )
     }
 }

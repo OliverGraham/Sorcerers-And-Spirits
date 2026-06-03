@@ -84,7 +84,7 @@ internal class CombatMutator(
         if (nextPlayer != null) {
             nextPlayer.characterClass.addNewTurnMessage()
             setNextCombatAction(
-                nextAction = NextCombatAction.Idle(activeUserId = nextPlayer.userId)
+                nextAction = NextCombatAction.Idle(activeUserIds = setOf(nextPlayer.userId))
             )
         } else {
             goToNextRound()
@@ -102,7 +102,7 @@ internal class CombatMutator(
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
 
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserId = fastestPlayerNextRound.userId)
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(fastestPlayerNextRound.userId))
         )
     }
 

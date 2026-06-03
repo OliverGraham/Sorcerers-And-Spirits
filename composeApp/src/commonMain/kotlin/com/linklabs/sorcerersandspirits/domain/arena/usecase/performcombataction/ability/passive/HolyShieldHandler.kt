@@ -27,7 +27,8 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose = AbilityAction.Passive.HolyShield.Prayer(activeUserId = defenderUserId)
+                    purpose = AbilityAction.Passive.HolyShield.Prayer,
+                    activeUserIds = setOf(defenderUserId),
                 )
         )
     }
@@ -59,7 +60,8 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose = AbilityAction.Passive.HolyShield.Wrath(activeUserId = defenderUserId)
+                    purpose = AbilityAction.Passive.HolyShield.Wrath,
+                    activeUserIds = setOf(defenderUserId),
                 )
         )
     }

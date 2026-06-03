@@ -49,7 +49,13 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
             )
 
-        setNextCombatAction(nextAction = NextCombatAction.AbilityRoll(purpose = purpose))
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    activeUserIds = setOf(defenderUserId),
+                )
+        )
     }
 
     private fun CombatMutator.handleReroll(mirrorImage: AbilityAction.Passive.MirrorImage) {
@@ -91,7 +97,13 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                 )
-            setNextCombatAction(nextAction = NextCombatAction.NormalAttack(roll = nextRoll))
+            setNextCombatAction(
+                nextAction =
+                    NextCombatAction.NormalAttack(
+                        roll = nextRoll,
+                        activeUserIds = setOf(attackerUserId),
+                    )
+            )
         } else {
             resolveTurnEnd()
         }

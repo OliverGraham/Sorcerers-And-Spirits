@@ -142,7 +142,10 @@ internal fun ArenaMatch.toEntity(
                 numberOfNewMessages = mappedNewMessages.size,
                 playerEntitiesMap =
                     playerMap.mapValues { it.value.toEntity() as ArenaPlayerEntity.Selected },
+                nextCombatActionEntity = nextCombatAction.toEntity(),
                 nextActivePlayerUserId = nextActivePlayerUserId,
+                roundNumber = roundNumber,
+                isNewRound = isNewRound,
             )
 
         is ArenaMatch.Finished ->

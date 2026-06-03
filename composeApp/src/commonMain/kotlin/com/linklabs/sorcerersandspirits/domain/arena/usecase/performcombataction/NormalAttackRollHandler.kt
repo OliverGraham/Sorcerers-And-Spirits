@@ -17,7 +17,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -206,8 +205,7 @@ internal class NormalAttackRollHandler(private val firstDie: Int, private val se
             currentAction: CurrentCombatAction.NormalAttack,
             combatMutator: CombatMutator,
         ) {
-            val firstDie = roll1D6()
-            val secondDie = roll1D6()
+            val (firstDie, secondDie) = combatMutator.diceRoller.roll2D6()
 
             val normalAttackRollHandler =
                 NormalAttackRollHandler(firstDie = firstDie, secondDie = secondDie)

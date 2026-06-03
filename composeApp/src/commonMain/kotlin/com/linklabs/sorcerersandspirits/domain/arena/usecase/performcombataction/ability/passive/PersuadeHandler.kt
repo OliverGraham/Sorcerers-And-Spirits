@@ -7,7 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.NormalAttackRollHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
@@ -33,7 +32,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.strumLute() {
-        val persuadeDie = roll1D6()
+        val persuadeDie = diceRoller.roll1D6()
         if (persuadeDie < LULL) {
             handleStrumLuteFailure(persuadeDie = persuadeDie)
         } else {

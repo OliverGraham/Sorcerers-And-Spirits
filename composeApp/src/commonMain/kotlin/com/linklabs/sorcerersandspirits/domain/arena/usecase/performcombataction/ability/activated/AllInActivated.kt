@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class AllInActivated(
@@ -13,7 +12,7 @@ internal class AllInActivated(
     operator fun invoke() = combatMutator.handleOutcome()
 
     private fun CombatMutator.handleOutcome() {
-        val singleDie = roll1D6()
+        val singleDie = diceRoller.roll1D6()
         addMessage(
             message =
                 OutgoingArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = singleDie)

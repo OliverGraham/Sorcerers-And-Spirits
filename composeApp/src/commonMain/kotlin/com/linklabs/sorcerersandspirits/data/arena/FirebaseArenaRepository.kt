@@ -80,7 +80,8 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 playerEntitiesMap =
                     result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
                 nextCombatActionEntity = result.nextCombatAction.toEntity(),
-                nextActivePlayerUserId = result.nextActivePlayerUserId,
+                nextActivePlayerUserId =
+                    result.nextCombatAction.activeUserIds.first(), // TODO big time fix
                 roundNumber = result.roundNumber,
                 isNewRound = result.isNewRound,
             )

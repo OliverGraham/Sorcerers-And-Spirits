@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class EncoreHandler(private val combatMutator: CombatMutator) {
@@ -28,7 +27,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rollEncore() {
-        val encoreDie = roll1D6()
+        val encoreDie = diceRoller.roll1D6()
         val isSuccessful = encoreDie in ENCORE_SUCCESS_RANGE
 
         addMessage(

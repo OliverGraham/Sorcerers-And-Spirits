@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 internal class RiposteHandler(
     private val combatMutator: CombatMutator,
@@ -29,8 +28,7 @@ internal class RiposteHandler(
     }
 
     private fun CombatMutator.rollRiposte() {
-        val firstDie = roll1D6()
-        val secondDie = roll1D6()
+        val (firstDie, secondDie) = diceRoller.roll2D6()
         val isSuccessful = firstDie + secondDie in SUCCESS_RANGE
 
         addMessage(

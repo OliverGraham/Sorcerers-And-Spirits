@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 internal class LuckyCoinHandler(
     private val combatMutator: CombatMutator,
@@ -32,7 +31,7 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.flipLuckyCoin() {
-        val luckyCoinArmorBonus = roll1D6()
+        val luckyCoinArmorBonus = diceRoller.roll1D6()
 
         if (luckyCoinArmorBonus == 6) {
             triggerHighRoller()
@@ -63,7 +62,7 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.handleHighRoller() {
-        val highRollerDamageRoll = roll1D6()
+        val highRollerDamageRoll = diceRoller.roll1D6()
 
         updateAttackerClass { attacker ->
             attacker.copy(hitPoints = attacker.hitPoints - highRollerDamageRoll)

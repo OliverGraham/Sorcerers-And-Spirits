@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -34,8 +33,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.attemptPrayer() {
-        val firstDie = roll1D6()
-        val secondDie = roll1D6()
+        val (firstDie, secondDie) = diceRoller.roll2D6()
         val didSurvive = firstDie + secondDie in HOLY_SHIELD_SUCCESS_RANGE
 
         addMessage(
@@ -80,7 +78,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.wrathRoll() {
-        val wrathDamage = roll1D6()
+        val wrathDamage = diceRoller.roll1D6()
 
         addMessage(
             message =

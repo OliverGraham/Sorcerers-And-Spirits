@@ -1,13 +1,60 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import io.mockk.every
+import io.mockk.mockk
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class PerformCombatActionUseCaseTest {
+
+    private val diceRoller: DiceRoller = mockk()
+
+    @Test
+    fun `successful armor break`() {
+        // Given
+        val attackerId = "attacker"
+        val defenderId = "defender"
+        val attacker = createArenaPlayer(userId = attackerId, characterClass = createRogue())
+        val defender =
+            createArenaPlayer(userId = defenderId, characterClass = createMage(armorClass = 6))
+        val arguments = createCombatActionArguments(attacker = attacker, defender = defender)
+
+        val currentAction =
+            CurrentCombatAction.NormalAttack(
+                roll =
+                    NormalAttackRoll.ArmorClass(
+                        attackerUserId = attackerId,
+                        defenderUserId = defenderId,
+                    )
+            )
+
+        // Mock a roll of 7 (3 + 4), which is >= Mage armor class (6)
+        every { diceRoller.roll2D6() } returns Pair(3, 4)
+
+        // When
+        val outcome =
+            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
+                .invoke(currentAction)
+
+        // Then
+        val nextAction = outcome.nextCombatAction
+        assertTrue(nextAction is NextCombatAction.NormalAttack)
+        assertTrue(nextAction.roll is NormalAttackRoll.Health)
+        assertEquals(attackerId, nextAction.roll.attackerUserId)
+        assertEquals(defenderId, nextAction.roll.defenderUserId)
+    }
 
     companion object {
         private const val DEFAULT_USER_ID = "userId"

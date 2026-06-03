@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.roll1D6
 
 // TODO Teleport Messages
 internal class TeleportHandler(private val combatMutator: CombatMutator) {
@@ -75,7 +74,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         }
 
     private fun CombatMutator.rollAndMessage(userId: String): Int {
-        val newRoll = roll1D6()
+        val newRoll = diceRoller.roll1D6()
 
         addMessage(
             message = OutgoingArenaMessage.Teleport.Roll(userId = userId, singleDie = newRoll)

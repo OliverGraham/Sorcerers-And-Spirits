@@ -14,8 +14,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 
-internal class PerformCombatAction(private val arguments: CombatActionArguments) {
+internal class PerformCombatAction(
+    private val arguments: CombatActionArguments,
+    private val diceRoller: DiceRoller,
+) {
 
     private val combatMutator =
         CombatMutator(
@@ -24,6 +28,7 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             defenderUserId = arguments.defender.userId,
             roundNumber = arguments.roundNumber,
             originalTurnUserId = arguments.originalTurnUserId,
+            diceRoller = diceRoller,
         )
 
     operator fun invoke(currentAction: CurrentCombatAction): ActionOutcome {

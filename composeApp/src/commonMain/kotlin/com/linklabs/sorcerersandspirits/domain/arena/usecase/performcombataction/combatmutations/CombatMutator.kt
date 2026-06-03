@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -16,6 +17,7 @@ internal class CombatMutator(
     val defenderUserId: UserId,
     val updatedPlayerMap: MutableMap<UserId, ArenaPlayer.Selected>,
     val originalTurnUserId: String,
+    val diceRoller: DiceRoller,
     private val roundNumber: Int,
     private val messages: MutableList<OutgoingArenaMessage> = mutableListOf(),
 ) {

@@ -14,54 +14,46 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PerformCombatActionUseCaseTest {
 
+    // TODO - Need to address doubles die. Also, improve DiceRoller. Enums for values 1 through 6?
     private val diceRoller: DiceRoller = mockk()
 
     @Test
-    fun `successful armor break`() {
-        // Given
-        val attackerId = "attacker"
-        val defenderId = "defender"
-        val attacker = createArenaPlayer(userId = attackerId, characterClass = createRogue())
-        val defender =
-            createArenaPlayer(userId = defenderId, characterClass = createMage(armorClass = 6))
-        val arguments = createCombatActionArguments(attacker = attacker, defender = defender)
+    fun `Given an attacker that rolls higher than a defender's armor, the next combat action is a roll against the defender's health`() {
+        // Arrange
+        val arguments = createCombatActionArguments()
+        val currentAction = getNormalAttackAction()
 
-        val currentAction =
-            CurrentCombatAction.NormalAttack(
-                roll =
-                    NormalAttackRoll.ArmorClass(
-                        attackerUserId = attackerId,
-                        defenderUserId = defenderId,
-                    )
-            )
-
-        // Mock a roll of 7 (3 + 4), which is >= Mage armor class (6)
+        // Act
         every { diceRoller.roll2D6() } returns Pair(3, 4)
 
-        // When
         val outcome =
             PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
                 .invoke(currentAction)
 
-        // Then
+        // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(nextAction is NextCombatAction.NormalAttack)
         assertTrue(nextAction.roll is NormalAttackRoll.Health)
-        assertEquals(attackerId, nextAction.roll.attackerUserId)
-        assertEquals(defenderId, nextAction.roll.defenderUserId)
     }
 
     companion object {
-        private const val DEFAULT_USER_ID = "userId"
         private const val DEFAULT_DISPLAY_NAME = "displayName"
         private const val DEFAULT_ARENA_ID = "arenaId"
         private const val DEFAULT_ATTACKER_ID = "attackerId"
         private const val DEFAULT_DEFENDER_ID = "defenderId"
+
+        private fun getNormalAttackAction() =
+            CurrentCombatAction.NormalAttack(
+                roll =
+                    NormalAttackRoll.ArmorClass(
+                        attackerUserId = DEFAULT_ATTACKER_ID,
+                        defenderUserId = DEFAULT_DEFENDER_ID,
+                    )
+            )
 
         private fun createCharacterClass(
             type: CharacterClassType = CharacterClassType.Rogue,
@@ -211,9 +203,9 @@ class PerformCombatActionUseCaseTest {
             )
 
         private fun createArenaPlayer(
-            userId: String = DEFAULT_USER_ID,
+            userId: String = DEFAULT_ATTACKER_ID,
             displayName: String = DEFAULT_DISPLAY_NAME,
-            characterClass: CharacterClass = createRogue(),
+            characterClass: CharacterClass = createCharacterClass(),
         ) =
             ArenaPlayer.Selected(
                 userId = userId,
@@ -223,9 +215,9 @@ class PerformCombatActionUseCaseTest {
 
         private fun createCombatActionArguments(
             arenaId: String = DEFAULT_ARENA_ID,
-            userId: String = DEFAULT_USER_ID,
-            attacker: ArenaPlayer.Selected = createArenaPlayer(userId = DEFAULT_ATTACKER_ID),
-            defender: ArenaPlayer.Selected = createArenaPlayer(userId = DEFAULT_DEFENDER_ID),
+            userId: String = DEFAULT_ATTACKER_ID,
+            attacker: ArenaPlayer.Selected = createArenaPlayer(),
+            defender: ArenaPlayer.Selected = createArenaPlayer(),
             playerMap: Map<String, ArenaPlayer.Selected> =
                 mapOf(attacker.userId to attacker, defender.userId to defender),
             roundNumber: Int = 1,

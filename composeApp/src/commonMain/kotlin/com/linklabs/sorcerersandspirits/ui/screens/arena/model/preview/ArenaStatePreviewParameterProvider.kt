@@ -9,6 +9,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NextCombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 // TODO Arena: update when state changes to use enums to determine the text (using resources)
@@ -77,6 +79,10 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             playerMap = playerMap,
             userPlayerId = userPlayerId,
             activePlayerUserId = activePlayerUserId,
+            nextCombatAction =
+                NextCombatActionState.NormalAttack(roll = NormalAttackRollState.ArmorClass),
+            roundNumber = 1,
+            isNewRound = true,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

@@ -26,7 +26,7 @@ internal class PerformCombatAction(private val arguments: CombatActionArguments)
             originalTurnUserId = arguments.originalTurnUserId,
         )
 
-    operator fun invoke(currentAction: CurrentCombatAction): RollOutcome {
+    operator fun invoke(currentAction: CurrentCombatAction): ActionOutcome {
         resolveAction(action = currentAction)
         return combatMutator.getOutcome()
     }

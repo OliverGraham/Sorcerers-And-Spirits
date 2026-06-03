@@ -12,7 +12,7 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.RollOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -62,7 +62,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     }
 
     // TODO Arena: Look at this, refactor
-    override suspend fun applyCombatResult(arenaId: String, result: RollOutcome) {
+    override suspend fun applyCombatResult(arenaId: String, result: ActionOutcome) {
         val arenaReference = arenaMatchesReference.child(path = arenaId)
 
         arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->

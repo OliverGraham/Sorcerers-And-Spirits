@@ -5,7 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
-data class RollOutcome(
+data class ActionOutcome(
     val messages: List<OutgoingArenaMessage>,
     val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
     val nextCombatAction: NextCombatAction,

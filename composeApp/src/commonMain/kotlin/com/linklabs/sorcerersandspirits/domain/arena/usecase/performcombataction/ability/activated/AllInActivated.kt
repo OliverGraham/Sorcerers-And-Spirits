@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -14,8 +14,7 @@ internal class AllInActivated(
     private fun CombatMutator.handleOutcome() {
         val singleDie = diceRoller.roll1D6()
         addMessage(
-            message =
-                OutgoingArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = singleDie)
+            message = ArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = singleDie)
         )
 
         when (singleDie) {

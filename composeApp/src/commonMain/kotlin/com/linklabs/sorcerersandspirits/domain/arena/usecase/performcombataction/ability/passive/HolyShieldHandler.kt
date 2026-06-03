@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -17,7 +17,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     fun wrathRoll() = combatMutator.wrathRoll()
 
     private fun CombatMutator.triggerHolyShield(holyShield: DefensiveAbility.HolyShield) {
-        addMessage(message = OutgoingArenaMessage.HolyShield.Trigger)
+        addMessage(message = ArenaMessage.HolyShield.Trigger)
 
         updateDefenderClass { defender ->
             defender.copy(defensiveAbility = holyShield.copy(usedThisMatch = true))
@@ -38,7 +38,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-                OutgoingArenaMessage.HolyShield.Prayer(
+                ArenaMessage.HolyShield.Prayer(
                     firstDie = firstDie,
                     secondDie = secondDie,
                     didSurvive = didSurvive,
@@ -82,7 +82,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-                OutgoingArenaMessage.HolyShield.Wrath(
+                ArenaMessage.HolyShield.Wrath(
                     paladinUserId = defenderUserId,
                     attackerUserId =
                         attackerUserId, // TODO SpellPotency - what if is splash damage?

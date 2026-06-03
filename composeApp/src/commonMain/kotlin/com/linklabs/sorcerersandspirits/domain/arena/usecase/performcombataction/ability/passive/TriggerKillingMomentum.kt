@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 internal class TriggerKillingMomentum(private val combatMutator: CombatMutator) {
@@ -10,7 +10,7 @@ internal class TriggerKillingMomentum(private val combatMutator: CombatMutator) 
     }
 
     private fun CombatMutator.triggerKillingMomentum() {
-        addMessage(message = OutgoingArenaMessage.KillingMomentum)
+        addMessage(message = ArenaMessage.KillingMomentum)
 
         setNextCombatAction(
             nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))

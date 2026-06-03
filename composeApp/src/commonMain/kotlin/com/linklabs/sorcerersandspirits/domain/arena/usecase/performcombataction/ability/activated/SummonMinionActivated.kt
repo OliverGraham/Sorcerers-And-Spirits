@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -14,11 +14,7 @@ internal class SummonMinionActivated(
         val singleDie = diceRoller.roll1D6()
 
         addMessage(
-            message =
-                OutgoingArenaMessage.SummonMinion(
-                    necroUserId = attackerUserId,
-                    singleDie = singleDie,
-                )
+            message = ArenaMessage.SummonMinion(necroUserId = attackerUserId, singleDie = singleDie)
         )
 
         updateAttackerClass { attacker ->

@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -14,7 +14,7 @@ internal class ImpersonateActivated(
     private fun CombatMutator.impersonateOutcome() {
         addMessage(
             message =
-                OutgoingArenaMessage.Impersonate(
+                ArenaMessage.Impersonate(
                     illusionistUserId = attackerUserId,
                     impersonateAbility = impersonateAbility,
                 )

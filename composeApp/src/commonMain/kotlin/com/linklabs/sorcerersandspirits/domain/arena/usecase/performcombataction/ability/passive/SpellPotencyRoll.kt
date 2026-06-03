@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 // TODO: Docstring, etc.
@@ -39,7 +39,7 @@ internal class SpellPotencyRoll(
     private fun CombatMutator.addSpellPotencyMessage(splashDamage: Int) {
         addMessage(
             message =
-                OutgoingArenaMessage.SpellPotency(
+                ArenaMessage.SpellPotency(
                     mageUserId = attackerUserId,
                     mainTargetUserId = defenderUserId,
                     mainDamage = diceTotal,

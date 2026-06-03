@@ -113,7 +113,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
 // TODO: Hmmm
 /*
 internal fun ArenaMatch.toEntity(
-    newMessages: List<OutgoingArenaMessage>,
+    newMessages: List<ArenaMessage>,
     addNewMessageKey: () -> String,
 ): ArenaMatchEntity {
     val existingMessages = messages.map { it.toEntity() }

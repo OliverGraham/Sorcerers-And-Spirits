@@ -1,9 +1,9 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 // TODO Teleport Messages
@@ -15,7 +15,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         combatMutator.handleTeleport(teleport = teleport, userId = userId)
 
     private fun CombatMutator.triggerTeleport() {
-        addMessage(message = OutgoingArenaMessage.Teleport.Trigger)
+        addMessage(message = ArenaMessage.Teleport.Trigger)
 
         setNextCombatAction(
             nextAction =
@@ -76,21 +76,19 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.rollAndMessage(userId: String): Int {
         val newRoll = diceRoller.roll1D6()
 
-        addMessage(
-            message = OutgoingArenaMessage.Teleport.Roll(userId = userId, singleDie = newRoll)
-        )
+        addMessage(message = ArenaMessage.Teleport.Roll(userId = userId, singleDie = newRoll))
 
         return newRoll
     }
 
     private fun CombatMutator.handleTeleportSuccess() {
-        addMessage(message = OutgoingArenaMessage.Teleport.Result(didDefenderEscape = true))
+        addMessage(message = ArenaMessage.Teleport.Result(didDefenderEscape = true))
 
         resolveTurnEnd()
     }
 
     private fun CombatMutator.handleTeleportFailure() {
-        addMessage(message = OutgoingArenaMessage.Teleport.Result(didDefenderEscape = false))
+        addMessage(message = ArenaMessage.Teleport.Result(didDefenderEscape = false))
 
         setNextCombatAction(
             nextAction =

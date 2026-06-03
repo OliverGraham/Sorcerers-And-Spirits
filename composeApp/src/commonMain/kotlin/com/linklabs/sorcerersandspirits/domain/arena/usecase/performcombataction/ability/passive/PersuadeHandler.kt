@@ -1,10 +1,10 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.NormalAttackRollHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
@@ -18,7 +18,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     fun charm(charm: AbilityAction.Passive.Persuade.Charm) = combatMutator.charm(charm = charm)
 
     private fun CombatMutator.triggerPersuade(attackerRollTotal: Int) {
-        addMessage(message = OutgoingArenaMessage.Persuade.Trigger)
+        addMessage(message = ArenaMessage.Persuade.Trigger)
 
         val purpose =
             AbilityAction.Passive.Persuade.StrumLute(attackerRollTotal = attackerRollTotal)
@@ -42,11 +42,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.handleStrumLuteFailure(persuadeDie: Int) {
         addMessage(
-            message =
-                OutgoingArenaMessage.Persuade.StrumLute(
-                    diceRoll = persuadeDie,
-                    isSuccessful = false,
-                )
+            message = ArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = false)
         )
 
         val healthAttackRoll =
@@ -79,8 +75,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.strumLuteToLull(persuadeDie: Int) {
         // TODO Persuade: "Bard rolled a 5 and stopped $Attacker's attack!"
         addMessage(
-            message =
-                OutgoingArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = true)
+            message = ArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = true)
         )
         resolveTurnEnd()
     }
@@ -88,7 +83,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.strumLuteToCharm(charmTargetUserIds: Set<String>) {
         // TODO Persuade: "Bard rolled a 6, stopped $Attacker's attack and now forcing $Attacker to
         //  fight someone else!"
-        addMessage(message = OutgoingArenaMessage.Persuade.CharmActivation)
+        addMessage(message = ArenaMessage.Persuade.CharmActivation)
 
         val purpose =
             AbilityAction.Passive.Persuade.Charm(
@@ -111,7 +106,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         // TODO Persuade: "Under Bard's control, $Attacker attacks $Defender!"
         addMessage(
             message =
-                OutgoingArenaMessage.Persuade.Charm(
+                ArenaMessage.Persuade.Charm(
                     attackerUserId = attackerUserId,
                     defenderUserId = selectedCharmTargetUserId,
                 )

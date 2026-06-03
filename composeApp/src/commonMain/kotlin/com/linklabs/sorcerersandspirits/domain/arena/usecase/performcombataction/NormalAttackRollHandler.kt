@@ -1,11 +1,11 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.LuckyCoinHandler
@@ -172,7 +172,7 @@ internal class NormalAttackRollHandler(private val firstDie: Int, private val se
     private fun CombatMutator.addNormalRollMessage(type: NormalRollMessageType) {
         addMessage(
             message =
-                OutgoingArenaMessage.NormalRoll(
+                ArenaMessage.NormalRoll(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                     firstDie = firstDie,

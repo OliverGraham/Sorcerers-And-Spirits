@@ -2,10 +2,10 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.MirrorImageDie
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -39,7 +39,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         attackType: NormalAttackType,
         mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
     ) {
-        addMessage(message = OutgoingArenaMessage.MirrorImage.Trigger)
+        addMessage(message = ArenaMessage.MirrorImage.Trigger)
 
         val purpose =
             AbilityAction.Passive.MirrorImage(
@@ -78,8 +78,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         // TODO MirrorImage - message could be combined with more properties to have a single
         //  message for the "Illusionist tempts fate, rerolls a die and {AC outcome || HP outcome}"
         addMessage(
-            message =
-                OutgoingArenaMessage.MirrorImage.TemptFate(rerolledMirrorImageDie = rerolledDie)
+            message = ArenaMessage.MirrorImage.TemptFate(rerolledMirrorImageDie = rerolledDie)
         )
 
         val totalRoll = rerolledDie.finalValue + originalDie.finalValue

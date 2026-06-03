@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
@@ -22,6 +22,6 @@ internal class TriggerDodge(
             updateDefenderClass { playerClass -> playerClass.copy(defensiveAbility = updatedDodge) }
         }
 
-        addMessage(message = OutgoingArenaMessage.Dodge(didArmorIncrease = didArmorIncrease))
+        addMessage(message = ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease))
     }
 }

@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
@@ -34,74 +35,87 @@ sealed interface ArenaMessageState {
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
 fun IncomingArenaMessage.toState(): ArenaMessageState =
-    when (this) {
-        is IncomingArenaMessage.NewRound ->
-            ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
+    when (val message = this.message) {
+        is ArenaMessage.NewRound ->
+            ArenaMessageState.NewRound(id = id, roundNumber = message.roundNumber.toString())
 
-        is IncomingArenaMessage.ChoseCharacterClass ->
+        is ArenaMessage.ChoseCharacterClass ->
             ArenaMessageState.ChoseCharacterClass(
                 id = id,
-                displayName = displayName,
-                characterClassInfo = characterClassInfo.toState(),
+                displayName = message.displayName,
+                characterClassInfo = message.characterClassInfo.toState(),
             )
 
-        is IncomingArenaMessage.ConnectedToArena ->
-            ArenaMessageState.ConnectedToArena(id = id, displayName = displayName)
+        is ArenaMessage.ConnectedToArena ->
+            ArenaMessageState.ConnectedToArena(id = id, displayName = message.displayName)
 
-        is IncomingArenaMessage.NewTurn ->
-            ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
+        is ArenaMessage.NewTurn ->
+            ArenaMessageState.NewTurn(
+                id = id,
+                characterClassInfo = message.characterClassInfo.toState(),
+            )
 
-        is IncomingArenaMessage.AllIn -> TODO()
+        is ArenaMessage.AllIn -> TODO()
 
-        is IncomingArenaMessage.Dodge -> TODO()
+        is ArenaMessage.Dodge -> TODO()
 
-        is IncomingArenaMessage.Encore -> TODO()
+        is ArenaMessage.Encore.Trigger -> TODO()
 
-        is IncomingArenaMessage.HolyShield.Reflect -> TODO()
+        is ArenaMessage.Encore.Roll -> TODO()
 
-        is IncomingArenaMessage.HolyShield.Survival -> TODO()
+        is ArenaMessage.HolyShield.Wrath -> TODO()
 
-        is IncomingArenaMessage.HolyShield.Trigger -> TODO()
+        is ArenaMessage.HolyShield.Prayer -> TODO()
 
-        is IncomingArenaMessage.Impersonate -> TODO()
+        is ArenaMessage.HolyShield.Trigger -> TODO()
 
-        is IncomingArenaMessage.KillingMomentum -> TODO()
+        is ArenaMessage.Impersonate -> TODO()
 
-        is IncomingArenaMessage.LuckyCoin.ArmorClassRoll -> TODO()
+        is ArenaMessage.KillingMomentum -> TODO()
 
-        is IncomingArenaMessage.LuckyCoin.ReflectRoll -> TODO()
+        is ArenaMessage.LuckyCoin.Flip -> TODO()
 
-        is IncomingArenaMessage.LuckyCoin.Trigger -> TODO()
+        is ArenaMessage.LuckyCoin.HighRollerDamage -> TODO()
 
-        is IncomingArenaMessage.MirrorImage.Pass -> TODO()
+        is ArenaMessage.LuckyCoin.HighRollerTrigger -> TODO()
 
-        is IncomingArenaMessage.MirrorImage.Reroll -> TODO()
+        is ArenaMessage.LuckyCoin.Trigger -> TODO()
 
-        is IncomingArenaMessage.MirrorImage.Trigger -> TODO()
+        is ArenaMessage.MirrorImage.Pass -> TODO()
 
-        is IncomingArenaMessage.NormalRoll -> TODO()
+        is ArenaMessage.MirrorImage.Reroll -> TODO()
 
-        is IncomingArenaMessage.Persuade.Charm -> TODO()
+        is ArenaMessage.MirrorImage.Trigger -> TODO()
 
-        is IncomingArenaMessage.Persuade.Lull -> TODO()
+        is ArenaMessage.MirrorImage.TemptFate -> TODO()
 
-        is IncomingArenaMessage.Persuade.Trigger -> TODO()
+        is ArenaMessage.NormalRoll -> TODO()
 
-        is IncomingArenaMessage.PrepareAttack -> TODO()
+        is ArenaMessage.Persuade.Charm -> TODO()
 
-        is IncomingArenaMessage.Riposte.EnGarde -> TODO()
+        is ArenaMessage.Persuade.CharmActivation -> TODO()
 
-        is IncomingArenaMessage.Riposte.Trigger -> TODO()
+        is ArenaMessage.Persuade.Lull -> TODO()
 
-        is IncomingArenaMessage.SpellPotency -> TODO()
+        is ArenaMessage.Persuade.StrumLute -> TODO()
 
-        is IncomingArenaMessage.SummonMinion -> TODO()
+        is ArenaMessage.Persuade.Trigger -> TODO()
 
-        is IncomingArenaMessage.Teleport.Result -> TODO()
+        is ArenaMessage.PrepareAttack -> TODO()
 
-        is IncomingArenaMessage.Teleport.Roll -> TODO()
+        is ArenaMessage.Riposte.EnGarde -> TODO()
 
-        is IncomingArenaMessage.Teleport.Trigger -> TODO()
+        is ArenaMessage.Riposte.Trigger -> TODO()
+
+        is ArenaMessage.SpellPotency -> TODO()
+
+        is ArenaMessage.SummonMinion -> TODO()
+
+        is ArenaMessage.Teleport.Result -> TODO()
+
+        is ArenaMessage.Teleport.Roll -> TODO()
+
+        is ArenaMessage.Teleport.Trigger -> TODO()
     }
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =

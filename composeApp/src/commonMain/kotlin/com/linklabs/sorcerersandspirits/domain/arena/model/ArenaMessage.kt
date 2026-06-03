@@ -2,18 +2,18 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-sealed interface OutgoingArenaMessage {
+sealed interface ArenaMessage {
 
     data class ChoseCharacterClass(
         val displayName: String,
         val characterClassInfo: CharacterClassMessageInfo,
-    ) : OutgoingArenaMessage
+    ) : ArenaMessage
 
-    data class ConnectedToArena(val displayName: String) : OutgoingArenaMessage
+    data class ConnectedToArena(val displayName: String) : ArenaMessage
 
-    data class NewRound(val roundNumber: Int) : OutgoingArenaMessage
+    data class NewRound(val roundNumber: Int) : ArenaMessage
 
-    data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : OutgoingArenaMessage
+    data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : ArenaMessage
 
     data class NormalRoll(
         val attackerUserId: String,
@@ -21,13 +21,13 @@ sealed interface OutgoingArenaMessage {
         val firstDie: Int,
         val secondDie: Int,
         val type: NormalRollMessageType,
-    ) : OutgoingArenaMessage
+    ) : ArenaMessage
 
-    data object KillingMomentum : OutgoingArenaMessage
+    data object KillingMomentum : ArenaMessage
 
-    data class Dodge(val didArmorIncrease: Boolean) : OutgoingArenaMessage
+    data class Dodge(val didArmorIncrease: Boolean) : ArenaMessage
 
-    sealed interface Teleport : OutgoingArenaMessage {
+    sealed interface Teleport : ArenaMessage {
         data object Trigger : Teleport
 
         data class Roll(val userId: String, val singleDie: Int) : Teleport
@@ -36,7 +36,7 @@ sealed interface OutgoingArenaMessage {
     }
 
     // TODO LuckyCoin is this the right approach for messages?
-    sealed interface LuckyCoin : OutgoingArenaMessage {
+    sealed interface LuckyCoin : ArenaMessage {
 
         data object Trigger : LuckyCoin
 
@@ -47,16 +47,16 @@ sealed interface OutgoingArenaMessage {
         data class HighRollerDamage(val singleDie: Int, val isKnockout: Boolean) : LuckyCoin
     }
 
-    sealed interface Riposte : OutgoingArenaMessage {
+    sealed interface Riposte : ArenaMessage {
         data object Trigger : Riposte
 
         data class EnGarde(val firstDie: Int, val secondDie: Int, val isSuccessful: Boolean) :
             Riposte
     }
 
-    data class SummonMinion(val necroUserId: String, val singleDie: Int) : OutgoingArenaMessage
+    data class SummonMinion(val necroUserId: String, val singleDie: Int) : ArenaMessage
 
-    sealed interface Persuade : OutgoingArenaMessage {
+    sealed interface Persuade : ArenaMessage {
 
         data object Trigger : Persuade
 
@@ -69,19 +69,19 @@ sealed interface OutgoingArenaMessage {
         data class Charm(val attackerUserId: String, val defenderUserId: String) : Persuade
     }
 
-    sealed interface Encore : OutgoingArenaMessage {
+    sealed interface Encore : ArenaMessage {
         data object Trigger : Encore
 
-        data class Roll(val encoreDie: Int, val isSuccessful: Boolean) : OutgoingArenaMessage
+        data class Roll(val encoreDie: Int, val isSuccessful: Boolean) : ArenaMessage
     }
 
     data class Impersonate(
         val illusionistUserId: String,
         val impersonateAbility: OffensiveAbility.Impersonate,
-    ) : OutgoingArenaMessage
+    ) : ArenaMessage
 
     // TODO MirrorImage
-    sealed interface MirrorImage : OutgoingArenaMessage {
+    sealed interface MirrorImage : ArenaMessage {
         data object Trigger : MirrorImage
 
         data object Pass : MirrorImage
@@ -98,9 +98,9 @@ sealed interface OutgoingArenaMessage {
         val mainTargetUserId: String,
         val mainDamage: Int,
         val splashDamage: Int,
-    ) : OutgoingArenaMessage
+    ) : ArenaMessage
 
-    sealed interface HolyShield : OutgoingArenaMessage {
+    sealed interface HolyShield : ArenaMessage {
 
         data object Trigger : HolyShield
 
@@ -114,7 +114,7 @@ sealed interface OutgoingArenaMessage {
         ) : HolyShield
     }
 
-    data class AllIn(val gamblerUserId: String, val singleDie: Int) : OutgoingArenaMessage
+    data class AllIn(val gamblerUserId: String, val singleDie: Int) : ArenaMessage
 
     data class PrepareAttack(
         val duelistUserId: String,
@@ -122,7 +122,7 @@ sealed interface OutgoingArenaMessage {
         val firstDie: Int,
         val secondDie: Int,
         val isSuccessful: Boolean,
-    ) : OutgoingArenaMessage
+    ) : ArenaMessage
 }
 
 enum class NormalRollMessageType {

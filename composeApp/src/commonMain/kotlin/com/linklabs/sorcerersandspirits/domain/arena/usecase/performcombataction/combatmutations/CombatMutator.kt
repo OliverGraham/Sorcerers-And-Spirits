@@ -1,10 +1,10 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
@@ -19,7 +19,7 @@ internal class CombatMutator(
     val originalTurnUserId: String,
     val diceRoller: DiceRoller,
     private val roundNumber: Int,
-    private val messages: MutableList<OutgoingArenaMessage> = mutableListOf(),
+    private val messages: MutableList<ArenaMessage> = mutableListOf(),
 ) {
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
@@ -75,7 +75,7 @@ internal class CombatMutator(
         updateDefenderClass { defender -> defender.copy(hitPoints = hitPoints) }
     }
 
-    fun addMessage(message: OutgoingArenaMessage) {
+    fun addMessage(message: ArenaMessage) {
         messages.add(element = message)
     }
 
@@ -98,7 +98,7 @@ internal class CombatMutator(
         updatedRoundNumber = newRoundNumber
 
         resetAllPlayersActed()
-        messages.add(element = OutgoingArenaMessage.NewRound(roundNumber = newRoundNumber))
+        messages.add(element = ArenaMessage.NewRound(roundNumber = newRoundNumber))
 
         val fastestPlayerNextRound = consciousPlayers.maxBy { it.characterClass.speed }
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
@@ -150,8 +150,6 @@ internal class CombatMutator(
 
     private fun CharacterClass.addNewTurnMessage() {
         val characterClassInfo = CharacterClassMessageInfo(className = className, type = type)
-        messages.add(
-            element = OutgoingArenaMessage.NewTurn(characterClassInfo = characterClassInfo)
-        )
+        messages.add(element = ArenaMessage.NewTurn(characterClassInfo = characterClassInfo))
     }
 }

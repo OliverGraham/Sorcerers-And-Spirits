@@ -1,9 +1,9 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -14,7 +14,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     fun rollEncore() = combatMutator.rollEncore()
 
     private fun CombatMutator.triggerEncore() {
-        addMessage(message = OutgoingArenaMessage.Encore.Trigger)
+        addMessage(message = ArenaMessage.Encore.Trigger)
 
         val purpose = AbilityAction.Passive.Encore
         setNextCombatAction(
@@ -31,8 +31,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         val isSuccessful = encoreDie in ENCORE_SUCCESS_RANGE
 
         addMessage(
-            message =
-                OutgoingArenaMessage.Encore.Roll(encoreDie = encoreDie, isSuccessful = isSuccessful)
+            message = ArenaMessage.Encore.Roll(encoreDie = encoreDie, isSuccessful = isSuccessful)
         )
 
         if (isSuccessful) {

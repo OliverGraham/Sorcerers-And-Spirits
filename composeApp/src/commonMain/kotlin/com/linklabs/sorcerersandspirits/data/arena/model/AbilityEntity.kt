@@ -76,8 +76,9 @@ internal fun DefensiveAbility.toEntity(): DefensiveAbilityEntity =
 
         is DefensiveAbility.Persuade -> DefensiveAbilityEntity.Persuade
 
+        // TODO Fix big time
         is DefensiveAbility.MirrorImage ->
-            DefensiveAbilityEntity.MirrorImage(usedThisRound = usedThisRound)
+            DefensiveAbilityEntity.MirrorImage(usedThisRound = usedThisAttack)
 
         is DefensiveAbility.Teleport -> DefensiveAbilityEntity.Teleport
 
@@ -122,8 +123,9 @@ internal fun DefensiveAbilityEntity.toDomain(): DefensiveAbility =
 
         is DefensiveAbilityEntity.Persuade -> DefensiveAbility.Persuade
 
+        // TODO Fix big time
         is DefensiveAbilityEntity.MirrorImage ->
-            DefensiveAbility.MirrorImage(usedThisRound = usedThisRound)
+            DefensiveAbility.MirrorImage(usedThisAttack = usedThisRound)
 
         is DefensiveAbilityEntity.Teleport -> DefensiveAbility.Teleport
 

@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.OutgoingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 internal class PrepareAttackActivated(private val combatMutator: CombatMutator) {
@@ -16,7 +16,7 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
 
         addMessage(
             message =
-                OutgoingArenaMessage.PrepareAttack(
+                ArenaMessage.PrepareAttack(
                     duelistUserId = attackerUserId,
                     targetUserId = defenderUserId,
                     firstDie = firstDie,

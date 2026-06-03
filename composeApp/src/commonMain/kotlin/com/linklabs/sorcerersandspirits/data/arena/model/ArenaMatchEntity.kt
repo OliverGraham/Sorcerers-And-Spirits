@@ -33,6 +33,7 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val nextCombatActionEntity: NextCombatActionEntity,
+        // TODO: Delete nextActivePlayerUserId
         val nextActivePlayerUserId: String,
         val roundNumber: Int,
         val isNewRound: Boolean,

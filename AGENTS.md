@@ -7,7 +7,7 @@ Game state flows circularly through the app:
 Data -> Domain -> UI -> user chooses action/targets -> Domain -> Data -> emitted/distributed to
 other clients
 
-The game uses RTDB as the shared persisted game-state source.
+The game uses Firebase's RealTime Database as the shared persisted game-state source.
 
 Game terminology:
 
@@ -16,8 +16,7 @@ Game terminology:
 - "Round" A round consists of every player acting
 - "Turn" A player attacking or using their ability
 - "Activated Ability" an ability that is used instead of attacking (Impersonate and Allin are an
-  exceptions and
-  don't use up an attack).
+  exceptions and don't use up an attack).
 
 Core normal combat rules:
 
@@ -45,43 +44,6 @@ Core normal combat rules:
       Duelist's Riposte ability and this would nullify the attacker's double roll, because the
       Duelist got the dice and the doubles roll is no longer consecutive.
 
-Some abilities require multiple precise roll steps. The Domain needs to know:
-
-- who is attacking
-- who is defending
-- who is currently rolling
-- what exact purpose this roll has
-- what dice should be rolled
-- what should happen after the roll resolves
-
-Example problem:
-Rogue attacks Mage and scores a hit against Mage ArmorClass.
-
-Mage has Teleport:
-"When your armor is passed: Roll off 1D6 with attacker. If you roll higher, escape the attack."
-
-That means the flow is:
-
-1. Rogue attacks Mage.
-2. Rogue rolls 2d6 against Mage armor.
-3. Rogue succeeds.
-4. Mage Teleport triggers.
-5. The current active roller becomes Mage.
-6. Mage rolls 1d6.
-7. Mage roll is saved to RTDB and emitted.
-8. The current active roller becomes Rogue.
-9. Rogue rolls 1d6.
-10. Rogue roll is saved to RTDB and emitted.
-11. The two rolls are compared.
-12. If Mage rolled higher, Mage escapes and the attack ends.
-13. Otherwise, Rogue continues to the health roll against Mage.
-
-So RollType.AbilityRoll(DefensiveAbility.Teleport) is not enough, because Teleport has at least two
-different roll steps:
-
-- Teleport.DefenderEscapeRoll
-- Teleport.AttackerChaseRoll
-
 Class abilities:
 
 Rogue:
@@ -94,7 +56,7 @@ Rogue:
 Gambler:
 
 - Offensive: All-In
-    - Activated choice
+    - Activated choice - Does not use Gambler's normal attack roll
     - Roll 1d6.
         - on 1, Gambler knocks themselves out. on 5 or 6, Gambler attacks twice this round. on 2, 3
           or 4, there's no effect.
@@ -105,7 +67,7 @@ Gambler:
 Duelist:
 
 - Offensive: Prepare Attack
-    - Activated.
+    - Activated - Used instead of normal attack roll
     - Roll 2d6.
         - 10, 11 or 12 K.O.s the target.
 - Defensive: Riposte
@@ -135,7 +97,7 @@ Bard:
 
 Illusionist:
 
-- Offensive: Impersonate
+- Offensive: Impersonate - Does not use Illusionist's normal attack roll
     - Copy an offensive SPC ability from a living opponent until end of match or until another is
       chosen.
 - Defensive: Mirror Image
@@ -162,17 +124,3 @@ Paladin:
             - If Paladin survives, roll 1d6 damage to attacker (no ArmorClass roll - this damage is
               unblockable and goes directly to attacker's health).
         - Also: 12 stops Duelist's Prepare Attack.
-
-Recommended modeling direction:
-Do not model the active roll only as RollType.
-Model combat as a state machine.
-
-Recommended concepts:
-
-RollType = what category of roll is this?
-CombatStep = where are we in the combat state machine?
-RollPurpose = why exactly is this player rolling?
-AbilityCombatHandler = how does this ability advance the state machine?
-
-Abilities like Teleport, Persuade, Riposte, Holy Shield, All-In, Summon Minion, Encore, and
-Mirror Image are not single rolls. They are mini state machines.

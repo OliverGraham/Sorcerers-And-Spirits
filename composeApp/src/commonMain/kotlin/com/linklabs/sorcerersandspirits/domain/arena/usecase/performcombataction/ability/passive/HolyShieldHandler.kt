@@ -78,7 +78,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.wrathRoll() {
-        val wrathDamage = diceRoller.roll1D6(userId = defenderUserId)
+        val result = diceRoller.roll1D6(userId = defenderUserId).total
 
         addMessage(
             message =
@@ -86,13 +86,11 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
                     paladinUserId = defenderUserId,
                     attackerUserId =
                         attackerUserId, // TODO SpellPotency - what if is splash damage?
-                    singleDie = wrathDamage,
+                    singleDie = result,
                 )
         )
 
-        updateDefenderClass { defender ->
-            defender.copy(hitPoints = defender.hitPoints - wrathDamage)
-        }
+        updateDefenderClass { defender -> defender.copy(hitPoints = defender.hitPoints - result) }
 
         resolveWrath()
     }

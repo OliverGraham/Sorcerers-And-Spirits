@@ -4,7 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import kotlin.random.Random
 
 interface DiceRoller {
-    fun roll1D6(userId: String): Int
+    fun roll1D6(userId: String): RollResult.OneDie
 
     fun roll2D6(userId: String): RollResult.TwoDice
 
@@ -16,6 +16,10 @@ interface DiceRoller {
 sealed interface RollResult {
     val total: Int
 
+    data class OneDie(val die: Int, val bonus: Int = 0) : RollResult {
+        override val total: Int = die + bonus
+    }
+
     data class TwoDice(val firstDie: Int, val secondDie: Int, val bonus: Int = 0) : RollResult {
         override val total: Int = firstDie + secondDie + bonus
         val isDoubles: Boolean = firstDie == secondDie
@@ -25,9 +29,9 @@ sealed interface RollResult {
 class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
     private var doublesBonus: DoublesBonus? = initialBonus
 
-    override fun roll1D6(userId: String): Int {
+    override fun roll1D6(userId: String): RollResult.OneDie {
         val bonus = consumeBonus(userId = userId)
-        return Random.nextInt(from = 1, until = 7) + bonus
+        return RollResult.OneDie(die = Random.nextInt(from = 1, until = 7), bonus = bonus)
     }
 
     override fun roll2D6(userId: String): RollResult.TwoDice {

@@ -11,10 +11,10 @@ internal class SummonMinionActivated(
     operator fun invoke() = combatMutator.summonMinionOutcome()
 
     private fun CombatMutator.summonMinionOutcome() {
-        val singleDie = diceRoller.roll1D6(userId = attackerUserId)
+        val result = diceRoller.roll1D6(userId = attackerUserId).total
 
         addMessage(
-            message = ArenaMessage.SummonMinion(necroUserId = attackerUserId, singleDie = singleDie)
+            message = ArenaMessage.SummonMinion(necroUserId = attackerUserId, singleDie = result)
         )
 
         updateAttackerClass { attacker ->
@@ -22,7 +22,7 @@ internal class SummonMinionActivated(
             var newGolemCount = summonMinionAbility.golemCount
             var newHp = attacker.hitPoints
 
-            when (singleDie) {
+            when (result) {
                 2,
                 3 -> newSkeletonCount++
 

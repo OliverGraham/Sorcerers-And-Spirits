@@ -32,11 +32,11 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.strumLute() {
-        val persuadeDie = diceRoller.roll1D6(userId = defenderUserId)
-        if (persuadeDie < LULL) {
-            handleStrumLuteFailure(persuadeDie = persuadeDie)
+        val result = diceRoller.roll1D6(userId = defenderUserId).total
+        if (result < LULL) {
+            handleStrumLuteFailure(persuadeDie = result)
         } else {
-            handleStrumLuteSuccess(persuadeDie = persuadeDie)
+            handleStrumLuteSuccess(persuadeDie = result)
         }
     }
 

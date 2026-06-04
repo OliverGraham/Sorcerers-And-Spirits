@@ -31,12 +31,12 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.flipLuckyCoin() {
-        val luckyCoinArmorBonus = diceRoller.roll1D6(userId = defenderUserId)
+        val result = diceRoller.roll1D6(userId = defenderUserId).total
 
-        if (luckyCoinArmorBonus == 6) {
+        if (result == 6) {
             triggerHighRoller()
         } else {
-            handleNormalRoll(luckyCoinArmorBonus = luckyCoinArmorBonus)
+            handleNormalRoll(luckyCoinArmorBonus = result)
         }
     }
 
@@ -61,19 +61,14 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.handleHighRoller() {
-        val highRollerDamageRoll = diceRoller.roll1D6(userId = defenderUserId)
+        val result = diceRoller.roll1D6(userId = defenderUserId).total
 
-        updateAttackerClass { attacker ->
-            attacker.copy(hitPoints = attacker.hitPoints - highRollerDamageRoll)
-        }
+        updateAttackerClass { attacker -> attacker.copy(hitPoints = attacker.hitPoints - result) }
 
         val isKnockout = !attacker.isConscious()
         addMessage(
             message =
-                ArenaMessage.LuckyCoin.HighRollerDamage(
-                    singleDie = highRollerDamageRoll,
-                    isKnockout = isKnockout,
-                )
+                ArenaMessage.LuckyCoin.HighRollerDamage(singleDie = result, isKnockout = isKnockout)
         )
 
         if (isKnockout) {

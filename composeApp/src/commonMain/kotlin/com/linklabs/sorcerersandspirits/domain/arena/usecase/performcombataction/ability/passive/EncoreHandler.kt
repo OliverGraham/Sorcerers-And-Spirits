@@ -27,11 +27,11 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rollEncore() {
-        val total = diceRoller.roll1D6(userId = attackerUserId)
-        val isSuccessful = total in ENCORE_SUCCESS_RANGE
+        val result = diceRoller.roll1D6(userId = attackerUserId).total
+        val isSuccessful = result in ENCORE_SUCCESS_RANGE
 
         addMessage(
-            message = ArenaMessage.Encore.Roll(encoreDie = total, isSuccessful = isSuccessful)
+            message = ArenaMessage.Encore.Roll(encoreDie = result, isSuccessful = isSuccessful)
         )
 
         if (isSuccessful) {

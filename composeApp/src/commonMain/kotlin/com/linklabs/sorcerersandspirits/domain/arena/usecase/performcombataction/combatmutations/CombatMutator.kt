@@ -46,6 +46,7 @@ internal class CombatMutator(
             nextCombatAction = nextCombatAction,
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
+            doublesBonus = diceRoller.getDoublesBonus(),
         )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {

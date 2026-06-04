@@ -28,14 +28,14 @@ internal class RiposteHandler(
     }
 
     private fun CombatMutator.rollRiposte() {
-        val (firstDie, secondDie) = diceRoller.roll2D6()
-        val isSuccessful = firstDie + secondDie in SUCCESS_RANGE
+        val result = diceRoller.roll2D6(userId = defenderUserId)
+        val isSuccessful = result.total in SUCCESS_RANGE
 
         addMessage(
             message =
                 ArenaMessage.Riposte.EnGarde(
-                    firstDie = firstDie,
-                    secondDie = secondDie,
+                    firstDie = result.firstDie,
+                    secondDie = result.secondDie,
                     isSuccessful = isSuccessful,
                 )
         )

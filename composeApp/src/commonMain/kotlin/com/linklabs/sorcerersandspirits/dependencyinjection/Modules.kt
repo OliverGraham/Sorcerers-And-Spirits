@@ -10,8 +10,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatc
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
-import com.linklabs.sorcerersandspirits.domain.arena.utilities.RealDiceRoller
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
@@ -54,7 +52,6 @@ private fun Module.initializeParameters() {
     single { Firebase.database }
     single { Firebase.firestore }
     single { CoroutineScope(context = Dispatchers.IO) }
-    singleOf(::RealDiceRoller) { bind<DiceRoller>() }
 }
 
 private fun Module.initializeRepositories() {

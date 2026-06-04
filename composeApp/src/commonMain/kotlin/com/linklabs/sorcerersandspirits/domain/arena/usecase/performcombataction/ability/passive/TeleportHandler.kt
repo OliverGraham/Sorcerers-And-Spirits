@@ -74,7 +74,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         }
 
     private fun CombatMutator.rollAndMessage(userId: String): Int {
-        val newRoll = diceRoller.roll1D6()
+        val newRoll = diceRoller.roll1D6(userId = userId)
 
         addMessage(message = ArenaMessage.Teleport.Roll(userId = userId, singleDie = newRoll))
 

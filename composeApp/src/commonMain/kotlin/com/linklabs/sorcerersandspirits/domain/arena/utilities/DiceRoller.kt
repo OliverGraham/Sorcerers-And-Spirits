@@ -1,16 +1,53 @@
 package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import kotlin.random.Random
 
 interface DiceRoller {
-    fun roll1D6(): Int
+    fun roll1D6(userId: String): Int
 
-    fun roll2D6(): Pair<Int, Int>
+    fun roll2D6(userId: String): RollResult.TwoDice
+
+    fun getDoublesBonus(): DoublesBonus?
+
+    fun setDoublesBonus(userId: String)
 }
 
-class RealDiceRoller : DiceRoller {
-    override fun roll1D6(): Int = Random.nextInt(from = 1, until = 7)
+sealed interface RollResult {
+    val total: Int
 
-    override fun roll2D6(): Pair<Int, Int> =
-        Pair(Random.nextInt(from = 1, until = 7), Random.nextInt(from = 1, until = 7))
+    data class TwoDice(val firstDie: Int, val secondDie: Int, val bonus: Int = 0) : RollResult {
+        override val total: Int = firstDie + secondDie + bonus
+        val isDoubles: Boolean = firstDie == secondDie
+    }
+}
+
+class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
+    private var doublesBonus: DoublesBonus? = initialBonus
+
+    override fun roll1D6(userId: String): Int {
+        val bonus = consumeBonus(userId = userId)
+        return Random.nextInt(from = 1, until = 7) + bonus
+    }
+
+    override fun roll2D6(userId: String): RollResult.TwoDice {
+        val bonus = consumeBonus(userId = userId)
+        return RollResult.TwoDice(
+            firstDie = Random.nextInt(from = 1, until = 7),
+            secondDie = Random.nextInt(from = 1, until = 7),
+            bonus = bonus,
+        )
+    }
+
+    override fun getDoublesBonus(): DoublesBonus? = doublesBonus
+
+    private fun consumeBonus(userId: String): Int {
+        val bonus = if (doublesBonus?.userId == userId) 1 else 0
+        doublesBonus = null
+        return bonus
+    }
+
+    override fun setDoublesBonus(userId: String) {
+        doublesBonus = DoublesBonus(userId)
+    }
 }

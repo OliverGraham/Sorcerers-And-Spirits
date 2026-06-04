@@ -33,14 +33,14 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.attemptPrayer() {
-        val (firstDie, secondDie) = diceRoller.roll2D6()
-        val didSurvive = firstDie + secondDie in HOLY_SHIELD_SUCCESS_RANGE
+        val result = diceRoller.roll2D6(userId = defenderUserId)
+        val didSurvive = result.total in HOLY_SHIELD_SUCCESS_RANGE
 
         addMessage(
             message =
                 ArenaMessage.HolyShield.Prayer(
-                    firstDie = firstDie,
-                    secondDie = secondDie,
+                    firstDie = result.firstDie,
+                    secondDie = result.secondDie,
                     didSurvive = didSurvive,
                 )
         )
@@ -78,7 +78,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.wrathRoll() {
-        val wrathDamage = diceRoller.roll1D6()
+        val wrathDamage = diceRoller.roll1D6(userId = defenderUserId)
 
         addMessage(
             message =

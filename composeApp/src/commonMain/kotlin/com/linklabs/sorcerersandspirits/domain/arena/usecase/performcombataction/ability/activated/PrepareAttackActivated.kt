@@ -7,8 +7,8 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
     operator fun invoke() = combatMutator.prepareAttackOutcome()
 
     private fun CombatMutator.prepareAttackOutcome() {
-        val (firstDie, secondDie) = diceRoller.roll2D6()
-        val isSuccessful = firstDie + secondDie in 10..12
+        val result = diceRoller.roll2D6(userId = attackerUserId)
+        val isSuccessful = result.total in 10..12
 
         if (isSuccessful) {
             updateDefenderHitPoints(hitPoints = 0)
@@ -19,8 +19,8 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                 ArenaMessage.PrepareAttack(
                     duelistUserId = attackerUserId,
                     targetUserId = defenderUserId,
-                    firstDie = firstDie,
-                    secondDie = secondDie,
+                    firstDie = result.firstDie,
+                    secondDie = result.secondDie,
                     isSuccessful = isSuccessful,
                 )
         )

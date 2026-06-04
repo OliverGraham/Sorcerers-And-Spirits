@@ -25,6 +25,7 @@ sealed interface ArenaMatch {
         val nextCombatAction: NextCombatAction,
         val roundNumber: Int,
         val isNewRound: Boolean,
+        val doublesBonus: DoublesBonus?,
     ) : ArenaMatch
 
     data class Finished(

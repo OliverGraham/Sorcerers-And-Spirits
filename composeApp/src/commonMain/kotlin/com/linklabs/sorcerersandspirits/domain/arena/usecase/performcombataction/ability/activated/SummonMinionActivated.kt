@@ -11,7 +11,7 @@ internal class SummonMinionActivated(
     operator fun invoke() = combatMutator.summonMinionOutcome()
 
     private fun CombatMutator.summonMinionOutcome() {
-        val singleDie = diceRoller.roll1D6()
+        val singleDie = diceRoller.roll1D6(userId = attackerUserId)
 
         addMessage(
             message = ArenaMessage.SummonMinion(necroUserId = attackerUserId, singleDie = singleDie)

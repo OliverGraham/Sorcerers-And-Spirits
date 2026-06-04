@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
@@ -11,4 +12,5 @@ data class ActionOutcome(
     val nextCombatAction: NextCombatAction,
     val roundNumber: Int,
     val isNewRound: Boolean,
+    val doublesBonus: DoublesBonus?,
 )

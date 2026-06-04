@@ -12,7 +12,7 @@ internal class AllInActivated(
     operator fun invoke() = combatMutator.handleOutcome()
 
     private fun CombatMutator.handleOutcome() {
-        val singleDie = diceRoller.roll1D6()
+        val singleDie = diceRoller.roll1D6(userId = attackerUserId)
         addMessage(
             message = ArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = singleDie)
         )

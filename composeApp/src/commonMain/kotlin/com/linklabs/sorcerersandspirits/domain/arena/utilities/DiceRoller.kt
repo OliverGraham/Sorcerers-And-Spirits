@@ -33,10 +33,15 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
     override fun roll2D6(userId: String): RollResult.TwoDice {
         val bonus = consumeBonus(userId = userId)
         return RollResult.TwoDice(
-            firstDie = Random.nextInt(from = 1, until = 7),
-            secondDie = Random.nextInt(from = 1, until = 7),
-            bonus = bonus,
-        )
+                firstDie = Random.nextInt(from = 1, until = 7),
+                secondDie = Random.nextInt(from = 1, until = 7),
+                bonus = bonus,
+            )
+            .also { result ->
+                if (result.isDoubles) {
+                    setDoublesBonus(userId = userId)
+                }
+            }
     }
 
     override fun getDoublesBonus(): DoublesBonus? = doublesBonus

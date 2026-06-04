@@ -60,13 +60,8 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         fun triggerEncoreIfApplicable(
             combatMutator: CombatMutator,
             offensiveAbility: OffensiveAbility,
-            isDoubles: Boolean = false,
         ): Boolean {
             if (offensiveAbility !is OffensiveAbility.Encore) return false
-
-            if (isDoubles) {
-                combatMutator.diceRoller.setDoublesBonus(userId = combatMutator.attackerUserId)
-            }
 
             EncoreHandler(combatMutator = combatMutator).triggerEncore()
 

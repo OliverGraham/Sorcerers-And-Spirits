@@ -20,8 +20,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
-internal class NormalAttackRollHandler(private val firstDie: Int, private val secondDie: Int) {
-    private val diceTotal = firstDie + secondDie
+internal class NormalAttackRollHandler(
+    private val firstDie: Int,
+    private val secondDie: Int,
+    bonus: Int,
+) {
+    private val diceTotal = firstDie + secondDie + bonus
 
     fun handleRoll(currentAction: CurrentCombatAction.NormalAttack, combatMutator: CombatMutator) {
         combatMutator.handleRoll(currentAction = currentAction)
@@ -205,10 +209,14 @@ internal class NormalAttackRollHandler(private val firstDie: Int, private val se
             currentAction: CurrentCombatAction.NormalAttack,
             combatMutator: CombatMutator,
         ) {
-            val (firstDie, secondDie) = combatMutator.diceRoller.roll2D6()
+            val result = combatMutator.diceRoller.roll2D6(userId = combatMutator.attackerUserId)
 
             val normalAttackRollHandler =
-                NormalAttackRollHandler(firstDie = firstDie, secondDie = secondDie)
+                NormalAttackRollHandler(
+                    firstDie = result.firstDie,
+                    secondDie = result.secondDie,
+                    bonus = result.bonus,
+                )
 
             normalAttackRollHandler.handleRoll(
                 currentAction = currentAction,

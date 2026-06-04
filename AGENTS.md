@@ -34,6 +34,16 @@ Core normal combat rules:
   player.
 - Knocked-out players are skipped.
 - The game ends when one or zero non-knocked-out players remain.
+- When a player rolls two dice and each die is the same value, the roll is considered "doubles".
+    - "Doubles" dice give the player who rolled them a +1 bonus to their next consecutive roll.
+    - If a player rolls doubles but then it's another player's turn, or their ability has them roll
+      both of the dice, then the player who rolled doubles no longer gets a +1 bonus, because the
+      roll is not consecutive.
+    - For example, if an attacker rolls doubles against the Mage and breaks armor, then the attacker
+      DOES get the +1 bonus to that Teleport roll off because it's a consecutive roll. If the
+      attacker attacks the Duelist and breaks armor with a doubles roll, then it would go to
+      Duelist's Riposte ability and this would nullify the attacker's double roll, because the
+      Duelist got the dice and the doubles roll is no longer consecutive.
 
 Some abilities require multiple precise roll steps. The Domain needs to know:
 

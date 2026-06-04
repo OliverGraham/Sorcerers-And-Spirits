@@ -84,6 +84,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     result.nextCombatAction.activeUserIds.first(), // TODO big time fix
                 roundNumber = result.roundNumber,
                 isNewRound = result.isNewRound,
+                doublesBonusEntity = result.doublesBonus?.toEntity(),
             )
         }
     }

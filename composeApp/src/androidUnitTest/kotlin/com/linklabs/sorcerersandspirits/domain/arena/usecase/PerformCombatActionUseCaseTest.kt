@@ -231,6 +231,7 @@ class PerformCombatActionUseCaseTest {
                 playerMap = playerMap,
                 roundNumber = roundNumber,
                 originalTurnUserId = originalTurnUserId,
+                doublesBonus = null,
             )
     }
 }

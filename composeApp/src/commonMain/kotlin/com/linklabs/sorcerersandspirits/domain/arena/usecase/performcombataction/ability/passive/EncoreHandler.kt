@@ -27,11 +27,11 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rollEncore() {
-        val encoreDie = diceRoller.roll1D6()
-        val isSuccessful = encoreDie in ENCORE_SUCCESS_RANGE
+        val total = diceRoller.roll1D6(userId = attackerUserId)
+        val isSuccessful = total in ENCORE_SUCCESS_RANGE
 
         addMessage(
-            message = ArenaMessage.Encore.Roll(encoreDie = encoreDie, isSuccessful = isSuccessful)
+            message = ArenaMessage.Encore.Roll(encoreDie = total, isSuccessful = isSuccessful)
         )
 
         if (isSuccessful) {
@@ -60,8 +60,13 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         fun triggerEncoreIfApplicable(
             combatMutator: CombatMutator,
             offensiveAbility: OffensiveAbility,
+            isDoubles: Boolean = false,
         ): Boolean {
             if (offensiveAbility !is OffensiveAbility.Encore) return false
+
+            if (isDoubles) {
+                combatMutator.diceRoller.setDoublesBonus(userId = combatMutator.attackerUserId)
+            }
 
             EncoreHandler(combatMutator = combatMutator).triggerEncore()
 

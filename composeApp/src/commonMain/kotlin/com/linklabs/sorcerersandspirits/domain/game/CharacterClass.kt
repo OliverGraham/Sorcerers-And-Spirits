@@ -121,5 +121,5 @@ enum class CharacterClassType {
     Illusionist,
     Mage,
     Paladin,
-    None
+    None,
 }

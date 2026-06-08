@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
@@ -28,7 +29,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `Given an attacker that rolls higher than a defender's armor, the next combat action is a roll against the defender's health`() {
         // Arrange
-        val arguments = createCombatActionArguments()
+        val arguments = createTwoPlayerArguments()
         val currentAction = getNormalAttackAction()
 
         every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
@@ -48,7 +49,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `Given an attacker that rolls less than a defender's armor, the next combat action is an idle action for the next player`() {
         // Arrange
-        val arguments = createCombatActionArguments()
+        val arguments = createTwoPlayerArguments()
         val currentAction = getNormalAttackAction()
 
         every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
@@ -65,11 +66,51 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.activeUserIds.contains(element = DEFAULT_DEFENDER_ID))
     }
 
+    @Test
+    fun `Given a 2-player game, when an attacker knocks out the defender, then the turn ends and it proceeds to the next round`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments()
+        val currentAction = getHealthAttackAction()
+
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 6, secondDie = 5, bonus = 0)
+
+        // Act
+        val outcome =
+            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
+                .invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.isNewRound)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+    }
+
+    @Test
+    fun `Given a 3-player game, when an attacker knocks out a defender, then the next player becomes active`() {
+        // Arrange
+        val arguments = createThreePlayerArguments()
+        val currentAction = getHealthAttackAction()
+
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 5, secondDie = 6, bonus = 0)
+
+        // Act
+        val outcome =
+            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
+                .invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.activeUserIds.contains(element = THIRD_PLAYER_ID))
+    }
+
     companion object {
         private const val DEFAULT_DISPLAY_NAME = "displayName"
         private const val DEFAULT_ARENA_ID = "arenaId"
         private const val DEFAULT_ATTACKER_ID = "attackerId"
         private const val DEFAULT_DEFENDER_ID = "defenderId"
+        private const val THIRD_PLAYER_ID = "thirdPlayerId"
 
         private fun getNormalAttackAction() =
             CurrentCombatAction.NormalAttack(
@@ -80,8 +121,17 @@ class PerformCombatActionUseCaseTest {
                     )
             )
 
+        private fun getHealthAttackAction() =
+            CurrentCombatAction.NormalAttack(
+                roll =
+                    NormalAttackRoll.Health(
+                        attackerUserId = DEFAULT_ATTACKER_ID,
+                        defenderUserId = DEFAULT_DEFENDER_ID,
+                    )
+            )
+
         private fun createCharacterClass(
-            type: CharacterClassType = CharacterClassType.Rogue,
+            type: CharacterClassType = CharacterClassType.None,
             hitPoints: Int = 5,
             armorClass: Int = 6,
             speed: Int = 8,
@@ -99,134 +149,6 @@ class PerformCombatActionUseCaseTest {
                 hasActedThisRound = hasActedThisRound,
             )
 
-        private fun createRogue(
-            hitPoints: Int = 5,
-            armorClass: Int = 6,
-            speed: Int = 8,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Rogue,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.KillingMomentum,
-                defensiveAbility = DefensiveAbility.Dodge(),
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createGambler(
-            hitPoints: Int = 3,
-            armorClass: Int = 4,
-            speed: Int = 7,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Gambler,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.AllIn(),
-                defensiveAbility = DefensiveAbility.LuckyCoin,
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createDuelist(
-            hitPoints: Int = 4,
-            armorClass: Int = 4,
-            speed: Int = 6,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Duelist,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.PrepareAttack,
-                defensiveAbility = DefensiveAbility.Riposte,
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createNecromancer(
-            hitPoints: Int = 7,
-            armorClass: Int = 7,
-            speed: Int = 5,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Necromancer,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.SummonMinion(),
-                defensiveAbility = DefensiveAbility.None,
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createBard(
-            hitPoints: Int = 5,
-            armorClass: Int = 5,
-            speed: Int = 4,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Bard,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.Encore,
-                defensiveAbility = DefensiveAbility.Persuade,
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createIllusionist(
-            hitPoints: Int = 5,
-            armorClass: Int = 5,
-            speed: Int = 3,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Illusionist,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.Impersonate(),
-                defensiveAbility = DefensiveAbility.MirrorImage(),
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createMage(
-            hitPoints: Int = 4,
-            armorClass: Int = 4,
-            speed: Int = 2,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Mage,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.SpellPotency,
-                defensiveAbility = DefensiveAbility.Teleport,
-                hasActedThisRound = hasActedThisRound,
-            )
-
-        private fun createPaladin(
-            hitPoints: Int = 7,
-            armorClass: Int = 7,
-            speed: Int = 1,
-            hasActedThisRound: Boolean = false,
-        ) =
-            createCharacterClass(
-                type = CharacterClassType.Paladin,
-                hitPoints = hitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = OffensiveAbility.None,
-                defensiveAbility = DefensiveAbility.HolyShield(),
-                hasActedThisRound = hasActedThisRound,
-            )
-
         private fun createArenaPlayer(
             userId: String = DEFAULT_ATTACKER_ID,
             displayName: String = DEFAULT_DISPLAY_NAME,
@@ -238,16 +160,31 @@ class PerformCombatActionUseCaseTest {
                 characterClass = characterClass,
             )
 
-        private fun createCombatActionArguments(
+        private fun createTwoPlayerArguments(
             arenaId: String = DEFAULT_ARENA_ID,
             userId: String = DEFAULT_ATTACKER_ID,
-            attacker: ArenaPlayer.Selected = createArenaPlayer(characterClass = createRogue()),
+            attacker: ArenaPlayer.Selected =
+                createArenaPlayer(
+                    userId = DEFAULT_ATTACKER_ID,
+                    characterClass =
+                        createCharacterClass(type = CharacterClassType.Rogue, speed = 8),
+                ),
             defender: ArenaPlayer.Selected =
-                createArenaPlayer(userId = DEFAULT_DEFENDER_ID, characterClass = createPaladin()),
+                createArenaPlayer(
+                    userId = DEFAULT_DEFENDER_ID,
+                    characterClass =
+                        createCharacterClass(
+                            type = CharacterClassType.Paladin,
+                            speed = 1,
+                            hitPoints = 7,
+                            armorClass = 7,
+                        ),
+                ),
             playerMap: Map<String, ArenaPlayer.Selected> =
                 mapOf(attacker.userId to attacker, defender.userId to defender),
             roundNumber: Int = 1,
             originalTurnUserId: String = DEFAULT_ATTACKER_ID,
+            doublesBonus: DoublesBonus? = null,
         ) =
             CombatActionArguments(
                 arenaId = arenaId,
@@ -257,7 +194,53 @@ class PerformCombatActionUseCaseTest {
                 playerMap = playerMap,
                 roundNumber = roundNumber,
                 originalTurnUserId = originalTurnUserId,
-                doublesBonus = null,
+                doublesBonus = doublesBonus,
+            )
+
+        private fun createThreePlayerArguments(
+            arenaId: String = DEFAULT_ARENA_ID,
+            userId: String = DEFAULT_ATTACKER_ID,
+            attacker: ArenaPlayer.Selected =
+                createArenaPlayer(
+                    userId = DEFAULT_ATTACKER_ID,
+                    characterClass =
+                        createCharacterClass(type = CharacterClassType.Rogue, speed = 8),
+                ),
+            defender: ArenaPlayer.Selected =
+                createArenaPlayer(
+                    userId = DEFAULT_DEFENDER_ID,
+                    characterClass =
+                        createCharacterClass(
+                            type = CharacterClassType.Paladin,
+                            speed = 5,
+                            hitPoints = 7,
+                            armorClass = 7,
+                        ),
+                ),
+            thirdPlayer: ArenaPlayer.Selected =
+                createArenaPlayer(
+                    userId = THIRD_PLAYER_ID,
+                    characterClass = createCharacterClass(type = CharacterClassType.Mage, speed = 1),
+                ),
+            playerMap: Map<String, ArenaPlayer.Selected> =
+                mapOf(
+                    attacker.userId to attacker,
+                    defender.userId to defender,
+                    thirdPlayer.userId to thirdPlayer,
+                ),
+            roundNumber: Int = 1,
+            originalTurnUserId: String = DEFAULT_ATTACKER_ID,
+            doublesBonus: DoublesBonus? = null,
+        ) =
+            CombatActionArguments(
+                arenaId = arenaId,
+                userId = userId,
+                attacker = attacker,
+                defender = defender,
+                playerMap = playerMap,
+                roundNumber = roundNumber,
+                originalTurnUserId = originalTurnUserId,
+                doublesBonus = doublesBonus,
             )
     }
 }

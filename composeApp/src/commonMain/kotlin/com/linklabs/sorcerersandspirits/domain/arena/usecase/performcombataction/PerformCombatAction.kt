@@ -24,8 +24,8 @@ internal class PerformCombatAction(
     private val combatMutator =
         CombatMutator(
             updatedPlayerMap = arguments.playerMap.toMutableMap(),
-            attackerUserId = arguments.attacker.userId,
-            defenderUserId = arguments.defender.userId,
+            attackerUserId = arguments.attackerUserId,
+            defenderUserId = arguments.defenderUserId,
             roundNumber = arguments.roundNumber,
             originalTurnUserId = arguments.originalTurnUserId,
             diceRoller = diceRoller,

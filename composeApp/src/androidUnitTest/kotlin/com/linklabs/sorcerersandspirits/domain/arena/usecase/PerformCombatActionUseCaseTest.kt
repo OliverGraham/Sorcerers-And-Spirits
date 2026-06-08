@@ -136,7 +136,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `Given a 3-player game, when a health roll deals damage but no knockout, then the turn moves to the next player in speed order`() {
         // Arrange
-        val arguments = createThreePlayerArguments()
+        val defender = createCharacterClass(hitPoints = 7)
+        val arguments = createThreePlayerArguments(defender = defender)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
@@ -178,27 +179,17 @@ class PerformCombatActionUseCaseTest {
         val attacker =
             createArenaPlayer(
                 userId = THIRD_PLAYER_ID,
-                characterClass = createCharacterClass(type = CharacterClassType.Mage, speed = 1),
+                characterClass = createCharacterClass(speed = 1),
             )
         val defender =
             createArenaPlayer(
                 userId = DEFAULT_DEFENDER_ID,
-                characterClass =
-                    createCharacterClass(
-                        type = CharacterClassType.Paladin,
-                        speed = 5,
-                        hasActedThisRound = true,
-                    ),
+                characterClass = createCharacterClass(speed = 5, hasActedThisRound = true),
             )
         val otherPlayer =
             createArenaPlayer(
                 userId = DEFAULT_ATTACKER_ID,
-                characterClass =
-                    createCharacterClass(
-                        type = CharacterClassType.Rogue,
-                        speed = 8,
-                        hasActedThisRound = true,
-                    ),
+                characterClass = createCharacterClass(speed = 8, hasActedThisRound = true),
             )
 
         val arguments =
@@ -338,25 +329,10 @@ class PerformCombatActionUseCaseTest {
         private fun createTwoPlayerArguments(
             arenaId: String = DEFAULT_ARENA_ID,
             userId: String = DEFAULT_ATTACKER_ID,
-            attacker: ArenaPlayer.Selected =
-                createArenaPlayer(
-                    userId = DEFAULT_ATTACKER_ID,
-                    characterClass =
-                        createCharacterClass(type = CharacterClassType.Rogue, speed = 8),
-                ),
-            defender: ArenaPlayer.Selected =
-                createArenaPlayer(
-                    userId = DEFAULT_DEFENDER_ID,
-                    characterClass =
-                        createCharacterClass(
-                            type = CharacterClassType.Paladin,
-                            speed = 1,
-                            hitPoints = 7,
-                            armorClass = 7,
-                        ),
-                ),
-            playerMap: Map<String, ArenaPlayer.Selected> =
-                mapOf(attacker.userId to attacker, defender.userId to defender),
+            attackerUserId: String = DEFAULT_ATTACKER_ID,
+            defenderUserId: String = DEFAULT_DEFENDER_ID,
+            attackerClass: CharacterClass = createCharacterClass(speed = 8),
+            defenderClass: CharacterClass = createCharacterClass(speed = 1),
             roundNumber: Int = 1,
             originalTurnUserId: String = DEFAULT_ATTACKER_ID,
             doublesBonus: DoublesBonus? = null,
@@ -364,9 +340,21 @@ class PerformCombatActionUseCaseTest {
             CombatActionArguments(
                 arenaId = arenaId,
                 userId = userId,
-                attacker = attacker,
-                defender = defender,
-                playerMap = playerMap,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                playerMap =
+                    mapOf(
+                        attackerUserId to
+                            createArenaPlayer(
+                                userId = attackerUserId,
+                                characterClass = attackerClass,
+                            ),
+                        defenderUserId to
+                            createArenaPlayer(
+                                userId = defenderUserId,
+                                characterClass = defenderClass,
+                            ),
+                    ),
                 roundNumber = roundNumber,
                 originalTurnUserId = originalTurnUserId,
                 doublesBonus = doublesBonus,
@@ -378,24 +366,17 @@ class PerformCombatActionUseCaseTest {
             attacker: ArenaPlayer.Selected =
                 createArenaPlayer(
                     userId = DEFAULT_ATTACKER_ID,
-                    characterClass =
-                        createCharacterClass(type = CharacterClassType.Rogue, speed = 8),
+                    characterClass = createCharacterClass(speed = 8),
                 ),
             defender: ArenaPlayer.Selected =
                 createArenaPlayer(
                     userId = DEFAULT_DEFENDER_ID,
-                    characterClass =
-                        createCharacterClass(
-                            type = CharacterClassType.Paladin,
-                            speed = 5,
-                            hitPoints = 7,
-                            armorClass = 7,
-                        ),
+                    characterClass = createCharacterClass(speed = 6),
                 ),
             thirdPlayer: ArenaPlayer.Selected =
                 createArenaPlayer(
                     userId = THIRD_PLAYER_ID,
-                    characterClass = createCharacterClass(type = CharacterClassType.Mage, speed = 1),
+                    characterClass = createCharacterClass(speed = 1),
                 ),
             playerMap: Map<String, ArenaPlayer.Selected> =
                 mapOf(

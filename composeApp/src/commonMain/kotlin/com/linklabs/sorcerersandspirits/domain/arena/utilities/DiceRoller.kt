@@ -13,6 +13,7 @@ interface DiceRoller {
     fun setDoublesBonus(userId: String)
 }
 
+// TODO Enums for values 1 through 6?
 sealed interface RollResult {
     val total: Int
 

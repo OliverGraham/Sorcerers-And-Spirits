@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
+import com.linklabs.sorcerersandspirits.domain.arena.utilities.RollResult
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -18,8 +19,11 @@ import kotlin.test.assertTrue
 
 class PerformCombatActionUseCaseTest {
 
-    // TODO - Need to address doubles die. Also, improve DiceRoller. Enums for values 1 through 6?
-    private val diceRoller: DiceRoller = mockk()
+    private val diceRoller =
+        mockk<DiceRoller> {
+            every { getDoublesBonus() } returns null
+            every { setDoublesBonus(any()) } returns Unit
+        }
 
     @Test
     fun `Given an attacker that rolls higher than a defender's armor, the next combat action is a roll against the defender's health`() {
@@ -27,17 +31,38 @@ class PerformCombatActionUseCaseTest {
         val arguments = createCombatActionArguments()
         val currentAction = getNormalAttackAction()
 
-        // Act
-        every { diceRoller.roll2D6() } returns Pair(3, 4)
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 4, secondDie = 5, bonus = 0)
 
+        // Act
         val outcome =
             PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
-                .invoke(currentAction)
+                .invoke(currentAction = currentAction)
 
         // Assert
         val nextAction = outcome.nextCombatAction
-        assertTrue(nextAction is NextCombatAction.NormalAttack)
-        assertTrue(nextAction.roll is NormalAttackRoll.Health)
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+    }
+
+    @Test
+    fun `Given an attacker that rolls less than a defender's armor, the next combat action is an idle action for the next player`() {
+        // Arrange
+        val arguments = createCombatActionArguments()
+        val currentAction = getNormalAttackAction()
+
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 1, secondDie = 2, bonus = 0)
+
+        // Act
+        val outcome =
+            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
+                .invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.activeUserIds.contains(element = DEFAULT_DEFENDER_ID))
     }
 
     companion object {
@@ -216,8 +241,9 @@ class PerformCombatActionUseCaseTest {
         private fun createCombatActionArguments(
             arenaId: String = DEFAULT_ARENA_ID,
             userId: String = DEFAULT_ATTACKER_ID,
-            attacker: ArenaPlayer.Selected = createArenaPlayer(),
-            defender: ArenaPlayer.Selected = createArenaPlayer(),
+            attacker: ArenaPlayer.Selected = createArenaPlayer(characterClass = createRogue()),
+            defender: ArenaPlayer.Selected =
+                createArenaPlayer(userId = DEFAULT_DEFENDER_ID, characterClass = createPaladin()),
             playerMap: Map<String, ArenaPlayer.Selected> =
                 mapOf(attacker.userId to attacker, defender.userId to defender),
             roundNumber: Int = 1,

@@ -35,7 +35,7 @@ class PerformCombatActionUseCaseTest {
         bonus: Int = 0,
     ) {
         every { diceRoller.roll2D6(userId = userId) } returns
-            RollResult.TwoDice(firstDie = 4, secondDie = 5, bonus = 0)
+            RollResult.TwoDice(firstDie = firstDie, secondDie = secondDie, bonus = bonus)
     }
 
     @Test
@@ -65,8 +65,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 1, secondDie = 2, bonus = 0)
+        setupTwoDiceRoll(userId = arguments.attacker.userId, firstDie = 1, secondDie = 2)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -84,8 +83,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
         val currentAction = getHealthAttackAction()
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 6, secondDie = 5, bonus = 0)
+        setupTwoDiceRoll(userId = arguments.attacker.userId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -104,8 +102,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 2, secondDie = 2, bonus = 0)
+        setupTwoDiceRoll(userId = arguments.attacker.userId, firstDie = 2, secondDie = 2)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -125,8 +122,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 5, secondDie = 6, bonus = 0)
+        setupTwoDiceRoll(userId = arguments.attacker.userId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -144,8 +140,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 2, secondDie = 2, bonus = 0)
+        setupTwoDiceRoll(userId = arguments.attacker.userId, firstDie = 2, secondDie = 2)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -166,8 +161,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 1, secondDie = 1, bonus = 0)
+        setupTwoDiceRoll(userId = arguments.attacker.userId, firstDie = 1, secondDie = 1)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -226,8 +220,7 @@ class PerformCombatActionUseCaseTest {
                     )
             )
 
-        every { diceRoller.roll2D6(userId = THIRD_PLAYER_ID) } returns
-            RollResult.TwoDice(firstDie = 1, secondDie = 1, bonus = 0)
+        setupTwoDiceRoll(userId = THIRD_PLAYER_ID, firstDie = 1, secondDie = 1)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -273,8 +266,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        every { diceRoller.roll2D6(userId = DEFAULT_ATTACKER_ID) } returns
-            RollResult.TwoDice(firstDie = 1, secondDie = 1, bonus = 0)
+        setupTwoDiceRoll(userId = DEFAULT_ATTACKER_ID, firstDie = 1, secondDie = 1)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)

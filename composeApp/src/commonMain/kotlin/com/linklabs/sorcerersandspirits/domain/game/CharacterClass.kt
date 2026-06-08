@@ -109,18 +109,6 @@ data class CharacterClass(
                 offensiveAbility = OffensiveAbility.None,
                 defensiveAbility = DefensiveAbility.HolyShield(),
             )
-
-        fun fromType(type: CharacterClassType) =
-            when (type) {
-                CharacterClassType.Rogue -> getRogue()
-                CharacterClassType.Gambler -> getGambler()
-                CharacterClassType.Duelist -> getDuelist()
-                CharacterClassType.Necromancer -> getNecromancer()
-                CharacterClassType.Bard -> getBard()
-                CharacterClassType.Illusionist -> getIllusionist()
-                CharacterClassType.Mage -> getMage()
-                CharacterClassType.Paladin -> getPaladin()
-            }
     }
 }
 
@@ -133,4 +121,5 @@ enum class CharacterClassType {
     Illusionist,
     Mage,
     Paladin,
+    None
 }

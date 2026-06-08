@@ -66,6 +66,10 @@ internal class NormalAttackRollHandler(
             triggerMirrorImageIfApplicable(attackType = NormalAttackType.Health)
         if (wasMirrorImageTriggered) return
 
+        updateDefenderClass { defenderClass ->
+            defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
+        }
+
         return if (diceTotal >= defender.hitPoints) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
             resolveKnockout()
@@ -76,10 +80,6 @@ internal class NormalAttackRollHandler(
     }
 
     private fun CombatMutator.resolveKnockout() {
-        updateDefenderClass { defenderClass ->
-            defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
-        }
-
         val wasHolyShieldTriggered =
             HolyShieldHandler.triggerHolyShieldIfApplicable(
                 combatMutator = this,

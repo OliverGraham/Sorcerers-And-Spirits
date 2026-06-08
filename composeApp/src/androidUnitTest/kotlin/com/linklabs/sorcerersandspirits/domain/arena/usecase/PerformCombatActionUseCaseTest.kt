@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
@@ -16,6 +17,7 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class PerformCombatActionUseCaseTest {
@@ -23,18 +25,28 @@ class PerformCombatActionUseCaseTest {
     private val diceRoller =
         mockk<DiceRoller> {
             every { getDoublesBonus() } returns null
-            every { setDoublesBonus(any()) } returns Unit
+            every { setDoublesBonus(userId = any()) } returns Unit
         }
 
+    private fun setupTwoDiceRoll(
+        userId: String,
+        firstDie: Int = 5,
+        secondDie: Int = 6,
+        bonus: Int = 0,
+    ) {
+        every { diceRoller.roll2D6(userId = userId) } returns
+            RollResult.TwoDice(firstDie = 4, secondDie = 5, bonus = 0)
+    }
+
     @Test
-    fun `Given an attacker that rolls higher than a defender's armor, the next combat action is a roll against the defender's health`() {
+    fun `Given a 2-player game, when an attacker rolls higher than a defender's armor, the next combat action is a roll against the defender's health`() {
         // Arrange
         val arguments = createTwoPlayerArguments()
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
+        val attackerUserId = arguments.attacker.userId
 
-        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
-            RollResult.TwoDice(firstDie = 4, secondDie = 5, bonus = 0)
+        setupTwoDiceRoll(userId = attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -43,10 +55,11 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
     }
 
     @Test
-    fun `Given an attacker that rolls less than a defender's armor, the next combat action is an idle action for the next player`() {
+    fun `Given a 2-player game, when an attacker rolls less than a defender's armor, the next combat action is an idle action for the next player`() {
         // Arrange
         val arguments = createTwoPlayerArguments()
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -61,7 +74,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
-        assertTrue(actual = nextAction.activeUserIds.contains(element = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
     }
 
     @Test
@@ -80,6 +93,29 @@ class PerformCombatActionUseCaseTest {
         // Assert
         assertTrue(actual = outcome.isNewRound)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+
+        // TODO: Add MatchFinished type somewhere, somehow
+    }
+
+    @Test
+    fun `Given a 2-player game, when a health roll deals damage but no knockout, then the turn ends and the next player becomes active`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 2, secondDie = 2, bonus = 0)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+
+        val updatedDefender = outcome.getDefenderById(userId = DEFAULT_DEFENDER_ID)
+        assertEquals(expected = 3, actual = updatedDefender.characterClass.hitPoints)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
     }
 
     @Test
@@ -98,7 +134,155 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
-        assertTrue(actual = nextAction.activeUserIds.contains(element = THIRD_PLAYER_ID))
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = THIRD_PLAYER_ID))
+    }
+
+    @Test
+    fun `Given a 3-player game, when a health roll deals damage but no knockout, then the turn moves to the next player in speed order`() {
+        // Arrange
+        val arguments = createThreePlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 2, secondDie = 2, bonus = 0)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+
+        val updatedDefender = outcome.getDefenderById(userId = DEFAULT_DEFENDER_ID)
+        assertEquals(expected = 3, actual = updatedDefender.characterClass.hitPoints)
+    }
+
+    @Test
+    fun `Given a 3-player game, when an armor class roll misses, then the turn moves to the next player's turn`() {
+        // Arrange
+        val arguments = createThreePlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
+            RollResult.TwoDice(firstDie = 1, secondDie = 1, bonus = 0)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+    }
+
+    @Test
+    fun `Given a 3-player game, when the last player of the round finishes their turn, then the game transitions to a new round`() {
+        // Arrange
+        val attacker =
+            createArenaPlayer(
+                userId = THIRD_PLAYER_ID,
+                characterClass = createCharacterClass(type = CharacterClassType.Mage, speed = 1),
+            )
+        val defender =
+            createArenaPlayer(
+                userId = DEFAULT_DEFENDER_ID,
+                characterClass =
+                    createCharacterClass(
+                        type = CharacterClassType.Paladin,
+                        speed = 5,
+                        hasActedThisRound = true,
+                    ),
+            )
+        val otherPlayer =
+            createArenaPlayer(
+                userId = DEFAULT_ATTACKER_ID,
+                characterClass =
+                    createCharacterClass(
+                        type = CharacterClassType.Rogue,
+                        speed = 8,
+                        hasActedThisRound = true,
+                    ),
+            )
+
+        val arguments =
+            createThreePlayerArguments(
+                userId = THIRD_PLAYER_ID,
+                attacker = attacker,
+                defender = defender,
+                thirdPlayer = otherPlayer,
+                originalTurnUserId = THIRD_PLAYER_ID,
+            )
+
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.NormalAttack(
+                roll =
+                    NormalAttackRoll.ArmorClass(
+                        attackerUserId = THIRD_PLAYER_ID,
+                        defenderUserId = DEFAULT_DEFENDER_ID,
+                    )
+            )
+
+        every { diceRoller.roll2D6(userId = THIRD_PLAYER_ID) } returns
+            RollResult.TwoDice(firstDie = 1, secondDie = 1, bonus = 0)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.isNewRound)
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+    }
+
+    @Test
+    fun `Given a 3-player game where one player is knocked out, then that player is skipped when transitioning turns`() {
+        // Arrange
+        val attacker =
+            createArenaPlayer(
+                userId = DEFAULT_ATTACKER_ID,
+                characterClass = createCharacterClass(type = CharacterClassType.Rogue, speed = 8),
+            )
+        val defender =
+            createArenaPlayer(
+                userId = DEFAULT_DEFENDER_ID,
+                characterClass =
+                    createCharacterClass(
+                        type = CharacterClassType.Paladin,
+                        speed = 5,
+                        hitPoints = 0,
+                    ),
+            )
+        val thirdPlayer =
+            createArenaPlayer(
+                userId = THIRD_PLAYER_ID,
+                characterClass = createCharacterClass(type = CharacterClassType.Mage, speed = 1),
+            )
+
+        val arguments =
+            createThreePlayerArguments(
+                attacker = attacker,
+                defender = defender,
+                thirdPlayer = thirdPlayer,
+            )
+
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        every { diceRoller.roll2D6(userId = DEFAULT_ATTACKER_ID) } returns
+            RollResult.TwoDice(firstDie = 1, secondDie = 1, bonus = 0)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = THIRD_PLAYER_ID))
     }
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
@@ -241,5 +425,10 @@ class PerformCombatActionUseCaseTest {
                 originalTurnUserId = originalTurnUserId,
                 doublesBonus = doublesBonus,
             )
+
+        private fun ActionOutcome.getDefenderById(userId: String): ArenaPlayer.Selected =
+            updatedPlayerMap.getValue(key = userId)
+
+        private fun NextCombatAction.isThisUserNext(userId: String) = userId in activeUserIds
     }
 }

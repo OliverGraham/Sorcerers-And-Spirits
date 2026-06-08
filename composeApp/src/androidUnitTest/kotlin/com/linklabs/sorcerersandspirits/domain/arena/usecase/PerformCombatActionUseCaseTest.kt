@@ -30,15 +30,14 @@ class PerformCombatActionUseCaseTest {
     fun `Given an attacker that rolls higher than a defender's armor, the next combat action is a roll against the defender's health`() {
         // Arrange
         val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
         every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
             RollResult.TwoDice(firstDie = 4, secondDie = 5, bonus = 0)
 
         // Act
-        val outcome =
-            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
-                .invoke(currentAction = currentAction)
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
         val nextAction = outcome.nextCombatAction
@@ -50,15 +49,14 @@ class PerformCombatActionUseCaseTest {
     fun `Given an attacker that rolls less than a defender's armor, the next combat action is an idle action for the next player`() {
         // Arrange
         val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
         every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
             RollResult.TwoDice(firstDie = 1, secondDie = 2, bonus = 0)
 
         // Act
-        val outcome =
-            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
-                .invoke(currentAction = currentAction)
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
         val nextAction = outcome.nextCombatAction
@@ -70,15 +68,14 @@ class PerformCombatActionUseCaseTest {
     fun `Given a 2-player game, when an attacker knocks out the defender, then the turn ends and it proceeds to the next round`() {
         // Arrange
         val arguments = createTwoPlayerArguments()
-        val currentAction = getHealthAttackAction()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
 
+        val currentAction = getHealthAttackAction()
         every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
             RollResult.TwoDice(firstDie = 6, secondDie = 5, bonus = 0)
 
         // Act
-        val outcome =
-            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
-                .invoke(currentAction = currentAction)
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
         assertTrue(actual = outcome.isNewRound)
@@ -89,21 +86,23 @@ class PerformCombatActionUseCaseTest {
     fun `Given a 3-player game, when an attacker knocks out a defender, then the next player becomes active`() {
         // Arrange
         val arguments = createThreePlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
         every { diceRoller.roll2D6(userId = arguments.attacker.userId) } returns
             RollResult.TwoDice(firstDie = 5, secondDie = 6, bonus = 0)
 
         // Act
-        val outcome =
-            PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
-                .invoke(currentAction = currentAction)
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.activeUserIds.contains(element = THIRD_PLAYER_ID))
     }
+
+    private fun getPerformCombatAction(arguments: CombatActionArguments) =
+        PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 
     companion object {
         private const val DEFAULT_DISPLAY_NAME = "displayName"

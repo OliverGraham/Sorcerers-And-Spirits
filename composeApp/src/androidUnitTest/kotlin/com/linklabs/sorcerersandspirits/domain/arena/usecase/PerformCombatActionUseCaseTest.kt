@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
@@ -36,6 +37,11 @@ class PerformCombatActionUseCaseTest {
     ) {
         every { diceRoller.roll2D6(userId = userId) } returns
             RollResult.TwoDice(firstDie = firstDie, secondDie = secondDie, bonus = bonus)
+    }
+
+    private fun setupOneDiceRoll(userId: String, die: Int = 3, bonus: Int = 0) {
+        every { diceRoller.roll1D6(userId = userId) } returns
+            RollResult.OneDie(die = die, bonus = bonus)
     }
 
     @Test
@@ -280,6 +286,72 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = startingArmorBonus, actual = updatedDodge.armorBonus)
     }
 
+    @Test
+    fun `Given a 2-player game, when a Gambler uses All-In and rolls a 1, then the Gambler is knocked out`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAllInAction(gamblerClass = gamblerClass)
+
+        setupOneDiceRoll(userId = arguments.attackerUserId, die = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedGambler = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        assertEquals(expected = 0, actual = updatedGambler.hitPoints)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+    }
+
+    @Test
+    fun `Given a 2-player game, when a Gambler uses All-In and rolls a 6, then the Gambler gets another attack`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAllInAction(gamblerClass = gamblerClass)
+
+        setupOneDiceRoll(userId = arguments.attackerUserId, die = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedGambler = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        val updatedAllIn = updatedGambler.offensiveAbility as OffensiveAbility.AllIn
+        assertTrue(actual = updatedAllIn.hasAnotherAttack)
+        assertTrue(actual = updatedAllIn.usedThisTurn)
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
+        )
+    }
+
+    @Test
+    fun `Given a 2-player game, when a Gambler uses All-In and rolls a 3, then nothing happens`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAllInAction(gamblerClass = gamblerClass)
+
+        setupOneDiceRoll(userId = arguments.attackerUserId, die = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedGambler = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        val updatedAllIn = updatedGambler.offensiveAbility as OffensiveAbility.AllIn
+        assertTrue(actual = !updatedAllIn.hasAnotherAttack)
+        assertTrue(actual = updatedAllIn.usedThisTurn)
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
+        )
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 
@@ -305,6 +377,14 @@ class PerformCombatActionUseCaseTest {
                     NormalAttackRoll.Health(
                         attackerUserId = DEFAULT_ATTACKER_ID,
                         defenderUserId = DEFAULT_DEFENDER_ID,
+                    )
+            )
+
+        private fun getAllInAction(gamblerClass: CharacterClass) =
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Activated.AllIn(
+                        allInAbility = gamblerClass.offensiveAbility as OffensiveAbility.AllIn
                     )
             )
 

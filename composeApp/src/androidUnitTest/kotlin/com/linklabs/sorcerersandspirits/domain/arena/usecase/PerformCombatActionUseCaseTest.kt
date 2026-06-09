@@ -258,6 +258,27 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = 1, actual = updatedDodge.armorBonus)
     }
 
+    @Test
+    fun `Given a 2-player game, when an attacker misses a Rogue's armor but Dodge bonus is already at maximum, then the bonus remains at 2`() {
+        // Arrange
+        val rogueWithMaxDodge =
+            CharacterClass.getRogue()
+                .copy(defensiveAbility = DefensiveAbility.Dodge(armorBonus = 2))
+        val arguments = createTwoPlayerArguments(defenderClass = rogueWithMaxDodge)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        val updatedDodge = updatedDefender.defensiveAbility as DefensiveAbility.Dodge
+        assertEquals(expected = 2, actual = updatedDodge.armorBonus)
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 

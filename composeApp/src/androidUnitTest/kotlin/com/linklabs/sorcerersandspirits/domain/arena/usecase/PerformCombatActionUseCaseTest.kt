@@ -699,6 +699,47 @@ class PerformCombatActionUseCaseTest {
         )
     }
 
+    @Test
+    fun `When Illusionist uses Impersonate, then the Illusionist's offensive ability is updated and they can act again`() {
+        impersonateTest(abilityToImpersonate = OffensiveAbility.PrepareAttack)
+    }
+
+    @Test
+    fun `When Illusionist uses Impersonate but already has an impersonated ability, it is replaced with the new one`() {
+        impersonateTest(
+            startingAbility =
+                OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.PrepareAttack),
+            abilityToImpersonate = OffensiveAbility.AllIn(),
+        )
+    }
+
+    private fun impersonateTest(
+        startingAbility: OffensiveAbility = OffensiveAbility.Impersonate(),
+        abilityToImpersonate: OffensiveAbility,
+    ) {
+        // Arrange
+        val illusionist = CharacterClass.getIllusionist().copy(offensiveAbility = startingAbility)
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getImpersonateAction(abilityToImpersonate = abilityToImpersonate)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedIllusionist =
+            outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        val updatedImpersonate = updatedIllusionist.offensiveAbility as OffensiveAbility.Impersonate
+
+        assertEquals(
+            expected = abilityToImpersonate,
+            actual = updatedImpersonate.impersonatedAbility,
+        )
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
+        )
+    }
+
     private fun summonMinionTest(
         startingHitPoints: Int,
         expectedHitPoints: Int,
@@ -987,6 +1028,15 @@ class PerformCombatActionUseCaseTest {
         private fun getPrepareAttackAction() =
             CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Activated.PrepareAttack)
 
+        private fun getImpersonateAction(abilityToImpersonate: OffensiveAbility) =
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Activated.Impersonate(
+                        impersonateAbility =
+                            OffensiveAbility.Impersonate(impersonatedAbility = abilityToImpersonate)
+                    )
+            )
+
         private fun getSummonMinionAction(necromancer: CharacterClass) =
             CurrentCombatAction.AbilityRoll(
                 purpose =
@@ -995,9 +1045,6 @@ class PerformCombatActionUseCaseTest {
                             necromancer.offensiveAbility as OffensiveAbility.SummonMinion
                     )
             )
-
-        private fun getEncoreAction() =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Encore)
 
         private fun getStrumLuteAction() =
             CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Persuade.StrumLute)

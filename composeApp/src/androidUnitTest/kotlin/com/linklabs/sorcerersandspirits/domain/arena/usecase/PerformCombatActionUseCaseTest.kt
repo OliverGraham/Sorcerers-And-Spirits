@@ -247,7 +247,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given a 2-player game, when an attacker misses a Rogue's armor, then Dodge triggers and the Rogue's armor bonus increases`() {
+    fun `When an attacker misses a Rogue's armor, then Dodge triggers and the Rogue's armor bonus increases`() {
         // Arrange
         val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getRogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -265,7 +265,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given a 2-player game, when an attacker misses a Rogue's armor but Dodge bonus is already at maximum, then the bonus remains at 2`() {
+    fun `When an attacker misses a Rogue's armor but Dodge bonus is already at maximum, then the bonus remains at 2`() {
         // Arrange
         val startingArmorBonus = 2
         val rogueWithMaxDodge =
@@ -287,7 +287,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given a 2-player game, when a Gambler uses All-In and rolls a 1, then the Gambler is knocked out`() {
+    fun `When Gambler uses All-In and rolls a 1, then the Gambler is knocked out`() {
         // Arrange
         val gamblerClass = CharacterClass.getGambler()
         val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
@@ -307,7 +307,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given a 2-player game, when a Gambler uses All-In and rolls a 6, then the Gambler gets another attack`() {
+    fun `When Gambler uses All-In and rolls a 6, then the Gambler gets another attack`() {
         // Arrange
         val gamblerClass = CharacterClass.getGambler()
         val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
@@ -330,7 +330,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given a 2-player game, when a Gambler uses All-In and rolls a 3, then nothing happens`() {
+    fun `When Gambler uses All-In and rolls a 3, then nothing happens`() {
         // Arrange
         val gamblerClass = CharacterClass.getGambler()
         val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
@@ -350,6 +350,133 @@ class PerformCombatActionUseCaseTest {
         assertTrue(
             actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
         )
+    }
+
+    @Test
+    fun `When someone attacks the Gambler and LuckyCoin stops the attack, it is the next player's turn`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gamblerUserId = arguments.defenderUserId
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val attackerRollTotal = 6
+        val currentAction = getLuckyCoinFlipAction(attackerRollTotal = attackerRollTotal)
+
+        setupOneDiceRoll(userId = gamblerUserId, die = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = gamblerUserId))
+    }
+
+    @Test
+    fun `When someone attacks the Gambler and LuckyCoin does not stop the attack, the attacker rolls against Gambler's health`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gamblerUserId = arguments.defenderUserId
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val attackerRollTotal = 6
+        val currentAction = getLuckyCoinFlipAction(attackerRollTotal = attackerRollTotal)
+
+        setupOneDiceRoll(userId = gamblerUserId, die = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+    }
+
+    @Test
+    fun `When someone attacks the Gambler and rolls a 6, then High Roller triggers`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gamblerUserId = arguments.defenderUserId
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val attackerRollTotal = 6
+        val currentAction = getLuckyCoinFlipAction(attackerRollTotal = attackerRollTotal)
+
+        setupOneDiceRoll(userId = gamblerUserId, die = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.LuckyCoin.HighRoller)
+        assertTrue(actual = nextAction.isThisUserNext(userId = gamblerUserId))
+    }
+
+    @Test
+    fun `Given a 2-player game, when a Gambler uses High Roller and deals damage that knocks out the attacker, then the match ends`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gamblerUserId = arguments.defenderUserId
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val attackerRollTotal = 10
+        val currentAction =
+            getLuckyCoinHighRollerAction(
+                attackerUserId = arguments.attackerUserId,
+                attackerRollTotal = attackerRollTotal,
+            )
+
+        setupOneDiceRoll(userId = gamblerUserId, die = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedAttacker =
+            outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        assertTrue(actual = updatedAttacker.hitPoints <= 0)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = gamblerUserId))
+
+        // TODO MatchFinished
+    }
+
+    @Test
+    fun `When a Gambler uses High Roller and deals damage but the attacker survives, then the attacker rolls against health`() {
+        // Arrange
+        val gamblerClass = CharacterClass.getGambler()
+        val attackerClass = createCharacterClass(hitPoints = 10)
+        val arguments =
+            createTwoPlayerArguments(attackerClass = attackerClass, defenderClass = gamblerClass)
+
+        val attackerUserId = arguments.attackerUserId
+        val gamblerUserId = arguments.defenderUserId
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+
+        val attackerRollTotal = 10
+        val currentAction =
+            getLuckyCoinHighRollerAction(
+                attackerUserId = arguments.attackerUserId,
+                attackerRollTotal = attackerRollTotal,
+            )
+
+        setupOneDiceRoll(userId = gamblerUserId, die = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedAttacker = outcome.getPlayerById(userId = attackerUserId).characterClass
+        assertTrue(actual = updatedAttacker.isConscious())
+
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
     }
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
@@ -385,6 +512,21 @@ class PerformCombatActionUseCaseTest {
                 purpose =
                     AbilityAction.Activated.AllIn(
                         allInAbility = gamblerClass.offensiveAbility as OffensiveAbility.AllIn
+                    )
+            )
+
+        private fun getLuckyCoinFlipAction(attackerRollTotal: Int) =
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = attackerRollTotal)
+            )
+
+        private fun getLuckyCoinHighRollerAction(attackerUserId: String, attackerRollTotal: Int) =
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.LuckyCoin.HighRoller(
+                        attackerUserId = attackerUserId,
+                        attackerRollTotal = attackerRollTotal,
                     )
             )
 

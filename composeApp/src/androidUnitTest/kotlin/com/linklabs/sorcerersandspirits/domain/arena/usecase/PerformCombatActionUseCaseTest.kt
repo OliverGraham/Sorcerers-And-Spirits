@@ -888,15 +888,6 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = newTargetUserId))
     }
 
-    @Test
-    fun `Given a 3-player game, when Duelist attacks and Bard charms Duelist and Duelist attacks another target and that target triggers Duelist's Riposte, turn order correctly executes after`() {
-        // Arrange
-
-        // Act
-
-        // Assert
-    }
-
     private fun persuadeRollTest(
         dieRoll: Int,
         expectedNextUserId: String,

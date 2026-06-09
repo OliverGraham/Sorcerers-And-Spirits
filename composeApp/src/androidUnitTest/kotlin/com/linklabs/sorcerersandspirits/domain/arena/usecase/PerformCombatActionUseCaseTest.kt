@@ -826,7 +826,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `When a Bard selects a Charm target, then the attacker performs a new ArmorClass roll against that target`() {
+    fun `When a Bard selects a Charm target, then the attacker performs a new ArmorClass roll against that target and hits`() {
         // Arrange
         val bard = CharacterClass.getBard()
         val arguments = createThreePlayerArguments(thirdClass = bard)
@@ -857,6 +857,44 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = charmedAttackerUserId, actual = roll.attackerUserId)
         assertEquals(expected = newTargetUserId, actual = roll.defenderUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+    }
+
+    @Test
+    fun `When a Bard selects a Charm target, then the attacker performs a new ArmorClass roll against that target and misses`() {
+        // Arrange
+        val bard = CharacterClass.getBard()
+        val arguments = createThreePlayerArguments(thirdClass = bard)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+
+        val charmedAttackerUserId = arguments.attackerUserId
+        val newTargetUserId = arguments.defenderUserId
+
+        val charmPurpose =
+            AbilityAction.Passive.Persuade.Charm(
+                attackerUserId = charmedAttackerUserId,
+                targetableUserIds = setOf(newTargetUserId),
+                selectedCharmTargetUserId = newTargetUserId,
+            )
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = charmPurpose)
+
+        setupTwoDiceRoll(userId = charmedAttackerUserId, firstDie = 1, secondDie = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = newTargetUserId))
+    }
+
+    @Test
+    fun `Given a 3-player game, when Duelist attacks and Bard charms Duelist and Duelist attacks another target and that target triggers Duelist's Riposte, turn order correctly executes after`() {
+        // Arrange
+
+        // Act
+
+        // Assert
     }
 
     private fun persuadeRollTest(

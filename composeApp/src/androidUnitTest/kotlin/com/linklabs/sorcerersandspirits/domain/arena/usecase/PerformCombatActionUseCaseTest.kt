@@ -780,6 +780,85 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = expectedNextUserId))
     }
 
+    @Test
+    fun `When an attacker passes a Bard's ArmorClass, then Persuade triggers`() {
+        // Arrange
+        val bard = CharacterClass.getBard()
+        val arguments = createTwoPlayerArguments(defenderClass = bard)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 5, secondDie = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Persuade.StrumLute)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+    }
+
+    @Test
+    fun `When a Bard rolls a failed Persuade, then the attacker rolls against the Bard's health`() {
+        persuadeRollTest(dieRoll = 4, expectedNextUserId = DEFAULT_ATTACKER_ID)
+    }
+
+    @Test
+    fun `When a Bard rolls a successful Persuade (Lull), then the turn ends`() {
+        persuadeRollTest(dieRoll = 5, expectedNextUserId = DEFAULT_DEFENDER_ID)
+    }
+
+    @Test
+    fun `When a Bard rolls a 6 for Persuade in a 2-player game, then the turn ends`() {
+        // In 2-player game, 6 behaves like 5 (Lull) because Charm needs at least 3 players
+        persuadeRollTest(dieRoll = 6, expectedNextUserId = DEFAULT_DEFENDER_ID)
+    }
+
+    private fun persuadeRollTest(
+        dieRoll: Int,
+        expectedNextUserId: String,
+        isThreePlayer: Boolean = false,
+    ) {
+        // Arrange
+        val bard = CharacterClass.getBard()
+        val arguments =
+            if (isThreePlayer) {
+                createThreePlayerArguments(defenderClass = bard)
+            } else {
+                createTwoPlayerArguments(defenderClass = bard)
+            }
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getStrumLuteAction()
+
+        setupOneDiceRoll(userId = arguments.defenderUserId, die = dieRoll)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        when (dieRoll) {
+            in 1..4 -> {
+                assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+                assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+            }
+
+            5 -> assertTrue(actual = nextAction is NextCombatAction.Idle)
+
+            6 ->
+                if (isThreePlayer) {
+                    assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+                    assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Persuade.Charm)
+                } else {
+                    assertTrue(actual = nextAction is NextCombatAction.Idle)
+                }
+        }
+
+        assertTrue(actual = nextAction.isThisUserNext(userId = expectedNextUserId))
+    }
+
     // TODO PrepareAttack against Paladin test
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
@@ -844,6 +923,12 @@ class PerformCombatActionUseCaseTest {
                             necromancer.offensiveAbility as OffensiveAbility.SummonMinion
                     )
             )
+
+        private fun getEncoreAction() =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Encore)
+
+        private fun getStrumLuteAction() =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Persuade.StrumLute)
 
         private fun getRiposteAction(attackerRollTotal: Int) =
             CurrentCombatAction.AbilityRoll(

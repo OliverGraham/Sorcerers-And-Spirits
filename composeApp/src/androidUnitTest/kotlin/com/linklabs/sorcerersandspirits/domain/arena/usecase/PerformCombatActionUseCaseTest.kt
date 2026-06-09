@@ -219,6 +219,45 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
     }
 
+    @Test
+    fun `Given a 3-player game, when a Rogue knocks out a defender, then Killing Momentum triggers and the Rogue acts again`() {
+        // Arrange
+        val arguments = createThreePlayerArguments(attackerClass = CharacterClass.getRogue())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
+
+        val defender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID)
+        assertTrue(actual = defender.characterClass.hitPoints <= 0)
+    }
+
+    @Test
+    fun `Given a 2-player game, when an attacker misses a Rogue's armor, then Dodge triggers and the Rogue's armor bonus increases`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getRogue())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        val updatedDodge = updatedDefender.defensiveAbility as DefensiveAbility.Dodge
+        assertEquals(expected = 1, actual = updatedDodge.armorBonus)
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 

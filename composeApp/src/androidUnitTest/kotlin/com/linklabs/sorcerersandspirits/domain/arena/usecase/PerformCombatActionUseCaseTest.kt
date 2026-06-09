@@ -479,6 +479,132 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
     }
 
+    @Test
+    fun `When Duelist uses Prepare Attack and rolls a 10, then the defender is knocked out`() {
+        // Arrange
+        val duelistClass = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(attackerClass = duelistClass)
+        val attackerUserId = arguments.attackerUserId
+
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getPrepareAttackAction()
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 5, secondDie = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        assertEquals(expected = 0, actual = updatedDefender.hitPoints)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = attackerUserId))
+
+        // TODO MatchFinished
+    }
+
+    @Test
+    fun `When Duelist uses Prepare Attack and rolls a 7, then nothing happens and the turn ends`() {
+        // Arrange
+        val duelistClass = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(attackerClass = duelistClass)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getPrepareAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 3, secondDie = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        assertTrue(actual = updatedDefender.isConscious())
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+    }
+
+    @Test
+    fun `When an attacker passes a Duelist's ArmorClass, then Riposte triggers`() {
+        // Arrange
+        val duelistClass = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(defenderClass = duelistClass)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 5, secondDie = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+
+        val purpose = nextAction.purpose
+        assertTrue(actual = purpose is AbilityAction.Passive.Riposte)
+        assertEquals(expected = 10, actual = purpose.attackerRollTotal)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+    }
+
+    @Test
+    fun `When a Duelist rolls a successful Riposte, then the Duelist attacks the attacker`() {
+        // Arrange
+        val duelistClass = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(defenderClass = duelistClass)
+        val duelistUserId = arguments.defenderUserId
+        val initialAttackerUserId = arguments.attackerUserId
+
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val attackerRollTotal = 10
+        val currentAction = getRiposteAction(attackerRollTotal = attackerRollTotal)
+
+        setupTwoDiceRoll(userId = duelistUserId, firstDie = 3, secondDie = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+
+        val roll = nextAction.roll
+        assertTrue(actual = roll is NormalAttackRoll.ArmorClass)
+        assertEquals(expected = duelistUserId, actual = roll.attackerUserId)
+        assertEquals(expected = initialAttackerUserId, actual = roll.defenderUserId)
+        assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
+    }
+
+    @Test
+    fun `When a Duelist rolls a failed Riposte, then the attacker rolls against the Duelist's health`() {
+        // Arrange
+        val duelistClass = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(defenderClass = duelistClass)
+        val duelistUserId = arguments.defenderUserId
+        val initialAttackerUserId = arguments.attackerUserId
+
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val attackerRollTotal = 10
+        val currentAction = getRiposteAction(attackerRollTotal = attackerRollTotal)
+
+        // total 4 (outside 6..8)
+        setupTwoDiceRoll(userId = duelistUserId, firstDie = 2, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+
+        val roll = nextAction.roll
+        assertTrue(actual = roll is NormalAttackRoll.Health)
+        assertEquals(expected = initialAttackerUserId, actual = roll.attackerUserId)
+        assertEquals(expected = duelistUserId, actual = roll.defenderUserId)
+        assertTrue(actual = nextAction.isThisUserNext(userId = initialAttackerUserId))
+    }
+
+    // TODO PrepareAttack against Paladin test
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 
@@ -528,6 +654,14 @@ class PerformCombatActionUseCaseTest {
                         attackerUserId = attackerUserId,
                         attackerRollTotal = attackerRollTotal,
                     )
+            )
+
+        private fun getPrepareAttackAction() =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Activated.PrepareAttack)
+
+        private fun getRiposteAction(attackerRollTotal: Int) =
+            CurrentCombatAction.AbilityRoll(
+                purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
             )
 
         private fun createCharacterClass(

@@ -571,6 +571,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = roll is NormalAttackRoll.ArmorClass)
         assertEquals(expected = duelistUserId, actual = roll.attackerUserId)
         assertEquals(expected = initialAttackerUserId, actual = roll.defenderUserId)
+        assertEquals(expected = initialAttackerUserId, actual = roll.originalTurnUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
     }
 
@@ -601,6 +602,55 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = initialAttackerUserId, actual = roll.attackerUserId)
         assertEquals(expected = duelistUserId, actual = roll.defenderUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = initialAttackerUserId))
+    }
+
+    @Test
+    fun `Given a 3-player game, when a Duelist performs a Riposte counter-attack and the turn ends, then the Duelist acts next if they have the highest remaining speed`() {
+        // Arrange
+        val attackerClass = createCharacterClass()
+        val duelistClass = CharacterClass.getDuelist()
+        val attackerUserId = DEFAULT_ATTACKER_ID
+        val duelistUserId = DEFAULT_DEFENDER_ID
+        val thirdClass = createCharacterClass(speed = 5)
+
+        val arguments =
+            createThreePlayerArguments(
+                attackerUserId = duelistUserId,
+                defenderUserId = attackerUserId,
+                attackerClass = duelistClass,
+                defenderClass = attackerClass,
+                thirdClass = thirdClass,
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+
+        // Counter-attack AC roll
+        val currentAction =
+            CurrentCombatAction.NormalAttack(
+                roll =
+                    NormalAttackRoll.ArmorClass(
+                        attackerUserId = duelistUserId,
+                        defenderUserId = attackerUserId,
+                        originalTurnUserId = attackerUserId,
+                    )
+            )
+
+        // Set up a miss to end the sequence
+        setupTwoDiceRoll(userId = duelistUserId, firstDie = 1, secondDie = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        // Original attacker should be marked as acted
+        assertTrue(
+            actual =
+                outcome.getPlayerById(userId = DEFAULT_ATTACKER_ID).characterClass.hasActedThisRound
+        )
+
+        // Turn should move to Duelist because they are fastest remaining (8 > 5)
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
     }
 
     // TODO PrepareAttack against Paladin test
@@ -759,7 +809,7 @@ class PerformCombatActionUseCaseTest {
                                 characterClass = defenderClass,
                             ),
                         thirdUserId to
-                            createArenaPlayer(userId = THIRD_PLAYER_ID, characterClass = thirdClass),
+                            createArenaPlayer(userId = thirdUserId, characterClass = thirdClass),
                     ),
                 roundNumber = roundNumber,
                 originalTurnUserId = originalTurnUserId,

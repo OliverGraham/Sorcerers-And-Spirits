@@ -816,6 +816,49 @@ class PerformCombatActionUseCaseTest {
         persuadeRollTest(dieRoll = 6, expectedNextUserId = DEFAULT_DEFENDER_ID)
     }
 
+    @Test
+    fun `When a Bard rolls a 6 for Persuade in a 3-player game, then the Bard chooses a new target for the attacker`() {
+        persuadeRollTest(
+            dieRoll = 6,
+            expectedNextUserId = DEFAULT_DEFENDER_ID,
+            isThreePlayer = true,
+        )
+    }
+
+    @Test
+    fun `When a Bard selects a Charm target, then the attacker performs a new ArmorClass roll against that target`() {
+        // Arrange
+        val bard = CharacterClass.getBard()
+        val arguments = createThreePlayerArguments(thirdClass = bard)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+
+        val charmedAttackerUserId = arguments.attackerUserId
+        val newTargetUserId = arguments.defenderUserId
+
+        val charmPurpose =
+            AbilityAction.Passive.Persuade.Charm(
+                attackerUserId = charmedAttackerUserId,
+                targetableUserIds = setOf(newTargetUserId),
+                selectedCharmTargetUserId = newTargetUserId,
+            )
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = charmPurpose)
+
+        setupTwoDiceRoll(userId = charmedAttackerUserId, firstDie = 4, secondDie = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+
+        val roll = nextAction.roll
+        assertTrue(actual = roll is NormalAttackRoll.Health)
+        assertEquals(expected = charmedAttackerUserId, actual = roll.attackerUserId)
+        assertEquals(expected = newTargetUserId, actual = roll.defenderUserId)
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+    }
+
     private fun persuadeRollTest(
         dieRoll: Int,
         expectedNextUserId: String,

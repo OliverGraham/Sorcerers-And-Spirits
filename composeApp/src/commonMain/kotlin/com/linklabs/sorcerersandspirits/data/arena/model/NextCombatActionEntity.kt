@@ -77,7 +77,7 @@ sealed interface AbilityActionEntity {
 
         @Serializable
         sealed interface PersuadeEntity : PassiveEntity {
-            @Serializable data class StrumLuteEntity(val attackerRollTotal: Int) : PersuadeEntity
+            @Serializable data object StrumLuteEntity : PersuadeEntity
 
             @Serializable
             data class CharmEntity(
@@ -231,9 +231,7 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                 is AbilityAction.Passive.Persuade ->
                     when (this) {
                         is AbilityAction.Passive.Persuade.StrumLute ->
-                            AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity(
-                                attackerRollTotal = attackerRollTotal
-                            )
+                            AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity
 
                         is AbilityAction.Passive.Persuade.Charm ->
                             AbilityActionEntity.PassiveEntity.PersuadeEntity.CharmEntity(
@@ -334,9 +332,7 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                 is AbilityActionEntity.PassiveEntity.PersuadeEntity ->
                     when (this) {
                         is AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity ->
-                            AbilityAction.Passive.Persuade.StrumLute(
-                                attackerRollTotal = attackerRollTotal
-                            )
+                            AbilityAction.Passive.Persuade.StrumLute
 
                         is AbilityActionEntity.PassiveEntity.PersuadeEntity.CharmEntity ->
                             AbilityAction.Passive.Persuade.Charm(

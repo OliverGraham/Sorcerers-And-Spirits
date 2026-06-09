@@ -10,22 +10,19 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 
 internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
-    fun triggerPersuade(attackerRollTotal: Int) =
-        combatMutator.triggerPersuade(attackerRollTotal = attackerRollTotal)
+    fun triggerPersuade() = combatMutator.triggerPersuade()
 
     fun strumLute() = combatMutator.strumLute()
 
     fun charm(charm: AbilityAction.Passive.Persuade.Charm) = combatMutator.charm(charm = charm)
 
-    private fun CombatMutator.triggerPersuade(attackerRollTotal: Int) {
+    private fun CombatMutator.triggerPersuade() {
         addMessage(message = ArenaMessage.Persuade.Trigger)
 
-        val purpose =
-            AbilityAction.Passive.Persuade.StrumLute(attackerRollTotal = attackerRollTotal)
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose = purpose,
+                    purpose = AbilityAction.Passive.Persuade.StrumLute,
                     activeUserIds = setOf(defenderUserId),
                 )
         )
@@ -61,7 +58,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleStrumLuteSuccess(persuadeDie: Int) {
-        val isCharm = consciousPlayers.size >= 2 && persuadeDie == CHARM
+        val isCharm = consciousPlayers.size >= 3 && persuadeDie == CHARM
         if (isCharm) {
             strumLuteToCharm(
                 charmTargetUserIds =

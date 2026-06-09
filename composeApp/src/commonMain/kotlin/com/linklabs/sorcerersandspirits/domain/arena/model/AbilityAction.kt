@@ -27,7 +27,7 @@ sealed interface AbilityAction {
         data class Riposte(val attackerRollTotal: Int) : Passive
 
         sealed interface Persuade : Passive {
-            data class StrumLute(val attackerRollTotal: Int) : Persuade
+            data object StrumLute : Persuade
 
             // TODO Persuade: In UI - need to pass in selectedCharmTargetUserId so the
             //  defenderUserId is Bard's selected target

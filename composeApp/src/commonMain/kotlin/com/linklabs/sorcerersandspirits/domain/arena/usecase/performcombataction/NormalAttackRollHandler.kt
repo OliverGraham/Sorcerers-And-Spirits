@@ -125,8 +125,7 @@ internal class NormalAttackRollHandler(
             is DefensiveAbility.Riposte ->
                 RiposteHandler(combatMutator = this, attackerRollTotal = diceTotal).triggerRiposte()
 
-            is DefensiveAbility.Persuade ->
-                PersuadeHandler(combatMutator = this).triggerPersuade(attackerRollTotal = diceTotal)
+            is DefensiveAbility.Persuade -> PersuadeHandler(combatMutator = this).triggerPersuade()
 
             is DefensiveAbility.LuckyCoin ->
                 LuckyCoinHandler(combatMutator = this, attackerRollTotal = diceTotal)

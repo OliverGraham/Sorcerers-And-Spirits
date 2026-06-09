@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -39,18 +38,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
                 nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
             )
         } else {
-            val healthRoll =
-                NormalAttackRoll.Health(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
-                )
-            setNextCombatAction(
-                nextAction =
-                    NextCombatAction.NormalAttack(
-                        roll = healthRoll,
-                        activeUserIds = setOf(attackerUserId),
-                    )
-            )
+            resolveTurnEnd()
         }
     }
 

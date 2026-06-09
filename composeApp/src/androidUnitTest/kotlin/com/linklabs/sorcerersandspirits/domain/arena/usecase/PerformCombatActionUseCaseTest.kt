@@ -734,6 +734,52 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
     }
 
+    @Test
+    fun `When Bard deals damage, then Encore triggers`() {
+        // Arrange
+        val bard = CharacterClass.getBard()
+        val arguments = createTwoPlayerArguments(attackerClass = bard)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Encore)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
+    }
+
+    @Test
+    fun `When Bard rolls a successful Encore, then the Bard acts again`() {
+        encoreRollTest(dieRoll = 5, expectedNextUserId = DEFAULT_ATTACKER_ID)
+    }
+
+    @Test
+    fun `When Bard rolls a failed Encore, then the turn ends`() {
+        encoreRollTest(dieRoll = 4, expectedNextUserId = DEFAULT_DEFENDER_ID)
+    }
+
+    private fun encoreRollTest(dieRoll: Int, expectedNextUserId: String) {
+        // Arrange
+        val arguments = createTwoPlayerArguments(attackerClass = CharacterClass.getBard())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Encore)
+
+        setupOneDiceRoll(userId = arguments.attackerUserId, die = dieRoll)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = expectedNextUserId))
+    }
+
     // TODO PrepareAttack against Paladin test
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =

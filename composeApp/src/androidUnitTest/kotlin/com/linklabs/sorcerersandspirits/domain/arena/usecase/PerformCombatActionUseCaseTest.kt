@@ -289,10 +289,10 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Gambler uses All-In and rolls a 1, then the Gambler is knocked out`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = getAllInAction(gamblerClass = gamblerClass)
+        val currentAction = getAllInAction(gambler = gambler)
 
         setupOneDiceRoll(userId = arguments.attackerUserId, die = 1)
 
@@ -309,10 +309,10 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Gambler uses All-In and rolls a 6, then the Gambler gets another attack`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = getAllInAction(gamblerClass = gamblerClass)
+        val currentAction = getAllInAction(gambler = gambler)
 
         setupOneDiceRoll(userId = arguments.attackerUserId, die = 6)
 
@@ -332,10 +332,10 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Gambler uses All-In and rolls a 3, then nothing happens`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(attackerClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = getAllInAction(gamblerClass = gamblerClass)
+        val currentAction = getAllInAction(gambler = gambler)
 
         setupOneDiceRoll(userId = arguments.attackerUserId, die = 3)
 
@@ -355,8 +355,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When someone attacks the Gambler and LuckyCoin stops the attack, it is the next player's turn`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val gamblerUserId = arguments.defenderUserId
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 6
@@ -375,8 +375,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When someone attacks the Gambler and LuckyCoin does not stop the attack, the attacker rolls against Gambler's health`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val gamblerUserId = arguments.defenderUserId
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 6
@@ -397,8 +397,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When someone attacks the Gambler and rolls a 6, then High Roller triggers`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val gamblerUserId = arguments.defenderUserId
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 6
@@ -419,8 +419,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `Given a 2-player game, when a Gambler uses High Roller and deals damage that knocks out the attacker, then the match ends`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
-        val arguments = createTwoPlayerArguments(defenderClass = gamblerClass)
+        val gambler = CharacterClass.getGambler()
+        val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val gamblerUserId = arguments.defenderUserId
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 10
@@ -448,10 +448,10 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Gambler uses High Roller and deals damage but the attacker survives, then the attacker rolls against health`() {
         // Arrange
-        val gamblerClass = CharacterClass.getGambler()
+        val gambler = CharacterClass.getGambler()
         val attackerClass = createCharacterClass(hitPoints = 10)
         val arguments =
-            createTwoPlayerArguments(attackerClass = attackerClass, defenderClass = gamblerClass)
+            createTwoPlayerArguments(attackerClass = attackerClass, defenderClass = gambler)
 
         val attackerUserId = arguments.attackerUserId
         val gamblerUserId = arguments.defenderUserId
@@ -482,8 +482,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Duelist uses Prepare Attack and rolls a 10, then the defender is knocked out`() {
         // Arrange
-        val duelistClass = CharacterClass.getDuelist()
-        val arguments = createTwoPlayerArguments(attackerClass = duelistClass)
+        val duelist = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(attackerClass = duelist)
         val attackerUserId = arguments.attackerUserId
 
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -506,8 +506,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Duelist uses Prepare Attack and rolls a 7, then nothing happens and the turn ends`() {
         // Arrange
-        val duelistClass = CharacterClass.getDuelist()
-        val arguments = createTwoPlayerArguments(attackerClass = duelistClass)
+        val duelist = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(attackerClass = duelist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getPrepareAttackAction()
 
@@ -526,8 +526,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker passes a Duelist's ArmorClass, then Riposte triggers`() {
         // Arrange
-        val duelistClass = CharacterClass.getDuelist()
-        val arguments = createTwoPlayerArguments(defenderClass = duelistClass)
+        val duelist = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(defenderClass = duelist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
@@ -549,8 +549,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Duelist rolls a successful Riposte, then the Duelist attacks the attacker`() {
         // Arrange
-        val duelistClass = CharacterClass.getDuelist()
-        val arguments = createTwoPlayerArguments(defenderClass = duelistClass)
+        val duelist = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(defenderClass = duelist)
         val duelistUserId = arguments.defenderUserId
         val initialAttackerUserId = arguments.attackerUserId
 
@@ -578,8 +578,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Duelist rolls a failed Riposte, then the attacker rolls against the Duelist's health`() {
         // Arrange
-        val duelistClass = CharacterClass.getDuelist()
-        val arguments = createTwoPlayerArguments(defenderClass = duelistClass)
+        val duelist = CharacterClass.getDuelist()
+        val arguments = createTwoPlayerArguments(defenderClass = duelist)
         val duelistUserId = arguments.defenderUserId
         val initialAttackerUserId = arguments.attackerUserId
 
@@ -608,7 +608,7 @@ class PerformCombatActionUseCaseTest {
     fun `Given a 3-player game, when a Duelist performs a Riposte counter-attack and the turn ends, then the Duelist acts next if they have the highest remaining speed`() {
         // Arrange
         val attackerClass = createCharacterClass()
-        val duelistClass = CharacterClass.getDuelist()
+        val duelist = CharacterClass.getDuelist()
         val attackerUserId = DEFAULT_ATTACKER_ID
         val duelistUserId = DEFAULT_DEFENDER_ID
         val thirdClass = createCharacterClass(speed = 5)
@@ -617,7 +617,7 @@ class PerformCombatActionUseCaseTest {
             createThreePlayerArguments(
                 attackerUserId = duelistUserId,
                 defenderUserId = attackerUserId,
-                attackerClass = duelistClass,
+                attackerClass = duelist,
                 defenderClass = attackerClass,
                 thirdClass = thirdClass,
             )
@@ -653,6 +653,87 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
     }
 
+    @Test
+    fun `When Necromancer uses Summon Minion and rolls a 1, then no minion is summoned and no healing occurs`() {
+        summonMinionTest(startingHitPoints = 3, expectedHitPoints = 3, dieRoll = 1)
+    }
+
+    @Test
+    fun `When Necromancer uses Summon Minion and rolls a 2, then a skeleton is summoned`() {
+        summonMinionTest(
+            startingHitPoints = 3,
+            expectedHitPoints = 3,
+            dieRoll = 2,
+            expectedSkeletonCount = 1,
+        )
+    }
+
+    @Test
+    fun `When Necromancer uses Summon Minion and rolls a 4, then a skeleton is summoned and Necromancer heals to full`() {
+        summonMinionTest(
+            startingHitPoints = 3,
+            expectedHitPoints = 7,
+            dieRoll = 4,
+            expectedSkeletonCount = 1,
+        )
+    }
+
+    @Test
+    fun `When Necromancer uses Summon Minion and rolls a 6, then a golem is summoned and Necromancer heals to full`() {
+        summonMinionTest(
+            startingHitPoints = 3,
+            expectedHitPoints = 7,
+            dieRoll = 6,
+            expectedGolemCount = 1,
+        )
+    }
+
+    @Test
+    fun `When Necromancer already has a skeleton and summons another, the skeleton count increases to 2`() {
+        summonMinionTest(
+            startingHitPoints = 3,
+            expectedHitPoints = 3,
+            dieRoll = 2,
+            startingSkeletonCount = 1,
+            expectedSkeletonCount = 2,
+        )
+    }
+
+    private fun summonMinionTest(
+        startingHitPoints: Int,
+        expectedHitPoints: Int,
+        dieRoll: Int,
+        startingSkeletonCount: Int = 0,
+        expectedSkeletonCount: Int = 0,
+        expectedGolemCount: Int = 0,
+    ) {
+        // Arrange
+        val necromancer =
+            CharacterClass.getNecromancer()
+                .copy(
+                    hitPoints = startingHitPoints,
+                    offensiveAbility =
+                        OffensiveAbility.SummonMinion(skeletonCount = startingSkeletonCount),
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getSummonMinionAction(necromancer = necromancer)
+
+        setupOneDiceRoll(userId = arguments.attackerUserId, die = dieRoll)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedNecro = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        val updatedSummon = updatedNecro.offensiveAbility as OffensiveAbility.SummonMinion
+        assertEquals(expected = expectedSkeletonCount, actual = updatedSummon.skeletonCount)
+        assertEquals(expected = expectedGolemCount, actual = updatedSummon.golemCount)
+        assertEquals(expected = expectedHitPoints, actual = updatedNecro.hitPoints)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+    }
+
     // TODO PrepareAttack against Paladin test
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
@@ -683,11 +764,11 @@ class PerformCombatActionUseCaseTest {
                     )
             )
 
-        private fun getAllInAction(gamblerClass: CharacterClass) =
+        private fun getAllInAction(gambler: CharacterClass) =
             CurrentCombatAction.AbilityRoll(
                 purpose =
                     AbilityAction.Activated.AllIn(
-                        allInAbility = gamblerClass.offensiveAbility as OffensiveAbility.AllIn
+                        allInAbility = gambler.offensiveAbility as OffensiveAbility.AllIn
                     )
             )
 
@@ -708,6 +789,15 @@ class PerformCombatActionUseCaseTest {
 
         private fun getPrepareAttackAction() =
             CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Activated.PrepareAttack)
+
+        private fun getSummonMinionAction(necromancer: CharacterClass) =
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Activated.SummonMinion(
+                        summonMinionAbility =
+                            necromancer.offensiveAbility as OffensiveAbility.SummonMinion
+                    )
+            )
 
         private fun getRiposteAction(attackerRollTotal: Int) =
             CurrentCombatAction.AbilityRoll(

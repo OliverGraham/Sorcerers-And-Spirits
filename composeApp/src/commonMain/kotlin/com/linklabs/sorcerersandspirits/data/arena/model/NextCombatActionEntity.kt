@@ -82,7 +82,7 @@ sealed interface AbilityActionEntity {
             @Serializable
             data class CharmEntity(
                 val attackerUserId: String,
-                val charmTargetUserIds: Set<String>,
+                val targetableUserIds: Set<String>,
                 val selectedCharmTargetUserId: String? = null,
             ) : PersuadeEntity
         }
@@ -236,7 +236,7 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                         is AbilityAction.Passive.Persuade.Charm ->
                             AbilityActionEntity.PassiveEntity.PersuadeEntity.CharmEntity(
                                 attackerUserId = attackerUserId,
-                                charmTargetUserIds = charmTargetUserIds,
+                                targetableUserIds = targetableUserIds,
                                 selectedCharmTargetUserId = selectedCharmTargetUserId,
                             )
                     }
@@ -337,7 +337,7 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                         is AbilityActionEntity.PassiveEntity.PersuadeEntity.CharmEntity ->
                             AbilityAction.Passive.Persuade.Charm(
                                 attackerUserId = attackerUserId,
-                                charmTargetUserIds = charmTargetUserIds,
+                                targetableUserIds = targetableUserIds,
                                 selectedCharmTargetUserId = selectedCharmTargetUserId,
                             )
                     }

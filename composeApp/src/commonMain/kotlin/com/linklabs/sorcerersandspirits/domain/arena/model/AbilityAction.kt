@@ -33,7 +33,7 @@ sealed interface AbilityAction {
             //  defenderUserId is Bard's selected target
             data class Charm(
                 val attackerUserId: String,
-                val charmTargetUserIds: Set<String>,
+                val targetableUserIds: Set<String>,
                 val selectedCharmTargetUserId: String? = null,
             ) : Persuade
         }

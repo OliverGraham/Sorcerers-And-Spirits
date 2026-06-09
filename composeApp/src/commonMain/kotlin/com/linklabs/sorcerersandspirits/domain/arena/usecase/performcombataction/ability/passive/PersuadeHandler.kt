@@ -61,7 +61,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         val isCharm = consciousPlayers.size >= 3 && persuadeDie == CHARM
         if (isCharm) {
             strumLuteToCharm(
-                charmTargetUserIds =
+                targetableUserIds =
                     consciousPlayers.map { it.userId }.toSet() - attackerUserId - defenderUserId
             )
         } else {
@@ -77,7 +77,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         resolveTurnEnd()
     }
 
-    private fun CombatMutator.strumLuteToCharm(charmTargetUserIds: Set<String>) {
+    private fun CombatMutator.strumLuteToCharm(targetableUserIds: Set<String>) {
         // TODO Persuade: "Bard rolled a 6, stopped $Attacker's attack and now forcing $Attacker to
         //  fight someone else!"
         addMessage(message = ArenaMessage.Persuade.CharmActivation)
@@ -85,7 +85,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         val purpose =
             AbilityAction.Passive.Persuade.Charm(
                 attackerUserId = attackerUserId,
-                charmTargetUserIds = charmTargetUserIds,
+                targetableUserIds = targetableUserIds,
             )
 
         setNextCombatAction(

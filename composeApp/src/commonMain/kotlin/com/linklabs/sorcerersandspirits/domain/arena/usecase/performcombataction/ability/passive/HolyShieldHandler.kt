@@ -90,7 +90,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
                 )
         )
 
-        updateDefenderClass { defender -> defender.copy(hitPoints = defender.hitPoints - result) }
+        updateAttackerClass { attacker -> attacker.copy(hitPoints = attacker.hitPoints - result) }
 
         resolveWrath()
     }

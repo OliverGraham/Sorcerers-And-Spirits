@@ -1287,6 +1287,106 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll)
     }
 
+    @Test
+    fun `When a Paladin is knocked out, then Holy Shield triggers`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.HolyShield.Prayer)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+
+        val updatedPaladin = outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
+        val holyShield = updatedPaladin.defensiveAbility as DefensiveAbility.HolyShield
+        assertTrue(actual = holyShield.usedThisMatch)
+    }
+
+    @Test
+    fun `When a Paladin rolls a successful Holy Shield Prayer, then the Paladin survives with 1 HP and performs Wrath`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Prayer)
+
+        setupTwoDiceRoll(userId = arguments.defenderUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.HolyShield.Wrath)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+
+        val updatedPaladin = outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
+        assertEquals(expected = 1, actual = updatedPaladin.hitPoints)
+    }
+
+    @Test
+    fun `When a Paladin rolls a failed Holy Shield Prayer, then the Paladin is knocked out`() {
+        // Arrange
+        val arguments =
+            createTwoPlayerArguments(
+                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 0)
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Prayer)
+
+        setupTwoDiceRoll(userId = arguments.defenderUserId, firstDie = 4, secondDie = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+
+        val updatedPaladin = outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
+        assertTrue(actual = updatedPaladin.hitPoints <= 0)
+    }
+
+    @Test
+    fun `When a Paladin performs Wrath, then the attacker takes damage and the turn ends`() {
+        // Arrange
+        val attackerClass = createCharacterClass(hitPoints = 10)
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass = attackerClass,
+                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 1),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Wrath)
+
+        val wrathDamage = 4
+        setupOneDiceRoll(userId = arguments.defenderUserId, die = wrathDamage)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.defenderUserId)
+        )
+
+        val updatedAttacker =
+            outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        assertEquals(expected = 10 - wrathDamage, actual = updatedAttacker.hitPoints)
+    }
+
     // TODO SpellPotency test(s) with Paladin
     // TODO PrepareAttack against Paladin test
 

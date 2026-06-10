@@ -262,7 +262,8 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
-        val updatedDodge = updatedDefender.defensiveAbility as DefensiveAbility.Dodge
+        val updatedDodge =
+            assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = 1, actual = updatedDodge.armorBonus)
     }
 
@@ -284,7 +285,8 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
-        val updatedDodge = updatedDefender.defensiveAbility as DefensiveAbility.Dodge
+        val updatedDodge =
+            assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = startingArmorBonus, actual = updatedDodge.armorBonus)
     }
 
@@ -323,7 +325,7 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         val updatedGambler = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
-        val updatedAllIn = updatedGambler.offensiveAbility as OffensiveAbility.AllIn
+        val updatedAllIn = assertIs<OffensiveAbility.AllIn>(value = updatedGambler.offensiveAbility)
         assertTrue(actual = updatedAllIn.hasAnotherAttack)
         assertTrue(actual = updatedAllIn.usedThisTurn)
         assertTrue(
@@ -346,7 +348,7 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         val updatedGambler = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
-        val updatedAllIn = updatedGambler.offensiveAbility as OffensiveAbility.AllIn
+        val updatedAllIn = assertIs<OffensiveAbility.AllIn>(value = updatedGambler.offensiveAbility)
         assertTrue(actual = !updatedAllIn.hasAnotherAttack)
         assertTrue(actual = updatedAllIn.usedThisTurn)
         assertTrue(
@@ -728,7 +730,8 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         val updatedNecro = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
-        val updatedSummon = updatedNecro.offensiveAbility as OffensiveAbility.SummonMinion
+        val updatedSummon =
+            assertIs<OffensiveAbility.SummonMinion>(value = updatedNecro.offensiveAbility)
         assertEquals(expected = expectedSkeletonCount, actual = updatedSummon.skeletonCount)
         assertEquals(expected = expectedGolemCount, actual = updatedSummon.golemCount)
         assertEquals(expected = expectedHitPoints, actual = updatedNecro.hitPoints)
@@ -963,7 +966,8 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val updatedIllusionist =
             outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
-        val updatedImpersonate = updatedIllusionist.offensiveAbility as OffensiveAbility.Impersonate
+        val updatedImpersonate =
+            assertIs<OffensiveAbility.Impersonate>(value = updatedIllusionist.offensiveAbility)
 
         assertEquals(
             expected = abilityToImpersonate,
@@ -990,7 +994,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
-        val purpose = nextAction.purpose as AbilityAction.Passive.MirrorImage
+        val purpose = assertIs<AbilityAction.Passive.MirrorImage>(value = nextAction.purpose)
         assertEquals(expected = 3, actual = purpose.firstDie.originalRoll)
         assertEquals(expected = 4, actual = purpose.secondDie.originalRoll)
         assertEquals(expected = NormalAttackType.ArmorClass, actual = purpose.attackType)
@@ -1067,7 +1071,8 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val updatedIllusionist =
             outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
-        val updatedMirrorImage = updatedIllusionist.defensiveAbility as DefensiveAbility.MirrorImage
+        val updatedMirrorImage =
+            assertIs<DefensiveAbility.MirrorImage>(value = updatedIllusionist.defensiveAbility)
         assertEquals(expected = expectedUsedThisAttack, actual = updatedMirrorImage.usedThisAttack)
 
         when (val nextAction = outcome.nextCombatAction) {
@@ -1205,7 +1210,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
-        val teleport = nextAction.purpose as AbilityAction.Passive.Teleport
+        val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
         assertEquals(expected = attackerRoll, actual = teleport.attackerRoll)
         assertEquals(expected = null, actual = teleport.defenderRoll)
     }
@@ -1284,7 +1289,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
 
-        val teleport = nextAction.purpose as AbilityAction.Passive.Teleport
+        val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
         assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll)
     }
 
@@ -1307,7 +1312,8 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
 
         val updatedPaladin = outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
-        val holyShield = updatedPaladin.defensiveAbility as DefensiveAbility.HolyShield
+        val holyShield =
+            assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
     }
 
@@ -1426,7 +1432,8 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = THIRD_PLAYER_ID))
 
         val updatedPaladin = outcome.getPlayerById(userId = THIRD_PLAYER_ID).characterClass
-        val holyShield = updatedPaladin.defensiveAbility as DefensiveAbility.HolyShield
+        val holyShield =
+            assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
     }
 
@@ -1481,7 +1488,11 @@ class PerformCombatActionUseCaseTest {
         val updatedPaladin = outcome1.getPlayerById(userId = paladinUserId).characterClass
         assertEquals(expected = 0, actual = updatedPaladin.hitPoints)
 
-        assertTrue((updatedPaladin.defensiveAbility as DefensiveAbility.HolyShield).usedThisMatch)
+        assertTrue(
+            actual =
+                assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
+                    .usedThisMatch
+        )
 
         // 2. Mage uses Spell Potency (against Duelist)
         val arguments2 =
@@ -1502,7 +1513,7 @@ class PerformCombatActionUseCaseTest {
 
         // Assert: Holy Shield should NOT be triggered (no AbilityRoll for Prayer)
         val nextAction = outcome2.nextCombatAction
-        assertTrue(nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
     }
 
     @Test
@@ -1528,7 +1539,8 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
 
         val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
-        val holyShield = updatedDefender.defensiveAbility as DefensiveAbility.HolyShield
+        val holyShield =
+            assertIs<DefensiveAbility.HolyShield>(value = updatedDefender.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
     }
 
@@ -1564,7 +1576,8 @@ class PerformCombatActionUseCaseTest {
             CurrentCombatAction.AbilityRoll(
                 purpose =
                     AbilityAction.Activated.AllIn(
-                        allInAbility = gambler.offensiveAbility as OffensiveAbility.AllIn
+                        allInAbility =
+                            assertIs<OffensiveAbility.AllIn>(value = gambler.offensiveAbility)
                     )
             )
 
@@ -1600,7 +1613,9 @@ class PerformCombatActionUseCaseTest {
                 purpose =
                     AbilityAction.Activated.SummonMinion(
                         summonMinionAbility =
-                            necromancer.offensiveAbility as OffensiveAbility.SummonMinion
+                            assertIs<OffensiveAbility.SummonMinion>(
+                                value = necromancer.offensiveAbility
+                            )
                     )
             )
 

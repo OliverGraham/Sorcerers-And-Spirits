@@ -933,6 +933,90 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `When Mage rolls doubles during ArmorClass roll, then Spell Potency triggers, deals damage, and turn ends`() {
+        spellPotencyTest(
+            attackRoll =
+                NormalAttackRoll.ArmorClass(
+                    attackerUserId = DEFAULT_ATTACKER_ID,
+                    defenderUserId = DEFAULT_DEFENDER_ID,
+                ),
+            dieValue = 3,
+        )
+    }
+
+    @Test
+    fun `When Mage rolls doubles during Health roll, then Spell Potency triggers, deals damage, and turn ends`() {
+        spellPotencyTest(
+            attackRoll =
+                NormalAttackRoll.Health(
+                    attackerUserId = DEFAULT_ATTACKER_ID,
+                    defenderUserId = DEFAULT_DEFENDER_ID,
+                ),
+            dieValue = 4,
+        )
+    }
+
+    @Test
+    fun `When Mage rolls doubles in a 3-player game, then Spell Potency deals splash damage to the third player`() {
+        spellPotencyTest(
+            attackRoll =
+                NormalAttackRoll.ArmorClass(
+                    attackerUserId = DEFAULT_ATTACKER_ID,
+                    defenderUserId = DEFAULT_DEFENDER_ID,
+                ),
+            dieValue = 2,
+            isThreePlayer = true,
+        )
+    }
+
+    private fun spellPotencyTest(
+        attackRoll: NormalAttackRoll,
+        dieValue: Int,
+        isThreePlayer: Boolean = false,
+    ) {
+        // Arrange
+        val mage = CharacterClass.getMage()
+        val arguments =
+            if (isThreePlayer) {
+                createThreePlayerArguments(attackerClass = mage)
+            } else {
+                createTwoPlayerArguments(attackerClass = mage)
+            }
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = CurrentCombatAction.NormalAttack(roll = attackRoll)
+
+        setupTwoDiceRoll(
+            userId = arguments.attackerUserId,
+            firstDie = dieValue,
+            secondDie = dieValue,
+        )
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val diceTotal = dieValue * 2
+
+        // Main target hit points
+        val updatedDefender =
+            outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
+        val initialDefenderHp =
+            arguments.playerMap.getValue(arguments.defenderUserId).characterClass.hitPoints
+        assertEquals(expected = initialDefenderHp - diceTotal, actual = updatedDefender.hitPoints)
+
+        // Splash damage (if 3 players)
+        if (isThreePlayer) {
+            val thirdPlayer = outcome.getPlayerById(userId = THIRD_PLAYER_ID).characterClass
+            val initialThirdHp =
+                arguments.playerMap.getValue(THIRD_PLAYER_ID).characterClass.hitPoints
+            assertEquals(expected = initialThirdHp - dieValue, actual = thirdPlayer.hitPoints)
+        }
+
+        // Turn ends
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+    }
+
+    @Test
     fun `When Illusionist uses Impersonate, then the Illusionist's offensive ability is updated and they can act again`() {
         impersonateTest(abilityToImpersonate = OffensiveAbility.PrepareAttack)
     }

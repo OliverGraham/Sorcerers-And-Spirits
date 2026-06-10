@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
@@ -699,47 +700,6 @@ class PerformCombatActionUseCaseTest {
         )
     }
 
-    @Test
-    fun `When Illusionist uses Impersonate, then the Illusionist's offensive ability is updated and they can act again`() {
-        impersonateTest(abilityToImpersonate = OffensiveAbility.PrepareAttack)
-    }
-
-    @Test
-    fun `When Illusionist uses Impersonate but already has an impersonated ability, it is replaced with the new one`() {
-        impersonateTest(
-            startingAbility =
-                OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.PrepareAttack),
-            abilityToImpersonate = OffensiveAbility.AllIn(),
-        )
-    }
-
-    private fun impersonateTest(
-        startingAbility: OffensiveAbility = OffensiveAbility.Impersonate(),
-        abilityToImpersonate: OffensiveAbility,
-    ) {
-        // Arrange
-        val illusionist = CharacterClass.getIllusionist().copy(offensiveAbility = startingAbility)
-        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
-        val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = getImpersonateAction(abilityToImpersonate = abilityToImpersonate)
-
-        // Act
-        val outcome = performCombatAction.invoke(currentAction = currentAction)
-
-        // Assert
-        val updatedIllusionist =
-            outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
-        val updatedImpersonate = updatedIllusionist.offensiveAbility as OffensiveAbility.Impersonate
-
-        assertEquals(
-            expected = abilityToImpersonate,
-            actual = updatedImpersonate.impersonatedAbility,
-        )
-        assertTrue(
-            actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
-        )
-    }
-
     private fun summonMinionTest(
         startingHitPoints: Int,
         expectedHitPoints: Int,
@@ -970,6 +930,156 @@ class PerformCombatActionUseCaseTest {
         }
 
         assertTrue(actual = nextAction.isThisUserNext(userId = expectedNextUserId))
+    }
+
+    @Test
+    fun `When Illusionist uses Impersonate, then the Illusionist's offensive ability is updated and they can act again`() {
+        impersonateTest(abilityToImpersonate = OffensiveAbility.PrepareAttack)
+    }
+
+    @Test
+    fun `When Illusionist uses Impersonate but already has an impersonated ability, it is replaced with the new one`() {
+        impersonateTest(
+            startingAbility =
+                OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.PrepareAttack),
+            abilityToImpersonate = OffensiveAbility.AllIn(),
+        )
+    }
+
+    private fun impersonateTest(
+        startingAbility: OffensiveAbility = OffensiveAbility.Impersonate(),
+        abilityToImpersonate: OffensiveAbility,
+    ) {
+        // Arrange
+        val illusionist = CharacterClass.getIllusionist().copy(offensiveAbility = startingAbility)
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getImpersonateAction(abilityToImpersonate = abilityToImpersonate)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedIllusionist =
+            outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+        val updatedImpersonate = updatedIllusionist.offensiveAbility as OffensiveAbility.Impersonate
+
+        assertEquals(
+            expected = abilityToImpersonate,
+            actual = updatedImpersonate.impersonatedAbility,
+        )
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
+        )
+    }
+
+    @Test
+    fun `When an attacker hits an Illusionist's ArmorClass, then Mirror Image triggers`() {
+        // Arrange
+        val illusionist = CharacterClass.getIllusionist()
+        val arguments = createTwoPlayerArguments(defenderClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 3, secondDie = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        val purpose = nextAction.purpose as AbilityAction.Passive.MirrorImage
+        assertEquals(expected = 3, actual = purpose.firstDie.originalRoll)
+        assertEquals(expected = 4, actual = purpose.secondDie.originalRoll)
+        assertEquals(expected = NormalAttackType.ArmorClass, actual = purpose.attackType)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+    }
+
+    @Test
+    fun `When an Illusionist uses Mirror Image to reroll and attacker misses, then the turn ends and the ability is reset`() {
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie =
+                    AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3, reroll = 2),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                attackType = NormalAttackType.ArmorClass,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            )
+
+        mirrorImageTest(
+            mirrorImagePurpose = mirrorImagePurpose,
+            expectedUsedThisAttack = false,
+            expectedIsNextActionIdle = true,
+        )
+    }
+
+    @Test
+    fun `When an Illusionist passes on Mirror Image during ArmorClass, the attacker then rolls against the Health`() {
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                attackType = NormalAttackType.ArmorClass,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            )
+
+        mirrorImageTest(
+            mirrorImagePurpose = mirrorImagePurpose,
+            expectedUsedThisAttack = false,
+            expectedIsNextActionNormalAttack = true,
+        )
+    }
+
+    @Test
+    fun `When an Illusionist uses Mirror Image during ArmorClass, they cannot use it again during the Health roll`() {
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie =
+                    AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3, reroll = 6),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                attackType = NormalAttackType.ArmorClass,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            )
+
+        mirrorImageTest(
+            mirrorImagePurpose = mirrorImagePurpose,
+            expectedUsedThisAttack = true,
+            expectedIsNextActionNormalAttack = true,
+        )
+    }
+
+    private fun mirrorImageTest(
+        mirrorImagePurpose: AbilityAction.Passive.MirrorImage,
+        expectedUsedThisAttack: Boolean,
+        expectedIsNextActionIdle: Boolean = false,
+        expectedIsNextActionNormalAttack: Boolean = false,
+    ) {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getIllusionist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = mirrorImagePurpose)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedIllusionist =
+            outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
+        val updatedMirrorImage = updatedIllusionist.defensiveAbility as DefensiveAbility.MirrorImage
+        assertEquals(expected = expectedUsedThisAttack, actual = updatedMirrorImage.usedThisAttack)
+
+        when (val nextAction = outcome.nextCombatAction) {
+            is NextCombatAction.AbilityRoll ->
+                assertTrue(actual = false, message = "Something went wrong")
+
+            is NextCombatAction.Idle -> assertTrue(actual = expectedIsNextActionIdle)
+
+            is NextCombatAction.NormalAttack -> {
+                assertTrue(actual = expectedIsNextActionNormalAttack)
+                assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+            }
+        }
     }
 
     // TODO PrepareAttack against Paladin test

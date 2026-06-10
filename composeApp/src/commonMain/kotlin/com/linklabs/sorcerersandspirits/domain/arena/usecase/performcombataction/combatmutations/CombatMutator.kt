@@ -33,6 +33,9 @@ internal class CombatMutator(
     val consciousPlayers
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
+    private val isMatchFinished
+        get() = consciousPlayers.size <= 1
+
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextAction.resetMirrorImageIfApplicable()
 
@@ -47,6 +50,7 @@ internal class CombatMutator(
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
             doublesBonus = diceRoller.getDoublesBonus(),
+            isMatchFinished = isMatchFinished,
         )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
@@ -82,6 +86,11 @@ internal class CombatMutator(
 
     fun resolveTurnEnd() {
         updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
+
+        if (isMatchFinished) {
+            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserIds = emptySet()))
+            return
+        }
 
         val nextPlayer = calculateNextPlayerInRound()
         if (nextPlayer != null) {

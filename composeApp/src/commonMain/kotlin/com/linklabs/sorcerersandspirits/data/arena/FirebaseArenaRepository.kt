@@ -74,18 +74,25 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
                 }
 
-            ArenaMatchEntity.Combat(
-                messages = existingMatch.messages + newMessages,
-                numberOfNewMessages = newMessages.size,
-                playerEntitiesMap =
-                    result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
-                nextCombatActionEntity = result.nextCombatAction.toEntity(),
-                nextActivePlayerUserId =
-                    result.nextCombatAction.activeUserIds.first(), // TODO big time fix
-                roundNumber = result.roundNumber,
-                isNewRound = result.isNewRound,
-                doublesBonusEntity = result.doublesBonus?.toEntity(),
-            )
+            if (result.isMatchFinished) {
+                ArenaMatchEntity.Finished(
+                    messages = existingMatch.messages + newMessages,
+                    numberOfNewMessages = newMessages.size,
+                )
+            } else {
+                ArenaMatchEntity.Combat(
+                    messages = existingMatch.messages + newMessages,
+                    numberOfNewMessages = newMessages.size,
+                    playerEntitiesMap =
+                        result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
+                    nextCombatActionEntity = result.nextCombatAction.toEntity(),
+                    nextActivePlayerUserId =
+                        result.nextCombatAction.activeUserIds.first(), // TODO big time fix
+                    roundNumber = result.roundNumber,
+                    isNewRound = result.isNewRound,
+                    doublesBonusEntity = result.doublesBonus?.toEntity(),
+                )
+            }
         }
     }
 

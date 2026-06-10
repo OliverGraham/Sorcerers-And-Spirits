@@ -1677,6 +1677,72 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = nextPlayerId))
     }
 
+    @Test
+    fun `When a Rogue rolls doubles to knockout a defender, Killing Momentum triggers and the doubles bonus is preserved in the outcome`() {
+        // Arrange
+        val arguments = createThreePlayerArguments(attackerClass = CharacterClass.getRogue())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val rogueUserId = arguments.attackerUserId
+
+        setupTwoDiceRoll(userId = rogueUserId, firstDie = 5, secondDie = 5)
+        every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = rogueUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction.isThisUserNext(userId = rogueUserId))
+        assertEquals(expected = DoublesBonus(userId = rogueUserId), actual = outcome.doublesBonus)
+    }
+
+    @Test
+    fun `When a Paladin rolls 10 (doubles) for Holy Shield Prayer, the doubles bonus is preserved for the subsequent Wrath roll`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Prayer)
+        val paladinUserId = arguments.defenderUserId
+
+        setupTwoDiceRoll(userId = paladinUserId, firstDie = 5, secondDie = 5)
+        every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = paladinUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = assertIs<NextCombatAction.AbilityRoll>(value = outcome.nextCombatAction)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.HolyShield.Wrath)
+        assertTrue(actual = nextAction.isThisUserNext(userId = paladinUserId))
+        assertEquals(expected = DoublesBonus(userId = paladinUserId), actual = outcome.doublesBonus)
+    }
+
+    @Test
+    fun `When a Gambler with two attacks rolls doubles on their first attack's Health roll, the doubles bonus is preserved in the outcome`() {
+        // Arrange
+        val gambler =
+            CharacterClass.getGambler()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val gamblerUserId = arguments.attackerUserId
+
+        setupTwoDiceRoll(userId = gamblerUserId, firstDie = 3, secondDie = 3)
+        every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = gamblerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertEquals(expected = DoublesBonus(userId = gamblerUserId), actual = outcome.doublesBonus)
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 

@@ -87,6 +87,11 @@ internal class NormalAttackRollHandler(
             )
         if (wasHolyShieldTriggered) return
 
+        if (consciousPlayers.size <= 1) {
+            resolveTurnEnd()
+            return
+        }
+
         // TODO KillingMomentum
         if (attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
             TriggerKillingMomentum(combatMutator = this).invoke()
@@ -104,6 +109,11 @@ internal class NormalAttackRollHandler(
     }
 
     private fun CombatMutator.resolveDamage() {
+        if (consciousPlayers.size <= 1) {
+            resolveTurnEnd()
+            return
+        }
+
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,

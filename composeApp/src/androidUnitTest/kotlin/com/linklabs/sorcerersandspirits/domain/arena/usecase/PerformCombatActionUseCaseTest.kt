@@ -64,6 +64,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -85,6 +86,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -103,6 +105,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -118,10 +121,8 @@ class PerformCombatActionUseCaseTest {
         val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
-        assertTrue(actual = outcome.isNewRound)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
-
-        // TODO: Add MatchFinished type somewhere, somehow
+        assertTrue(actual = outcome.isMatchFinished)
     }
 
     @Test
@@ -146,6 +147,7 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = !outcome.isMatchFinished)
 
         val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
         assertEquals(
@@ -173,6 +175,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = THIRD_PLAYER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -200,6 +203,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
 
         val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
         assertEquals(
@@ -225,6 +229,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -243,6 +248,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
 
         val defender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID)
         assertTrue(actual = defender.characterClass.hitPoints <= 0)
@@ -265,6 +271,7 @@ class PerformCombatActionUseCaseTest {
         val updatedDodge =
             assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = 1, actual = updatedDodge.armorBonus)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -288,6 +295,7 @@ class PerformCombatActionUseCaseTest {
         val updatedDodge =
             assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = startingArmorBonus, actual = updatedDodge.armorBonus)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -307,7 +315,7 @@ class PerformCombatActionUseCaseTest {
         val updatedGambler = outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
         assertEquals(expected = 0, actual = updatedGambler.hitPoints)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
-        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = outcome.isMatchFinished)
     }
 
     @Test
@@ -331,6 +339,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(
             actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
         )
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -354,6 +363,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(
             actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
         )
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -374,6 +384,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = gamblerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -396,6 +407,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -418,6 +430,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.LuckyCoin.HighRoller)
         assertTrue(actual = nextAction.isThisUserNext(userId = gamblerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -444,9 +457,7 @@ class PerformCombatActionUseCaseTest {
             outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
         assertTrue(actual = updatedAttacker.hitPoints <= 0)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
-        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = gamblerUserId))
-
-        // TODO MatchFinished
+        assertTrue(actual = outcome.isMatchFinished)
     }
 
     @Test
@@ -481,6 +492,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -502,9 +514,7 @@ class PerformCombatActionUseCaseTest {
         val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
         assertEquals(expected = 0, actual = updatedDefender.hitPoints)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
-        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = attackerUserId))
-
-        // TODO MatchFinished
+        assertTrue(actual = outcome.isMatchFinished)
     }
 
     @Test
@@ -525,6 +535,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = updatedDefender.isConscious())
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -548,6 +559,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = purpose is AbilityAction.Passive.Riposte)
         assertEquals(expected = 10, actual = purpose.attackerRollTotal)
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -577,6 +589,7 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = initialAttackerUserId, actual = roll.defenderUserId)
         assertEquals(expected = initialAttackerUserId, actual = roll.originalTurnUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -606,6 +619,7 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = initialAttackerUserId, actual = roll.attackerUserId)
         assertEquals(expected = duelistUserId, actual = roll.defenderUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = initialAttackerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -655,6 +669,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -737,6 +752,7 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = expectedHitPoints, actual = updatedNecro.hitPoints)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -757,6 +773,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Encore)
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -783,6 +800,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = expectedNextUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -803,6 +821,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Persuade.StrumLute)
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -862,6 +881,7 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = charmedAttackerUserId, actual = roll.attackerUserId)
         assertEquals(expected = newTargetUserId, actual = roll.defenderUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -891,6 +911,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
         assertTrue(actual = nextAction.isThisUserNext(userId = newTargetUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     private fun persuadeRollTest(
@@ -934,6 +955,7 @@ class PerformCombatActionUseCaseTest {
         }
 
         assertTrue(actual = nextAction.isThisUserNext(userId = expectedNextUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -976,6 +998,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(
             actual = outcome.nextCombatAction.isThisUserNext(userId = arguments.attackerUserId)
         )
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -999,6 +1022,7 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = 4, actual = purpose.secondDie.originalRoll)
         assertEquals(expected = NormalAttackType.ArmorClass, actual = purpose.attackType)
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1074,6 +1098,7 @@ class PerformCombatActionUseCaseTest {
         val updatedMirrorImage =
             assertIs<DefensiveAbility.MirrorImage>(value = updatedIllusionist.defensiveAbility)
         assertEquals(expected = expectedUsedThisAttack, actual = updatedMirrorImage.usedThisAttack)
+        assertTrue(actual = !outcome.isMatchFinished)
 
         when (val nextAction = outcome.nextCombatAction) {
             is NextCombatAction.AbilityRoll ->
@@ -1170,6 +1195,7 @@ class PerformCombatActionUseCaseTest {
 
         // Turn ends
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertEquals(expected = !isThreePlayer, actual = outcome.isMatchFinished)
     }
 
     @Test
@@ -1191,6 +1217,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Teleport)
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
         assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1213,6 +1240,7 @@ class PerformCombatActionUseCaseTest {
         val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
         assertEquals(expected = attackerRoll, actual = teleport.attackerRoll)
         assertEquals(expected = null, actual = teleport.defenderRoll)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1260,6 +1288,7 @@ class PerformCombatActionUseCaseTest {
             assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
             assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
         }
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1291,6 +1320,7 @@ class PerformCombatActionUseCaseTest {
 
         val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
         assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1315,6 +1345,7 @@ class PerformCombatActionUseCaseTest {
         val holyShield =
             assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1338,6 +1369,7 @@ class PerformCombatActionUseCaseTest {
 
         val updatedPaladin = outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
         assertEquals(expected = 1, actual = updatedPaladin.hitPoints)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1357,11 +1389,10 @@ class PerformCombatActionUseCaseTest {
         val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
-        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
-        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
-
         val updatedPaladin = outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
         assertTrue(actual = updatedPaladin.hitPoints <= 0)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.isMatchFinished)
     }
 
     @Test
@@ -1397,6 +1428,7 @@ class PerformCombatActionUseCaseTest {
             expected = attackerStartingHitPoints - wrathDamage,
             actual = updatedAttacker.hitPoints,
         )
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1435,6 +1467,7 @@ class PerformCombatActionUseCaseTest {
         val holyShield =
             assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     @Test
@@ -1458,13 +1491,14 @@ class PerformCombatActionUseCaseTest {
             outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
         assertEquals(expected = 0, actual = updatedDefender.hitPoints)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.isMatchFinished)
 
         assertIs<DefensiveAbility.HolyShield>(value = updatedDefender.defensiveAbility)
         assertTrue(actual = updatedDefender.defensiveAbility.usedThisMatch)
     }
 
     @Test
-    fun `When Duelist knocks out Paladin with a 12, then Mage later triggers Spell Potency, the Paladin's Holy Shield does NOT trigger`() {
+    fun `When Duelist uses PrepareAttack against  Paladin and gets a 12, then Mage later triggers Spell Potency, the Paladin's Holy Shield does NOT trigger`() {
         // Arrange
         val duelistUserId = DEFAULT_ATTACKER_ID
         val paladinUserId = DEFAULT_DEFENDER_ID
@@ -1507,13 +1541,14 @@ class PerformCombatActionUseCaseTest {
                 doublesBonus = null,
             )
 
-        setupTwoDiceRoll(userId = mageUserId, firstDie = 3, secondDie = 3)
+        setupTwoDiceRoll(userId = mageUserId, firstDie = 1, secondDie = 1)
         val performCombatAction2 = getPerformCombatAction(arguments = arguments2)
         val outcome2 = performCombatAction2.invoke(currentAction = getNormalAttackAction())
 
         // Assert: Holy Shield should NOT be triggered (no AbilityRoll for Prayer)
         val nextAction = outcome2.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = !outcome2.isMatchFinished)
     }
 
     @Test
@@ -1542,6 +1577,7 @@ class PerformCombatActionUseCaseTest {
         val holyShield =
             assertIs<DefensiveAbility.HolyShield>(value = updatedDefender.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =

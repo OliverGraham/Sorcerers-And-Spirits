@@ -33,9 +33,6 @@ internal class CombatMutator(
     val consciousPlayers
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
-    private val isMatchFinished
-        get() = consciousPlayers.size <= 1
-
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextAction.resetMirrorImageIfApplicable()
 
@@ -50,7 +47,7 @@ internal class CombatMutator(
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
             doublesBonus = diceRoller.getDoublesBonus(),
-            isMatchFinished = isMatchFinished,
+            isMatchFinished = getIsMatchFinished(),
         )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
@@ -85,12 +82,12 @@ internal class CombatMutator(
     }
 
     fun resolveTurnEnd() {
-        updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
-
-        if (isMatchFinished) {
+        if (consciousPlayers.size <= 1) {
             setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserIds = emptySet()))
             return
         }
+
+        updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
 
         val nextPlayer = calculateNextPlayerInRound()
         if (nextPlayer != null) {
@@ -161,5 +158,17 @@ internal class CombatMutator(
     private fun CharacterClass.addNewTurnMessage() {
         val characterClassInfo = CharacterClassMessageInfo(className = className, type = type)
         messages.add(element = ArenaMessage.NewTurn(characterClassInfo = characterClassInfo))
+    }
+
+    private fun getIsMatchFinished(): Boolean {
+        if (consciousPlayers.size > 1) return false
+        if (!::nextCombatAction.isInitialized) return false
+
+        val anyActiveUnconsciousPlayers =
+            nextCombatAction.activeUserIds.any { userId ->
+                !updatedPlayerMap.getValue(key = userId).characterClass.isConscious()
+            }
+
+        return !anyActiveUnconsciousPlayers
     }
 }

@@ -1166,6 +1166,128 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
     }
 
+    @Test
+    fun `When an attacker passes a Mage's ArmorClass, then Teleport triggers`() {
+        // Arrange
+        val mage = CharacterClass.getMage()
+        val arguments = createTwoPlayerArguments(defenderClass = mage)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Teleport)
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
+        assertTrue(actual = nextAction.isThisUserNext(userId = arguments.defenderUserId))
+    }
+
+    @Test
+    fun `When an attacker rolls for Teleport, then the Teleport action is updated with the attacker's roll`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getMage())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Teleport())
+
+        val attackerRoll = 4
+        setupOneDiceRoll(userId = arguments.attackerUserId, die = attackerRoll)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        val teleport = nextAction.purpose as AbilityAction.Passive.Teleport
+        assertEquals(expected = attackerRoll, actual = teleport.attackerRoll)
+        assertEquals(expected = null, actual = teleport.defenderRoll)
+    }
+
+    @Test
+    fun `When a Mage rolls for Teleport and wins the roll-off, then the Mage escapes and the turn ends`() {
+        teleportRollOffTest(attackerRoll = 3, mageRoll = 4, isMageExpectedToWin = true)
+    }
+
+    @Test
+    fun `When a Mage rolls for Teleport and loses the roll-off, then the attacker rolls against the Mage's health`() {
+        teleportRollOffTest(attackerRoll = 5, mageRoll = 2, isMageExpectedToWin = false)
+    }
+
+    @Test
+    fun `When a Mage rolls for Teleport and ties the roll-off, then the attacker rolls against the Mage's health`() {
+        teleportRollOffTest(attackerRoll = 4, mageRoll = 4, isMageExpectedToWin = false)
+    }
+
+    private fun teleportRollOffTest(
+        attackerRoll: Int,
+        mageRoll: Int,
+        isMageExpectedToWin: Boolean,
+    ) {
+        // Arrange
+        val mageUserId = DEFAULT_DEFENDER_ID
+        val arguments =
+            createTwoPlayerArguments(userId = mageUserId, defenderClass = CharacterClass.getMage())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(
+                purpose = AbilityAction.Passive.Teleport(attackerRoll = attackerRoll)
+            )
+
+        setupOneDiceRoll(userId = mageUserId, die = mageRoll)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        if (isMageExpectedToWin) {
+            assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+            assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = mageUserId))
+        } else {
+            val nextAction = outcome.nextCombatAction
+            assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+            assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+            assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+        }
+    }
+
+    @Test
+    fun `When an attacker rolls doubles to pass Mage's armor, then the Teleport roll-off includes the doubles bonus`() {
+        // Arrange
+        val attackerUserId = DEFAULT_ATTACKER_ID
+        val mageUserId = DEFAULT_DEFENDER_ID
+        val arguments =
+            createTwoPlayerArguments(
+                attackerUserId = attackerUserId,
+                defenderUserId = mageUserId,
+                defenderClass = CharacterClass.getMage(),
+                doublesBonus = DoublesBonus(userId = attackerUserId),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Teleport())
+
+        val attackerDie = 3
+        val bonus = 1
+        setupOneDiceRoll(userId = attackerUserId, die = attackerDie, bonus = bonus)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+
+        val teleport = nextAction.purpose as AbilityAction.Passive.Teleport
+        assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll)
+    }
+
+    // TODO SpellPotency test(s) with Paladin
     // TODO PrepareAttack against Paladin test
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =

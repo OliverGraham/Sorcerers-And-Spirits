@@ -9,25 +9,31 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
-    fun triggerHolyShield(holyShield: DefensiveAbility.HolyShield) =
-        combatMutator.triggerHolyShield(holyShield = holyShield)
+    fun triggerHolyShield(holyShield: DefensiveAbility.HolyShield, holyShieldUserId: String) =
+        combatMutator.triggerHolyShield(
+            holyShield = holyShield,
+            holyShieldUserId = holyShieldUserId,
+        )
 
     fun attemptPrayer() = combatMutator.attemptPrayer()
 
     fun wrathRoll() = combatMutator.wrathRoll()
 
-    private fun CombatMutator.triggerHolyShield(holyShield: DefensiveAbility.HolyShield) {
+    private fun CombatMutator.triggerHolyShield(
+        holyShield: DefensiveAbility.HolyShield,
+        holyShieldUserId: String,
+    ) {
         addMessage(message = ArenaMessage.HolyShield.Trigger)
 
-        updateDefenderClass { defender ->
-            defender.copy(defensiveAbility = holyShield.copy(usedThisMatch = true))
+        updatePlayerClass(userId = holyShieldUserId) { playerClass ->
+            playerClass.copy(defensiveAbility = holyShield.copy(usedThisMatch = true))
         }
 
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
                     purpose = AbilityAction.Passive.HolyShield.Prayer,
-                    activeUserIds = setOf(defenderUserId),
+                    activeUserIds = setOf(holyShieldUserId),
                 )
         )
     }
@@ -117,6 +123,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         fun triggerHolyShieldIfApplicable(
             combatMutator: CombatMutator,
             defenderDefensiveAbility: DefensiveAbility,
+            holyShieldUserId: String = combatMutator.defenderUserId,
         ): Boolean {
             val shouldTriggerHolyShield =
                 defenderDefensiveAbility is DefensiveAbility.HolyShield &&
@@ -124,7 +131,10 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
             if (shouldTriggerHolyShield) {
                 HolyShieldHandler(combatMutator = combatMutator)
-                    .triggerHolyShield(holyShield = defenderDefensiveAbility)
+                    .triggerHolyShield(
+                        holyShield = defenderDefensiveAbility,
+                        holyShieldUserId = holyShieldUserId,
+                    )
             }
 
             return shouldTriggerHolyShield

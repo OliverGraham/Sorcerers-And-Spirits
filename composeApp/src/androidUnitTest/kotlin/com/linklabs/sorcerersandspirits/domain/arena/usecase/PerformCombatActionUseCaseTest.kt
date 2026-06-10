@@ -1385,13 +1385,50 @@ class PerformCombatActionUseCaseTest {
 
         val updatedAttacker =
             outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
+
         assertEquals(
             expected = attackerStartingHitPoints - wrathDamage,
             actual = updatedAttacker.hitPoints,
         )
     }
 
-    // TODO SpellPotency test(s) with Paladin
+    @Test
+    fun `When Mage triggers Spell Potency and splash damage knocks out a Paladin, then Holy Shield triggers for the Paladin and deals damage to Mage`() {
+        // Arrange
+        val defenderStartingHitPoints = 10
+        val arguments =
+            createThreePlayerArguments(
+                attackerClass = CharacterClass.getMage(),
+                defenderClass = createCharacterClass(hitPoints = defenderStartingHitPoints),
+                thirdClass = CharacterClass.getPaladin().copy(hitPoints = 2),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        val spellPotencyTotal = 6
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 3, secondDie = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertEquals(
+            expected = defenderStartingHitPoints - spellPotencyTotal,
+            actual =
+                outcome.getPlayerById(userId = arguments.defenderUserId).characterClass.hitPoints,
+        )
+
+        // Paladin takes 3 splash damage and triggers Holy Shield
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.HolyShield.Prayer)
+        assertTrue(actual = nextAction.isThisUserNext(userId = THIRD_PLAYER_ID))
+
+        val updatedPaladin = outcome.getPlayerById(userId = THIRD_PLAYER_ID).characterClass
+        val holyShield = updatedPaladin.defensiveAbility as DefensiveAbility.HolyShield
+        assertTrue(actual = holyShield.usedThisMatch)
+    }
+
     // TODO PrepareAttack against Paladin test
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =

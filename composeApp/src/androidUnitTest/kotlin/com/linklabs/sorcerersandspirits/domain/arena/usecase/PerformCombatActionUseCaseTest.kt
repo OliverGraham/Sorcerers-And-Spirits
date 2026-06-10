@@ -1580,6 +1580,103 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
+    @Test
+    fun `When an attacker rolls doubles to pass a defender's ArmorClass, then the subsequent Health roll includes the doubles bonus`() {
+        // Arrange
+        val attackerUserId = DEFAULT_ATTACKER_ID
+        val arguments =
+            createTwoPlayerArguments(
+                attackerUserId = attackerUserId,
+                doublesBonus = DoublesBonus(userId = attackerUserId),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        val firstDie = 3
+        val secondDie = 4
+        val bonus = 1
+        setupTwoDiceRoll(
+            userId = attackerUserId,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            bonus = bonus,
+        )
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val defenderUserId = arguments.defenderUserId
+        val updatedDefender = outcome.getPlayerById(userId = defenderUserId).characterClass
+        val expectedDamage = firstDie + secondDie + bonus
+        val initialHp = arguments.playerMap.getValue(defenderUserId).characterClass.hitPoints
+        assertEquals(expected = initialHp - expectedDamage, actual = updatedDefender.hitPoints)
+    }
+
+    @Test
+    fun `When an attacker rolls doubles to pass a Duelist's ArmorClass, the Duelist's Riposte roll does NOT include the bonus`() {
+        // Arrange
+        val attackerUserId = DEFAULT_ATTACKER_ID
+        val duelistUserId = DEFAULT_DEFENDER_ID
+        val arguments =
+            createTwoPlayerArguments(
+                attackerUserId = attackerUserId,
+                defenderUserId = duelistUserId,
+                defenderClass = CharacterClass.getDuelist(),
+                doublesBonus = DoublesBonus(userId = attackerUserId),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getRiposteAction(attackerRollTotal = 10)
+
+        val firstDie = 3
+        val secondDie = 4
+        val bonus = 0 // Duelist should NOT get the attacker's bonus
+        setupTwoDiceRoll(
+            userId = duelistUserId,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            bonus = bonus,
+        )
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        // Riposte total is 7 (successful)
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
+
+        val roll = assertIs<NormalAttackRoll.ArmorClass>(value = nextAction.roll)
+        assertEquals(expected = duelistUserId, actual = roll.attackerUserId)
+    }
+
+    @Test
+    fun `When an attacker rolls doubles but the turn ends, the next player's roll does NOT include the bonus`() {
+        // Arrange
+        val attackerUserId = DEFAULT_ATTACKER_ID
+        val nextPlayerId = DEFAULT_DEFENDER_ID
+        val arguments =
+            createTwoPlayerArguments(
+                attackerUserId = attackerUserId,
+                defenderUserId = nextPlayerId,
+                doublesBonus = DoublesBonus(userId = attackerUserId),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction() // Attack that misses
+
+        // Set up a miss
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 1, secondDie = 1, bonus = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        // Bonus should be null in the outcome since it was "consumed" by the attacker's roll
+        // and it won't be passed to the next player.
+        assertEquals(expected = null, actual = outcome.doublesBonus)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = nextPlayerId))
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 

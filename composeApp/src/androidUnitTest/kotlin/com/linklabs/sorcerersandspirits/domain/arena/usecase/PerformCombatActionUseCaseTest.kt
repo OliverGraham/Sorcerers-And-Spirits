@@ -1360,7 +1360,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Paladin performs Wrath, then the attacker takes damage and the turn ends`() {
         // Arrange
-        val attackerClass = createCharacterClass(hitPoints = 10)
+        val attackerStartingHitPoints = 10
+        val attackerClass = createCharacterClass(hitPoints = attackerStartingHitPoints)
         val arguments =
             createTwoPlayerArguments(
                 attackerClass = attackerClass,
@@ -1384,7 +1385,10 @@ class PerformCombatActionUseCaseTest {
 
         val updatedAttacker =
             outcome.getPlayerById(userId = arguments.attackerUserId).characterClass
-        assertEquals(expected = 10 - wrathDamage, actual = updatedAttacker.hitPoints)
+        assertEquals(
+            expected = attackerStartingHitPoints - wrathDamage,
+            actual = updatedAttacker.hitPoints,
+        )
     }
 
     // TODO SpellPotency test(s) with Paladin

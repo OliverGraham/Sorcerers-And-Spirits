@@ -139,5 +139,22 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
             return shouldTriggerHolyShield
         }
+
+        fun bypassHolyShieldIfApplicable(
+            combatMutator: CombatMutator,
+            defenderDefensiveAbility: DefensiveAbility,
+            holyShieldUserId: String = combatMutator.defenderUserId,
+        ) {
+            if (
+                defenderDefensiveAbility is DefensiveAbility.HolyShield &&
+                    !defenderDefensiveAbility.usedThisMatch
+            ) {
+                combatMutator.updatePlayerClass(userId = holyShieldUserId) { playerClass ->
+                    playerClass.copy(
+                        defensiveAbility = defenderDefensiveAbility.copy(usedThisMatch = true)
+                    )
+                }
+            }
+        }
     }
 }

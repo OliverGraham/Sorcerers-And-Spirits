@@ -20,6 +20,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
 class PerformCombatActionUseCaseTest {
@@ -1429,7 +1430,107 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = holyShield.usedThisMatch)
     }
 
-    // TODO PrepareAttack against Paladin test
+    @Test
+    fun `When Duelist uses Prepare Attack and rolls a 12 against a Paladin, then the Paladin is knocked out and Holy Shield is marked as used`() {
+        // Arrange
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass = CharacterClass.getDuelist(),
+                defenderClass = CharacterClass.getPaladin(),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getPrepareAttackAction()
+
+        setupTwoDiceRoll(userId = arguments.attackerUserId, firstDie = 6, secondDie = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedDefender =
+            outcome.getPlayerById(userId = arguments.defenderUserId).characterClass
+        assertEquals(expected = 0, actual = updatedDefender.hitPoints)
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+
+        assertIs<DefensiveAbility.HolyShield>(value = updatedDefender.defensiveAbility)
+        assertTrue(actual = updatedDefender.defensiveAbility.usedThisMatch)
+    }
+
+    @Test
+    fun `When Duelist knocks out Paladin with a 12, then Mage later triggers Spell Potency, the Paladin's Holy Shield does NOT trigger`() {
+        // Arrange
+        val duelistUserId = DEFAULT_ATTACKER_ID
+        val paladinUserId = DEFAULT_DEFENDER_ID
+        val mageUserId = THIRD_PLAYER_ID
+
+        val arguments =
+            createThreePlayerArguments(
+                attackerUserId = duelistUserId,
+                defenderUserId = paladinUserId,
+                thirdUserId = mageUserId,
+                attackerClass = CharacterClass.getDuelist(),
+                defenderClass = CharacterClass.getPaladin(),
+                thirdClass = CharacterClass.getMage(),
+            )
+
+        // 1. Duelist attacks Paladin with 12
+        setupTwoDiceRoll(userId = duelistUserId, firstDie = 6, secondDie = 6)
+        val performCombatAction1 = getPerformCombatAction(arguments = arguments)
+        val outcome1 = performCombatAction1.invoke(currentAction = getPrepareAttackAction())
+
+        val updatedPaladin = outcome1.getPlayerById(userId = paladinUserId).characterClass
+        assertEquals(expected = 0, actual = updatedPaladin.hitPoints)
+
+        assertTrue((updatedPaladin.defensiveAbility as DefensiveAbility.HolyShield).usedThisMatch)
+
+        // 2. Mage uses Spell Potency (against Duelist)
+        val arguments2 =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                userId = mageUserId,
+                attackerUserId = mageUserId,
+                defenderUserId = duelistUserId,
+                playerMap = outcome1.updatedPlayerMap,
+                roundNumber = outcome1.roundNumber,
+                originalTurnUserId = mageUserId,
+                doublesBonus = null,
+            )
+
+        setupTwoDiceRoll(userId = mageUserId, firstDie = 3, secondDie = 3)
+        val performCombatAction2 = getPerformCombatAction(arguments = arguments2)
+        val outcome2 = performCombatAction2.invoke(currentAction = getNormalAttackAction())
+
+        // Assert: Holy Shield should NOT be triggered (no AbilityRoll for Prayer)
+        val nextAction = outcome2.nextCombatAction
+        assertTrue(nextAction is NextCombatAction.Idle)
+    }
+
+    @Test
+    fun `When Duelist uses Prepare Attack and rolls a 10 against a Paladin, then Holy Shield triggers`() {
+        // Arrange
+        val duelist = CharacterClass.getDuelist()
+        val paladin = CharacterClass.getPaladin()
+        val arguments = createTwoPlayerArguments(attackerClass = duelist, defenderClass = paladin)
+        val attackerUserId = arguments.attackerUserId
+
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getPrepareAttackAction()
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 5, secondDie = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.HolyShield.Prayer)
+        assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+
+        val updatedDefender = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        val holyShield = updatedDefender.defensiveAbility as DefensiveAbility.HolyShield
+        assertTrue(actual = holyShield.usedThisMatch)
+    }
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)

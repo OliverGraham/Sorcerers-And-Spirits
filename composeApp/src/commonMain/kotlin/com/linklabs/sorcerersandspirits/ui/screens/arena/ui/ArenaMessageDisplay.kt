@@ -80,32 +80,32 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_hit,
-                        attackerUserId,
-                        defenderUserId,
+                        attackerName,
+                        defenderName,
                         firstDie + secondDie,
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_miss,
-                        attackerUserId,
-                        defenderUserId,
+                        attackerName,
+                        defenderName,
                         firstDie + secondDie,
                     )
 
                 NormalRollMessageType.Damage ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_damage,
-                        attackerUserId,
-                        defenderUserId,
+                        attackerName,
+                        defenderName,
                         firstDie + secondDie,
                     )
 
                 NormalRollMessageType.Knockout ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_knockout,
-                        attackerUserId,
-                        defenderUserId,
+                        attackerName,
+                        defenderName,
                         firstDie + secondDie,
                     )
             }
@@ -124,7 +124,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
             stringResource(resource = Res.string.arena_message_teleport_trigger)
 
         is ArenaMessageState.Teleport.Roll ->
-            stringResource(resource = Res.string.arena_message_teleport_roll, userId, singleDie)
+            stringResource(resource = Res.string.arena_message_teleport_roll, playerName, singleDie)
 
         is ArenaMessageState.Teleport.Result ->
             if (didDefenderEscape) {
@@ -152,7 +152,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_high_roller_trigger,
-                targetUserId,
+                targetName,
             )
 
         is ArenaMessageState.LuckyCoin.HighRollerDamage ->
@@ -187,11 +187,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
             }
 
         is ArenaMessageState.SummonMinion ->
-            stringResource(
-                resource = Res.string.arena_message_summon_minion,
-                necroUserId,
-                singleDie,
-            )
+            stringResource(resource = Res.string.arena_message_summon_minion, necroName, singleDie)
 
         is ArenaMessageState.Persuade.Trigger ->
             stringResource(resource = Res.string.arena_message_persuade_trigger)
@@ -218,8 +214,8 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.Persuade.Charm ->
             stringResource(
                 resource = Res.string.arena_message_persuade_charm,
-                attackerUserId,
-                defenderUserId,
+                attackerName,
+                defenderName,
             )
 
         is ArenaMessageState.Encore.Trigger ->
@@ -235,7 +231,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.Impersonate ->
             stringResource(
                 resource = Res.string.arena_message_impersonate,
-                illusionistUserId,
+                illusionistName,
                 impersonatedAbilityName,
             )
 
@@ -262,8 +258,8 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.SpellPotency ->
             stringResource(
                 resource = Res.string.arena_message_spell_potency,
-                mageUserId,
-                mainTargetUserId,
+                mageName,
+                mainTargetName,
                 mainDamage,
                 splashDamage,
             )
@@ -289,28 +285,28 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.HolyShield.Wrath ->
             stringResource(
                 resource = Res.string.arena_message_holy_shield_wrath,
-                paladinUserId,
-                attackerUserId,
+                paladinName,
+                attackerName,
                 singleDie,
             )
 
         is ArenaMessageState.AllIn ->
-            stringResource(resource = Res.string.arena_message_all_in, gamblerUserId, singleDie)
+            stringResource(resource = Res.string.arena_message_all_in, gamblerName, singleDie)
 
         is ArenaMessageState.PrepareAttack ->
             if (isSuccessful) {
                 stringResource(
                     resource = Res.string.arena_message_prepare_attack_success,
-                    duelistUserId,
-                    targetUserId,
+                    duelistName,
+                    targetName,
                     firstDie,
                     secondDie,
                 )
             } else {
                 stringResource(
                     resource = Res.string.arena_message_prepare_attack_failed,
-                    duelistUserId,
-                    targetUserId,
+                    duelistName,
+                    targetName,
                     firstDie,
                     secondDie,
                 )

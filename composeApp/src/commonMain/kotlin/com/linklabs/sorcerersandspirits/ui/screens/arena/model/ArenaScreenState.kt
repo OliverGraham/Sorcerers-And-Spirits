@@ -73,8 +73,20 @@ internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
 ): ArenaStateUpdate {
+    val displayNames =
+        when (this) {
+            is ArenaMatch.ChoosingClasses -> playerMap.mapValues { it.value.displayName }
+
+            is ArenaMatch.Combat -> playerMap.mapValues { it.value.displayName }
+
+            is ArenaMatch.WaitingForAllPlayers,
+            is ArenaMatch.Finished -> emptyMap()
+        }
+
     val messages =
-        messages.map { incomingMessage -> incomingMessage.message.toState(id = incomingMessage.id) }
+        messages.map { incomingMessage ->
+            incomingMessage.message.toState(id = incomingMessage.id, displayNames = displayNames)
+        }
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false

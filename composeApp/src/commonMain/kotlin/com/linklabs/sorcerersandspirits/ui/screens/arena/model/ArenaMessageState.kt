@@ -33,8 +33,8 @@ sealed interface ArenaMessageState {
     @Immutable
     data class NormalRoll(
         override val id: String,
-        val attackerUserId: String,
-        val defenderUserId: String,
+        val attackerName: String,
+        val defenderName: String,
         val firstDie: Int,
         val secondDie: Int,
         val type: NormalRollMessageType,
@@ -50,7 +50,8 @@ sealed interface ArenaMessageState {
         @Immutable data class Trigger(override val id: String) : Teleport
 
         @Immutable
-        data class Roll(override val id: String, val userId: String, val singleDie: Int) : Teleport
+        data class Roll(override val id: String, val playerName: String, val singleDie: Int) :
+            Teleport
 
         @Immutable
         data class Result(override val id: String, val didDefenderEscape: Boolean) : Teleport
@@ -65,7 +66,7 @@ sealed interface ArenaMessageState {
             LuckyCoin
 
         @Immutable
-        data class HighRollerTrigger(override val id: String, val targetUserId: String) : LuckyCoin
+        data class HighRollerTrigger(override val id: String, val targetName: String) : LuckyCoin
 
         @Immutable
         data class HighRollerDamage(
@@ -89,7 +90,7 @@ sealed interface ArenaMessageState {
     }
 
     @Immutable
-    data class SummonMinion(override val id: String, val necroUserId: String, val singleDie: Int) :
+    data class SummonMinion(override val id: String, val necroName: String, val singleDie: Int) :
         ArenaMessageState
 
     @Immutable
@@ -110,8 +111,8 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Charm(
             override val id: String,
-            val attackerUserId: String,
-            val defenderUserId: String,
+            val attackerName: String,
+            val defenderName: String,
         ) : Persuade
     }
 
@@ -127,7 +128,7 @@ sealed interface ArenaMessageState {
     @Immutable
     data class Impersonate(
         override val id: String,
-        val illusionistUserId: String,
+        val illusionistName: String,
         val impersonatedAbilityName: String,
     ) : ArenaMessageState
 
@@ -149,8 +150,8 @@ sealed interface ArenaMessageState {
     @Immutable
     data class SpellPotency(
         override val id: String,
-        val mageUserId: String,
-        val mainTargetUserId: String,
+        val mageName: String,
+        val mainTargetName: String,
         val mainDamage: Int,
         val splashDamage: Int,
     ) : ArenaMessageState
@@ -170,21 +171,21 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Wrath(
             override val id: String,
-            val paladinUserId: String,
-            val attackerUserId: String,
+            val paladinName: String,
+            val attackerName: String,
             val singleDie: Int,
         ) : HolyShield
     }
 
     @Immutable
-    data class AllIn(override val id: String, val gamblerUserId: String, val singleDie: Int) :
+    data class AllIn(override val id: String, val gamblerName: String, val singleDie: Int) :
         ArenaMessageState
 
     @Immutable
     data class PrepareAttack(
         override val id: String,
-        val duelistUserId: String,
-        val targetUserId: String,
+        val duelistName: String,
+        val targetName: String,
         val firstDie: Int,
         val secondDie: Int,
         val isSuccessful: Boolean,
@@ -194,7 +195,7 @@ sealed interface ArenaMessageState {
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-fun ArenaMessage.toState(id: String): ArenaMessageState =
+fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
             ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
@@ -213,7 +214,11 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
             ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
 
         is ArenaMessage.AllIn ->
-            ArenaMessageState.AllIn(id = id, gamblerUserId = gamblerUserId, singleDie = singleDie)
+            ArenaMessageState.AllIn(
+                id = id,
+                gamblerName = displayNames.resolve(userId = gamblerUserId),
+                singleDie = singleDie,
+            )
 
         is ArenaMessage.Dodge ->
             ArenaMessageState.Dodge(id = id, didArmorIncrease = didArmorIncrease)
@@ -230,8 +235,8 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.HolyShield.Wrath ->
             ArenaMessageState.HolyShield.Wrath(
                 id = id,
-                paladinUserId = paladinUserId,
-                attackerUserId = attackerUserId,
+                paladinName = displayNames.resolve(userId = paladinUserId),
+                attackerName = displayNames.resolve(userId = attackerUserId),
                 singleDie = singleDie,
             )
 
@@ -248,7 +253,7 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.Impersonate ->
             ArenaMessageState.Impersonate(
                 id = id,
-                illusionistUserId = illusionistUserId,
+                illusionistName = displayNames.resolve(userId = illusionistUserId),
                 impersonatedAbilityName =
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )
@@ -270,7 +275,10 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
             )
 
         is ArenaMessage.LuckyCoin.HighRollerTrigger ->
-            ArenaMessageState.LuckyCoin.HighRollerTrigger(id = id, targetUserId = targetUserId)
+            ArenaMessageState.LuckyCoin.HighRollerTrigger(
+                id = id,
+                targetName = displayNames.resolve(userId = targetUserId),
+            )
 
         is ArenaMessage.LuckyCoin.Trigger -> ArenaMessageState.LuckyCoin.Trigger(id = id)
 
@@ -295,8 +303,8 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.NormalRoll ->
             ArenaMessageState.NormalRoll(
                 id = id,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
+                attackerName = displayNames.resolve(userId = attackerUserId),
+                defenderName = displayNames.resolve(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 type = type,
@@ -305,8 +313,8 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageState.Persuade.Charm(
                 id = id,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
+                attackerName = displayNames.resolve(userId = attackerUserId),
+                defenderName = displayNames.resolve(userId = defenderUserId),
             )
 
         is ArenaMessage.Persuade.CharmActivation ->
@@ -326,8 +334,8 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.PrepareAttack ->
             ArenaMessageState.PrepareAttack(
                 id = id,
-                duelistUserId = duelistUserId,
-                targetUserId = targetUserId,
+                duelistName = displayNames.resolve(userId = duelistUserId),
+                targetName = displayNames.resolve(userId = targetUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 isSuccessful = isSuccessful,
@@ -346,8 +354,8 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.SpellPotency ->
             ArenaMessageState.SpellPotency(
                 id = id,
-                mageUserId = mageUserId,
-                mainTargetUserId = mainTargetUserId,
+                mageName = displayNames.resolve(userId = mageUserId),
+                mainTargetName = displayNames.resolve(userId = mainTargetUserId),
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,
             )
@@ -355,7 +363,7 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.SummonMinion ->
             ArenaMessageState.SummonMinion(
                 id = id,
-                necroUserId = necroUserId,
+                necroName = displayNames.resolve(userId = necroUserId),
                 singleDie = singleDie,
             )
 
@@ -363,10 +371,16 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
             ArenaMessageState.Teleport.Result(id = id, didDefenderEscape = didDefenderEscape)
 
         is ArenaMessage.Teleport.Roll ->
-            ArenaMessageState.Teleport.Roll(id = id, userId = userId, singleDie = singleDie)
+            ArenaMessageState.Teleport.Roll(
+                id = id,
+                playerName = displayNames.resolve(userId = userId),
+                singleDie = singleDie,
+            )
 
         is ArenaMessage.Teleport.Trigger -> ArenaMessageState.Teleport.Trigger(id = id)
     }
+
+private fun Map<String, String>.resolve(userId: String): String = this[userId] ?: userId
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =
     CharacterClassMessageInfoState(className = className, type = type)

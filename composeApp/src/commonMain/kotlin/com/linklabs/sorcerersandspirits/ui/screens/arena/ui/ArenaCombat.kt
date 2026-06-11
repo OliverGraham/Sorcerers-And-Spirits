@@ -36,7 +36,7 @@ import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.RollDiceArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NextCombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -51,7 +51,8 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = activePlayerIds, label = TRANSITION_LABEL) { _ ->
+        AnimatedContent(targetState = combatActionState.activeUserIds, label = TRANSITION_LABEL) { _
+            ->
             SharedTransitionProvider(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,
@@ -64,14 +65,16 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
-    var targetedOpponentUserId by remember(key1 = activePlayerIds) { mutableStateOf(value = "") }
-    var isTargetLocked by remember(key1 = activePlayerIds) { mutableStateOf(value = false) }
+    var targetedOpponentUserId by
+        remember(key1 = combatActionState.activeUserIds) { mutableStateOf(value = "") }
+    var isTargetLocked by
+        remember(key1 = combatActionState.activeUserIds) { mutableStateOf(value = false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        activePlayerIds.forEach { activeId ->
+        combatActionState.activeUserIds.forEach { activeId ->
             item(key = activeId) {
                 ActivePlayerCard(
                     activePlayer = playerMap.getValue(key = activeId),
@@ -95,7 +98,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
             item(key = ROLL_DICE_KEY) {
                 RollDiceSection(
                     otherPlayers = otherPlayers,
-                    nextCombatAction = nextCombatAction,
+                    combatActionState = combatActionState,
                     targetedOpponentUserId = targetedOpponentUserId,
                     updateIsTargetLocked = { isTargetLocked = true },
                 )
@@ -174,14 +177,14 @@ private fun GridPlayerCard(
 @Composable
 private fun RollDiceSection(
     otherPlayers: Map<UserId, PlayerState.Selected>,
-    nextCombatAction: NextCombatActionState,
+    combatActionState: CombatActionState,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
 ) {
     val buttonText =
-        when (nextCombatAction) {
-            is NextCombatActionState.NormalAttack ->
-                when (nextCombatAction.roll) {
+        when (combatActionState) {
+            is CombatActionState.NormalAttack ->
+                when (combatActionState.roll) {
                     NormalAttackRollState.ArmorClass ->
                         "Roll to Hit (AC: ${otherPlayers[targetedOpponentUserId]?.characterClass?.armorClass ?: "?"})"
 
@@ -189,7 +192,7 @@ private fun RollDiceSection(
                         "Roll for Damage (HP: ${otherPlayers[targetedOpponentUserId]?.characterClass?.hitPoints ?: "?"})"
                 }
 
-            is NextCombatActionState.AbilityRoll -> "Roll for Ability"
+            is CombatActionState.AbilityRoll -> "Roll for Ability"
 
             else -> "Roll Dice"
         }

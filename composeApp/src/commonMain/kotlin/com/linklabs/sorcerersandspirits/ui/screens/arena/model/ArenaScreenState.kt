@@ -49,13 +49,12 @@ sealed interface ArenaState {
     data class Combat(
         override val playerMap: Map<UserId, PlayerState.Selected>,
         override val userPlayerId: String,
-        val activePlayerIds: Set<String>,
-        val nextCombatAction: NextCombatActionState,
+        val combatActionState: CombatActionState,
         val roundNumber: Int,
         val isNewRound: Boolean,
     ) : ActiveState {
-        val otherPlayers = playerMap.filterKeys { it !in activePlayerIds }
-        val isItThisUsersTurn = userPlayerId in activePlayerIds
+        val otherPlayers = playerMap.filterKeys { it !in combatActionState.activeUserIds }
+        val isItThisUsersTurn = userPlayerId in combatActionState.activeUserIds
     }
 
     @Immutable data object UserPlayerKnockedOut : ArenaState
@@ -105,8 +104,7 @@ internal fun ArenaMatch.toUpdatedState(
                     ArenaState.Combat(
                         playerMap = playerMap.mapValues { it.value.toSelectedState() },
                         userPlayerId = userId,
-                        activePlayerIds = nextCombatAction.activeUserIds,
-                        nextCombatAction = nextCombatAction.toState(),
+                        combatActionState = nextCombatAction.toCombatActionState(),
                         roundNumber = roundNumber,
                         isNewRound = isNewRound,
                     )

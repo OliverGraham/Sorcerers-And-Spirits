@@ -6,13 +6,22 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 
 @Immutable
-sealed interface NextCombatActionState {
+sealed interface CombatActionState {
+    val activeUserIds: Set<String>
 
-    @Immutable data object Idle : NextCombatActionState
+    @Immutable data class Idle(override val activeUserIds: Set<String>) : CombatActionState
 
-    @Immutable data class NormalAttack(val roll: NormalAttackRollState) : NextCombatActionState
+    @Immutable
+    data class NormalAttack(
+        val roll: NormalAttackRollState,
+        override val activeUserIds: Set<String>,
+    ) : CombatActionState
 
-    @Immutable data class AbilityRoll(val action: AbilityActionState) : NextCombatActionState
+    @Immutable
+    data class AbilityRoll(
+        val action: AbilityActionState,
+        override val activeUserIds: Set<String>,
+    ) : CombatActionState
 }
 
 @Immutable
@@ -76,21 +85,22 @@ sealed interface AbilityActionState {
     }
 }
 
-internal fun NextCombatAction.toState(): NextCombatActionState =
+internal fun NextCombatAction.toCombatActionState(): CombatActionState =
     when (this) {
-        is NextCombatAction.Idle -> NextCombatActionState.Idle
+        is NextCombatAction.Idle -> CombatActionState.Idle(activeUserIds = activeUserIds)
 
         is NextCombatAction.NormalAttack ->
-            NextCombatActionState.NormalAttack(
+            CombatActionState.NormalAttack(
                 roll =
                     when (roll) {
                         is NormalAttackRoll.ArmorClass -> NormalAttackRollState.ArmorClass
                         is NormalAttackRoll.Health -> NormalAttackRollState.Health
-                    }
+                    },
+                activeUserIds = activeUserIds,
             )
 
         is NextCombatAction.AbilityRoll ->
-            NextCombatActionState.AbilityRoll(action = purpose.toState())
+            CombatActionState.AbilityRoll(action = purpose.toState(), activeUserIds = activeUserIds)
     }
 
 internal fun AbilityAction.toState(): AbilityActionState =

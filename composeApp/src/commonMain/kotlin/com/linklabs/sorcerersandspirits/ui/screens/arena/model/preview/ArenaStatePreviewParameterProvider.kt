@@ -9,7 +9,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NextCombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
@@ -73,14 +73,16 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     private fun getExampleCombatState(
         playerMap: Map<String, PlayerState.Selected> = getExamplePlayers(),
         userPlayerId: String = "player1",
-        activePlayerIds: Set<String> = setOf("player1"),
+        combatActionState: CombatActionState =
+            CombatActionState.NormalAttack(
+                roll = NormalAttackRollState.ArmorClass,
+                activeUserIds = setOf("player1"),
+            ),
     ) =
         ArenaState.Combat(
             playerMap = playerMap,
             userPlayerId = userPlayerId,
-            activePlayerIds = activePlayerIds,
-            nextCombatAction =
-                NextCombatActionState.NormalAttack(roll = NormalAttackRollState.ArmorClass),
+            combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = true,
         )

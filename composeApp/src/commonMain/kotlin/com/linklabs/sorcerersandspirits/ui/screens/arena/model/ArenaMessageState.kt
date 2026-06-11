@@ -39,6 +39,156 @@ sealed interface ArenaMessageState {
         val secondDie: Int,
         val type: NormalRollMessageType,
     ) : ArenaMessageState
+
+    @Immutable data class KillingMomentum(override val id: String) : ArenaMessageState
+
+    @Immutable
+    data class Dodge(override val id: String, val didArmorIncrease: Boolean) : ArenaMessageState
+
+    @Immutable
+    sealed interface Teleport : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : Teleport
+
+        @Immutable
+        data class Roll(override val id: String, val userId: String, val singleDie: Int) : Teleport
+
+        @Immutable
+        data class Result(override val id: String, val didDefenderEscape: Boolean) : Teleport
+    }
+
+    @Immutable
+    sealed interface LuckyCoin : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : LuckyCoin
+
+        @Immutable
+        data class Flip(override val id: String, val singleDie: Int, val didStopAttack: Boolean) :
+            LuckyCoin
+
+        @Immutable
+        data class HighRollerTrigger(override val id: String, val targetUserId: String) : LuckyCoin
+
+        @Immutable
+        data class HighRollerDamage(
+            override val id: String,
+            val singleDie: Int,
+            val isKnockout: Boolean,
+        ) : LuckyCoin
+    }
+
+    @Immutable
+    sealed interface Riposte : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : Riposte
+
+        @Immutable
+        data class EnGarde(
+            override val id: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val isSuccessful: Boolean,
+        ) : Riposte
+    }
+
+    @Immutable
+    data class SummonMinion(override val id: String, val necroUserId: String, val singleDie: Int) :
+        ArenaMessageState
+
+    @Immutable
+    sealed interface Persuade : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : Persuade
+
+        @Immutable
+        data class StrumLute(
+            override val id: String,
+            val diceRoll: Int,
+            val isSuccessful: Boolean,
+        ) : Persuade
+
+        @Immutable data class CharmActivation(override val id: String) : Persuade
+
+        @Immutable data class Lull(override val id: String) : Persuade
+
+        @Immutable
+        data class Charm(
+            override val id: String,
+            val attackerUserId: String,
+            val defenderUserId: String,
+        ) : Persuade
+    }
+
+    @Immutable
+    sealed interface Encore : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : Encore
+
+        @Immutable
+        data class Roll(override val id: String, val encoreDie: Int, val isSuccessful: Boolean) :
+            Encore
+    }
+
+    @Immutable
+    data class Impersonate(
+        override val id: String,
+        val illusionistUserId: String,
+        val impersonatedAbilityName: String,
+    ) : ArenaMessageState
+
+    @Immutable
+    sealed interface MirrorImage : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : MirrorImage
+
+        @Immutable data class Pass(override val id: String) : MirrorImage
+
+        @Immutable
+        data class Reroll(override val id: String, val firstDie: Int, val secondDie: Int) :
+            MirrorImage
+
+        @Immutable
+        data class TemptFate(override val id: String, val originalRoll: Int, val finalRoll: Int) :
+            MirrorImage
+    }
+
+    @Immutable
+    data class SpellPotency(
+        override val id: String,
+        val mageUserId: String,
+        val mainTargetUserId: String,
+        val mainDamage: Int,
+        val splashDamage: Int,
+    ) : ArenaMessageState
+
+    @Immutable
+    sealed interface HolyShield : ArenaMessageState {
+        @Immutable data class Trigger(override val id: String) : HolyShield
+
+        @Immutable
+        data class Prayer(
+            override val id: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val didSurvive: Boolean,
+        ) : HolyShield
+
+        @Immutable
+        data class Wrath(
+            override val id: String,
+            val paladinUserId: String,
+            val attackerUserId: String,
+            val singleDie: Int,
+        ) : HolyShield
+    }
+
+    @Immutable
+    data class AllIn(override val id: String, val gamblerUserId: String, val singleDie: Int) :
+        ArenaMessageState
+
+    @Immutable
+    data class PrepareAttack(
+        override val id: String,
+        val duelistUserId: String,
+        val targetUserId: String,
+        val firstDie: Int,
+        val secondDie: Int,
+        val isSuccessful: Boolean,
+    ) : ArenaMessageState
 }
 
 @Immutable
@@ -62,39 +212,85 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
         is ArenaMessage.NewTurn ->
             ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
 
-        is ArenaMessage.AllIn -> TODO()
+        is ArenaMessage.AllIn ->
+            ArenaMessageState.AllIn(id = id, gamblerUserId = gamblerUserId, singleDie = singleDie)
 
-        is ArenaMessage.Dodge -> TODO()
+        is ArenaMessage.Dodge ->
+            ArenaMessageState.Dodge(id = id, didArmorIncrease = didArmorIncrease)
 
-        is ArenaMessage.Encore.Trigger -> TODO()
+        is ArenaMessage.Encore.Trigger -> ArenaMessageState.Encore.Trigger(id = id)
 
-        is ArenaMessage.Encore.Roll -> TODO()
+        is ArenaMessage.Encore.Roll ->
+            ArenaMessageState.Encore.Roll(
+                id = id,
+                encoreDie = encoreDie,
+                isSuccessful = isSuccessful,
+            )
 
-        is ArenaMessage.HolyShield.Wrath -> TODO()
+        is ArenaMessage.HolyShield.Wrath ->
+            ArenaMessageState.HolyShield.Wrath(
+                id = id,
+                paladinUserId = paladinUserId,
+                attackerUserId = attackerUserId,
+                singleDie = singleDie,
+            )
 
-        is ArenaMessage.HolyShield.Prayer -> TODO()
+        is ArenaMessage.HolyShield.Prayer ->
+            ArenaMessageState.HolyShield.Prayer(
+                id = id,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                didSurvive = didSurvive,
+            )
 
-        is ArenaMessage.HolyShield.Trigger -> TODO()
+        is ArenaMessage.HolyShield.Trigger -> ArenaMessageState.HolyShield.Trigger(id = id)
 
-        is ArenaMessage.Impersonate -> TODO()
+        is ArenaMessage.Impersonate ->
+            ArenaMessageState.Impersonate(
+                id = id,
+                illusionistUserId = illusionistUserId,
+                impersonatedAbilityName =
+                    impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
+            )
 
-        is ArenaMessage.KillingMomentum -> TODO()
+        is ArenaMessage.KillingMomentum -> ArenaMessageState.KillingMomentum(id = id)
 
-        is ArenaMessage.LuckyCoin.Flip -> TODO()
+        is ArenaMessage.LuckyCoin.Flip ->
+            ArenaMessageState.LuckyCoin.Flip(
+                id = id,
+                singleDie = singleDie,
+                didStopAttack = didStopAttack,
+            )
 
-        is ArenaMessage.LuckyCoin.HighRollerDamage -> TODO()
+        is ArenaMessage.LuckyCoin.HighRollerDamage ->
+            ArenaMessageState.LuckyCoin.HighRollerDamage(
+                id = id,
+                singleDie = singleDie,
+                isKnockout = isKnockout,
+            )
 
-        is ArenaMessage.LuckyCoin.HighRollerTrigger -> TODO()
+        is ArenaMessage.LuckyCoin.HighRollerTrigger ->
+            ArenaMessageState.LuckyCoin.HighRollerTrigger(id = id, targetUserId = targetUserId)
 
-        is ArenaMessage.LuckyCoin.Trigger -> TODO()
+        is ArenaMessage.LuckyCoin.Trigger -> ArenaMessageState.LuckyCoin.Trigger(id = id)
 
-        is ArenaMessage.MirrorImage.Pass -> TODO()
+        is ArenaMessage.MirrorImage.Pass -> ArenaMessageState.MirrorImage.Pass(id = id)
 
-        is ArenaMessage.MirrorImage.Reroll -> TODO()
+        is ArenaMessage.MirrorImage.Reroll ->
+            ArenaMessageState.MirrorImage.Reroll(
+                id = id,
+                firstDie = firstDie,
+                secondDie = secondDie,
+            )
 
-        is ArenaMessage.MirrorImage.Trigger -> TODO()
+        is ArenaMessage.MirrorImage.Trigger -> ArenaMessageState.MirrorImage.Trigger(id = id)
 
-        is ArenaMessage.MirrorImage.TemptFate -> TODO()
+        is ArenaMessage.MirrorImage.TemptFate ->
+            ArenaMessageState.MirrorImage.TemptFate(
+                id = id,
+                originalRoll = rerolledMirrorImageDie.originalRoll,
+                finalRoll = rerolledMirrorImageDie.finalValue,
+            )
 
         is ArenaMessage.NormalRoll ->
             ArenaMessageState.NormalRoll(
@@ -106,31 +302,70 @@ fun ArenaMessage.toState(id: String): ArenaMessageState =
                 type = type,
             )
 
-        is ArenaMessage.Persuade.Charm -> TODO()
+        is ArenaMessage.Persuade.Charm ->
+            ArenaMessageState.Persuade.Charm(
+                id = id,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+            )
 
-        is ArenaMessage.Persuade.CharmActivation -> TODO()
+        is ArenaMessage.Persuade.CharmActivation ->
+            ArenaMessageState.Persuade.CharmActivation(id = id)
 
-        is ArenaMessage.Persuade.Lull -> TODO()
+        is ArenaMessage.Persuade.Lull -> ArenaMessageState.Persuade.Lull(id = id)
 
-        is ArenaMessage.Persuade.StrumLute -> TODO()
+        is ArenaMessage.Persuade.StrumLute ->
+            ArenaMessageState.Persuade.StrumLute(
+                id = id,
+                diceRoll = diceRoll,
+                isSuccessful = isSuccessful,
+            )
 
-        is ArenaMessage.Persuade.Trigger -> TODO()
+        is ArenaMessage.Persuade.Trigger -> ArenaMessageState.Persuade.Trigger(id = id)
 
-        is ArenaMessage.PrepareAttack -> TODO()
+        is ArenaMessage.PrepareAttack ->
+            ArenaMessageState.PrepareAttack(
+                id = id,
+                duelistUserId = duelistUserId,
+                targetUserId = targetUserId,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                isSuccessful = isSuccessful,
+            )
 
-        is ArenaMessage.Riposte.EnGarde -> TODO()
+        is ArenaMessage.Riposte.EnGarde ->
+            ArenaMessageState.Riposte.EnGarde(
+                id = id,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                isSuccessful = isSuccessful,
+            )
 
-        is ArenaMessage.Riposte.Trigger -> TODO()
+        is ArenaMessage.Riposte.Trigger -> ArenaMessageState.Riposte.Trigger(id = id)
 
-        is ArenaMessage.SpellPotency -> TODO()
+        is ArenaMessage.SpellPotency ->
+            ArenaMessageState.SpellPotency(
+                id = id,
+                mageUserId = mageUserId,
+                mainTargetUserId = mainTargetUserId,
+                mainDamage = mainDamage,
+                splashDamage = splashDamage,
+            )
 
-        is ArenaMessage.SummonMinion -> TODO()
+        is ArenaMessage.SummonMinion ->
+            ArenaMessageState.SummonMinion(
+                id = id,
+                necroUserId = necroUserId,
+                singleDie = singleDie,
+            )
 
-        is ArenaMessage.Teleport.Result -> TODO()
+        is ArenaMessage.Teleport.Result ->
+            ArenaMessageState.Teleport.Result(id = id, didDefenderEscape = didDefenderEscape)
 
-        is ArenaMessage.Teleport.Roll -> TODO()
+        is ArenaMessage.Teleport.Roll ->
+            ArenaMessageState.Teleport.Roll(id = id, userId = userId, singleDie = singleDie)
 
-        is ArenaMessage.Teleport.Trigger -> TODO()
+        is ArenaMessage.Teleport.Trigger -> ArenaMessageState.Teleport.Trigger(id = id)
     }
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =

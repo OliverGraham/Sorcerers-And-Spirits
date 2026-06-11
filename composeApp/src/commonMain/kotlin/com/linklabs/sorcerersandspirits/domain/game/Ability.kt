@@ -17,7 +17,6 @@ sealed interface DefensiveAbility : Ability {
 
     data object Teleport : DefensiveAbility
 
-    // TODO: perhaps needs to know here that Duelist used PrepareAttack
     data class HolyShield(val usedThisMatch: Boolean = false) : DefensiveAbility
 
     data object None : DefensiveAbility
@@ -31,7 +30,6 @@ sealed interface OffensiveAbility : Ability {
 
     data object PrepareAttack : OffensiveAbility, ActivatedAbility
 
-    // TODO: Can Necro have more than 1 skeleton? Or Golem?
     data class SummonMinion(val skeletonCount: Int = 0, val golemCount: Int = 0) :
         OffensiveAbility, ActivatedAbility
 

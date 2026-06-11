@@ -53,6 +53,7 @@ sealed interface ArenaState {
         val roundNumber: Int,
         val isNewRound: Boolean,
     ) : ActiveState {
+        val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds

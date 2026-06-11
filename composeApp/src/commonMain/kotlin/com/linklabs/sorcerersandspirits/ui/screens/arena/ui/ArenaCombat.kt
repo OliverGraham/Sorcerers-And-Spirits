@@ -30,14 +30,15 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ActivatedAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCard
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
@@ -174,30 +175,13 @@ private fun GridPlayerCard(
 }
 
 @Composable
-private fun RollDiceSection(
+private fun ArenaState.Combat.RollDiceSection(
     otherPlayers: Map<UserId, PlayerState.Selected>,
     combatActionState: CombatActionState,
     userPlayerId: String,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
 ) {
-    val buttonText =
-        when (combatActionState) {
-            is CombatActionState.Idle ->
-                "Roll to Hit (AC: ${otherPlayers[targetedOpponentUserId]?.characterClass?.armorClass ?: "?"})"
-
-            is CombatActionState.NormalAttack ->
-                when (combatActionState.roll) {
-                    is NormalAttackRollState.ArmorClass ->
-                        "Roll to Hit (AC: ${otherPlayers[targetedOpponentUserId]?.characterClass?.armorClass ?: "?"})"
-
-                    is NormalAttackRollState.Health ->
-                        "Roll for Damage (HP: ${otherPlayers[targetedOpponentUserId]?.characterClass?.hitPoints ?: "?"})"
-                }
-
-            is CombatActionState.AbilityRoll -> "Roll for Ability"
-        }
-
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -220,6 +204,40 @@ private fun RollDiceSection(
             updateIsTargetLocked = updateIsTargetLocked,
             userPlayerId = userPlayerId,
         )
+    }
+}
+
+@Composable
+private fun ArenaState.Combat.AbilityButton(
+    combatActionState: CombatActionState,
+    targetedOpponentUserId: String,
+    updateIsTargetLocked: () -> Unit,
+    userPlayerId: String,
+    modifier: Modifier = Modifier,
+) {
+    when (val ability = userPlayer.characterClass.offensiveAbility) {
+        is ActivatedAbilityState -> ActivatedButton(ability = ability)
+        else -> {}
+    }
+
+    when (combatActionState) {
+        is CombatActionState.AbilityRoll -> TODO()
+
+        is CombatActionState.Idle -> {
+            // TODO continue
+        }
+
+        is CombatActionState.NormalAttack -> TODO()
+    }
+}
+
+@Composable
+private fun ActivatedButton(ability: ActivatedAbilityState, modifier: Modifier = Modifier) {
+    when (ability) {
+        is OffensiveAbilityState.AllIn -> TODO()
+        is OffensiveAbilityState.Impersonate -> TODO()
+        is OffensiveAbilityState.PrepareAttack -> TODO()
+        is OffensiveAbilityState.SummonMinion -> TODO()
     }
 }
 

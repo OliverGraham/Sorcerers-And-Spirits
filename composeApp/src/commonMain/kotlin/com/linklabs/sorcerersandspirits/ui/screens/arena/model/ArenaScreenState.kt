@@ -57,6 +57,7 @@ sealed interface ArenaState {
         val activeUserIds = combatActionState.activeUserIds
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
+        val combatControls = deriveCombatControls()
     }
 
     @Immutable data object UserPlayerKnockedOut : ArenaState

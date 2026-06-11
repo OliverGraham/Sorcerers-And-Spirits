@@ -40,7 +40,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatContro
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.deriveCombatControls
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val TRANSITION_LABEL = "ArenaCombatTransition"
@@ -92,7 +91,6 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
             )
         }
 
-        val combatControls = deriveCombatControls()
         if (combatControls.isNotEmpty()) {
             item(key = ROLL_DICE_KEY) {
                 RollDiceSection(

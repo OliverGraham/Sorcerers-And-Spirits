@@ -39,7 +39,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toNormalAttackAction
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 // TODO Arena: Lots of slop to update
@@ -218,19 +217,21 @@ private fun RollDiceSection(
         //  it will simply pass along the ActivatedAbility type found from the button
 
         val onRollDice = ArenaActionsProvider.current.onRollDice
-        val normalAttackAction =
-            combatActionState.toNormalAttackAction(
-                attackerUserId = userPlayerId,
-                defenderUserId = targetedOpponentUserId,
-            )
 
         Button(
             onClick = {
-                normalAttackAction ?: return@Button
                 updateIsTargetLocked()
-                onRollDice(RollDiceArguments(currentCombatAction = normalAttackAction))
+
+                val rollDiceArguments =
+                    RollDiceArguments(
+                        combatActionState = combatActionState,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        userPlayerId = userPlayerId,
+                    )
+
+                onRollDice(rollDiceArguments)
             },
-            enabled = targetedOpponentUserId.isNotEmpty() && normalAttackAction != null,
+            enabled = targetedOpponentUserId.isNotEmpty(),
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(text = buttonText)

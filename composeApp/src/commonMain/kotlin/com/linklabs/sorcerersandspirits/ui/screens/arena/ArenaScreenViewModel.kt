@@ -140,7 +140,11 @@ class ArenaScreenViewModel(
         viewModelScope.launch {
             val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
             val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
-            val currentAction = rollDiceArguments.currentCombatAction
+            val currentAction =
+                rollDiceArguments.combatActionState.toDomain(
+                    attackerUserId = rollDiceArguments.userPlayerId,
+                    defenderUserId = rollDiceArguments.targetedOpponentUserId,
+                )
 
             val (attackerUserId, defenderUserId, originalTurnUserId) =
                 when (currentAction) {
@@ -161,8 +165,10 @@ class ArenaScreenViewModel(
                                 )
                         }
 
-                    is CurrentCombatAction.AbilityRoll ->
-                        return@launch // TODO: implement ability rolls
+                    is CurrentCombatAction.AbilityRoll -> {
+                        // TODO: Extract IDs for ability rolls
+                        Triple(userId, rollDiceArguments.targetedOpponentUserId, userId)
+                    }
                 }
 
             performCombatActionUseCase(

@@ -107,49 +107,135 @@ sealed interface AbilityActionState {
 }
 
 /**
- * The [CurrentCombatAction] produced when the active player taps the Attack button.
+ * Maps the [CombatActionState] to its domain counterpart [CurrentCombatAction].
  *
- * Every class can always attack. A fresh turn ([CombatActionState.Idle]) opens with a to-hit roll
- * against the target's armor class; an in-progress [CombatActionState.NormalAttack] simply
- * continues whichever roll the domain says comes next (to-hit, or damage against health). Ability
- * rolls are not driven by the Attack button, so there is no normal attack to produce.
+ * This mapping is used by the ViewModel to determine the domain action to perform based on the
+ * current UI state and user context.
  */
-internal fun CombatActionState.toNormalAttackAction(
+internal fun CombatActionState.toDomain(
     attackerUserId: String,
     defenderUserId: String,
-): CurrentCombatAction.NormalAttack? {
-    val rollState =
-        when (this) {
-            is CombatActionState.Idle ->
-                NormalAttackRollState.ArmorClass(
+): CurrentCombatAction =
+    when (this) {
+        is CombatActionState.Idle -> {
+            val roll =
+                NormalAttackRoll.ArmorClass(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                     originalTurnUserId = attackerUserId,
                 )
-
-            is CombatActionState.NormalAttack -> roll
-
-            is CombatActionState.AbilityRoll -> return null
+            CurrentCombatAction.NormalAttack(roll = roll)
         }
 
-    val roll =
-        when (rollState) {
-            is NormalAttackRollState.ArmorClass ->
-                NormalAttackRoll.ArmorClass(
-                    attackerUserId = rollState.attackerUserId,
-                    defenderUserId = rollState.defenderUserId,
-                    originalTurnUserId = rollState.originalTurnUserId,
-                )
+        is CombatActionState.NormalAttack -> {
+            val roll =
+                when (val rollState = roll) {
+                    is NormalAttackRollState.ArmorClass ->
+                        NormalAttackRoll.ArmorClass(
+                            attackerUserId = rollState.attackerUserId,
+                            defenderUserId = rollState.defenderUserId,
+                            originalTurnUserId = rollState.originalTurnUserId,
+                        )
 
-            is NormalAttackRollState.Health ->
-                NormalAttackRoll.Health(
-                    attackerUserId = rollState.attackerUserId,
-                    defenderUserId = rollState.defenderUserId,
-                )
+                    is NormalAttackRollState.Health ->
+                        NormalAttackRoll.Health(
+                            attackerUserId = rollState.attackerUserId,
+                            defenderUserId = rollState.defenderUserId,
+                        )
+                }
+            CurrentCombatAction.NormalAttack(roll = roll)
         }
 
-    return CurrentCombatAction.NormalAttack(roll = roll)
-}
+        is CombatActionState.AbilityRoll -> {
+            // TODO: Map AbilityActionState to AbilityAction when implementing ability rolls
+            CurrentCombatAction.AbilityRoll(purpose = action.toDomain())
+        }
+    }
+
+internal fun AbilityActionState.toDomain(): AbilityAction =
+    when (this) {
+        is AbilityActionState.Activated ->
+            when (this) {
+                is AbilityActionState.Activated.AllIn ->
+                    AbilityAction.Activated.AllIn(allInAbility = allInAbility)
+
+                is AbilityActionState.Activated.SummonMinion ->
+                    AbilityAction.Activated.SummonMinion(summonMinionAbility = summonMinionAbility)
+
+                AbilityActionState.Activated.PrepareAttack -> AbilityAction.Activated.PrepareAttack
+
+                is AbilityActionState.Activated.Impersonate ->
+                    AbilityAction.Activated.Impersonate(impersonateAbility = impersonateAbility)
+            }
+
+        is AbilityActionState.Passive ->
+            when (this) {
+                is AbilityActionState.Passive.LuckyCoin ->
+                    when (this) {
+                        is AbilityActionState.Passive.LuckyCoin.Flip ->
+                            AbilityAction.Passive.LuckyCoin.Flip(
+                                attackerRollTotal = attackerRollTotal
+                            )
+
+                        is AbilityActionState.Passive.LuckyCoin.HighRoller ->
+                            AbilityAction.Passive.LuckyCoin.HighRoller(
+                                attackerUserId = attackerUserId,
+                                attackerRollTotal = attackerRollTotal,
+                            )
+                    }
+
+                is AbilityActionState.Passive.Riposte ->
+                    AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
+
+                is AbilityActionState.Passive.Persuade ->
+                    when (this) {
+                        is AbilityActionState.Passive.Persuade.StrumLute ->
+                            AbilityAction.Passive.Persuade.StrumLute
+
+                        is AbilityActionState.Passive.Persuade.Charm ->
+                            AbilityAction.Passive.Persuade.Charm(
+                                attackerUserId = attackerUserId,
+                                targetableUserIds = targetableUserIds,
+                                selectedCharmTargetUserId = selectedCharmTargetUserId,
+                            )
+                    }
+
+                AbilityActionState.Passive.Encore -> AbilityAction.Passive.Encore
+
+                is AbilityActionState.Passive.Teleport ->
+                    AbilityAction.Passive.Teleport(
+                        attackerRoll = attackerRoll,
+                        defenderRoll = defenderRoll,
+                    )
+
+                is AbilityActionState.Passive.MirrorImage ->
+                    AbilityAction.Passive.MirrorImage(
+                        firstDie =
+                            AbilityAction.Passive.MirrorImage.MirrorImageDie(
+                                originalRoll = firstDie.originalRoll,
+                                reroll = firstDie.reroll,
+                            ),
+                        secondDie =
+                            AbilityAction.Passive.MirrorImage.MirrorImageDie(
+                                originalRoll = secondDie.originalRoll,
+                                reroll = secondDie.reroll,
+                            ),
+                        attackType =
+                            com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+                                .ArmorClass, // TODO: This needs to be tracked in UI state
+                        mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
+                    )
+
+                is AbilityActionState.Passive.HolyShield ->
+                    when (this) {
+                        AbilityActionState.Passive.HolyShield.Prayer ->
+                            AbilityAction.Passive.HolyShield.Prayer
+
+                        AbilityActionState.Passive.HolyShield.Wrath ->
+                            AbilityAction.Passive.HolyShield.Wrath
+                    }
+            }
+    }
 
 internal fun NextCombatAction.toCombatActionState(): CombatActionState =
     when (this) {

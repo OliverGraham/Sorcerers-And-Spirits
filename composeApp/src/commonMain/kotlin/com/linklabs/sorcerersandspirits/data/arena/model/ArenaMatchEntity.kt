@@ -33,8 +33,6 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
         val nextCombatActionEntity: NextCombatActionEntity,
-        // TODO: Delete nextActivePlayerUserId
-        val nextActivePlayerUserId: String,
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonusEntity: DoublesBonusEntity? = null,
@@ -88,74 +86,18 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
 
         is ArenaMatchEntity.Combat -> {
             val playerMap = playerEntitiesMap.mapValues { it.value.toDomain() }
-
-            // TODO Arena: ArenaMatch.UserPlayerKnockedOut should here instead?
-            //  This currently can never happen - so there will be another way
-            val activePlayer = playerMap[nextActivePlayerUserId]
-            if (activePlayer == null) {
-                ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
-            } else {
-                ArenaMatch.Combat(
-                    playerMap = playerMap,
-                    messages = messages,
-                    numberOfNewMessages = numberOfNewMessages,
-                    activePlayer = activePlayer,
-                    nextCombatAction = nextCombatActionEntity.toDomain(),
-                    roundNumber = roundNumber,
-                    isNewRound = isNewRound,
-                    doublesBonus = doublesBonusEntity?.toDomain(),
-                )
-            }
+            ArenaMatch.Combat(
+                playerMap = playerMap,
+                messages = messages,
+                numberOfNewMessages = numberOfNewMessages,
+                nextCombatAction = nextCombatActionEntity.toDomain(),
+                roundNumber = roundNumber,
+                isNewRound = isNewRound,
+                doublesBonus = doublesBonusEntity?.toDomain(),
+            )
         }
 
         is ArenaMatchEntity.Finished ->
             ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)
     }
 }
-
-// TODO: Hmmm
-/*
-internal fun ArenaMatch.toEntity(
-    newMessages: List<ArenaMessage>,
-    addNewMessageKey: () -> String,
-): ArenaMatchEntity {
-    val existingMessages = messages.map { it.toEntity() }
-    val mappedNewMessages = newMessages.map { it.toEntity(id = addNewMessageKey()) }
-    val allMessages = existingMessages + mappedNewMessages
-
-    return when (this) {
-        is ArenaMatch.WaitingForAllPlayers ->
-            ArenaMatchEntity.WaitingForAllPlayers(
-                messages = allMessages,
-                numberOfNewMessages = mappedNewMessages.size,
-                playerEntitiesMap = emptyMap(), // TODO: Update if needed
-            )
-
-        is ArenaMatch.ChoosingClasses ->
-            ArenaMatchEntity.ChoosingClasses(
-                messages = allMessages,
-                numberOfNewMessages = mappedNewMessages.size,
-                playerEntitiesMap = playerMap.mapValues { it.value.toEntity() },
-                activePlayerUserId = activePlayerUserId,
-            )
-
-        is ArenaMatch.Combat ->
-            ArenaMatchEntity.Combat(
-                messages = allMessages,
-                numberOfNewMessages = mappedNewMessages.size,
-                playerEntitiesMap =
-                    playerMap.mapValues { it.value.toEntity() as ArenaPlayerEntity.Selected },
-                nextCombatActionEntity = nextCombatAction.toEntity(),
-                nextActivePlayerUserId = nextActivePlayerUserId,
-                roundNumber = roundNumber,
-                isNewRound = isNewRound,
-            )
-
-        is ArenaMatch.Finished ->
-            ArenaMatchEntity.Finished(
-                messages = allMessages,
-                numberOfNewMessages = mappedNewMessages.size,
-            )
-    }
-}
-*/

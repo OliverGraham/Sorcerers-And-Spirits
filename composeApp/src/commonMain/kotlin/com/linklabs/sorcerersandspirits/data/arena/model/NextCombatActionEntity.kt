@@ -119,6 +119,13 @@ enum class NormalAttackTypeEntity {
     Health,
 }
 
+internal fun NextCombatActionEntity.withActiveUserIds(ids: Set<String>): NextCombatActionEntity =
+    when (this) {
+        is NextCombatActionEntity.IdleEntity -> copy(activeUserIds = ids)
+        is NextCombatActionEntity.NormalAttackEntity -> copy(activeUserIds = ids)
+        is NextCombatActionEntity.AbilityRollEntity -> copy(activeUserIds = ids)
+    }
+
 internal fun NextCombatAction.toEntity(): NextCombatActionEntity =
     when (this) {
         is NextCombatAction.Idle -> NextCombatActionEntity.IdleEntity(activeUserIds = activeUserIds)

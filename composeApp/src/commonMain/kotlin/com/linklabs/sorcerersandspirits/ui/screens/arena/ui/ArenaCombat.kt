@@ -51,7 +51,7 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = activePlayerUserId, label = TRANSITION_LABEL) { _ ->
+        AnimatedContent(targetState = activePlayerIds, label = TRANSITION_LABEL) { _ ->
             SharedTransitionProvider(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,
@@ -64,18 +64,20 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
-    var targetedOpponentUserId by remember(key1 = activePlayerUserId) { mutableStateOf(value = "") }
-    var isTargetLocked by remember(key1 = activePlayerUserId) { mutableStateOf(value = false) }
+    var targetedOpponentUserId by remember(key1 = activePlayerIds) { mutableStateOf(value = "") }
+    var isTargetLocked by remember(key1 = activePlayerIds) { mutableStateOf(value = false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize().padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item(key = activePlayerUserId) {
-            ActivePlayerCard(
-                activePlayer = playerMap.getValue(key = activePlayerUserId),
-                isItThisUsersTurn = isItThisUsersTurn,
-            )
+        activePlayerIds.forEach { activeId ->
+            item(key = activeId) {
+                ActivePlayerCard(
+                    activePlayer = playerMap.getValue(key = activeId),
+                    isItThisUsersTurn = activeId == userPlayerId,
+                )
+            }
         }
 
         item(key = GRID_CARDS_KEY) {

@@ -73,12 +73,12 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     private fun getExampleCombatState(
         playerMap: Map<String, PlayerState.Selected> = getExamplePlayers(),
         userPlayerId: String = "player1",
-        activePlayerUserId: String = "player1",
+        activePlayerIds: Set<String> = setOf("player1"),
     ) =
         ArenaState.Combat(
             playerMap = playerMap,
             userPlayerId = userPlayerId,
-            activePlayerUserId = activePlayerUserId,
+            activePlayerIds = activePlayerIds,
             nextCombatAction =
                 NextCombatActionState.NormalAttack(roll = NormalAttackRollState.ArmorClass),
             roundNumber = 1,

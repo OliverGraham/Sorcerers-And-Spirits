@@ -20,7 +20,6 @@ sealed interface ArenaMatch {
     data class Combat(
         override val messages: List<IncomingArenaMessage>,
         override val numberOfNewMessages: Int,
-        val activePlayer: ArenaPlayer.Selected,
         val playerMap: Map<String, ArenaPlayer.Selected>,
         val nextCombatAction: NextCombatAction,
         val roundNumber: Int,

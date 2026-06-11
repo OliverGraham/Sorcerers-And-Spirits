@@ -88,7 +88,6 @@ internal class ChooseCharacterClass(
                         ),
                     activeUserIds = setOf(fastestPlayerUserId),
                 ),
-            nextActivePlayerUserId = fastestPlayerUserId,
             roundNumber = 1,
             isNewRound = true,
         )

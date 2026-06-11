@@ -75,7 +75,12 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         userPlayerId: String = "player1",
         combatActionState: CombatActionState =
             CombatActionState.NormalAttack(
-                roll = NormalAttackRollState.ArmorClass,
+                roll =
+                    NormalAttackRollState.ArmorClass(
+                        attackerUserId = "player1",
+                        defenderUserId = "player2",
+                        originalTurnUserId = "player1",
+                    ),
                 activeUserIds = setOf("player1"),
             ),
     ) =

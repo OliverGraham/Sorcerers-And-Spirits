@@ -5,6 +5,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 @Immutable
 sealed interface CombatActionState {
@@ -27,9 +29,16 @@ sealed interface CombatActionState {
 
 @Immutable
 sealed interface NormalAttackRollState {
-    @Immutable data object ArmorClass : NormalAttackRollState
+    @Immutable
+    data class ArmorClass(
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val originalTurnUserId: String,
+    ) : NormalAttackRollState
 
-    @Immutable data object Health : NormalAttackRollState
+    @Immutable
+    data class Health(val attackerUserId: String, val defenderUserId: String) :
+        NormalAttackRollState
 }
 
 @Immutable
@@ -37,13 +46,15 @@ sealed interface AbilityActionState {
 
     @Immutable
     sealed interface Activated : AbilityActionState {
-        @Immutable data object AllIn : Activated
+        @Immutable data class AllIn(val allInAbility: OffensiveAbility.AllIn) : Activated
 
-        @Immutable data object SummonMinion : Activated
+        @Immutable
+        data class SummonMinion(val summonMinionAbility: OffensiveAbility.SummonMinion) : Activated
 
         @Immutable data object PrepareAttack : Activated
 
-        @Immutable data object Impersonate : Activated
+        @Immutable
+        data class Impersonate(val impersonateAbility: OffensiveAbility.Impersonate) : Activated
     }
 
     @Immutable
@@ -51,28 +62,37 @@ sealed interface AbilityActionState {
 
         @Immutable
         sealed interface LuckyCoin : Passive {
-            @Immutable data object Flip : LuckyCoin
+            @Immutable data class Flip(val attackerRollTotal: Int) : LuckyCoin
 
-            @Immutable data object HighRoller : LuckyCoin
+            @Immutable
+            data class HighRoller(val attackerUserId: String, val attackerRollTotal: Int) :
+                LuckyCoin
         }
 
-        @Immutable data object Riposte : Passive
+        @Immutable data class Riposte(val attackerRollTotal: Int) : Passive
 
         @Immutable
         sealed interface Persuade : Passive {
             @Immutable data object StrumLute : Persuade
 
-            @Immutable data object Charm : Persuade
+            @Immutable
+            data class Charm(
+                val attackerUserId: String,
+                val targetableUserIds: Set<String>,
+                val selectedCharmTargetUserId: String?,
+            ) : Persuade
         }
 
         @Immutable data object Encore : Passive
 
-        @Immutable data object Teleport : Passive
+        @Immutable
+        data class Teleport(val attackerRoll: Int? = null, val defenderRoll: Int? = null) : Passive
 
         @Immutable
         data class MirrorImage(
             val firstDie: MirrorImageDieState,
             val secondDie: MirrorImageDieState,
+            val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
         ) : Passive
 
         @Immutable data class MirrorImageDieState(val originalRoll: Int, val reroll: Int? = null)
@@ -89,10 +109,10 @@ sealed interface AbilityActionState {
 /**
  * The [CurrentCombatAction] produced when the active player taps the Attack button.
  *
- * Every class can always attack. A fresh turn ([Idle]) opens with a to-hit roll against the
- * target's armor class; an in-progress [CombatActionState.NormalAttack] simply continues whichever
- * roll the domain says comes next (to-hit, or damage against health). Ability rolls are not driven
- * by the Attack button, so there is no normal attack to produce.
+ * Every class can always attack. A fresh turn ([CombatActionState.Idle]) opens with a to-hit roll
+ * against the target's armor class; an in-progress [CombatActionState.NormalAttack] simply
+ * continues whichever roll the domain says comes next (to-hit, or damage against health). Ability
+ * rolls are not driven by the Attack button, so there is no normal attack to produce.
  */
 internal fun CombatActionState.toNormalAttackAction(
     attackerUserId: String,
@@ -100,23 +120,31 @@ internal fun CombatActionState.toNormalAttackAction(
 ): CurrentCombatAction.NormalAttack? {
     val rollState =
         when (this) {
-            is CombatActionState.Idle -> NormalAttackRollState.ArmorClass
+            is CombatActionState.Idle ->
+                NormalAttackRollState.ArmorClass(
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
+                    originalTurnUserId = attackerUserId,
+                )
+
             is CombatActionState.NormalAttack -> roll
+
             is CombatActionState.AbilityRoll -> return null
         }
 
     val roll =
         when (rollState) {
-            NormalAttackRollState.ArmorClass ->
+            is NormalAttackRollState.ArmorClass ->
                 NormalAttackRoll.ArmorClass(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
+                    attackerUserId = rollState.attackerUserId,
+                    defenderUserId = rollState.defenderUserId,
+                    originalTurnUserId = rollState.originalTurnUserId,
                 )
 
-            NormalAttackRollState.Health ->
+            is NormalAttackRollState.Health ->
                 NormalAttackRoll.Health(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
+                    attackerUserId = rollState.attackerUserId,
+                    defenderUserId = rollState.defenderUserId,
                 )
         }
 
@@ -130,9 +158,19 @@ internal fun NextCombatAction.toCombatActionState(): CombatActionState =
         is NextCombatAction.NormalAttack ->
             CombatActionState.NormalAttack(
                 roll =
-                    when (roll) {
-                        is NormalAttackRoll.ArmorClass -> NormalAttackRollState.ArmorClass
-                        is NormalAttackRoll.Health -> NormalAttackRollState.Health
+                    when (val roll = roll) {
+                        is NormalAttackRoll.ArmorClass ->
+                            NormalAttackRollState.ArmorClass(
+                                attackerUserId = roll.attackerUserId,
+                                defenderUserId = roll.defenderUserId,
+                                originalTurnUserId = roll.originalTurnUserId,
+                            )
+
+                        is NormalAttackRoll.Health ->
+                            NormalAttackRollState.Health(
+                                attackerUserId = roll.attackerUserId,
+                                defenderUserId = roll.defenderUserId,
+                            )
                     },
                 activeUserIds = activeUserIds,
             )
@@ -145,10 +183,20 @@ internal fun AbilityAction.toState(): AbilityActionState =
     when (this) {
         is AbilityAction.Activated ->
             when (this) {
-                is AbilityAction.Activated.AllIn -> AbilityActionState.Activated.AllIn
-                is AbilityAction.Activated.SummonMinion -> AbilityActionState.Activated.SummonMinion
+                is AbilityAction.Activated.AllIn ->
+                    AbilityActionState.Activated.AllIn(allInAbility = allInAbility)
+
+                is AbilityAction.Activated.SummonMinion ->
+                    AbilityActionState.Activated.SummonMinion(
+                        summonMinionAbility = summonMinionAbility
+                    )
+
                 AbilityAction.Activated.PrepareAttack -> AbilityActionState.Activated.PrepareAttack
-                is AbilityAction.Activated.Impersonate -> AbilityActionState.Activated.Impersonate
+
+                is AbilityAction.Activated.Impersonate ->
+                    AbilityActionState.Activated.Impersonate(
+                        impersonateAbility = impersonateAbility
+                    )
             }
 
         is AbilityAction.Passive ->
@@ -156,13 +204,19 @@ internal fun AbilityAction.toState(): AbilityActionState =
                 is AbilityAction.Passive.LuckyCoin ->
                     when (this) {
                         is AbilityAction.Passive.LuckyCoin.Flip ->
-                            AbilityActionState.Passive.LuckyCoin.Flip
+                            AbilityActionState.Passive.LuckyCoin.Flip(
+                                attackerRollTotal = attackerRollTotal
+                            )
 
                         is AbilityAction.Passive.LuckyCoin.HighRoller ->
-                            AbilityActionState.Passive.LuckyCoin.HighRoller
+                            AbilityActionState.Passive.LuckyCoin.HighRoller(
+                                attackerUserId = attackerUserId,
+                                attackerRollTotal = attackerRollTotal,
+                            )
                     }
 
-                is AbilityAction.Passive.Riposte -> AbilityActionState.Passive.Riposte
+                is AbilityAction.Passive.Riposte ->
+                    AbilityActionState.Passive.Riposte(attackerRollTotal = attackerRollTotal)
 
                 is AbilityAction.Passive.Persuade ->
                     when (this) {
@@ -170,12 +224,20 @@ internal fun AbilityAction.toState(): AbilityActionState =
                             AbilityActionState.Passive.Persuade.StrumLute
 
                         is AbilityAction.Passive.Persuade.Charm ->
-                            AbilityActionState.Passive.Persuade.Charm
+                            AbilityActionState.Passive.Persuade.Charm(
+                                attackerUserId = attackerUserId,
+                                targetableUserIds = targetableUserIds,
+                                selectedCharmTargetUserId = selectedCharmTargetUserId,
+                            )
                     }
 
                 AbilityAction.Passive.Encore -> AbilityActionState.Passive.Encore
 
-                is AbilityAction.Passive.Teleport -> AbilityActionState.Passive.Teleport
+                is AbilityAction.Passive.Teleport ->
+                    AbilityActionState.Passive.Teleport(
+                        attackerRoll = attackerRoll,
+                        defenderRoll = defenderRoll,
+                    )
 
                 is AbilityAction.Passive.MirrorImage ->
                     AbilityActionState.Passive.MirrorImage(
@@ -189,6 +251,7 @@ internal fun AbilityAction.toState(): AbilityActionState =
                                 originalRoll = secondDie.originalRoll,
                                 reroll = secondDie.reroll,
                             ),
+                        mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
                     )
 
                 is AbilityAction.Passive.HolyShield ->

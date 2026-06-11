@@ -191,10 +191,10 @@ private fun RollDiceSection(
 
             is CombatActionState.NormalAttack ->
                 when (combatActionState.roll) {
-                    NormalAttackRollState.ArmorClass ->
+                    is NormalAttackRollState.ArmorClass ->
                         "Roll to Hit (AC: ${otherPlayers[targetedOpponentUserId]?.characterClass?.armorClass ?: "?"})"
 
-                    NormalAttackRollState.Health ->
+                    is NormalAttackRollState.Health ->
                         "Roll for Damage (HP: ${otherPlayers[targetedOpponentUserId]?.characterClass?.hitPoints ?: "?"})"
                 }
 

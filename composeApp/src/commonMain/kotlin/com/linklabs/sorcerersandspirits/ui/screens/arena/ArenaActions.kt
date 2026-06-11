@@ -5,6 +5,7 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.linklabs.sorcerersandspirits.domain.utilities.EmptyTwoArgumentLambda
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
@@ -35,7 +36,7 @@ data class RollDiceArguments(
 
 // TODO: Rename/refactor
 data class UseAbilityArguments(
-    val combatActionState: CombatActionState,
+    val abilityActionState: AbilityActionState,
     val targetedOpponentUserId: String,
     val userPlayerId: String,
 )

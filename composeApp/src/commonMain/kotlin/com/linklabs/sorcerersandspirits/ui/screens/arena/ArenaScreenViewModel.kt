@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTraveler
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -176,7 +177,62 @@ class ArenaScreenViewModel(
         )
     }
 
-    fun onUseAbility(useAbilityArguments: UseAbilityArguments) {}
+    fun onUseAbility(useAbilityArguments: UseAbilityArguments) {
+        viewModelScope.launch { useAbilityArguments.onUseAbility() }
+    }
+
+    private suspend fun UseAbilityArguments.onUseAbility() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
+
+        val resolvedAbilityActionState =
+            if (
+                abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
+                    targetedOpponentUserId.isNotEmpty()
+            ) {
+                abilityActionState.copy(selectedCharmTargetUserId = targetedOpponentUserId)
+            } else {
+                abilityActionState
+            }
+
+        val (attackerUserId, defenderUserId) =
+            when (resolvedAbilityActionState) {
+                is AbilityActionState.Activated ->
+                    userPlayerId to targetedOpponentUserId.ifEmpty { userPlayerId }
+
+                is AbilityActionState.Passive.Teleport ->
+                    resolvedAbilityActionState.attackerRoll.userId to
+                        resolvedAbilityActionState.defenderRoll.userId
+
+                is AbilityActionState.Passive.LuckyCoin.HighRoller ->
+                    resolvedAbilityActionState.attackerUserId to userPlayerId
+
+                is AbilityActionState.Passive.Persuade.Charm ->
+                    resolvedAbilityActionState.attackerUserId to userPlayerId
+
+                // The remaining passive rolls are made by this user; their state does not carry
+                // the opposing combatant's id
+                is AbilityActionState.Passive ->
+                    userPlayerId to targetedOpponentUserId.ifEmpty { userPlayerId }
+            }
+
+        val combatActionArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
+                roundNumber = arenaState.roundNumber,
+                originalTurnUserId = attackerUserId,
+                doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
+            )
+
+        performCombatActionUseCase(
+            arguments = combatActionArguments,
+            currentAction =
+                CurrentCombatAction.AbilityRoll(purpose = resolvedAbilityActionState.toDomain()),
+        )
+    }
 
     fun onRollDice(rollDiceArguments: RollDiceArguments) {}
 

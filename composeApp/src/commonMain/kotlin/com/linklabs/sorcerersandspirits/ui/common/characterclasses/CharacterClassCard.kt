@@ -22,8 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -127,8 +125,8 @@ private fun Header(className: String, classSpeed: Int, modifier: Modifier = Modi
 
 @Composable
 private fun Body(
-    offensiveAbility: OffensiveAbility,
-    defensiveAbility: DefensiveAbility,
+    offensiveAbility: OffensiveAbilityState,
+    defensiveAbility: DefensiveAbilityState,
     modifier: Modifier = Modifier,
 ) {
     Column(

@@ -28,21 +28,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
-import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ActivatedAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCard
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.deriveCombatControls
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-
-// TODO Arena: Lots of slop to update
 
 private const val TRANSITION_LABEL = "ArenaCombatTransition"
 private const val GRID_CARDS_KEY = "GridCardsKey"
@@ -93,12 +92,11 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
             )
         }
 
-        if (isItThisUsersTurn) {
+        val combatControls = deriveCombatControls()
+        if (combatControls.isNotEmpty()) {
             item(key = ROLL_DICE_KEY) {
                 RollDiceSection(
-                    otherPlayers = otherPlayers,
-                    combatActionState = combatActionState,
-                    userPlayerId = userPlayerId,
+                    combatControls = combatControls,
                     targetedOpponentUserId = targetedOpponentUserId,
                     updateIsTargetLocked = { isTargetLocked = true },
                 )
@@ -176,9 +174,7 @@ private fun GridPlayerCard(
 
 @Composable
 private fun ArenaState.Combat.RollDiceSection(
-    otherPlayers: Map<UserId, PlayerState.Selected>,
-    combatActionState: CombatActionState,
-    userPlayerId: String,
+    combatControls: List<ArenaCombatControl>,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
 ) {
@@ -187,7 +183,7 @@ private fun ArenaState.Combat.RollDiceSection(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        if (targetedOpponentUserId.isEmpty()) {
+        if (targetedOpponentUserId.isEmpty() && combatControls.any { it.requiresTarget }) {
             Text(
                 text = "Tap an enemy card to select your target",
                 style = MaterialTheme.typography.bodyMedium,
@@ -195,49 +191,70 @@ private fun ArenaState.Combat.RollDiceSection(
             )
         }
 
-        // TODO will need new button to use ability (Necro, Bard?, Gambler, Dualist, Illusionist)
-        //  it will simply pass along the ActivatedAbility type found from the button
+        combatControls.forEach { combatControl ->
+            when (combatControl) {
+                is ArenaCombatControl.NormalAttack ->
+                    AttackButton(
+                        combatActionState = combatActionState,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        updateIsTargetLocked = updateIsTargetLocked,
+                        userPlayerId = userPlayerId,
+                        requiresTarget = combatControl.requiresTarget,
+                    )
 
-        AttackButton(
-            combatActionState = combatActionState,
-            targetedOpponentUserId = targetedOpponentUserId,
-            updateIsTargetLocked = updateIsTargetLocked,
-            userPlayerId = userPlayerId,
-        )
+                is ArenaCombatControl.ActivatedAbility ->
+                    AbilityButton(
+                        label = combatControl.label,
+                        abilityActionState = combatControl.action,
+                        requiresTarget = combatControl.requiresTarget,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        updateIsTargetLocked = updateIsTargetLocked,
+                        userPlayerId = userPlayerId,
+                    )
+
+                is ArenaCombatControl.AbilityRoll ->
+                    AbilityButton(
+                        label = combatControl.label,
+                        abilityActionState = combatControl.action,
+                        requiresTarget = combatControl.requiresTarget,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        updateIsTargetLocked = updateIsTargetLocked,
+                        userPlayerId = userPlayerId,
+                    )
+            }
+        }
     }
 }
 
 @Composable
-private fun ArenaState.Combat.AbilityButton(
-    combatActionState: CombatActionState,
+private fun AbilityButton(
+    label: String,
+    abilityActionState: AbilityActionState,
+    requiresTarget: Boolean,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
     userPlayerId: String,
     modifier: Modifier = Modifier,
 ) {
-    when (val ability = userPlayer.characterClass.offensiveAbility) {
-        is ActivatedAbilityState -> ActivatedButton(ability = ability)
-        else -> {}
-    }
+    val onUseAbility = ArenaActionsProvider.current.onUseAbility
 
-    when (combatActionState) {
-        is CombatActionState.AbilityRoll -> TODO()
+    Button(
+        onClick = {
+            if (requiresTarget) updateIsTargetLocked()
 
-        is CombatActionState.Idle -> {
-            // TODO continue
-        }
+            val useAbilityArguments =
+                UseAbilityArguments(
+                    abilityActionState = abilityActionState,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    userPlayerId = userPlayerId,
+                )
 
-        is CombatActionState.NormalAttack -> TODO()
-    }
-}
-
-@Composable
-private fun ActivatedButton(ability: ActivatedAbilityState, modifier: Modifier = Modifier) {
-    when (ability) {
-        is OffensiveAbilityState.AllIn -> TODO()
-        is OffensiveAbilityState.Impersonate -> TODO()
-        is OffensiveAbilityState.PrepareAttack -> TODO()
-        is OffensiveAbilityState.SummonMinion -> TODO()
+            onUseAbility(useAbilityArguments)
+        },
+        enabled = !requiresTarget || targetedOpponentUserId.isNotEmpty(),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Text(text = label)
     }
 }
 
@@ -247,6 +264,7 @@ private fun AttackButton(
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
     userPlayerId: String,
+    requiresTarget: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -264,10 +282,10 @@ private fun AttackButton(
 
             onAttack(attackArguments)
         },
-        enabled = targetedOpponentUserId.isNotEmpty(),
+        enabled = !requiresTarget || targetedOpponentUserId.isNotEmpty(),
         modifier = modifier.fillMaxWidth(),
     ) {
-        Text(text = "Attack Button")
+        Text(text = "Attack")
     }
 }
 

@@ -40,7 +40,11 @@ sealed interface AbilityAction {
 
         data object Encore : Passive
 
-        data class Teleport(val attackerRoll: Int? = null, val defenderRoll: Int? = null) : Passive
+        data class Teleport(val attackerRoll: TeleportDie, val defenderRoll: TeleportDie) :
+            Passive {
+
+            data class TeleportDie(val userId: String, val roll: Int? = null)
+        }
 
         data class MirrorImage(
             val firstDie: MirrorImageDie,

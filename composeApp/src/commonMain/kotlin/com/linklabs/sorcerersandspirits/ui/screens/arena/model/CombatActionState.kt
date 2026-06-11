@@ -29,6 +29,7 @@ sealed interface CombatActionState {
 
 @Immutable
 sealed interface NormalAttackRollState {
+
     @Immutable
     data class ArmorClass(
         val attackerUserId: String,
@@ -86,12 +87,18 @@ sealed interface AbilityActionState {
         @Immutable data object Encore : Passive
 
         @Immutable
-        data class Teleport(val attackerRoll: Int? = null, val defenderRoll: Int? = null) : Passive
+        data class Teleport(
+            val attackerRoll: TeleportDieState,
+            val defenderRoll: TeleportDieState,
+        ) : Passive
+
+        @Immutable data class TeleportDieState(val userId: String, val roll: Int? = null)
 
         @Immutable
         data class MirrorImage(
             val firstDie: MirrorImageDieState,
             val secondDie: MirrorImageDieState,
+            val attackType: com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
         ) : Passive
 
@@ -147,7 +154,6 @@ internal fun CombatActionState.toDomain(
         }
 
         is CombatActionState.AbilityRoll -> {
-            // TODO: Map AbilityActionState to AbilityAction when implementing ability rolls
             CurrentCombatAction.AbilityRoll(purpose = action.toDomain())
         }
     }
@@ -204,8 +210,16 @@ internal fun AbilityActionState.toDomain(): AbilityAction =
 
                 is AbilityActionState.Passive.Teleport ->
                     AbilityAction.Passive.Teleport(
-                        attackerRoll = attackerRoll,
-                        defenderRoll = defenderRoll,
+                        attackerRoll =
+                            AbilityAction.Passive.Teleport.TeleportDie(
+                                userId = attackerRoll.userId,
+                                roll = attackerRoll.roll,
+                            ),
+                        defenderRoll =
+                            AbilityAction.Passive.Teleport.TeleportDie(
+                                userId = defenderRoll.userId,
+                                roll = defenderRoll.roll,
+                            ),
                     )
 
                 is AbilityActionState.Passive.MirrorImage ->
@@ -220,9 +234,7 @@ internal fun AbilityActionState.toDomain(): AbilityAction =
                                 originalRoll = secondDie.originalRoll,
                                 reroll = secondDie.reroll,
                             ),
-                        attackType =
-                            com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-                                .ArmorClass, // TODO: This needs to be tracked in UI state
+                        attackType = attackType,
                         mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
                     )
 
@@ -321,8 +333,16 @@ internal fun AbilityAction.toState(): AbilityActionState =
 
                 is AbilityAction.Passive.Teleport ->
                     AbilityActionState.Passive.Teleport(
-                        attackerRoll = attackerRoll,
-                        defenderRoll = defenderRoll,
+                        attackerRoll =
+                            AbilityActionState.Passive.TeleportDieState(
+                                userId = attackerRoll.userId,
+                                roll = attackerRoll.roll,
+                            ),
+                        defenderRoll =
+                            AbilityActionState.Passive.TeleportDieState(
+                                userId = defenderRoll.userId,
+                                roll = defenderRoll.roll,
+                            ),
                     )
 
                 is AbilityAction.Passive.MirrorImage ->
@@ -337,6 +357,7 @@ internal fun AbilityAction.toState(): AbilityActionState =
                                 originalRoll = secondDie.originalRoll,
                                 reroll = secondDie.reroll,
                             ),
+                        attackType = attackType,
                         mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
                     )
 

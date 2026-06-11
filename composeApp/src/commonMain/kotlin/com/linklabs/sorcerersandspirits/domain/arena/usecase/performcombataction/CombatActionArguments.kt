@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 
 data class CombatActionArguments(
     val arenaId: String,
-    val userId: String,
     val attackerUserId: String,
     val defenderUserId: String,
     val playerMap: Map<String, ArenaPlayer.Selected>,

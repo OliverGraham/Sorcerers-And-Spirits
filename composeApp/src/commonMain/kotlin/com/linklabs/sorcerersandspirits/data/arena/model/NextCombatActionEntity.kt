@@ -90,8 +90,12 @@ sealed interface AbilityActionEntity {
         @Serializable data object EncoreEntity : PassiveEntity
 
         @Serializable
-        data class TeleportEntity(val attackerRoll: Int? = null, val defenderRoll: Int? = null) :
-            PassiveEntity
+        data class TeleportEntity(
+            val attackerRoll: TeleportDieEntity,
+            val defenderRoll: TeleportDieEntity,
+        ) : PassiveEntity
+
+        @Serializable data class TeleportDieEntity(val userId: String, val roll: Int? = null)
 
         @Serializable
         data class MirrorImageEntity(
@@ -252,8 +256,16 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
 
                 is AbilityAction.Passive.Teleport ->
                     AbilityActionEntity.PassiveEntity.TeleportEntity(
-                        attackerRoll = attackerRoll,
-                        defenderRoll = defenderRoll,
+                        attackerRoll =
+                            AbilityActionEntity.PassiveEntity.TeleportDieEntity(
+                                userId = attackerRoll.userId,
+                                roll = attackerRoll.roll,
+                            ),
+                        defenderRoll =
+                            AbilityActionEntity.PassiveEntity.TeleportDieEntity(
+                                userId = defenderRoll.userId,
+                                roll = defenderRoll.roll,
+                            ),
                     )
 
                 is AbilityAction.Passive.MirrorImage ->
@@ -353,8 +365,16 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
 
                 is AbilityActionEntity.PassiveEntity.TeleportEntity ->
                     AbilityAction.Passive.Teleport(
-                        attackerRoll = attackerRoll,
-                        defenderRoll = defenderRoll,
+                        attackerRoll =
+                            AbilityAction.Passive.Teleport.TeleportDie(
+                                userId = attackerRoll.userId,
+                                roll = attackerRoll.roll,
+                            ),
+                        defenderRoll =
+                            AbilityAction.Passive.Teleport.TeleportDie(
+                                userId = defenderRoll.userId,
+                                roll = defenderRoll.roll,
+                            ),
                     )
 
                 is AbilityActionEntity.PassiveEntity.MirrorImageEntity ->

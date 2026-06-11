@@ -53,8 +53,9 @@ sealed interface ArenaState {
         val roundNumber: Int,
         val isNewRound: Boolean,
     ) : ActiveState {
-        val otherPlayers = playerMap.filterKeys { it !in combatActionState.activeUserIds }
-        val isItThisUsersTurn = userPlayerId in combatActionState.activeUserIds
+        val activeUserIds = combatActionState.activeUserIds
+        val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
+        val isItThisUsersTurn = userPlayerId in activeUserIds
     }
 
     @Immutable data object UserPlayerKnockedOut : ArenaState

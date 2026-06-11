@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
@@ -1225,8 +1226,13 @@ class PerformCombatActionUseCaseTest {
         // Arrange
         val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getMage())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Teleport())
+
+        val purpose =
+            AbilityAction.Passive.Teleport(
+                attackerRoll = TeleportDie(userId = arguments.attackerUserId),
+                defenderRoll = TeleportDie(userId = arguments.defenderUserId),
+            )
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = purpose)
 
         val attackerRoll = 4
         setupOneDiceRoll(userId = arguments.attackerUserId, die = attackerRoll)
@@ -1238,8 +1244,8 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
-        assertEquals(expected = attackerRoll, actual = teleport.attackerRoll)
-        assertEquals(expected = null, actual = teleport.defenderRoll)
+        assertEquals(expected = attackerRoll, actual = teleport.attackerRoll.roll)
+        assertEquals(expected = null, actual = teleport.defenderRoll.roll)
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -1265,13 +1271,15 @@ class PerformCombatActionUseCaseTest {
     ) {
         // Arrange
         val mageUserId = DEFAULT_DEFENDER_ID
-        val arguments =
-            createTwoPlayerArguments(userId = mageUserId, defenderClass = CharacterClass.getMage())
+        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getMage())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction =
-            CurrentCombatAction.AbilityRoll(
-                purpose = AbilityAction.Passive.Teleport(attackerRoll = attackerRoll)
+
+        val purpose =
+            AbilityAction.Passive.Teleport(
+                attackerRoll = TeleportDie(userId = arguments.attackerUserId, roll = attackerRoll),
+                defenderRoll = TeleportDie(userId = mageUserId),
             )
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = purpose)
 
         setupOneDiceRoll(userId = mageUserId, die = mageRoll)
 
@@ -1286,7 +1294,7 @@ class PerformCombatActionUseCaseTest {
             val nextAction = outcome.nextCombatAction
             assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
             assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
-            assertTrue(actual = nextAction.isThisUserNext(userId = DEFAULT_ATTACKER_ID))
+            assertTrue(actual = nextAction.isThisUserNext(userId = arguments.attackerUserId))
         }
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -1304,8 +1312,13 @@ class PerformCombatActionUseCaseTest {
                 doublesBonus = DoublesBonus(userId = attackerUserId),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Teleport())
+
+        val purpose =
+            AbilityAction.Passive.Teleport(
+                attackerRoll = TeleportDie(userId = attackerUserId),
+                defenderRoll = TeleportDie(userId = mageUserId),
+            )
+        val currentAction = CurrentCombatAction.AbilityRoll(purpose = purpose)
 
         val attackerDie = 3
         val bonus = 1
@@ -1319,7 +1332,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
 
         val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
-        assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll)
+        assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll.roll)
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -1532,7 +1545,6 @@ class PerformCombatActionUseCaseTest {
         val arguments2 =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
-                userId = mageUserId,
                 attackerUserId = mageUserId,
                 defenderUserId = duelistUserId,
                 playerMap = outcome1.updatedPlayerMap,
@@ -1858,7 +1870,6 @@ class PerformCombatActionUseCaseTest {
 
         private fun createTwoPlayerArguments(
             arenaId: String = DEFAULT_ARENA_ID,
-            userId: String = DEFAULT_ATTACKER_ID,
             attackerUserId: String = DEFAULT_ATTACKER_ID,
             defenderUserId: String = DEFAULT_DEFENDER_ID,
             attackerClass: CharacterClass = createCharacterClass(speed = 8),
@@ -1869,7 +1880,6 @@ class PerformCombatActionUseCaseTest {
         ) =
             CombatActionArguments(
                 arenaId = arenaId,
-                userId = userId,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 playerMap =
@@ -1892,7 +1902,6 @@ class PerformCombatActionUseCaseTest {
 
         private fun createThreePlayerArguments(
             arenaId: String = DEFAULT_ARENA_ID,
-            userId: String = DEFAULT_ATTACKER_ID,
             attackerUserId: String = DEFAULT_ATTACKER_ID,
             defenderUserId: String = DEFAULT_DEFENDER_ID,
             thirdUserId: String = THIRD_PLAYER_ID,
@@ -1905,7 +1914,6 @@ class PerformCombatActionUseCaseTest {
         ) =
             CombatActionArguments(
                 arenaId = arenaId,
-                userId = userId,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 playerMap =

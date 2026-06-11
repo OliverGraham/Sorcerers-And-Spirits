@@ -17,7 +17,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 
 internal class PerformCombatAction(
-    private val arguments: CombatActionArguments,
+    arguments: CombatActionArguments,
     private val diceRoller: DiceRoller,
 ) {
 
@@ -79,8 +79,7 @@ internal class PerformCombatAction(
     private fun AbilityAction.Passive.handlePassive() {
         when (this) {
             is AbilityAction.Passive.Teleport ->
-                TeleportHandler(combatMutator = combatMutator)
-                    .handleTeleport(teleport = this, userId = arguments.userId)
+                TeleportHandler(combatMutator = combatMutator).handleTeleport(teleport = this)
 
             is AbilityAction.Passive.HolyShield -> handleHolyShield()
 

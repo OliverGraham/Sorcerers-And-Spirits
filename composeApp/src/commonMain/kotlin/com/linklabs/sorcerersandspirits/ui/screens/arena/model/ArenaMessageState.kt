@@ -3,7 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
-import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 @Immutable
@@ -29,31 +29,38 @@ sealed interface ArenaMessageState {
         override val id: String,
         val characterClassInfo: CharacterClassMessageInfoState,
     ) : ArenaMessageState
+
+    @Immutable
+    data class NormalRoll(
+        override val id: String,
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val firstDie: Int,
+        val secondDie: Int,
+        val type: NormalRollMessageType,
+    ) : ArenaMessageState
 }
 
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-fun IncomingArenaMessage.toState(): ArenaMessageState =
-    when (val message = this.message) {
+fun ArenaMessage.toState(id: String): ArenaMessageState =
+    when (this) {
         is ArenaMessage.NewRound ->
-            ArenaMessageState.NewRound(id = id, roundNumber = message.roundNumber.toString())
+            ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
 
         is ArenaMessage.ChoseCharacterClass ->
             ArenaMessageState.ChoseCharacterClass(
                 id = id,
-                displayName = message.displayName,
-                characterClassInfo = message.characterClassInfo.toState(),
+                displayName = displayName,
+                characterClassInfo = characterClassInfo.toState(),
             )
 
         is ArenaMessage.ConnectedToArena ->
-            ArenaMessageState.ConnectedToArena(id = id, displayName = message.displayName)
+            ArenaMessageState.ConnectedToArena(id = id, displayName = displayName)
 
         is ArenaMessage.NewTurn ->
-            ArenaMessageState.NewTurn(
-                id = id,
-                characterClassInfo = message.characterClassInfo.toState(),
-            )
+            ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())
 
         is ArenaMessage.AllIn -> TODO()
 
@@ -89,7 +96,15 @@ fun IncomingArenaMessage.toState(): ArenaMessageState =
 
         is ArenaMessage.MirrorImage.TemptFate -> TODO()
 
-        is ArenaMessage.NormalRoll -> TODO()
+        is ArenaMessage.NormalRoll ->
+            ArenaMessageState.NormalRoll(
+                id = id,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                type = type,
+            )
 
         is ArenaMessage.Persuade.Charm -> TODO()
 

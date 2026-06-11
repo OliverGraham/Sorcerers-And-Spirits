@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 
 @Immutable
 sealed interface CombatActionState {
@@ -119,43 +120,33 @@ sealed interface AbilityActionState {
  * This mapping is used by the ViewModel to determine the domain action to perform based on the
  * current UI state and user context.
  */
-internal fun CombatActionState.toDomain(
-    attackerUserId: String,
-    defenderUserId: String,
-): CurrentCombatAction =
-    when (this) {
-        is CombatActionState.Idle -> {
-            val roll =
-                NormalAttackRoll.ArmorClass(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
-                    originalTurnUserId = attackerUserId,
-                )
-            CurrentCombatAction.NormalAttack(roll = roll)
-        }
+internal fun AttackArguments.toDomain(): NormalAttackRoll? =
+    when (combatActionState) {
+        // TODO: Make different CombatActionState somehow. I guess code quality doesn't matter
+        //  though
+        is CombatActionState.AbilityRoll -> null
 
-        is CombatActionState.NormalAttack -> {
-            val roll =
-                when (val rollState = roll) {
-                    is NormalAttackRollState.ArmorClass ->
-                        NormalAttackRoll.ArmorClass(
-                            attackerUserId = rollState.attackerUserId,
-                            defenderUserId = rollState.defenderUserId,
-                            originalTurnUserId = rollState.originalTurnUserId,
-                        )
+        is CombatActionState.Idle ->
+            NormalAttackRoll.ArmorClass(
+                attackerUserId = userPlayerId,
+                defenderUserId = targetedOpponentUserId,
+            )
 
-                    is NormalAttackRollState.Health ->
-                        NormalAttackRoll.Health(
-                            attackerUserId = rollState.attackerUserId,
-                            defenderUserId = rollState.defenderUserId,
-                        )
-                }
-            CurrentCombatAction.NormalAttack(roll = roll)
-        }
+        is CombatActionState.NormalAttack ->
+            when (val roll = combatActionState.roll) {
+                is NormalAttackRollState.ArmorClass ->
+                    NormalAttackRoll.ArmorClass(
+                        attackerUserId = roll.attackerUserId,
+                        defenderUserId = roll.defenderUserId,
+                        originalTurnUserId = roll.originalTurnUserId,
+                    )
 
-        is CombatActionState.AbilityRoll -> {
-            CurrentCombatAction.AbilityRoll(purpose = action.toDomain())
-        }
+                is NormalAttackRollState.Health ->
+                    NormalAttackRoll.Health(
+                        attackerUserId = roll.attackerUserId,
+                        defenderUserId = roll.defenderUserId,
+                    )
+            }
     }
 
 internal fun AbilityActionState.toDomain(): AbilityAction =

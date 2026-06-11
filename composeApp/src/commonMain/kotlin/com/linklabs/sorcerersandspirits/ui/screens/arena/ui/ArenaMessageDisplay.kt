@@ -30,4 +30,8 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 resource = Res.string.arena_message_new_turn,
                 characterClassInfo.className,
             )
+
+        // TODO: stringResource
+        is ArenaMessageState.NormalRoll ->
+            "$attackerUserId attacked $defenderUserId and rolled ${firstDie + secondDie}"
     }

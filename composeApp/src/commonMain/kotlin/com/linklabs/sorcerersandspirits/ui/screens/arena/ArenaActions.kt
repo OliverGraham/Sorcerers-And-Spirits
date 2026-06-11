@@ -12,15 +12,29 @@ internal data class ArenaActions(
     val onSelectCharacterClass: (CharacterClassState) -> Unit = {},
     val onChooseCharacterClass: (PlayerState, CharacterClassState) -> Unit = EmptyTwoArgumentLambda,
     val onIncomingMessageHandled: () -> Unit = {},
-    val onAttack: (targetUserId: String) -> Unit = {},
-    val onUseAbility: (abilityName: String) -> Unit = {},
+    val onAttack: (arguments: AttackArguments) -> Unit = {},
+    val onUseAbility: (arguments: UseAbilityArguments) -> Unit = {},
     val onRollDice: (arguments: RollDiceArguments) -> Unit = {},
     val onTryLeaveArena: () -> Unit = {},
     val onConfirmLeaveArena: () -> Unit = {},
     val onDismissForfeitDialog: () -> Unit = {},
 )
 
+data class AttackArguments(
+    val combatActionState: CombatActionState,
+    val targetedOpponentUserId: String,
+    val userPlayerId: String,
+)
+
+// TODO: Delete
 data class RollDiceArguments(
+    val combatActionState: CombatActionState,
+    val targetedOpponentUserId: String,
+    val userPlayerId: String,
+)
+
+// TODO: Rename/refactor
+data class UseAbilityArguments(
     val combatActionState: CombatActionState,
     val targetedOpponentUserId: String,
     val userPlayerId: String,

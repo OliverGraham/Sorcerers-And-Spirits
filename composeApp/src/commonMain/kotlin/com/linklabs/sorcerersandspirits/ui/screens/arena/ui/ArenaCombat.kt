@@ -34,7 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.RollDiceArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
@@ -71,7 +71,6 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
         modifier = modifier.fillMaxSize().padding(all = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-
         // TODO: Update UI to NOT have an ActiveCard and instead who cares
         activeUserIds.forEach { activeId ->
             item(key = activeId) {
@@ -215,26 +214,42 @@ private fun RollDiceSection(
         // TODO will need new button to use ability (Necro, Bard?, Gambler, Dualist, Illusionist)
         //  it will simply pass along the ActivatedAbility type found from the button
 
-        val onRollDice = ArenaActionsProvider.current.onRollDice
+        AttackButton(
+            combatActionState = combatActionState,
+            targetedOpponentUserId = targetedOpponentUserId,
+            updateIsTargetLocked = updateIsTargetLocked,
+            userPlayerId = userPlayerId,
+        )
+    }
+}
 
-        Button(
-            onClick = {
-                updateIsTargetLocked()
+@Composable
+private fun AttackButton(
+    combatActionState: CombatActionState,
+    targetedOpponentUserId: String,
+    updateIsTargetLocked: () -> Unit,
+    userPlayerId: String,
+    modifier: Modifier = Modifier,
+) {
+    val onAttack = ArenaActionsProvider.current.onAttack
 
-                val rollDiceArguments =
-                    RollDiceArguments(
-                        combatActionState = combatActionState,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        userPlayerId = userPlayerId,
-                    )
+    Button(
+        onClick = {
+            updateIsTargetLocked()
 
-                onRollDice(rollDiceArguments)
-            },
-            enabled = targetedOpponentUserId.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(text = buttonText)
-        }
+            val attackArguments =
+                AttackArguments(
+                    combatActionState = combatActionState,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    userPlayerId = userPlayerId,
+                )
+
+            onAttack(attackArguments)
+        },
+        enabled = targetedOpponentUserId.isNotEmpty(),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Text(text = "Attack Button")
     }
 }
 

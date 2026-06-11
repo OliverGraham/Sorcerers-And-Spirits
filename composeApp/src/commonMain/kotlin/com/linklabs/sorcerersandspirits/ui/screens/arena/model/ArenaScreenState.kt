@@ -73,7 +73,8 @@ internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
 ): ArenaStateUpdate {
-    val messages = messages.map { message -> message.toState() }
+    val messages =
+        messages.map { incomingMessage -> incomingMessage.message.toState(id = incomingMessage.id) }
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
@@ -97,19 +98,15 @@ internal fun ArenaMatch.toUpdatedState(
             }
 
             is ArenaMatch.Combat -> {
-                // TODO: Pass along UserPlayerKnockedOut?
-                val userPlayer = playerMap[userId]
-                if (userPlayer == null) {
-                    ArenaState.UserPlayerKnockedOut
-                } else {
-                    ArenaState.Combat(
-                        playerMap = playerMap.mapValues { it.value.toSelectedState() },
-                        userPlayerId = userId,
-                        combatActionState = nextCombatAction.toCombatActionState(),
-                        roundNumber = roundNumber,
-                        isNewRound = isNewRound,
-                    )
-                }
+                // TODO: Pass along UserPlayerKnockedOut? Use isConscious on user to determine
+
+                ArenaState.Combat(
+                    playerMap = playerMap.mapValues { it.value.toSelectedState() },
+                    userPlayerId = userId,
+                    combatActionState = nextCombatAction.toCombatActionState(),
+                    roundNumber = roundNumber,
+                    isNewRound = isNewRound,
+                )
             }
 
             is ArenaMatch.Finished -> ArenaState.Finished

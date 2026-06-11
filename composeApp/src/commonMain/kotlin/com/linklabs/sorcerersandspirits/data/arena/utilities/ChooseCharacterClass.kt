@@ -6,7 +6,6 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.NormalAttackRollEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
 internal class ChooseCharacterClass(
@@ -79,14 +78,8 @@ internal class ChooseCharacterClass(
             messages = updatedMessages,
             numberOfNewMessages = numberOfNewMessages,
             nextCombatActionEntity =
-                NextCombatActionEntity.NormalAttackEntity(
-                    roll =
-                        NormalAttackRollEntity.ArmorClassEntity(
-                            attackerUserId = fastestPlayerUserId,
-                            defenderUserId = "",
-                            originalTurnUserId = fastestPlayerUserId,
-                        ),
-                    activeUserIds = setOf(fastestPlayerUserId),
+                NextCombatActionEntity.IdleEntity(
+                    activeUserIds = setOf(element = fastestPlayerUserId)
                 ),
             roundNumber = 1,
             isNewRound = true,

@@ -84,10 +84,9 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
             }
         }
 
-        is ArenaMatchEntity.Combat -> {
-            val playerMap = playerEntitiesMap.mapValues { it.value.toDomain() }
+        is ArenaMatchEntity.Combat ->
             ArenaMatch.Combat(
-                playerMap = playerMap,
+                playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 messages = messages,
                 numberOfNewMessages = numberOfNewMessages,
                 nextCombatAction = nextCombatActionEntity.toDomain(),
@@ -95,7 +94,6 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 isNewRound = isNewRound,
                 doublesBonus = doublesBonusEntity?.toDomain(),
             )
-        }
 
         is ArenaMatchEntity.Finished ->
             ArenaMatch.Finished(messages = messages, numberOfNewMessages = numberOfNewMessages)

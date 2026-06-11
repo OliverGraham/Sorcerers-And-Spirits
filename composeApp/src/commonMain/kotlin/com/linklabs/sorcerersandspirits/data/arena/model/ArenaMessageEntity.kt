@@ -9,6 +9,8 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+// TODO: Add SerialNames everywhere. Also, make sure to never name a property as "type"
+
 @Serializable
 sealed interface ArenaMessageEntity {
     val id: String
@@ -45,7 +47,7 @@ sealed interface ArenaMessageEntity {
         val defenderUserId: String,
         val firstDie: Int,
         val secondDie: Int,
-        val type: NormalRollMessageType,
+        val messageType: NormalRollMessageType,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -273,7 +275,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     defenderUserId = defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
-                    type = type,
+                    type = messageType,
                 )
 
             is ArenaMessageEntity.Dodge -> ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease)
@@ -407,7 +409,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 defenderUserId = defenderUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
-                type = type,
+                messageType = type,
             )
 
         is ArenaMessage.Dodge ->

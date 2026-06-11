@@ -46,6 +46,10 @@ private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier
             ConnectedToArenaMessage(state = messageState, modifier = modifier)
 
         is ArenaMessageState.NewTurn -> NewTurnMessage(state = messageState, modifier = modifier)
+
+        else -> {
+            // TODO:
+        }
     }
 }
 

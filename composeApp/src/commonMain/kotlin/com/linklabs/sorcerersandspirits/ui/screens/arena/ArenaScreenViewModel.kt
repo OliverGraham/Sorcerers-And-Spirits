@@ -132,61 +132,53 @@ class ArenaScreenViewModel(
         }
     }
 
-    fun onAttack(targetUserId: String) {
-        println("ArenaScreenViewModel - onAttack() Called")
+    fun onAttack(attackArguments: AttackArguments) {
+        viewModelScope.launch { attackArguments.onAttack() }
     }
 
-    fun onRollDice(rollDiceArguments: RollDiceArguments) {
-        viewModelScope.launch {
-            val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
-            val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
-            val currentAction =
-                rollDiceArguments.combatActionState.toDomain(
-                    attackerUserId = rollDiceArguments.userPlayerId,
-                    defenderUserId = rollDiceArguments.targetedOpponentUserId,
-                )
+    private suspend fun AttackArguments.onAttack() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
+        val normalAttackRoll = toDomain() ?: return
 
-            val (attackerUserId, defenderUserId, originalTurnUserId) =
-                when (currentAction) {
-                    is CurrentCombatAction.NormalAttack ->
-                        when (val roll = currentAction.roll) {
-                            is NormalAttackRoll.ArmorClass ->
-                                Triple(
-                                    roll.attackerUserId,
-                                    roll.defenderUserId,
-                                    roll.originalTurnUserId,
-                                )
+        // TODO: Refactor this
+        val (attackerUserId, defenderUserId, originalTurnUserId) =
+            when (normalAttackRoll) {
+                is NormalAttackRoll.ArmorClass ->
+                    Triple(
+                        first = normalAttackRoll.attackerUserId,
+                        second = normalAttackRoll.defenderUserId,
+                        third = normalAttackRoll.originalTurnUserId,
+                    )
 
-                            is NormalAttackRoll.Health ->
-                                Triple(
-                                    roll.attackerUserId,
-                                    roll.defenderUserId,
-                                    roll.attackerUserId,
-                                )
-                        }
+                is NormalAttackRoll.Health ->
+                    Triple(
+                        first = normalAttackRoll.attackerUserId,
+                        second = normalAttackRoll.defenderUserId,
+                        third = normalAttackRoll.attackerUserId,
+                    )
+            }
 
-                    is CurrentCombatAction.AbilityRoll -> {
-                        // TODO: Extract IDs for ability rolls
-                        Triple(userId, rollDiceArguments.targetedOpponentUserId, userId)
-                    }
-                }
-
-            performCombatActionUseCase(
-                arguments =
-                    CombatActionArguments(
-                        arenaId = arguments.arenaId,
-                        userId = userId,
-                        attackerUserId = attackerUserId,
-                        defenderUserId = defenderUserId,
-                        playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
-                        roundNumber = arenaState.roundNumber,
-                        originalTurnUserId = originalTurnUserId,
-                        doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
-                    ),
-                currentAction = currentAction,
+        val combatActionArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
+                roundNumber = arenaState.roundNumber,
+                originalTurnUserId = originalTurnUserId,
+                doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
             )
-        }
+
+        performCombatActionUseCase(
+            arguments = combatActionArguments,
+            currentAction = CurrentCombatAction.NormalAttack(roll = normalAttackRoll),
+        )
     }
+
+    fun onUseAbility(useAbilityArguments: UseAbilityArguments) {}
+
+    fun onRollDice(rollDiceArguments: RollDiceArguments) {}
 
     fun onTryLeaveArena() {
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }

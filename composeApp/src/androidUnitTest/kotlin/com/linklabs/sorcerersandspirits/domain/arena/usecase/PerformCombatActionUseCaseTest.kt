@@ -791,7 +791,10 @@ class PerformCombatActionUseCaseTest {
         // Arrange
         val arguments = createTwoPlayerArguments(attackerClass = CharacterClass.getBard())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Encore)
+        val currentAction =
+            CurrentCombatAction.AbilityRoll(
+                purpose = AbilityAction.Passive.Encore(defenderUserId = DEFAULT_DEFENDER_ID)
+            )
 
         setupOneDiceRoll(userId = arguments.attackerUserId, die = dieRoll)
 
@@ -1030,6 +1033,7 @@ class PerformCombatActionUseCaseTest {
     fun `When an Illusionist uses Mirror Image to reroll and attacker misses, then the turn ends and the ability is reset`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
+                attackerUserId = DEFAULT_ATTACKER_ID,
                 firstDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3, reroll = 2),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
@@ -1048,6 +1052,7 @@ class PerformCombatActionUseCaseTest {
     fun `When an Illusionist passes on Mirror Image during ArmorClass, the attacker then rolls against the Health`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
+                attackerUserId = DEFAULT_ATTACKER_ID,
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
@@ -1065,6 +1070,7 @@ class PerformCombatActionUseCaseTest {
     fun `When an Illusionist uses Mirror Image during ArmorClass, they cannot use it again during the Health roll`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
+                attackerUserId = DEFAULT_ATTACKER_ID,
                 firstDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3, reroll = 6),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
@@ -1367,7 +1373,10 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Prayer)
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.HolyShield.Prayer(attackerUserId = DEFAULT_ATTACKER_ID)
+            )
 
         setupTwoDiceRoll(userId = arguments.defenderUserId)
 
@@ -1394,7 +1403,10 @@ class PerformCombatActionUseCaseTest {
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Prayer)
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.HolyShield.Prayer(attackerUserId = DEFAULT_ATTACKER_ID)
+            )
 
         setupTwoDiceRoll(userId = arguments.defenderUserId, firstDie = 4, secondDie = 5)
 
@@ -1420,7 +1432,10 @@ class PerformCombatActionUseCaseTest {
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Wrath)
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.HolyShield.Wrath(attackerUserId = DEFAULT_ATTACKER_ID)
+            )
 
         val wrathDamage = 4
         setupOneDiceRoll(userId = arguments.defenderUserId, die = wrathDamage)
@@ -1715,7 +1730,10 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.HolyShield.Prayer)
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.HolyShield.Prayer(attackerUserId = DEFAULT_ATTACKER_ID)
+            )
         val paladinUserId = arguments.defenderUserId
 
         setupTwoDiceRoll(userId = paladinUserId, firstDie = 5, secondDie = 5)
@@ -1795,7 +1813,10 @@ class PerformCombatActionUseCaseTest {
         private fun getLuckyCoinFlipAction(attackerRollTotal: Int) =
             CurrentCombatAction.AbilityRoll(
                 purpose =
-                    AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = attackerRollTotal)
+                    AbilityAction.Passive.LuckyCoin.Flip(
+                        attackerUserId = DEFAULT_ATTACKER_ID,
+                        attackerRollTotal = attackerRollTotal,
+                    )
             )
 
         private fun getLuckyCoinHighRollerAction(attackerUserId: String, attackerRollTotal: Int) =
@@ -1831,11 +1852,18 @@ class PerformCombatActionUseCaseTest {
             )
 
         private fun getStrumLuteAction() =
-            CurrentCombatAction.AbilityRoll(purpose = AbilityAction.Passive.Persuade.StrumLute)
+            CurrentCombatAction.AbilityRoll(
+                purpose =
+                    AbilityAction.Passive.Persuade.StrumLute(attackerUserId = DEFAULT_ATTACKER_ID)
+            )
 
         private fun getRiposteAction(attackerRollTotal: Int) =
             CurrentCombatAction.AbilityRoll(
-                purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
+                purpose =
+                    AbilityAction.Passive.Riposte(
+                        attackerUserId = DEFAULT_ATTACKER_ID,
+                        attackerRollTotal = attackerRollTotal,
+                    )
             )
 
         private fun createCharacterClass(

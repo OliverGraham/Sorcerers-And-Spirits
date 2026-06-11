@@ -17,7 +17,11 @@ internal class RiposteHandler(
     private fun CombatMutator.triggerRiposte() {
         addMessage(message = ArenaMessage.Riposte.Trigger)
 
-        val purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
+        val purpose =
+            AbilityAction.Passive.Riposte(
+                attackerUserId = attackerUserId,
+                attackerRollTotal = attackerRollTotal,
+            )
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(

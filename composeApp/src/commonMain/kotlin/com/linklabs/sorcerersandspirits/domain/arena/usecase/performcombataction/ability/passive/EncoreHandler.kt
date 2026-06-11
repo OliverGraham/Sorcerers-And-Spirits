@@ -15,7 +15,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.triggerEncore() {
         addMessage(message = ArenaMessage.Encore.Trigger)
 
-        val purpose = AbilityAction.Passive.Encore
+        val purpose = AbilityAction.Passive.Encore(defenderUserId = defenderUserId)
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(

@@ -22,6 +22,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveCombatants
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -185,6 +186,7 @@ class ArenaScreenViewModel(
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
         val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
 
+        // TODO: This Charm logic is done oddly or incorrectly
         val resolvedAbilityActionState =
             if (
                 abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
@@ -196,25 +198,10 @@ class ArenaScreenViewModel(
             }
 
         val (attackerUserId, defenderUserId) =
-            when (resolvedAbilityActionState) {
-                is AbilityActionState.Activated ->
-                    userPlayerId to targetedOpponentUserId.ifEmpty { userPlayerId }
-
-                is AbilityActionState.Passive.Teleport ->
-                    resolvedAbilityActionState.attackerRoll.userId to
-                        resolvedAbilityActionState.defenderRoll.userId
-
-                is AbilityActionState.Passive.LuckyCoin.HighRoller ->
-                    resolvedAbilityActionState.attackerUserId to userPlayerId
-
-                is AbilityActionState.Passive.Persuade.Charm ->
-                    resolvedAbilityActionState.attackerUserId to userPlayerId
-
-                // The remaining passive rolls are made by this user; their state does not carry
-                // the opposing combatant's id
-                is AbilityActionState.Passive ->
-                    userPlayerId to targetedOpponentUserId.ifEmpty { userPlayerId }
-            }
+            resolvedAbilityActionState.resolveCombatants(
+                userPlayerId = userPlayerId,
+                targetedOpponentUserId = targetedOpponentUserId,
+            )
 
         val combatActionArguments =
             CombatActionArguments(

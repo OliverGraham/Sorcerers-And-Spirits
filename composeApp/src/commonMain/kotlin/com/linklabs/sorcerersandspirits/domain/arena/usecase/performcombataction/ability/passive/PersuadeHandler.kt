@@ -22,7 +22,8 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
-                    purpose = AbilityAction.Passive.Persuade.StrumLute,
+                    purpose =
+                        AbilityAction.Passive.Persuade.StrumLute(attackerUserId = attackerUserId),
                     activeUserIds = setOf(defenderUserId),
                 )
         )

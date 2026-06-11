@@ -14,10 +14,12 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 sealed interface ArenaCombatControl {
     val label: String
     val requiresTarget: Boolean
+    val enabled: Boolean
 
     @Immutable
     data class NormalAttack(override val requiresTarget: Boolean) : ArenaCombatControl {
         override val label: String = "Attack"
+        override val enabled: Boolean = true
     }
 
     @Immutable
@@ -25,6 +27,7 @@ sealed interface ArenaCombatControl {
         val action: AbilityActionState.Activated,
         override val label: String,
         override val requiresTarget: Boolean,
+        override val enabled: Boolean,
     ) : ArenaCombatControl
 
     @Immutable
@@ -32,6 +35,7 @@ sealed interface ArenaCombatControl {
         val action: AbilityActionState,
         override val label: String,
         override val requiresTarget: Boolean,
+        override val enabled: Boolean = true,
     ) : ArenaCombatControl
 }
 
@@ -100,21 +104,18 @@ private fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
 private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl.ActivatedAbility> =
     when (this) {
         is OffensiveAbilityState.AllIn ->
-            if (usedThisTurn) {
-                emptyList()
-            } else {
-                listOf(
-                    element =
-                        AbilityActionState.Activated.AllIn(
-                                allInAbility =
-                                    OffensiveAbility.AllIn(
-                                        hasAnotherAttack = hasAnotherAttack,
-                                        usedThisTurn = usedThisTurn,
-                                    )
-                            )
-                            .toControl()
-                )
-            }
+            listOf(
+                element =
+                    AbilityActionState.Activated.AllIn(
+                            allInAbility =
+                                OffensiveAbility.AllIn(
+                                    hasAnotherAttack = hasAnotherAttack,
+                                    usedThisTurn = usedThisTurn,
+                                )
+                        )
+                        // All-In can only be activated once per turn
+                        .toControl(enabled = !usedThisTurn)
+            )
 
         is OffensiveAbilityState.PrepareAttack ->
             listOf(element = AbilityActionState.Activated.PrepareAttack.toControl())
@@ -159,13 +160,15 @@ private fun OffensiveAbilityState.toImpersonatedControls():
         else -> toActivatedControls()
     }
 
-private fun AbilityActionState.Activated.toControl() =
+private fun AbilityActionState.Activated.toControl(enabled: Boolean = true) =
     ArenaCombatControl.ActivatedAbility(
         action = this,
         label = label,
         requiresTarget = requiresTarget,
+        enabled = enabled,
     )
 
+// TODO: Always StringResources
 private val AbilityActionState.label: String
     get() =
         when (this) {

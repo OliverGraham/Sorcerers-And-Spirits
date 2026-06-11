@@ -205,6 +205,7 @@ private fun ArenaState.Combat.RollDiceSection(
                         label = combatControl.label,
                         abilityActionState = combatControl.action,
                         requiresTarget = combatControl.requiresTarget,
+                        enabled = combatControl.enabled,
                         targetedOpponentUserId = targetedOpponentUserId,
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
@@ -215,6 +216,7 @@ private fun ArenaState.Combat.RollDiceSection(
                         label = combatControl.label,
                         abilityActionState = combatControl.action,
                         requiresTarget = combatControl.requiresTarget,
+                        enabled = combatControl.enabled,
                         targetedOpponentUserId = targetedOpponentUserId,
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
@@ -229,6 +231,7 @@ private fun AbilityButton(
     label: String,
     abilityActionState: AbilityActionState,
     requiresTarget: Boolean,
+    enabled: Boolean,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
     userPlayerId: String,
@@ -249,7 +252,7 @@ private fun AbilityButton(
 
             onUseAbility(useAbilityArguments)
         },
-        enabled = !requiresTarget || targetedOpponentUserId.isNotEmpty(),
+        enabled = enabled && (!requiresTarget || targetedOpponentUserId.isNotEmpty()),
         modifier = modifier.fillMaxWidth(),
     ) {
         Text(text = label)

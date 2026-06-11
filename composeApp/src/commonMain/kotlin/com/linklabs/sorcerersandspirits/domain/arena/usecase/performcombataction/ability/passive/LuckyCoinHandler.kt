@@ -19,7 +19,11 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.triggerLuckyCoin() {
         addMessage(message = ArenaMessage.LuckyCoin.Trigger)
 
-        val purpose = AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = attackerRollTotal)
+        val purpose =
+            AbilityAction.Passive.LuckyCoin.Flip(
+                attackerUserId = attackerUserId,
+                attackerRollTotal = attackerRollTotal,
+            )
 
         setNextCombatAction(
             nextAction =

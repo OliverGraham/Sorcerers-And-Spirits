@@ -43,6 +43,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         val purpose =
             AbilityAction.Passive.MirrorImage(
+                attackerUserId = attackerUserId,
                 firstDie = MirrorImageDie(originalRoll = firstDie),
                 secondDie = MirrorImageDie(originalRoll = secondDie),
                 attackType = attackType,

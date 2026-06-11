@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.utilities.EmptyTwoArgumentLambda
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -19,8 +20,7 @@ internal data class ArenaActions(
     val onDismissForfeitDialog: () -> Unit = {},
 )
 
-// TODO: Different name if used in Composable as well
-data class RollDiceArguments(val opponentUserId: String)
+data class RollDiceArguments(val currentCombatAction: CurrentCombatAction)
 
 internal val LocalArenaActions = staticCompositionLocalOf { ArenaActions() }
 

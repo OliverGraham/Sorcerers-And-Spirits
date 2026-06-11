@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 
@@ -83,6 +84,43 @@ sealed interface AbilityActionState {
             @Immutable data object Wrath : HolyShield
         }
     }
+}
+
+/**
+ * The [CurrentCombatAction] produced when the active player taps the Attack button.
+ *
+ * Every class can always attack. A fresh turn ([Idle]) opens with a to-hit roll against the
+ * target's armor class; an in-progress [CombatActionState.NormalAttack] simply continues whichever
+ * roll the domain says comes next (to-hit, or damage against health). Ability rolls are not driven
+ * by the Attack button, so there is no normal attack to produce.
+ */
+internal fun CombatActionState.toNormalAttackAction(
+    attackerUserId: String,
+    defenderUserId: String,
+): CurrentCombatAction.NormalAttack? {
+    val rollState =
+        when (this) {
+            is CombatActionState.Idle -> NormalAttackRollState.ArmorClass
+            is CombatActionState.NormalAttack -> roll
+            is CombatActionState.AbilityRoll -> return null
+        }
+
+    val roll =
+        when (rollState) {
+            NormalAttackRollState.ArmorClass ->
+                NormalAttackRoll.ArmorClass(
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
+                )
+
+            NormalAttackRollState.Health ->
+                NormalAttackRoll.Health(
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
+                )
+        }
+
+    return CurrentCombatAction.NormalAttack(roll = roll)
 }
 
 internal fun NextCombatAction.toCombatActionState(): CombatActionState =

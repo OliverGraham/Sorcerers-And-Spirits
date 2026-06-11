@@ -39,6 +39,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toNormalAttackAction
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 // TODO Arena: Lots of slop to update
@@ -99,6 +100,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
                 RollDiceSection(
                     otherPlayers = otherPlayers,
                     combatActionState = combatActionState,
+                    userPlayerId = userPlayerId,
                     targetedOpponentUserId = targetedOpponentUserId,
                     updateIsTargetLocked = { isTargetLocked = true },
                 )
@@ -178,11 +180,15 @@ private fun GridPlayerCard(
 private fun RollDiceSection(
     otherPlayers: Map<UserId, PlayerState.Selected>,
     combatActionState: CombatActionState,
+    userPlayerId: String,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
 ) {
     val buttonText =
         when (combatActionState) {
+            is CombatActionState.Idle ->
+                "Roll to Hit (AC: ${otherPlayers[targetedOpponentUserId]?.characterClass?.armorClass ?: "?"})"
+
             is CombatActionState.NormalAttack ->
                 when (combatActionState.roll) {
                     NormalAttackRollState.ArmorClass ->
@@ -193,8 +199,6 @@ private fun RollDiceSection(
                 }
 
             is CombatActionState.AbilityRoll -> "Roll for Ability"
-
-            else -> "Roll Dice"
         }
 
     Column(
@@ -214,12 +218,19 @@ private fun RollDiceSection(
         //  it will simply pass along the ActivatedAbility type found from the button
 
         val onRollDice = ArenaActionsProvider.current.onRollDice
+        val normalAttackAction =
+            combatActionState.toNormalAttackAction(
+                attackerUserId = userPlayerId,
+                defenderUserId = targetedOpponentUserId,
+            )
+
         Button(
             onClick = {
+                normalAttackAction ?: return@Button
                 updateIsTargetLocked()
-                onRollDice(RollDiceArguments(opponentUserId = targetedOpponentUserId))
+                onRollDice(RollDiceArguments(currentCombatAction = normalAttackAction))
             },
-            enabled = targetedOpponentUserId.isNotEmpty(),
+            enabled = targetedOpponentUserId.isNotEmpty() && normalAttackAction != null,
             modifier = Modifier.fillMaxWidth(),
         ) {
             Text(text = buttonText)

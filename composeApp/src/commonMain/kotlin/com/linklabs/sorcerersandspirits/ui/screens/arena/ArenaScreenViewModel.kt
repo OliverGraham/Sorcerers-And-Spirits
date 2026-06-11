@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -61,12 +64,13 @@ class ArenaScreenViewModel(
         )
 
     private var screenStateFlowJob: Job? = null
+    private var userId: String = ""
 
     init {
         screenStateFlowJob =
             viewModelScope.launch {
                 // TODO: Figure out better way for userId
-                val userId = getUserIdUseCase().orEmpty()
+                userId = getUserIdUseCase().orEmpty()
 
                 coordinateArenaMatchUseCase(
                         arenaId = arguments.arenaId,
@@ -136,25 +140,45 @@ class ArenaScreenViewModel(
         viewModelScope.launch {
             val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
             val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
+            val currentAction = rollDiceArguments.currentCombatAction
 
-            // TODO Update later, after test in Domain
-            /*
-            val combatActionArguments = CombatActionArguments(
-                arenaId = arguments.arenaId,
-                attacker = ,
-                defender = ,
-                playerMap = ,
-                roundNumber = ,
-            )
+            val (attackerUserId, defenderUserId, originalTurnUserId) =
+                when (currentAction) {
+                    is CurrentCombatAction.NormalAttack ->
+                        when (val roll = currentAction.roll) {
+                            is NormalAttackRoll.ArmorClass ->
+                                Triple(
+                                    roll.attackerUserId,
+                                    roll.defenderUserId,
+                                    roll.originalTurnUserId,
+                                )
+
+                            is NormalAttackRoll.Health ->
+                                Triple(
+                                    roll.attackerUserId,
+                                    roll.defenderUserId,
+                                    roll.attackerUserId,
+                                )
+                        }
+
+                    is CurrentCombatAction.AbilityRoll ->
+                        return@launch // TODO: implement ability rolls
+                }
+
             performCombatActionUseCase(
-                arenaId = arguments.arenaId,
-                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
-                attackerUserId = arenaState.userPlayerId,
-                targetUserId = rollDiceArguments.opponentUserId,
-                newRollType = rollDiceArguments.newRollType.toDomain(),
-                turnInfo = arenaState.turnInfo.toDomain(),
+                arguments =
+                    CombatActionArguments(
+                        arenaId = arguments.arenaId,
+                        userId = userId,
+                        attackerUserId = attackerUserId,
+                        defenderUserId = defenderUserId,
+                        playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
+                        roundNumber = arenaState.roundNumber,
+                        originalTurnUserId = originalTurnUserId,
+                        doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
+                    ),
+                currentAction = currentAction,
             )
-             */
         }
     }
 

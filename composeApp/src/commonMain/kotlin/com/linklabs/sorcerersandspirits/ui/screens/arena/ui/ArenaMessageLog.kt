@@ -47,9 +47,7 @@ private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier
 
         is ArenaMessageState.NewTurn -> NewTurnMessage(state = messageState, modifier = modifier)
 
-        else -> {
-            // TODO:
-        }
+        else -> DefaultMessage(state = messageState, modifier = modifier)
     }
 }
 

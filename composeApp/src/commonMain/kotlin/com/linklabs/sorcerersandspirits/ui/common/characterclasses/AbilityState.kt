@@ -1,8 +1,14 @@
 package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.game.AllInAbility
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
+import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
+import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.SummonMinionAbility
 
 @Immutable sealed interface AbilityState
 
@@ -10,7 +16,7 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 @Immutable
 sealed interface DefensiveAbilityState : AbilityState {
-    @Immutable data class Dodge(val armorBonus: Int) : DefensiveAbilityState
+    @Immutable data class Dodge(override val armorBonus: Int) : DefensiveAbilityState, DodgeAbility
 
     @Immutable data object LuckyCoin : DefensiveAbilityState
 
@@ -18,11 +24,15 @@ sealed interface DefensiveAbilityState : AbilityState {
 
     @Immutable data object Persuade : DefensiveAbilityState
 
-    @Immutable data class MirrorImage(val usedThisAttack: Boolean) : DefensiveAbilityState
+    @Immutable
+    data class MirrorImage(override val usedThisAttack: Boolean) :
+        DefensiveAbilityState, MirrorImageAbility
 
     @Immutable data object Teleport : DefensiveAbilityState
 
-    @Immutable data class HolyShield(val usedThisMatch: Boolean) : DefensiveAbilityState
+    @Immutable
+    data class HolyShield(override val usedThisMatch: Boolean) :
+        DefensiveAbilityState, HolyShieldAbility
 
     @Immutable data object None : DefensiveAbilityState
 }
@@ -32,20 +42,20 @@ sealed interface OffensiveAbilityState : AbilityState {
     @Immutable data object KillingMomentum : OffensiveAbilityState
 
     @Immutable
-    data class AllIn(val hasAnotherAttack: Boolean, val usedThisTurn: Boolean) :
-        OffensiveAbilityState, ActivatedAbilityState
+    data class AllIn(override val hasAnotherAttack: Boolean, override val usedThisTurn: Boolean) :
+        OffensiveAbilityState, ActivatedAbilityState, AllInAbility
 
     @Immutable data object PrepareAttack : OffensiveAbilityState, ActivatedAbilityState
 
     @Immutable
-    data class SummonMinion(val skeletonCount: Int = 0, val golemCount: Int = 0) :
-        OffensiveAbilityState, ActivatedAbilityState
+    data class SummonMinion(override val skeletonCount: Int = 0, override val golemCount: Int = 0) :
+        OffensiveAbilityState, ActivatedAbilityState, SummonMinionAbility
 
     @Immutable data object Encore : OffensiveAbilityState
 
     @Immutable
-    data class Impersonate(val impersonatedAbility: OffensiveAbilityState = None) :
-        OffensiveAbilityState, ActivatedAbilityState
+    data class Impersonate(override val impersonatedAbility: OffensiveAbilityState = None) :
+        OffensiveAbilityState, ActivatedAbilityState, ImpersonateAbility<OffensiveAbilityState>
 
     @Immutable data object SpellPotency : OffensiveAbilityState
 

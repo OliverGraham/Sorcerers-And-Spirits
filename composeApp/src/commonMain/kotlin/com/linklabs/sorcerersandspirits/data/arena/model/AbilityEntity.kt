@@ -1,8 +1,14 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.Ability
+import com.linklabs.sorcerersandspirits.domain.game.AllInAbility
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
+import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
+import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.SummonMinionAbility
 import kotlinx.serialization.Serializable
 
 @Serializable sealed interface AbilityEntity
@@ -11,7 +17,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface DefensiveAbilityEntity : AbilityEntity {
-    @Serializable data class Dodge(val armorBonus: Int = 0) : DefensiveAbilityEntity
+    @Serializable
+    data class Dodge(override val armorBonus: Int = 0) : DefensiveAbilityEntity, DodgeAbility
 
     @Serializable data object LuckyCoin : DefensiveAbilityEntity
 
@@ -20,11 +27,14 @@ sealed interface DefensiveAbilityEntity : AbilityEntity {
     @Serializable data object Persuade : DefensiveAbilityEntity
 
     @Serializable
-    data class MirrorImage(val usedThisRound: Boolean = false) : DefensiveAbilityEntity
+    data class MirrorImage(override val usedThisAttack: Boolean = false) :
+        DefensiveAbilityEntity, MirrorImageAbility
 
     @Serializable data object Teleport : DefensiveAbilityEntity
 
-    @Serializable data class HolyShield(val usedThisMatch: Boolean = false) : DefensiveAbilityEntity
+    @Serializable
+    data class HolyShield(override val usedThisMatch: Boolean = false) :
+        DefensiveAbilityEntity, HolyShieldAbility
 
     @Serializable data object None : DefensiveAbilityEntity
 }
@@ -34,20 +44,22 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
     @Serializable data object KillingMomentum : OffensiveAbilityEntity
 
     @Serializable
-    data class AllIn(val hasAnotherAttack: Boolean = false) :
-        OffensiveAbilityEntity, ActivatedAbilityEntity
+    data class AllIn(
+        override val hasAnotherAttack: Boolean = false,
+        override val usedThisTurn: Boolean = false,
+    ) : OffensiveAbilityEntity, ActivatedAbilityEntity, AllInAbility
 
     @Serializable data object PrepareAttack : OffensiveAbilityEntity, ActivatedAbilityEntity
 
     @Serializable
-    data class SummonMinion(val skeletonCount: Int = 0, val golemCount: Int = 0) :
-        OffensiveAbilityEntity, ActivatedAbilityEntity
+    data class SummonMinion(override val skeletonCount: Int = 0, override val golemCount: Int = 0) :
+        OffensiveAbilityEntity, ActivatedAbilityEntity, SummonMinionAbility
 
     @Serializable data object Encore : OffensiveAbilityEntity
 
     @Serializable
-    data class Impersonate(val impersonatedAbility: OffensiveAbilityEntity = None) :
-        OffensiveAbilityEntity, ActivatedAbilityEntity
+    data class Impersonate(override val impersonatedAbility: OffensiveAbilityEntity = None) :
+        OffensiveAbilityEntity, ActivatedAbilityEntity, ImpersonateAbility<OffensiveAbilityEntity>
 
     @Serializable data object SpellPotency : OffensiveAbilityEntity
 
@@ -76,9 +88,8 @@ internal fun DefensiveAbility.toEntity(): DefensiveAbilityEntity =
 
         is DefensiveAbility.Persuade -> DefensiveAbilityEntity.Persuade
 
-        // TODO Fix big time
         is DefensiveAbility.MirrorImage ->
-            DefensiveAbilityEntity.MirrorImage(usedThisRound = usedThisAttack)
+            DefensiveAbilityEntity.MirrorImage(usedThisAttack = usedThisAttack)
 
         is DefensiveAbility.Teleport -> DefensiveAbilityEntity.Teleport
 
@@ -93,7 +104,10 @@ internal fun OffensiveAbility.toEntity(): OffensiveAbilityEntity =
         is OffensiveAbility.KillingMomentum -> OffensiveAbilityEntity.KillingMomentum
 
         is OffensiveAbility.AllIn ->
-            OffensiveAbilityEntity.AllIn(hasAnotherAttack = hasAnotherAttack)
+            OffensiveAbilityEntity.AllIn(
+                hasAnotherAttack = hasAnotherAttack,
+                usedThisTurn = usedThisTurn,
+            )
 
         is OffensiveAbility.PrepareAttack -> OffensiveAbilityEntity.PrepareAttack
 
@@ -123,9 +137,8 @@ internal fun DefensiveAbilityEntity.toDomain(): DefensiveAbility =
 
         is DefensiveAbilityEntity.Persuade -> DefensiveAbility.Persuade
 
-        // TODO Fix big time
         is DefensiveAbilityEntity.MirrorImage ->
-            DefensiveAbility.MirrorImage(usedThisAttack = usedThisRound)
+            DefensiveAbility.MirrorImage(usedThisAttack = usedThisAttack)
 
         is DefensiveAbilityEntity.Teleport -> DefensiveAbility.Teleport
 
@@ -140,7 +153,7 @@ internal fun OffensiveAbilityEntity.toDomain(): OffensiveAbility =
         is OffensiveAbilityEntity.KillingMomentum -> OffensiveAbility.KillingMomentum
 
         is OffensiveAbilityEntity.AllIn ->
-            OffensiveAbility.AllIn(hasAnotherAttack = hasAnotherAttack)
+            OffensiveAbility.AllIn(hasAnotherAttack = hasAnotherAttack, usedThisTurn = usedThisTurn)
 
         is OffensiveAbilityEntity.PrepareAttack -> OffensiveAbility.PrepareAttack
 

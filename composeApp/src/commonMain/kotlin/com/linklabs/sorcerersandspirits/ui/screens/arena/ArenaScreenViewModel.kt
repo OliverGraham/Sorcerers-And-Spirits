@@ -65,13 +65,12 @@ class ArenaScreenViewModel(
         )
 
     private var screenStateFlowJob: Job? = null
-    private var userId: String = ""
 
     init {
         screenStateFlowJob =
             viewModelScope.launch {
                 // TODO: Figure out better way for userId
-                userId = getUserIdUseCase().orEmpty()
+                val userId = getUserIdUseCase().orEmpty()
 
                 coordinateArenaMatchUseCase(
                         arenaId = arguments.arenaId,

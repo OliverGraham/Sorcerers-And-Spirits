@@ -4,8 +4,20 @@ sealed interface Ability
 
 sealed interface ActivatedAbility : Ability
 
+interface DodgeAbility {
+    val armorBonus: Int
+}
+
+interface MirrorImageAbility {
+    val usedThisAttack: Boolean
+}
+
+interface HolyShieldAbility {
+    val usedThisMatch: Boolean
+}
+
 sealed interface DefensiveAbility : Ability {
-    data class Dodge(val armorBonus: Int = 0) : DefensiveAbility
+    data class Dodge(override val armorBonus: Int = 0) : DefensiveAbility, DodgeAbility
 
     data object LuckyCoin : DefensiveAbility
 
@@ -13,30 +25,48 @@ sealed interface DefensiveAbility : Ability {
 
     data object Persuade : DefensiveAbility
 
-    data class MirrorImage(val usedThisAttack: Boolean = false) : DefensiveAbility
+    data class MirrorImage(override val usedThisAttack: Boolean = false) :
+        DefensiveAbility, MirrorImageAbility
 
     data object Teleport : DefensiveAbility
 
-    data class HolyShield(val usedThisMatch: Boolean = false) : DefensiveAbility
+    data class HolyShield(override val usedThisMatch: Boolean = false) :
+        DefensiveAbility, HolyShieldAbility
 
     data object None : DefensiveAbility
+}
+
+interface AllInAbility {
+    val hasAnotherAttack: Boolean
+    val usedThisTurn: Boolean
+}
+
+interface SummonMinionAbility {
+    val skeletonCount: Int
+    val golemCount: Int
+}
+
+interface ImpersonateAbility<out T> {
+    val impersonatedAbility: T
 }
 
 sealed interface OffensiveAbility : Ability {
     data object KillingMomentum : OffensiveAbility
 
-    data class AllIn(val hasAnotherAttack: Boolean = false, val usedThisTurn: Boolean = false) :
-        OffensiveAbility, ActivatedAbility
+    data class AllIn(
+        override val hasAnotherAttack: Boolean = false,
+        override val usedThisTurn: Boolean = false,
+    ) : OffensiveAbility, ActivatedAbility, AllInAbility
 
     data object PrepareAttack : OffensiveAbility, ActivatedAbility
 
-    data class SummonMinion(val skeletonCount: Int = 0, val golemCount: Int = 0) :
-        OffensiveAbility, ActivatedAbility
+    data class SummonMinion(override val skeletonCount: Int = 0, override val golemCount: Int = 0) :
+        OffensiveAbility, ActivatedAbility, SummonMinionAbility
 
     data object Encore : OffensiveAbility
 
-    data class Impersonate(val impersonatedAbility: OffensiveAbility = None) :
-        OffensiveAbility, ActivatedAbility
+    data class Impersonate(override val impersonatedAbility: OffensiveAbility = None) :
+        OffensiveAbility, ActivatedAbility, ImpersonateAbility<OffensiveAbility>
 
     data object SpellPotency : OffensiveAbility
 

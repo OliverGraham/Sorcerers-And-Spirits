@@ -6,9 +6,9 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCard
@@ -55,7 +56,10 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,
             ) {
-                CombatContent()
+                Column(modifier = Modifier.fillMaxSize()) {
+                    CombatContent(modifier = Modifier.weight(1f))
+                    UserStatsRow(userPlayer = userPlayer)
+                }
             }
         }
     }
@@ -66,24 +70,16 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
     var targetedOpponentUserId by remember(key1 = activeUserIds) { mutableStateOf(value = "") }
     var isTargetLocked by remember(key1 = activeUserIds) { mutableStateOf(value = false) }
 
+    val opponents = playerMap.values.filter { it.userId != userPlayerId }
+
     LazyColumn(
-        modifier = modifier.fillMaxSize().padding(all = 16.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // TODO: Update UI to NOT have an ActiveCard and instead who cares
-        activeUserIds.forEach { activeId ->
-            item(key = activeId) {
-                ActivePlayerCard(
-                    activePlayer = playerMap.getValue(key = activeId),
-                    isItThisUsersTurn = activeId == userPlayerId,
-                )
-            }
-        }
-
         item(key = GRID_CARDS_KEY) {
             GridCards(
-                otherPlayers = otherPlayers.values.toList(),
-                userPlayerId = userPlayerId,
+                opponents = opponents,
+                activeUserIds = activeUserIds,
                 isItThisUsersTurn = isItThisUsersTurn,
                 isTargetLocked = isTargetLocked,
                 targetedOpponentUserId = targetedOpponentUserId,
@@ -104,26 +100,38 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ActivePlayerCard(
-    activePlayer: PlayerState.Selected,
-    isItThisUsersTurn: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    CharacterClassCard(
-        characterClass = activePlayer.characterClass,
-        isActive = true,
-        isSelected = isItThisUsersTurn,
-        selectedBy = if (isItThisUsersTurn) "You" else activePlayer.displayName,
-        onClick = { /* Could show details */ },
-        modifier =
-            modifier.fillMaxWidth().height(height = 220.dp).sharedBounds(key = activePlayer.userId),
-    )
+private fun UserStatsRow(userPlayer: PlayerState.Selected, modifier: Modifier = Modifier) {
+    val characterClass = userPlayer.characterClass
+    androidx.compose.material3.Surface(
+        modifier = modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 4.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            StatItem(label = "Class", value = characterClass.className)
+            StatItem(label = "AC", value = characterClass.armorClass.toString())
+            StatItem(label = "HP", value = characterClass.hitPoints.toString())
+            StatItem(label = "Speed", value = characterClass.speed.toString())
+        }
+    }
+}
+
+@Composable
+private fun StatItem(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
+        Text(text = label, style = MaterialTheme.typography.labelSmall)
+        Text(text = value, style = MaterialTheme.typography.titleMedium)
+    }
 }
 
 @Composable
 private fun GridCards(
-    otherPlayers: List<PlayerState.Selected>,
-    userPlayerId: String,
+    opponents: List<PlayerState.Selected>,
+    activeUserIds: Set<String>,
     isItThisUsersTurn: Boolean,
     isTargetLocked: Boolean,
     targetedOpponentUserId: String?,
@@ -137,10 +145,10 @@ private fun GridCards(
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        items(items = otherPlayers, key = { it.userId }) { otherPlayer ->
+        items(items = opponents, key = { it.userId }) { opponent ->
             GridPlayerCard(
-                otherPlayer = otherPlayer,
-                isUser = otherPlayer.userId == userPlayerId,
+                opponent = opponent,
+                isActive = opponent.userId in activeUserIds,
                 isItThisUsersTurn = isItThisUsersTurn,
                 isTargetLocked = isTargetLocked,
                 targetedOpponentUserId = targetedOpponentUserId,
@@ -152,8 +160,8 @@ private fun GridCards(
 
 @Composable
 private fun GridPlayerCard(
-    otherPlayer: PlayerState.Selected,
-    isUser: Boolean,
+    opponent: PlayerState.Selected,
+    isActive: Boolean,
     isItThisUsersTurn: Boolean,
     isTargetLocked: Boolean,
     targetedOpponentUserId: String?,
@@ -161,12 +169,13 @@ private fun GridPlayerCard(
     modifier: Modifier = Modifier,
 ) {
     CharacterClassCard(
-        characterClass = otherPlayer.characterClass,
-        isSelected = targetedOpponentUserId == otherPlayer.userId,
-        enabled = isItThisUsersTurn && !isTargetLocked && !isUser,
-        selectedBy = otherPlayer.displayName,
-        modifier = modifier.sharedBounds(key = otherPlayer.userId),
-        onClick = { onUpdateTargetedOpponentId(otherPlayer.userId) },
+        characterClass = opponent.characterClass,
+        isActive = isActive,
+        isSelected = targetedOpponentUserId == opponent.userId,
+        enabled = isItThisUsersTurn && !isTargetLocked,
+        selectedBy = opponent.displayName,
+        modifier = modifier.sharedBounds(key = opponent.userId),
+        onClick = { onUpdateTargetedOpponentId(opponent.userId) },
     )
 }
 
@@ -298,8 +307,25 @@ private fun ArenaCombatYourTurnPreview() {
         val mage = CharacterClass.getMage().toState()
         val userPlayer =
             PlayerState.Selected(userId = "1", displayName = "User", characterClass = rogue)
-        val otherPlayer =
-            PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
+        val enemy = PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
+
+        val combatState =
+            ArenaState.Combat(
+                playerMap = mapOf(userPlayer.userId to userPlayer, enemy.userId to enemy),
+                userPlayerId = userPlayer.userId,
+                combatActionState =
+                    CombatActionState.NormalAttack(
+                        roll = NormalAttackType.ArmorClass,
+                        attackerUserId = userPlayer.userId,
+                        defenderUserId = enemy.userId,
+                        originalTurnUserId = userPlayer.userId,
+                        activeUserIds = setOf(userPlayer.userId),
+                    ),
+                roundNumber = 1,
+                isNewRound = true,
+            )
+
+        combatState.ArenaCombat()
     }
 }
 
@@ -316,5 +342,28 @@ private fun ArenaCombatEnemyTurnPreview() {
             PlayerState.Selected(userId = "2", displayName = "Enemy 1", characterClass = mage)
         val enemy2 =
             PlayerState.Selected(userId = "3", displayName = "Enemy 2", characterClass = paladin)
+
+        val combatState =
+            ArenaState.Combat(
+                playerMap =
+                    mapOf(
+                        userPlayer.userId to userPlayer,
+                        enemy1.userId to enemy1,
+                        enemy2.userId to enemy2,
+                    ),
+                userPlayerId = userPlayer.userId,
+                combatActionState =
+                    CombatActionState.NormalAttack(
+                        roll = NormalAttackType.ArmorClass,
+                        attackerUserId = enemy1.userId,
+                        defenderUserId = userPlayer.userId,
+                        originalTurnUserId = enemy1.userId,
+                        activeUserIds = setOf(enemy1.userId),
+                    ),
+                roundNumber = 1,
+                isNewRound = true,
+            )
+
+        combatState.ArenaCombat()
     }
 }

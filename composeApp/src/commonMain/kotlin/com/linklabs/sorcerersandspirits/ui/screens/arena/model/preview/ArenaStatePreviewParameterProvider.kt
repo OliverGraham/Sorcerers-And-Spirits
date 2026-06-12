@@ -37,6 +37,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             getExampleScreenState(arenaState = getExampleArenaState()),
             getExampleScreenState(arenaState = getExampleChoosingClassesState()),
             getExampleScreenState(arenaState = getExampleCombatState()),
+            getExampleScreenState(arenaState = ArenaState.Finished),
         )
 
     private fun getExampleScreenState(
@@ -45,12 +46,16 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         unhandledMessagesCount: Int = 0,
         secondsRemaining: Int = 20,
         showForfeitDialog: Boolean = false,
+        isUserPlayerKnockedOut: Boolean = false,
+        hasMadeKnockoutDecision: Boolean = false,
     ) =
         ArenaScreenState(
             messages = messages,
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = secondsRemaining,
             showForfeitDialog = showForfeitDialog,
+            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = arenaState,
         )
 

@@ -43,6 +43,7 @@ internal fun ArenaScreen(
                 onTryLeaveArena = viewModel::onTryLeaveArena,
                 onConfirmLeaveArena = viewModel::onConfirmLeaveArena,
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
+                onStayForAnotherMatch = viewModel::onStayForAnotherMatch,
             )
     ) {
         InterceptBackNavigationToShowForfeitDialog()

@@ -14,6 +14,8 @@ data class ArenaScreenState(
     val unhandledMessagesCount: Int,
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
+    val isUserPlayerKnockedOut: Boolean,
+    val hasMadeKnockoutDecision: Boolean,
     val arenaState: ArenaState,
 ) {
     val latestMessage: ArenaMessageState? =
@@ -25,6 +27,8 @@ data class ArenaScreenState(
         messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
     val characterClasses = CharacterClass.getAllClasses().map { it.toState() }
+
+    val showKnockoutDialog = isUserPlayerKnockedOut && !hasMadeKnockoutDecision
 }
 
 @Immutable
@@ -60,8 +64,6 @@ sealed interface ArenaState {
         val combatControls = deriveCombatControls()
     }
 
-    @Immutable data object UserPlayerKnockedOut : ArenaState
-
     @Immutable data object Finished : ArenaState
 }
 
@@ -92,6 +94,8 @@ internal fun ArenaMatch.toUpdatedState(
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
+    val isUserPlayerKnockedOut = previousState?.isUserPlayerKnockedOut ?: false
+    val hasMadeKnockoutDecision = previousState?.hasMadeKnockoutDecision ?: false
 
     val nextArenaState =
         when (this) {
@@ -132,6 +136,8 @@ internal fun ArenaMatch.toUpdatedState(
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = previousSeconds,
             showForfeitDialog = previousShowForfeitDialog,
+            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = nextArenaState,
         )
 
@@ -189,7 +195,6 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
             TimerAction.Start(timerDuration = 20)
         }
 
-        is ArenaState.UserPlayerKnockedOut,
         is ArenaState.Finished -> TimerAction.Stop
     }
 

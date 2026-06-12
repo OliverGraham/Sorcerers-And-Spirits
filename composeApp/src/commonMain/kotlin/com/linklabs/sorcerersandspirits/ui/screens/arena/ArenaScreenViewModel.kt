@@ -36,8 +36,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
-// TODO Arena: As soon as possible, write tests for this behavior. DO NOT do like the other view
-//  model test, with all the Firebase craziness. Figure out another way that makes more sense
+// TODO: This is all fucked
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -212,13 +211,16 @@ class ArenaScreenViewModel(
     }
 
     // TODO Arena: Need a leave that updates stats with a forfeit, and one that triggers when game
-    //  is finished
+    //  is finished. Update stats only when user leaves (could be after multiple matches)
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
 
         viewModelScope.launch {
             exitArenaUseCase(arenaId = arguments.arenaId)
+            setCurrentTravelerAvailableUseCase()
+            // TODO: If is last person leaving, then removeArenaMatchUseCase(arenaId =
+            // arguments.arenaId)
             _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }
@@ -228,7 +230,13 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
     }
 
-    private suspend fun ArenaMatch?.updateScreenState(userId: String) {
+    fun onStayForAnotherMatch() {
+        _uiStateFlow.updateLoaded { screenState ->
+            screenState.copy(hasMadeKnockoutDecision = true)
+        }
+    }
+
+    private fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
             // TODO Arena: Probably show message briefly and then navigate back, with
             //  cleanup, since if this is null then there was some problem
@@ -243,16 +251,6 @@ class ArenaScreenViewModel(
 
         val nextState = updatedArenaStateUpdate.nextState
         _uiStateFlow.value = UiState.Loaded(data = nextState)
-
-        if (nextState.arenaState == ArenaState.Finished) {
-            // TODO Arena: How to handle profile stats
-            setCurrentTravelerAvailableUseCase()
-            removeArenaMatchUseCase(arenaId = arguments.arenaId)
-            _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
-        }
-
-        // TODO Arena: next state UserKnockedOut -> ask if they want to observe & play in another
-        //  match, or leave. Update stats only after all matches
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {
@@ -286,10 +284,6 @@ class ArenaScreenViewModel(
             }
 
             is ArenaState.Combat -> {
-                // TODO
-            }
-
-            is ArenaState.UserPlayerKnockedOut -> {
                 // TODO
             }
 

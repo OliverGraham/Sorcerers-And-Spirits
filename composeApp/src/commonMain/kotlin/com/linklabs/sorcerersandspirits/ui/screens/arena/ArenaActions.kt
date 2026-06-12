@@ -19,6 +19,7 @@ internal data class ArenaActions(
     val onTryLeaveArena: () -> Unit = {},
     val onConfirmLeaveArena: () -> Unit = {},
     val onDismissForfeitDialog: () -> Unit = {},
+    val onStayForAnotherMatch: () -> Unit = {},
 )
 
 data class AttackArguments(

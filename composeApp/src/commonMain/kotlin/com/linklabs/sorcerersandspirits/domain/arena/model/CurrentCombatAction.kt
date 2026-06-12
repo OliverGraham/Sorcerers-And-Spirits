@@ -7,7 +7,7 @@ sealed interface CurrentCombatAction {
     val originalTurnUserId: String
 
     data class NormalAttack(
-        val roll: NormalAttackRoll,
+        val roll: NormalAttackType,
         override val attackerUserId: String,
         override val defenderUserId: String,
         override val originalTurnUserId: String,

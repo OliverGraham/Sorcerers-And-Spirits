@@ -5,7 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
@@ -45,7 +45,7 @@ internal class CombatMutator(
         setNextCombatAction(
             nextAction =
                 NextCombatAction.NormalAttack(
-                    roll = NormalAttackRoll.Health,
+                    roll = NormalAttackType.Health,
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                     originalTurnUserId = originalTurnUserId,
@@ -176,7 +176,7 @@ internal class CombatMutator(
      * attempt ended or a new one is starting, so Mirror Image becomes available again.
      */
     private fun NextCombatAction.resetMirrorImageIfApplicable() {
-        if (this is NextCombatAction.NormalAttack && this.roll is NormalAttackRoll.Health) return
+        if (this is NextCombatAction.NormalAttack && this.roll == NormalAttackType.Health) return
 
         val illusionistPlayer =
             consciousPlayers.firstOrNull {

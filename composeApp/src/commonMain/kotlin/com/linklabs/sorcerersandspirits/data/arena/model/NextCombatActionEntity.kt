@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -18,7 +17,7 @@ sealed interface NextCombatActionEntity {
 
     @Serializable
     data class NormalAttackEntity(
-        val roll: NormalAttackRollEntity,
+        val roll: NormalAttackType,
         val attackerUserId: String,
         val defenderUserId: String,
         val originalTurnUserId: String,
@@ -33,13 +32,6 @@ sealed interface NextCombatActionEntity {
         val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatActionEntity
-}
-
-@Serializable
-sealed interface NormalAttackRollEntity {
-    @Serializable data object ArmorClassEntity : NormalAttackRollEntity
-
-    @Serializable data object HealthEntity : NormalAttackRollEntity
 }
 
 @Serializable
@@ -103,7 +95,7 @@ sealed interface AbilityActionEntity {
         data class MirrorImageEntity(
             val firstDie: MirrorImageDieEntity,
             val secondDie: MirrorImageDieEntity,
-            val attackType: NormalAttackTypeEntity,
+            val attackType: NormalAttackType,
             val mirrorImageDefensiveAbility: DefensiveAbilityEntity.MirrorImage,
         ) : PassiveEntity
 
@@ -119,12 +111,6 @@ sealed interface AbilityActionEntity {
     }
 }
 
-@Serializable
-enum class NormalAttackTypeEntity {
-    ArmorClass,
-    Health,
-}
-
 internal fun NextCombatActionEntity.withActiveUserIds(ids: Set<String>): NextCombatActionEntity =
     when (this) {
         is NextCombatActionEntity.IdleEntity -> copy(activeUserIds = ids)
@@ -138,7 +124,7 @@ internal fun NextCombatAction.toEntity(): NextCombatActionEntity =
 
         is NextCombatAction.NormalAttack ->
             NextCombatActionEntity.NormalAttackEntity(
-                roll = roll.toEntity(),
+                roll = roll,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 originalTurnUserId = originalTurnUserId,
@@ -161,7 +147,7 @@ internal fun NextCombatActionEntity.toDomain(): NextCombatAction =
 
         is NextCombatActionEntity.NormalAttackEntity ->
             NextCombatAction.NormalAttack(
-                roll = roll.toDomain(),
+                roll = roll,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 originalTurnUserId = originalTurnUserId,
@@ -176,18 +162,6 @@ internal fun NextCombatActionEntity.toDomain(): NextCombatAction =
                 originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
-    }
-
-internal fun NormalAttackRoll.toEntity(): NormalAttackRollEntity =
-    when (this) {
-        is NormalAttackRoll.ArmorClass -> NormalAttackRollEntity.ArmorClassEntity
-        is NormalAttackRoll.Health -> NormalAttackRollEntity.HealthEntity
-    }
-
-internal fun NormalAttackRollEntity.toDomain(): NormalAttackRoll =
-    when (this) {
-        is NormalAttackRollEntity.ArmorClassEntity -> NormalAttackRoll.ArmorClass
-        is NormalAttackRollEntity.HealthEntity -> NormalAttackRoll.Health
     }
 
 internal fun AbilityAction.toEntity(): AbilityActionEntity =
@@ -275,11 +249,7 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                                 originalRoll = secondDie.originalRoll,
                                 reroll = secondDie.reroll,
                             ),
-                        attackType =
-                            when (attackType) {
-                                NormalAttackType.ArmorClass -> NormalAttackTypeEntity.ArmorClass
-                                NormalAttackType.Health -> NormalAttackTypeEntity.Health
-                            },
+                        attackType = attackType,
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toEntity()
                                 as DefensiveAbilityEntity.MirrorImage,
@@ -379,11 +349,7 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                                 originalRoll = secondDie.originalRoll,
                                 reroll = secondDie.reroll,
                             ),
-                        attackType =
-                            when (attackType) {
-                                NormalAttackTypeEntity.ArmorClass -> NormalAttackType.ArmorClass
-                                NormalAttackTypeEntity.Health -> NormalAttackType.Health
-                            },
+                        attackType = attackType,
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toDomain() as DefensiveAbility.MirrorImage,
                     )

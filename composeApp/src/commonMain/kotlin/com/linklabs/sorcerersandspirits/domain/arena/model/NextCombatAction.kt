@@ -7,7 +7,7 @@ sealed interface NextCombatAction {
     data class Idle(override val activeUserIds: Set<String>) : NextCombatAction
 
     data class NormalAttack(
-        val roll: NormalAttackRoll,
+        val roll: NormalAttackType,
         val attackerUserId: String,
         val defenderUserId: String,
         val originalTurnUserId: String,

@@ -6,7 +6,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
@@ -63,7 +62,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -85,7 +84,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -410,7 +409,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -487,7 +486,7 @@ class PerformCombatActionUseCaseTest {
 
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
         assertTrue(actual = nextAction.isThisUserNext(userId = attackerUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -580,7 +579,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction.roll is NormalAttackRoll.ArmorClass)
+        assertEquals(actual = nextAction.roll, expected = NormalAttackType.ArmorClass)
         assertEquals(expected = duelistUserId, actual = nextAction.attackerUserId)
         assertEquals(expected = initialAttackerUserId, actual = nextAction.defenderUserId)
         assertEquals(expected = initialAttackerUserId, actual = nextAction.originalTurnUserId)
@@ -609,7 +608,7 @@ class PerformCombatActionUseCaseTest {
         // Assert
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+        assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
         assertEquals(expected = initialAttackerUserId, actual = nextAction.attackerUserId)
         assertEquals(expected = duelistUserId, actual = nextAction.defenderUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = initialAttackerUserId))
@@ -871,7 +870,7 @@ class PerformCombatActionUseCaseTest {
         // Assert 1: The attacker rolls a new ArmorClass attack against the new target
         val nextAction1 = outcome1.nextCombatAction
         assertTrue(actual = nextAction1 is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction1.roll is NormalAttackRoll.ArmorClass)
+        assertEquals(actual = nextAction1.roll, expected = NormalAttackType.ArmorClass)
         assertEquals(expected = charmedAttackerUserId, actual = nextAction1.attackerUserId)
         assertEquals(expected = newTargetUserId, actual = nextAction1.defenderUserId)
         assertTrue(actual = nextAction1.isThisUserNext(userId = charmedAttackerUserId))
@@ -891,7 +890,7 @@ class PerformCombatActionUseCaseTest {
         // Assert 2: The attack continues against the new target's health
         val nextAction2 = outcome2.nextCombatAction
         assertTrue(actual = nextAction2 is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction2.roll is NormalAttackRoll.Health)
+        assertEquals(actual = nextAction2.roll, expected = NormalAttackType.Health)
         assertEquals(expected = charmedAttackerUserId, actual = nextAction2.attackerUserId)
         assertEquals(expected = newTargetUserId, actual = nextAction2.defenderUserId)
         assertTrue(actual = nextAction2.isThisUserNext(userId = charmedAttackerUserId))
@@ -923,7 +922,7 @@ class PerformCombatActionUseCaseTest {
         // Assert 1: The attacker rolls a new ArmorClass attack against the new target
         val nextAction1 = outcome1.nextCombatAction
         assertTrue(actual = nextAction1 is NextCombatAction.NormalAttack)
-        assertTrue(actual = nextAction1.roll is NormalAttackRoll.ArmorClass)
+        assertEquals(actual = nextAction1.roll, expected = NormalAttackType.ArmorClass)
         assertEquals(expected = newTargetUserId, actual = nextAction1.defenderUserId)
 
         // Act 2: The redirected attack misses the new target's armor
@@ -971,7 +970,7 @@ class PerformCombatActionUseCaseTest {
         when (dieRoll) {
             in 1..4 -> {
                 assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-                assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+                assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
             }
 
             5 -> assertTrue(actual = nextAction is NextCombatAction.Idle)
@@ -1137,32 +1136,32 @@ class PerformCombatActionUseCaseTest {
 
             is NextCombatAction.NormalAttack -> {
                 assertTrue(actual = expectedIsNextActionNormalAttack)
-                assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+                assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
             }
         }
     }
 
     @Test
     fun `When Mage rolls doubles during ArmorClass roll, then Spell Potency triggers, deals damage, and turn ends`() {
-        spellPotencyTest(attackRoll = NormalAttackRoll.ArmorClass, dieValue = 3)
+        spellPotencyTest(attackRoll = NormalAttackType.ArmorClass, dieValue = 3)
     }
 
     @Test
     fun `When Mage rolls doubles during Health roll, then Spell Potency triggers, deals damage, and turn ends`() {
-        spellPotencyTest(attackRoll = NormalAttackRoll.Health, dieValue = 4)
+        spellPotencyTest(attackRoll = NormalAttackType.Health, dieValue = 4)
     }
 
     @Test
     fun `When Mage rolls doubles in a 3-player game, then Spell Potency deals splash damage to the third player`() {
         spellPotencyTest(
-            attackRoll = NormalAttackRoll.ArmorClass,
+            attackRoll = NormalAttackType.ArmorClass,
             dieValue = 2,
             isThreePlayer = true,
         )
     }
 
     private fun spellPotencyTest(
-        attackRoll: NormalAttackRoll,
+        attackRoll: NormalAttackType,
         dieValue: Int,
         isThreePlayer: Boolean = false,
     ) {
@@ -1309,7 +1308,7 @@ class PerformCombatActionUseCaseTest {
         } else {
             val nextAction = outcome.nextCombatAction
             assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
-            assertTrue(actual = nextAction.roll is NormalAttackRoll.Health)
+            assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
             assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
         }
         assertTrue(actual = !outcome.isMatchFinished)
@@ -1676,7 +1675,7 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
 
-        assertIs<NormalAttackRoll.ArmorClass>(value = nextAction.roll)
+        assertIs<NormalAttackType>(value = nextAction.roll)
         assertEquals(expected = duelistUserId, actual = nextAction.attackerUserId)
     }
 
@@ -1792,7 +1791,7 @@ class PerformCombatActionUseCaseTest {
             originalTurnUserId: String = attackerUserId,
         ) =
             CurrentCombatAction.NormalAttack(
-                roll = NormalAttackRoll.ArmorClass,
+                roll = NormalAttackType.ArmorClass,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 originalTurnUserId = originalTurnUserId,
@@ -1800,7 +1799,7 @@ class PerformCombatActionUseCaseTest {
 
         private fun getHealthAttackAction() =
             CurrentCombatAction.NormalAttack(
-                roll = NormalAttackRoll.Health,
+                roll = NormalAttackType.Health,
                 attackerUserId = DEFAULT_ATTACKER_ID,
                 defenderUserId = DEFAULT_DEFENDER_ID,
                 originalTurnUserId = DEFAULT_ATTACKER_ID,

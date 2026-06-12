@@ -6,7 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
@@ -237,7 +237,7 @@ class ArenaScreenViewModelTest {
                 createViewModelWithCombatState(
                     nextCombatAction =
                         NextCombatAction.NormalAttack(
-                            roll = NormalAttackRoll.Health,
+                            roll = NormalAttackType.Health,
                             attackerUserId = USER_ID,
                             defenderUserId = OPPONENT_ID,
                             originalTurnUserId = USER_ID,
@@ -310,7 +310,7 @@ class ArenaScreenViewModelTest {
 
             val currentAction = currentCombatActionSlot.captured
             assertIs<CurrentCombatAction.NormalAttack>(value = currentAction)
-            assertIs<NormalAttackRoll.ArmorClass>(value = currentAction.roll)
+            assertEquals(expected = NormalAttackType.ArmorClass, actual = currentAction.roll)
             assertEquals(expected = USER_ID, actual = currentAction.attackerUserId)
             assertEquals(expected = OPPONENT_ID, actual = currentAction.defenderUserId)
             assertEquals(expected = USER_ID, actual = currentAction.originalTurnUserId)

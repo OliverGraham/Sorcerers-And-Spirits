@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -10,7 +11,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NormalAttackRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 // TODO Arena: update when state changes to use enums to determine the text (using resources)
@@ -75,7 +75,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         userPlayerId: String = "player1",
         combatActionState: CombatActionState =
             CombatActionState.NormalAttack(
-                roll = NormalAttackRollState.ArmorClass,
+                roll = NormalAttackType.ArmorClass,
                 attackerUserId = "player1",
                 defenderUserId = "player2",
                 originalTurnUserId = "player1",

@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -18,7 +17,7 @@ sealed interface CombatActionState {
 
     @Immutable
     data class NormalAttack(
-        val roll: NormalAttackRollState,
+        val roll: NormalAttackType,
         val attackerUserId: String,
         val defenderUserId: String,
         val originalTurnUserId: String,
@@ -33,14 +32,6 @@ sealed interface CombatActionState {
         val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : CombatActionState
-}
-
-@Immutable
-sealed interface NormalAttackRollState {
-
-    @Immutable data object ArmorClass : NormalAttackRollState
-
-    @Immutable data object Health : NormalAttackRollState
 }
 
 @Immutable
@@ -124,7 +115,7 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
 
         is CombatActionState.Idle ->
             CurrentCombatAction.NormalAttack(
-                roll = NormalAttackRoll.ArmorClass,
+                roll = NormalAttackType.ArmorClass,
                 attackerUserId = userPlayerId,
                 defenderUserId = targetedOpponentUserId,
                 originalTurnUserId = userPlayerId,
@@ -132,11 +123,7 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
 
         is CombatActionState.NormalAttack ->
             CurrentCombatAction.NormalAttack(
-                roll =
-                    when (combatActionState.roll) {
-                        NormalAttackRollState.ArmorClass -> NormalAttackRoll.ArmorClass
-                        NormalAttackRollState.Health -> NormalAttackRoll.Health
-                    },
+                roll = combatActionState.roll,
                 attackerUserId = combatActionState.attackerUserId,
                 defenderUserId = combatActionState.defenderUserId,
                 originalTurnUserId = combatActionState.originalTurnUserId,
@@ -238,11 +225,7 @@ internal fun NextCombatAction.toCombatActionState(): CombatActionState =
 
         is NextCombatAction.NormalAttack ->
             CombatActionState.NormalAttack(
-                roll =
-                    when (roll) {
-                        NormalAttackRoll.ArmorClass -> NormalAttackRollState.ArmorClass
-                        NormalAttackRoll.Health -> NormalAttackRollState.Health
-                    },
+                roll = roll,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 originalTurnUserId = originalTurnUserId,

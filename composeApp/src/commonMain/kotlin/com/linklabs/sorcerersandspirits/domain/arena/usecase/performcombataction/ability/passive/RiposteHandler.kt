@@ -17,17 +17,9 @@ internal class RiposteHandler(
     private fun CombatMutator.triggerRiposte() {
         addMessage(message = ArenaMessage.Riposte.Trigger)
 
-        val purpose =
-            AbilityAction.Passive.Riposte(
-                attackerUserId = attackerUserId,
-                attackerRollTotal = attackerRollTotal,
-            )
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    activeUserIds = setOf(defenderUserId),
-                )
+        setNextAbilityRoll(
+            purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal),
+            activeUserIds = setOf(element = defenderUserId),
         )
     }
 
@@ -47,38 +39,20 @@ internal class RiposteHandler(
         if (isSuccessful) {
             handleSuccess()
         } else {
-            handleFailure()
+            continueAttackWithHealthRoll()
         }
     }
 
     /** Duelist is now attacking the attacker - swapping attacker and defender should do it? */
     private fun CombatMutator.handleSuccess() {
-        val armorClassRoll =
-            NormalAttackRoll.ArmorClass(
-                attackerUserId = defenderUserId,
-                defenderUserId = attackerUserId,
-                originalTurnUserId = attackerUserId,
-            )
         setNextCombatAction(
             nextAction =
                 NextCombatAction.NormalAttack(
-                    roll = armorClassRoll,
-                    activeUserIds = setOf(defenderUserId),
-                )
-        )
-    }
-
-    private fun CombatMutator.handleFailure() {
-        val healthRoll =
-            NormalAttackRoll.Health(
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-            )
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.NormalAttack(
-                    roll = healthRoll,
-                    activeUserIds = setOf(attackerUserId),
+                    roll = NormalAttackRoll.ArmorClass,
+                    attackerUserId = defenderUserId,
+                    defenderUserId = attackerUserId,
+                    originalTurnUserId = originalTurnUserId,
+                    activeUserIds = setOf(element = defenderUserId),
                 )
         )
     }

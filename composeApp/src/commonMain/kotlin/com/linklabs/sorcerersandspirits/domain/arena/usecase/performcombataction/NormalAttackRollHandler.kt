@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
@@ -146,27 +145,13 @@ internal class NormalAttackRollHandler(
                     triggerMirrorImageIfApplicable(attackType = NormalAttackType.ArmorClass)
                 if (wasMirrorImageTriggered) return
 
-                setNextActionToHealthAttack()
+                continueAttackWithHealthRoll()
             }
 
             is DefensiveAbility.Dodge,
             is DefensiveAbility.HolyShield,
-            is DefensiveAbility.None -> setNextActionToHealthAttack()
+            is DefensiveAbility.None -> continueAttackWithHealthRoll()
         }
-    }
-
-    private fun CombatMutator.setNextActionToHealthAttack() {
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.NormalAttack(
-                    roll =
-                        NormalAttackRoll.Health(
-                            attackerUserId = attackerUserId,
-                            defenderUserId = defenderUserId,
-                        ),
-                    activeUserIds = setOf(attackerUserId),
-                )
-        )
     }
 
     /**

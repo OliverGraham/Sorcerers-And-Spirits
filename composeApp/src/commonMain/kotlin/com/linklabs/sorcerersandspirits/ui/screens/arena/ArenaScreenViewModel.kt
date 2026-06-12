@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
@@ -20,9 +19,9 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveCombatants
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -141,41 +140,17 @@ class ArenaScreenViewModel(
     private suspend fun AttackArguments.onAttack() {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
         val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
-        val normalAttackRoll = toDomain() ?: return
-
-        // TODO: Refactor this
-        val (attackerUserId, defenderUserId, originalTurnUserId) =
-            when (normalAttackRoll) {
-                is NormalAttackRoll.ArmorClass ->
-                    Triple(
-                        first = normalAttackRoll.attackerUserId,
-                        second = normalAttackRoll.defenderUserId,
-                        third = normalAttackRoll.originalTurnUserId,
-                    )
-
-                is NormalAttackRoll.Health ->
-                    Triple(
-                        first = normalAttackRoll.attackerUserId,
-                        second = normalAttackRoll.defenderUserId,
-                        third = normalAttackRoll.attackerUserId,
-                    )
-            }
+        val normalAttack = toDomain() ?: return
 
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 roundNumber = arenaState.roundNumber,
-                originalTurnUserId = originalTurnUserId,
                 doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
             )
 
-        performCombatActionUseCase(
-            arguments = combatActionArguments,
-            currentAction = CurrentCombatAction.NormalAttack(roll = normalAttackRoll),
-        )
+        performCombatActionUseCase(arguments = combatActionArguments, currentAction = normalAttack)
     }
 
     fun onUseAbility(useAbilityArguments: UseAbilityArguments) {
@@ -197,28 +172,38 @@ class ArenaScreenViewModel(
                 abilityActionState
             }
 
-        val (attackerUserId, defenderUserId) =
-            resolvedAbilityActionState.resolveCombatants(
-                userPlayerId = userPlayerId,
-                targetedOpponentUserId = targetedOpponentUserId,
-            )
-
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 roundNumber = arenaState.roundNumber,
-                originalTurnUserId = attackerUserId,
                 doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
             )
 
-        performCombatActionUseCase(
-            arguments = combatActionArguments,
-            currentAction =
-                CurrentCombatAction.AbilityRoll(purpose = resolvedAbilityActionState.toDomain()),
-        )
+        val currentAction =
+            when (val actionState = arenaState.combatActionState) {
+                // Responding to an ability roll in progress: the combatant ids come from the
+                // ongoing action
+                is CombatActionState.AbilityRoll ->
+                    CurrentCombatAction.AbilityRoll(
+                        purpose = resolvedAbilityActionState.toDomain(),
+                        attackerUserId = actionState.attackerUserId,
+                        defenderUserId = actionState.defenderUserId,
+                        originalTurnUserId = actionState.originalTurnUserId,
+                    )
+
+                // Activated ability used on the user's own turn against their selected target
+                // (or themselves when no target is required)
+                else ->
+                    CurrentCombatAction.AbilityRoll(
+                        purpose = resolvedAbilityActionState.toDomain(),
+                        attackerUserId = userPlayerId,
+                        defenderUserId = targetedOpponentUserId.ifEmpty { userPlayerId },
+                        originalTurnUserId = userPlayerId,
+                    )
+            }
+
+        performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
     }
 
     fun onRollDice(rollDiceArguments: RollDiceArguments) {}

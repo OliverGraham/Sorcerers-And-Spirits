@@ -17,21 +17,23 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 
 internal class PerformCombatAction(
-    arguments: CombatActionArguments,
+    private val arguments: CombatActionArguments,
     private val diceRoller: DiceRoller,
 ) {
 
-    private val combatMutator =
-        CombatMutator(
-            updatedPlayerMap = arguments.playerMap.toMutableMap(),
-            attackerUserId = arguments.attackerUserId,
-            defenderUserId = arguments.defenderUserId,
-            roundNumber = arguments.roundNumber,
-            originalTurnUserId = arguments.originalTurnUserId,
-            diceRoller = diceRoller,
-        )
+    private lateinit var combatMutator: CombatMutator
 
     operator fun invoke(currentAction: CurrentCombatAction): ActionOutcome {
+        combatMutator =
+            CombatMutator(
+                updatedPlayerMap = arguments.playerMap.toMutableMap(),
+                attackerUserId = currentAction.attackerUserId,
+                defenderUserId = currentAction.defenderUserId,
+                roundNumber = arguments.roundNumber,
+                originalTurnUserId = currentAction.originalTurnUserId,
+                diceRoller = diceRoller,
+            )
+
         resolveAction(action = currentAction)
         return combatMutator.getOutcome()
     }

@@ -3,8 +3,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.MirrorImageDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -43,20 +41,13 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         val purpose =
             AbilityAction.Passive.MirrorImage(
-                attackerUserId = attackerUserId,
                 firstDie = MirrorImageDie(originalRoll = firstDie),
                 secondDie = MirrorImageDie(originalRoll = secondDie),
                 attackType = attackType,
                 mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
             )
 
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    activeUserIds = setOf(defenderUserId),
-                )
-        )
+        setNextAbilityRoll(purpose = purpose, activeUserIds = setOf(element = defenderUserId))
     }
 
     private fun CombatMutator.handleReroll(mirrorImage: AbilityAction.Passive.MirrorImage) {
@@ -92,18 +83,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
     // TODO MirrorImage - messages
     private fun CombatMutator.handleArmorClassAttack(totalRoll: Int) {
         if (totalRoll >= defender.armorClass) {
-            val nextRoll =
-                NormalAttackRoll.Health(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
-                )
-            setNextCombatAction(
-                nextAction =
-                    NextCombatAction.NormalAttack(
-                        roll = nextRoll,
-                        activeUserIds = setOf(attackerUserId),
-                    )
-            )
+            continueAttackWithHealthRoll()
         } else {
             resolveTurnEnd()
         }

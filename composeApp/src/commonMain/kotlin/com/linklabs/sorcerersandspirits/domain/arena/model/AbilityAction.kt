@@ -18,27 +18,28 @@ sealed interface AbilityAction {
     sealed interface Passive : AbilityAction {
 
         sealed interface LuckyCoin : Passive {
-            data class Flip(val attackerUserId: String, val attackerRollTotal: Int) : LuckyCoin
+            val attackerRollTotal: Int
 
-            data class HighRoller(val attackerUserId: String, val attackerRollTotal: Int) :
-                LuckyCoin
+            data class Flip(override val attackerRollTotal: Int) : LuckyCoin
+
+            data class HighRoller(override val attackerRollTotal: Int) : LuckyCoin
         }
 
-        data class Riposte(val attackerUserId: String, val attackerRollTotal: Int) : Passive
+        data class Riposte(val attackerRollTotal: Int) : Passive
 
         sealed interface Persuade : Passive {
-            data class StrumLute(val attackerUserId: String) : Persuade
+
+            data object StrumLute : Persuade
 
             // TODO Persuade: In UI - need to pass in selectedCharmTargetUserId so the
             //  defenderUserId is Bard's selected target
             data class Charm(
-                val attackerUserId: String,
                 val targetableUserIds: Set<String>,
                 val selectedCharmTargetUserId: String? = null,
             ) : Persuade
         }
 
-        data class Encore(val defenderUserId: String) : Passive
+        data object Encore : Passive
 
         data class Teleport(val attackerRoll: TeleportDie, val defenderRoll: TeleportDie) :
             Passive {
@@ -47,7 +48,6 @@ sealed interface AbilityAction {
         }
 
         data class MirrorImage(
-            val attackerUserId: String,
             val firstDie: MirrorImageDie,
             val secondDie: MirrorImageDie,
             val attackType: NormalAttackType,
@@ -62,9 +62,9 @@ sealed interface AbilityAction {
         }
 
         sealed interface HolyShield : Passive {
-            data class Prayer(val attackerUserId: String) : HolyShield
+            data object Prayer : HolyShield
 
-            data class Wrath(val attackerUserId: String) : HolyShield
+            data object Wrath : HolyShield
         }
     }
 }

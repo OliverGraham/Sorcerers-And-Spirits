@@ -2,8 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 internal class LuckyCoinHandler(
@@ -19,18 +17,9 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.triggerLuckyCoin() {
         addMessage(message = ArenaMessage.LuckyCoin.Trigger)
 
-        val purpose =
-            AbilityAction.Passive.LuckyCoin.Flip(
-                attackerUserId = attackerUserId,
-                attackerRollTotal = attackerRollTotal,
-            )
-
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    activeUserIds = setOf(defenderUserId),
-                )
+        setNextAbilityRoll(
+            purpose = AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = attackerRollTotal),
+            activeUserIds = setOf(element = defenderUserId),
         )
     }
 
@@ -49,18 +38,10 @@ internal class LuckyCoinHandler(
             message = ArenaMessage.LuckyCoin.HighRollerTrigger(targetUserId = attackerUserId)
         )
 
-        val purpose =
-            AbilityAction.Passive.LuckyCoin.HighRoller(
-                attackerUserId = attackerUserId,
-                attackerRollTotal = attackerRollTotal,
-            )
-
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    activeUserIds = setOf(defenderUserId),
-                )
+        setNextAbilityRoll(
+            purpose =
+                AbilityAction.Passive.LuckyCoin.HighRoller(attackerRollTotal = attackerRollTotal),
+            activeUserIds = setOf(element = defenderUserId),
         )
     }
 
@@ -117,18 +98,6 @@ internal class LuckyCoinHandler(
                 ArenaMessage.LuckyCoin.Flip(singleDie = luckyCoinArmorBonus, didStopAttack = false)
         )
 
-        val healthRoll =
-            NormalAttackRoll.Health(
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-            )
-
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.NormalAttack(
-                    roll = healthRoll,
-                    activeUserIds = setOf(attackerUserId),
-                )
-        )
+        continueAttackWithHealthRoll()
     }
 }

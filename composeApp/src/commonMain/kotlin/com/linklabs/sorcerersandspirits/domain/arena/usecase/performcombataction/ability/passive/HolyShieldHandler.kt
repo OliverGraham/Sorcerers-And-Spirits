@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -29,13 +28,10 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             playerClass.copy(defensiveAbility = holyShield.copy(usedThisMatch = true))
         }
 
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose =
-                        AbilityAction.Passive.HolyShield.Prayer(attackerUserId = attackerUserId),
-                    activeUserIds = setOf(holyShieldUserId),
-                )
+        setNextAbilityRoll(
+            purpose = AbilityAction.Passive.HolyShield.Prayer,
+            activeUserIds = setOf(element = holyShieldUserId),
+            defenderUserId = holyShieldUserId,
         )
     }
 
@@ -62,13 +58,9 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.prayerSuccess() {
         updateDefenderClass { defender -> defender.copy(hitPoints = 1) }
 
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose =
-                        AbilityAction.Passive.HolyShield.Wrath(attackerUserId = attackerUserId),
-                    activeUserIds = setOf(defenderUserId),
-                )
+        setNextAbilityRoll(
+            purpose = AbilityAction.Passive.HolyShield.Wrath,
+            activeUserIds = setOf(element = defenderUserId),
         )
     }
 

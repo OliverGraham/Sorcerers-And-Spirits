@@ -6,9 +6,19 @@ sealed interface NextCombatAction {
 
     data class Idle(override val activeUserIds: Set<String>) : NextCombatAction
 
-    data class NormalAttack(val roll: NormalAttackRoll, override val activeUserIds: Set<String>) :
-        NextCombatAction
+    data class NormalAttack(
+        val roll: NormalAttackRoll,
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val originalTurnUserId: String,
+        override val activeUserIds: Set<String>,
+    ) : NextCombatAction
 
-    data class AbilityRoll(val purpose: AbilityAction, override val activeUserIds: Set<String>) :
-        NextCombatAction
+    data class AbilityRoll(
+        val purpose: AbilityAction,
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val originalTurnUserId: String,
+        override val activeUserIds: Set<String>,
+    ) : NextCombatAction
 }

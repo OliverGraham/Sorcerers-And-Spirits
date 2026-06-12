@@ -3,8 +3,6 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 // TODO Teleport Messages
@@ -24,13 +22,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 defenderRoll = TeleportDie(userId = defenderUserId),
             )
 
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    activeUserIds = setOf(attackerUserId, defenderUserId),
-                )
-        )
+        setNextAbilityRoll(purpose = purpose, activeUserIds = setOf(attackerUserId, defenderUserId))
     }
 
     private fun CombatMutator.handleTeleport(teleport: AbilityAction.Passive.Teleport) {
@@ -52,12 +44,9 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 handleTeleportFailure()
             }
         } else {
-            setNextCombatAction(
-                nextAction =
-                    NextCombatAction.AbilityRoll(
-                        purpose = updatedTeleport,
-                        activeUserIds = setOf(attackerUserId, defenderUserId),
-                    )
+            setNextAbilityRoll(
+                purpose = updatedTeleport,
+                activeUserIds = setOf(attackerUserId, defenderUserId),
             )
         }
     }
@@ -95,16 +84,6 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.handleTeleportFailure() {
         addMessage(message = ArenaMessage.Teleport.Result(didDefenderEscape = false))
 
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.NormalAttack(
-                    roll =
-                        NormalAttackRoll.Health(
-                            attackerUserId = attackerUserId,
-                            defenderUserId = defenderUserId,
-                        ),
-                    activeUserIds = setOf(attackerUserId),
-                )
-        )
+        continueAttackWithHealthRoll()
     }
 }

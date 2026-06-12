@@ -237,11 +237,10 @@ class ArenaScreenViewModelTest {
                 createViewModelWithCombatState(
                     nextCombatAction =
                         NextCombatAction.NormalAttack(
-                            roll =
-                                NormalAttackRoll.Health(
-                                    attackerUserId = USER_ID,
-                                    defenderUserId = OPPONENT_ID,
-                                ),
+                            roll = NormalAttackRoll.Health,
+                            attackerUserId = USER_ID,
+                            defenderUserId = OPPONENT_ID,
+                            originalTurnUserId = USER_ID,
                             activeUserIds = setOf(USER_ID),
                         ),
                     userClass = CharacterClass.getDuelist(),
@@ -275,11 +274,10 @@ class ArenaScreenViewModelTest {
                 createViewModelWithCombatState(
                     nextCombatAction =
                         NextCombatAction.AbilityRoll(
-                            purpose =
-                                AbilityAction.Passive.Riposte(
-                                    attackerUserId = USER_ID,
-                                    attackerRollTotal = 7,
-                                ),
+                            purpose = AbilityAction.Passive.Riposte(attackerRollTotal = 7),
+                            attackerUserId = USER_ID,
+                            defenderUserId = OPPONENT_ID,
+                            originalTurnUserId = USER_ID,
                             activeUserIds = setOf(OPPONENT_ID),
                         ),
                     userClass = CharacterClass.getGambler(),
@@ -312,15 +310,13 @@ class ArenaScreenViewModelTest {
 
             val currentAction = currentCombatActionSlot.captured
             assertIs<CurrentCombatAction.NormalAttack>(value = currentAction)
-            val roll = assertIs<NormalAttackRoll.ArmorClass>(value = currentAction.roll)
-            assertEquals(expected = USER_ID, actual = roll.attackerUserId)
-            assertEquals(expected = OPPONENT_ID, actual = roll.defenderUserId)
+            assertIs<NormalAttackRoll.ArmorClass>(value = currentAction.roll)
+            assertEquals(expected = USER_ID, actual = currentAction.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = currentAction.defenderUserId)
+            assertEquals(expected = USER_ID, actual = currentAction.originalTurnUserId)
 
             val combatArguments = combatActionArgumentsSlot.captured
             assertEquals(expected = arguments.arenaId, actual = combatArguments.arenaId)
-            assertEquals(expected = USER_ID, actual = combatArguments.attackerUserId)
-            assertEquals(expected = OPPONENT_ID, actual = combatArguments.defenderUserId)
-            assertEquals(expected = USER_ID, actual = combatArguments.originalTurnUserId)
             assertEquals(expected = 1, actual = combatArguments.roundNumber)
             assertEquals(
                 expected = CharacterClassType.Duelist,
@@ -357,10 +353,9 @@ class ArenaScreenViewModelTest {
             val allIn = assertIs<AbilityAction.Activated.AllIn>(value = abilityRoll.purpose)
             assertFalse(actual = allIn.allInAbility.usedThisTurn)
 
-            val combatArguments = combatActionArgumentsSlot.captured
-            assertEquals(expected = USER_ID, actual = combatArguments.attackerUserId)
-            assertEquals(expected = USER_ID, actual = combatArguments.defenderUserId)
-            assertEquals(expected = USER_ID, actual = combatArguments.originalTurnUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.originalTurnUserId)
         }
 
     @Test
@@ -391,9 +386,8 @@ class ArenaScreenViewModelTest {
                 assertIs<CurrentCombatAction.AbilityRoll>(value = currentCombatActionSlot.captured)
             assertIs<AbilityAction.Activated.PrepareAttack>(value = abilityRoll.purpose)
 
-            val combatArguments = combatActionArgumentsSlot.captured
-            assertEquals(expected = USER_ID, actual = combatArguments.attackerUserId)
-            assertEquals(expected = OPPONENT_ID, actual = combatArguments.defenderUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.defenderUserId)
         }
 
     @Test
@@ -429,9 +423,8 @@ class ArenaScreenViewModelTest {
             assertEquals(expected = USER_ID, actual = teleport.defenderRoll.userId)
             assertNull(actual = teleport.defenderRoll.roll)
 
-            val combatArguments = combatActionArgumentsSlot.captured
-            assertEquals(expected = OPPONENT_ID, actual = combatArguments.attackerUserId)
-            assertEquals(expected = USER_ID, actual = combatArguments.defenderUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
         }
 
     // ---------- Forfeit dialog ----------
@@ -554,6 +547,9 @@ class ArenaScreenViewModelTest {
                                 roll = defenderRoll,
                             ),
                     ),
+                attackerUserId = OPPONENT_ID,
+                defenderUserId = USER_ID,
+                originalTurnUserId = OPPONENT_ID,
                 activeUserIds = setOf(USER_ID),
             )
     }

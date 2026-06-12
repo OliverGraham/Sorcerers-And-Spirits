@@ -2,10 +2,8 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackRoll
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.NormalAttackRollHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
 internal class PersuadeHandler(private val combatMutator: CombatMutator) {
@@ -19,13 +17,9 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.triggerPersuade() {
         addMessage(message = ArenaMessage.Persuade.Trigger)
 
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose =
-                        AbilityAction.Passive.Persuade.StrumLute(attackerUserId = attackerUserId),
-                    activeUserIds = setOf(defenderUserId),
-                )
+        setNextAbilityRoll(
+            purpose = AbilityAction.Passive.Persuade.StrumLute,
+            activeUserIds = setOf(element = defenderUserId),
         )
     }
 
@@ -43,19 +37,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
             message = ArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = false)
         )
 
-        val healthAttackRoll =
-            NormalAttackRoll.Health(
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-            )
-
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.NormalAttack(
-                    roll = healthAttackRoll,
-                    activeUserIds = setOf(attackerUserId),
-                )
-        )
+        continueAttackWithHealthRoll()
     }
 
     private fun CombatMutator.handleStrumLuteSuccess(persuadeDie: Int) {
@@ -83,18 +65,9 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         //  fight someone else!"
         addMessage(message = ArenaMessage.Persuade.CharmActivation)
 
-        val purpose =
-            AbilityAction.Passive.Persuade.Charm(
-                attackerUserId = attackerUserId,
-                targetableUserIds = targetableUserIds,
-            )
-
-        setNextCombatAction(
-            nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    activeUserIds = setOf(defenderUserId),
-                )
+        setNextAbilityRoll(
+            purpose = AbilityAction.Passive.Persuade.Charm(targetableUserIds = targetableUserIds),
+            activeUserIds = setOf(element = defenderUserId),
         )
     }
 
@@ -110,14 +83,15 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
                 )
         )
 
-        val armorClassAttackRoll =
-            NormalAttackRoll.ArmorClass(
-                attackerUserId = attackerUserId,
-                defenderUserId = selectedCharmTargetUserId,
-            )
-        NormalAttackRollHandler.handleNormalRoll(
-            currentAction = CurrentCombatAction.NormalAttack(roll = armorClassAttackRoll),
-            combatMutator = combatMutator,
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll = NormalAttackRoll.ArmorClass,
+                    attackerUserId = attackerUserId,
+                    defenderUserId = selectedCharmTargetUserId,
+                    originalTurnUserId = originalTurnUserId,
+                    activeUserIds = setOf(element = attackerUserId),
+                )
         )
     }
 

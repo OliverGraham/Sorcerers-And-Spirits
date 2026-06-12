@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
@@ -37,6 +38,42 @@ internal class CombatMutator(
         nextAction.resetMirrorImageIfApplicable()
 
         nextCombatAction = nextAction
+    }
+
+    /** The current attack continues: the attacker passed armor and now rolls against Health. */
+    fun continueAttackWithHealthRoll() {
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.NormalAttack(
+                    roll = NormalAttackRoll.Health,
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
+                    originalTurnUserId = originalTurnUserId,
+                    activeUserIds = setOf(element = attackerUserId),
+                )
+        )
+    }
+
+    /**
+     * Sets the next action to an ability roll, carrying this action's combatant ids forward.
+     * [defenderUserId] can be overridden when the ability owner is not the current defender (e.g.
+     * Holy Shield triggered by Spell Potency splash damage).
+     */
+    fun setNextAbilityRoll(
+        purpose: AbilityAction,
+        activeUserIds: Set<UserId>,
+        defenderUserId: UserId = this.defenderUserId,
+    ) {
+        setNextCombatAction(
+            nextAction =
+                NextCombatAction.AbilityRoll(
+                    purpose = purpose,
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
+                    originalTurnUserId = originalTurnUserId,
+                    activeUserIds = activeUserIds,
+                )
+        )
     }
 
     fun getOutcome() =

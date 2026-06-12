@@ -1,11 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
 sealed interface NormalAttackRoll {
-    data class ArmorClass(
-        val attackerUserId: String,
-        val defenderUserId: String,
-        val originalTurnUserId: String = attackerUserId,
-    ) : NormalAttackRoll
+    data object ArmorClass : NormalAttackRoll
 
-    data class Health(val attackerUserId: String, val defenderUserId: String) : NormalAttackRoll
+    data object Health : NormalAttackRoll
 }

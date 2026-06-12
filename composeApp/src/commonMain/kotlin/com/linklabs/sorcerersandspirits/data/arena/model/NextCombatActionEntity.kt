@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.Serializable
 
+/** Persisted and shared game state for the next combat action. */
 @Serializable
 sealed interface NextCombatActionEntity {
     val activeUserIds: Set<String>
@@ -18,28 +19,27 @@ sealed interface NextCombatActionEntity {
     @Serializable
     data class NormalAttackEntity(
         val roll: NormalAttackRollEntity,
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatActionEntity
 
     @Serializable
     data class AbilityRollEntity(
         val purpose: AbilityActionEntity,
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatActionEntity
 }
 
 @Serializable
 sealed interface NormalAttackRollEntity {
-    @Serializable
-    data class ArmorClassEntity(
-        val attackerUserId: String,
-        val defenderUserId: String,
-        val originalTurnUserId: String,
-    ) : NormalAttackRollEntity
+    @Serializable data object ArmorClassEntity : NormalAttackRollEntity
 
-    @Serializable
-    data class HealthEntity(val attackerUserId: String, val defenderUserId: String) :
-        NormalAttackRollEntity
+    @Serializable data object HealthEntity : NormalAttackRollEntity
 }
 
 @Serializable
@@ -67,32 +67,29 @@ sealed interface AbilityActionEntity {
 
         @Serializable
         sealed interface LuckyCoinEntity : PassiveEntity {
-            @Serializable
-            data class FlipEntity(val attackerUserId: String, val attackerRollTotal: Int) :
-                LuckyCoinEntity
+            val attackerRollTotal: Int
 
             @Serializable
-            data class HighRollerEntity(val attackerUserId: String, val attackerRollTotal: Int) :
-                LuckyCoinEntity
+            data class FlipEntity(override val attackerRollTotal: Int) : LuckyCoinEntity
+
+            @Serializable
+            data class HighRollerEntity(override val attackerRollTotal: Int) : LuckyCoinEntity
         }
 
-        @Serializable
-        data class RiposteEntity(val attackerUserId: String, val attackerRollTotal: Int) :
-            PassiveEntity
+        @Serializable data class RiposteEntity(val attackerRollTotal: Int) : PassiveEntity
 
         @Serializable
         sealed interface PersuadeEntity : PassiveEntity {
-            @Serializable data class StrumLuteEntity(val attackerUserId: String) : PersuadeEntity
+            @Serializable data object StrumLuteEntity : PersuadeEntity
 
             @Serializable
             data class CharmEntity(
-                val attackerUserId: String,
                 val targetableUserIds: Set<String>,
                 val selectedCharmTargetUserId: String? = null,
             ) : PersuadeEntity
         }
 
-        @Serializable data class EncoreEntity(val defenderUserId: String) : PassiveEntity
+        @Serializable data object EncoreEntity : PassiveEntity
 
         @Serializable
         data class TeleportEntity(
@@ -104,7 +101,6 @@ sealed interface AbilityActionEntity {
 
         @Serializable
         data class MirrorImageEntity(
-            val attackerUserId: String,
             val firstDie: MirrorImageDieEntity,
             val secondDie: MirrorImageDieEntity,
             val attackType: NormalAttackTypeEntity,
@@ -116,9 +112,9 @@ sealed interface AbilityActionEntity {
 
         @Serializable
         sealed interface HolyShieldEntity : PassiveEntity {
-            @Serializable data class PrayerEntity(val attackerUserId: String) : HolyShieldEntity
+            @Serializable data object PrayerEntity : HolyShieldEntity
 
-            @Serializable data class WrathEntity(val attackerUserId: String) : HolyShieldEntity
+            @Serializable data object WrathEntity : HolyShieldEntity
         }
     }
 }
@@ -143,29 +139,19 @@ internal fun NextCombatAction.toEntity(): NextCombatActionEntity =
         is NextCombatAction.NormalAttack ->
             NextCombatActionEntity.NormalAttackEntity(
                 roll = roll.toEntity(),
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
 
         is NextCombatAction.AbilityRoll ->
             NextCombatActionEntity.AbilityRollEntity(
                 purpose = purpose.toEntity(),
-                activeUserIds = activeUserIds,
-            )
-    }
-
-internal fun NormalAttackRoll.toEntity(): NormalAttackRollEntity =
-    when (this) {
-        is NormalAttackRoll.ArmorClass ->
-            NormalAttackRollEntity.ArmorClassEntity(
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 originalTurnUserId = originalTurnUserId,
-            )
-
-        is NormalAttackRoll.Health ->
-            NormalAttackRollEntity.HealthEntity(
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
+                activeUserIds = activeUserIds,
             )
     }
 
@@ -174,29 +160,34 @@ internal fun NextCombatActionEntity.toDomain(): NextCombatAction =
         is NextCombatActionEntity.IdleEntity -> NextCombatAction.Idle(activeUserIds = activeUserIds)
 
         is NextCombatActionEntity.NormalAttackEntity ->
-            NextCombatAction.NormalAttack(roll = roll.toDomain(), activeUserIds = activeUserIds)
+            NextCombatAction.NormalAttack(
+                roll = roll.toDomain(),
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                originalTurnUserId = originalTurnUserId,
+                activeUserIds = activeUserIds,
+            )
 
         is NextCombatActionEntity.AbilityRollEntity ->
             NextCombatAction.AbilityRoll(
                 purpose = purpose.toDomain(),
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
     }
 
+internal fun NormalAttackRoll.toEntity(): NormalAttackRollEntity =
+    when (this) {
+        is NormalAttackRoll.ArmorClass -> NormalAttackRollEntity.ArmorClassEntity
+        is NormalAttackRoll.Health -> NormalAttackRollEntity.HealthEntity
+    }
+
 internal fun NormalAttackRollEntity.toDomain(): NormalAttackRoll =
     when (this) {
-        is NormalAttackRollEntity.ArmorClassEntity ->
-            NormalAttackRoll.ArmorClass(
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
-            )
-
-        is NormalAttackRollEntity.HealthEntity ->
-            NormalAttackRoll.Health(
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-            )
+        is NormalAttackRollEntity.ArmorClassEntity -> NormalAttackRoll.ArmorClass
+        is NormalAttackRollEntity.HealthEntity -> NormalAttackRoll.Health
     }
 
 internal fun AbilityAction.toEntity(): AbilityActionEntity =
@@ -230,40 +221,33 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                     when (this) {
                         is AbilityAction.Passive.LuckyCoin.Flip ->
                             AbilityActionEntity.PassiveEntity.LuckyCoinEntity.FlipEntity(
-                                attackerUserId = attackerUserId,
-                                attackerRollTotal = attackerRollTotal,
+                                attackerRollTotal = attackerRollTotal
                             )
 
                         is AbilityAction.Passive.LuckyCoin.HighRoller ->
                             AbilityActionEntity.PassiveEntity.LuckyCoinEntity.HighRollerEntity(
-                                attackerUserId = attackerUserId,
-                                attackerRollTotal = attackerRollTotal,
+                                attackerRollTotal = attackerRollTotal
                             )
                     }
 
                 is AbilityAction.Passive.Riposte ->
                     AbilityActionEntity.PassiveEntity.RiposteEntity(
-                        attackerUserId = attackerUserId,
-                        attackerRollTotal = attackerRollTotal,
+                        attackerRollTotal = attackerRollTotal
                     )
 
                 is AbilityAction.Passive.Persuade ->
                     when (this) {
-                        is AbilityAction.Passive.Persuade.StrumLute ->
-                            AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity(
-                                attackerUserId = attackerUserId
-                            )
+                        AbilityAction.Passive.Persuade.StrumLute ->
+                            AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity
 
                         is AbilityAction.Passive.Persuade.Charm ->
                             AbilityActionEntity.PassiveEntity.PersuadeEntity.CharmEntity(
-                                attackerUserId = attackerUserId,
                                 targetableUserIds = targetableUserIds,
                                 selectedCharmTargetUserId = selectedCharmTargetUserId,
                             )
                     }
 
-                is AbilityAction.Passive.Encore ->
-                    AbilityActionEntity.PassiveEntity.EncoreEntity(defenderUserId = defenderUserId)
+                AbilityAction.Passive.Encore -> AbilityActionEntity.PassiveEntity.EncoreEntity
 
                 is AbilityAction.Passive.Teleport ->
                     AbilityActionEntity.PassiveEntity.TeleportEntity(
@@ -281,7 +265,6 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
 
                 is AbilityAction.Passive.MirrorImage ->
                     AbilityActionEntity.PassiveEntity.MirrorImageEntity(
-                        attackerUserId = attackerUserId,
                         firstDie =
                             AbilityActionEntity.PassiveEntity.MirrorImageDieEntity(
                                 originalRoll = firstDie.originalRoll,
@@ -294,11 +277,8 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                             ),
                         attackType =
                             when (attackType) {
-                                com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-                                    .ArmorClass -> NormalAttackTypeEntity.ArmorClass
-
-                                com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-                                    .Health -> NormalAttackTypeEntity.Health
+                                NormalAttackType.ArmorClass -> NormalAttackTypeEntity.ArmorClass
+                                NormalAttackType.Health -> NormalAttackTypeEntity.Health
                             },
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toEntity()
@@ -307,15 +287,11 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
 
                 is AbilityAction.Passive.HolyShield ->
                     when (this) {
-                        is AbilityAction.Passive.HolyShield.Prayer ->
-                            AbilityActionEntity.PassiveEntity.HolyShieldEntity.PrayerEntity(
-                                attackerUserId = attackerUserId
-                            )
+                        AbilityAction.Passive.HolyShield.Prayer ->
+                            AbilityActionEntity.PassiveEntity.HolyShieldEntity.PrayerEntity
 
-                        is AbilityAction.Passive.HolyShield.Wrath ->
-                            AbilityActionEntity.PassiveEntity.HolyShieldEntity.WrathEntity(
-                                attackerUserId = attackerUserId
-                            )
+                        AbilityAction.Passive.HolyShield.Wrath ->
+                            AbilityActionEntity.PassiveEntity.HolyShieldEntity.WrathEntity
                     }
             }
     }
@@ -351,40 +327,31 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                     when (this) {
                         is AbilityActionEntity.PassiveEntity.LuckyCoinEntity.FlipEntity ->
                             AbilityAction.Passive.LuckyCoin.Flip(
-                                attackerUserId = attackerUserId,
-                                attackerRollTotal = attackerRollTotal,
+                                attackerRollTotal = attackerRollTotal
                             )
 
                         is AbilityActionEntity.PassiveEntity.LuckyCoinEntity.HighRollerEntity ->
                             AbilityAction.Passive.LuckyCoin.HighRoller(
-                                attackerUserId = attackerUserId,
-                                attackerRollTotal = attackerRollTotal,
+                                attackerRollTotal = attackerRollTotal
                             )
                     }
 
                 is AbilityActionEntity.PassiveEntity.RiposteEntity ->
-                    AbilityAction.Passive.Riposte(
-                        attackerUserId = attackerUserId,
-                        attackerRollTotal = attackerRollTotal,
-                    )
+                    AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal)
 
                 is AbilityActionEntity.PassiveEntity.PersuadeEntity ->
                     when (this) {
-                        is AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity ->
-                            AbilityAction.Passive.Persuade.StrumLute(
-                                attackerUserId = attackerUserId
-                            )
+                        AbilityActionEntity.PassiveEntity.PersuadeEntity.StrumLuteEntity ->
+                            AbilityAction.Passive.Persuade.StrumLute
 
                         is AbilityActionEntity.PassiveEntity.PersuadeEntity.CharmEntity ->
                             AbilityAction.Passive.Persuade.Charm(
-                                attackerUserId = attackerUserId,
                                 targetableUserIds = targetableUserIds,
                                 selectedCharmTargetUserId = selectedCharmTargetUserId,
                             )
                     }
 
-                is AbilityActionEntity.PassiveEntity.EncoreEntity ->
-                    AbilityAction.Passive.Encore(defenderUserId = defenderUserId)
+                AbilityActionEntity.PassiveEntity.EncoreEntity -> AbilityAction.Passive.Encore
 
                 is AbilityActionEntity.PassiveEntity.TeleportEntity ->
                     AbilityAction.Passive.Teleport(
@@ -402,7 +369,6 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
 
                 is AbilityActionEntity.PassiveEntity.MirrorImageEntity ->
                     AbilityAction.Passive.MirrorImage(
-                        attackerUserId = attackerUserId,
                         firstDie =
                             AbilityAction.Passive.MirrorImage.MirrorImageDie(
                                 originalRoll = firstDie.originalRoll,
@@ -424,11 +390,11 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
 
                 is AbilityActionEntity.PassiveEntity.HolyShieldEntity ->
                     when (this) {
-                        is AbilityActionEntity.PassiveEntity.HolyShieldEntity.PrayerEntity ->
-                            AbilityAction.Passive.HolyShield.Prayer(attackerUserId = attackerUserId)
+                        AbilityActionEntity.PassiveEntity.HolyShieldEntity.PrayerEntity ->
+                            AbilityAction.Passive.HolyShield.Prayer
 
-                        is AbilityActionEntity.PassiveEntity.HolyShieldEntity.WrathEntity ->
-                            AbilityAction.Passive.HolyShield.Wrath(attackerUserId = attackerUserId)
+                        AbilityActionEntity.PassiveEntity.HolyShieldEntity.WrathEntity ->
+                            AbilityAction.Passive.HolyShield.Wrath
                     }
             }
     }

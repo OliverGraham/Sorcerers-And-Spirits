@@ -58,7 +58,7 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
             }
 
         is CombatActionState.NormalAttack ->
-            if (actionState.roll.attackerUserId == userPlayerId) {
+            if (actionState.attackerUserId == userPlayerId) {
                 listOf(element = ArenaCombatControl.NormalAttack(requiresTarget = false))
             } else {
                 emptyList()
@@ -80,13 +80,6 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
                 emptyList()
             }
     }
-
-private val NormalAttackRollState.attackerUserId: String
-    get() =
-        when (this) {
-            is NormalAttackRollState.ArmorClass -> attackerUserId
-            is NormalAttackRollState.Health -> attackerUserId
-        }
 
 /**
  * The user is already in [CombatActionState.activeUserIds] when this is checked. Teleport is the

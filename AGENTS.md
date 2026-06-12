@@ -1,3 +1,5 @@
+Reference the Android Skills found here:  ~/.claude/CLAUDE.md
+
 We are building a Kotlin Multiplatform Compose dice-combat game called Sorcerers and Spirits.
 
 The app has Data, Domain, and UI layers.

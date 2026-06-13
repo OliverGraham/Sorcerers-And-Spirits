@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -56,23 +58,28 @@ private fun CharacterClassCards(
     onClassSelected: (CharacterClassState) -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
-    HorizontalPager(
-        state = pagerState,
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 32.dp),
-        key = { index ->
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f), // subtle background
+    ) {
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(horizontal = 32.dp),
+            key = { index ->
+                val characterClass = characterClasses[index % count]
+                "${characterClass.className}-$index"
+            },
+        ) { index ->
             val characterClass = characterClasses[index % count]
-            "${characterClass.className}-$index"
-        },
-    ) { index ->
-        val characterClass = characterClasses[index % count]
-        CharacterClassCard(
-            characterClass = characterClass,
-            isSelected = characterClass == selectedClass,
-            enabled = characterClass !in unavailableClasses,
-            selectedBy = classSelections[characterClass],
-            onClick = { onClassSelected(characterClass) },
-        )
+            CharacterClassCard(
+                characterClass = characterClass,
+                isSelected = characterClass == selectedClass,
+                enabled = characterClass !in unavailableClasses,
+                selectedBy = classSelections[characterClass],
+                onClick = { onClassSelected(characterClass) },
+            )
+        }
     }
 }
 

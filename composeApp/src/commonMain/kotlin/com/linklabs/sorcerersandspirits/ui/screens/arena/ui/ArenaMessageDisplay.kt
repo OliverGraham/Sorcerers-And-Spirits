@@ -29,7 +29,6 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_i
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_held
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_damage
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_knockout
-import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_reroll
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_armor_broke
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_armor_held
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_damage
@@ -270,13 +269,6 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         attackerName,
                     )
             }
-
-        is ArenaMessageState.MirrorImage.Reroll ->
-            stringResource(
-                resource = Res.string.arena_message_mirror_image_reroll,
-                firstDie,
-                secondDie,
-            )
 
         is ArenaMessageState.MirrorImage.TemptFate ->
             when (outcome) {

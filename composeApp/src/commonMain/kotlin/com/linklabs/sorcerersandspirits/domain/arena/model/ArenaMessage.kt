@@ -90,8 +90,6 @@ sealed interface ArenaMessage {
         data class Pass(val attackerUserId: String, val outcome: NormalRollMessageType) :
             MirrorImage
 
-        data class Reroll(val firstDie: Int, val secondDie: Int) : MirrorImage
-
         /**
          * The Illusionist rerolled a die ([rerolledMirrorImageDie]) against [attackerUserId]'s
          * attack; [outcome] is how the modified roll resolved.

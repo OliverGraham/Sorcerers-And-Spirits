@@ -91,7 +91,6 @@ class ArenaMessageEntityTest {
                     attackerUserId = "attacker",
                     outcome = NormalRollMessageType.ArmorClassMiss,
                 ),
-                ArenaMessage.MirrorImage.Reroll(firstDie = 3, secondDie = 4),
                 ArenaMessage.MirrorImage.TemptFate(
                     rerolledMirrorImageDie =
                         AbilityAction.Passive.MirrorImage.MirrorImageDie(

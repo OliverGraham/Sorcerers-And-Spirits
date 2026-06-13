@@ -191,11 +191,6 @@ sealed interface ArenaMessageEntity {
         ) : MirrorImage
 
         @Serializable
-        @SerialName(value = MIRROR_IMAGE_REROLL)
-        data class Reroll(override val id: String, val firstDie: Int, val secondDie: Int) :
-            MirrorImage
-
-        @Serializable
         @SerialName(value = MIRROR_IMAGE_TEMPT_FATE)
         data class TemptFate(
             override val id: String,
@@ -291,7 +286,6 @@ sealed interface ArenaMessageEntity {
         private const val MIRROR_IMAGE = "MirrorImage"
         private const val MIRROR_IMAGE_TRIGGER = "MirrorImageTrigger"
         private const val MIRROR_IMAGE_PASS = "MirrorImagePass"
-        private const val MIRROR_IMAGE_REROLL = "MirrorImageReroll"
         private const val MIRROR_IMAGE_TEMPT_FATE = "MirrorImageTemptFate"
         private const val SPELL_POTENCY = "SpellPotency"
         private const val HOLY_SHIELD = "HolyShield"
@@ -402,9 +396,6 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
 
             is ArenaMessageEntity.MirrorImage.Pass ->
                 ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
-
-            is ArenaMessageEntity.MirrorImage.Reroll ->
-                ArenaMessage.MirrorImage.Reroll(firstDie = firstDie, secondDie = secondDie)
 
             is ArenaMessageEntity.MirrorImage.TemptFate ->
                 ArenaMessage.MirrorImage.TemptFate(
@@ -581,13 +572,6 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 attackerUserId = attackerUserId,
                 outcome = outcome,
-            )
-
-        is ArenaMessage.MirrorImage.Reroll ->
-            ArenaMessageEntity.MirrorImage.Reroll(
-                id = id,
-                firstDie = firstDie,
-                secondDie = secondDie,
             )
 
         is ArenaMessage.MirrorImage.TemptFate ->

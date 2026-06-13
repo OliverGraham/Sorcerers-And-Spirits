@@ -61,7 +61,6 @@
     <string name="arena_message_impersonate">%1$s impersonates %2$s</string>
 
     <string name="arena_message_mirror_image_trigger">Mirror Image! Which one is real?</string>
-    <string name="arena_message_mirror_image_reroll">Mirror Image reroll: %1$s and %2$s</string>
     <string name="arena_message_mirror_image_pass_armor_broke">The Illusionist lets the roll stand, and %1$s breaks through the armor!</string>
     <string name="arena_message_mirror_image_pass_armor_held">The Illusionist lets the roll stand and turns aside %1$s\'s attack!</string>
     <string name="arena_message_mirror_image_pass_damage">The Illusionist lets the roll stand, and %1$s lands a blow!</string>

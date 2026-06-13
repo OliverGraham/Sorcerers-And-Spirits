@@ -144,10 +144,6 @@ sealed interface ArenaMessageState {
         ) : MirrorImage
 
         @Immutable
-        data class Reroll(override val id: String, val firstDie: Int, val secondDie: Int) :
-            MirrorImage
-
-        @Immutable
         data class TemptFate(
             override val id: String,
             val originalRoll: Int,
@@ -297,13 +293,6 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
                 id = id,
                 attackerName = displayNames.resolve(userId = attackerUserId),
                 outcome = outcome,
-            )
-
-        is ArenaMessage.MirrorImage.Reroll ->
-            ArenaMessageState.MirrorImage.Reroll(
-                id = id,
-                firstDie = firstDie,
-                secondDie = secondDie,
             )
 
         is ArenaMessage.MirrorImage.Trigger -> ArenaMessageState.MirrorImage.Trigger(id = id)

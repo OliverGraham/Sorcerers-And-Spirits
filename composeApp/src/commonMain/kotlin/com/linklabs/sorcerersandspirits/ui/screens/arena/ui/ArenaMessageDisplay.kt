@@ -1,14 +1,57 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.runtime.Composable
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_message_all_in
 import sorcerersandspirits.composeapp.generated.resources.arena_message_chose_character_class
+import sorcerersandspirits.composeapp.generated.resources.arena_message_dodge_armor_increased
+import sorcerersandspirits.composeapp.generated.resources.arena_message_dodge_armor_unchanged
+import sorcerersandspirits.composeapp.generated.resources.arena_message_encore_roll_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_encore_roll_success
+import sorcerersandspirits.composeapp.generated.resources.arena_message_encore_trigger
+import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_prayer_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_prayer_survived
+import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_trigger
+import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_wrath
+import sorcerersandspirits.composeapp.generated.resources.arena_message_impersonate
 import sorcerersandspirits.composeapp.generated.resources.arena_message_joined_arena
+import sorcerersandspirits.composeapp.generated.resources.arena_message_killing_momentum
+import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_flip_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_flip_stopped
+import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_damage
+import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_knockout
+import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_trigger
+import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_trigger
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_reroll
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_new_turn
+import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_damage
+import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_hit
+import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_knockout
+import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_miss
+import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_charm
+import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_charm_activation
+import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_lull
+import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_strum_lute_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_strum_lute_success
+import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_trigger
+import sorcerersandspirits.composeapp.generated.resources.arena_message_prepare_attack_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_prepare_attack_success
+import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_en_garde_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_en_garde_success
+import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_round
+import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion
+import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_escaped
+import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_failed
+import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_roll
+import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_trigger
 
 @Composable
 internal fun ArenaMessageState.getDisplayString(): String =
@@ -32,15 +75,240 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 characterClassInfo.className,
             )
 
-        is ArenaMessageState.DiceRoll -> "$rollerClassName rolled $rollValue for $rollType"
+        is ArenaMessageState.NormalRoll ->
+            when (type) {
+                NormalRollMessageType.ArmorClassHit ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_hit,
+                        attackerName,
+                        defenderName,
+                        firstDie + secondDie,
+                    )
 
-        is ArenaMessageState.AttackResult -> {
-            val action = if (rollType == RollType.ArmorClass) "attack" else "kill"
-            val result = if (isHit) "HIT!" else "MISS"
-            "$attackerClassName's $action against $targetClassName: $result"
-        }
+                NormalRollMessageType.ArmorClassMiss ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_miss,
+                        attackerName,
+                        defenderName,
+                        firstDie + secondDie,
+                    )
 
-        is ArenaMessageState.TargetDead -> "$targetClassName has been defeated by $killerClassName!"
+                NormalRollMessageType.Damage ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_damage,
+                        attackerName,
+                        defenderName,
+                        firstDie + secondDie,
+                    )
 
-        is ArenaMessageState.GameFinished -> "GAME OVER! $winnerClassName is the Champion!"
+                NormalRollMessageType.Knockout ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_knockout,
+                        attackerName,
+                        defenderName,
+                        firstDie + secondDie,
+                    )
+            }
+
+        is ArenaMessageState.KillingMomentum ->
+            stringResource(resource = Res.string.arena_message_killing_momentum)
+
+        is ArenaMessageState.Dodge ->
+            if (didArmorIncrease) {
+                stringResource(resource = Res.string.arena_message_dodge_armor_increased)
+            } else {
+                stringResource(resource = Res.string.arena_message_dodge_armor_unchanged)
+            }
+
+        is ArenaMessageState.Teleport.Trigger ->
+            stringResource(resource = Res.string.arena_message_teleport_trigger)
+
+        is ArenaMessageState.Teleport.Roll ->
+            stringResource(resource = Res.string.arena_message_teleport_roll, playerName, singleDie)
+
+        is ArenaMessageState.Teleport.Result ->
+            if (didDefenderEscape) {
+                stringResource(resource = Res.string.arena_message_teleport_escaped)
+            } else {
+                stringResource(resource = Res.string.arena_message_teleport_failed)
+            }
+
+        is ArenaMessageState.LuckyCoin.Trigger ->
+            stringResource(resource = Res.string.arena_message_lucky_coin_trigger)
+
+        is ArenaMessageState.LuckyCoin.Flip ->
+            if (didStopAttack) {
+                stringResource(
+                    resource = Res.string.arena_message_lucky_coin_flip_stopped,
+                    singleDie,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_lucky_coin_flip_failed,
+                    singleDie,
+                )
+            }
+
+        is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
+            stringResource(
+                resource = Res.string.arena_message_lucky_coin_high_roller_trigger,
+                targetName,
+            )
+
+        is ArenaMessageState.LuckyCoin.HighRollerDamage ->
+            if (isKnockout) {
+                stringResource(
+                    resource = Res.string.arena_message_lucky_coin_high_roller_knockout,
+                    singleDie,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_lucky_coin_high_roller_damage,
+                    singleDie,
+                )
+            }
+
+        is ArenaMessageState.Riposte.Trigger ->
+            stringResource(resource = Res.string.arena_message_riposte_trigger)
+
+        is ArenaMessageState.Riposte.EnGarde ->
+            if (isSuccessful) {
+                stringResource(
+                    resource = Res.string.arena_message_riposte_en_garde_success,
+                    firstDie,
+                    secondDie,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_riposte_en_garde_failed,
+                    firstDie,
+                    secondDie,
+                )
+            }
+
+        is ArenaMessageState.SummonMinion ->
+            stringResource(resource = Res.string.arena_message_summon_minion, necroName, singleDie)
+
+        is ArenaMessageState.Persuade.Trigger ->
+            stringResource(resource = Res.string.arena_message_persuade_trigger)
+
+        is ArenaMessageState.Persuade.StrumLute ->
+            if (isSuccessful) {
+                stringResource(
+                    resource = Res.string.arena_message_persuade_strum_lute_success,
+                    diceRoll,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_persuade_strum_lute_failed,
+                    diceRoll,
+                )
+            }
+
+        is ArenaMessageState.Persuade.CharmActivation ->
+            stringResource(resource = Res.string.arena_message_persuade_charm_activation)
+
+        is ArenaMessageState.Persuade.Lull ->
+            stringResource(resource = Res.string.arena_message_persuade_lull)
+
+        is ArenaMessageState.Persuade.Charm ->
+            stringResource(
+                resource = Res.string.arena_message_persuade_charm,
+                attackerName,
+                defenderName,
+            )
+
+        is ArenaMessageState.Encore.Trigger ->
+            stringResource(resource = Res.string.arena_message_encore_trigger)
+
+        is ArenaMessageState.Encore.Roll ->
+            if (isSuccessful) {
+                stringResource(resource = Res.string.arena_message_encore_roll_success, encoreDie)
+            } else {
+                stringResource(resource = Res.string.arena_message_encore_roll_failed, encoreDie)
+            }
+
+        is ArenaMessageState.Impersonate ->
+            stringResource(
+                resource = Res.string.arena_message_impersonate,
+                illusionistName,
+                impersonatedAbilityName,
+            )
+
+        is ArenaMessageState.MirrorImage.Trigger ->
+            stringResource(resource = Res.string.arena_message_mirror_image_trigger)
+
+        is ArenaMessageState.MirrorImage.Pass ->
+            stringResource(resource = Res.string.arena_message_mirror_image_pass)
+
+        is ArenaMessageState.MirrorImage.Reroll ->
+            stringResource(
+                resource = Res.string.arena_message_mirror_image_reroll,
+                firstDie,
+                secondDie,
+            )
+
+        is ArenaMessageState.MirrorImage.TemptFate ->
+            stringResource(
+                resource = Res.string.arena_message_mirror_image_tempt_fate,
+                originalRoll,
+                finalRoll,
+            )
+
+        is ArenaMessageState.SpellPotency ->
+            stringResource(
+                resource = Res.string.arena_message_spell_potency,
+                mageName,
+                mainTargetName,
+                mainDamage,
+                splashDamage,
+            )
+
+        is ArenaMessageState.HolyShield.Trigger ->
+            stringResource(resource = Res.string.arena_message_holy_shield_trigger)
+
+        is ArenaMessageState.HolyShield.Prayer ->
+            if (didSurvive) {
+                stringResource(
+                    resource = Res.string.arena_message_holy_shield_prayer_survived,
+                    firstDie,
+                    secondDie,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_holy_shield_prayer_failed,
+                    firstDie,
+                    secondDie,
+                )
+            }
+
+        is ArenaMessageState.HolyShield.Wrath ->
+            stringResource(
+                resource = Res.string.arena_message_holy_shield_wrath,
+                paladinName,
+                attackerName,
+                singleDie,
+            )
+
+        is ArenaMessageState.AllIn ->
+            stringResource(resource = Res.string.arena_message_all_in, gamblerName, singleDie)
+
+        is ArenaMessageState.PrepareAttack ->
+            if (isSuccessful) {
+                stringResource(
+                    resource = Res.string.arena_message_prepare_attack_success,
+                    duelistName,
+                    targetName,
+                    firstDie,
+                    secondDie,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_prepare_attack_failed,
+                    duelistName,
+                    targetName,
+                    firstDie,
+                    secondDie,
+                )
+            }
     }

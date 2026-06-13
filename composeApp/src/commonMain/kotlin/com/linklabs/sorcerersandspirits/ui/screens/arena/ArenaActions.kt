@@ -5,18 +5,41 @@ import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.linklabs.sorcerersandspirits.domain.utilities.EmptyTwoArgumentLambda
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 internal data class ArenaActions(
     val onSelectCharacterClass: (CharacterClassState) -> Unit = {},
     val onChooseCharacterClass: (PlayerState, CharacterClassState) -> Unit = EmptyTwoArgumentLambda,
     val onIncomingMessageHandled: () -> Unit = {},
-    val onAttack: (targetUserId: String) -> Unit = {},
-    val onUseAbility: (abilityName: String) -> Unit = {},
-    val onRollDice: () -> Unit = {},
+    val onAttack: (arguments: AttackArguments) -> Unit = {},
+    val onUseAbility: (arguments: UseAbilityArguments) -> Unit = {},
+    val onRollDice: (arguments: RollDiceArguments) -> Unit = {},
     val onTryLeaveArena: () -> Unit = {},
     val onConfirmLeaveArena: () -> Unit = {},
     val onDismissForfeitDialog: () -> Unit = {},
+    val onStayForAnotherMatch: () -> Unit = {},
+)
+
+data class AttackArguments(
+    val combatActionState: CombatActionState,
+    val targetedOpponentUserId: String,
+    val userPlayerId: String,
+)
+
+// TODO: Delete
+data class RollDiceArguments(
+    val combatActionState: CombatActionState,
+    val targetedOpponentUserId: String,
+    val userPlayerId: String,
+)
+
+// TODO: Rename/refactor
+data class UseAbilityArguments(
+    val abilityActionState: AbilityActionState,
+    val targetedOpponentUserId: String,
+    val userPlayerId: String,
 )
 
 internal val LocalArenaActions = staticCompositionLocalOf { ArenaActions() }

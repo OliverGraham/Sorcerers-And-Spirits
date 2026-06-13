@@ -40,7 +40,7 @@ internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
                 if (isItThisUsersTurn) {
                     "Choose Your Class"
                 } else {
-                    "${activePlayer.displayName} is choosing their class..."
+                    "${playerMap.getValue(key = activePlayerUserId).displayName} is choosing their class..."
                 },
             style =
                 if (isItThisUsersTurn) {
@@ -71,7 +71,7 @@ internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
             Button(
                 onClick = {
                     if (selectedClass != null) {
-                        onClassConfirmed(userPlayer, selectedClass)
+                        onClassConfirmed(playerMap.getValue(key = userPlayerId), selectedClass)
                     }
                 },
                 enabled = selectedClass != null,
@@ -90,10 +90,9 @@ private fun ArenaChoosingClassesPreview() {
         val mockPlayer = PlayerState.Unselected(userId = "1", displayName = "Player")
         val mockState =
             ArenaState.ChoosingClasses(
-                activePlayer = mockPlayer,
-                userPlayer = mockPlayer,
-                otherPlayers = emptyList(),
-                isItThisUsersTurn = true,
+                playerMap = emptyMap(),
+                activePlayerUserId = mockPlayer.userId,
+                userPlayerId = mockPlayer.userId,
                 selectedClass = null,
                 unavailableClasses = emptyList(),
                 classSelections = emptyMap(),

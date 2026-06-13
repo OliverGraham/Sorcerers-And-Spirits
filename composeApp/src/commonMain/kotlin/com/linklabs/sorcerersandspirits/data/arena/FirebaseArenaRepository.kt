@@ -8,12 +8,12 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CombatResult
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -63,7 +63,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     }
 
     // TODO Arena: Look at this, refactor
-    override suspend fun applyCombatResult(arenaId: String, result: CombatResult) {
+    override suspend fun applyCombatResult(arenaId: String, result: ActionOutcome) {
         val arenaReference = arenaMatchesReference.child(path = arenaId)
 
         arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
@@ -71,69 +71,27 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
             val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
             val newMessages =
-                result.messages.map { outgoingMessage ->
-                    outgoingMessage.toEntity(id = messagesReference.addNewKey())
-                }
-            val allMessages = existingMatch.messages + newMessages
-
-            when (result) {
-                is CombatResult.Miss ->
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        turnInfoEntity = result.nextTurnInfo.toEntity(),
-                        pendingRollType = RollType.ArmorClass,
-                        pendingTargetUserId = null,
-                    )
-
-                is CombatResult.Hit ->
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        pendingRollType = RollType.Health,
-                        pendingTargetUserId = result.targetId,
-                    )
-
-                is CombatResult.DamageDealt -> {
-                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
-                    val target =
-                        updatedPlayerMap[result.targetId] ?: return@runTransaction existingMatch
-
-                    updatedPlayerMap[result.targetId] =
-                        target.copy(
-                            characterClassEntity =
-                                target.characterClassEntity.copy(hitPoints = result.newHp)
-                        )
-
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        playerEntitiesMap = updatedPlayerMap,
-                        turnInfoEntity = result.nextTurnInfo.toEntity(),
-                        pendingRollType = RollType.ArmorClass,
-                        pendingTargetUserId = null,
-                    )
+                result.messages.map { outgoingArenaMessage ->
+                    outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
                 }
 
-                is CombatResult.TargetDefeated -> {
-                    val updatedPlayerMap = existingMatch.playerEntitiesMap.toMutableMap()
-                    updatedPlayerMap.remove(result.defeatedPlayerId)
-
-                    existingMatch.copy(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                        playerEntitiesMap = updatedPlayerMap,
-                        turnInfoEntity = result.nextTurnInfo.toEntity(),
-                        pendingRollType = RollType.ArmorClass,
-                        pendingTargetUserId = null,
-                    )
-                }
-
-                is CombatResult.Victory ->
-                    ArenaMatchEntity.Finished(
-                        messages = allMessages,
-                        numberOfNewMessages = newMessages.size,
-                    )
+            if (result.isMatchFinished) {
+                ArenaMatchEntity.Finished(
+                    messages = existingMatch.messages + newMessages,
+                    numberOfNewMessages = newMessages.size,
+                    playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
+                )
+            } else {
+                ArenaMatchEntity.Combat(
+                    messages = existingMatch.messages + newMessages,
+                    numberOfNewMessages = newMessages.size,
+                    playerEntitiesMap =
+                        result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
+                    nextCombatActionEntity = result.nextCombatAction.toEntity(),
+                    roundNumber = result.roundNumber,
+                    isNewRound = result.isNewRound,
+                    doublesBonusEntity = result.doublesBonus?.toEntity(),
+                )
             }
         }
     }
@@ -157,6 +115,11 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     override suspend fun exitArena(arenaId: String, userId: String) {
         ExitArena(userId = userId)
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    }
+
+    override suspend fun stayForAnotherMatch(arenaId: String, userId: String) {
+        StayForAnotherMatch(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 }

@@ -2,8 +2,6 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -12,8 +10,8 @@ data class CharacterClassEntity(
     val hitPoints: Int,
     val armorClass: Int,
     val speed: Int,
-    val offensiveAbility: OffensiveAbility,
-    val defensiveAbility: DefensiveAbility,
+    val offensiveAbility: OffensiveAbilityEntity,
+    val defensiveAbility: DefensiveAbilityEntity,
 ) {
     val className = type.name
 }
@@ -24,8 +22,8 @@ internal fun CharacterClassEntity.toDomain(): CharacterClass =
         hitPoints = hitPoints,
         armorClass = armorClass,
         speed = speed,
-        offensiveAbility = offensiveAbility,
-        defensiveAbility = defensiveAbility,
+        offensiveAbility = offensiveAbility.toDomain(),
+        defensiveAbility = defensiveAbility.toDomain(),
     )
 
 internal fun CharacterClass.toEntity(): CharacterClassEntity =
@@ -34,6 +32,6 @@ internal fun CharacterClass.toEntity(): CharacterClassEntity =
         hitPoints = hitPoints,
         armorClass = armorClass,
         speed = speed,
-        offensiveAbility = offensiveAbility,
-        defensiveAbility = defensiveAbility,
+        offensiveAbility = offensiveAbility.toEntity(),
+        defensiveAbility = defensiveAbility.toEntity(),
     )

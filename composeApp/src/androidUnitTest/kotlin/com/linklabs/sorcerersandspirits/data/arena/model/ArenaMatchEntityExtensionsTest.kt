@@ -3,8 +3,6 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 import com.linklabs.sorcerersandspirits.data.arena.utilities.determineNextChoosingPlayerId
 import com.linklabs.sorcerersandspirits.data.arena.utilities.getFastestPlayer
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -22,8 +20,8 @@ class ArenaMatchEntityExtensionsTest {
                     hitPoints = 10,
                     armorClass = 10,
                     speed = speed,
-                    offensiveAbility = OffensiveAbility.KillingMomentum,
-                    defensiveAbility = DefensiveAbility.Anticipation,
+                    offensiveAbility = OffensiveAbilityEntity.KillingMomentum,
+                    defensiveAbility = DefensiveAbilityEntity.Dodge(armorBonus = 0),
                 ),
         )
 

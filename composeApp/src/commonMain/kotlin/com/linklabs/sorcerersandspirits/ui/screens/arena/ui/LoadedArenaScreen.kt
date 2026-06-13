@@ -57,6 +57,13 @@ internal fun LoadedArenaScreen(
     if (screenState.showForfeitDialog) {
         ForfeitDialog()
     }
+
+    if (screenState.showKnockoutDialog) {
+        MatchDecisionDialog(
+            isMatchFinished = screenState.arenaState is ArenaState.Finished,
+            isUserPlayerKnockedOut = screenState.isUserPlayerKnockedOut,
+        )
+    }
 }
 
 @Composable
@@ -94,12 +101,7 @@ private fun ArenaStateContent(
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
-            is ArenaState.UserPlayerKnockedOut -> {
-                // TODO Arena: show dialog asking if they want to see, or keep observing the match
-            }
-
-            // TODO Arena: Add some sort of message / UI / something for when the game ends
-            is ArenaState.Finished -> {}
+            is ArenaState.Finished -> MatchFinishedContent()
         }
     }
 }

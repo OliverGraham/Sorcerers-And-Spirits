@@ -47,10 +47,7 @@ private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier
 
         is ArenaMessageState.NewTurn -> NewTurnMessage(state = messageState, modifier = modifier)
 
-        is ArenaMessageState.AttackResult,
-        is ArenaMessageState.DiceRoll,
-        is ArenaMessageState.GameFinished,
-        is ArenaMessageState.TargetDead -> DefaultMessage(state = messageState, modifier = modifier)
+        else -> DefaultMessage(state = messageState, modifier = modifier)
     }
 }
 

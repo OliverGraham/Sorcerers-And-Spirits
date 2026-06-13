@@ -5,7 +5,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.TurnInfoEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
 internal class ChooseCharacterClass(
@@ -66,21 +66,23 @@ internal class ChooseCharacterClass(
         messageGenerator: ChooseCharacterClassMessageGenerator,
         selectedPlayers: Map<String, ArenaPlayerEntity.Selected>,
     ): ArenaMatchEntity.Combat {
+        val fastestPlayer = selectedPlayers.getFastestPlayer()
         val (updatedMessages, numberOfNewMessages) =
             messageGenerator.generateCombatStartingMessages(
-                startingCharacterClass = selectedPlayers.getFastestPlayer().characterClassEntity
+                startingCharacterClass = fastestPlayer.characterClassEntity
             )
 
+        val fastestPlayerUserId = fastestPlayer.userId
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = selectedPlayers,
             messages = updatedMessages,
             numberOfNewMessages = numberOfNewMessages,
-            turnInfoEntity =
-                TurnInfoEntity(
-                    activePlayerUserId = nextPlayerId,
-                    actedThisRoundUserIds = emptySet(),
-                    roundNumber = 1,
+            nextCombatActionEntity =
+                NextCombatActionEntity.IdleEntity(
+                    activeUserIds = setOf(element = fastestPlayerUserId)
                 ),
+            roundNumber = 1,
+            isNewRound = true,
         )
     }
 

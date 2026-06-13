@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.game
 
 import kotlin.Int
 
+// TODO: Add a maximum HP
 data class CharacterClass(
     val type: CharacterClassType,
     val hitPoints: Int,
@@ -9,22 +10,85 @@ data class CharacterClass(
     val speed: Int,
     val offensiveAbility: OffensiveAbility,
     val defensiveAbility: DefensiveAbility,
+    val hasActedThisRound: Boolean = false,
 ) {
     val className = type.name
 
+    fun isConscious() = hitPoints > 0
+
     companion object {
-        fun getAllClasses() = listOf(getRogue(), getMage(), getPaladin())
+        fun getAllClasses() =
+            listOf(
+                getRogue(),
+                getGambler(),
+                getDuelist(),
+                getNecromancer(),
+                getBard(),
+                getIllusionist(),
+                getMage(),
+                getPaladin(),
+            )
 
         // TODO: Get CharacterClass values from RemoteConfig
 
         fun getRogue() =
             CharacterClass(
                 type = CharacterClassType.Rogue,
-                hitPoints = 6,
-                armorClass = 5,
+                hitPoints = 5,
+                armorClass = 6,
                 speed = 8,
                 offensiveAbility = OffensiveAbility.KillingMomentum,
-                defensiveAbility = DefensiveAbility.Anticipation,
+                defensiveAbility = DefensiveAbility.Dodge(),
+            )
+
+        fun getGambler() =
+            CharacterClass(
+                type = CharacterClassType.Gambler,
+                hitPoints = 3,
+                armorClass = 4,
+                speed = 7,
+                offensiveAbility = OffensiveAbility.AllIn(),
+                defensiveAbility = DefensiveAbility.LuckyCoin,
+            )
+
+        fun getDuelist() =
+            CharacterClass(
+                type = CharacterClassType.Duelist,
+                hitPoints = 4,
+                armorClass = 4,
+                speed = 6,
+                offensiveAbility = OffensiveAbility.PrepareAttack,
+                defensiveAbility = DefensiveAbility.Riposte,
+            )
+
+        fun getNecromancer() =
+            CharacterClass(
+                type = CharacterClassType.Necromancer,
+                hitPoints = 7,
+                armorClass = 7,
+                speed = 5,
+                offensiveAbility = OffensiveAbility.SummonMinion(),
+                defensiveAbility = DefensiveAbility.None,
+            )
+
+        fun getBard() =
+            CharacterClass(
+                type = CharacterClassType.Bard,
+                hitPoints = 5,
+                armorClass = 5,
+                speed = 4,
+                offensiveAbility = OffensiveAbility.Encore,
+                defensiveAbility = DefensiveAbility.Persuade,
+            )
+
+        fun getIllusionist() =
+            CharacterClass(
+                type = CharacterClassType.Illusionist,
+                hitPoints = 5,
+                armorClass = 5,
+                speed = 3,
+                offensiveAbility = OffensiveAbility.Impersonate(),
+                defensiveAbility = DefensiveAbility.MirrorImage(),
             )
 
         fun getMage() =
@@ -33,8 +97,8 @@ data class CharacterClass(
                 hitPoints = 4,
                 armorClass = 4,
                 speed = 2,
-                offensiveAbility = OffensiveAbility.SpellNova,
-                defensiveAbility = DefensiveAbility.Blink,
+                offensiveAbility = OffensiveAbility.SpellPotency,
+                defensiveAbility = DefensiveAbility.Teleport,
             )
 
         fun getPaladin() =
@@ -43,33 +107,20 @@ data class CharacterClass(
                 hitPoints = 7,
                 armorClass = 7,
                 speed = 1,
-                offensiveAbility = OffensiveAbility.ReflectiveShield,
-                defensiveAbility = DefensiveAbility.HolyPrayer,
+                offensiveAbility = OffensiveAbility.None,
+                defensiveAbility = DefensiveAbility.HolyShield(),
             )
-
-        fun fromType(type: CharacterClassType) =
-            when (type) {
-                CharacterClassType.Rogue -> getRogue()
-                CharacterClassType.Mage -> getMage()
-                CharacterClassType.Paladin -> getPaladin()
-            }
     }
 }
 
 enum class CharacterClassType {
     Rogue,
+    Gambler,
+    Duelist,
+    Necromancer,
+    Bard,
+    Illusionist,
     Mage,
     Paladin,
-}
-
-enum class OffensiveAbility {
-    KillingMomentum,
-    SpellNova,
-    ReflectiveShield,
-}
-
-enum class DefensiveAbility {
-    Anticipation,
-    Blink,
-    HolyPrayer,
+    None,
 }

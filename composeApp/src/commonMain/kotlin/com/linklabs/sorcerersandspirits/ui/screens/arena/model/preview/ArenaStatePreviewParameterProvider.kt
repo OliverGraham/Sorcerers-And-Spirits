@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -10,8 +10,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TurnInfoState
 
 // TODO Arena: update when state changes to use enums to determine the text (using resources)
 
@@ -37,6 +37,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             getExampleScreenState(arenaState = getExampleArenaState()),
             getExampleScreenState(arenaState = getExampleChoosingClassesState()),
             getExampleScreenState(arenaState = getExampleCombatState()),
+            getExampleScreenState(arenaState = ArenaState.Finished),
         )
 
     private fun getExampleScreenState(
@@ -45,52 +46,53 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         unhandledMessagesCount: Int = 0,
         secondsRemaining: Int = 20,
         showForfeitDialog: Boolean = false,
+        isUserPlayerKnockedOut: Boolean = false,
+        hasMadeKnockoutDecision: Boolean = false,
     ) =
         ArenaScreenState(
             messages = messages,
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = secondsRemaining,
             showForfeitDialog = showForfeitDialog,
+            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = arenaState,
         )
 
     private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers
 
     private fun getExampleChoosingClassesState(
-        activePlayer: PlayerState = getExamplePlayers().values.first(),
-        userPlayer: PlayerState = getExamplePlayers().values.first(),
-        otherPlayers: List<PlayerState> = getExamplePlayers().values.drop(1),
-        isItThisUsersTurn: Boolean = true,
+        playerMap: Map<String, PlayerState> = getExamplePlayers(),
+        userPlayerId: String = "player1",
+        activePlayerUserId: String = "player1",
     ) =
         ArenaState.ChoosingClasses(
-            activePlayer = activePlayer,
-            userPlayer = userPlayer,
-            otherPlayers = otherPlayers,
-            isItThisUsersTurn = isItThisUsersTurn,
+            playerMap = playerMap,
+            userPlayerId = userPlayerId,
+            activePlayerUserId = activePlayerUserId,
             selectedClass = null,
             unavailableClasses = emptyList(),
             classSelections = emptyMap(),
         )
 
     private fun getExampleCombatState(
-        activePlayer: PlayerState.Selected = getExamplePlayers().values.first(),
-        userPlayer: PlayerState.Selected = getExamplePlayers().values.first(),
-        otherPlayers: List<PlayerState.Selected> = getExamplePlayers().values.drop(1),
-        isItThisUsersTurn: Boolean = true,
+        playerMap: Map<String, PlayerState.Selected> = getExamplePlayers(),
+        userPlayerId: String = "player1",
+        combatActionState: CombatActionState =
+            CombatActionState.NormalAttack(
+                roll = NormalAttackType.ArmorClass,
+                attackerUserId = "player1",
+                defenderUserId = "player2",
+                originalTurnUserId = "player1",
+                activeUserIds = setOf("player1"),
+            ),
     ) =
         ArenaState.Combat(
-            activePlayer = activePlayer,
-            userPlayer = userPlayer,
-            otherPlayers = otherPlayers,
-            isItThisUsersTurn = isItThisUsersTurn,
-            pendingRollType = RollType.ArmorClass,
-            pendingTargetUserId = null,
-            turnInfo =
-                TurnInfoState(
-                    activePlayerUserId = "",
-                    actedThisRoundUserIds = emptySet(),
-                    roundNumber = 1,
-                ),
+            playerMap = playerMap,
+            userPlayerId = userPlayerId,
+            combatActionState = combatActionState,
+            roundNumber = 1,
+            isNewRound = true,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

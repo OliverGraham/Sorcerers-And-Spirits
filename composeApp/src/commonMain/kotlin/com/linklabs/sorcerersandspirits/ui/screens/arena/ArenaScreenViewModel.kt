@@ -4,19 +4,23 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ActiveState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
@@ -33,8 +37,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
-// TODO Arena: As soon as possible, write tests for this behavior. DO NOT do like the other view
-//  model test, with all the Firebase craziness. Figure out another way that makes more sense
+// TODO: This is all fucked
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -45,6 +48,7 @@ class ArenaScreenViewModel(
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
+    private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
 ) : ViewModel() {
 
@@ -92,7 +96,8 @@ class ArenaScreenViewModel(
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
             val arenaState =
-                _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ActiveState ?: return@launch
+                _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.ChoosingClasses
+                    ?: return@launch
 
             val selectedArenaPlayer =
                 ArenaPlayer.Selected(
@@ -100,12 +105,12 @@ class ArenaScreenViewModel(
                     displayName = playerState.displayName,
                     characterClass = characterClassState.toDomain(),
                 )
-            val allPlayers = arenaState.otherPlayers.map { it.toDomain() } + selectedArenaPlayer
 
             chooseCharacterClassUseCase(
                 arenaId = arguments.arenaId,
                 selectedArenaPlayer = selectedArenaPlayer,
-                allPlayers = allPlayers,
+                allPlayers =
+                    arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
             )
 
             _uiStateFlow.updateLoaded { screenState ->
@@ -128,61 +133,96 @@ class ArenaScreenViewModel(
         }
     }
 
-    fun onAttack(targetUserId: String) {
-        _uiStateFlow.updateLoaded { screenState ->
-            val arenaState = screenState.arenaState
-            if (arenaState is ArenaState.Combat && arenaState.isItThisUsersTurn) {
-                // Once a target is chosen, it's locked until turn end or target defeated
-                if (arenaState.pendingTargetUserId == null) {
-                    screenState.copy(
-                        arenaState = arenaState.copy(pendingTargetUserId = targetUserId)
-                    )
-                } else {
-                    screenState
-                }
-            } else {
-                screenState
-            }
-        }
+    fun onAttack(attackArguments: AttackArguments) {
+        viewModelScope.launch { attackArguments.onAttack() }
     }
 
-    fun onRollDice() {
-        viewModelScope.launch {
-            val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
-            val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return@launch
-            if (!arenaState.isItThisUsersTurn) return@launch
+    private suspend fun AttackArguments.onAttack() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
+        val normalAttack = toDomain() ?: return
 
-            val targetUserId = arenaState.pendingTargetUserId ?: return@launch
-
-            // TODO Arena: Clean this slop
-            val playerMap =
-                (arenaState.otherPlayers + arenaState.activePlayer).associate { playerState ->
-                    playerState.userId to (playerState.toDomain() as ArenaPlayer.Selected)
-                }
-
-            performCombatActionUseCase(
+        val combatActionArguments =
+            CombatActionArguments(
                 arenaId = arguments.arenaId,
-                playerMap = playerMap,
-                attackerUserId = arenaState.userPlayer.userId,
-                targetUserId = targetUserId,
-                rollType = arenaState.pendingRollType,
-                turnInfo = arenaState.turnInfo.toDomain(),
+                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
+                roundNumber = arenaState.roundNumber,
+                doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
             )
-        }
+
+        performCombatActionUseCase(arguments = combatActionArguments, currentAction = normalAttack)
     }
+
+    fun onUseAbility(useAbilityArguments: UseAbilityArguments) {
+        viewModelScope.launch { useAbilityArguments.onUseAbility() }
+    }
+
+    private suspend fun UseAbilityArguments.onUseAbility() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
+
+        // TODO: This Charm logic is done oddly or incorrectly
+        val resolvedAbilityActionState =
+            if (
+                abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
+                    targetedOpponentUserId.isNotEmpty()
+            ) {
+                abilityActionState.copy(selectedCharmTargetUserId = targetedOpponentUserId)
+            } else {
+                abilityActionState
+            }
+
+        val combatActionArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
+                roundNumber = arenaState.roundNumber,
+                doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
+            )
+
+        val currentAction =
+            when (val actionState = arenaState.combatActionState) {
+                // Responding to an ability roll in progress: the combatant ids come from the
+                // ongoing action
+                is CombatActionState.AbilityRoll ->
+                    CurrentCombatAction.AbilityRoll(
+                        purpose = resolvedAbilityActionState.toDomain(),
+                        attackerUserId = actionState.attackerUserId,
+                        defenderUserId = actionState.defenderUserId,
+                        originalTurnUserId = actionState.originalTurnUserId,
+                    )
+
+                // Activated ability used on the user's own turn against their selected target
+                // (or themselves when no target is required)
+                else ->
+                    CurrentCombatAction.AbilityRoll(
+                        purpose = resolvedAbilityActionState.toDomain(),
+                        attackerUserId = userPlayerId,
+                        defenderUserId = targetedOpponentUserId.ifEmpty { userPlayerId },
+                        originalTurnUserId = userPlayerId,
+                    )
+            }
+
+        performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
+    }
+
+    fun onRollDice(rollDiceArguments: RollDiceArguments) {}
 
     fun onTryLeaveArena() {
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
     }
 
     // TODO Arena: Need a leave that updates stats with a forfeit, and one that triggers when game
-    //  is finished
+    //  is finished. Update stats only when user leaves (could be after multiple matches)
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
 
         viewModelScope.launch {
             exitArenaUseCase(arenaId = arguments.arenaId)
+            setCurrentTravelerAvailableUseCase()
+            // TODO: If is last person leaving, then removeArenaMatchUseCase(arenaId =
+            // arguments.arenaId)
             _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }
@@ -192,11 +232,24 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
     }
 
-    private suspend fun ArenaMatch?.updateScreenState(userId: String) {
+    fun onStayForAnotherMatch() {
+        viewModelScope.launch {
+            stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
+
+            _uiStateFlow.updateLoaded { screenState ->
+                screenState.copy(hasMadeKnockoutDecision = true)
+            }
+        }
+    }
+
+    private fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
-            // TODO Arena: Probably show message briefly and then navigate back, with
-            //  cleanup, since if this is null then there was some problem
-            _uiStateFlow.value = UiState.Error
+            screenStateFlowJob?.cancel()
+
+            viewModelScope.launch {
+                setCurrentTravelerAvailableUseCase()
+                _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+            }
             return
         }
 
@@ -207,20 +260,6 @@ class ArenaScreenViewModel(
 
         val nextState = updatedArenaStateUpdate.nextState
         _uiStateFlow.value = UiState.Loaded(data = nextState)
-
-        if (nextState.arenaState == ArenaState.Finished) {
-            // TODO Arena: How to handle profile stats
-            setCurrentTravelerAvailableUseCase()
-            removeArenaMatchUseCase(arenaId = arguments.arenaId)
-            _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
-        }
-
-        // TODO Arena: next state UserKnockedOut -> ask if they want to observe & play in another
-        //  match, or leave
-        //  update stats only after all matches
-        //  Match 1 to n
-        //  Round 1 to n
-        //  Turn 1 to n
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {
@@ -254,10 +293,6 @@ class ArenaScreenViewModel(
             }
 
             is ArenaState.Combat -> {
-                // TODO
-            }
-
-            is ArenaState.UserPlayerKnockedOut -> {
                 // TODO
             }
 

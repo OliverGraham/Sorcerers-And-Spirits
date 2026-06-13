@@ -18,4 +18,62 @@
     <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>
     <string name="arena_message_new_turn">It's %1$s's turn</string>
+
+    <string name="arena_message_normal_roll_hit">%1$s targeted %2$s, rolled %3$s and hit</string>
+    <string name="arena_message_normal_roll_miss">%1$s targeted %2$s, rolled %3$s and missed</string>
+    <string name="arena_message_normal_roll_damage">%1$s damaged %2$s for %3$s</string>
+    <string name="arena_message_normal_roll_knockout">%1$s damaged %2$s for %3$s and knocked them out!</string>
+
+    <string name="arena_message_killing_momentum">Killing Momentum! The attack presses on</string>
+
+    <string name="arena_message_dodge_armor_increased">Dodge! Armor class increased</string>
+    <string name="arena_message_dodge_armor_unchanged">Dodge! Armor class unchanged</string>
+
+    <string name="arena_message_teleport_trigger">Teleport! Rolling to escape…</string>
+    <string name="arena_message_teleport_roll">%1$s rolled a %2$s</string>
+    <string name="arena_message_teleport_escaped">The defender teleported away!</string>
+    <string name="arena_message_teleport_failed">The teleport failed</string>
+
+    <string name="arena_message_lucky_coin_trigger">Lucky Coin! Flipping for fate…</string>
+    <string name="arena_message_lucky_coin_flip_stopped">The coin shows %1$s — the attack is stopped!</string>
+    <string name="arena_message_lucky_coin_flip_failed">The coin shows %1$s — the attack continues</string>
+    <string name="arena_message_lucky_coin_high_roller_trigger">High Roller! %1$s is targeted</string>
+    <string name="arena_message_lucky_coin_high_roller_damage">The coin strikes for %1$s damage</string>
+    <string name="arena_message_lucky_coin_high_roller_knockout">The coin strikes for %1$s damage — a knockout!</string>
+
+    <string name="arena_message_riposte_trigger">Riposte! Preparing a counter…</string>
+    <string name="arena_message_riposte_en_garde_success">En garde! Rolled %1$s and %2$s — the counter lands</string>
+    <string name="arena_message_riposte_en_garde_failed">En garde! Rolled %1$s and %2$s — the counter fails</string>
+
+    <string name="arena_message_summon_minion">%1$s rolled a %2$s to summon a minion</string>
+
+    <string name="arena_message_persuade_trigger">Persuade! A song begins…</string>
+    <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>
+    <string name="arena_message_persuade_strum_lute_failed">Strummed the lute and rolled %1$s — the song falls flat</string>
+    <string name="arena_message_persuade_charm_activation">The charm takes effect!</string>
+    <string name="arena_message_persuade_lull">The attacker is lulled…</string>
+    <string name="arena_message_persuade_charm">%1$s charmed %2$s</string>
+
+    <string name="arena_message_encore_trigger">Encore! The crowd demands more…</string>
+    <string name="arena_message_encore_roll_success">Encore roll of %1$s — another performance!</string>
+    <string name="arena_message_encore_roll_failed">Encore roll of %1$s — the moment passes</string>
+
+    <string name="arena_message_impersonate">%1$s impersonates %2$s</string>
+
+    <string name="arena_message_mirror_image_trigger">Mirror Image! Which one is real?</string>
+    <string name="arena_message_mirror_image_pass">The roll stands</string>
+    <string name="arena_message_mirror_image_reroll">Mirror Image reroll: %1$s and %2$s</string>
+    <string name="arena_message_mirror_image_tempt_fate">Tempting fate! The %1$s becomes a %2$s</string>
+
+    <string name="arena_message_spell_potency">%1$s hit %2$s for %3$s damage and splashed others for %4$s</string>
+
+    <string name="arena_message_holy_shield_trigger">Holy Shield! A prayer is offered…</string>
+    <string name="arena_message_holy_shield_prayer_survived">Rolled %1$s and %2$s — the prayer is answered!</string>
+    <string name="arena_message_holy_shield_prayer_failed">Rolled %1$s and %2$s — the prayer goes unanswered</string>
+    <string name="arena_message_holy_shield_wrath">%1$s's wrath strikes %2$s for %3$s</string>
+
+    <string name="arena_message_all_in">%1$s goes all in and rolled a %2$s!</string>
+
+    <string name="arena_message_prepare_attack_success">%1$s studied %2$s, rolled %3$s and %4$s — the next attack is prepared!</string>
+    <string name="arena_message_prepare_attack_failed">%1$s studied %2$s, rolled %3$s and %4$s — the preparation fails</string>
 </resources>

@@ -3,8 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.RollType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
@@ -14,6 +14,8 @@ data class ArenaScreenState(
     val unhandledMessagesCount: Int,
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
+    val isUserPlayerKnockedOut: Boolean,
+    val hasMadeKnockoutDecision: Boolean,
     val arenaState: ArenaState,
 ) {
     val latestMessage: ArenaMessageState? =
@@ -25,6 +27,10 @@ data class ArenaScreenState(
         messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
     val characterClasses = CharacterClass.getAllClasses().map { it.toState() }
+
+    // TODO: Update property name and way to assign it
+    val showKnockoutDialog =
+        (isUserPlayerKnockedOut || arenaState is ArenaState.Finished) && !hasMadeKnockoutDecision
 }
 
 @Immutable
@@ -34,67 +40,81 @@ sealed interface ArenaState {
 
     @Immutable
     data class ChoosingClasses(
-        override val activePlayer: PlayerState,
-        override val userPlayer: PlayerState,
-        override val otherPlayers: List<PlayerState>,
-        override val isItThisUsersTurn: Boolean,
+        override val playerMap: Map<UserId, PlayerState>,
+        override val userPlayerId: String,
+        val activePlayerUserId: String,
         val selectedClass: CharacterClassState?,
         val unavailableClasses: List<CharacterClassState>,
         val classSelections: Map<CharacterClassState, String>,
-    ) : ActiveState
+    ) : ActiveState {
+        val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
+        val isItThisUsersTurn = activePlayerUserId == userPlayerId
+    }
 
     @Immutable
     data class Combat(
-        override val activePlayer: PlayerState.Selected,
-        override val userPlayer: PlayerState.Selected,
-        override val otherPlayers: List<PlayerState.Selected>,
-        override val isItThisUsersTurn: Boolean,
-        val pendingRollType: RollType,
-        val pendingTargetUserId: String?,
-        val turnInfo: TurnInfoState,
-    ) : ActiveState
-
-    @Immutable data object UserPlayerKnockedOut : ArenaState
+        override val playerMap: Map<UserId, PlayerState.Selected>,
+        override val userPlayerId: String,
+        val combatActionState: CombatActionState,
+        val roundNumber: Int,
+        val isNewRound: Boolean,
+    ) : ActiveState {
+        val userPlayer = playerMap.getValue(key = userPlayerId)
+        val activeUserIds = combatActionState.activeUserIds
+        val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
+        val isItThisUsersTurn = userPlayerId in activeUserIds
+        val combatControls = deriveCombatControls()
+    }
 
     @Immutable data object Finished : ArenaState
 }
 
 @Immutable
 sealed interface ActiveState : ArenaState {
-    val activePlayer: PlayerState
-    val userPlayer: PlayerState
-    val otherPlayers: List<PlayerState>
-    val isItThisUsersTurn: Boolean
+    val playerMap: Map<UserId, PlayerState>
+    val userPlayerId: String
 }
+
+// TODO: Need to refactor this badly
 
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
 ): ArenaStateUpdate {
-    val messages = messages.map { message -> message.toState() }
+    val messages =
+        messages.map { incomingMessage ->
+            incomingMessage.message.toState(
+                id = incomingMessage.id,
+                displayNames = playerMap.mapValues { it.value.displayName },
+            )
+        }
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
+
+    val userPlayer = playerMap.getValue(key = userId)
+
+    val isUserPlayerKnockedOut =
+        (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious()?.not() ?: false
+
+    val hasMadeKnockoutDecision =
+        if (this is ArenaMatch.ChoosingClasses) {
+            false
+        } else {
+            previousState?.hasMadeKnockoutDecision ?: false
+        }
 
     val nextArenaState =
         when (this) {
             is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
 
             is ArenaMatch.ChoosingClasses -> {
-                // TODO Arena: Handle this nullability better
-                val userPlayer = playerMap[userId]!!
-
                 val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
-                val activePlayerState = activePlayer.toState()
-                val userPlayerState = userPlayer.toState()
-                val otherPlayersState =
-                    playerMap.getOtherPlayers(activePlayerUserId = activePlayerUserId)
 
                 ArenaState.ChoosingClasses(
-                    activePlayer = activePlayerState,
-                    userPlayer = userPlayerState,
-                    otherPlayers = otherPlayersState,
-                    isItThisUsersTurn = activePlayerUserId == userId,
+                    playerMap = playerMap.mapValues { it.value.toState() },
+                    activePlayerUserId = activePlayer.userId,
+                    userPlayerId = userId,
                     unavailableClasses = unavailable,
                     classSelections = selections,
                     selectedClass =
@@ -103,28 +123,13 @@ internal fun ArenaMatch.toUpdatedState(
             }
 
             is ArenaMatch.Combat -> {
-                val userPlayer = playerMap[userId]
-                if (userPlayer == null) {
-                    ArenaState.UserPlayerKnockedOut
-                } else {
-                    val activePlayerState = activePlayer.toSelectedState()
-                    val userPlayerState = userPlayer.toSelectedState()
-                    val activePlayerUserId = turnInfo.activePlayerUserId
-                    val otherPlayersState =
-                        playerMap.values
-                            .filter { player -> player.userId != activePlayerUserId }
-                            .map { player -> player.toSelectedState() }
-
-                    ArenaState.Combat(
-                        activePlayer = activePlayerState,
-                        userPlayer = userPlayerState,
-                        otherPlayers = otherPlayersState,
-                        isItThisUsersTurn = activePlayerUserId == userId,
-                        pendingRollType = pendingRollType,
-                        pendingTargetUserId = pendingTargetUserId,
-                        turnInfo = turnInfo.toState(),
-                    )
-                }
+                ArenaState.Combat(
+                    playerMap = playerMap.mapValues { it.value.toSelectedState() },
+                    userPlayerId = userId,
+                    combatActionState = nextCombatAction.toCombatActionState(),
+                    roundNumber = roundNumber,
+                    isNewRound = isNewRound,
+                )
             }
 
             is ArenaMatch.Finished -> ArenaState.Finished
@@ -136,6 +141,8 @@ internal fun ArenaMatch.toUpdatedState(
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = previousSeconds,
             showForfeitDialog = previousShowForfeitDialog,
+            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = nextArenaState,
         )
 
@@ -172,13 +179,6 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
-private fun Map<String, ArenaPlayer>.getOtherPlayers(
-    activePlayerUserId: String
-): List<PlayerState> =
-    values
-        .filter { player -> player.userId != activePlayerUserId }
-        .map { player -> player.toState() }
-
 private fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
     when (next) {
         is ArenaState.WaitingForAllPlayers ->
@@ -196,16 +196,10 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
             }
 
         is ArenaState.Combat -> {
-            val turnChanged =
-                previous is ActiveState && previous.activePlayer.userId != next.activePlayer.userId
-            if (previous !is ArenaState.Combat || turnChanged) {
-                TimerAction.Start(timerDuration = 20)
-            } else {
-                TimerAction.None
-            }
+            // TODO: Hmm, how should timers be started? Based on NextCombatAction?
+            TimerAction.Start(timerDuration = 20)
         }
 
-        is ArenaState.UserPlayerKnockedOut,
         is ArenaState.Finished -> TimerAction.Stop
     }
 

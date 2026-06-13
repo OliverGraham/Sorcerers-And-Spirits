@@ -545,6 +545,45 @@ class ArenaScreenViewModelTest {
         coVerify { stayForAnotherMatchUseCase(arenaId = arguments.arenaId) }
     }
 
+    @Test
+    fun `participantNames maintains names even after players leave`() = runTest {
+        val viewModel = createViewModel()
+
+        viewModel.uiStateFlow.test {
+            // Loading
+            awaitItem()
+
+            // 1. Initial Match with two players
+            arenaMatchFlow.value =
+                ArenaMatch.WaitingForAllPlayers(
+                    messages = emptyList(),
+                    numberOfNewMessages = 0,
+                    playerMap =
+                        mapOf(
+                            USER_ID to ArenaPlayer.Unselected(USER_ID, "Alice"),
+                            OPPONENT_ID to ArenaPlayer.Unselected(OPPONENT_ID, "Bob"),
+                        ),
+                )
+
+            val state1 = (awaitItem() as UiState.Loaded).data
+            assertEquals("Alice", state1.participantNames[USER_ID])
+            assertEquals("Bob", state1.participantNames[OPPONENT_ID])
+
+            // 2. Opponent leaves
+            arenaMatchFlow.value =
+                ArenaMatch.WaitingForAllPlayers(
+                    messages = emptyList(),
+                    numberOfNewMessages = 0,
+                    playerMap = mapOf(USER_ID to ArenaPlayer.Unselected(USER_ID, "Alice")),
+                )
+
+            val state2 = (awaitItem() as UiState.Loaded).data
+            assertEquals("Alice", state2.participantNames[USER_ID])
+            // Bob should still be here!
+            assertEquals("Bob", state2.participantNames[OPPONENT_ID])
+        }
+    }
+
     companion object {
         private const val USER_ID = "user_123"
         private const val OPPONENT_ID = "opponent_456"

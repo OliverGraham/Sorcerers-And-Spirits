@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,11 +38,8 @@ fun CharacterClassCard(
 ) {
     val borderColor =
         when {
-            isActive -> Color(0xFFFFD700)
-
-            // Golden for active
+            isActive -> MaterialTheme.colorScheme.secondary
             isSelected -> MaterialTheme.colorScheme.primary
-
             else -> MaterialTheme.colorScheme.outlineVariant
         }
 
@@ -61,6 +57,8 @@ fun CharacterClassCard(
             enabled = enabled,
             modifier = cardModifier,
             elevation = CardDefaults.elevatedCardElevation(defaultElevation = 8.dp),
+            colors =
+                CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
             CardContent(selectedBy, characterClass)
         }
@@ -70,6 +68,8 @@ fun CharacterClassCard(
             enabled = enabled,
             modifier = cardModifier,
             border = BorderStroke(width = borderWidth, color = borderColor),
+            colors =
+                CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface),
         ) {
             CardContent(selectedBy, characterClass)
         }

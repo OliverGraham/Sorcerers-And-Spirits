@@ -17,12 +17,14 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -107,8 +109,7 @@ class ArenaScreenViewModelTest {
         arenaMatchFlow.value =
             createCombatMatch(
                 nextCombatAction = nextCombatAction,
-                userClass = userClass,
-                opponentClass = opponentClass,
+                playerMap = twoPlayerMap(userClass = userClass, opponentClass = opponentClass),
             )
 
         val viewModel = createViewModel()
@@ -121,6 +122,111 @@ class ArenaScreenViewModelTest {
         val uiState = uiStateFlow.value
         assertIs<UiState.Loaded<ArenaScreenState>>(uiState)
         return assertIs<ArenaState.Combat>(uiState.data.arenaState)
+    }
+
+    private fun combatViewModel(
+        nextCombatAction: NextCombatAction,
+        playerMap: Map<String, ArenaPlayer.Selected>,
+    ): ArenaScreenViewModel {
+        arenaMatchFlow.value =
+            createCombatMatch(nextCombatAction = nextCombatAction, playerMap = playerMap)
+        return createViewModel()
+    }
+
+    /** Collects the UI state via Turbine and returns the loaded [ArenaState.Combat]. */
+    private suspend fun ArenaScreenViewModel.awaitCombatState(): ArenaState.Combat {
+        lateinit var combatState: ArenaState.Combat
+        uiStateFlow.test {
+            skipItems(count = 1) // initial Loading
+            val loaded = assertIs<UiState.Loaded<ArenaScreenState>>(value = awaitItem())
+            combatState = assertIs<ArenaState.Combat>(value = loaded.data.arenaState)
+            cancelAndIgnoreRemainingEvents()
+        }
+        return combatState
+    }
+
+    private fun ArenaState.Combat.attackControl(): ArenaCombatControl.NormalAttack =
+        combatControls.filterIsInstance<ArenaCombatControl.NormalAttack>().single()
+
+    private fun ArenaState.Combat.abilityRollControl(): ArenaCombatControl.AbilityRoll =
+        combatControls.filterIsInstance<ArenaCombatControl.AbilityRoll>().single()
+
+    private inline fun <reified T : AbilityActionState> ArenaState.Combat.activatedControlFor():
+        ArenaCombatControl.ActivatedAbility =
+        combatControls.filterIsInstance<ArenaCombatControl.ActivatedAbility>().single {
+            it.action is T
+        }
+
+    /** Asserts the user can only make a normal attack on their turn (no activated ability). */
+    private fun ArenaState.Combat.assertOnlyAttackOffered() {
+        assertTrue(actual = isItThisUsersTurn)
+        assertTrue(actual = attackControl().requiresTarget)
+        assertTrue(actual = combatControls.none { it is ArenaCombatControl.ActivatedAbility })
+    }
+
+    private fun ArenaScreenViewModel.useAbility(
+        action: AbilityActionState,
+        targetedOpponentUserId: String = "",
+        userPlayerId: String = USER_ID,
+    ) =
+        onUseAbility(
+            useAbilityArguments =
+                UseAbilityArguments(
+                    abilityActionState = action,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    userPlayerId = userPlayerId,
+                )
+        )
+
+    private fun ArenaScreenViewModel.attack(
+        combatActionState: CombatActionState,
+        targetedOpponentUserId: String,
+        userPlayerId: String = USER_ID,
+    ) =
+        onAttack(
+            attackArguments =
+                AttackArguments(
+                    combatActionState = combatActionState,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    userPlayerId = userPlayerId,
+                )
+        )
+
+    private fun capturedAbilityRoll(): CurrentCombatAction.AbilityRoll =
+        assertIs<CurrentCombatAction.AbilityRoll>(value = currentCombatActionSlot.captured)
+
+    private fun capturedNormalAttack(): CurrentCombatAction.NormalAttack =
+        assertIs<CurrentCombatAction.NormalAttack>(value = currentCombatActionSlot.captured)
+
+    /**
+     * Sets up a defender-side passive ability roll owned by the user, then asserts the offered
+     * [ArenaCombatControl.AbilityRoll] matches the expected label and target requirement.
+     */
+    private suspend fun assertPassiveRollControl(
+        purpose: AbilityAction,
+        userClass: CharacterClass,
+        opponentClass: CharacterClass = CharacterClass.getMage(),
+        attackerUserId: String = OPPONENT_ID,
+        defenderUserId: String = USER_ID,
+        expectedLabel: String,
+        expectedRequiresTarget: Boolean,
+    ) {
+        val combatState =
+            combatViewModel(
+                    nextCombatAction =
+                        abilityRollAction(
+                            purpose = purpose,
+                            attackerUserId = attackerUserId,
+                            defenderUserId = defenderUserId,
+                            activeUserIds = setOf(USER_ID),
+                        ),
+                    playerMap = twoPlayerMap(userClass = userClass, opponentClass = opponentClass),
+                )
+                .awaitCombatState()
+
+        val control = combatState.abilityRollControl()
+        assertEquals(expected = expectedLabel, actual = control.label)
+        assertEquals(expected = expectedRequiresTarget, actual = control.requiresTarget)
     }
 
     // ---------- Domain data -> UI state: which controls are available ----------
@@ -584,43 +690,644 @@ class ArenaScreenViewModelTest {
         }
     }
 
+    // ---------- Idle-turn controls per class (no activated ability) ----------
+
+    @Test
+    fun `Given an idle turn for the user's Rogue, then only an attack control is offered`() =
+        runTest {
+            combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getRogue()),
+                )
+                .awaitCombatState()
+                .assertOnlyAttackOffered()
+        }
+
+    @Test
+    fun `Given an idle turn for the user's Bard, then only an attack control is offered`() =
+        runTest {
+            combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getBard()),
+                )
+                .awaitCombatState()
+                .assertOnlyAttackOffered()
+        }
+
+    @Test
+    fun `Given an idle turn for the user's Mage, then only an attack control is offered`() =
+        runTest {
+            combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getMage()),
+                )
+                .awaitCombatState()
+                .assertOnlyAttackOffered()
+        }
+
+    @Test
+    fun `Given an idle turn for the user's Paladin, then only an attack control is offered`() =
+        runTest {
+            combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getPaladin()),
+                )
+                .awaitCombatState()
+                .assertOnlyAttackOffered()
+        }
+
+    @Test
+    fun `Given an idle turn for the user's Illusionist, then an Impersonate control that requires a target is offered`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
+                    )
+                    .awaitCombatState()
+
+            val impersonateControl =
+                combatState.activatedControlFor<AbilityActionState.Activated.Impersonate>()
+            assertEquals(expected = "Impersonate", actual = impersonateControl.label)
+            assertTrue(actual = impersonateControl.requiresTarget)
+            // A fresh Illusionist has copied nothing, so Impersonate is the only activated control
+            assertEquals(
+                expected = 1,
+                actual =
+                    combatState.combatControls.count { it is ArenaCombatControl.ActivatedAbility },
+            )
+        }
+
+    @Test
+    fun `Given the user's Illusionist has impersonated All In, then both Impersonate and the copied All In controls are offered`() =
+        runTest {
+            val illusionist =
+                CharacterClass.getIllusionist()
+                    .copy(
+                        offensiveAbility =
+                            OffensiveAbility.Impersonate(
+                                impersonatedAbility = OffensiveAbility.AllIn()
+                            )
+                    )
+
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = illusionist),
+                    )
+                    .awaitCombatState()
+
+            val activatedControls =
+                combatState.combatControls.filterIsInstance<ArenaCombatControl.ActivatedAbility>()
+            assertEquals(expected = 2, actual = activatedControls.size)
+            assertTrue(
+                actual =
+                    activatedControls.any { it.action is AbilityActionState.Activated.Impersonate }
+            )
+            assertTrue(
+                actual = activatedControls.any { it.action is AbilityActionState.Activated.AllIn }
+            )
+        }
+
+    @Test
+    fun `Given the user's Illusionist has impersonated Prepare Attack, then the copied control requires a target`() =
+        runTest {
+            val illusionist =
+                CharacterClass.getIllusionist()
+                    .copy(
+                        offensiveAbility =
+                            OffensiveAbility.Impersonate(
+                                impersonatedAbility = OffensiveAbility.PrepareAttack
+                            )
+                    )
+
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = illusionist),
+                    )
+                    .awaitCombatState()
+
+            val prepareAttackControl =
+                combatState.activatedControlFor<AbilityActionState.Activated.PrepareAttack>()
+            assertEquals(expected = "Prepare Attack", actual = prepareAttackControl.label)
+            assertTrue(actual = prepareAttackControl.requiresTarget)
+        }
+
+    // ---------- Controls while an attack is in progress ----------
+
+    @Test
+    fun `Given a normal attack in progress where the user is not the attacker, then the user has no combat controls`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction =
+                            normalAttackAction(
+                                roll = NormalAttackType.ArmorClass,
+                                attackerUserId = OPPONENT_ID,
+                                defenderUserId = USER_ID,
+                            ),
+                        playerMap = twoPlayerMap(userClass = CharacterClass.getRogue()),
+                    )
+                    .awaitCombatState()
+
+            assertFalse(actual = combatState.isItThisUsersTurn)
+            assertTrue(actual = combatState.combatControls.isEmpty())
+        }
+
+    @Test
+    fun `Given a Teleport roll-off where the user has already rolled, then no Teleport control is offered`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction =
+                            createTeleportRollOff(attackerRoll = null, defenderRoll = 5),
+                        playerMap =
+                            twoPlayerMap(
+                                userClass = CharacterClass.getMage(),
+                                opponentClass = CharacterClass.getDuelist(),
+                            ),
+                    )
+                    .awaitCombatState()
+
+            assertTrue(actual = combatState.combatControls.isEmpty())
+        }
+
+    // ---------- Passive ability roll controls owned by the user ----------
+
+    @Test
+    fun `Given a Riposte roll that belongs to the user's Duelist, then a Riposte control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.Riposte(attackerRollTotal = 7),
+                userClass = CharacterClass.getDuelist(),
+                opponentClass = CharacterClass.getRogue(),
+                expectedLabel = "Riposte",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given a Lucky Coin flip roll that belongs to the user's Gambler, then a Lucky Coin control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = 8),
+                userClass = CharacterClass.getGambler(),
+                expectedLabel = "Lucky Coin",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given a Lucky Coin high-roller roll that belongs to the user's Gambler, then a Lucky Coin control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.LuckyCoin.HighRoller(attackerRollTotal = 9),
+                userClass = CharacterClass.getGambler(),
+                expectedLabel = "Lucky Coin",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given a Persuade strum-lute roll that belongs to the user's Bard, then a Persuade control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.Persuade.StrumLute,
+                userClass = CharacterClass.getBard(),
+                expectedLabel = "Persuade",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given a Persuade charm that belongs to the user's Bard, then a Persuade control that requires a target is offered`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose =
+                    AbilityAction.Passive.Persuade.Charm(targetableUserIds = setOf(OPPONENT_ID)),
+                userClass = CharacterClass.getBard(),
+                expectedLabel = "Persuade",
+                expectedRequiresTarget = true,
+            )
+        }
+
+    @Test
+    fun `Given a Mirror Image roll that belongs to the user's Illusionist, then a Mirror Image control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose =
+                    AbilityAction.Passive.MirrorImage(
+                        firstDie =
+                            AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                        secondDie =
+                            AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 4),
+                        attackType = NormalAttackType.ArmorClass,
+                        mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                    ),
+                userClass = CharacterClass.getIllusionist(),
+                expectedLabel = "Mirror Image",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given a Holy Shield prayer roll that belongs to the user's Paladin, then a Holy Shield control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.HolyShield.Prayer,
+                userClass = CharacterClass.getPaladin(),
+                opponentClass = CharacterClass.getRogue(),
+                expectedLabel = "Holy Shield",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given a Holy Shield wrath roll that belongs to the user's Paladin, then a Holy Shield control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.HolyShield.Wrath,
+                userClass = CharacterClass.getPaladin(),
+                opponentClass = CharacterClass.getRogue(),
+                expectedLabel = "Holy Shield",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    @Test
+    fun `Given an Encore roll that belongs to the user's attacking Bard, then an Encore control is offered without a target`() =
+        runTest {
+            assertPassiveRollControl(
+                purpose = AbilityAction.Passive.Encore,
+                userClass = CharacterClass.getBard(),
+                attackerUserId = USER_ID,
+                defenderUserId = OPPONENT_ID,
+                expectedLabel = "Encore",
+                expectedRequiresTarget = false,
+            )
+        }
+
+    // ---------- UI action -> Domain conversion (abilities) ----------
+
+    @Test
+    fun `When the user activates Summon Minion, then a Summon Minion ability action targets the user themselves`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getNecromancer()),
+                )
+            val control =
+                viewModel
+                    .awaitCombatState()
+                    .activatedControlFor<AbilityActionState.Activated.SummonMinion>()
+
+            viewModel.useAbility(action = control.action)
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            assertIs<AbilityAction.Activated.SummonMinion>(value = abilityRoll.purpose)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.originalTurnUserId)
+        }
+
+    @Test
+    fun `When the user activates Impersonate with a target, then an Impersonate ability action targets that opponent`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
+                )
+            val control =
+                viewModel
+                    .awaitCombatState()
+                    .activatedControlFor<AbilityActionState.Activated.Impersonate>()
+
+            viewModel.useAbility(action = control.action, targetedOpponentUserId = OPPONENT_ID)
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            assertIs<AbilityAction.Activated.Impersonate>(value = abilityRoll.purpose)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.defenderUserId)
+        }
+
+    @Test
+    fun `When the user activates a copied All In via Impersonate, then an All In ability action is sent to the Domain`() =
+        runTest {
+            val illusionist =
+                CharacterClass.getIllusionist()
+                    .copy(
+                        offensiveAbility =
+                            OffensiveAbility.Impersonate(
+                                impersonatedAbility = OffensiveAbility.AllIn()
+                            )
+                    )
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap = twoPlayerMap(userClass = illusionist),
+                )
+            val allInControl =
+                viewModel
+                    .awaitCombatState()
+                    .activatedControlFor<AbilityActionState.Activated.AllIn>()
+
+            viewModel.useAbility(action = allInControl.action)
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            assertIs<AbilityAction.Activated.AllIn>(value = abilityRoll.purpose)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+        }
+
+    @Test
+    fun `When the user continues a normal attack with a pending health roll, then a health roll is sent with the same combatants`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction =
+                        normalAttackAction(
+                            roll = NormalAttackType.Health,
+                            attackerUserId = USER_ID,
+                            defenderUserId = OPPONENT_ID,
+                            activeUserIds = setOf(USER_ID),
+                        ),
+                    playerMap = twoPlayerMap(userClass = CharacterClass.getDuelist()),
+                )
+            val combatState = viewModel.awaitCombatState()
+
+            viewModel.attack(
+                combatActionState = combatState.combatActionState,
+                targetedOpponentUserId = OPPONENT_ID,
+            )
+            runCurrent()
+
+            val normalAttack = capturedNormalAttack()
+            assertEquals(expected = NormalAttackType.Health, actual = normalAttack.roll)
+            assertEquals(expected = USER_ID, actual = normalAttack.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = normalAttack.defenderUserId)
+        }
+
+    @Test
+    fun `When the user's Duelist responds with Riposte, then the ability roll keeps the original attacker and defender`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction =
+                        abilityRollAction(
+                            purpose = AbilityAction.Passive.Riposte(attackerRollTotal = 7),
+                            attackerUserId = OPPONENT_ID,
+                            defenderUserId = USER_ID,
+                            activeUserIds = setOf(USER_ID),
+                        ),
+                    playerMap =
+                        twoPlayerMap(
+                            userClass = CharacterClass.getDuelist(),
+                            opponentClass = CharacterClass.getRogue(),
+                        ),
+                )
+            val control = viewModel.awaitCombatState().abilityRollControl()
+
+            viewModel.useAbility(action = control.action)
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            assertIs<AbilityAction.Passive.Riposte>(value = abilityRoll.purpose)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.originalTurnUserId)
+        }
+
+    @Test
+    fun `When the user's Paladin responds with Holy Shield, then the ability roll keeps the original combatants`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction =
+                        abilityRollAction(
+                            purpose = AbilityAction.Passive.HolyShield.Prayer,
+                            attackerUserId = OPPONENT_ID,
+                            defenderUserId = USER_ID,
+                            activeUserIds = setOf(USER_ID),
+                        ),
+                    playerMap =
+                        twoPlayerMap(
+                            userClass = CharacterClass.getPaladin(),
+                            opponentClass = CharacterClass.getRogue(),
+                        ),
+                )
+            val control = viewModel.awaitCombatState().abilityRollControl()
+
+            viewModel.useAbility(action = control.action)
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            assertIs<AbilityAction.Passive.HolyShield.Prayer>(value = abilityRoll.purpose)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
+        }
+
+    // ---------- Three-player scenarios ----------
+
+    @Test
+    fun `Given a three-player idle turn for the user's Duelist, then attack and Prepare Attack controls are offered`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap =
+                            threePlayerMap(
+                                userClass = CharacterClass.getDuelist(),
+                                firstOpponentClass = CharacterClass.getRogue(),
+                                secondOpponentClass = CharacterClass.getMage(),
+                            ),
+                    )
+                    .awaitCombatState()
+
+            assertTrue(actual = combatState.isItThisUsersTurn)
+            assertTrue(actual = combatState.attackControl().requiresTarget)
+            val prepareAttack =
+                combatState.activatedControlFor<AbilityActionState.Activated.PrepareAttack>()
+            assertTrue(actual = prepareAttack.requiresTarget)
+        }
+
+    @Test
+    fun `Given a three-player game where it is an opponent's turn, then the user has no combat controls`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(OPPONENT_ID),
+                        playerMap =
+                            threePlayerMap(
+                                userClass = CharacterClass.getRogue(),
+                                firstOpponentClass = CharacterClass.getDuelist(),
+                                secondOpponentClass = CharacterClass.getMage(),
+                            ),
+                    )
+                    .awaitCombatState()
+
+            assertFalse(actual = combatState.isItThisUsersTurn)
+            assertTrue(actual = combatState.combatControls.isEmpty())
+        }
+
+    @Test
+    fun `When the user attacks a chosen opponent in a three-player game, then that opponent is the defender`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap =
+                        threePlayerMap(
+                            userClass = CharacterClass.getRogue(),
+                            firstOpponentClass = CharacterClass.getDuelist(),
+                            secondOpponentClass = CharacterClass.getMage(),
+                        ),
+                )
+            val combatState = viewModel.awaitCombatState()
+
+            viewModel.attack(
+                combatActionState = combatState.combatActionState,
+                targetedOpponentUserId = SECOND_OPPONENT_ID,
+            )
+            runCurrent()
+
+            val normalAttack = capturedNormalAttack()
+            assertEquals(expected = NormalAttackType.ArmorClass, actual = normalAttack.roll)
+            assertEquals(expected = USER_ID, actual = normalAttack.attackerUserId)
+            assertEquals(expected = SECOND_OPPONENT_ID, actual = normalAttack.defenderUserId)
+        }
+
+    @Test
+    fun `When the user's Bard charms a chosen target in a three-player game, then the charm target is set on the ability action`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction =
+                        abilityRollAction(
+                            purpose =
+                                AbilityAction.Passive.Persuade.Charm(
+                                    targetableUserIds = setOf(OPPONENT_ID, SECOND_OPPONENT_ID)
+                                ),
+                            attackerUserId = OPPONENT_ID,
+                            defenderUserId = USER_ID,
+                            activeUserIds = setOf(USER_ID),
+                        ),
+                    playerMap =
+                        threePlayerMap(
+                            userClass = CharacterClass.getBard(),
+                            firstOpponentClass = CharacterClass.getRogue(),
+                            secondOpponentClass = CharacterClass.getMage(),
+                        ),
+                )
+            val control = viewModel.awaitCombatState().abilityRollControl()
+
+            viewModel.useAbility(
+                action = control.action,
+                targetedOpponentUserId = SECOND_OPPONENT_ID,
+            )
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            val charm = assertIs<AbilityAction.Passive.Persuade.Charm>(value = abilityRoll.purpose)
+            assertEquals(expected = SECOND_OPPONENT_ID, actual = charm.selectedCharmTargetUserId)
+            assertEquals(
+                expected = setOf(OPPONENT_ID, SECOND_OPPONENT_ID),
+                actual = charm.targetableUserIds,
+            )
+        }
+
     companion object {
         private const val USER_ID = "user_123"
         private const val OPPONENT_ID = "opponent_456"
+        private const val SECOND_OPPONENT_ID = "opponent_789"
+
+        private fun selectedPlayer(
+            userId: String,
+            displayName: String,
+            characterClass: CharacterClass,
+        ) =
+            ArenaPlayer.Selected(
+                userId = userId,
+                displayName = displayName,
+                characterClass = characterClass,
+            )
+
+        private fun twoPlayerMap(
+            userClass: CharacterClass,
+            opponentClass: CharacterClass = CharacterClass.getMage(),
+        ) =
+            mapOf(
+                USER_ID to selectedPlayer(USER_ID, "User", userClass),
+                OPPONENT_ID to selectedPlayer(OPPONENT_ID, "Opponent", opponentClass),
+            )
+
+        private fun threePlayerMap(
+            userClass: CharacterClass,
+            firstOpponentClass: CharacterClass,
+            secondOpponentClass: CharacterClass,
+        ) =
+            mapOf(
+                USER_ID to selectedPlayer(USER_ID, "User", userClass),
+                OPPONENT_ID to selectedPlayer(OPPONENT_ID, "Opponent", firstOpponentClass),
+                SECOND_OPPONENT_ID to
+                    selectedPlayer(SECOND_OPPONENT_ID, "Second Opponent", secondOpponentClass),
+            )
 
         private fun createCombatMatch(
             nextCombatAction: NextCombatAction,
-            userClass: CharacterClass,
-            opponentClass: CharacterClass,
+            playerMap: Map<String, ArenaPlayer.Selected>,
             roundNumber: Int = 1,
         ) =
             ArenaMatch.Combat(
                 messages = emptyList(),
                 numberOfNewMessages = 0,
-                playerMap =
-                    mapOf(
-                        USER_ID to
-                            ArenaPlayer.Selected(
-                                userId = USER_ID,
-                                displayName = "User",
-                                characterClass = userClass,
-                            ),
-                        OPPONENT_ID to
-                            ArenaPlayer.Selected(
-                                userId = OPPONENT_ID,
-                                displayName = "Opponent",
-                                characterClass = opponentClass,
-                            ),
-                    ),
+                playerMap = playerMap,
                 nextCombatAction = nextCombatAction,
                 roundNumber = roundNumber,
                 isNewRound = false,
                 doublesBonus = null,
             )
 
+        private fun idleTurn(vararg activeUserIds: String) =
+            NextCombatAction.Idle(activeUserIds = activeUserIds.toSet())
+
+        private fun normalAttackAction(
+            roll: NormalAttackType,
+            attackerUserId: String,
+            defenderUserId: String,
+            originalTurnUserId: String = attackerUserId,
+            activeUserIds: Set<String> = setOf(attackerUserId),
+        ) =
+            NextCombatAction.NormalAttack(
+                roll = roll,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                originalTurnUserId = originalTurnUserId,
+                activeUserIds = activeUserIds,
+            )
+
+        private fun abilityRollAction(
+            purpose: AbilityAction,
+            attackerUserId: String,
+            defenderUserId: String,
+            originalTurnUserId: String = attackerUserId,
+            activeUserIds: Set<String>,
+        ) =
+            NextCombatAction.AbilityRoll(
+                purpose = purpose,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                originalTurnUserId = originalTurnUserId,
+                activeUserIds = activeUserIds,
+            )
+
         /** A Teleport roll-off where the opponent attacks and the user is the defending Mage. */
         private fun createTeleportRollOff(attackerRoll: Int?, defenderRoll: Int?) =
-            NextCombatAction.AbilityRoll(
+            abilityRollAction(
                 purpose =
                     AbilityAction.Passive.Teleport(
                         attackerRoll =
@@ -636,7 +1343,6 @@ class ArenaScreenViewModelTest {
                     ),
                 attackerUserId = OPPONENT_ID,
                 defenderUserId = USER_ID,
-                originalTurnUserId = OPPONENT_ID,
                 activeUserIds = setOf(USER_ID),
             )
     }

@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClas
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -47,6 +48,7 @@ class ArenaScreenViewModel(
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
+    private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
 ) : ViewModel() {
 
@@ -231,8 +233,12 @@ class ArenaScreenViewModel(
     }
 
     fun onStayForAnotherMatch() {
-        _uiStateFlow.updateLoaded { screenState ->
-            screenState.copy(hasMadeKnockoutDecision = true)
+        viewModelScope.launch {
+            stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
+
+            _uiStateFlow.updateLoaded { screenState ->
+                screenState.copy(hasMadeKnockoutDecision = true)
+            }
         }
     }
 

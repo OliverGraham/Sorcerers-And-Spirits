@@ -25,7 +25,11 @@ internal class ExitArena(private val userId: String) {
                 updatedPlayers.remove(key = userId)
 
                 if (updatedPlayers.size < 2) {
-                    ArenaMatchEntity.Finished(messages = messages, numberOfNewMessages = 0)
+                    ArenaMatchEntity.Finished(
+                        messages = messages,
+                        numberOfNewMessages = 0,
+                        playerEntitiesMap = updatedPlayers,
+                    )
                 } else {
                     val nextActivePlayerId =
                         if (activePlayerUserId == userId) {
@@ -45,7 +49,11 @@ internal class ExitArena(private val userId: String) {
                 updatedPlayers.remove(key = userId)
 
                 if (updatedPlayers.size < 2) {
-                    ArenaMatchEntity.Finished(messages = messages, numberOfNewMessages = 0)
+                    ArenaMatchEntity.Finished(
+                        messages = messages,
+                        numberOfNewMessages = 0,
+                        playerEntitiesMap = updatedPlayers,
+                    )
                 } else {
                     val updatedNextCombatAction =
                         if (userId in nextCombatActionEntity.activeUserIds) {

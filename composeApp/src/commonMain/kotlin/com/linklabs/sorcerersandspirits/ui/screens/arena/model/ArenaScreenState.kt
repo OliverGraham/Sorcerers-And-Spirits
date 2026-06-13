@@ -28,7 +28,9 @@ data class ArenaScreenState(
 
     val characterClasses = CharacterClass.getAllClasses().map { it.toState() }
 
-    val showKnockoutDialog = isUserPlayerKnockedOut && !hasMadeKnockoutDecision
+    // TODO: Update property name and way to assign it
+    val showKnockoutDialog =
+        (isUserPlayerKnockedOut || arenaState is ArenaState.Finished) && !hasMadeKnockoutDecision
 }
 
 @Immutable
@@ -73,29 +75,34 @@ sealed interface ActiveState : ArenaState {
     val userPlayerId: String
 }
 
+// TODO: Need to refactor this badly
+
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
 ): ArenaStateUpdate {
-    val displayNames =
-        when (this) {
-            is ArenaMatch.ChoosingClasses -> playerMap.mapValues { it.value.displayName }
-
-            is ArenaMatch.Combat -> playerMap.mapValues { it.value.displayName }
-
-            is ArenaMatch.WaitingForAllPlayers,
-            is ArenaMatch.Finished -> emptyMap()
-        }
-
     val messages =
         messages.map { incomingMessage ->
-            incomingMessage.message.toState(id = incomingMessage.id, displayNames = displayNames)
+            incomingMessage.message.toState(
+                id = incomingMessage.id,
+                displayNames = playerMap.mapValues { it.value.displayName },
+            )
         }
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
-    val isUserPlayerKnockedOut = previousState?.isUserPlayerKnockedOut ?: false
-    val hasMadeKnockoutDecision = previousState?.hasMadeKnockoutDecision ?: false
+
+    val userPlayer = playerMap.getValue(key = userId)
+
+    val isUserPlayerKnockedOut =
+        (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious() ?: false
+
+    val hasMadeKnockoutDecision =
+        if (this is ArenaMatch.ChoosingClasses) {
+            false
+        } else {
+            previousState?.hasMadeKnockoutDecision ?: false
+        }
 
     val nextArenaState =
         when (this) {
@@ -116,8 +123,6 @@ internal fun ArenaMatch.toUpdatedState(
             }
 
             is ArenaMatch.Combat -> {
-                // TODO: Pass along UserPlayerKnockedOut? Use isConscious on user to determine
-
                 ArenaState.Combat(
                     playerMap = playerMap.mapValues { it.value.toSelectedState() },
                     userPlayerId = userId,

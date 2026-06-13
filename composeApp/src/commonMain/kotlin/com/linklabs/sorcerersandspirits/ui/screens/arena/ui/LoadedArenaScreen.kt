@@ -59,7 +59,10 @@ internal fun LoadedArenaScreen(
     }
 
     if (screenState.showKnockoutDialog) {
-        KnockoutDialog()
+        MatchDecisionDialog(
+            isMatchFinished = screenState.arenaState is ArenaState.Finished,
+            isUserPlayerKnockedOut = screenState.isUserPlayerKnockedOut,
+        )
     }
 }
 

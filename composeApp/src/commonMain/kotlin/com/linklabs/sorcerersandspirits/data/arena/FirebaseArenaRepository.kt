@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
@@ -78,6 +79,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                 ArenaMatchEntity.Finished(
                     messages = existingMatch.messages + newMessages,
                     numberOfNewMessages = newMessages.size,
+                    playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
                 )
             } else {
                 ArenaMatchEntity.Combat(
@@ -113,6 +115,11 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
     override suspend fun exitArena(arenaId: String, userId: String) {
         ExitArena(userId = userId)
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    }
+
+    override suspend fun stayForAnotherMatch(arenaId: String, userId: String) {
+        StayForAnotherMatch(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 }

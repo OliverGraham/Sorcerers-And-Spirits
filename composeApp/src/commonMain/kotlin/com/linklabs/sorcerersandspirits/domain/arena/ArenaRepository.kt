@@ -29,4 +29,6 @@ interface ArenaRepository {
     suspend fun removeArenaMatch(arenaId: String)
 
     suspend fun exitArena(arenaId: String, userId: String)
+
+    suspend fun stayForAnotherMatch(arenaId: String, userId: String)
 }

@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClas
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -56,6 +57,7 @@ class ArenaScreenViewModelTest {
     private val getUserIdUseCase: GetUserIdUseCase = mockk()
     private val performCombatActionUseCase: PerformCombatActionUseCase = mockk()
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase = mockk(relaxed = true)
+    private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase = mockk(relaxed = true)
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase =
         mockk(relaxed = true)
 
@@ -93,6 +95,7 @@ class ArenaScreenViewModelTest {
             getUserIdUseCase = getUserIdUseCase,
             performCombatActionUseCase = performCombatActionUseCase,
             removeArenaMatchUseCase = removeArenaMatchUseCase,
+            stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
             setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
         )
 
@@ -229,6 +232,8 @@ class ArenaScreenViewModelTest {
         assertFalse(actual = combatState.isItThisUsersTurn)
         assertTrue(actual = combatState.combatControls.isEmpty())
     }
+
+    // TODO: All fucked
 
     @Test
     fun `Given the user's pending health roll, then only an attack control without a target requirement is offered`() =
@@ -432,7 +437,12 @@ class ArenaScreenViewModelTest {
     @Test
     fun `onTryLeaveArena shows forfeit dialog when state is WaitingForAllPlayers`() = runTest {
         arenaMatchFlow.value =
-            ArenaMatch.WaitingForAllPlayers(messages = emptyList(), numberOfNewMessages = 0)
+            ArenaMatch.WaitingForAllPlayers(
+                messages = emptyList(),
+                numberOfNewMessages = 0,
+                playerMap =
+                    mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
+            )
         val viewModel = createViewModel()
 
         viewModel.uiStateFlow.test {
@@ -456,7 +466,12 @@ class ArenaScreenViewModelTest {
     @Test
     fun `onConfirmLeaveArena calls use case and hides dialog`() = runTest {
         arenaMatchFlow.value =
-            ArenaMatch.WaitingForAllPlayers(messages = emptyList(), numberOfNewMessages = 0)
+            ArenaMatch.WaitingForAllPlayers(
+                messages = emptyList(),
+                numberOfNewMessages = 0,
+                playerMap =
+                    mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
+            )
         val viewModel = createViewModel()
 
         viewModel.uiStateFlow.test {
@@ -480,7 +495,12 @@ class ArenaScreenViewModelTest {
     @Test
     fun `onDismissForfeitDialog hides dialog`() = runTest {
         arenaMatchFlow.value =
-            ArenaMatch.WaitingForAllPlayers(messages = emptyList(), numberOfNewMessages = 0)
+            ArenaMatch.WaitingForAllPlayers(
+                messages = emptyList(),
+                numberOfNewMessages = 0,
+                playerMap =
+                    mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
+            )
         val viewModel = createViewModel()
 
         viewModel.uiStateFlow.test {
@@ -495,6 +515,34 @@ class ArenaScreenViewModelTest {
             viewModel.onDismissForfeitDialog()
             assertFalse((awaitItem() as UiState.Loaded).data.showForfeitDialog)
         }
+    }
+
+    @Test
+    fun `onStayForAnotherMatch calls use case and updates state`() = runTest {
+        arenaMatchFlow.value =
+            ArenaMatch.Finished(
+                messages = emptyList(),
+                numberOfNewMessages = 0,
+                playerMap =
+                    mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
+            )
+        val viewModel = createViewModel()
+
+        viewModel.uiStateFlow.test {
+            // Loading
+            awaitItem()
+            // Loaded
+            val initialState = awaitItem() as UiState.Loaded
+            assertFalse(initialState.data.hasMadeKnockoutDecision)
+
+            viewModel.onStayForAnotherMatch()
+
+            // Loaded (updated)
+            val updatedState = awaitItem() as UiState.Loaded
+            assertTrue(updatedState.data.hasMadeKnockoutDecision)
+        }
+
+        coVerify { stayForAnotherMatchUseCase(arenaId = arguments.arenaId) }
     }
 
     companion object {

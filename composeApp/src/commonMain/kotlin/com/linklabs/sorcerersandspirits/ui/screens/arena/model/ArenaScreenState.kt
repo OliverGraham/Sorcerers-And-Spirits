@@ -17,6 +17,7 @@ data class ArenaScreenState(
     val isUserPlayerKnockedOut: Boolean,
     val hasMadeKnockoutDecision: Boolean,
     val arenaState: ArenaState,
+    val participantNames: Map<String, String>,
 ) {
     val latestMessage: ArenaMessageState? =
         messages.getOrNull(
@@ -81,18 +82,21 @@ internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
 ): ArenaStateUpdate {
+    val userPlayer = playerMap.getValue(key = userId)
+
+    val currentNames = playerMap.mapValues { it.value.displayName }
+    val participantNames = (previousState?.participantNames ?: emptyMap()) + currentNames
+
     val messages =
         messages.map { incomingMessage ->
             incomingMessage.message.toState(
                 id = incomingMessage.id,
-                displayNames = playerMap.mapValues { it.value.displayName },
+                displayNames = participantNames,
             )
         }
     val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
-
-    val userPlayer = playerMap.getValue(key = userId)
 
     val isUserPlayerKnockedOut =
         (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious()?.not() ?: false
@@ -144,6 +148,7 @@ internal fun ArenaMatch.toUpdatedState(
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = nextArenaState,
+            participantNames = participantNames,
         )
 
     val timerAction =

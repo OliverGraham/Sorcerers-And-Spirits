@@ -57,6 +57,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = arenaState,
+            participantNames = getExamplePlayers().mapValues { it.value.displayName },
         )
 
     private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers

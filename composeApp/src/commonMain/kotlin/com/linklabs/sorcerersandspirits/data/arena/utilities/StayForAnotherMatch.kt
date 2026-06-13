@@ -40,11 +40,7 @@ internal class StayForAnotherMatch(private val userId: String) {
                 }
 
             if (resetPlayers.size < 2) {
-                ArenaMatchEntity.Finished(
-                    playerEntitiesMap = resetPlayers,
-                    messages = emptyList(),
-                    numberOfNewMessages = 0,
-                )
+                null
             } else {
                 ArenaMatchEntity.ChoosingClasses(
                     playerEntitiesMap = resetPlayers,

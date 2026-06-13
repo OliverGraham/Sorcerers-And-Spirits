@@ -244,9 +244,12 @@ class ArenaScreenViewModel(
 
     private fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
-            // TODO Arena: Probably show message briefly and then navigate back, with
-            //  cleanup, since if this is null then there was some problem
-            _uiStateFlow.value = UiState.Error
+            screenStateFlowJob?.cancel()
+
+            viewModelScope.launch {
+                setCurrentTravelerAvailableUseCase()
+                _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+            }
             return
         }
 

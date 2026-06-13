@@ -95,7 +95,7 @@ internal fun ArenaMatch.toUpdatedState(
     val userPlayer = playerMap.getValue(key = userId)
 
     val isUserPlayerKnockedOut =
-        (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious() ?: false
+        (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious()?.not() ?: false
 
     val hasMadeKnockoutDecision =
         if (this is ArenaMatch.ChoosingClasses) {

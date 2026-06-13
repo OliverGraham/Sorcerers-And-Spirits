@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
-// TODO Teleport Messages
 internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
     fun triggerTeleport() = combatMutator.triggerTeleport()

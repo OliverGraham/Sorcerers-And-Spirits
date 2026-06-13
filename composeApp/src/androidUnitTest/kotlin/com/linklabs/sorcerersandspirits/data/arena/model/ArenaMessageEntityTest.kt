@@ -87,14 +87,19 @@ class ArenaMessageEntityTest {
                         OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.AllIn()),
                 ),
                 ArenaMessage.MirrorImage.Trigger,
-                ArenaMessage.MirrorImage.Pass,
+                ArenaMessage.MirrorImage.Pass(
+                    attackerUserId = "attacker",
+                    outcome = NormalRollMessageType.ArmorClassMiss,
+                ),
                 ArenaMessage.MirrorImage.Reroll(firstDie = 3, secondDie = 4),
                 ArenaMessage.MirrorImage.TemptFate(
                     rerolledMirrorImageDie =
                         AbilityAction.Passive.MirrorImage.MirrorImageDie(
                             originalRoll = 4,
                             reroll = 6,
-                        )
+                        ),
+                    attackerUserId = "attacker",
+                    outcome = NormalRollMessageType.Knockout,
                 ),
                 ArenaMessage.SpellPotency(
                     mageUserId = "mage",

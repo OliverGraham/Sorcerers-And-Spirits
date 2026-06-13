@@ -136,15 +136,25 @@ sealed interface ArenaMessageState {
     sealed interface MirrorImage : ArenaMessageState {
         @Immutable data class Trigger(override val id: String) : MirrorImage
 
-        @Immutable data class Pass(override val id: String) : MirrorImage
+        @Immutable
+        data class Pass(
+            override val id: String,
+            val attackerName: String,
+            val outcome: NormalRollMessageType,
+        ) : MirrorImage
 
         @Immutable
         data class Reroll(override val id: String, val firstDie: Int, val secondDie: Int) :
             MirrorImage
 
         @Immutable
-        data class TemptFate(override val id: String, val originalRoll: Int, val finalRoll: Int) :
-            MirrorImage
+        data class TemptFate(
+            override val id: String,
+            val originalRoll: Int,
+            val finalRoll: Int,
+            val attackerName: String,
+            val outcome: NormalRollMessageType,
+        ) : MirrorImage
     }
 
     @Immutable
@@ -282,7 +292,12 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
 
         is ArenaMessage.LuckyCoin.Trigger -> ArenaMessageState.LuckyCoin.Trigger(id = id)
 
-        is ArenaMessage.MirrorImage.Pass -> ArenaMessageState.MirrorImage.Pass(id = id)
+        is ArenaMessage.MirrorImage.Pass ->
+            ArenaMessageState.MirrorImage.Pass(
+                id = id,
+                attackerName = displayNames.resolve(userId = attackerUserId),
+                outcome = outcome,
+            )
 
         is ArenaMessage.MirrorImage.Reroll ->
             ArenaMessageState.MirrorImage.Reroll(
@@ -298,6 +313,8 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
                 id = id,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 finalRoll = rerolledMirrorImageDie.finalValue,
+                attackerName = displayNames.resolve(userId = attackerUserId),
+                outcome = outcome,
             )
 
         is ArenaMessage.NormalRoll ->

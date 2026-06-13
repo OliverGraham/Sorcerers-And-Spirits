@@ -184,7 +184,11 @@ sealed interface ArenaMessageEntity {
 
         @Serializable
         @SerialName(value = MIRROR_IMAGE_PASS)
-        data class Pass(override val id: String) : MirrorImage
+        data class Pass(
+            override val id: String,
+            val attackerUserId: String,
+            val outcome: NormalRollMessageType,
+        ) : MirrorImage
 
         @Serializable
         @SerialName(value = MIRROR_IMAGE_REROLL)
@@ -197,6 +201,8 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             val originalRoll: Int,
             val reroll: Int? = null,
+            val attackerUserId: String,
+            val outcome: NormalRollMessageType,
         ) : MirrorImage
     }
 
@@ -394,7 +400,8 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
 
             is ArenaMessageEntity.MirrorImage.Trigger -> ArenaMessage.MirrorImage.Trigger
 
-            is ArenaMessageEntity.MirrorImage.Pass -> ArenaMessage.MirrorImage.Pass
+            is ArenaMessageEntity.MirrorImage.Pass ->
+                ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
 
             is ArenaMessageEntity.MirrorImage.Reroll ->
                 ArenaMessage.MirrorImage.Reroll(firstDie = firstDie, secondDie = secondDie)
@@ -405,7 +412,9 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                         AbilityAction.Passive.MirrorImage.MirrorImageDie(
                             originalRoll = originalRoll,
                             reroll = reroll,
-                        )
+                        ),
+                    attackerUserId = attackerUserId,
+                    outcome = outcome,
                 )
 
             is ArenaMessageEntity.SpellPotency ->
@@ -567,7 +576,12 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
 
         is ArenaMessage.MirrorImage.Trigger -> ArenaMessageEntity.MirrorImage.Trigger(id = id)
 
-        is ArenaMessage.MirrorImage.Pass -> ArenaMessageEntity.MirrorImage.Pass(id = id)
+        is ArenaMessage.MirrorImage.Pass ->
+            ArenaMessageEntity.MirrorImage.Pass(
+                id = id,
+                attackerUserId = attackerUserId,
+                outcome = outcome,
+            )
 
         is ArenaMessage.MirrorImage.Reroll ->
             ArenaMessageEntity.MirrorImage.Reroll(
@@ -581,6 +595,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 reroll = rerolledMirrorImageDie.reroll,
+                attackerUserId = attackerUserId,
+                outcome = outcome,
             )
 
         is ArenaMessage.SpellPotency ->

@@ -53,7 +53,6 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.strumLuteToLull(persuadeDie: Int) {
-        // TODO Persuade: "Bard rolled a 5 and stopped $Attacker's attack!"
         addMessage(
             message = ArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = true)
         )
@@ -61,8 +60,6 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.strumLuteToCharm(targetableUserIds: Set<String>) {
-        // TODO Persuade: "Bard rolled a 6, stopped $Attacker's attack and now forcing $Attacker to
-        //  fight someone else!"
         addMessage(message = ArenaMessage.Persuade.CharmActivation)
 
         setNextAbilityRoll(
@@ -74,7 +71,6 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.charm(charm: AbilityAction.Passive.Persuade.Charm) {
         val selectedCharmTargetUserId = charm.selectedCharmTargetUserId ?: return
 
-        // TODO Persuade: "Under Bard's control, $Attacker attacks $Defender!"
         addMessage(
             message =
                 ArenaMessage.Persuade.Charm(

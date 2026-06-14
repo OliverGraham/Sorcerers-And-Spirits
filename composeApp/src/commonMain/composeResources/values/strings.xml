@@ -61,9 +61,14 @@
     <string name="arena_message_impersonate">%1$s impersonates %2$s</string>
 
     <string name="arena_message_mirror_image_trigger">Mirror Image! Which one is real?</string>
-    <string name="arena_message_mirror_image_pass">The roll stands</string>
-    <string name="arena_message_mirror_image_reroll">Mirror Image reroll: %1$s and %2$s</string>
-    <string name="arena_message_mirror_image_tempt_fate">Tempting fate! The %1$s becomes a %2$s</string>
+    <string name="arena_message_mirror_image_pass_armor_broke">The Illusionist lets the roll stand, and %1$s breaks through the armor!</string>
+    <string name="arena_message_mirror_image_pass_armor_held">The Illusionist lets the roll stand and turns aside %1$s\'s attack!</string>
+    <string name="arena_message_mirror_image_pass_damage">The Illusionist lets the roll stand, and %1$s lands a blow!</string>
+    <string name="arena_message_mirror_image_pass_knockout">The Illusionist lets the roll stand, and %1$s lands a knockout blow!</string>
+    <string name="arena_message_mirror_image_tempt_fate_armor_broke">The Illusionist rerolls a die to %1$d, but %2$s breaks through the armor anyway!</string>
+    <string name="arena_message_mirror_image_tempt_fate_armor_held">The Illusionist rerolls a die to %1$d and turns aside %2$s\'s attack!</string>
+    <string name="arena_message_mirror_image_tempt_fate_damage">The Illusionist rerolls a die to %1$d, but %2$s still lands a blow!</string>
+    <string name="arena_message_mirror_image_tempt_fate_knockout">The Illusionist rerolls a die to %1$d, but %2$s lands a knockout blow!</string>
 
     <string name="arena_message_spell_potency">%1$s hit %2$s for %3$s damage and splashed others for %4$s</string>
 

@@ -25,9 +25,14 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_co
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_trigger
-import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass
-import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_reroll
-import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_broke
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_held
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_damage
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_knockout
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_armor_broke
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_armor_held
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_damage
+import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_new_turn
 import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_damage
@@ -239,21 +244,62 @@ internal fun ArenaMessageState.getDisplayString(): String =
             stringResource(resource = Res.string.arena_message_mirror_image_trigger)
 
         is ArenaMessageState.MirrorImage.Pass ->
-            stringResource(resource = Res.string.arena_message_mirror_image_pass)
+            when (outcome) {
+                NormalRollMessageType.ArmorClassHit ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_pass_armor_broke,
+                        attackerName,
+                    )
 
-        is ArenaMessageState.MirrorImage.Reroll ->
-            stringResource(
-                resource = Res.string.arena_message_mirror_image_reroll,
-                firstDie,
-                secondDie,
-            )
+                NormalRollMessageType.ArmorClassMiss ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_pass_armor_held,
+                        attackerName,
+                    )
+
+                NormalRollMessageType.Damage ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_pass_damage,
+                        attackerName,
+                    )
+
+                NormalRollMessageType.Knockout ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_pass_knockout,
+                        attackerName,
+                    )
+            }
 
         is ArenaMessageState.MirrorImage.TemptFate ->
-            stringResource(
-                resource = Res.string.arena_message_mirror_image_tempt_fate,
-                originalRoll,
-                finalRoll,
-            )
+            when (outcome) {
+                NormalRollMessageType.ArmorClassHit ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_tempt_fate_armor_broke,
+                        finalRoll,
+                        attackerName,
+                    )
+
+                NormalRollMessageType.ArmorClassMiss ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_tempt_fate_armor_held,
+                        finalRoll,
+                        attackerName,
+                    )
+
+                NormalRollMessageType.Damage ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_tempt_fate_damage,
+                        finalRoll,
+                        attackerName,
+                    )
+
+                NormalRollMessageType.Knockout ->
+                    stringResource(
+                        resource = Res.string.arena_message_mirror_image_tempt_fate_knockout,
+                        finalRoll,
+                        attackerName,
+                    )
+            }
 
         is ArenaMessageState.SpellPotency ->
             stringResource(

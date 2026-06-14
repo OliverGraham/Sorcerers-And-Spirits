@@ -275,6 +275,10 @@ class PerformCombatActionUseCaseTest {
         val updatedDodge =
             assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = 1, actual = updatedDodge.armorBonus)
+        assertEquals(
+            expected = CharacterClass.getRogue().armorClass + 1,
+            actual = updatedDefender.armorClass,
+        )
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -284,7 +288,10 @@ class PerformCombatActionUseCaseTest {
         val startingArmorBonus = 2
         val rogueWithMaxDodge =
             CharacterClass.getRogue()
-                .copy(defensiveAbility = DefensiveAbility.Dodge(armorBonus = startingArmorBonus))
+                .copy(
+                    armorClass = CharacterClass.getRogue().armorClass + startingArmorBonus,
+                    defensiveAbility = DefensiveAbility.Dodge(armorBonus = startingArmorBonus),
+                )
         val arguments = createTwoPlayerArguments(defenderClass = rogueWithMaxDodge)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
@@ -300,6 +307,10 @@ class PerformCombatActionUseCaseTest {
         val updatedDodge =
             assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = startingArmorBonus, actual = updatedDodge.armorBonus)
+        assertEquals(
+            expected = CharacterClass.getRogue().armorClass + startingArmorBonus,
+            actual = updatedDefender.armorClass,
+        )
         assertTrue(actual = !outcome.isMatchFinished)
     }
 

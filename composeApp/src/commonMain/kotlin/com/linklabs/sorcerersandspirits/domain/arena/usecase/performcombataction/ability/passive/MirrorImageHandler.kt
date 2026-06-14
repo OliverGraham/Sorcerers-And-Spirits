@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.MirrorImageDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -58,45 +59,75 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             )
         }
 
-        val (rerolledDie, originalDie) =
-            mirrorImage.run {
-                if (firstDie.isRerolled) {
-                    Pair(first = firstDie, second = secondDie)
-                } else {
-                    Pair(first = secondDie, second = firstDie)
-                }
-            }
+        val rerolledDie =
+            if (mirrorImage.firstDie.isRerolled) mirrorImage.firstDie else mirrorImage.secondDie
 
-        // TODO MirrorImage - message could be combined with more properties to have a single
-        //  message for the "Illusionist tempts fate, rerolls a die and {AC outcome || HP outcome}"
-        addMessage(
-            message = ArenaMessage.MirrorImage.TemptFate(rerolledMirrorImageDie = rerolledDie)
-        )
-
-        val totalRoll = rerolledDie.finalValue + originalDie.finalValue
-        when (mirrorImage.attackType) {
-            NormalAttackType.ArmorClass -> handleArmorClassAttack(totalRoll = totalRoll)
-            NormalAttackType.Health -> handleHealthAttack(totalRoll = totalRoll)
+        resolveModifiedRoll(mirrorImage = mirrorImage) { outcome ->
+            ArenaMessage.MirrorImage.TemptFate(
+                rerolledMirrorImageDie = rerolledDie,
+                attackerUserId = attackerUserId,
+                outcome = outcome,
+            )
         }
     }
 
-    // TODO MirrorImage - messages
-    private fun CombatMutator.handleArmorClassAttack(totalRoll: Int) {
-        if (totalRoll >= defender.armorClass) {
+    private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {
+        resolveModifiedRoll(mirrorImage = mirrorImage) { outcome ->
+            ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
+        }
+    }
+
+    /**
+     * Resolves the (possibly rerolled) attack against the defending Illusionist, emitting the
+     * supplied message with the resulting [NormalRollMessageType] before applying the outcome's
+     * side effects.
+     */
+    private fun CombatMutator.resolveModifiedRoll(
+        mirrorImage: AbilityAction.Passive.MirrorImage,
+        message: (NormalRollMessageType) -> ArenaMessage,
+    ) {
+        val totalRoll = mirrorImage.firstDie.finalValue + mirrorImage.secondDie.finalValue
+
+        when (mirrorImage.attackType) {
+            NormalAttackType.ArmorClass ->
+                resolveArmorClass(totalRoll = totalRoll, message = message)
+
+            NormalAttackType.Health -> resolveHealth(totalRoll = totalRoll, message = message)
+        }
+    }
+
+    private fun CombatMutator.resolveArmorClass(
+        totalRoll: Int,
+        message: (NormalRollMessageType) -> ArenaMessage,
+    ) {
+        val brokeArmor = totalRoll >= defender.armorClass
+
+        if (brokeArmor) {
+            addMessage(message = message(NormalRollMessageType.ArmorClassHit))
             continueAttackWithHealthRoll()
         } else {
+            addMessage(message = message(NormalRollMessageType.ArmorClassMiss))
             resolveTurnEnd()
         }
     }
 
-    private fun CombatMutator.handleHealthAttack(totalRoll: Int) {
+    private fun CombatMutator.resolveHealth(
+        totalRoll: Int,
+        message: (NormalRollMessageType) -> ArenaMessage,
+    ) {
         updateDefenderClass { defender.copy(hitPoints = defender.hitPoints - totalRoll) }
 
-        if (!defender.isConscious()) {
-            if (attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
-                TriggerKillingMomentum(combatMutator = this).invoke()
-                return
-            }
+        val isKnockout = !defender.isConscious()
+        addMessage(
+            message =
+                message(
+                    if (isKnockout) NormalRollMessageType.Knockout else NormalRollMessageType.Damage
+                )
+        )
+
+        if (isKnockout && attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
+            TriggerKillingMomentum(combatMutator = this).invoke()
+            return
         }
 
         val wasEncoreTriggered =
@@ -107,16 +138,6 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         if (wasEncoreTriggered) return
 
         resolveTurnEnd()
-    }
-
-    private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {
-        // TODO message and continue attack
-
-        val totalRoll = mirrorImage.firstDie.finalValue + mirrorImage.secondDie.finalValue
-        when (mirrorImage.attackType) {
-            NormalAttackType.ArmorClass -> handleArmorClassAttack(totalRoll = totalRoll)
-            NormalAttackType.Health -> handleHealthAttack(totalRoll = totalRoll)
-        }
     }
 
     companion object {

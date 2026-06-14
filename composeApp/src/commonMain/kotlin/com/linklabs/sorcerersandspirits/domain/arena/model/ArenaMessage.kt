@@ -83,16 +83,21 @@ sealed interface ArenaMessage {
         val impersonateAbility: OffensiveAbility.Impersonate,
     ) : ArenaMessage
 
-    // TODO MirrorImage
     sealed interface MirrorImage : ArenaMessage {
         data object Trigger : MirrorImage
 
-        data object Pass : MirrorImage
+        /** The Illusionist let the attacker's roll stand; [outcome] is how that roll resolved. */
+        data class Pass(val attackerUserId: String, val outcome: NormalRollMessageType) :
+            MirrorImage
 
-        data class Reroll(val firstDie: Int, val secondDie: Int) : MirrorImage
-
+        /**
+         * The Illusionist rerolled a die ([rerolledMirrorImageDie]) against [attackerUserId]'s
+         * attack; [outcome] is how the modified roll resolved.
+         */
         data class TemptFate(
-            val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie
+            val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie,
+            val attackerUserId: String,
+            val outcome: NormalRollMessageType,
         ) : MirrorImage
     }
 

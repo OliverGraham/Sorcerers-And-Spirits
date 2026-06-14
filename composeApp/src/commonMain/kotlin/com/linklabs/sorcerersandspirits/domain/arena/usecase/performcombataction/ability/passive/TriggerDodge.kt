@@ -16,10 +16,13 @@ internal class TriggerDodge(
         val didArmorIncrease = dodge.armorBonus < 2
 
         if (didArmorIncrease) {
-            // TODO in UI layer: Add ability and AC together to get end result
-
             val updatedDodge = dodge.copy(armorBonus = dodge.armorBonus + 1)
-            updateDefenderClass { playerClass -> playerClass.copy(defensiveAbility = updatedDodge) }
+            updateDefenderClass { playerClass ->
+                playerClass.copy(
+                    armorClass = playerClass.armorClass + 1,
+                    defensiveAbility = updatedDodge,
+                )
+            }
         }
 
         addMessage(message = ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease))

@@ -27,6 +27,7 @@ import sorcerersandspirits.composeapp.generated.resources.sign_in_button_accept
 import sorcerersandspirits.composeapp.generated.resources.sign_in_button_random
 import sorcerersandspirits.composeapp.generated.resources.sign_in_description
 import sorcerersandspirits.composeapp.generated.resources.sign_in_label_name
+import sorcerersandspirits.composeapp.generated.resources.sign_in_offline_message
 import sorcerersandspirits.composeapp.generated.resources.sign_in_title
 
 @Composable
@@ -34,6 +35,7 @@ fun SignInNameDialog(
     displayName: String,
     onRandomNameClick: () -> Unit,
     onAcceptClick: (String) -> Unit,
+    isOffline: Boolean = false,
     onDismissRequest: () -> Unit = {},
 ) {
     var currentDisplayName by remember(key1 = displayName) { mutableStateOf(value = displayName) }
@@ -63,6 +65,14 @@ fun SignInNameDialog(
                     },
                     singleLine = true,
                 )
+
+                if (isOffline) {
+                    Text(
+                        text = stringResource(resource = Res.string.sign_in_offline_message),
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
 
                 Row(
                     modifier = Modifier.fillMaxWidth(),

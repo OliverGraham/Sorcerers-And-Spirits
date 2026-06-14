@@ -6,6 +6,9 @@
     <string name="sign_in_label_name">Name</string>
     <string name="sign_in_button_random">Random</string>
     <string name="sign_in_button_accept">Accept</string>
+    <string name="sign_in_offline_message">Couldn\'t reach the realm. Check your connection and try again.</string>
+
+    <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>

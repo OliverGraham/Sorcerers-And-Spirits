@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
+import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -12,7 +13,8 @@ import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
@@ -58,6 +60,7 @@ private val randomNames =
 
 @KoinViewModel
 class AppViewModel(
+    private val connectivityObserver: ConnectivityObserver,
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
@@ -85,6 +88,21 @@ class AppViewModel(
 
     fun createProfile(newDisplayName: String) {
         viewModelScope.launch {
+            if (!connectivityObserver.isOnline.first()) {
+                // Signing in requires the network. Keep the dialog up with an offline notice
+                // instead of hanging on the loading indicator.
+                _uiStateFlow.value =
+                    UiState.Loaded(
+                        data =
+                            AppState(
+                                displayName = newDisplayName,
+                                showSignInDialog = true,
+                                isOffline = true,
+                            )
+                    )
+                return@launch
+            }
+
             _uiStateFlow.value = UiState.Loading
             createProfileUseCase(displayName = newDisplayName)
             collectScreenState()
@@ -103,10 +121,39 @@ class AppViewModel(
     }
 
     private suspend fun collectScreenState() {
-        getProfileFlowUseCase().filterNotNull().collectLatest { profile ->
-            connectTravelerPresenceUseCase(profile = profile)
+        // Reused if we show the offline shell before a profile is ever loaded, so the name stays
+        // stable across connectivity changes.
+        val displayNameWhenOffline = randomNames.random()
 
-            _uiStateFlow.value = UiState.Loaded(data = AppState(displayName = profile.displayName))
-        }
+        combine(getProfileFlowUseCase(), connectivityObserver.isOnline) { profile, isOnline ->
+                profile to isOnline
+            }
+            .collectLatest { (profile, isOnline) ->
+                when {
+                    profile != null -> {
+                        if (isOnline) connectTravelerPresenceUseCase(profile = profile)
+
+                        _uiStateFlow.value =
+                            UiState.Loaded(
+                                data =
+                                    AppState(
+                                        displayName = profile.displayName,
+                                        isOffline = !isOnline,
+                                    )
+                            )
+                    }
+
+                    // No profile yet and offline: show the shell so the app stays usable instead
+                    // of hanging on the loading indicator. Recovers once back online.
+                    !isOnline ->
+                        _uiStateFlow.value =
+                            UiState.Loaded(
+                                data =
+                                    AppState(displayName = displayNameWhenOffline, isOffline = true)
+                            )
+
+                // Online but the profile hasn't arrived yet: keep showing the loading indicator.
+                }
+            }
     }
 }

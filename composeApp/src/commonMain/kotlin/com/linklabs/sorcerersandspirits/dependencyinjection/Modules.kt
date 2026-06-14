@@ -42,6 +42,7 @@ import org.koin.dsl.module
 // TODO: Someday, scope these instead of single for everything
 
 val commonModule = module {
+    includes(platformModule())
     initializeParameters()
     initializeRepositories()
     initializeUseCases()

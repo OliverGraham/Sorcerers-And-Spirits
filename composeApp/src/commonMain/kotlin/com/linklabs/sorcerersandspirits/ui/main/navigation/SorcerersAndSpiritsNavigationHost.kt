@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.main.navigation
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
@@ -13,6 +14,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
+import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
 import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.main.AppState
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
@@ -40,6 +42,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
             if (data.showSignInDialog) {
                 SignInNameDialog(
                     displayName = data.displayName,
+                    isOffline = data.isOffline,
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
                     onDismissRequest = {
@@ -89,10 +92,11 @@ private fun SorcerersAndSpirits(
             modifier = modifier,
             topBar = { TopBar(onMenuClick = { scope.launch { drawerState.open() } }) },
         ) { innerPadding ->
-            NavigationDisplay(
-                backStack = backStack,
-                modifier = modifier.padding(paddingValues = innerPadding),
-            )
+            Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
+                OfflineBanner(isOffline = appState.isOffline)
+
+                NavigationDisplay(backStack = backStack, modifier = modifier)
+            }
         }
     }
 }

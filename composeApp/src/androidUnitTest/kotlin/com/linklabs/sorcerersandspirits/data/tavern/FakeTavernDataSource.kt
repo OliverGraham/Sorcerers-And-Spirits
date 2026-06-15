@@ -21,6 +21,10 @@ class FakeTavernDataSource : TavernDataSource {
 
     var challengeIdToGenerate: String? = GENERATED_CHALLENGE_ID
     var applyUpdatesError: Throwable? = null
+    var createChallengeError: Throwable? = null
+
+    // Stands in for the backend-stamped start time written by createChallenge.
+    var serverTimestampMillis: Long = 0L
 
     val appliedUpdates = mutableListOf<Map<String, Any?>>()
     val disconnectRegistrations = mutableListOf<String>()
@@ -60,6 +64,25 @@ class FakeTavernDataSource : TavernDataSource {
         challenges.value[challengeId]
 
     override fun generateChallengeId(): String? = challengeIdToGenerate
+
+    override suspend fun createChallenge(
+        challengeId: String,
+        challengers: Map<String, ChallengerEntity>,
+        participantUserIds: List<String>,
+    ) {
+        createChallengeError?.let { throw it }
+
+        challenges.update {
+            it +
+                (challengeId to
+                    ChallengeEntity(
+                        challengeId = challengeId,
+                        challengerEntitiesMap = challengers,
+                        startTimeMillis = serverTimestampMillis,
+                    ))
+        }
+        participantUserIds.forEach { userId -> mailboxes.update { it + (userId to challengeId) } }
+    }
 
     override suspend fun registerTravelerRemovalOnDisconnect(userId: String) {
         disconnectRegistrations += userId

@@ -9,8 +9,8 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
+import com.linklabs.sorcerersandspirits.domain.utilities.CHALLENGE_DURATION_MILLIS
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,30 +94,22 @@ class FirebaseTavernRepository(
             )
         }
 
-        val challengeEntity =
-            createChallengeEntity(
-                challengeId = challengeId,
-                claimedChallengers = claimedChallengers,
-            )
+        val claimedUserIds = claimedChallengers.map { it.challenger.userId }
+        val challengers =
+            claimedChallengers.associate { result ->
+                result.challenger.userId to result.challenger.toEntity()
+            }
 
         return try {
-            dataSource.applyUpdates(
-                updates =
-                    buildMap {
-                        putChallenge(challengeEntity = challengeEntity)
-                        setMailboxes(
-                            userIds = claimedChallengers.map { it.challenger.userId },
-                            challengeId = challengeId,
-                        )
-                    }
+            dataSource.createChallenge(
+                challengeId = challengeId,
+                challengers = challengers,
+                participantUserIds = claimedUserIds,
             )
 
             SendChallengeResult.Success(challengeId = challengeId)
         } catch (_: Exception) {
-            releaseTravelersIfMailboxMatches(
-                userIds = claimedChallengers.map { it.challenger.userId },
-                challengeId = challengeId,
-            )
+            releaseTravelersIfMailboxMatches(userIds = claimedUserIds, challengeId = challengeId)
             SendChallengeResult.Failure(errorMessage = SEND_RESULT_FAILURE_MESSAGE)
         }
     }
@@ -300,25 +292,6 @@ class FirebaseTavernRepository(
         releaseTravelersIfMailboxMatches(userIds = participantUserIds, challengeId = challengeId)
     }
 
-    @OptIn(ExperimentalTime::class)
-    private fun createChallengeEntity(
-        challengeId: String,
-        claimedChallengers: List<ClaimChallengerResult>,
-    ): ChallengeEntity {
-        val startTimeMillis = Clock.System.now().toEpochMilliseconds()
-        val endTimeMillis = startTimeMillis + 1.minutes.inWholeMilliseconds
-
-        return ChallengeEntity(
-            challengeId = challengeId,
-            challengerEntitiesMap =
-                claimedChallengers.associate { result ->
-                    result.challenger.userId to result.challenger.toEntity()
-                },
-            startTimeMillis = startTimeMillis,
-            endTimeMillis = endTimeMillis,
-        )
-    }
-
     private suspend fun removeChallengeReferences(
         challengeId: String,
         participantUserIds: List<String>,
@@ -348,24 +321,12 @@ class FirebaseTavernRepository(
 
 // TODO(SS-043): Move to separate file
 
-private fun MutableMap<String, Any?>.putChallenge(challengeEntity: ChallengeEntity) {
-    this[challengeEntity.challengeId.toChallengesPath()] = challengeEntity
-}
-
 private fun MutableMap<String, Any?>.removeChallenge(challengeId: String) {
     this[challengeId.toChallengesPath()] = null
 }
 
-private fun MutableMap<String, Any?>.setMailbox(userId: String, challengeId: String) {
-    this[userId.toChallengeMailBoxesPath()] = challengeId
-}
-
 private fun MutableMap<String, Any?>.clearMailbox(userId: String) {
     this[userId.toChallengeMailBoxesPath()] = null
-}
-
-private fun MutableMap<String, Any?>.setMailboxes(userIds: List<String>, challengeId: String) {
-    userIds.forEach { userId -> setMailbox(userId = userId, challengeId = challengeId) }
 }
 
 private fun MutableMap<String, Any?>.clearMailboxes(userIds: List<String>) {
@@ -374,7 +335,9 @@ private fun MutableMap<String, Any?>.clearMailboxes(userIds: List<String>) {
 
 @OptIn(ExperimentalTime::class)
 private fun ChallengeEntity.isExpired(): Boolean =
-    endTimeMillis?.let { it <= Clock.System.now().toEpochMilliseconds() } == true
+    startTimeMillis?.let {
+        it + CHALLENGE_DURATION_MILLIS <= Clock.System.now().toEpochMilliseconds()
+    } == true
 
 internal fun String.toChallengesPath(): String = "$CHALLENGES_PATH/$this"
 

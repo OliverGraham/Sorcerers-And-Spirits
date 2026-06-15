@@ -3,15 +3,13 @@ package com.linklabs.sorcerersandspirits.domain.tavern.usecase
 import com.linklabs.sorcerersandspirits.data.tavern.FakeTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
 import com.linklabs.sorcerersandspirits.data.tavern.challenger
-import com.linklabs.sorcerersandspirits.data.tavern.toChallengeMailBoxesPath
-import com.linklabs.sorcerersandspirits.data.tavern.toChallengesPath
 import com.linklabs.sorcerersandspirits.data.tavern.travelerEntity
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
-import kotlin.test.assertTrue
+import kotlin.test.assertNull
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -46,8 +44,9 @@ class SendChallengeUseCaseTest {
     }
 
     @Test
-    fun `returns Success and writes the challenge and mailboxes when enough challengers are claimed`() =
+    fun `returns Success and writes the challenge with a backend-stamped start time and mailboxes`() =
         runTest {
+            dataSource.serverTimestampMillis = SERVER_NOW
             dataSource.seedTraveler(traveler = travelerEntity(userId = INSTIGATOR))
             dataSource.seedTraveler(traveler = travelerEntity(userId = INVITEE))
 
@@ -64,16 +63,14 @@ class SendChallengeUseCaseTest {
                 actual = success.challengeId,
             )
 
-            val applied = dataSource.appliedUpdates.single()
-            assertTrue(actual = applied.containsKey(key = CHALLENGE_ID.toChallengesPath()))
+            val challenge = dataSource.challenge(challengeId = CHALLENGE_ID)
             assertEquals(
-                expected = CHALLENGE_ID,
-                actual = applied[INSTIGATOR.toChallengeMailBoxesPath()],
+                expected = setOf(INSTIGATOR, INVITEE),
+                actual = challenge?.challengerEntitiesMap?.keys,
             )
-            assertEquals(
-                expected = CHALLENGE_ID,
-                actual = applied[INVITEE.toChallengeMailBoxesPath()],
-            )
+            assertEquals(expected = SERVER_NOW, actual = challenge?.startTimeMillis)
+            assertEquals(expected = CHALLENGE_ID, actual = dataSource.mailbox(userId = INSTIGATOR))
+            assertEquals(expected = CHALLENGE_ID, actual = dataSource.mailbox(userId = INVITEE))
             assertEquals(
                 expected = TavernStatus.Busy,
                 actual = dataSource.traveler(userId = INSTIGATOR)?.tavernStatus,
@@ -105,7 +102,7 @@ class SendChallengeUseCaseTest {
                 expected = listOf(INVITEE),
                 actual = notEnough.unavailableChallengers.map { it.userId },
             )
-            assertTrue(actual = dataSource.appliedUpdates.isEmpty())
+            assertNull(actual = dataSource.challenge(challengeId = CHALLENGE_ID))
             assertEquals(
                 expected = TavernStatus.Available,
                 actual = dataSource.traveler(userId = INSTIGATOR)?.tavernStatus,
@@ -116,7 +113,7 @@ class SendChallengeUseCaseTest {
     fun `releases all claimed travelers and returns Failure when the write fails`() = runTest {
         dataSource.seedTraveler(traveler = travelerEntity(userId = INSTIGATOR))
         dataSource.seedTraveler(traveler = travelerEntity(userId = INVITEE))
-        dataSource.applyUpdatesError = RuntimeException("write failed")
+        dataSource.createChallengeError = RuntimeException("write failed")
 
         val result =
             useCase()
@@ -163,5 +160,6 @@ class SendChallengeUseCaseTest {
         const val INSTIGATOR = "instigator"
         const val INVITEE = "invitee"
         const val CHALLENGE_ID = FakeTavernDataSource.GENERATED_CHALLENGE_ID
+        const val SERVER_NOW = 1_000_000L
     }
 }

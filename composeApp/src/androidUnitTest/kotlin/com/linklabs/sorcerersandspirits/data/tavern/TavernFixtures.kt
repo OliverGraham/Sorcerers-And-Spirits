@@ -29,13 +29,11 @@ fun challengeEntity(
     challengeId: String,
     challengers: List<ChallengerEntity>,
     startTimeMillis: Long? = 0L,
-    endTimeMillis: Long? = null,
 ): ChallengeEntity =
     ChallengeEntity(
         challengeId = challengeId,
         challengerEntitiesMap = challengers.associateBy { it.userId },
         startTimeMillis = startTimeMillis,
-        endTimeMillis = endTimeMillis,
     )
 
 fun challenger(

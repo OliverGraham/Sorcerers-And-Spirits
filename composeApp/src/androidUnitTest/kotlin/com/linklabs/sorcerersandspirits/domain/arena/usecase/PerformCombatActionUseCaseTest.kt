@@ -875,7 +875,7 @@ class PerformCombatActionUseCaseTest {
             getAbilityRollAction(purpose = charmPurpose, defenderUserId = THIRD_PLAYER_ID)
         val charmedAttackerUserId = currentAction.attackerUserId
 
-        // Act 1: The Bard's chosen target redirects the attack
+        // Act 1: Persuade charms the attacker into attacking the Bard's chosen target instead
         val outcome1 = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert 1: The attacker rolls a new ArmorClass attack against the new target
@@ -925,10 +925,7 @@ class PerformCombatActionUseCaseTest {
             getAbilityRollAction(purpose = charmPurpose, defenderUserId = THIRD_PLAYER_ID)
         val charmedAttackerUserId = currentAction.attackerUserId
 
-        // TODO(SS-003): I don't understand this comment. Should be something like "Charmed target
-        // now
-        //  attacks someone else"
-        // Act 1: The Bard's chosen target redirects the attack
+        // Act 1: Persuade charms the attacker into attacking the Bard's chosen target instead
         val outcome1 = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert 1: The attacker rolls a new ArmorClass attack against the new target

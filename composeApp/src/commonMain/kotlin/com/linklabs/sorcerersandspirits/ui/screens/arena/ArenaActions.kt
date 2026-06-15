@@ -15,7 +15,6 @@ internal data class ArenaActions(
     val onIncomingMessageHandled: () -> Unit = {},
     val onAttack: (arguments: AttackArguments) -> Unit = {},
     val onUseAbility: (arguments: UseAbilityArguments) -> Unit = {},
-    val onRollDice: (arguments: RollDiceArguments) -> Unit = {},
     val onTryLeaveArena: () -> Unit = {},
     val onConfirmLeaveArena: () -> Unit = {},
     val onDismissForfeitDialog: () -> Unit = {},
@@ -23,13 +22,6 @@ internal data class ArenaActions(
 )
 
 data class AttackArguments(
-    val combatActionState: CombatActionState,
-    val targetedOpponentUserId: String,
-    val userPlayerId: String,
-)
-
-// TODO(SS-015): Delete
-data class RollDiceArguments(
     val combatActionState: CombatActionState,
     val targetedOpponentUserId: String,
     val userPlayerId: String,

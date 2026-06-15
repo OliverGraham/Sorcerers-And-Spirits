@@ -206,8 +206,6 @@ class ArenaScreenViewModel(
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
     }
 
-    fun onRollDice(rollDiceArguments: RollDiceArguments) {}
-
     fun onTryLeaveArena() {
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
     }

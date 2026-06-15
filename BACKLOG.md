@@ -22,13 +22,18 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Tests
 
 ### SS-001 — Fix Tavern repository tests
-- [ ] Not completed
+- [x] Completed
 - **Source:** `FirebaseTavernRepositoryTest.kt:8` (`// TODO Tavern: Fix all these tests`)
+- **Resolution:** Introduced a `TavernDataSource` seam (`FirebaseTavernDataSource` wraps gitlive
+  Firebase; `FirebaseTavernRepository` now holds the orchestration logic over it) so the logic is
+  unit-testable without mocking gitlive's inline `value()`/`updateChildren()`/`setValue()`. Replaced
+  the empty/obsolete stub suite with use-case-level tests backed by a `FakeTavernDataSource`.
 - **Goal:** Restore the Tavern repository test suite to a passing, meaningful state.
 - **Steps:**
   - Run the suite and catalog what currently fails or is disabled.
   - Update tests to match the current `FirebaseTavernRepository` API/behavior.
   - Remove tests that are obsolete; add coverage for any gaps surfaced.
+  - Use Kotlin asserts, and Turbine as necessary
 
 ### SS-002 — Repair broken ArenaScreenViewModel test
 - [ ] Not completed

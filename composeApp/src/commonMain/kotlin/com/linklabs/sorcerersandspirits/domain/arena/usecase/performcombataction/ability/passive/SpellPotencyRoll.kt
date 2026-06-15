@@ -4,7 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 
-// TODO: Docstring, etc.
+// TODO(SS-053): Docstring, etc.
 internal class SpellPotencyRoll(
     private val combatMutator: CombatMutator,
     private val diceTotal: Int,

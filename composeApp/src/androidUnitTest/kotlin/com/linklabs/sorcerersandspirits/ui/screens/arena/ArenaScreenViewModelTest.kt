@@ -339,7 +339,7 @@ class ArenaScreenViewModelTest {
         assertTrue(actual = combatState.combatControls.isEmpty())
     }
 
-    // TODO: All fucked
+    // TODO(SS-002): All fucked
 
     @Test
     fun `Given the user's pending health roll, then only an attack control without a target requirement is offered`() =

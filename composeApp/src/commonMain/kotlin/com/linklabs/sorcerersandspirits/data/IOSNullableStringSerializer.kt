@@ -7,7 +7,7 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 
-// TODO: Figure out if this is needed or useful
+// TODO(SS-038): Figure out if this is needed or useful
 object IOSNullableStringSerializer : KSerializer<String?> {
     override val descriptor =
         PrimitiveSerialDescriptor("NullableStringSanitizing", PrimitiveKind.STRING)

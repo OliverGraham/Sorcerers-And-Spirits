@@ -29,7 +29,7 @@ data class ArenaScreenState(
 
     val characterClasses = CharacterClass.getAllClasses().map { it.toState() }
 
-    // TODO: Update property name and way to assign it
+    // TODO(SS-030): Update property name and way to assign it
     val showKnockoutDialog =
         (isUserPlayerKnockedOut || arenaState is ArenaState.Finished) && !hasMadeKnockoutDecision
 }
@@ -76,7 +76,7 @@ sealed interface ActiveState : ArenaState {
     val userPlayerId: String
 }
 
-// TODO: Need to refactor this badly
+// TODO(SS-031): Need to refactor this badly
 
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
@@ -201,7 +201,7 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
             }
 
         is ArenaState.Combat -> {
-            // TODO: Hmm, how should timers be started? Based on NextCombatAction?
+            // TODO(SS-032): Hmm, how should timers be started? Based on NextCombatAction?
             TimerAction.Start(timerDuration = 20)
         }
 

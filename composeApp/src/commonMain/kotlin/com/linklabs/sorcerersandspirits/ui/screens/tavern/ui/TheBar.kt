@@ -39,7 +39,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
-// TODO: Improve
+// TODO(SS-009): Improve
 
 /** Location where users can challenge other users to fight in the Arena. */
 @Composable
@@ -80,7 +80,7 @@ private fun BarFolk(
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         item {
-            // TODO: Change UI - should say other players to challenge or something
+            // TODO(SS-010): Change UI - should say other players to challenge or something
             //  Idea - UI in settings to show every player playing right now, and their status and
             //  such
 
@@ -89,7 +89,7 @@ private fun BarFolk(
                     onClick = showDialog,
                     modifier = Modifier.align(alignment = Alignment.TopStart).size(size = 48.dp),
                 ) {
-                    // TODO: new icon
+                    // TODO(SS-011): new icon
                     Icon(
                         painter = painterResource(resource = Res.drawable.ic_menu),
                         contentDescription = "",
@@ -155,7 +155,7 @@ private fun ChallengeButton(
     }
 }
 
-// TODO: Update styling
+// TODO(SS-012): Update styling
 @Composable
 private fun TravelerState.ToCard(
     isSelected: Boolean,

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 
 class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository {
 
-    // TODO: implement user names collection to help with keeping a unique name for everyone
+    // TODO(SS-039): implement user names collection to help with keeping a unique name for everyone
 
     private val profilesCollection = database.collection(collectionPath = FireStoreKeys.PROFILES)
 

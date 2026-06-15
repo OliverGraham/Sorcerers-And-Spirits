@@ -48,7 +48,7 @@ internal class ConnectToArena(
                 ArenaPlayerEntity.Unselected(displayName = displayName, userId = userId)
         }
 
-        // TODO Arena: Add messages for connecting here?
+        // TODO(SS-044) Arena: Add messages for connecting here?
         return if (updatedPlayers.size == expectedNumberOfPlayers) {
             ArenaMatchEntity.ChoosingClasses(
                 playerEntitiesMap = updatedPlayers,

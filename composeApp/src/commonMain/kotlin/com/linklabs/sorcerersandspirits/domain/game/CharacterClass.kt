@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.game
 
 import kotlin.Int
 
-// TODO: Add a maximum HP
+// TODO(SS-046): Add a maximum HP
 data class CharacterClass(
     val type: CharacterClassType,
     val hitPoints: Int,
@@ -29,7 +29,7 @@ data class CharacterClass(
                 getPaladin(),
             )
 
-        // TODO: Get CharacterClass values from RemoteConfig
+        // TODO(SS-047): Get CharacterClass values from RemoteConfig
 
         fun getRogue() =
             CharacterClass(

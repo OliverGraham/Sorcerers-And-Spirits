@@ -166,7 +166,7 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
     }
 }
 
-// TODO: Update preview data
+// TODO(SS-008): Update preview data
 @Preview
 @Composable
 private fun ChallengeDialogInstigatorPreview() {

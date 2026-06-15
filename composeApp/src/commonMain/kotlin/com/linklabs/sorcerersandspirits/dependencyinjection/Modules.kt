@@ -39,7 +39,7 @@ import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
-// TODO: Someday, scope these instead of single for everything
+// TODO(SS-055): Someday, scope these instead of single for everything
 
 val commonModule = module {
     includes(platformModule())
@@ -49,7 +49,7 @@ val commonModule = module {
     initializeViewModels()
 }
 
-// TODO: What to name this?
+// TODO(SS-056): What to name this?
 private fun Module.initializeParameters() {
     single { Firebase.database }
     single { Firebase.firestore }

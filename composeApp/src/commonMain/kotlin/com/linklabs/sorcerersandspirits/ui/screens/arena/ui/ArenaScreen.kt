@@ -59,7 +59,7 @@ internal fun ArenaScreen(
 @Composable
 private fun ArenaScreen(uiState: UiState<ArenaScreenState>, modifier: Modifier = Modifier) {
     when (uiState) {
-        // TODO Arena: Update UI to show error
+        // TODO(SS-007) Arena: Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
 
         is UiState.Loaded -> LoadedArenaScreen(screenState = uiState.data, modifier = modifier)
@@ -75,7 +75,7 @@ private fun Flow<ArenaEvent>.collectEvents(onBack: () -> Unit) {
         collect { event ->
             when (event) {
                 ArenaEvent.MatchTimedOut -> {
-                    /* TODO */
+                    /* TODO(SS-014) */
                 }
 
                 ArenaEvent.NavigateBack -> onBack()

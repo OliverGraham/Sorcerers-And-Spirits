@@ -18,7 +18,9 @@ data class TavernState(
     val otherTravelers: List<TravelerState>,
     val challenge: ChallengeState?,
     val characterClasses: List<CharacterClassState> =
-        CharacterClass.getAllClasses().map { it.toState() }, // TODO: any reason to get from config?
+        CharacterClass.getAllClasses().map {
+            it.toState()
+        }, // TODO(SS-004): any reason to get from config?
 )
 
 @Immutable
@@ -36,7 +38,7 @@ data class ChallengeState(
     val secondsRemaining: Int,
     val showChallengeDialog: Boolean,
     val isThisUserTheInstigator: Boolean,
-    val navigateToArena: Boolean = false, // TODO: Move this out of state?
+    val navigateToArena: Boolean = false, // TODO(SS-005): Move this out of state?
 ) {
     val instigator: ChallengerState? =
         challengerStates.find { challengerState -> challengerState.isInstigator }

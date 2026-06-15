@@ -85,7 +85,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
                 ArenaMessage.HolyShield.Wrath(
                     paladinUserId = defenderUserId,
                     attackerUserId =
-                        attackerUserId, // TODO SpellPotency - what if is splash damage?
+                        attackerUserId, // TODO(SS-054) SpellPotency - what if is splash damage?
                     singleDie = result,
                 )
         )
@@ -111,7 +111,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
-        // TODO: From RemoteConfig in some way
+        // TODO(SS-047): From RemoteConfig in some way
         private val HOLY_SHIELD_SUCCESS_RANGE = 10..12
 
         fun triggerHolyShieldIfApplicable(

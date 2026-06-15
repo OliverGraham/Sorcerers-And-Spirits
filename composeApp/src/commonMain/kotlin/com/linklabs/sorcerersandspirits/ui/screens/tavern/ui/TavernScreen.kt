@@ -63,7 +63,7 @@ internal fun TavernScreen(
             )
     ) {
         viewModel.eventChannelFlow.collectEvents(
-            onNavigateToArena = onNavigateToArena // TODO: make one for App?
+            onNavigateToArena = onNavigateToArena // TODO(SS-006): make one for App?
         )
         val uiState by viewModel.uiStateFlow.collectAsState()
 
@@ -74,7 +74,7 @@ internal fun TavernScreen(
 @Composable
 private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Modifier) {
     when (uiState) {
-        // TODO: Update UI to show error
+        // TODO(SS-007): Update UI to show error
         is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
 
         is UiState.Loaded -> LoadedTavernScreen(tavernState = uiState.data, modifier = modifier)
@@ -196,5 +196,5 @@ private fun RowScope.ChallengeDialogHandle(
     }
 }
 
-// TODO: Preview
+// TODO(SS-008): Preview
 @Preview @Composable private fun TavernScreenPreview() {}

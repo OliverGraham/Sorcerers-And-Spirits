@@ -10,6 +10,8 @@
 
     <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 
+    <string name="retry_button">Try again</string>
+
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>
     <string name="challenge_dialog_awaiting_responses">You are awaiting responses</string>

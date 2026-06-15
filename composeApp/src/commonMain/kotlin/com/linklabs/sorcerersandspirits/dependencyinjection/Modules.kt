@@ -3,7 +3,9 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
 import com.linklabs.sorcerersandspirits.data.profile.FirebaseProfileRepository
+import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
+import com.linklabs.sorcerersandspirits.data.tavern.TavernDataSource
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
@@ -60,6 +62,7 @@ private fun Module.initializeRepositories() {
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
+    singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
 }
 

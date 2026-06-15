@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.data.tavern
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGES_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_PATH
-import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TAVERN_TRAVELERS_PATH
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -10,9 +9,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import dev.gitlive.firebase.database.DatabaseReference
-import dev.gitlive.firebase.database.FirebaseDatabase
-import kotlin.collections.map
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.ExperimentalTime
@@ -28,25 +24,15 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformLatest
-import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
 
 class FirebaseTavernRepository(
-    database: FirebaseDatabase,
+    private val dataSource: TavernDataSource,
     private val coroutineScope: CoroutineScope = CoroutineScope(Dispatchers.IO),
 ) : TavernRepository {
-
-    private val connectedReference = database.reference(CONNECTED_REFERENCE_PATH)
-
-    private val root = database.reference()
-    private val tavernTravelersReference = root.child(TAVERN_TRAVELERS_PATH)
-    private val mailboxChallengesReference = root.child(CHALLENGE_MAILBOXES_PATH)
-    private val challengesReference = root.child(CHALLENGES_PATH)
 
     private var travelerPresenceJob: Job? = null
 
@@ -57,7 +43,8 @@ class FirebaseTavernRepository(
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> =
-        getMailboxChallengeIdFlow(userId).distinctUntilChanged().transformLatest { challengeId ->
+        dataSource.mailboxChallengeIdFlow(userId = userId).distinctUntilChanged().transformLatest {
+            challengeId ->
             if (challengeId.isNullOrBlank()) {
                 emit(value = null)
             } else {
@@ -66,30 +53,22 @@ class FirebaseTavernRepository(
         }
 
     override fun getTavernTravelersFlow(): Flow<List<Traveler>> =
-        tavernTravelersReference.valueEvents
-            .map { snapshot ->
-                snapshot.children.mapNotNull { child ->
-                    child.value(TravelerEntity.serializer().nullable)?.toDomain()
-                }
-            }
+        dataSource
+            .travelerEntitiesFlow()
+            .map { entities -> entities.map(transform = TravelerEntity::toDomain) }
             .distinctUntilChanged()
 
     override suspend fun connectTravelerPresence(userId: String, displayName: String) {
         travelerPresenceJob?.cancel()
 
         travelerPresenceJob =
-            connectedReference.valueEvents
-                .map { snapshot -> snapshot.value<Boolean?>() ?: false }
+            dataSource
+                .connectedFlow()
                 .distinctUntilChanged()
                 .filter { isConnected -> isConnected }
                 .onEach {
-                    val travelerReference = tavernTravelersReference.child(userId)
-                    travelerReference.onDisconnect().removeValue()
-                    syncTravelerPresenceOnConnect(
-                        userId = userId,
-                        displayName = displayName,
-                        travelerReference = travelerReference,
-                    )
+                    dataSource.registerTravelerRemovalOnDisconnect(userId = userId)
+                    syncTravelerPresenceOnConnect(userId = userId, displayName = displayName)
                 }
                 .launchIn(scope = coroutineScope)
     }
@@ -99,7 +78,7 @@ class FirebaseTavernRepository(
         invitees: List<Challenger>,
     ): SendChallengeResult {
         val challengeId =
-            challengesReference.push().key
+            dataSource.generateChallengeId()
                 ?: return SendChallengeResult.Failure(errorMessage = SEND_RESULT_FAILURE_MESSAGE)
 
         val (claimedChallengers, unclaimedChallengers) =
@@ -122,13 +101,16 @@ class FirebaseTavernRepository(
             )
 
         return try {
-            applyUpdates {
-                putChallenge(challengeEntity = challengeEntity)
-                setMailboxes(
-                    userIds = claimedChallengers.map { it.challenger.userId },
-                    challengeId = challengeId,
-                )
-            }
+            dataSource.applyUpdates(
+                updates =
+                    buildMap {
+                        putChallenge(challengeEntity = challengeEntity)
+                        setMailboxes(
+                            userIds = claimedChallengers.map { it.challenger.userId },
+                            challengeId = challengeId,
+                        )
+                    }
+            )
 
             SendChallengeResult.Success(challengeId = challengeId)
         } catch (_: Exception) {
@@ -145,15 +127,10 @@ class FirebaseTavernRepository(
         userId: String,
         status: ChallengerStatus,
     ) {
-        challengesReference
-            .child(challengeId)
-            .child(ChallengeEntity.challengerEntitiesMapName)
-            .child(userId)
-            .child(ChallengerEntity.statusName)
-            .setValue(status)
+        dataSource.setChallengerStatus(challengeId = challengeId, userId = userId, status = status)
 
         if (status == ChallengerStatus.Declined) {
-            mailboxChallengesReference.child(userId).removeValue()
+            dataSource.removeMailbox(userId = userId)
             releaseTravelerIfMailboxEmpty(userId = userId)
         }
 
@@ -161,49 +138,30 @@ class FirebaseTavernRepository(
     }
 
     override suspend fun setTravelerAvailableIfPresent(userId: String) {
-        updateTravelerStatusIfPresent(userId = userId, tavernStatus = TavernStatus.Available)
+        dataSource.setTravelerStatusIfPresent(
+            userId = userId,
+            tavernStatus = TavernStatus.Available,
+        )
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun syncTravelerPresenceOnConnect(
-        userId: String,
-        displayName: String,
-        travelerReference: DatabaseReference,
-    ) {
-        val mailboxReference = mailboxChallengesReference.child(userId)
-
-        suspend fun upsertPresence(hasActiveChallenge: Boolean) {
-            travelerReference.runTransaction(strategy = TravelerEntity.serializer().nullable) {
-                currentTraveler ->
-                val tavernStatus =
-                    if (hasActiveChallenge) TavernStatus.Busy else TavernStatus.Available
-
-                currentTraveler?.copy(
-                    userId = userId,
-                    displayName = displayName,
-                    tavernStatus = tavernStatus,
-                )
-                    ?: TravelerEntity(
-                        userId = userId,
-                        displayName = displayName,
-                        tavernStatus = tavernStatus,
-                    )
-            }
-        }
-
-        val challengeId = mailboxReference.awaitNullableValue<String>()
+    private suspend fun syncTravelerPresenceOnConnect(userId: String, displayName: String) {
+        val challengeId = dataSource.getMailboxChallengeId(userId = userId)
         if (challengeId.isNullOrBlank()) {
-            upsertPresence(hasActiveChallenge = false)
+            upsertPresence(userId = userId, displayName = displayName, hasActiveChallenge = false)
             return
         }
 
-        val challengeEntity =
-            challengesReference.child(challengeId).awaitNullableValue<ChallengeEntity>()
+        val challengeEntity = dataSource.getChallengeEntity(challengeId = challengeId)
 
         when {
             challengeEntity == null -> {
-                mailboxReference.removeValue()
-                upsertPresence(hasActiveChallenge = false)
+                dataSource.removeMailbox(userId = userId)
+                upsertPresence(
+                    userId = userId,
+                    displayName = displayName,
+                    hasActiveChallenge = false,
+                )
             }
 
             challengeEntity.isExpired() -> {
@@ -211,11 +169,32 @@ class FirebaseTavernRepository(
                     challengeId = challengeId,
                     participantUserIds = challengeEntity.challengerEntitiesMap.keys.toList(),
                 )
-                upsertPresence(hasActiveChallenge = false)
+                upsertPresence(
+                    userId = userId,
+                    displayName = displayName,
+                    hasActiveChallenge = false,
+                )
             }
 
-            else -> upsertPresence(hasActiveChallenge = true)
+            else ->
+                upsertPresence(
+                    userId = userId,
+                    displayName = displayName,
+                    hasActiveChallenge = true,
+                )
         }
+    }
+
+    private suspend fun upsertPresence(
+        userId: String,
+        displayName: String,
+        hasActiveChallenge: Boolean,
+    ) {
+        dataSource.upsertTravelerPresence(
+            userId = userId,
+            displayName = displayName,
+            tavernStatus = if (hasActiveChallenge) TavernStatus.Busy else TavernStatus.Available,
+        )
     }
 
     private suspend fun claimChallengers(
@@ -225,40 +204,14 @@ class FirebaseTavernRepository(
             .map { challenger ->
                 async(context = Dispatchers.IO) {
                     ClaimChallengerResult(
-                        isClaimed = tryMarkTravelerBusy(userId = challenger.userId),
+                        isClaimed =
+                            dataSource.markTravelerBusyIfAvailable(userId = challenger.userId),
                         challenger = challenger,
                     )
                 }
             }
             .awaitAll()
             .partition { it.isClaimed }
-    }
-
-    private suspend fun tryMarkTravelerBusy(userId: String): Boolean =
-        try {
-            tavernTravelersReference.child(userId).runTransaction(
-                strategy = TravelerEntity.serializer().nullable
-            ) { traveler ->
-                traveler ?: throw AbortTransactionException()
-
-                if (traveler.tavernStatus != TavernStatus.Available) {
-                    throw AbortTransactionException()
-                }
-
-                traveler.copy(tavernStatus = TavernStatus.Busy)
-            }
-
-            true
-        } catch (_: AbortTransactionException) {
-            false
-        }
-
-    private suspend fun updateTravelerStatusIfPresent(userId: String, tavernStatus: TavernStatus) {
-        tavernTravelersReference.child(userId).runTransaction(
-            strategy = TravelerEntity.serializer().nullable
-        ) { traveler ->
-            traveler?.copy(tavernStatus = tavernStatus) ?: traveler
-        }
     }
 
     private suspend fun releaseTravelersIfMailboxMatches(
@@ -271,68 +224,34 @@ class FirebaseTavernRepository(
     }
 
     private suspend fun releaseTravelerIfMailboxMatches(userId: String, challengeId: String) {
-        val mailboxChallengeId =
-            mailboxChallengesReference.child(userId).awaitNullableValue<String>()
+        val mailboxChallengeId = dataSource.getMailboxChallengeId(userId = userId)
 
         if (mailboxChallengeId != null && mailboxChallengeId != challengeId) {
             return
         }
 
-        tavernTravelersReference.child(userId).runTransaction(
-            strategy = TravelerEntity.serializer().nullable
-        ) { traveler ->
-            when {
-                traveler == null -> null
-                traveler.tavernStatus != TavernStatus.Busy -> traveler
-                else -> traveler.copy(tavernStatus = TavernStatus.Available)
-            }
-        }
+        dataSource.releaseTravelerIfBusy(userId = userId)
     }
 
     private suspend fun releaseTravelerIfMailboxEmpty(userId: String) {
-        val mailboxChallengeId =
-            mailboxChallengesReference.child(userId).awaitNullableValue<String>()
+        val mailboxChallengeId = dataSource.getMailboxChallengeId(userId = userId)
 
         if (!mailboxChallengeId.isNullOrBlank()) {
             return
         }
 
-        tavernTravelersReference.child(userId).runTransaction(
-            TravelerEntity.serializer().nullable
-        ) { traveler ->
-            when {
-                traveler == null -> null
-                traveler.tavernStatus != TavernStatus.Busy -> traveler
-                else -> traveler.copy(tavernStatus = TavernStatus.Available)
-            }
-        }
+        dataSource.releaseTravelerIfBusy(userId = userId)
     }
 
-    private fun getMailboxChallengeIdFlow(userId: String): Flow<String?> =
-        mailboxChallengesReference
-            .child(userId)
-            .valueEvents
-            .map { snapshot ->
-                if (snapshot.exists) {
-                    snapshot.value(strategy = String.serializer().nullable)
-                } else {
-                    null
-                }
-            }
-            .distinctUntilChanged()
-
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun getChallengeFlow(challengeId: String): Flow<Challenge?> =
-        challengesReference
-            .child(challengeId)
-            .valueEvents
-            .map { snapshot ->
-                snapshot.value(strategy = ChallengeEntity.serializer().nullable)?.toDomain()
-            }
+        dataSource
+            .challengeEntityFlow(challengeId = challengeId)
+            .map { entity -> entity?.toDomain() }
             .distinctUntilChanged()
 
     private suspend fun reconcileChallengeState(challengeId: String) {
-        val challengeEntity =
-            challengesReference.child(challengeId).awaitNullableValue<ChallengeEntity>() ?: return
+        val challengeEntity = dataSource.getChallengeEntity(challengeId = challengeId) ?: return
 
         val participantUserIds = challengeEntity.challengerEntitiesMap.keys.toList()
 
@@ -404,14 +323,13 @@ class FirebaseTavernRepository(
         challengeId: String,
         participantUserIds: List<String>,
     ) {
-        applyUpdates {
-            removeChallenge(challengeId)
-            clearMailboxes(participantUserIds)
-        }
-    }
-
-    private suspend fun applyUpdates(builder: MutableMap<String, Any?>.() -> Unit) {
-        root.updateChildren(update = buildMap(builderAction = builder))
+        dataSource.applyUpdates(
+            updates =
+                buildMap {
+                    removeChallenge(challengeId)
+                    clearMailboxes(participantUserIds)
+                }
+        )
     }
 
     private data class ClaimChallengerResult(val isClaimed: Boolean, val challenger: Challenger)
@@ -422,10 +340,7 @@ class FirebaseTavernRepository(
         CancelInsufficientPlayers,
     }
 
-    private class AbortTransactionException : RuntimeException()
-
     companion object {
-        const val CONNECTED_REFERENCE_PATH = ".info/connected"
         const val MINIMUM_CHALLENGERS = 2
         const val SEND_RESULT_FAILURE_MESSAGE = "Something went wrong, please try again."
     }
@@ -464,13 +379,3 @@ private fun ChallengeEntity.isExpired(): Boolean =
 internal fun String.toChallengesPath(): String = "$CHALLENGES_PATH/$this"
 
 internal fun String.toChallengeMailBoxesPath(): String = "$CHALLENGE_MAILBOXES_PATH/$this"
-
-private suspend inline fun <reified T> DatabaseReference.awaitNullableValue(): T? {
-    val snapshot = valueEvents.first()
-
-    return if (snapshot.exists) {
-        snapshot.value<T>()
-    } else {
-        null
-    }
-}

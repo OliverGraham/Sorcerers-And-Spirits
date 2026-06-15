@@ -101,20 +101,30 @@ class ArenaScreenViewModelTest {
             setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
         )
 
+    /**
+     * Seeds [arenaMatchFlow] with a combat match, creates the ViewModel, and advances the
+     * dispatcher so the loaded [ArenaState.Combat] is available via [requireCombatState].
+     */
+    private fun TestScope.combatViewModel(
+        nextCombatAction: NextCombatAction,
+        playerMap: Map<String, ArenaPlayer.Selected>,
+    ): ArenaScreenViewModel {
+        arenaMatchFlow.value =
+            createCombatMatch(nextCombatAction = nextCombatAction, playerMap = playerMap)
+        return createViewModel().also { runCurrent() }
+    }
+
+    /** Two-player convenience wrapper that also returns the loaded [ArenaState.Combat]. */
     private fun TestScope.createViewModelWithCombatState(
         nextCombatAction: NextCombatAction,
         userClass: CharacterClass,
         opponentClass: CharacterClass = CharacterClass.getMage(),
     ): Pair<ArenaScreenViewModel, ArenaState.Combat> {
-        arenaMatchFlow.value =
-            createCombatMatch(
+        val viewModel =
+            combatViewModel(
                 nextCombatAction = nextCombatAction,
                 playerMap = twoPlayerMap(userClass = userClass, opponentClass = opponentClass),
             )
-
-        val viewModel = createViewModel()
-        runCurrent()
-
         return viewModel to viewModel.requireCombatState()
     }
 
@@ -122,27 +132,6 @@ class ArenaScreenViewModelTest {
         val uiState = uiStateFlow.value
         assertIs<UiState.Loaded<ArenaScreenState>>(uiState)
         return assertIs<ArenaState.Combat>(uiState.data.arenaState)
-    }
-
-    private fun combatViewModel(
-        nextCombatAction: NextCombatAction,
-        playerMap: Map<String, ArenaPlayer.Selected>,
-    ): ArenaScreenViewModel {
-        arenaMatchFlow.value =
-            createCombatMatch(nextCombatAction = nextCombatAction, playerMap = playerMap)
-        return createViewModel()
-    }
-
-    /** Collects the UI state via Turbine and returns the loaded [ArenaState.Combat]. */
-    private suspend fun ArenaScreenViewModel.awaitCombatState(): ArenaState.Combat {
-        lateinit var combatState: ArenaState.Combat
-        uiStateFlow.test {
-            skipItems(count = 1) // initial Loading
-            val loaded = assertIs<UiState.Loaded<ArenaScreenState>>(value = awaitItem())
-            combatState = assertIs<ArenaState.Combat>(value = loaded.data.arenaState)
-            cancelAndIgnoreRemainingEvents()
-        }
-        return combatState
     }
 
     private fun ArenaState.Combat.attackControl(): ArenaCombatControl.NormalAttack =
@@ -202,7 +191,7 @@ class ArenaScreenViewModelTest {
      * Sets up a defender-side passive ability roll owned by the user, then asserts the offered
      * [ArenaCombatControl.AbilityRoll] matches the expected label and target requirement.
      */
-    private suspend fun assertPassiveRollControl(
+    private fun TestScope.assertPassiveRollControl(
         purpose: AbilityAction,
         userClass: CharacterClass,
         opponentClass: CharacterClass = CharacterClass.getMage(),
@@ -222,7 +211,7 @@ class ArenaScreenViewModelTest {
                         ),
                     playerMap = twoPlayerMap(userClass = userClass, opponentClass = opponentClass),
                 )
-                .awaitCombatState()
+                .requireCombatState()
 
         val control = combatState.abilityRollControl()
         assertEquals(expected = expectedLabel, actual = control.label)
@@ -339,7 +328,7 @@ class ArenaScreenViewModelTest {
         assertTrue(actual = combatState.combatControls.isEmpty())
     }
 
-    // TODO(SS-002): All fucked
+    // ---------- Pending mid-attack rolls -> available controls ----------
 
     @Test
     fun `Given the user's pending health roll, then only an attack control without a target requirement is offered`() =
@@ -699,7 +688,7 @@ class ArenaScreenViewModelTest {
                     nextCombatAction = idleTurn(USER_ID),
                     playerMap = twoPlayerMap(userClass = CharacterClass.getRogue()),
                 )
-                .awaitCombatState()
+                .requireCombatState()
                 .assertOnlyAttackOffered()
         }
 
@@ -710,7 +699,7 @@ class ArenaScreenViewModelTest {
                     nextCombatAction = idleTurn(USER_ID),
                     playerMap = twoPlayerMap(userClass = CharacterClass.getBard()),
                 )
-                .awaitCombatState()
+                .requireCombatState()
                 .assertOnlyAttackOffered()
         }
 
@@ -721,7 +710,7 @@ class ArenaScreenViewModelTest {
                     nextCombatAction = idleTurn(USER_ID),
                     playerMap = twoPlayerMap(userClass = CharacterClass.getMage()),
                 )
-                .awaitCombatState()
+                .requireCombatState()
                 .assertOnlyAttackOffered()
         }
 
@@ -732,7 +721,7 @@ class ArenaScreenViewModelTest {
                     nextCombatAction = idleTurn(USER_ID),
                     playerMap = twoPlayerMap(userClass = CharacterClass.getPaladin()),
                 )
-                .awaitCombatState()
+                .requireCombatState()
                 .assertOnlyAttackOffered()
         }
 
@@ -744,7 +733,7 @@ class ArenaScreenViewModelTest {
                         nextCombatAction = idleTurn(USER_ID),
                         playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             val impersonateControl =
                 combatState.activatedControlFor<AbilityActionState.Activated.Impersonate>()
@@ -775,7 +764,7 @@ class ArenaScreenViewModelTest {
                         nextCombatAction = idleTurn(USER_ID),
                         playerMap = twoPlayerMap(userClass = illusionist),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             val activatedControls =
                 combatState.combatControls.filterIsInstance<ArenaCombatControl.ActivatedAbility>()
@@ -806,7 +795,7 @@ class ArenaScreenViewModelTest {
                         nextCombatAction = idleTurn(USER_ID),
                         playerMap = twoPlayerMap(userClass = illusionist),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             val prepareAttackControl =
                 combatState.activatedControlFor<AbilityActionState.Activated.PrepareAttack>()
@@ -829,7 +818,7 @@ class ArenaScreenViewModelTest {
                             ),
                         playerMap = twoPlayerMap(userClass = CharacterClass.getRogue()),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             assertFalse(actual = combatState.isItThisUsersTurn)
             assertTrue(actual = combatState.combatControls.isEmpty())
@@ -848,7 +837,7 @@ class ArenaScreenViewModelTest {
                                 opponentClass = CharacterClass.getDuelist(),
                             ),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             assertTrue(actual = combatState.combatControls.isEmpty())
         }
@@ -980,7 +969,7 @@ class ArenaScreenViewModelTest {
                 )
             val control =
                 viewModel
-                    .awaitCombatState()
+                    .requireCombatState()
                     .activatedControlFor<AbilityActionState.Activated.SummonMinion>()
 
             viewModel.useAbility(action = control.action)
@@ -1003,7 +992,7 @@ class ArenaScreenViewModelTest {
                 )
             val control =
                 viewModel
-                    .awaitCombatState()
+                    .requireCombatState()
                     .activatedControlFor<AbilityActionState.Activated.Impersonate>()
 
             viewModel.useAbility(action = control.action, targetedOpponentUserId = OPPONENT_ID)
@@ -1033,7 +1022,7 @@ class ArenaScreenViewModelTest {
                 )
             val allInControl =
                 viewModel
-                    .awaitCombatState()
+                    .requireCombatState()
                     .activatedControlFor<AbilityActionState.Activated.AllIn>()
 
             viewModel.useAbility(action = allInControl.action)
@@ -1058,7 +1047,7 @@ class ArenaScreenViewModelTest {
                         ),
                     playerMap = twoPlayerMap(userClass = CharacterClass.getDuelist()),
                 )
-            val combatState = viewModel.awaitCombatState()
+            val combatState = viewModel.requireCombatState()
 
             viewModel.attack(
                 combatActionState = combatState.combatActionState,
@@ -1090,7 +1079,7 @@ class ArenaScreenViewModelTest {
                             opponentClass = CharacterClass.getRogue(),
                         ),
                 )
-            val control = viewModel.awaitCombatState().abilityRollControl()
+            val control = viewModel.requireCombatState().abilityRollControl()
 
             viewModel.useAbility(action = control.action)
             runCurrent()
@@ -1120,7 +1109,7 @@ class ArenaScreenViewModelTest {
                             opponentClass = CharacterClass.getRogue(),
                         ),
                 )
-            val control = viewModel.awaitCombatState().abilityRollControl()
+            val control = viewModel.requireCombatState().abilityRollControl()
 
             viewModel.useAbility(action = control.action)
             runCurrent()
@@ -1146,7 +1135,7 @@ class ArenaScreenViewModelTest {
                                 secondOpponentClass = CharacterClass.getMage(),
                             ),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             assertTrue(actual = combatState.isItThisUsersTurn)
             assertTrue(actual = combatState.attackControl().requiresTarget)
@@ -1168,7 +1157,7 @@ class ArenaScreenViewModelTest {
                                 secondOpponentClass = CharacterClass.getMage(),
                             ),
                     )
-                    .awaitCombatState()
+                    .requireCombatState()
 
             assertFalse(actual = combatState.isItThisUsersTurn)
             assertTrue(actual = combatState.combatControls.isEmpty())
@@ -1187,7 +1176,7 @@ class ArenaScreenViewModelTest {
                             secondOpponentClass = CharacterClass.getMage(),
                         ),
                 )
-            val combatState = viewModel.awaitCombatState()
+            val combatState = viewModel.requireCombatState()
 
             viewModel.attack(
                 combatActionState = combatState.combatActionState,
@@ -1223,7 +1212,7 @@ class ArenaScreenViewModelTest {
                             secondOpponentClass = CharacterClass.getMage(),
                         ),
                 )
-            val control = viewModel.awaitCombatState().abilityRollControl()
+            val control = viewModel.requireCombatState().abilityRollControl()
 
             viewModel.useAbility(
                 action = control.action,

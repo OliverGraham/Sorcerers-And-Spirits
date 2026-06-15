@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 data class CharacterClassState(
     val type: CharacterClassType,
     val hitPoints: Int,
+    val maxHitPoints: Int,
     val armorClass: Int,
     val speed: Int,
     val offensiveAbility: OffensiveAbilityState,
@@ -20,6 +21,7 @@ internal fun CharacterClass.toState() =
     CharacterClassState(
         type = type,
         hitPoints = hitPoints,
+        maxHitPoints = maxHitPoints,
         armorClass = armorClass,
         speed = speed,
         offensiveAbility = offensiveAbility.toState(),
@@ -30,6 +32,7 @@ internal fun CharacterClassState.toDomain() =
     CharacterClass(
         type = type,
         hitPoints = hitPoints,
+        maxHitPoints = maxHitPoints,
         armorClass = armorClass,
         speed = speed,
         offensiveAbility = offensiveAbility.toDomain(),

@@ -29,12 +29,12 @@ internal class SummonMinionActivated(
                 4,
                 5 -> {
                     newSkeletonCount++
-                    newHp = 7 // Necro max HP
+                    newHp = attacker.maxHitPoints
                 }
 
                 6 -> {
                     newGolemCount++
-                    newHp = 7
+                    newHp = attacker.maxHitPoints
                 }
 
                 else -> Unit

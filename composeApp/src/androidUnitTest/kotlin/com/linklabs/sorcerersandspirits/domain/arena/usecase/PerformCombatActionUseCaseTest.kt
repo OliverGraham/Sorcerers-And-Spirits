@@ -1884,6 +1884,7 @@ class PerformCombatActionUseCaseTest {
         private fun createCharacterClass(
             type: CharacterClassType = CharacterClassType.None,
             hitPoints: Int = 5,
+            maxHitPoints: Int = hitPoints,
             armorClass: Int = 6,
             speed: Int = 8,
             offensiveAbility: OffensiveAbility = OffensiveAbility.None,
@@ -1893,6 +1894,7 @@ class PerformCombatActionUseCaseTest {
             CharacterClass(
                 type = type,
                 hitPoints = hitPoints,
+                maxHitPoints = maxHitPoints,
                 armorClass = armorClass,
                 speed = speed,
                 offensiveAbility = offensiveAbility,

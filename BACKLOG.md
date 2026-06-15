@@ -346,10 +346,19 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Domain layer
 
 ### SS-046 — Add maximum HP
-- [ ] Not completed
+- [x] Completed
 - **Source:** `CharacterClass.kt:5` (`// TODO: Add a maximum HP`)
 - **Goal:** Introduce a max-HP concept so healing/shields can't exceed a cap (interacts with
   Necromancer heal-to-full, shields).
+- **Resolution:** Added a `maxHitPoints` field to the domain `CharacterClass` (set per class in the
+  factory functions, equal to each class's starting HP) and plumbed it through `CharacterClassEntity`
+  (with a `= hitPoints` serialization default so in-flight persisted matches still deserialize) and
+  `CharacterClassState`, including all four mappers. Replaced the hardcoded `7 // Necro max HP` in
+  `SummonMinionActivated`'s heal-to-full branches with `attacker.maxHitPoints`, so heal-to-full is
+  now capped at the class max by construction. Skeleton/golem shields are tracked as separate counts
+  and never added directly to `hitPoints`, so no further clamp was needed. `composeApp` debug
+  unit-test suite is green (including the Summon Minion heal-to-full cases). The SS-047 RemoteConfig
+  work can now drive `maxHitPoints` as part of the same class-stats schema.
 
 ### SS-047 — Class/ability values from RemoteConfig
 - [ ] Not completed

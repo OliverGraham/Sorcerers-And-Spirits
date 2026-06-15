@@ -2,10 +2,10 @@ package com.linklabs.sorcerersandspirits.domain.game
 
 import kotlin.Int
 
-// TODO(SS-046): Add a maximum HP
 data class CharacterClass(
     val type: CharacterClassType,
     val hitPoints: Int,
+    val maxHitPoints: Int,
     val armorClass: Int,
     val speed: Int,
     val offensiveAbility: OffensiveAbility,
@@ -35,6 +35,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Rogue,
                 hitPoints = 5,
+                maxHitPoints = 5,
                 armorClass = 6,
                 speed = 8,
                 offensiveAbility = OffensiveAbility.KillingMomentum,
@@ -45,6 +46,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Gambler,
                 hitPoints = 3,
+                maxHitPoints = 3,
                 armorClass = 4,
                 speed = 7,
                 offensiveAbility = OffensiveAbility.AllIn(),
@@ -55,6 +57,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Duelist,
                 hitPoints = 4,
+                maxHitPoints = 4,
                 armorClass = 4,
                 speed = 6,
                 offensiveAbility = OffensiveAbility.PrepareAttack,
@@ -65,6 +68,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Necromancer,
                 hitPoints = 7,
+                maxHitPoints = 7,
                 armorClass = 7,
                 speed = 5,
                 offensiveAbility = OffensiveAbility.SummonMinion(),
@@ -75,6 +79,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Bard,
                 hitPoints = 5,
+                maxHitPoints = 5,
                 armorClass = 5,
                 speed = 4,
                 offensiveAbility = OffensiveAbility.Encore,
@@ -85,6 +90,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Illusionist,
                 hitPoints = 5,
+                maxHitPoints = 5,
                 armorClass = 5,
                 speed = 3,
                 offensiveAbility = OffensiveAbility.Impersonate(),
@@ -95,6 +101,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Mage,
                 hitPoints = 4,
+                maxHitPoints = 4,
                 armorClass = 4,
                 speed = 2,
                 offensiveAbility = OffensiveAbility.SpellPotency,
@@ -105,6 +112,7 @@ data class CharacterClass(
             CharacterClass(
                 type = CharacterClassType.Paladin,
                 hitPoints = 7,
+                maxHitPoints = 7,
                 armorClass = 7,
                 speed = 1,
                 offensiveAbility = OffensiveAbility.None,

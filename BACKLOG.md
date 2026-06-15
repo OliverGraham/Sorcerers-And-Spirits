@@ -48,14 +48,16 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   rules — they test real derivation, not tautologies, so no further changes were needed.
 
 ### SS-003 — Clarify Charm test comment & assertion
-- [ ] Not completed
+- [x] Completed
 - **Source:** `PerformCombatActionUseCaseTest.kt:928` (`// TODO: I don't understand this comment...`)
 - **Goal:** Resolve the confusing comment about the Charmed target and verify the assertion matches
   the intended Persuade/Charm rule from CLAUDE.md.
-- **Steps:**
-  - Re-read the Bard Persuade/Charm rules in `CLAUDE.md`.
-  - Confirm the assertion reflects "Charmed target now attacks ..." correctly.
-  - Replace the comment with an accurate description (or self-documenting test name).
+- **Resolution:** The misleading "The Bard's chosen target redirects the attack" comment had the
+  direction backwards. Per the Bard Persuade rule, on a 6 the Bard charms the **attacker** into
+  attacking the Bard's chosen target. Replaced the comment in both the hit/miss Charm tests with
+  "Persuade charms the attacker into attacking the Bard's chosen target instead", matching the
+  `charmedAttackerUserId`/`newTargetUserId` naming. Verified the existing assertions already reflect
+  the rule (fresh ArmorClass roll against the new target; miss ends the turn) — the suite is green.
 
 ---
 
@@ -148,9 +150,14 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   implement; surface `MatchTimedOut` in the UI.
 
 ### SS-015 — Delete unused ArenaActions
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaActions.kt:31` (`// TODO: Delete`)
 - **Goal:** Remove the dead code flagged for deletion (verify no usages first).
+- **Resolution:** `RollDiceArguments` and its entire `onRollDice` chain were dead — the ViewModel
+  handler was an empty no-op (`fun onRollDice(...) {}`) and nothing ever invoked it. Deleted the
+  `RollDiceArguments` data class, the `onRollDice` field in `ArenaActions`, its wiring in
+  `ArenaScreen`, and the no-op ViewModel function. `composeApp` compiles clean (no remaining
+  references).
 
 ### SS-016 — Rename/refactor ArenaActions
 - [ ] Not completed

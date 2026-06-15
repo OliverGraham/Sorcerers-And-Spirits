@@ -27,6 +27,16 @@ interface TavernDataSource {
 
     fun generateChallengeId(): String?
 
+    /**
+     * Atomically creates the challenge and its participants' mailboxes in a single write, stamping
+     * the start time with the backend's clock so every client shares the same deadline.
+     */
+    suspend fun createChallenge(
+        challengeId: String,
+        challengers: Map<String, ChallengerEntity>,
+        participantUserIds: List<String>,
+    )
+
     suspend fun registerTravelerRemovalOnDisconnect(userId: String)
 
     suspend fun upsertTravelerPresence(

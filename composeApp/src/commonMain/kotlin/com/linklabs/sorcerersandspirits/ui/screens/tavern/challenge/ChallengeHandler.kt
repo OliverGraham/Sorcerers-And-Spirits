@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
-import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
@@ -13,11 +12,15 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallenger
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengerState
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 internal class ChallengeHandler(
     private val challengeTimer: Timer,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
+    private val now: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
 
     suspend fun sendChallenges(
@@ -73,11 +76,16 @@ internal class ChallengeHandler(
 
     private fun handleChallengeStart(userId: String, updatedChallenge: Challenge): ChallengeState {
         val isUserInstigator = updatedChallenge.isUserInstigator(userId = userId)
-        challengeTimer.startTimer(callOnTimerExpiration = !isUserInstigator)
+        val secondsRemaining = updatedChallenge.secondsRemaining(nowMillis = now())
+
+        challengeTimer.startTimer(
+            timerDuration = secondsRemaining,
+            callOnTimerExpiration = !isUserInstigator,
+        )
 
         return updatedChallenge.toChallengeState(
             isUserInstigator = isUserInstigator,
-            secondsRemaining = SIXTY_SECONDS,
+            secondsRemaining = secondsRemaining,
             showChallengeDialog = true,
         )
     }

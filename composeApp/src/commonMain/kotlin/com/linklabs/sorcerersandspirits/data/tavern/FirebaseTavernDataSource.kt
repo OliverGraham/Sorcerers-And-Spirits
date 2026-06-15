@@ -7,9 +7,11 @@ import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
+import dev.gitlive.firebase.database.ServerValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 
@@ -49,6 +51,26 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         challengesReference.child(path = challengeId).awaitNullableValue<ChallengeEntity>()
 
     override fun generateChallengeId(): String? = challengesReference.push().key
+
+    override suspend fun createChallenge(
+        challengeId: String,
+        challengers: Map<String, ChallengerEntity>,
+        participantUserIds: List<String>,
+    ) {
+        root.updateChildren(
+            update =
+                buildMap {
+                    this[challengeId.toChallengesPath()] =
+                        ChallengeWriteEntity(
+                            challengeId = challengeId,
+                            challengerEntitiesMap = challengers,
+                        )
+                    participantUserIds.forEach { userId ->
+                        this[userId.toChallengeMailBoxesPath()] = challengeId
+                    }
+                }
+        )
+    }
 
     override suspend fun registerTravelerRemovalOnDisconnect(userId: String) {
         tavernTravelersReference.child(path = userId).onDisconnect().removeValue()
@@ -141,6 +163,18 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         const val CONNECTED_REFERENCE_PATH = ".info/connected"
     }
 }
+
+/**
+ * Write-only shape of a challenge. [startTimeMillis] is the [ServerValue.TIMESTAMP] sentinel, which
+ * the backend resolves to its own clock on write. It is read back through [ChallengeEntity], whose
+ * `startTimeMillis` is a resolved `Long`.
+ */
+@Serializable
+private data class ChallengeWriteEntity(
+    val challengeId: String,
+    val challengerEntitiesMap: Map<String, ChallengerEntity>,
+    val startTimeMillis: ServerValue = ServerValue.TIMESTAMP,
+)
 
 private suspend inline fun <reified T> DatabaseReference.awaitNullableValue(): T? {
     val snapshot = valueEvents.first()

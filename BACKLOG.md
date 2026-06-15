@@ -400,3 +400,27 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - [ ] Not completed
 - **Source:** `Modules.kt:52` (`// TODO: What to name this?`)
 - **Goal:** Give the flagged DI definition a meaningful name.
+
+---
+
+## Tavern timing
+
+### SS-057 — Challenge timer must use the communal backend deadline
+- [x] Completed
+- **Source:** Reported bug — sending a challenge, then killing & relaunching the app, restarted the
+  countdown from a fresh 1:00 and left the two clients out of sync.
+- **Goal:** Drive the challenge countdown from the shared backend deadline instead of a hardcoded
+  60s anchored to when each client first observed the challenge. Related: SS-042.
+- **Resolution:**
+  - `ChallengeHandler.handleChallengeStart` now computes `Challenge.secondsRemaining(now)` from the
+    communal deadline rather than hardcoding `SIXTY_SECONDS`, so a relaunched/late client resumes at
+    the real remaining time.
+  - The start time is authored by the **backend** via `ServerValue.TIMESTAMP` (written in a single
+    atomic `createChallenge` through the `TavernDataSource` seam, contained in
+    `FirebaseTavernDataSource`), so the deadline no longer depends on the instigator's clock. The
+    deadline is derived as `startTimeMillis + CHALLENGE_DURATION_MILLIS`; `endTimeMillis` is no
+    longer client-written.
+  - Each client subtracts its own local clock (no `serverTimeOffset` correction by choice) — drift
+    is bounded by device clock accuracy (≈ms on NTP-synced devices), which is acceptable.
+- **Known limitation / future option:** if real-device clock skew ever matters, add
+  `.info/serverTimeOffset` correction. Left out deliberately to avoid complexity.

@@ -63,7 +63,7 @@ class ConnectTravelerPresenceUseCaseTest {
                 challengeEntity(
                     challengeId = CHALLENGE_ID,
                     challengers = listOf(challengerEntity(userId = USER_ID)),
-                    endTimeMillis = null,
+                    startTimeMillis = NON_EXPIRED_START,
                 )
         )
 
@@ -100,7 +100,7 @@ class ConnectTravelerPresenceUseCaseTest {
                     challengeEntity(
                         challengeId = CHALLENGE_ID,
                         challengers = listOf(challengerEntity(userId = USER_ID)),
-                        endTimeMillis = 1L,
+                        startTimeMillis = 1L,
                     )
             )
 
@@ -119,5 +119,8 @@ class ConnectTravelerPresenceUseCaseTest {
         const val USER_ID = "user-1"
         const val NAME = "Gandalf"
         const val CHALLENGE_ID = "challenge-1"
+
+        // Far enough out that start + 60s is never in the past during the test run.
+        const val NON_EXPIRED_START = 4_000_000_000_000L
     }
 }

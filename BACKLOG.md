@@ -36,13 +36,16 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   - Use Kotlin asserts, and Turbine as necessary
 
 ### SS-002 — Repair broken ArenaScreenViewModel test
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaScreenViewModelTest.kt:342` (`// TODO: All fucked`)
 - **Goal:** Fix the broken/abandoned test around line 342 so it asserts correct behavior.
-- **Steps:**
-  - Identify what scenario the test intends to cover.
-  - Reconcile it with the current ViewModel API and `ArenaState` shapes.
-  - Make it pass (or delete if redundant with other coverage).
+- **Resolution:** The abandoned test had already been superseded by a comprehensive, passing suite;
+  the broken scenario (mid-attack pending rolls) is now covered by the tests immediately following
+  the marker (pending health roll, Teleport roll-off, opponent-owned ability roll). Replaced the
+  stale `// TODO(SS-002): All fucked` divider with a real section header and verified the whole
+  `composeApp` debug unit-test suite is green. Reviewed every assertion against the live
+  `ArenaScreenViewModel` and `ArenaScreenState.toUpdatedState` mapping plus the CLAUDE.md ability
+  rules — they test real derivation, not tautologies, so no further changes were needed.
 
 ### SS-003 — Clarify Charm test comment & assertion
 - [ ] Not completed

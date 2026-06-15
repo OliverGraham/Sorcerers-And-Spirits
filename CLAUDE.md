@@ -9,6 +9,10 @@ other clients
 
 The game uses Firebase's RealTime Database as the shared persisted game-state source.
 
+Outstanding work is tracked as tickets in BACKLOG.md. TODO comments in the code are tagged with
+their ticket ID, e.g. `// TODO(SS-019): ...`; grep an ID to find every related TODO. When asked to
+work a ticket, read its entry in BACKLOG.md and check the box there when it's done.
+
 Game terminology:
 
 - "Match" Entire Arena battle from start to end. Players can join an arena and play for as many

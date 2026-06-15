@@ -5,7 +5,8 @@ import com.linklabs.sorcerersandspirits.data.arena.model.withActiveUserIds
 import dev.gitlive.firebase.database.DatabaseReference
 import kotlinx.serialization.builtins.nullable
 
-// TODO Arena: When it's finished because someone left early, then make sure there's UI about this
+// TODO(SS-045) Arena: When it's finished because someone left early, then make sure there's UI
+// about this
 internal class ExitArena(private val userId: String) {
     suspend operator fun invoke(arenaReference: DatabaseReference) {
         arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer().nullable) { match ->

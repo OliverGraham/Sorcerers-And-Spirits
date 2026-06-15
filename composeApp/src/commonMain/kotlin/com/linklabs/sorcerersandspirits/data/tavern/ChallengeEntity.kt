@@ -5,7 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import kotlinx.serialization.Serializable
 
-// TODO: Look into time part
+// TODO(SS-042): Look into time part
 @Serializable
 data class ChallengeEntity(
     val challengeId: String = "",

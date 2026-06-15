@@ -161,7 +161,7 @@ private fun AbilityActionState.Activated.toControl(enabled: Boolean = true) =
         enabled = enabled,
     )
 
-// TODO: Always StringResources
+// TODO(SS-029): Always StringResources
 private val AbilityActionState.label: String
     get() =
         when (this) {

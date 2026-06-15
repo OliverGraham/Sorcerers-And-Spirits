@@ -1,0 +1,397 @@
+# Backlog
+
+A tracked list of work items ("tickets") for Sorcerers and Spirits.
+
+## How this works
+
+- Each ticket has a stable ID (`SS-001`, `SS-002`, ...).
+- TODO comments in the codebase are tagged with their ticket ID, e.g. `// TODO(SS-019): ...`,
+  so any TODO can be traced back to its ticket here. Search the codebase for the ID to find every
+  related TODO.
+- A ticket may cover more than one TODO when they describe the same underlying work.
+- Not every ticket comes from a TODO — add new ones freely; just give them the next free ID.
+- Check the box (`[x]`) when a ticket is complete.
+
+## Status legend
+
+- `[ ]` not completed
+- `[x]` completed
+
+---
+
+## Tests
+
+### SS-001 — Fix Tavern repository tests
+- [ ] Not completed
+- **Source:** `FirebaseTavernRepositoryTest.kt:8` (`// TODO Tavern: Fix all these tests`)
+- **Goal:** Restore the Tavern repository test suite to a passing, meaningful state.
+- **Steps:**
+  - Run the suite and catalog what currently fails or is disabled.
+  - Update tests to match the current `FirebaseTavernRepository` API/behavior.
+  - Remove tests that are obsolete; add coverage for any gaps surfaced.
+
+### SS-002 — Repair broken ArenaScreenViewModel test
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModelTest.kt:342` (`// TODO: All fucked`)
+- **Goal:** Fix the broken/abandoned test around line 342 so it asserts correct behavior.
+- **Steps:**
+  - Identify what scenario the test intends to cover.
+  - Reconcile it with the current ViewModel API and `ArenaState` shapes.
+  - Make it pass (or delete if redundant with other coverage).
+
+### SS-003 — Clarify Charm test comment & assertion
+- [ ] Not completed
+- **Source:** `PerformCombatActionUseCaseTest.kt:928` (`// TODO: I don't understand this comment...`)
+- **Goal:** Resolve the confusing comment about the Charmed target and verify the assertion matches
+  the intended Persuade/Charm rule from CLAUDE.md.
+- **Steps:**
+  - Re-read the Bard Persuade/Charm rules in `CLAUDE.md`.
+  - Confirm the assertion reflects "Charmed target now attacks ..." correctly.
+  - Replace the comment with an accurate description (or self-documenting test name).
+
+---
+
+## Tavern UI
+
+### SS-004 — Decide source of class list in TavernState
+- [ ] Not completed
+- **Source:** `TavernState.kt:21` (`// TODO: any reason to get from config?`)
+- **Goal:** Decide whether the class list should come from RemoteConfig or stay static
+  (`CharacterClass.getAllClasses()`). Related: SS-047.
+- **Steps:** Evaluate whether classes are ever config-driven; document the decision; implement or
+  remove the TODO.
+
+### SS-005 — Move navigateToArena out of TavernState
+- [ ] Not completed
+- **Source:** `TavernState.kt:39` (`// TODO: Move this out of state?`)
+- **Goal:** Reconsider whether `navigateToArena` belongs in state vs. an event/effect channel.
+- **Steps:** Review existing event-channel pattern (e.g. `ArenaEvent`); migrate navigation to an
+  event if appropriate.
+
+### SS-006 — Consolidate navigate-to-arena callback at App level
+- [ ] Not completed
+- **Source:** `TavernScreen.kt:66` (`// TODO: make one for App?`)
+- **Goal:** Decide whether the `onNavigateToArena` wiring should live at the App level instead of
+  per-screen.
+- **Steps:** Inspect navigation host wiring; hoist the callback if it reduces duplication.
+
+### SS-007 — Real error UI for error states
+- [ ] Not completed
+- **Sources:**
+  - `TavernScreen.kt:77` (`// TODO: Update UI to show error`)
+  - `ArenaScreen.kt:62` (`// TODO Arena: Update UI to show error`)
+  - `SorcerersAndSpiritsNavigationHost.kt:36` (`// TODO: Update UI to show error`)
+  - `SorcerersAndSpiritsNavigationHost.kt:49` (`// TODO: what to do here, show another dialog?...`)
+- **Goal:** Replace placeholder retry/empty handling with proper error UI shared across screens.
+- **Steps:** Design a reusable error component/pattern; wire each `UiState.Error` branch to it;
+  decide UX for the navigation-host failure case (dialog / snackbar / exit).
+
+### SS-008 — Reusable Tavern preview state & previews
+- [ ] Not completed
+- **Sources:**
+  - `ExampleTravelers.kt:6` (`// TODO: Make example state that can be reused for previews`)
+  - `TavernScreen.kt:199` (`// TODO: Preview`)
+  - `ChallengeDialog.kt:169` (`// TODO: Update preview data`)
+- **Goal:** Build reusable example/preview state for Tavern composables and add/refresh previews.
+- **Steps:** Create shared sample data in `ExampleTravelers`; add a `TavernScreen` preview; update
+  `ChallengeDialog` preview data.
+
+### SS-009 — Improve TheBar
+- [ ] Not completed
+- **Source:** `TheBar.kt:42` (`// TODO: Improve`)
+- **Goal:** Clarify and improve `TheBar` (scope is vague — define concretely while working on it).
+- **Steps:** Inspect the composable; identify the concrete improvement intended; implement.
+
+### SS-010 — Reword challenge-list UI copy in TheBar
+- [ ] Not completed
+- **Source:** `TheBar.kt:83` (`// TODO: Change UI - should say other players to challenge...`)
+- **Goal:** Update copy to clearly communicate "other players to challenge."
+- **Steps:** Replace text with a string resource; verify wording.
+
+### SS-011 — New challenge icon in TheBar
+- [ ] Not completed
+- **Source:** `TheBar.kt:92` (`// TODO: new icon`)
+- **Goal:** Replace the placeholder icon with the intended challenge icon.
+
+### SS-012 — Update TheBar styling
+- [ ] Not completed
+- **Source:** `TheBar.kt:158` (`// TODO: Update styling`)
+- **Goal:** Finalize styling for `TheBar`.
+
+---
+
+## Arena UI
+
+### SS-013 — Review ArenaEvent (empty TODO)
+- [ ] Not completed
+- **Source:** `ArenaEvent.kt:3` (`// TODO Arena:`)
+- **Goal:** Empty placeholder TODO — determine intent (likely additional events) or remove.
+
+### SS-014 — Handle match/timer expiration per state
+- [ ] Not completed
+- **Sources:**
+  - `ArenaScreen.kt:78` (`/* TODO */` in `ArenaEvent.MatchTimedOut` handling)
+  - `ArenaScreenViewModel.kt:292` (timer expiration in `ChoosingClasses`)
+  - `ArenaScreenViewModel.kt:296` (timer expiration in `Combat`)
+  - `ArenaScreenViewModel.kt:300` (timer expiration in `Finished`)
+- **Goal:** Define and implement what happens when the timer expires in each `ArenaState`, and how
+  the `MatchTimedOut` event is surfaced to the user.
+- **Steps:** Decide per-state behavior (auto-pick class, skip/auto-resolve turn, finish handling);
+  implement; surface `MatchTimedOut` in the UI.
+
+### SS-015 — Delete unused ArenaActions
+- [ ] Not completed
+- **Source:** `ArenaActions.kt:31` (`// TODO: Delete`)
+- **Goal:** Remove the dead code flagged for deletion (verify no usages first).
+
+### SS-016 — Rename/refactor ArenaActions
+- [ ] Not completed
+- **Source:** `ArenaActions.kt:38` (`// TODO: Rename/refactor`)
+- **Goal:** Rename/refactor the flagged ArenaActions construct for clarity.
+
+### SS-017 — Refactor ArenaScreenViewModel
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModel.kt:40` (`// TODO: This is all fucked`)
+- **Goal:** Address the broad "this is all fucked" flag — clean up the ViewModel section it marks.
+- **Steps:** Read the surrounding block; identify the specific problem; refactor with tests.
+
+### SS-018 — Better userId resolution
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModel.kt:73` (`// TODO: Figure out better way for userId`)
+- **Goal:** Establish a cleaner way to obtain the current user's id.
+
+### SS-019 — Track doublesBonus in ArenaState.Combat
+- [ ] Not completed
+- **Sources:**
+  - `ArenaScreenViewModel.kt:150` (in `onAttack`)
+  - `ArenaScreenViewModel.kt:180` (in `onUseAbility`)
+- **Goal:** Track and pass the real `doublesBonus` (currently hardcoded `null`) per the doubles
+  +1 consecutive-roll rule in CLAUDE.md.
+- **Steps:** Add a `doublesBonus` field to `ArenaState.Combat`; populate it from domain state; pass
+  it into `CombatActionArguments` in both call sites.
+
+### SS-020 — Fix Charm logic in onUseAbility
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModel.kt:164` (`// TODO: This Charm logic is done oddly or incorrectly`)
+- **Goal:** Correct how `selectedCharmTargetUserId` is resolved for Persuade/Charm. Related: SS-049.
+- **Steps:** Verify against Bard Persuade rules; ensure target cannot be self/Bard; clean up the
+  conditional.
+
+### SS-021 — Forfeit vs finished leave + stats update
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModel.kt:215` (`// TODO Arena: Need a leave that updates stats with a forfeit...`)
+- **Goal:** Distinguish a forfeit-leave from a leave after the match finished, and update stats only
+  when the user actually leaves (possibly after multiple matches).
+- **Steps:** Define the two leave paths; wire stats update to the correct one.
+
+### SS-022 — Remove arena match when last player leaves
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModel.kt:224` (`// TODO: If is last person leaving, then removeArenaMatchUseCase(...)`)
+- **Goal:** When the last player leaves, remove the arena match.
+- **Steps:** Detect last-player-leaving; call `removeArenaMatchUseCase(arenaId = ...)`.
+
+### SS-023 — Resources + split functions in ArenaChoosingClasses
+- [ ] Not completed
+- **Source:** `ArenaChoosingClasses.kt:37` (`// TODO Arena: resources, put back into separate functions`)
+- **Goal:** Extract string resources and split the composable back into separate functions.
+
+### SS-024 — Possibly add finished-state content
+- [ ] Not completed
+- **Source:** `MatchFinishedContent.kt:29` (`// TODO add something here if it makes sense...`)
+- **Goal:** Decide whether the finished-match screen needs additional content; add it or keep as-is.
+
+### SS-025 — Improve message-log animation
+- [ ] Not completed
+- **Source:** `ArenaMessageLogHandle.kt:49` (`// TODO Arena: Improve animation`)
+- **Goal:** Improve the arena message-log animation.
+
+### SS-026 — Add isThisPlayerTheUser to PlayerState
+- [ ] Not completed
+- **Source:** `PlayerState.kt:9` (`// TODO: Add isThisPlayerTheUser ???`)
+- **Goal:** Decide whether `PlayerState` needs an `isThisPlayerTheUser` flag; add if it simplifies UI.
+
+### SS-027 — UI for waiting players
+- [ ] Not completed
+- **Source:** `ArenaWaitingForPlayers.kt:7` (`// TODO Arena: Loading for now, add some UI...`)
+- **Goal:** Replace the loading placeholder with engaging UI for players waiting for the match.
+
+### SS-028 — Arena previews & enum-driven preview text
+- [ ] Not completed
+- **Sources:**
+  - `ArenaWaitingForPlayers.kt:14` (`// TODO Arena: Previews`)
+  - `ArenaStatePreviewParameterProvider.kt:16` (`// TODO Arena: update when state changes to use enums...`)
+- **Goal:** Add previews for waiting screen and update the preview parameter provider to use
+  enum/resource-driven text.
+
+### SS-029 — Use StringResources in ArenaCombatControl
+- [ ] Not completed
+- **Source:** `ArenaCombatControl.kt:164` (`// TODO: Always StringResources`)
+- **Goal:** Replace hardcoded strings with string resources.
+
+### SS-030 — Rename/assign property in ArenaScreenState
+- [ ] Not completed
+- **Source:** `ArenaScreenState.kt:32` (`// TODO: Update property name and way to assign it`)
+- **Goal:** Improve the flagged property's name and assignment.
+
+### SS-031 — Refactor ArenaScreenState mapping
+- [ ] Not completed
+- **Source:** `ArenaScreenState.kt:79` (`// TODO: Need to refactor this badly`)
+- **Goal:** Refactor the flagged state-mapping code. Likely overlaps SS-017.
+
+### SS-032 — Decide timer-start strategy
+- [ ] Not completed
+- **Source:** `ArenaScreenState.kt:204` (`// TODO: Hmm, how should timers be started? Based on NextCombatAction?`)
+- **Goal:** Decide and document how timers should be started (e.g. based on `NextCombatAction`).
+
+---
+
+## Common UI
+
+### SS-033 — Replace "slop" + resources in CharacterClassCard
+- [ ] Not completed
+- **Sources:**
+  - `CharacterClassCard.kt:27` (`// TODO: Update Slop`)
+  - `CharacterClassCard.kt:85` (`// TODO Arena: resource, update the slop`)
+- **Goal:** Clean up placeholder ("slop") content and move text to string resources.
+
+### SS-034 — Update class-selection logic
+- [ ] Not completed
+- **Source:** `CharacterClassCards.kt:18` (`// TODO Arena: Update class-selection logic`)
+- **Goal:** Revisit the class-selection logic (no duplicate classes, selection UX).
+
+---
+
+## App / Main
+
+### SS-035 — Random names from RemoteConfig
+- [ ] Not completed
+- **Source:** `AppViewModel.kt:21` (`// TODO: Get random names from remote config`)
+- **Goal:** Source random traveler names from RemoteConfig instead of hardcoding.
+
+### SS-036 — Handle signed-in user with missing profile
+- [ ] Not completed
+- **Source:** `AppViewModel.kt:76` (`// TODO: if user isSignedIn but their profile doesn't exist, then the app will hang`)
+- **Goal:** Prevent the app hang when a signed-in user has no profile.
+- **Steps:** Detect the missing-profile case; create a profile or route to an error/recovery flow.
+
+### SS-037 — Decide SettingsDrawer content
+- [ ] Not completed
+- **Source:** `SettingsDrawer.kt:32` (`// TODO: What to do with this?`)
+- **Goal:** Determine the SettingsDrawer's purpose/content or remove it.
+
+---
+
+## Data layer
+
+### SS-038 — Determine if IOSNullableStringSerializer is needed
+- [ ] Not completed
+- **Source:** `IOSNullableStringSerializer.kt:10` (`// TODO: Figure out if this is needed or useful`)
+- **Goal:** Decide whether this serializer is required; keep with justification or delete.
+
+### SS-039 — Unique user-names collection
+- [ ] Not completed
+- **Source:** `FirebaseProfileRepository.kt:12` (`// TODO: implement user names collection to help with keeping a unique name...`)
+- **Goal:** Implement a names collection to enforce unique display names. Related: SS-035.
+
+### SS-040 — Paginate / separate node for arena messages
+- [ ] Not completed
+- **Source:** `FirebaseArenaRepository.kt:23` (`// TODO Arena: Paginate messages and/or have a separate node...`)
+- **Goal:** Reduce payload size by paginating messages or moving them to a separate RTDB node.
+
+### SS-041 — Refactor flagged arena repo code
+- [ ] Not completed
+- **Source:** `FirebaseArenaRepository.kt:65` (`// TODO Arena: Look at this, refactor`)
+- **Goal:** Refactor the flagged section of `FirebaseArenaRepository`.
+
+### SS-042 — Challenge timestamp handling
+- [ ] Not completed
+- **Sources:**
+  - `ChallengeEntity.kt:8` (`// TODO: Look into time part`)
+  - `Challenge.kt:3` (`// TODO: Look into time part`)
+- **Goal:** Resolve how the challenge timestamp is represented/serialized across the data entity and
+  domain model.
+
+### SS-043 — Extract class to separate file
+- [ ] Not completed
+- **Source:** `FirebaseTavernRepository.kt:434` (`// TODO: Move to separate file`)
+- **Goal:** Move the flagged class out of `FirebaseTavernRepository` into its own file.
+
+### SS-044 — Connecting messages in ConnectToArena
+- [ ] Not completed
+- **Source:** `ConnectToArena.kt:51` (`// TODO Arena: Add messages for connecting here?`)
+- **Goal:** Decide whether to emit connection messages while joining an arena; add if useful.
+
+### SS-045 — UI when match ends due to early leave
+- [ ] Not completed
+- **Source:** `ExitArena.kt:8` (`// TODO Arena: When it's finished because someone left early...`)
+- **Goal:** Ensure there is clear UI when a match ends because a player left early. Related: SS-021.
+
+---
+
+## Domain layer
+
+### SS-046 — Add maximum HP
+- [ ] Not completed
+- **Source:** `CharacterClass.kt:5` (`// TODO: Add a maximum HP`)
+- **Goal:** Introduce a max-HP concept so healing/shields can't exceed a cap (interacts with
+  Necromancer heal-to-full, shields).
+
+### SS-047 — Class/ability values from RemoteConfig
+- [ ] Not completed
+- **Sources:**
+  - `CharacterClass.kt:32` (`// TODO: Get CharacterClass values from RemoteConfig`)
+  - `HolyShieldHandler.kt:114` (`// TODO: From RemoteConfig in some way`)
+- **Goal:** Drive class/ability tuning values from RemoteConfig instead of hardcoding. Related:
+  SS-004, SS-035.
+
+### SS-048 — Die-value enum
+- [ ] Not completed
+- **Source:** `DiceRoller.kt:16` (`// TODO Enums for values 1 through 6?`)
+- **Goal:** Consider a type-safe enum for die faces (1–6) instead of raw Ints.
+
+### SS-049 — Persuade: pass selectedCharmTargetUserId from UI
+- [ ] Not completed
+- **Source:** `AbilityAction.kt:34` (`// TODO Persuade: In UI - need to pass in selectedCharmTargetUserId...`)
+- **Goal:** Ensure the UI supplies the Charm target id for Persuade. Related: SS-020.
+
+### SS-050 — Implement KillingMomentum
+- [ ] Not completed
+- **Source:** `NormalAttackRollHandler.kt:93` (`// TODO KillingMomentum`)
+- **Goal:** Implement the Rogue "Killing Momentum" rule — on a K.O., attack another chosen player.
+
+### SS-051 — Review ArenaMessage field (Maybe?)
+- [ ] Not completed
+- **Source:** `ArenaMessage.kt:18` (`// TODO: Maybe?`)
+- **Goal:** Resolve the uncertain message field — keep or remove based on actual usage.
+
+### SS-052 — LuckyCoin message approach
+- [ ] Not completed
+- **Source:** `ArenaMessage.kt:41` (`// TODO LuckyCoin is this the right approach for messages?`)
+- **Goal:** Confirm the messaging approach for the Gambler Lucky Coin ability is correct.
+
+### SS-053 — Docstrings for SpellPotencyRoll
+- [ ] Not completed
+- **Source:** `SpellPotencyRoll.kt:7` (`// TODO: Docstring, etc.`)
+- **Goal:** Add docstrings/cleanup to `SpellPotencyRoll`.
+
+### SS-054 — SpellPotency splash-damage attacker case
+- [ ] Not completed
+- **Source:** `HolyShieldHandler.kt:88` (`// TODO SpellPotency - what if is splash damage?`)
+- **Goal:** Handle the Paladin Holy Shield retaliation when the incoming damage was SpellPotency
+  splash damage (who is the "attacker"?).
+- **Steps:** Define the intended interaction between Mage Spell Potency splash and Holy Shield;
+  implement and test.
+
+---
+
+## Dependency injection
+
+### SS-055 — Scope DI definitions instead of single
+- [ ] Not completed
+- **Source:** `Modules.kt:42` (`// TODO: Someday, scope these instead of single for everything`)
+- **Goal:** Introduce appropriate Koin scopes rather than `single` for everything.
+
+### SS-056 — Name DI definition
+- [ ] Not completed
+- **Source:** `Modules.kt:52` (`// TODO: What to name this?`)
+- **Goal:** Give the flagged DI definition a meaningful name.

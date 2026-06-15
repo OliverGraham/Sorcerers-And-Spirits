@@ -29,7 +29,7 @@ import com.linklabs.sorcerersandspirits.ui.main.navigation.Route
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-// TODO: What to do with this?
+// TODO(SS-037): What to do with this?
 
 @Composable
 internal fun SettingsDrawer(

@@ -26,7 +26,7 @@ internal fun MatchFinishedContent(modifier: Modifier = Modifier) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // TODO add something here if it makes sense or just keep the same ArenaState
+        // TODO(SS-024) add something here if it makes sense or just keep the same ArenaState
         //  Maybe a display of the stats and recap of the match or something
 
         Text(

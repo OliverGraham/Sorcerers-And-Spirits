@@ -46,7 +46,7 @@ internal fun ArenaMessageLogHandle(
 
         WeightSpacer()
 
-        // TODO Arena: Improve animation
+        // TODO(SS-025) Arena: Improve animation
         AnimatedContent(
             targetState = latestMessage,
             transitionSpec = {

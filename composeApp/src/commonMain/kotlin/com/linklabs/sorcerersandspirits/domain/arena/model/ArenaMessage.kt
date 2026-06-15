@@ -15,7 +15,7 @@ sealed interface ArenaMessage {
 
     data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : ArenaMessage
 
-    // TODO: Maybe?
+    // TODO(SS-051): Maybe?
     // data class Doubles(val userId: String) : ArenaMessage
 
     data class NormalRoll(
@@ -38,7 +38,7 @@ sealed interface ArenaMessage {
         data class Result(val didDefenderEscape: Boolean) : Teleport
     }
 
-    // TODO LuckyCoin is this the right approach for messages?
+    // TODO(SS-052) LuckyCoin is this the right approach for messages?
     sealed interface LuckyCoin : ArenaMessage {
 
         data object Trigger : LuckyCoin

@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
-// TODO: Get random names from remote config
+// TODO(SS-035): Get random names from remote config
 private val randomNames =
     listOf(
         "a mysterious traveler",
@@ -73,7 +73,8 @@ class AppViewModel(
 
     init {
         viewModelScope.launch {
-            // TODO: if user isSignedIn but their profile doesn't exist, then the app will hang
+            // TODO(SS-036): if user isSignedIn but their profile doesn't exist, then the app will
+            // hang
             if (isUserSignedInUseCase()) {
                 collectScreenState()
             } else {

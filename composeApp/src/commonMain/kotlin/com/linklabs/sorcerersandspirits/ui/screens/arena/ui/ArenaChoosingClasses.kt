@@ -34,7 +34,7 @@ internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        // TODO Arena: resources, put back into separate functions
+        // TODO(SS-023) Arena: resources, put back into separate functions
         Text(
             text =
                 if (isItThisUsersTurn) {

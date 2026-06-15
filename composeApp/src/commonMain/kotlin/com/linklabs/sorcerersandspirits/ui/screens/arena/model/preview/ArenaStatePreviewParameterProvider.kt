@@ -13,7 +13,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMes
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
-// TODO Arena: update when state changes to use enums to determine the text (using resources)
+// TODO(SS-028) Arena: update when state changes to use enums to determine the text (using
+// resources)
 
 class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenState> {
     private val classStates = createExampleCharacterClassStates()

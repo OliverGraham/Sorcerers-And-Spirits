@@ -24,7 +24,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-// TODO: Update Slop
+// TODO(SS-033): Update Slop
 
 @Composable
 fun CharacterClassCard(
@@ -82,7 +82,7 @@ private fun CardContent(selectedBy: String?, characterClass: CharacterClassState
         modifier = Modifier.fillMaxSize().padding(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        // TODO Arena: resource, update the slop
+        // TODO(SS-033) Arena: resource, update the slop
         if (selectedBy != null) {
             Text(
                 text = "Chosen by: $selectedBy",

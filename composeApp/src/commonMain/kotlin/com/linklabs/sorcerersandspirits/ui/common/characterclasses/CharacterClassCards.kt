@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
-// TODO Arena: Update class-selection logic
+// TODO(SS-034) Arena: Update class-selection logic
 
 @Composable
 fun CharacterClassCards(

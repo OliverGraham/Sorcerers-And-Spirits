@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.tavern
 
-// TODO: Look into time part
+// TODO(SS-042): Look into time part
 data class Challenge(
     val challengeId: String,
     val challengers: Map<String, Challenger>,

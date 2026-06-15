@@ -37,7 +37,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
-// TODO: This is all fucked
+// TODO(SS-017): This is all fucked
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -70,7 +70,7 @@ class ArenaScreenViewModel(
     init {
         screenStateFlowJob =
             viewModelScope.launch {
-                // TODO: Figure out better way for userId
+                // TODO(SS-018): Figure out better way for userId
                 val userId = getUserIdUseCase().orEmpty()
 
                 coordinateArenaMatchUseCase(
@@ -147,7 +147,7 @@ class ArenaScreenViewModel(
                 arenaId = arguments.arenaId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 roundNumber = arenaState.roundNumber,
-                doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
+                doublesBonus = null, // TODO(SS-019): track doublesBonus in ArenaState.Combat
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = normalAttack)
@@ -161,7 +161,7 @@ class ArenaScreenViewModel(
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
         val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
 
-        // TODO: This Charm logic is done oddly or incorrectly
+        // TODO(SS-020): This Charm logic is done oddly or incorrectly
         val resolvedAbilityActionState =
             if (
                 abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
@@ -177,7 +177,7 @@ class ArenaScreenViewModel(
                 arenaId = arguments.arenaId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 roundNumber = arenaState.roundNumber,
-                doublesBonus = null, // TODO: track doublesBonus in ArenaState.Combat
+                doublesBonus = null, // TODO(SS-019): track doublesBonus in ArenaState.Combat
             )
 
         val currentAction =
@@ -212,7 +212,8 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
     }
 
-    // TODO Arena: Need a leave that updates stats with a forfeit, and one that triggers when game
+    // TODO(SS-021) Arena: Need a leave that updates stats with a forfeit, and one that triggers
+    // when game
     //  is finished. Update stats only when user leaves (could be after multiple matches)
 
     fun onConfirmLeaveArena() {
@@ -221,7 +222,7 @@ class ArenaScreenViewModel(
         viewModelScope.launch {
             exitArenaUseCase(arenaId = arguments.arenaId)
             setCurrentTravelerAvailableUseCase()
-            // TODO: If is last person leaving, then removeArenaMatchUseCase(arenaId =
+            // TODO(SS-022): If is last person leaving, then removeArenaMatchUseCase(arenaId =
             // arguments.arenaId)
             _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
@@ -289,15 +290,15 @@ class ArenaScreenViewModel(
             }
 
             is ArenaState.ChoosingClasses -> {
-                // TODO
+                // TODO(SS-014)
             }
 
             is ArenaState.Combat -> {
-                // TODO
+                // TODO(SS-014)
             }
 
             is ArenaState.Finished -> {
-                // TODO
+                // TODO(SS-014)
             }
         }
     }

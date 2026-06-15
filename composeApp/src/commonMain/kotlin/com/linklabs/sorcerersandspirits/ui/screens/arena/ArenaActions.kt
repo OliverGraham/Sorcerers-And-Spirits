@@ -28,14 +28,14 @@ data class AttackArguments(
     val userPlayerId: String,
 )
 
-// TODO: Delete
+// TODO(SS-015): Delete
 data class RollDiceArguments(
     val combatActionState: CombatActionState,
     val targetedOpponentUserId: String,
     val userPlayerId: String,
 )
 
-// TODO: Rename/refactor
+// TODO(SS-016): Rename/refactor
 data class UseAbilityArguments(
     val abilityActionState: AbilityActionState,
     val targetedOpponentUserId: String,

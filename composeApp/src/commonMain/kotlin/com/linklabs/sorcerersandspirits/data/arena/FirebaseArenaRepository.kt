@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
 
-// TODO Arena: Paginate messages and/or have a separate node for them to make more
+// TODO(SS-040) Arena: Paginate messages and/or have a separate node for them to make more
 //  efficient. Could also save all messages and get on demand, and only have the latest 30 or
 //  something
 
@@ -62,7 +62,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .setValue(value = arenaPlayer.toEntity())
     }
 
-    // TODO Arena: Look at this, refactor
+    // TODO(SS-041) Arena: Look at this, refactor
     override suspend fun applyCombatResult(arenaId: String, result: ActionOutcome) {
         val arenaReference = arenaMatchesReference.child(path = arenaId)
 

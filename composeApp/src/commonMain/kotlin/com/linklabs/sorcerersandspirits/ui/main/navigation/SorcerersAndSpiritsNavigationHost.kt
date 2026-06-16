@@ -13,9 +13,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
-import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.main.AppState
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
@@ -33,8 +33,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
     val uiState by viewModel.uiStateFlow.collectAsState()
 
     when (val state = uiState) {
-        // TODO(SS-007): Update UI to show error
-        is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
+        is UiState.Error -> ErrorContent(onRetry = viewModel::retry, modifier = modifier)
 
         is UiState.Loaded -> {
             val data = state.data
@@ -45,10 +44,9 @@ internal fun SorcerersAndSpiritsNavigationHost(
                     isOffline = data.isOffline,
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
-                    onDismissRequest = {
-                        // TODO(SS-007): what to do here, show another dialog? Snack bar? Just exit
-                        // app?
-                    },
+                    // A profile is required before the app is usable, so the sign-in dialog is
+                    // intentionally non-dismissible: dismiss attempts keep it on screen.
+                    onDismissRequest = {},
                 )
             } else {
                 SorcerersAndSpirits(

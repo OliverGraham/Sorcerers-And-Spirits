@@ -11,8 +11,10 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisp
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -73,18 +75,31 @@ class AppViewModel(
     private val _uiStateFlow = MutableStateFlow<UiState<AppState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
+    private var screenStateJob: Job? = null
+
     init {
         viewModelScope.launch { initializeGameConfigUseCase() }
 
-        viewModelScope.launch {
-            // TODO(SS-036): if user isSignedIn but their profile doesn't exist, then the app will
-            // hang
-            if (isUserSignedInUseCase()) {
-                collectScreenState()
-            } else {
-                showSignInDialog()
+        loadScreenState()
+    }
+
+    fun retry() {
+        _uiStateFlow.value = UiState.Loading
+        loadScreenState()
+    }
+
+    private fun loadScreenState() {
+        screenStateJob?.cancel()
+        screenStateJob =
+            viewModelScope.launch {
+                // TODO(SS-036): if user isSignedIn but their profile doesn't exist, then the app
+                // will hang
+                if (isUserSignedInUseCase()) {
+                    collectScreenState()
+                } else {
+                    showSignInDialog()
+                }
             }
-        }
     }
 
     fun onUpdateDisplayName(newDisplayName: String) {
@@ -133,6 +148,7 @@ class AppViewModel(
         combine(getProfileFlowUseCase(), connectivityObserver.isOnline) { profile, isOnline ->
                 profile to isOnline
             }
+            .catch { _uiStateFlow.value = UiState.Error }
             .collectLatest { (profile, isOnline) ->
                 when {
                     profile != null -> {

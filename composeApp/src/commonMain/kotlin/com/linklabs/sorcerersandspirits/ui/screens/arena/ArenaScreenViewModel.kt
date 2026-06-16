@@ -34,6 +34,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
@@ -73,6 +74,16 @@ class ArenaScreenViewModel(
     private var screenStateFlowJob: Job? = null
 
     init {
+        loadArenaMatch()
+    }
+
+    fun retry() {
+        _uiStateFlow.value = UiState.Loading
+        loadArenaMatch()
+    }
+
+    private fun loadArenaMatch() {
+        screenStateFlowJob?.cancel()
         screenStateFlowJob =
             viewModelScope.launch {
                 // TODO(SS-018): Figure out better way for userId
@@ -82,6 +93,7 @@ class ArenaScreenViewModel(
                         arenaId = arguments.arenaId,
                         expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
                     )
+                    .catch { _uiStateFlow.value = UiState.Error }
                     .collect { updatedArenaMatch ->
                         updatedArenaMatch.updateScreenState(userId = userId)
                     }

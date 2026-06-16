@@ -26,8 +26,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
-import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCards
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
@@ -62,23 +62,22 @@ internal fun TavernScreen(
                 onHideChallengeDialog = viewModel::hideChallengeDialog,
             )
     ) {
-        viewModel.eventChannelFlow.collectEvents(
-            onNavigateToArena = onNavigateToArena // TODO(SS-006): make one for App?
-        )
+        viewModel.eventChannelFlow.collectEvents(onNavigateToArena = onNavigateToArena)
         val uiState by viewModel.uiStateFlow.collectAsState()
 
-        TavernScreen(uiState = uiState, modifier = modifier)
+        TavernScreen(uiState = uiState, onRetry = viewModel::retry, modifier = modifier)
     }
 }
 
 @Composable
-private fun TavernScreen(uiState: UiState<TavernState>, modifier: Modifier = Modifier) {
+private fun TavernScreen(
+    uiState: UiState<TavernState>,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     when (uiState) {
-        // TODO(SS-007): Update UI to show error
-        is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
-
+        is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = modifier)
         is UiState.Loaded -> LoadedTavernScreen(tavernState = uiState.data, modifier = modifier)
-
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }

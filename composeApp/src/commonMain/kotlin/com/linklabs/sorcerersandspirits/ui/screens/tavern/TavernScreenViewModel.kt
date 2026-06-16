@@ -14,9 +14,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHan
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeUpdate
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -43,12 +45,26 @@ class TavernScreenViewModel(
 
     private val challengeHandler = initializeChallengeHandler()
 
+    private var tavernDataJob: Job? = null
+
     init {
-        viewModelScope.launch {
-            getTavernDataFlowUseCase().filterNotNull().collect { data ->
-                updateScreenState(data = data)
+        loadTavernData()
+    }
+
+    fun retry() {
+        _uiStateFlow.value = UiState.Loading
+        loadTavernData()
+    }
+
+    private fun loadTavernData() {
+        tavernDataJob?.cancel()
+        tavernDataJob =
+            viewModelScope.launch {
+                getTavernDataFlowUseCase()
+                    .filterNotNull()
+                    .catch { _uiStateFlow.value = UiState.Error }
+                    .collect { data -> updateScreenState(data = data) }
             }
-        }
     }
 
     fun showChallengeDialog() {

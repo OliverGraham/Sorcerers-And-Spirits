@@ -18,9 +18,7 @@ data class TavernState(
     val otherTravelers: List<TravelerState>,
     val challenge: ChallengeState?,
     val characterClasses: List<CharacterClassState> =
-        CharacterClass.getAllClasses().map {
-            it.toState()
-        }, // TODO(SS-004): any reason to get from config?
+        CharacterClass.getAllClasses().map { it.toState() },
 )
 
 @Immutable
@@ -61,7 +59,10 @@ data class ChallengerState(
     val status: ChallengerStatus,
 )
 
-internal fun TavernData.toState(challengeState: ChallengeState?): TavernState? {
+internal fun TavernData.toState(
+    challengeState: ChallengeState?,
+    characterClasses: List<CharacterClassState>,
+): TavernState? {
     val (userTravelers, otherTravelers) =
         travelers.partition { traveler -> traveler.userId == profile.userId }
 
@@ -75,6 +76,7 @@ internal fun TavernData.toState(challengeState: ChallengeState?): TavernState? {
                 traveler.toTravelerState(isThisTravelerTheUser = false)
             },
         challenge = challengeState,
+        characterClasses = characterClasses,
     )
 }
 

@@ -64,12 +64,20 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Tavern UI
 
 ### SS-004 — Decide source of class list in TavernState
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TavernState.kt:21` (`// TODO: any reason to get from config?`)
 - **Goal:** Decide whether the class list should come from RemoteConfig or stay static
   (`CharacterClass.getAllClasses()`). Related: SS-047.
-- **Steps:** Evaluate whether classes are ever config-driven; document the decision; implement or
-  remove the TODO.
+- **Decision:** Get from config. SS-047 made the RemoteConfig-driven `CharacterClassProvider`
+  (via `GetCharacterClassesUseCase`) the single source of class stats and routed the Arena's
+  class-selection list through it. The Tavern is where players browse classes before challenging
+  into a match, so it must show the same config-driven stats they'll actually get in the Arena —
+  otherwise the two screens can disagree.
+- **Resolution:** Injected `GetCharacterClassesUseCase` into `TavernScreenViewModel` and threaded
+  the resulting `characterClasses` through `TavernData.toState(...)`, mirroring
+  `ArenaScreenViewModel`. The static `CharacterClass.getAllClasses()` literal remains only as the
+  `TavernState.characterClasses` construction/preview default (same as `ArenaScreenState`); the
+  live ViewModel path now always supplies the config-driven list. `composeApp` compiles clean.
 
 ### SS-005 — Move navigateToArena out of TavernState
 - [ ] Not completed

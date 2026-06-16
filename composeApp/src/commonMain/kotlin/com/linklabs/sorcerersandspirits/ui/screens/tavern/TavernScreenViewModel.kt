@@ -2,12 +2,14 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHandler
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -25,7 +27,10 @@ class TavernScreenViewModel(
     private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
+    private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
 ) : ViewModel() {
+
+    private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
 
     private val _eventChannelFlow = Channel<TavernEvent>()
     val eventChannelFlow = _eventChannelFlow.receiveAsFlow()
@@ -87,7 +92,11 @@ class TavernScreenViewModel(
                 )
             _eventChannelFlow.send(element = TavernEvent.NavigateToArena(arguments = arguments))
         } else {
-            val tavernState = data.toState(challengeState = challengeState) ?: return
+            val tavernState =
+                data.toState(
+                    challengeState = challengeState,
+                    characterClasses = characterClasses,
+                ) ?: return
 
             _uiStateFlow.value = UiState.Loaded(data = tavernState)
         }

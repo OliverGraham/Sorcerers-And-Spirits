@@ -152,7 +152,7 @@ class ArenaScreenViewModel(
                 arenaId = arguments.arenaId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 roundNumber = arenaState.roundNumber,
-                doublesBonus = null, // TODO(SS-019): track doublesBonus in ArenaState.Combat
+                doublesBonus = arenaState.doublesBonus,
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = normalAttack)
@@ -182,7 +182,7 @@ class ArenaScreenViewModel(
                 arenaId = arguments.arenaId,
                 playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
                 roundNumber = arenaState.roundNumber,
-                doublesBonus = null, // TODO(SS-019): track doublesBonus in ArenaState.Combat
+                doublesBonus = arenaState.doublesBonus,
             )
 
         val currentAction =

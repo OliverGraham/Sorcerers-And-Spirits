@@ -95,6 +95,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = true,
+            doublesBonus = null,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

@@ -184,14 +184,23 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Goal:** Establish a cleaner way to obtain the current user's id.
 
 ### SS-019 — Track doublesBonus in ArenaState.Combat
-- [ ] Not completed
+- [x] Completed
 - **Sources:**
   - `ArenaScreenViewModel.kt:150` (in `onAttack`)
   - `ArenaScreenViewModel.kt:180` (in `onUseAbility`)
 - **Goal:** Track and pass the real `doublesBonus` (currently hardcoded `null`) per the doubles
   +1 consecutive-roll rule in CLAUDE.md.
-- **Steps:** Add a `doublesBonus` field to `ArenaState.Combat`; populate it from domain state; pass
-  it into `CombatActionArguments` in both call sites.
+- **Resolution:** Added a `doublesBonus: DoublesBonus?` field to the UI `ArenaState.Combat` and
+  populated it in `ArenaMatch.toUpdatedState` straight from the domain `ArenaMatch.Combat.doublesBonus`
+  (which the data layer already persists/restores via `ArenaMatchEntity`). Replaced the hardcoded
+  `doublesBonus = null` in both `onAttack` and `onUseAbility` with `arenaState.doublesBonus`, so the
+  persisted bonus now flows back into `CombatActionArguments` → `RealDiceRoller(initialBonus = ...)`.
+  The consecutive-roll rule itself is still enforced in the domain `DiceRoller` (the +1 only applies
+  when the rolling user's id matches the `DoublesBonus.userId`, and it clears on use), so carrying the
+  domain value through unchanged is correct. The UI state holds the trivial `DoublesBonus` id-holder
+  directly (no render use, only fed back to the domain), avoiding a needless round-trip mapping.
+  Updated the three preview `ArenaState.Combat` constructors to pass `doublesBonus = null`.
+  `composeApp` compiles clean; `ArenaScreenViewModel` and `PerformCombatAction` suites are green.
 
 ### SS-020 — Fix Charm logic in onUseAbility
 - [ ] Not completed

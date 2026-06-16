@@ -323,6 +323,7 @@ private fun ArenaCombatYourTurnPreview() {
                     ),
                 roundNumber = 1,
                 isNewRound = true,
+                doublesBonus = null,
             )
 
         combatState.ArenaCombat()
@@ -362,6 +363,7 @@ private fun ArenaCombatEnemyTurnPreview() {
                     ),
                 roundNumber = 1,
                 isNewRound = true,
+                doublesBonus = null,
             )
 
         combatState.ArenaCombat()

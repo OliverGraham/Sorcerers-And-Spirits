@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -59,6 +60,7 @@ sealed interface ArenaState {
         val combatActionState: CombatActionState,
         val roundNumber: Int,
         val isNewRound: Boolean,
+        val doublesBonus: DoublesBonus?,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
@@ -135,6 +137,7 @@ internal fun ArenaMatch.toUpdatedState(
                     combatActionState = nextCombatAction.toCombatActionState(),
                     roundNumber = roundNumber,
                     isNewRound = isNewRound,
+                    doublesBonus = doublesBonus,
                 )
             }
 

@@ -31,15 +31,16 @@ class ChallengeHandlerTest {
             // Challenge created 35s ago with a 60s deadline -> 25s left, as on an app restart.
             val challenge = challenge(endTimeMillis = NOW + 25_000L)
 
-            val state =
+            val update =
                 handler()
-                    .handleChallengeUpdateAndGetState(
+                    .handleChallengeUpdate(
                         previousChallengeState = null,
                         updatedChallenge = challenge,
                         userId = USER_ID,
                     )
 
-            assertEquals(expected = 25, actual = state?.secondsRemaining)
+            val challengeState = (update as ChallengeUpdate.Ongoing).challengeState
+            assertEquals(expected = 25, actual = challengeState?.secondsRemaining)
         }
 
     private fun challenge(endTimeMillis: Long): Challenge =

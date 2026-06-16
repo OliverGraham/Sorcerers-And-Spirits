@@ -10,8 +10,8 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCa
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHandler
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeUpdate
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.channels.Channel
@@ -77,28 +77,28 @@ class TavernScreenViewModel(
     }
 
     private suspend fun updateScreenState(data: TavernData) {
-        val challengeState =
-            challengeHandler.handleChallengeUpdateAndGetState(
+        val challengeUpdate =
+            challengeHandler.handleChallengeUpdate(
                 previousChallengeState = loadedUiState?.challenge,
                 updatedChallenge = data.challenge,
                 userId = data.profile.userId,
             )
 
-        if (challengeState?.navigateToArena == true) {
-            val arguments =
-                ArenaScreenViewModelArguments(
-                    arenaId = challengeState.challengeId,
-                    expectedNumberOfPlayers = challengeState.getExpectedNumberOfPlayers(),
+        when (challengeUpdate) {
+            is ChallengeUpdate.ReadyToStart ->
+                _eventChannelFlow.send(
+                    element = TavernEvent.NavigateToArena(arguments = challengeUpdate.arguments)
                 )
-            _eventChannelFlow.send(element = TavernEvent.NavigateToArena(arguments = arguments))
-        } else {
-            val tavernState =
-                data.toState(
-                    challengeState = challengeState,
-                    characterClasses = characterClasses,
-                ) ?: return
 
-            _uiStateFlow.value = UiState.Loaded(data = tavernState)
+            is ChallengeUpdate.Ongoing -> {
+                val tavernState =
+                    data.toState(
+                        challengeState = challengeUpdate.challengeState,
+                        characterClasses = characterClasses,
+                    ) ?: return
+
+                _uiStateFlow.value = UiState.Loaded(data = tavernState)
+            }
         }
     }
 

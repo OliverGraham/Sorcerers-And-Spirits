@@ -271,7 +271,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Goal:** Replace hardcoded strings with string resources.
 
 ### SS-030 — Rename/assign property in ArenaScreenState
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaScreenState.kt:32` (`// TODO: Update property name and way to assign it`)
 - **Goal:** Improve the flagged property's name and assignment.
 
@@ -518,7 +518,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Bugs
 
 ### SS-060 — Holy Shield: suppress KnockedOut dialog during the survival roll
-- [ ] Not completed
+- [x] Completed
 - **Source:** Reported bug.
   - `ArenaScreenState.kt:35` (`(isUserPlayerKnockedOut || arenaState is ArenaState.Finished) && !hasMadeKnockoutDecision`)
   - `MatchDecisionDialog.kt:12` / `LoadedArenaScreen.kt:64`

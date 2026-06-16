@@ -30,9 +30,27 @@ data class ArenaScreenState(
     val filteredMessages: List<ArenaMessageState> =
         messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
-    // TODO(SS-030): Update property name and way to assign it
-    val showKnockoutDialog =
-        (isUserPlayerKnockedOut || arenaState is ArenaState.Finished) && !hasMadeKnockoutDecision
+    private val isUserPlayerActing: Boolean =
+        (arenaState as? ArenaState.Combat)?.isItThisUsersTurn ?: false
+
+    val matchDecision: MatchDecision? =
+        when {
+            hasMadeKnockoutDecision -> null
+            arenaState is ArenaState.Finished -> MatchDecision.MatchFinished
+            isUserPlayerKnockedOut && !isUserPlayerActing -> MatchDecision.KnockedOut
+            else -> null
+        }
+}
+
+/**
+ * A choice the user must make to continue: stay for another match once it has finished, or stay to
+ * observe after being knocked out. A knocked-out Paladin who is still acting (owes a Holy Shield
+ * survival roll) has not yet been definitively knocked out, so no decision is offered.
+ */
+@Immutable
+enum class MatchDecision {
+    KnockedOut,
+    MatchFinished,
 }
 
 @Immutable

@@ -6,20 +6,31 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.MatchDecision
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 @Composable
-internal fun MatchDecisionDialog(isMatchFinished: Boolean, isUserPlayerKnockedOut: Boolean) {
+internal fun MatchDecisionDialog(decision: MatchDecision) {
     val actions = ArenaActionsProvider.current
 
-    val title = if (isMatchFinished) "Match Finished!" else "Knocked Out!"
-    val message =
-        if (isMatchFinished) {
-            "The match has ended. Would you like to stay for another match or leave the arena?"
-        } else {
-            "You've been knocked out. Would you like to stay and observe (joining the next match) or leave the arena?"
+    val title =
+        when (decision) {
+            MatchDecision.MatchFinished -> "Match Finished!"
+            MatchDecision.KnockedOut -> "Knocked Out!"
         }
-    val confirmText = if (isMatchFinished) "Stay" else "Observe"
+    val message =
+        when (decision) {
+            MatchDecision.MatchFinished ->
+                "The match has ended. Would you like to stay for another match or leave the arena?"
+
+            MatchDecision.KnockedOut ->
+                "You've been knocked out. Would you like to stay and observe (joining the next match) or leave the arena?"
+        }
+    val confirmText =
+        when (decision) {
+            MatchDecision.MatchFinished -> "Stay"
+            MatchDecision.KnockedOut -> "Observe"
+        }
 
     AlertDialog(
         onDismissRequest = actions.onStayForAnotherMatch,
@@ -37,15 +48,11 @@ internal fun MatchDecisionDialog(isMatchFinished: Boolean, isUserPlayerKnockedOu
 @Preview
 @Composable
 private fun MatchDecisionDialogKnockoutPreview() {
-    SorcerersAndSpiritsTheme {
-        MatchDecisionDialog(isMatchFinished = false, isUserPlayerKnockedOut = true)
-    }
+    SorcerersAndSpiritsTheme { MatchDecisionDialog(decision = MatchDecision.KnockedOut) }
 }
 
 @Preview
 @Composable
 private fun MatchDecisionDialogFinishedPreview() {
-    SorcerersAndSpiritsTheme {
-        MatchDecisionDialog(isMatchFinished = true, isUserPlayerKnockedOut = false)
-    }
+    SorcerersAndSpiritsTheme { MatchDecisionDialog(decision = MatchDecision.MatchFinished) }
 }

@@ -162,35 +162,86 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   `exampleUserTraveler`/`exampleOtherTravelers`. `composeApp` Android debug compiles clean.
 
 ### SS-009 — Improve TheBar
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TheBar.kt:42` (`// TODO: Improve`)
 - **Goal:** Clarify and improve `TheBar` (scope is vague — define concretely while working on it).
-- **Steps:** Inspect the composable; identify the concrete improvement intended; implement.
+- **Decision:** The concrete improvement (separate from the copy/icon/styling tickets SS-010/011/012)
+  was a selection-state correctness bug. Selection was remembered as a `Set<TravelerState>` of full
+  data-class objects. When a selected traveler left the Tavern or flipped `Available`↔`Busy`, the
+  remembered object went stale: it still inflated the `Challenge (N)` count and was passed to
+  `onSendChallengerNotifications`, even though a busy/absent traveler can't be challenged. A status
+  change also made the stale object unequal to the live one, so the card lost its selected highlight
+  while the phantom entry lingered in the set.
+- **Resolution:** Track selection by the stable `userId` (`Set<String>`) and derive the effective
+  selectable set from the current `otherTravelers`, filtered to those still present and not
+  `TavernStatus.Busy`. Selections of travelers who leave or go busy now drop out of both the count and
+  the outgoing challenge automatically. Moved the toggle logic up to `TheBar` (single source of truth
+  on the id set); `BarFolk` now takes `selectedUserIds: Set<String>` + `onToggleTraveler` and checks
+  membership by `userId`. `composeApp` Android debug compiles clean.
 
 ### SS-010 — Reword challenge-list UI copy in TheBar
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TheBar.kt:83` (`// TODO: Change UI - should say other players to challenge...`)
 - **Goal:** Update copy to clearly communicate "other players to challenge."
-- **Steps:** Replace text with a string resource; verify wording.
+- **Resolution:** Replaced the two hardcoded `BarFolk` header strings with string resources reworded
+  to convey that these are the other players available to challenge: the count label `"Travelers in
+  Tavern: $count"` → `tavern_travelers_to_challenge` (`"Travelers to challenge: %1$s"`) and the
+  subtitle `"Challenge people to fight in The Arena:"` → `tavern_challenge_instruction` (`"Tap
+  travelers to challenge them into The Arena:"`). Both pulled via `stringResource(...)` (the count
+  passed as the format arg). Dropped the SS-010 TODO; the loose "settings UI to show every player and
+  their status" idea is left to the drawer/settings tickets (SS-037/SS-063). `composeApp` Android
+  debug compiles clean.
 
 ### SS-011 — New challenge icon in TheBar
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TheBar.kt:92` (`// TODO: new icon`)
 - **Goal:** Replace the placeholder icon with the intended challenge icon.
+- **Resolution:** `TheBar`'s top-start `IconButton` (which calls `onShowChallengeDialog`) used the
+  `ic_menu` drawer/hamburger glyph — the same icon `TopBar` uses to open the app drawer, so it read as
+  a menu, not a challenge. Swapped it to `ic_swords`, the project's established "open challenge dialog"
+  icon already used by `ChallengeDialogHandle` (the sheet drag-handle button that fires the same
+  action). Also replaced the placeholder empty `contentDescription = ""` with `null` to match that
+  sibling handle's convention. `composeApp` Android debug compiles clean.
 
 ### SS-012 — Update TheBar styling
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TheBar.kt:158` (`// TODO: Update styling`)
 - **Goal:** Finalize styling for `TheBar`.
+- **Resolution:** Reworked the traveler `ToCard`:
+  - **Fixed the broken selected state:** the selected container was `primaryContainer.copy(alpha =
+    0.1f)`, which rendered the highlight nearly invisible (only the border distinguished it). Now uses
+    full `primaryContainer` with `onPrimaryContainer` text for proper contrast, plus a stronger
+    selected elevation (6.dp vs 2.dp) on top of the existing primary border.
+  - **Idiomatic clickable card:** replaced the `Box.clickable(enabled = !isBusy)` wrapper with the
+    Material3 clickable `Card(onClick = …, enabled = !isBusy)` overload (matching `CharacterClassCard`),
+    so the card gets a proper ripple and routes the Busy appearance through the Card's
+    `disabledContainerColor`/`disabledContentColor` instead of manual per-state alpha branching.
+  - **Surface lift + spacing:** unselected cards now sit on `surfaceContainerHigh` to lift them off
+    the bottom-sheet surface, and inner padding tightened to `horizontal = 20.dp, vertical = 16.dp`.
+  - Since selection is derived to exclude busy travelers (SS-009), a card is never both selected and
+    busy, so the three-way color `when` collapsed to clean selected-vs-default + disabled cases.
+    Removed the now-unused `clickable` import.
+  - **Split selected/unselected into separate composables (per review):** `ToCard` is now a single
+    `AnimatedContent(targetState = isSelected)` that switches between `SelectedTravelerCard` and
+    `UnselectedTravelerCard` — one `if`, with each composable styling itself directly instead of
+    branching every Card parameter inline. The busy state lives entirely in `UnselectedTravelerCard`.
+    Shared pieces are factored out: a `TravelerCardLabel` composable (the centered name `Text`) and a
+    `Modifier.travelerCardSize()` extension so both cards keep the same footprint and animate cleanly.
+    `composeApp` Android debug compiles clean.
 
 ---
 
 ## Arena UI
 
 ### SS-013 — Review ArenaEvent (empty TODO)
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaEvent.kt:3` (`// TODO Arena:`)
 - **Goal:** Empty placeholder TODO — determine intent (likely additional events) or remove.
+- **Resolution:** The placeholder was an open-ended musing ("use for one-time animations… what other
+  events are needed?"). The existing `ArenaEvent` (`MatchTimedOut`, `NavigateBack`) covers current
+  needs, and concrete future events belong to their own tickets (e.g. timer/phase handling under
+  SS-014, message-log animation under SS-025) rather than a speculative note here. Removed the TODO;
+  no code change to the interface.
 
 ### SS-014 — Handle match/timer expiration per state
 - [ ] Not completed

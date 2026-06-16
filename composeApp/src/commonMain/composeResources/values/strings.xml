@@ -13,6 +13,9 @@
     <string name="error_generic_message">Something went wrong. Please try again.</string>
     <string name="retry_button">Try again</string>
 
+    <string name="tavern_travelers_to_challenge">Travelers to challenge:</string>
+    <string name="tavern_challenge_instruction">Tap travelers to challenge them into The Arena:</string>
+
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>
     <string name="challenge_dialog_awaiting_responses">You are awaiting responses</string>

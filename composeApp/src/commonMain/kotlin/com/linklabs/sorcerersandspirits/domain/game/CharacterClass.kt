@@ -29,8 +29,6 @@ data class CharacterClass(
                 getPaladin(),
             )
 
-        // TODO(SS-047): Get CharacterClass values from RemoteConfig
-
         fun getRogue() =
             CharacterClass(
                 type = CharacterClassType.Rogue,

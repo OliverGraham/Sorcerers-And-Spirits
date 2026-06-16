@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
+import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -64,6 +65,7 @@ class AppViewModel(
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
+    private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
 ) : ViewModel() {
@@ -72,6 +74,8 @@ class AppViewModel(
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
     init {
+        viewModelScope.launch { initializeGameConfigUseCase() }
+
         viewModelScope.launch {
             // TODO(SS-036): if user isSignedIn but their profile doesn't exist, then the app will
             // hang

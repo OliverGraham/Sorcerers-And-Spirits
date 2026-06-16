@@ -360,13 +360,37 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   unit-test suite is green (including the Summon Minion heal-to-full cases). The SS-047 RemoteConfig
   work can now drive `maxHitPoints` as part of the same class-stats schema.
 
-### SS-047 — Class/ability values from RemoteConfig
+### SS-047 — Class stat values from RemoteConfig
+- [x] Completed
+- **Source:** `CharacterClass.kt:32` (`// TODO: Get CharacterClass values from RemoteConfig`)
+- **Goal:** Drive class stat tuning values (`hitPoints`/`maxHitPoints`/`armorClass`/`speed`) from
+  RemoteConfig instead of hardcoding. Related: SS-004, SS-035. Ability roll values split out to
+  SS-058.
+- **Resolution:**
+  - Added the `firebase-config` (gitlive) + `kotlinx-serialization-json` dependencies and a
+    `RemoteConfigDataSource` seam (`FirebaseRemoteConfigDataSource`) holding the
+    `character_class_stats` JSON parameter.
+  - Introduced the domain `CharacterClassProvider` (impl `RemoteConfigCharacterClassProvider`) which
+    overlays the remote stats onto the ability-wired factory classes. Exposed via
+    `GetCharacterClassesUseCase`; config is fetched/activated once at app start via
+    `InitializeGameConfigUseCase` from `AppViewModel`.
+  - Routed the Arena class-selection list through the provider (`ArenaScreenViewModel` →
+    `ArenaScreenState.characterClasses`), so the stats a player sees and commits into a match share
+    one config-driven source.
+- **Follow-on (separate tickets):** Tavern class list (SS-004) and random names (SS-035) still read
+  static sources; ability roll values are SS-058.
+
+### SS-058 — Ability roll values from RemoteConfig
 - [ ] Not completed
-- **Sources:**
-  - `CharacterClass.kt:32` (`// TODO: Get CharacterClass values from RemoteConfig`)
-  - `HolyShieldHandler.kt:114` (`// TODO: From RemoteConfig in some way`)
-- **Goal:** Drive class/ability tuning values from RemoteConfig instead of hardcoding. Related:
-  SS-004, SS-035.
+- **Source:** `HolyShieldHandler.kt:114` (`// TODO(SS-058): From RemoteConfig in some way`,
+  `HOLY_SHIELD_SUCCESS_RANGE = 10..12`)
+- **Goal:** Drive the per-ability roll thresholds/ranges from RemoteConfig instead of hardcoding,
+  across all abilities — e.g. Holy Shield's `10..12` survival range, Duelist Riposte's `6..8` success
+  range, Prepare Attack's `10..12` K.O. range, All-In's outcome buckets, Summon Minion's per-face
+  results, Encore/Persuade/Mirror Image/Teleport roll-offs, etc.
+- **Steps:** Catalog every hardcoded ability roll value; design a config schema for them (likely a
+  per-ability stats block parallel to `character_class_stats`); overlay via the existing
+  RemoteConfig data source. Defer until the full set of desired values is decided.
 
 ### SS-048 — Die-value enum
 - [ ] Not completed

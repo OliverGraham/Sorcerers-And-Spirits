@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
@@ -48,25 +49,29 @@ internal class ChallengeHandler(
         }
     }
 
-    fun handleChallengeUpdateAndGetState(
+    fun handleChallengeUpdate(
         previousChallengeState: ChallengeState?,
         updatedChallenge: Challenge?,
         userId: String,
-    ): ChallengeState? =
+    ): ChallengeUpdate =
         when {
             previousChallengeState == null && updatedChallenge != null ->
-                handleChallengeStart(userId = userId, updatedChallenge = updatedChallenge)
+                ChallengeUpdate.Ongoing(
+                    challengeState =
+                        handleChallengeStart(userId = userId, updatedChallenge = updatedChallenge)
+                )
 
             previousChallengeState != null && updatedChallenge != null ->
-                handleChallengeUpdate(
+                handleExistingChallengeUpdate(
                     previousChallengeState = previousChallengeState,
                     updatedChallenge = updatedChallenge,
                     userId = userId,
                 )
 
-            previousChallengeState != null && updatedChallenge == null -> handleChallengeFinish()
+            previousChallengeState != null && updatedChallenge == null ->
+                ChallengeUpdate.Ongoing(challengeState = handleChallengeFinish())
 
-            else -> null
+            else -> ChallengeUpdate.Ongoing(challengeState = null)
         }
 
     suspend fun updateChallengerStatus(challengeId: String, status: ChallengerStatus) {
@@ -90,27 +95,31 @@ internal class ChallengeHandler(
         )
     }
 
-    private fun handleChallengeUpdate(
+    private fun handleExistingChallengeUpdate(
         previousChallengeState: ChallengeState,
         updatedChallenge: Challenge,
         userId: String,
-    ): ChallengeState {
-        val isUserInstigator = updatedChallenge.isUserInstigator(userId = userId)
-        val isChallengeReadyToStart = updatedChallenge.isReadyToStart(userId = userId)
-
-        return if (isChallengeReadyToStart) {
-            updatedChallenge.toChallengeState(
-                isUserInstigator = isUserInstigator,
-                isReadyToStart = true,
-            )
-        } else {
-            updatedChallenge.toChallengeState(
-                isUserInstigator = isUserInstigator,
-                showChallengeDialog = previousChallengeState.showChallengeDialog,
-                secondsRemaining = previousChallengeState.secondsRemaining,
-            )
+    ): ChallengeUpdate {
+        if (updatedChallenge.isReadyToStart(userId = userId)) {
+            return ChallengeUpdate.ReadyToStart(arguments = updatedChallenge.toArenaArguments())
         }
+
+        return ChallengeUpdate.Ongoing(
+            challengeState =
+                updatedChallenge.toChallengeState(
+                    isUserInstigator = updatedChallenge.isUserInstigator(userId = userId),
+                    showChallengeDialog = previousChallengeState.showChallengeDialog,
+                    secondsRemaining = previousChallengeState.secondsRemaining,
+                )
+        )
     }
+
+    private fun Challenge.toArenaArguments() =
+        ArenaScreenViewModelArguments(
+            arenaId = challengeId,
+            expectedNumberOfPlayers =
+                challengers.values.count { it.status == ChallengerStatus.Accepted },
+        )
 
     private fun handleChallengeFinish(): ChallengeState? {
         challengeTimer.stopTimer()

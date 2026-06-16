@@ -80,11 +80,21 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   live ViewModel path now always supplies the config-driven list. `composeApp` compiles clean.
 
 ### SS-005 — Move navigateToArena out of TavernState
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TavernState.kt:39` (`// TODO: Move this out of state?`)
 - **Goal:** Reconsider whether `navigateToArena` belongs in state vs. an event/effect channel.
-- **Steps:** Review existing event-channel pattern (e.g. `ArenaEvent`); migrate navigation to an
-  event if appropriate.
+- **Decision:** Move it out. `navigateToArena` was a transient one-shot navigation signal embedded
+  in the persistent `ChallengeState`/`TavernState` but never rendered — the ViewModel only read it
+  once to fire `TavernEvent.NavigateToArena`. That's navigation-as-state; it belongs on the existing
+  event channel.
+- **Resolution:** Introduced a `ChallengeUpdate` result type (`Ongoing(challengeState)` vs.
+  `ReadyToStart(arguments)`) returned by `ChallengeHandler` (renamed `handleChallengeUpdateAndGetState`
+  → `handleChallengeUpdate`). The handler now builds the `ArenaScreenViewModelArguments` directly in
+  the ready-to-start branch (via a private `Challenge.toArenaArguments()`), and the ViewModel's
+  `when` on the result either sends `TavernEvent.NavigateToArena` or loads the screen state. Removed
+  `navigateToArena` and the now-unused `getExpectedNumberOfPlayers()` from `ChallengeState`, and the
+  `isReadyToStart` param from `Challenge.toChallengeState`. Updated `ChallengeHandlerTest` to the new
+  return type. `composeApp` compiles clean; Tavern + ChallengeHandler suites are green.
 
 ### SS-006 — Consolidate navigate-to-arena callback at App level
 - [ ] Not completed

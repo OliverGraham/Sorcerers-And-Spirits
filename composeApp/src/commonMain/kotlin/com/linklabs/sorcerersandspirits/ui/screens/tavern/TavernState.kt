@@ -36,7 +36,6 @@ data class ChallengeState(
     val secondsRemaining: Int,
     val showChallengeDialog: Boolean,
     val isThisUserTheInstigator: Boolean,
-    val navigateToArena: Boolean = false, // TODO(SS-005): Move this out of state?
 ) {
     val instigator: ChallengerState? =
         challengerStates.find { challengerState -> challengerState.isInstigator }
@@ -46,9 +45,6 @@ data class ChallengeState(
 
     val formattedTimeRemaining = "$minutes:${seconds.toString().padStart(2, '0')}"
     val isLessThanTenSeconds = secondsRemaining <= 10
-
-    fun getExpectedNumberOfPlayers() =
-        challengerStates.count { it.status == ChallengerStatus.Accepted }
 }
 
 @Immutable
@@ -100,7 +96,6 @@ internal fun Challenge.toChallengeState(
     isUserInstigator: Boolean,
     secondsRemaining: Int = 0,
     showChallengeDialog: Boolean = false,
-    isReadyToStart: Boolean = false,
 ) =
     ChallengeState(
         challengeId = challengeId,
@@ -108,7 +103,6 @@ internal fun Challenge.toChallengeState(
         isThisUserTheInstigator = isUserInstigator,
         showChallengeDialog = showChallengeDialog,
         secondsRemaining = secondsRemaining,
-        navigateToArena = isReadyToStart,
     )
 
 internal fun Challenger.toChallengerState() =

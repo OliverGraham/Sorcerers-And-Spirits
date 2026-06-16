@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
+import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSource
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.profile.FirebaseProfileRepository
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
@@ -32,6 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.database.database
 import dev.gitlive.firebase.firestore.firestore
+import dev.gitlive.firebase.remoteconfig.remoteConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -55,12 +58,14 @@ val commonModule = module {
 private fun Module.initializeParameters() {
     single { Firebase.database }
     single { Firebase.firestore }
+    single { Firebase.remoteConfig }
     single { CoroutineScope(context = Dispatchers.IO) }
 }
 
 private fun Module.initializeRepositories() {
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
+    singleOf(::FirebaseRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }

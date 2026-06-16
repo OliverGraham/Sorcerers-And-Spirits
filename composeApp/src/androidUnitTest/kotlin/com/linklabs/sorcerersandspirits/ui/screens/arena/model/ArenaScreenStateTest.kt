@@ -1,0 +1,140 @@
+package com.linklabs.sorcerersandspirits.ui.screens.arena.model
+
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNull
+
+class ArenaScreenStateTest {
+
+    @Test
+    fun `Given the user's Paladin is knocked out but still owes a Holy Shield roll, then no match decision is offered`() {
+        val state =
+            combatScreenState(
+                isUserPlayerKnockedOut = true,
+                combatActionState =
+                    holyShieldRoll(
+                        action = AbilityActionState.Passive.HolyShield.Prayer,
+                        defenderUserId = USER_ID,
+                    ),
+            )
+
+        assertNull(actual = state.matchDecision)
+    }
+
+    @Test
+    fun `Given the user is knocked out after Holy Shield resolves, then a knocked-out decision is offered`() {
+        val state =
+            combatScreenState(
+                isUserPlayerKnockedOut = true,
+                combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+            )
+
+        assertEquals(expected = MatchDecision.KnockedOut, actual = state.matchDecision)
+    }
+
+    @Test
+    fun `Given another player owes a Holy Shield roll while the user is knocked out, then a knocked-out decision is offered`() {
+        val state =
+            combatScreenState(
+                isUserPlayerKnockedOut = true,
+                combatActionState =
+                    holyShieldRoll(
+                        action = AbilityActionState.Passive.HolyShield.Prayer,
+                        defenderUserId = OPPONENT_ID,
+                    ),
+            )
+
+        assertEquals(expected = MatchDecision.KnockedOut, actual = state.matchDecision)
+    }
+
+    @Test
+    fun `Given the user already made their decision, then no match decision is offered`() {
+        val state =
+            combatScreenState(
+                isUserPlayerKnockedOut = true,
+                hasMadeKnockoutDecision = true,
+                combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+            )
+
+        assertNull(actual = state.matchDecision)
+    }
+
+    @Test
+    fun `Given the match has finished, then a match-finished decision is offered`() {
+        val state = screenState(arenaState = ArenaState.Finished)
+
+        assertEquals(expected = MatchDecision.MatchFinished, actual = state.matchDecision)
+    }
+
+    private fun holyShieldRoll(
+        action: AbilityActionState.Passive.HolyShield,
+        defenderUserId: String,
+    ) =
+        CombatActionState.AbilityRoll(
+            action = action,
+            attackerUserId = OPPONENT_ID,
+            defenderUserId = defenderUserId,
+            originalTurnUserId = OPPONENT_ID,
+            activeUserIds = setOf(defenderUserId),
+        )
+
+    private fun combatScreenState(
+        isUserPlayerKnockedOut: Boolean,
+        combatActionState: CombatActionState,
+        hasMadeKnockoutDecision: Boolean = false,
+    ) =
+        screenState(
+            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
+            arenaState =
+                ArenaState.Combat(
+                    playerMap = players(),
+                    userPlayerId = USER_ID,
+                    combatActionState = combatActionState,
+                    roundNumber = 1,
+                    isNewRound = false,
+                    doublesBonus = null,
+                ),
+        )
+
+    private fun screenState(
+        arenaState: ArenaState,
+        isUserPlayerKnockedOut: Boolean = false,
+        hasMadeKnockoutDecision: Boolean = false,
+    ) =
+        ArenaScreenState(
+            messages = emptyList(),
+            unhandledMessagesCount = 0,
+            secondsRemaining = 0,
+            showForfeitDialog = false,
+            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
+            arenaState = arenaState,
+            participantNames = emptyMap(),
+        )
+
+    private fun players() =
+        mapOf(
+            USER_ID to
+                PlayerState.Selected(
+                    userId = USER_ID,
+                    displayName = "Paladin",
+                    characterClass = CharacterClass.getPaladin().toState(),
+                ),
+            OPPONENT_ID to
+                PlayerState.Selected(
+                    userId = OPPONENT_ID,
+                    displayName = "Rogue",
+                    characterClass = CharacterClass.getRogue().toState(),
+                ),
+        )
+
+    private companion object {
+        const val USER_ID = "player1"
+        const val OPPONENT_ID = "player2"
+    }
+}

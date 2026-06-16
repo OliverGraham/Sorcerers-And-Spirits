@@ -4,6 +4,7 @@ description: Branch, commit, push, PR, merge, pull main, delete branch
 
 Ship the current working-tree changes end-to-end, autonomously, without pausing for confirmation between steps:
 
+0. `./gradlew :composeApp:spotlessApply` to format the code before branching (the formatter may modify tracked files; those edits get committed in step 2).
 1. `git checkout -b <descriptive-branch>` off `main`.
 2. `git add` the relevant files + `git commit` (end message with `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`).
 3. `git push -u origin <branch>`.

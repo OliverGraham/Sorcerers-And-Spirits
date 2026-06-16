@@ -58,11 +58,9 @@ internal fun LoadedArenaScreen(
         ForfeitDialog()
     }
 
-    if (screenState.showKnockoutDialog) {
-        MatchDecisionDialog(
-            isMatchFinished = screenState.arenaState is ArenaState.Finished,
-            isUserPlayerKnockedOut = screenState.isUserPlayerKnockedOut,
-        )
+    val matchDecision = screenState.matchDecision
+    if (matchDecision != null) {
+        MatchDecisionDialog(decision = matchDecision)
     }
 }
 

@@ -19,14 +19,15 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleInstigatorChallengeState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleRecipientChallengeState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_awaiting_responses
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_button_accept
@@ -166,65 +167,14 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
     }
 }
 
-// TODO(SS-008): Update preview data
 @Preview
 @Composable
 private fun ChallengeDialogInstigatorPreview() {
-    SorcerersAndSpiritsTheme {
-        ChallengeDialog(
-            challengeState =
-                ChallengeState(
-                    challengeId = "preview_challenge",
-                    challengerStates =
-                        listOf(
-                            ChallengerState(
-                                userId = "user_1",
-                                displayName = "Merlin",
-                                isInstigator = true,
-                                status = ChallengerStatus.Accepted,
-                            ),
-                            ChallengerState(
-                                userId = "user_2",
-                                displayName = "Morgana",
-                                isInstigator = false,
-                                status = ChallengerStatus.Pending,
-                            ),
-                        ),
-                    secondsRemaining = 45,
-                    showChallengeDialog = true,
-                    isThisUserTheInstigator = true,
-                )
-        )
-    }
+    SorcerersAndSpiritsTheme { ChallengeDialog(challengeState = exampleInstigatorChallengeState) }
 }
 
 @Preview
 @Composable
 private fun ChallengeDialogRecipientPreview() {
-    SorcerersAndSpiritsTheme {
-        ChallengeDialog(
-            challengeState =
-                ChallengeState(
-                    challengeId = "preview_challenge",
-                    challengerStates =
-                        listOf(
-                            ChallengerState(
-                                userId = "user_1",
-                                displayName = "Merlin",
-                                isInstigator = true,
-                                status = ChallengerStatus.Accepted,
-                            ),
-                            ChallengerState(
-                                userId = "user_2",
-                                displayName = "Morgana (You)",
-                                isInstigator = false,
-                                status = ChallengerStatus.Pending,
-                            ),
-                        ),
-                    secondsRemaining = 9,
-                    showChallengeDialog = true,
-                    isThisUserTheInstigator = false,
-                )
-        )
-    }
+    SorcerersAndSpiritsTheme { ChallengeDialog(challengeState = exampleRecipientChallengeState) }
 }

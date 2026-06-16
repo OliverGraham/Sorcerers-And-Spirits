@@ -145,14 +145,21 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   `AppViewModelTest` (7) pass.
 
 ### SS-008 — Reusable Tavern preview state & previews
-- [ ] Not completed
+- [x] Completed
 - **Sources:**
   - `ExampleTravelers.kt:6` (`// TODO: Make example state that can be reused for previews`)
   - `TavernScreen.kt:199` (`// TODO: Preview`)
   - `ChallengeDialog.kt:169` (`// TODO: Update preview data`)
 - **Goal:** Build reusable example/preview state for Tavern composables and add/refresh previews.
-- **Steps:** Create shared sample data in `ExampleTravelers`; add a `TavernScreen` preview; update
-  `ChallengeDialog` preview data.
+- **Resolution:** Turned `ExampleTravelers.kt` into a shared sample-state catalog —
+  `exampleUserTraveler`, `exampleOtherTravelers` (mix of `Available`/`Busy`),
+  `exampleInstigatorChallengeState`/`exampleRecipientChallengeState`, and a full
+  `exampleTavernState` (defaulting `characterClasses` from `CharacterClass.getAllClasses()`).
+  Replaced the empty `TavernScreenPreview` stub with a real `UiState.Loaded(exampleTavernState)`
+  preview wrapped in `SorcerersAndSpiritsTheme`, repointed both `ChallengeDialog` previews at the
+  shared challenge states (dropping the duplicated inline `ChallengeState` literals and the now-unused
+  `ChallengerStatus` import), and collapsed `TheBar`'s hand-rolled preset onto
+  `exampleUserTraveler`/`exampleOtherTravelers`. `composeApp` Android debug compiles clean.
 
 ### SS-009 — Improve TheBar
 - [ ] Not completed

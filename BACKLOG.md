@@ -512,3 +512,139 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
     is bounded by device clock accuracy (≈ms on NTP-synced devices), which is acceptable.
 - **Known limitation / future option:** if real-device clock skew ever matters, add
   `.info/serverTimeOffset` correction. Left out deliberately to avoid complexity.
+
+---
+
+## Bugs
+
+### SS-060 — Holy Shield: suppress KnockedOut dialog during the survival roll
+- [ ] Not completed
+- **Source:** Reported bug.
+  - `ArenaScreenState.kt:35` (`(isUserPlayerKnockedOut || arenaState is ArenaState.Finished) && !hasMadeKnockoutDecision`)
+  - `MatchDecisionDialog.kt:12` / `LoadedArenaScreen.kt:64`
+- **Goal:** When a Paladin is knocked out but is about to roll (or is rolling) for Holy Shield, the
+  KnockedOut/match-decision dialog must NOT show. The dialog should only appear once Holy Shield has
+  resolved and the Paladin is actually knocked out (i.e. the roll failed to land in 10–12).
+- **Steps:** Identify the window where `isUserPlayerKnockedOut` flips true while a pending Holy
+  Shield roll is still owed; gate the `shouldShowMatchDecisionDialog` derivation on there being no
+  pending Holy Shield roll for the user; verify the dialog reappears correctly if the roll fails.
+
+---
+
+## Profile & Auth
+
+### SS-061 — Investigate Firebase Authentication for user profiles
+- [ ] Not completed
+- **Goal:** Choose the easiest and most robust way for users to create and own a profile. Evaluate
+  Firebase Auth providers — Google Sign-In and phone (mobile) auth are the leading candidates — for a
+  KMP (Android + iOS) app, and decide which to support. This unblocks tying profiles/stats to a real
+  authenticated identity.
+- **Steps:** Survey gitlive `firebase-auth` support across Android/iOS; compare Google Sign-In vs.
+  phone auth vs. anonymous-then-link for friction, account recovery, and abuse resistance; consider
+  anonymous auth as the first-launch default with later upgrade/link to a permanent provider; document
+  a recommendation and the migration path for existing anonymous profiles. Related: SS-036 (signed-in
+  user with missing profile), SS-064 (ProfileScreen).
+
+### SS-062 — Profile deletion in Firestore
+- [ ] Not completed
+- **Source:** `FirebaseProfileRepository.kt` (profile data layer).
+- **Goal:** Add the ability to delete a user's profile from Firestore, with the corresponding
+  domain use case and repository method.
+- **Steps:** Add a `DeleteProfileUseCase` + `ProfileRepository.deleteProfile(...)`; ensure related
+  data is cleaned up (the unique display-name reservation from SS-039, any stats records, the auth
+  account if appropriate per SS-061); surface it from the ProfileScreen (SS-064) behind a
+  confirmation.
+
+### SS-063 — App Drawer cleanup
+- [ ] Not completed
+- **Source:** `SettingsDrawer.kt` (also flagged by `// TODO(SS-037): What to do with this?`).
+- **Goal:** The drawer currently holds ad-hoc items (a raw Display Name field, Tavern/Arena links).
+  Replace it with a deliberate set of entries. The name-change capability moves out of the drawer and
+  into the ProfileScreen (SS-064); the drawer should instead link to Profile, Game Rules (SS-067),
+  Leaderboard (SS-065), etc.
+- **Steps:** Decide the final drawer entry list; remove the inline display-name editor; add
+  navigation entries to the new screens; tidy styling. Related: SS-037, SS-064.
+
+### SS-064 — ProfileScreen
+- [ ] Not completed
+- **Goal:** Add a ProfileScreen, accessed from the app drawer (SS-063). It contains the name-change
+  capability (moved out of `SettingsDrawer`), profile deletion (SS-062), and, once game-stat handling
+  exists, the user's own game statistics.
+- **Steps:** Create the route + screen + ViewModel; move the display-name edit flow here (reusing
+  `UpdateProfileDisplayNameUseCase`); wire profile deletion (SS-062) behind a confirmation; leave a
+  placeholder for per-user stats. Related: SS-035, SS-039, SS-061, SS-065.
+
+---
+
+## Stats & Leaderboard
+
+### SS-065 — LeaderboardScreen
+- [ ] Not completed
+- **Goal:** Once game stats are recorded on user profiles (and general game-stat handling lands —
+  see related stats tickets), add a screen showing the top players. Accessible from the drawer
+  (SS-063).
+- **Notes:** Depends on stats existing/being persisted (Related: SS-021 forfeit/finished stats
+  update). Likely splits into multiple tickets as work begins — stats schema/aggregation, query/
+  ordering strategy, and the screen UI.
+
+---
+
+## Rules & Help
+
+### SS-066 — Explore an in-app game-rules chatbot
+- [ ] Not completed
+- **Goal:** Explore a chatbot that answers questions about the game rules — including for players
+  using the app alongside a physical game to settle rules edge-cases. The rules in CLAUDE.md / the
+  GameRulesScreen content (SS-067) form the knowledge base.
+- **Steps:** Decide the backend (default to the Claude API with a current Claude model, grounded on
+  the rules text); scope question types (rules lookups vs. ability-interaction edge cases); design the
+  entry point (likely from the GameRulesScreen or drawer). Investigation only for now.
+
+### SS-067 — GameRulesScreen
+- [ ] Not completed
+- **Goal:** A screen, accessible from the drawer (SS-063), where users can read the game rules and
+  class abilities.
+- **Steps:** Decide the rules content source (static resource vs. RemoteConfig-driven); build a
+  readable/navigable layout (core combat rules + per-class abilities); link to the rules chatbot
+  (SS-066) if/when it exists.
+
+---
+
+## UI overhaul & input
+
+### SS-068 — Lottie animation pass & UI overhaul (Arena + Tavern)
+- [ ] Not completed
+- **Source:** Existing local branch with Lottie animation work. Related: combat-animation foundation.
+- **Goal:** Track the broader UI overhaul. Primary focus is the ArenaScreen, with knock-on effects on
+  the TavernScreen. The CharacterClassCards pager becomes a spinning-wheel selector (a pager may still
+  back it). Arena combat animations should map roughly 1-to-1 to `ArenaMessage`s.
+- **Notes:** Large; expected to spawn many child tickets. Likely overlaps SS-025 (message-log
+  animation), SS-033/SS-034 (CharacterClassCard/selection), and the existing Compottie foundation.
+  Captured now to anchor the work; break out concrete tickets as the overhaul begins.
+
+### SS-069 — Shake-to-roll dice UX
+- [ ] Not completed
+- **Goal:** Investigate a dice-rolling interaction where the user taps and holds a pair of dice (or a
+  single die, depending on what the current step requires), shakes the phone to simulate rolling, and
+  on release the existing ViewModel roll handler is invoked.
+- **Steps:** Determine which die count the current combat step expects (1 vs. 2 dice) to drive what's
+  held; add accelerometer/shake detection (platform `expect`/`actual` for Android + iOS); wire the
+  release gesture to the existing roll entry point; design the press/shake/release visual feedback.
+
+---
+
+## Release & versioning
+
+### SS-070 — Investigate app version control & force-upgrade
+- [ ] Not completed
+- **Goal:** Establish a way to gate clients by app version so an outdated client can be soft- or
+  force-upgraded — important since all clients share one RTDB game-state schema and a stale client
+  could read/write incompatible data.
+- **Open question:** Is RemoteConfig the path forward — publishing `minimum_supported_version` /
+  `latest_version` (and maybe a force-vs-recommend flag) there, with the app comparing its own build
+  version on launch? It already initializes RemoteConfig at app start (SS-047), so this would reuse
+  that plumbing.
+- **Steps:** Decide the version source (RemoteConfig parameters vs. alternative); define the version
+  comparison + where it runs (launch/`AppViewModel`); design the soft-update prompt vs. hard
+  force-upgrade block UI with store deep-links (Play / App Store) for both platforms; consider how
+  this interacts with the shared game-state schema versioning. Related: SS-047.

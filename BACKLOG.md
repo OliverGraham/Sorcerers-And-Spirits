@@ -392,6 +392,24 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   per-ability stats block parallel to `character_class_stats`); overlay via the existing
   RemoteConfig data source. Defer until the full set of desired values is decided.
 
+### SS-059 — Single-source class stats via bundled JSON (drop factory stat literals)
+- [ ] Not completed
+- **Source:** Design follow-on to SS-047. Today the default class stat numbers exist in three places:
+  the `CharacterClass` factory literals, the `defaultCharacterClassStats()` payload derived from them,
+  and the Firebase Console value (`remote-config/character_class_stats.json`).
+- **Goal:** Make the version-controlled `remote-config/character_class_stats.json` the single source
+  of default stats. Bundle it as a `commonMain` resource and use it as both the RemoteConfig in-app
+  default (`setDefaults`) and the provider's offline/first-launch fallback, then remove the stat
+  literals from the `CharacterClass` factories (which shrink to type + abilities only).
+- **Notes / cost:**
+  - Resource reads are `suspend` (`Res.readBytes`), so parse the bundled JSON once during
+    `CharacterClassProvider.refresh()` and cache it; keep `getAllClasses()` synchronous off the cache.
+  - The factories can't read the resource (pure domain, no IO), so the provider becomes the sole
+    assembler of stat-bearing `CharacterClass` instances. Tests/combat that use
+    `CharacterClass.getRogue().hitPoints` etc. must instead source classes from the provider (fake
+    stats source) or a test helper — this is the test refactor deferred from SS-047.
+  - Could later layer disk-caching of the last fetched remote value on top of the bundled default.
+
 ### SS-048 — Die-value enum
 - [ ] Not completed
 - **Source:** `DiceRoller.kt:16` (`// TODO Enums for values 1 through 6?`)

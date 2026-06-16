@@ -25,6 +25,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
@@ -36,10 +37,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleTavernState
+import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_martini
@@ -195,5 +197,14 @@ private fun RowScope.ChallengeDialogHandle(
     }
 }
 
-// TODO(SS-008): Preview
-@Preview @Composable private fun TavernScreenPreview() {}
+@Preview
+@Composable
+private fun TavernScreenPreview() {
+    SorcerersAndSpiritsTheme {
+        TavernScreen(
+            uiState = UiState.Loaded(data = exampleTavernState),
+            onRetry = {},
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}

@@ -30,12 +30,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleOtherTravelers
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleUserTraveler
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_menu
 
@@ -208,36 +210,8 @@ private fun TravelerState.ToCard(
 @Composable
 private fun TheBarPreview() {
     TheBar(
-        userTraveler =
-            TravelerState(
-                userId = "-1",
-                displayName = "User",
-                isThisTravelerTheUser = true,
-                tavernStatus = TavernStatus.Available,
-            ),
-        otherTravelers =
-            buildList {
-                repeat(times = 5) {
-                    add(
-                        TravelerState(
-                            userId = it.toString(),
-                            displayName = "Traveler $it",
-                            isThisTravelerTheUser = false,
-                            tavernStatus = TavernStatus.Available,
-                        )
-                    )
-                }
-                repeat(times = 5) {
-                    add(
-                        TravelerState(
-                            userId = (it + 5).toString(),
-                            displayName = "Traveler ${it + 5}",
-                            isThisTravelerTheUser = false,
-                            tavernStatus = TavernStatus.Busy,
-                        )
-                    )
-                }
-            },
+        userTraveler = exampleUserTraveler,
+        otherTravelers = exampleOtherTravelers,
         modifier = Modifier.fillMaxSize(),
     )
 }

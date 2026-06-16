@@ -18,6 +18,8 @@ data class ArenaScreenState(
     val hasMadeKnockoutDecision: Boolean,
     val arenaState: ArenaState,
     val participantNames: Map<String, String>,
+    val characterClasses: List<CharacterClassState> =
+        CharacterClass.getAllClasses().map { it.toState() },
 ) {
     val latestMessage: ArenaMessageState? =
         messages.getOrNull(
@@ -26,8 +28,6 @@ data class ArenaScreenState(
 
     val filteredMessages: List<ArenaMessageState> =
         messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
-
-    val characterClasses = CharacterClass.getAllClasses().map { it.toState() }
 
     // TODO(SS-030): Update property name and way to assign it
     val showKnockoutDialog =
@@ -81,6 +81,8 @@ sealed interface ActiveState : ArenaState {
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
+    characterClasses: List<CharacterClassState> =
+        CharacterClass.getAllClasses().map { it.toState() },
 ): ArenaStateUpdate {
     val userPlayer = playerMap.getValue(key = userId)
 
@@ -149,6 +151,7 @@ internal fun ArenaMatch.toUpdatedState(
             hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = nextArenaState,
             participantNames = participantNames,
+            characterClasses = characterClasses,
         )
 
     val timerAction =

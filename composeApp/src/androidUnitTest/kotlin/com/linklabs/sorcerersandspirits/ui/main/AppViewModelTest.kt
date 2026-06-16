@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.main
 import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
+import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
@@ -38,6 +39,7 @@ class AppViewModelTest {
         mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
+    private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase =
         mockk(relaxed = true)
@@ -64,6 +66,7 @@ class AppViewModelTest {
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
             createProfileUseCase = createProfileUseCase,
             getProfileFlowUseCase = getProfileFlowUseCase,
+            initializeGameConfigUseCase = initializeGameConfigUseCase,
             isUserSignedInUseCase = isUserSignedInUseCase,
             updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
         )

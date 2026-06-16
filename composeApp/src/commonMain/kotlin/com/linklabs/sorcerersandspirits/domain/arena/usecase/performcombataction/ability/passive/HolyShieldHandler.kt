@@ -111,7 +111,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
-        // TODO(SS-047): From RemoteConfig in some way
+        // TODO(SS-058): From RemoteConfig in some way
         private val HOLY_SHIELD_SUCCESS_RANGE = 10..12
 
         fun triggerHolyShieldIfApplicable(

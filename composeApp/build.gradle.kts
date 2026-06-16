@@ -59,8 +59,11 @@ kotlin {
 
             implementation(dependencyNotation = libs.firebase.gitlive.app)
             implementation(dependencyNotation = libs.firebase.gitlive.auth)
+            implementation(dependencyNotation = libs.firebase.gitlive.config)
             implementation(dependencyNotation = libs.firebase.gitlive.database)
             implementation(dependencyNotation = libs.firebase.gitlive.firestore)
+
+            implementation(dependencyNotation = libs.kotlinx.serialization.json)
 
             implementation(dependencyNotation = project.dependencies.platform(libs.koin.bom))
             implementation(dependencyNotation = libs.koin.annotations)

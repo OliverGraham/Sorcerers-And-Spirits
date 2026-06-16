@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 data class CharacterClassEntity(
     val type: CharacterClassType,
     val hitPoints: Int,
+    val maxHitPoints: Int = hitPoints,
     val armorClass: Int,
     val speed: Int,
     val offensiveAbility: OffensiveAbilityEntity,
@@ -20,6 +21,7 @@ internal fun CharacterClassEntity.toDomain(): CharacterClass =
     CharacterClass(
         type = type,
         hitPoints = hitPoints,
+        maxHitPoints = maxHitPoints,
         armorClass = armorClass,
         speed = speed,
         offensiveAbility = offensiveAbility.toDomain(),
@@ -30,6 +32,7 @@ internal fun CharacterClass.toEntity(): CharacterClassEntity =
     CharacterClassEntity(
         type = type,
         hitPoints = hitPoints,
+        maxHitPoints = maxHitPoints,
         armorClass = armorClass,
         speed = speed,
         offensiveAbility = offensiveAbility.toEntity(),

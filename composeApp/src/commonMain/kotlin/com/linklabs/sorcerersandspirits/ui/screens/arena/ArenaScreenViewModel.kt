@@ -13,10 +13,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatch
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
@@ -45,6 +47,7 @@ class ArenaScreenViewModel(
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val exitArenaUseCase: ExitArenaUseCase,
+    private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
@@ -57,6 +60,8 @@ class ArenaScreenViewModel(
 
     private val _uiStateFlow = MutableStateFlow<UiState<ArenaScreenState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
+
+    private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
 
     private val arenaTimer =
         Timer(
@@ -253,7 +258,11 @@ class ArenaScreenViewModel(
         }
 
         val updatedArenaStateUpdate =
-            toUpdatedState(previousState = _uiStateFlow.getLoadedStateOrNull(), userId = userId)
+            toUpdatedState(
+                previousState = _uiStateFlow.getLoadedStateOrNull(),
+                userId = userId,
+                characterClasses = characterClasses,
+            )
 
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 

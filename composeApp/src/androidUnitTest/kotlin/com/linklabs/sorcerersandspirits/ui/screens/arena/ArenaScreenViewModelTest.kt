@@ -19,6 +19,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
@@ -28,6 +29,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.coVerify
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import kotlin.test.AfterTest
@@ -56,6 +58,7 @@ class ArenaScreenViewModelTest {
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase = mockk()
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase = mockk()
     private val exitArenaUseCase: ExitArenaUseCase = mockk(relaxed = true)
+    private val getCharacterClassesUseCase: GetCharacterClassesUseCase = mockk()
     private val getUserIdUseCase: GetUserIdUseCase = mockk()
     private val performCombatActionUseCase: PerformCombatActionUseCase = mockk()
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase = mockk(relaxed = true)
@@ -74,6 +77,7 @@ class ArenaScreenViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         coEvery { getUserIdUseCase() } returns USER_ID
+        every { getCharacterClassesUseCase() } returns CharacterClass.getAllClasses()
         coEvery { coordinateArenaMatchUseCase(any(), any()) } returns arenaMatchFlow
         coEvery {
             performCombatActionUseCase(
@@ -94,6 +98,7 @@ class ArenaScreenViewModelTest {
             chooseCharacterClassUseCase = chooseCharacterClassUseCase,
             coordinateArenaMatchUseCase = coordinateArenaMatchUseCase,
             exitArenaUseCase = exitArenaUseCase,
+            getCharacterClassesUseCase = getCharacterClassesUseCase,
             getUserIdUseCase = getUserIdUseCase,
             performCombatActionUseCase = performCombatActionUseCase,
             removeArenaMatchUseCase = removeArenaMatchUseCase,

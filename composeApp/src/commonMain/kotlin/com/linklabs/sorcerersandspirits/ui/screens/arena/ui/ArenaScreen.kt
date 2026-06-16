@@ -10,8 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
-import com.linklabs.sorcerersandspirits.ui.common.RetryButton
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
@@ -50,19 +50,20 @@ internal fun ArenaScreen(
         viewModel.eventChannelFlow.collectEvents(onBack = onBack)
         val uiState by viewModel.uiStateFlow.collectAsState()
 
-        ArenaScreen(uiState = uiState, modifier = modifier)
+        ArenaScreen(uiState = uiState, onRetry = viewModel::retry, modifier = modifier)
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ArenaScreen(uiState: UiState<ArenaScreenState>, modifier: Modifier = Modifier) {
+private fun ArenaScreen(
+    uiState: UiState<ArenaScreenState>,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     when (uiState) {
-        // TODO(SS-007) Arena: Update UI to show error
-        is UiState.Error -> RetryButton(retryMessage = "Retry", onRetry = {}, modifier = modifier)
-
+        is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = modifier)
         is UiState.Loaded -> LoadedArenaScreen(screenState = uiState.data, modifier = modifier)
-
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }

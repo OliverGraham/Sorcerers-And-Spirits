@@ -97,22 +97,52 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   return type. `composeApp` compiles clean; Tavern + ChallengeHandler suites are green.
 
 ### SS-006 — Consolidate navigate-to-arena callback at App level
-- [ ] Not completed
+- [x] Completed
 - **Source:** `TavernScreen.kt:66` (`// TODO: make one for App?`)
 - **Goal:** Decide whether the `onNavigateToArena` wiring should live at the App level instead of
   per-screen.
-- **Steps:** Inspect navigation host wiring; hoist the callback if it reduces duplication.
+- **Decision:** Keep as-is. The navigation wiring is already consolidated at the App level:
+  `NavigationDisplay` (the navigation host that owns the route→screen mapping and the `backStack`) is
+  where the Tavern→Arena navigation lambda (`backStack.add(Route.ArenaScreen(...))`) lives — not
+  inside `TavernScreen`. `TavernScreen` stays navigation-agnostic and only forwards a
+  `TavernEvent.NavigateToArena` intent through its `onNavigateToArena` callback, which is the
+  idiomatic state-hoisting seam rather than duplication to eliminate. Hoisting the lambda body
+  further up into `SorcerersAndSpirits` would only move it away from the `backStack` it operates on.
+  (`SettingsDrawer.onNavigateToArena` is a separate commented-out no-op stub being reconsidered under
+  SS-037/SS-063, unrelated to the challenge-driven navigation.)
+- **Resolution:** Removed the `// TODO(SS-006): make one for App?` comment from `TavernScreen.kt`; no
+  code change to the wiring was warranted.
 
 ### SS-007 — Real error UI for error states
-- [ ] Not completed
+- [x] Completed
 - **Sources:**
   - `TavernScreen.kt:77` (`// TODO: Update UI to show error`)
   - `ArenaScreen.kt:62` (`// TODO Arena: Update UI to show error`)
   - `SorcerersAndSpiritsNavigationHost.kt:36` (`// TODO: Update UI to show error`)
   - `SorcerersAndSpiritsNavigationHost.kt:49` (`// TODO: what to do here, show another dialog?...`)
 - **Goal:** Replace placeholder retry/empty handling with proper error UI shared across screens.
-- **Steps:** Design a reusable error component/pattern; wire each `UiState.Error` branch to it;
-  decide UX for the navigation-host failure case (dialog / snackbar / exit).
+- **Resolution:**
+  - **Reusable component:** Replaced the misused `RetryButton` (each `UiState.Error` branch was
+    calling `RetryButton(retryMessage = "Retry", onRetry = {})` — passing the button label as the
+    *message* with a no-op retry) with a single shared `ErrorContent(onRetry, message)` in
+    `ui/common/` (renamed `Retry.kt` → `ErrorContent.kt`). It shows a generic error message
+    (`error_generic_message` string resource) plus the existing `retry_button`. Wired all three
+    branches — Tavern, Arena, and the App navigation host — to it.
+  - **Made `UiState.Error` actually reachable + retryable:** previously no ViewModel ever emitted
+    `Error`, and the data flows had no failure handling — a thrown Firebase flow silently stuck the
+    screen on `Loading` forever. Added `.catch { _uiStateFlow.value = UiState.Error }` to the
+    collected flows in `TavernScreenViewModel`, `ArenaScreenViewModel`, and `AppViewModel`, and a
+    `retry()` on each that resets to `Loading` and restarts the load (cancelling the prior job via a
+    tracked `Job`; Arena reused its existing `screenStateFlowJob`). `AppViewModel`'s `.catch` sits on
+    the `combine(profile, isOnline)` flow, which emits offline as a *value* (handled by the existing
+    offline-shell branch), so only genuine throws map to `Error` — the deliberate offline-first UX is
+    preserved (`AppViewModelTest` still green).
+  - **Navigation-host sign-in dismiss UX:** decided the `SignInNameDialog` is intentionally
+    non-dismissible (a profile is required before the app is usable), so `onDismissRequest` stays a
+    documented no-op rather than a dialog/snackbar/exit. Replaced the open-question TODO with a
+    comment stating the decision.
+- **Verification:** `composeApp` Android debug compiles clean; `ArenaScreenViewModelTest` (45) and
+  `AppViewModelTest` (7) pass.
 
 ### SS-008 — Reusable Tavern preview state & previews
 - [ ] Not completed

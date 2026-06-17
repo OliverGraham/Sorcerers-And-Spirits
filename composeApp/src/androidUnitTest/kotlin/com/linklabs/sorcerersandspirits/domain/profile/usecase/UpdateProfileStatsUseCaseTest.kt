@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.profile.usecase
 
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
+import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
@@ -20,40 +21,34 @@ class UpdateProfileStatsUseCaseTest {
         )
 
     @Test
-    fun `forwards increments for the signed-in user`() = runTest {
+    fun `forwards the delta for the signed-in user`() = runTest {
         every { authenticationRepository.getUserId() } returns USER_ID
 
-        useCase(increments = INCREMENTS)
+        useCase(delta = DELTA)
 
-        coVerify(exactly = 1) {
-            profileRepository.incrementStats(userId = USER_ID, increments = INCREMENTS)
-        }
+        coVerify(exactly = 1) { profileRepository.incrementStats(userId = USER_ID, delta = DELTA) }
     }
 
     @Test
     fun `does nothing when no user is signed in`() = runTest {
         every { authenticationRepository.getUserId() } returns null
 
-        useCase(increments = INCREMENTS)
+        useCase(delta = DELTA)
 
-        coVerify(exactly = 0) {
-            profileRepository.incrementStats(userId = any(), increments = any())
-        }
+        coVerify(exactly = 0) { profileRepository.incrementStats(userId = any(), delta = any()) }
     }
 
     @Test
-    fun `does nothing when there are no increments`() = runTest {
+    fun `does nothing when the delta is empty`() = runTest {
         every { authenticationRepository.getUserId() } returns USER_ID
 
-        useCase(increments = emptyMap())
+        useCase(delta = ProfileStats())
 
-        coVerify(exactly = 0) {
-            profileRepository.incrementStats(userId = any(), increments = any())
-        }
+        coVerify(exactly = 0) { profileRepository.incrementStats(userId = any(), delta = any()) }
     }
 
     private companion object {
         const val USER_ID = "user-1"
-        val INCREMENTS = mapOf("matchesPlayed" to 1, "wins" to 1)
+        val DELTA = ProfileStats(wins = 1, losses = 0)
     }
 }

@@ -53,6 +53,7 @@ internal class ChooseCharacterClass(
                     updatedPlayers.values.associate {
                         it.userId to it as ArenaPlayerEntity.Selected
                     },
+                matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
             updateChoosingClasses(
@@ -65,6 +66,7 @@ internal class ChooseCharacterClass(
     private fun transitionToCombat(
         messageGenerator: ChooseCharacterClassMessageGenerator,
         selectedPlayers: Map<String, ArenaPlayerEntity.Selected>,
+        matchNumberInGauntlet: Int,
     ): ArenaMatchEntity.Combat {
         val fastestPlayer = selectedPlayers.getFastestPlayer()
         val (updatedMessages, numberOfNewMessages) =
@@ -83,6 +85,7 @@ internal class ChooseCharacterClass(
                 ),
             roundNumber = 1,
             isNewRound = true,
+            matchNumberInGauntlet = matchNumberInGauntlet,
         )
     }
 

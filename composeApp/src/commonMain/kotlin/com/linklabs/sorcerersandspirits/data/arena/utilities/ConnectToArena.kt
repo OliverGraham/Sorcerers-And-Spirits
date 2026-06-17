@@ -55,6 +55,7 @@ internal class ConnectToArena(
                 activePlayerUserId = userId,
                 messages = messages,
                 numberOfNewMessages = 0,
+                matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
             copy(playerEntitiesMap = updatedPlayers)

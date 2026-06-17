@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
@@ -52,6 +53,7 @@ internal fun LoadedArenaScreen(
         ScreenContent(
             arenaState = screenState.arenaState,
             characterClasses = screenState.characterClasses,
+            gauntletProgress = screenState.gauntletProgress,
             paddingValues = paddingValues,
         )
     }
@@ -62,7 +64,10 @@ internal fun LoadedArenaScreen(
 
     val matchDecision = screenState.matchDecision
     if (matchDecision != null) {
-        MatchDecisionDialog(decision = matchDecision)
+        MatchDecisionDialog(
+            decision = matchDecision,
+            gauntletProgress = screenState.gauntletProgress,
+        )
     }
 }
 
@@ -70,6 +75,7 @@ internal fun LoadedArenaScreen(
 private fun ScreenContent(
     arenaState: ArenaState,
     characterClasses: List<CharacterClassState>,
+    gauntletProgress: GauntletProgress,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -77,7 +83,11 @@ private fun ScreenContent(
         val transition =
             updateTransition(targetState = arenaState, label = ARENA_STATE_TRANSITION_LABEL)
 
-        ArenaStateContent(transitionState = transition, characterClasses = characterClasses)
+        ArenaStateContent(
+            transitionState = transition,
+            characterClasses = characterClasses,
+            gauntletProgress = gauntletProgress,
+        )
     }
 }
 
@@ -86,6 +96,7 @@ private fun ScreenContent(
 private fun ArenaStateContent(
     transitionState: Transition<ArenaState>,
     characterClasses: List<CharacterClassState>,
+    gauntletProgress: GauntletProgress,
     modifier: Modifier = Modifier,
 ) {
     transitionState.Crossfade(
@@ -101,7 +112,7 @@ private fun ArenaStateContent(
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
-            is ArenaState.Finished -> MatchFinishedContent()
+            is ArenaState.Finished -> MatchFinishedContent(gauntletProgress = gauntletProgress)
         }
     }
 }

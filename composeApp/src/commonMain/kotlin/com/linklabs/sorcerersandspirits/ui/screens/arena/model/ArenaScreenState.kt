@@ -25,6 +25,7 @@ data class ArenaScreenState(
     val hasMadeKnockoutDecision: Boolean,
     val arenaState: ArenaState,
     val participantNames: Map<String, String>,
+    val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> =
         CharacterClass.getAllClasses().map { it.toState() },
 ) {
@@ -182,6 +183,7 @@ internal fun ArenaMatch.toUpdatedState(
             hasMadeKnockoutDecision = hasMadeKnockoutDecision,
             arenaState = nextArenaState,
             participantNames = participantNames,
+            gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
             characterClasses = characterClasses,
         )
 

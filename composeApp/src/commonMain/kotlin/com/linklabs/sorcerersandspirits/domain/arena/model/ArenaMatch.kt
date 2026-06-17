@@ -4,11 +4,13 @@ sealed interface ArenaMatch {
     val messages: List<IncomingArenaMessage>
     val numberOfNewMessages: Int
     val playerMap: Map<String, ArenaPlayer>
+    val matchNumberInGauntlet: Int
 
     data class WaitingForAllPlayers(
         override val messages: List<IncomingArenaMessage>,
         override val numberOfNewMessages: Int,
         override val playerMap: Map<String, ArenaPlayer>,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatch
 
     data class ChoosingClasses(
@@ -17,6 +19,7 @@ sealed interface ArenaMatch {
         override val playerMap: Map<String, ArenaPlayer>,
         val activePlayer: ArenaPlayer,
         val activePlayerUserId: String,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatch
 
     data class Combat(
@@ -27,11 +30,13 @@ sealed interface ArenaMatch {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonus: DoublesBonus?,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatch
 
     data class Finished(
         override val messages: List<IncomingArenaMessage>,
         override val numberOfNewMessages: Int,
         override val playerMap: Map<String, ArenaPlayer>,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatch
 }

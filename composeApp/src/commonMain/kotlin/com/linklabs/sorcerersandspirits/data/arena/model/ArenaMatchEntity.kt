@@ -9,6 +9,7 @@ sealed interface ArenaMatchEntity {
     val messages: List<ArenaMessageEntity>
     val numberOfNewMessages: Int
     val playerEntitiesMap: Map<String, ArenaPlayerEntity>
+    val matchNumberInGauntlet: Int
 
     @Serializable
     @SerialName(value = WAITING_FOR_ALL_PLAYERS)
@@ -16,6 +17,7 @@ sealed interface ArenaMatchEntity {
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity> = emptyMap(),
         override val messages: List<ArenaMessageEntity> = emptyList(),
         override val numberOfNewMessages: Int = 0,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -25,6 +27,7 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
         val activePlayerUserId: String,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -37,6 +40,7 @@ sealed interface ArenaMatchEntity {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonusEntity: DoublesBonusEntity? = null,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -45,6 +49,7 @@ sealed interface ArenaMatchEntity {
         override val messages: List<ArenaMessageEntity>,
         override val numberOfNewMessages: Int,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
+        override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatchEntity
 
     companion object {
@@ -67,6 +72,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 messages = messages,
                 numberOfNewMessages = numberOfNewMessages,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
+                matchNumberInGauntlet = matchNumberInGauntlet,
             )
 
         is ArenaMatchEntity.ChoosingClasses -> {
@@ -78,6 +84,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 numberOfNewMessages = numberOfNewMessages,
                 activePlayerUserId = activePlayerUserId,
                 activePlayer = playerMap.getValue(key = activePlayerUserId),
+                matchNumberInGauntlet = matchNumberInGauntlet,
             )
         }
 
@@ -90,6 +97,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
                 doublesBonus = doublesBonusEntity?.toDomain(),
+                matchNumberInGauntlet = matchNumberInGauntlet,
             )
 
         is ArenaMatchEntity.Finished ->
@@ -97,6 +105,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 messages = messages,
                 numberOfNewMessages = numberOfNewMessages,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
+                matchNumberInGauntlet = matchNumberInGauntlet,
             )
     }
 }

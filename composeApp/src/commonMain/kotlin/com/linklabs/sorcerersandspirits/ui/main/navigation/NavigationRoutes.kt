@@ -13,6 +13,12 @@ sealed interface Route : NavKey {
 
     @Serializable
     data class ArenaScreen(val arguments: ArenaScreenViewModelArgumentsSerializable) : Route
+
+    @Serializable data object ProfileScreen : Route
+
+    @Serializable data object LeaderboardScreen : Route
+
+    @Serializable data object GameRulesScreen : Route
 }
 
 /** Necessary for KMP and to work with iOS */
@@ -26,6 +32,18 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
             subclass(
                 subclass = Route.ArenaScreen::class,
                 serializer = Route.ArenaScreen.serializer(),
+            )
+            subclass(
+                subclass = Route.ProfileScreen::class,
+                serializer = Route.ProfileScreen.serializer(),
+            )
+            subclass(
+                subclass = Route.LeaderboardScreen::class,
+                serializer = Route.LeaderboardScreen.serializer(),
+            )
+            subclass(
+                subclass = Route.GameRulesScreen::class,
+                serializer = Route.GameRulesScreen.serializer(),
             )
         }
     }

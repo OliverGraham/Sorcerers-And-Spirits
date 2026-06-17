@@ -21,6 +21,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 
@@ -43,7 +44,9 @@ internal fun ArenaScreen(
                 onConfirmLeaveArena = viewModel::onConfirmLeaveArena,
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
                 onStayForAnotherMatch = viewModel::onStayForAnotherMatch,
-            )
+            ),
+        LocalShakeDetector provides koinInject(),
+        LocalHaptics provides koinInject(),
     ) {
         InterceptBackNavigationToShowForfeitDialog()
 

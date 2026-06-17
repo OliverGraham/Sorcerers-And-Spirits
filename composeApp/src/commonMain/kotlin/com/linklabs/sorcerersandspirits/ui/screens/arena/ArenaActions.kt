@@ -27,7 +27,6 @@ data class AttackArguments(
     val userPlayerId: String,
 )
 
-// TODO(SS-016): Rename/refactor
 data class UseAbilityArguments(
     val abilityActionState: AbilityActionState,
     val targetedOpponentUserId: String,

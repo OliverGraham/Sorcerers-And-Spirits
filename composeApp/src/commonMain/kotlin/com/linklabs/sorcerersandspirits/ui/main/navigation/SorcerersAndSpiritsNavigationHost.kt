@@ -76,13 +76,7 @@ private fun SorcerersAndSpirits(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet {
-                SettingsDrawer(
-                    backStack = backStack,
-                    drawerState = drawerState,
-                    scope = scope,
-                    displayName = appState.displayName,
-                    onUpdateDisplayName = onUpdateDisplayName,
-                )
+                SettingsDrawer(backStack = backStack, drawerState = drawerState, scope = scope)
             }
         },
         gesturesEnabled = true,
@@ -94,7 +88,12 @@ private fun SorcerersAndSpirits(
             Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
                 OfflineBanner(isOffline = appState.isOffline)
 
-                NavigationDisplay(backStack = backStack, modifier = modifier)
+                NavigationDisplay(
+                    backStack = backStack,
+                    displayName = appState.displayName,
+                    onUpdateDisplayName = onUpdateDisplayName,
+                    modifier = modifier,
+                )
             }
         }
     }

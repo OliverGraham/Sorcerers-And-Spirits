@@ -724,7 +724,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   confirmation.
 
 ### SS-063 — App Drawer cleanup
-- [ ] Not completed
+- [x] Completed
 - **Source:** `SettingsDrawer.kt` (also flagged by `// TODO(SS-037): What to do with this?`).
 - **Goal:** The drawer currently holds ad-hoc items (a raw Display Name field, Tavern/Arena links).
   Replace it with a deliberate set of entries. The name-change capability moves out of the drawer and
@@ -732,6 +732,16 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   Leaderboard (SS-065), etc.
 - **Steps:** Decide the final drawer entry list; remove the inline display-name editor; add
   navigation entries to the new screens; tidy styling. Related: SS-037, SS-064.
+- **Resolution:** Rewrote `SettingsDrawer` to a deliberate list of navigation entries — **Profile**,
+  **Leaderboard**, **Game Rules** — dropping the inline display-name editor and the ad-hoc
+  Tavern/Arena links (clears the `TODO(SS-037)`). Added `Route.ProfileScreen`/`LeaderboardScreen`/
+  `GameRulesScreen` (registered in `navigationRoutesConfiguration`) and wired them into
+  `NavigationDisplay`, which now threads `displayName`/`onUpdateDisplayName` from the host. Created
+  placeholder screens: `ProfileScreen` (carries the moved display-name edit flow so the capability
+  isn't lost; `TODO(SS-064)`), `LeaderboardScreen` (`TODO(SS-065)`), `GameRulesScreen`
+  (`TODO(SS-067)`). Drawer entries push onto the back stack so the system back returns to the prior
+  screen.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean.
 
 ### SS-064 — ProfileScreen
 - [ ] Not completed

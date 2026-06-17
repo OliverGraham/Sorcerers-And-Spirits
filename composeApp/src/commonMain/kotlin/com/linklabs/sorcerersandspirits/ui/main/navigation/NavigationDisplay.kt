@@ -10,20 +10,38 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
+import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
+import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
+import com.linklabs.sorcerersandspirits.ui.screens.profile.ui.ProfileScreen
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreen
 
 @Composable
-internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifier = Modifier) {
+internal fun NavigationDisplay(
+    backStack: NavBackStack<NavKey>,
+    displayName: String,
+    onUpdateDisplayName: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     NavDisplay(
         backStack = backStack,
-        entryProvider = { key -> key.toScreen(backStack = backStack) },
+        entryProvider = { key ->
+            key.toScreen(
+                backStack = backStack,
+                displayName = displayName,
+                onUpdateDisplayName = onUpdateDisplayName,
+            )
+        },
         onBack = { backStack.removeLastOrNull() },
         entryDecorators = getRouteScopedEntryDecorators(),
         modifier = modifier,
     )
 }
 
-private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
+private fun NavKey.toScreen(
+    backStack: NavBackStack<NavKey>,
+    displayName: String,
+    onUpdateDisplayName: (String) -> Unit,
+): NavEntry<NavKey> =
     when (this) {
         Route.TavernScreen ->
             NavEntry(key = this) {
@@ -46,6 +64,15 @@ private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
                     onBack = { backStack.removeLastOrNull() },
                 )
             }
+
+        Route.ProfileScreen ->
+            NavEntry(key = this) {
+                ProfileScreen(displayName = displayName, onUpdateDisplayName = onUpdateDisplayName)
+            }
+
+        Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }
+
+        Route.GameRulesScreen -> NavEntry(key = this) { GameRulesScreen() }
 
         else -> throw IllegalArgumentException("Unknown key: $this")
     }

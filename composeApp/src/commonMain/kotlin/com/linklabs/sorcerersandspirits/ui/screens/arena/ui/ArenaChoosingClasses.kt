@@ -23,6 +23,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import org.jetbrains.compose.resources.stringResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_confirm
+import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_title
+import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_waiting
 
 @Composable
 internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
@@ -34,52 +39,78 @@ internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        // TODO(SS-023) Arena: resources, put back into separate functions
-        Text(
-            text =
-                if (isItThisUsersTurn) {
-                    "Choose Your Class"
-                } else {
-                    "${playerMap.getValue(key = activePlayerUserId).displayName} is choosing their class..."
-                },
-            style =
-                if (isItThisUsersTurn) {
-                    MaterialTheme.typography.headlineMedium
-                } else {
-                    MaterialTheme.typography.headlineSmall
-                },
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(bottom = 24.dp).padding(horizontal = 32.dp),
+        ChoosingClassesTitle(
+            isItThisUsersTurn = isItThisUsersTurn,
+            activePlayerName = playerMap.getValue(key = activePlayerUserId).displayName,
         )
 
-        val actions = ArenaActionsProvider.current
-        val onClassConfirmed = actions.onChooseCharacterClass
-        val onClassSelectedAction = actions.onSelectCharacterClass
-
-        CharacterClassCards(
+        ChoosingClassesCards(
             characterClasses = characterClasses,
-            selectedClass = selectedClass,
-            unavailableClasses = unavailableClasses,
-            classSelections = classSelections,
-            onClassSelected = { if (isItThisUsersTurn) onClassSelectedAction(it) },
             modifier = Modifier.weight(weight = 1f),
         )
 
         if (isItThisUsersTurn) {
-            Spacer(modifier = Modifier.height(height = 24.dp))
-
-            Button(
-                onClick = {
-                    if (selectedClass != null) {
-                        onClassConfirmed(playerMap.getValue(key = userPlayerId), selectedClass)
-                    }
-                },
-                enabled = selectedClass != null,
-                modifier = Modifier.padding(bottom = 16.dp),
-            ) {
-                Text(text = "Confirm Selection")
-            }
+            ConfirmSelectionButton()
         }
+    }
+}
+
+@Composable
+private fun ChoosingClassesTitle(isItThisUsersTurn: Boolean, activePlayerName: String) {
+    Text(
+        text =
+            if (isItThisUsersTurn) {
+                stringResource(resource = Res.string.arena_choosing_classes_title)
+            } else {
+                stringResource(
+                    resource = Res.string.arena_choosing_classes_waiting,
+                    activePlayerName,
+                )
+            },
+        style =
+            if (isItThisUsersTurn) {
+                MaterialTheme.typography.headlineMedium
+            } else {
+                MaterialTheme.typography.headlineSmall
+            },
+        textAlign = TextAlign.Center,
+        modifier = Modifier.padding(bottom = 24.dp).padding(horizontal = 32.dp),
+    )
+}
+
+@Composable
+private fun ArenaState.ChoosingClasses.ChoosingClassesCards(
+    characterClasses: List<CharacterClassState>,
+    modifier: Modifier = Modifier,
+) {
+    val onClassSelected = ArenaActionsProvider.current.onSelectCharacterClass
+
+    CharacterClassCards(
+        characterClasses = characterClasses,
+        selectedClass = selectedClass,
+        unavailableClasses = unavailableClasses,
+        classSelections = classSelections,
+        onClassSelected = { if (isItThisUsersTurn) onClassSelected(it) },
+        modifier = modifier,
+    )
+}
+
+@Composable
+private fun ArenaState.ChoosingClasses.ConfirmSelectionButton() {
+    val onClassConfirmed = ArenaActionsProvider.current.onChooseCharacterClass
+
+    Spacer(modifier = Modifier.height(height = 24.dp))
+
+    Button(
+        onClick = {
+            if (selectedClass != null) {
+                onClassConfirmed(playerMap.getValue(key = userPlayerId), selectedClass)
+            }
+        },
+        enabled = selectedClass != null,
+        modifier = Modifier.padding(bottom = 16.dp),
+    ) {
+        Text(text = stringResource(resource = Res.string.arena_choosing_classes_confirm))
     }
 }
 

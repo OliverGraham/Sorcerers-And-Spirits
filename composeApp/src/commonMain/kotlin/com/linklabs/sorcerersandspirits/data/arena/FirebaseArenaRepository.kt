@@ -107,14 +107,6 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             }
             .distinctUntilChanged()
 
-    override suspend fun removeArenaMatch(arenaId: String) {
-        arenaMatchesReference.child(path = arenaId).runTransaction(
-            strategy = ArenaMatchEntity.serializer().nullable
-        ) {
-            null
-        }
-    }
-
     override suspend fun exitArena(arenaId: String, userId: String) {
         ExitArena(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))

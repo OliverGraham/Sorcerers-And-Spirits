@@ -8,7 +8,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
@@ -50,7 +49,6 @@ class ArenaScreenViewModel(
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
-    private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
     private val updateProfileStatsUseCase: UpdateProfileStatsUseCase,
@@ -208,8 +206,6 @@ class ArenaScreenViewModel(
             exitArenaUseCase(arenaId = arguments.arenaId)
             setCurrentTravelerAvailableUseCase()
             flushSessionStats()
-            // TODO(SS-022): If is last person leaving, then removeArenaMatchUseCase(arenaId =
-            // arguments.arenaId)
             _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }

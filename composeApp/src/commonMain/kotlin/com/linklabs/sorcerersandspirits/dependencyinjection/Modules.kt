@@ -13,7 +13,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
@@ -90,7 +89,6 @@ private fun Module.initializeUseCases() {
     singleOf(::GetUserIdUseCase)
     singleOf(::IsUserSignedInUseCase)
     singleOf(::PerformCombatActionUseCase)
-    singleOf(::RemoveArenaMatchUseCase)
     singleOf(::SetCurrentTravelerAvailableUseCase)
     singleOf(::SendChallengeUseCase)
     singleOf(::StayForAnotherMatchUseCase)

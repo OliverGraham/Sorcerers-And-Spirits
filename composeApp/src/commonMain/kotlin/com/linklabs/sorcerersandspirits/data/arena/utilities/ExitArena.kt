@@ -14,17 +14,15 @@ internal class ExitArena(private val userId: String) {
         }
     }
 
-    private fun ArenaMatchEntity.exitArenaTransaction(): ArenaMatchEntity? =
-        when (this) {
-            is ArenaMatchEntity.WaitingForAllPlayers -> {
-                val updatedPlayers = playerEntitiesMap.toMutableMap()
-                updatedPlayers.remove(key = userId)
-                copy(playerEntitiesMap = updatedPlayers)
-            }
+    private fun ArenaMatchEntity.exitArenaTransaction(): ArenaMatchEntity? {
+        if ((playerEntitiesMap - userId).isEmpty()) return null
+
+        return when (this) {
+            is ArenaMatchEntity.WaitingForAllPlayers ->
+                copy(playerEntitiesMap = playerEntitiesMap - userId)
 
             is ArenaMatchEntity.ChoosingClasses -> {
-                val updatedPlayers = playerEntitiesMap.toMutableMap()
-                updatedPlayers.remove(key = userId)
+                val updatedPlayers = playerEntitiesMap - userId
 
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
@@ -48,8 +46,7 @@ internal class ExitArena(private val userId: String) {
             }
 
             is ArenaMatchEntity.Combat -> {
-                val updatedPlayers = playerEntitiesMap.toMutableMap()
-                updatedPlayers.remove(key = userId)
+                val updatedPlayers = playerEntitiesMap - userId
 
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
@@ -77,15 +74,7 @@ internal class ExitArena(private val userId: String) {
                 }
             }
 
-            is ArenaMatchEntity.Finished -> {
-                val updatedPlayers = playerEntitiesMap.toMutableMap()
-                updatedPlayers.remove(key = userId)
-
-                if (updatedPlayers.isEmpty()) {
-                    null
-                } else {
-                    copy(playerEntitiesMap = updatedPlayers)
-                }
-            }
+            is ArenaMatchEntity.Finished -> copy(playerEntitiesMap = playerEntitiesMap - userId)
         }
+    }
 }

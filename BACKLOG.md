@@ -371,10 +371,24 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   including a new case asserting an untargetable (Bard self) selection is rejected.
 
 ### SS-022 — Remove arena match when last player leaves
-- [ ] Not completed
-- **Source:** `ArenaScreenViewModel.kt:224` (`// TODO: If is last person leaving, then removeArenaMatchUseCase(...)`)
+- [x] Completed
+- **Source:** `ArenaScreenViewModel.kt` (`// TODO(SS-022): If is last person leaving, then removeArenaMatchUseCase(...)`)
 - **Goal:** When the last player leaves, remove the arena match.
-- **Steps:** Detect last-player-leaving; call `removeArenaMatchUseCase(arenaId = ...)`.
+- **Resolution:** Handled atomically inside the `ExitArena` Firebase transaction rather than via a
+  separate ViewModel call. A ViewModel-side `removeArenaMatchUseCase` after `exitArena` would be
+  racy (another client could join in the gap) and would miss the `WaitingForAllPlayers` case
+  entirely. Added a single guard at the top of `exitArenaTransaction`: if removing the leaving user
+  empties `playerEntitiesMap`, return `null` so the same transaction that removes the player also
+  deletes the match — extending the pattern the `Finished` branch already used to every state. This
+  also closes a real orphan-match leak: previously the last player leaving from
+  `WaitingForAllPlayers` left an empty match behind (it only `copy`'d the emptied map), and
+  Choosing/Combat could orphan an empty `Finished` match.
+- **Cleanup:** `removeArenaMatchUseCase` existed only for this TODO and was never called, so removed
+  the dead chain — the ViewModel injection, the `RemoveArenaMatchUseCase` use case, its DI
+  registration, and `ArenaRepository.removeArenaMatch` / its Firebase impl (which unconditionally
+  nulled the match regardless of remaining players).
+- **Verification:** `composeApp` Android debug compiles clean; `ArenaScreenViewModelTest` and
+  `ExitArenaUseCaseTest` pass. Related: SS-045 (left-early UI), SS-071 (stats flush on leave).
 
 ### SS-023 — Resources + split functions in ArenaChoosingClasses
 - [ ] Not completed

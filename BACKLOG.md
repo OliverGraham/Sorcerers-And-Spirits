@@ -993,13 +993,48 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   Captured now to anchor the work; break out concrete tickets as the overhaul begins.
 
 ### SS-069 — Shake-to-roll dice UX
-- [ ] Not completed
+- [x] Completed — gesture mechanics done; final dice visuals deferred to SS-077/SS-078.
+- **Done:** `ShakeDetector` interface (`domain/sensor`) with Android `SensorManager` + iOS
+  `CMMotionManager` actuals, wired via `platformModule()`. `ArenaCombatControl.diceCount` derives 1
+  vs. 2 dice per step (non-roll choices Impersonate/Charm stay plain buttons). `HoldToRollDice`
+  composable rolls three ways: press-and-hold + shake (any duration) then release; double-tap the
+  dice; or press the Roll button — all invoke the existing `onAttack`/`onUseAbility`. The hold
+  gesture consumes its touch events (`awaitEachGesture` + `down.consume()`) so the surrounding combat
+  `LazyColumn` can't steal the press and cancel the hold. A `Haptics` interface (`domain/haptics`,
+  Android `Vibrator` + iOS `UIImpactFeedbackGenerator` actuals, wired via `platformModule()`) buzzes
+  MEDIUM on each detected shake and HEAVY on the roll. Double-tap / Roll button keep turns playable
+  on emulators / sensorless devices; final UX placement is a SS-078 product decision. Covered by
+  `CombatControlDiceCountTest`.
 - **Goal:** Investigate a dice-rolling interaction where the user taps and holds a pair of dice (or a
   single die, depending on what the current step requires), shakes the phone to simulate rolling, and
   on release the existing ViewModel roll handler is invoked.
 - **Steps:** Determine which die count the current combat step expects (1 vs. 2 dice) to drive what's
   held; add accelerometer/shake detection (platform `expect`/`actual` for Android + iOS); wire the
   release gesture to the existing roll entry point; design the press/shake/release visual feedback.
+- **Notes:** Scoped to the *interaction* (gesture detection + roll wiring). The dice's visual
+  representation is split out: how the dice are rendered/animated is SS-077, and where they live on
+  screen + final styling is SS-078. Related: SS-077, SS-078.
+
+### SS-077 — Decide dice rendering & animation tech
+- [ ] Not completed
+- **Goal:** Choose how the dice are drawn and animated for the shake-to-roll interaction (SS-069):
+  Lottie/Compottie files, Compose Canvas-drawn dice, or another approach. This is a tech-selection
+  ticket only — it precedes finalizing the on-screen UI (SS-078).
+- **Considerations:** Need to show 1 or 2 dice depending on the combat step; convey press/shake/
+  release states and a settling-to-face animation; land on the rolled value the ViewModel returns
+  (so the animation must be able to resolve to a specific face). KMP-friendly (Android + iOS).
+  Compottie is already a foundation dependency in this project (combat-animation work) — weigh
+  reusing it vs. Canvas for crisp, value-driven die faces.
+- **Steps:** Prototype the leading option(s); decide; record the choice and rationale here.
+- **Notes:** Blocks SS-078. Related: SS-069, SS-078, SS-068 (broader animation pass).
+
+### SS-078 — Finalize dice UI (placement, size, color)
+- [ ] Not completed
+- **Goal:** Once the rendering tech is chosen (SS-077), finalize the dice presentation: where the
+  dice sit on the ArenaScreen, their size, colors/theming, and resting vs. active layout.
+- **Steps:** Decide on-screen location relative to the combat controls; pick size/scale across form
+  factors; choose colors/theme alignment; define resting state vs. held/shaking state appearance.
+- **Notes:** Depends on SS-077. Related: SS-069, SS-077, SS-068.
 
 ---
 

@@ -41,6 +41,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatContro
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceCount
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val TRANSITION_LABEL = "ArenaCombatTransition"
@@ -201,16 +202,17 @@ private fun ArenaState.Combat.RollDiceSection(
         combatControls.forEach { combatControl ->
             when (combatControl) {
                 is ArenaCombatControl.NormalAttack ->
-                    AttackButton(
+                    AttackControl(
                         combatActionState = combatActionState,
                         targetedOpponentUserId = targetedOpponentUserId,
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
                         requiresTarget = combatControl.requiresTarget,
+                        diceCount = combatControl.diceCount,
                     )
 
                 is ArenaCombatControl.ActivatedAbility ->
-                    AbilityButton(
+                    AbilityControl(
                         label = combatControl.label,
                         abilityActionState = combatControl.action,
                         requiresTarget = combatControl.requiresTarget,
@@ -218,10 +220,11 @@ private fun ArenaState.Combat.RollDiceSection(
                         targetedOpponentUserId = targetedOpponentUserId,
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
+                        diceCount = combatControl.diceCount,
                     )
 
                 is ArenaCombatControl.AbilityRoll ->
-                    AbilityButton(
+                    AbilityControl(
                         label = combatControl.label,
                         abilityActionState = combatControl.action,
                         requiresTarget = combatControl.requiresTarget,
@@ -229,6 +232,7 @@ private fun ArenaState.Combat.RollDiceSection(
                         targetedOpponentUserId = targetedOpponentUserId,
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
+                        diceCount = combatControl.diceCount,
                     )
             }
         }
@@ -236,7 +240,7 @@ private fun ArenaState.Combat.RollDiceSection(
 }
 
 @Composable
-private fun AbilityButton(
+private fun AbilityControl(
     label: String,
     abilityActionState: AbilityActionState,
     requiresTarget: Boolean,
@@ -244,58 +248,78 @@ private fun AbilityButton(
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
     userPlayerId: String,
+    diceCount: Int?,
     modifier: Modifier = Modifier,
 ) {
     val onUseAbility = ArenaActionsProvider.current.onUseAbility
+    val isEnabled = enabled && (!requiresTarget || targetedOpponentUserId.isNotEmpty())
 
-    Button(
-        onClick = {
-            if (requiresTarget) updateIsTargetLocked()
+    val performAbility = {
+        if (requiresTarget) updateIsTargetLocked()
 
-            val useAbilityArguments =
-                UseAbilityArguments(
-                    abilityActionState = abilityActionState,
-                    targetedOpponentUserId = targetedOpponentUserId,
-                    userPlayerId = userPlayerId,
-                )
+        val useAbilityArguments =
+            UseAbilityArguments(
+                abilityActionState = abilityActionState,
+                targetedOpponentUserId = targetedOpponentUserId,
+                userPlayerId = userPlayerId,
+            )
 
-            onUseAbility(useAbilityArguments)
-        },
-        enabled = enabled && (!requiresTarget || targetedOpponentUserId.isNotEmpty()),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Text(text = label)
+        onUseAbility(useAbilityArguments)
+    }
+
+    if (diceCount != null) {
+        HoldToRollDice(
+            label = label,
+            diceCount = diceCount,
+            enabled = isEnabled,
+            onRoll = performAbility,
+            modifier = modifier,
+        )
+    } else {
+        Button(onClick = performAbility, enabled = isEnabled, modifier = modifier.fillMaxWidth()) {
+            Text(text = label)
+        }
     }
 }
 
 @Composable
-private fun AttackButton(
+private fun AttackControl(
     combatActionState: CombatActionState,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
     userPlayerId: String,
     requiresTarget: Boolean,
+    diceCount: Int?,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
+    val isEnabled = !requiresTarget || targetedOpponentUserId.isNotEmpty()
 
-    Button(
-        onClick = {
-            updateIsTargetLocked()
+    val performAttack = {
+        updateIsTargetLocked()
 
-            val attackArguments =
-                AttackArguments(
-                    combatActionState = combatActionState,
-                    targetedOpponentUserId = targetedOpponentUserId,
-                    userPlayerId = userPlayerId,
-                )
+        val attackArguments =
+            AttackArguments(
+                combatActionState = combatActionState,
+                targetedOpponentUserId = targetedOpponentUserId,
+                userPlayerId = userPlayerId,
+            )
 
-            onAttack(attackArguments)
-        },
-        enabled = !requiresTarget || targetedOpponentUserId.isNotEmpty(),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Text(text = "Attack")
+        onAttack(attackArguments)
+    }
+
+    if (diceCount != null) {
+        HoldToRollDice(
+            label = "Attack",
+            diceCount = diceCount,
+            enabled = isEnabled,
+            onRoll = performAttack,
+            modifier = modifier,
+        )
+    } else {
+        Button(onClick = performAttack, enabled = isEnabled, modifier = modifier.fillMaxWidth()) {
+            Text(text = "Attack")
+        }
     }
 }
 

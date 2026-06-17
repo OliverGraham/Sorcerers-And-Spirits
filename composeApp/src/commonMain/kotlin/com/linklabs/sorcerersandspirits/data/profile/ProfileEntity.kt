@@ -14,6 +14,12 @@ data class ProfileEntity(
     val stats: ProfileStatsEntity = ProfileStatsEntity(),
 )
 
+/**
+ * A reservation in the [FireStoreKeys.DISPLAY_NAMES] collection, keyed by the normalized display
+ * name, recording which user currently owns that name so display names stay unique (SS-039).
+ */
+@Serializable data class DisplayNameEntity(val userId: String = "", val displayName: String = "")
+
 @Serializable
 data class ProfileStatsEntity(
     val overall: GameStatsEntity = GameStatsEntity(),

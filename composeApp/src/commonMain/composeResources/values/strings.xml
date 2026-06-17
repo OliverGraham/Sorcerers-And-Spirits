@@ -7,6 +7,7 @@
     <string name="sign_in_button_random">Random</string>
     <string name="sign_in_button_accept">Accept</string>
     <string name="sign_in_offline_message">Couldn\'t reach the realm. Check your connection and try again.</string>
+    <string name="sign_in_name_taken_message">That name is already taken. Choose another.</string>
 
     <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 

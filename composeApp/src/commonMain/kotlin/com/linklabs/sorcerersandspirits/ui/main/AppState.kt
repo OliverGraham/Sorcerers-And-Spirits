@@ -7,4 +7,5 @@ data class AppState(
     val displayName: String,
     val showSignInDialog: Boolean = false,
     val isOffline: Boolean = false,
+    val isNameTaken: Boolean = false,
 )

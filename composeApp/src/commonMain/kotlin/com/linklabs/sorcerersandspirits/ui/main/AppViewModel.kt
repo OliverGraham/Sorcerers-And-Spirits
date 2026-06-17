@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -124,8 +125,27 @@ class AppViewModel(
             }
 
             _uiStateFlow.value = UiState.Loading
-            createProfileUseCase(displayName = newDisplayName)
-            collectScreenState()
+
+            when (createProfileUseCase(displayName = newDisplayName)) {
+                DisplayNameResult.SUCCESS -> collectScreenState()
+
+                DisplayNameResult.NAME_TAKEN ->
+                    _uiStateFlow.value =
+                        UiState.Loaded(
+                            data =
+                                AppState(
+                                    displayName = newDisplayName,
+                                    showSignInDialog = true,
+                                    isNameTaken = true,
+                                )
+                        )
+
+                DisplayNameResult.ERROR ->
+                    _uiStateFlow.value =
+                        UiState.Loaded(
+                            data = AppState(displayName = newDisplayName, showSignInDialog = true)
+                        )
+            }
         }
     }
 

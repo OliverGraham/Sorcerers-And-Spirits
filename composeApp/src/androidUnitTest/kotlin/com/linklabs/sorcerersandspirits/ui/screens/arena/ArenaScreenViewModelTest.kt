@@ -10,7 +10,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
@@ -62,7 +61,6 @@ class ArenaScreenViewModelTest {
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase = mockk()
     private val getUserIdUseCase: GetUserIdUseCase = mockk()
     private val performCombatActionUseCase: PerformCombatActionUseCase = mockk()
-    private val removeArenaMatchUseCase: RemoveArenaMatchUseCase = mockk(relaxed = true)
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase = mockk(relaxed = true)
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase =
         mockk(relaxed = true)
@@ -103,7 +101,6 @@ class ArenaScreenViewModelTest {
             getCharacterClassesUseCase = getCharacterClassesUseCase,
             getUserIdUseCase = getUserIdUseCase,
             performCombatActionUseCase = performCombatActionUseCase,
-            removeArenaMatchUseCase = removeArenaMatchUseCase,
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
             setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
             updateProfileStatsUseCase = updateProfileStatsUseCase,

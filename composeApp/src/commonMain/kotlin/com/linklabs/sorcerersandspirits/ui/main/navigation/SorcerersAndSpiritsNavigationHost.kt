@@ -42,6 +42,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
                 SignInNameDialog(
                     displayName = data.displayName,
                     isOffline = data.isOffline,
+                    isNameTaken = data.isNameTaken,
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
                     // A profile is required before the app is usable, so the sign-in dialog is

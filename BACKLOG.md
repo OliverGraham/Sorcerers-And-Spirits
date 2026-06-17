@@ -509,9 +509,20 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Goal:** Decide whether this serializer is required; keep with justification or delete.
 
 ### SS-039 — Unique user-names collection
-- [ ] Not completed
+- [x] Completed
 - **Source:** `FirebaseProfileRepository.kt:12` (`// TODO: implement user names collection to help with keeping a unique name...`)
 - **Goal:** Implement a names collection to enforce unique display names. Related: SS-035.
+- **Resolution:** Added a `DisplayNames` Firestore collection (`FireStoreKeys.DISPLAY_NAMES`) whose
+  documents are keyed by the normalized display name (trim + lowercase, `/` → `_`) and hold the
+  owning `userId` (`DisplayNameEntity`). `createProfile` and `updateDisplayName` now run inside
+  `runTransaction`: they read the target name doc first, return `DisplayNameResult.NAME_TAKEN` if it
+  is owned by another user, otherwise reserve the name and write the profile in the same atomic
+  transaction. `updateDisplayName` also releases the user's previous reservation. The repository
+  methods and their use cases (`CreateProfileUseCase`, `UpdateProfileDisplayNameUseCase`) return the
+  new `DisplayNameResult` enum (`SUCCESS`/`NAME_TAKEN`/`ERROR`); `AppViewModel.createProfile` surfaces
+  `NAME_TAKEN` by keeping the sign-in dialog up with a "name is already taken" notice (`AppState.nameTaken`).
+- **Notes:** Reservation cleanup on profile deletion stays with SS-062; consuming the update result
+  in the ProfileScreen edit flow stays with SS-064.
 
 ### SS-040 — Paginate / separate node for arena messages
 - [ ] Not completed

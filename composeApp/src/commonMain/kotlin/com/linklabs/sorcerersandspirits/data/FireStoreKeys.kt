@@ -7,6 +7,7 @@ object FireStoreKeys {
     const val TAVERN_TRAVELERS_PATH = "TavernTravelers"
 
     const val PROFILES = "Profiles"
+    const val DISPLAY_NAMES = "DisplayNames"
     const val DISPLAY_NAME = "displayName"
     const val STATS = "stats"
     const val OVERALL = "overall"

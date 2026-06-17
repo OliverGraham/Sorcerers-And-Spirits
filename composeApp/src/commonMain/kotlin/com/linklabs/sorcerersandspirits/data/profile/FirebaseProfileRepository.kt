@@ -1,24 +1,37 @@
 package com.linklabs.sorcerersandspirits.data.profile
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
+import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
+import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FieldPath
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
+import dev.gitlive.firebase.firestore.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository {
-
-    // TODO(SS-039): implement user names collection to help with keeping a unique name for everyone
+class FirebaseProfileRepository(private val database: FirebaseFirestore) : ProfileRepository {
 
     private val profilesCollection = database.collection(collectionPath = FireStoreKeys.PROFILES)
+    private val displayNamesCollection =
+        database.collection(collectionPath = FireStoreKeys.DISPLAY_NAMES)
 
-    override suspend fun createProfile(profile: Profile) {
-        val profileEntity = profile.toEntity()
-        profilesCollection.document(documentPath = profileEntity.userId).set(data = profileEntity)
+    override suspend fun createProfile(profile: Profile): DisplayNameResult {
+        val profileRef = profilesCollection.document(documentPath = profile.userId)
+        val nameRef = displayNameReference(displayName = profile.displayName)
+
+        return database.runTransaction {
+            if (isReservedByOther(nameRef = nameRef, userId = profile.userId)) {
+                return@runTransaction DisplayNameResult.NAME_TAKEN
+            }
+
+            set(documentRef = profileRef, data = profile.toEntity())
+            reserve(nameRef = nameRef, userId = profile.userId, displayName = profile.displayName)
+            DisplayNameResult.SUCCESS
+        }
     }
 
     override suspend fun deleteProfile(userId: String) {
@@ -36,9 +49,34 @@ class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository
             snapshot.data<ProfileEntity?>()?.toDomain()
         }
 
-    override suspend fun updateDisplayName(userId: String, newDisplayName: String) {
-        profilesCollection.document(documentPath = userId).updateFields {
-            FireStoreKeys.DISPLAY_NAME to newDisplayName
+    override suspend fun updateDisplayName(
+        userId: String,
+        newDisplayName: String,
+    ): DisplayNameResult {
+        val profileRef = profilesCollection.document(documentPath = userId)
+        val newNameRef = displayNameReference(displayName = newDisplayName)
+
+        return database.runTransaction {
+            if (isReservedByOther(nameRef = newNameRef, userId = userId)) {
+                return@runTransaction DisplayNameResult.NAME_TAKEN
+            }
+
+            // Firestore requires all reads before any writes, so read the old name here.
+            val currentDisplayName =
+                get(documentRef = profileRef).data<ProfileEntity?>()?.displayName
+
+            val nameToRelease =
+                currentDisplayName?.takeIf {
+                    it.isNotBlank() && it.normalize() != newDisplayName.normalize()
+                }
+
+            if (nameToRelease != null) {
+                delete(documentRef = displayNameReference(displayName = nameToRelease))
+            }
+
+            reserve(nameRef = newNameRef, userId = userId, displayName = newDisplayName)
+            updateFields(documentRef = profileRef) { FireStoreKeys.DISPLAY_NAME to newDisplayName }
+            DisplayNameResult.SUCCESS
         }
     }
 
@@ -52,4 +90,25 @@ class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository
             }
         }
     }
+
+    private fun displayNameReference(displayName: String): DocumentReference =
+        displayNamesCollection.document(documentPath = displayName.normalize())
+}
+
+/**
+ * The key a display name is reserved under. Names are unique case-insensitively, with surrounding
+ * whitespace and path separators (which Firestore would treat as subcollections) stripped.
+ */
+private fun String.normalize(): String = trim().lowercase().replace(oldChar = '/', newChar = '_')
+
+private suspend fun Transaction.isReservedByOther(
+    nameRef: DocumentReference,
+    userId: String,
+): Boolean {
+    val snapshot = get(documentRef = nameRef)
+    return snapshot.exists && snapshot.data<DisplayNameEntity>().userId != userId
+}
+
+private fun Transaction.reserve(nameRef: DocumentReference, userId: String, displayName: String) {
+    set(documentRef = nameRef, data = DisplayNameEntity(userId = userId, displayName = displayName))
 }

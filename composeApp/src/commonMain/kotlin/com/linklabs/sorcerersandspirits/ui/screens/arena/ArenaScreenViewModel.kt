@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
@@ -38,8 +39,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
-
-// TODO(SS-017): This is all fucked
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -85,8 +84,11 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         screenStateFlowJob =
             viewModelScope.launch {
-                // TODO(SS-018): Figure out better way for userId
-                val userId = getUserIdUseCase().orEmpty()
+                val userId = getUserIdUseCase()
+                if (userId == null) {
+                    _uiStateFlow.value = UiState.Error
+                    return@launch
+                }
 
                 coordinateArenaMatchUseCase(
                         arenaId = arguments.arenaId,
@@ -154,19 +156,10 @@ class ArenaScreenViewModel(
     }
 
     private suspend fun AttackArguments.onAttack() {
-        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
+        val arenaState = currentCombatState() ?: return
         val normalAttack = toDomain() ?: return
 
-        val combatActionArguments =
-            CombatActionArguments(
-                arenaId = arguments.arenaId,
-                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
-                roundNumber = arenaState.roundNumber,
-                doublesBonus = arenaState.doublesBonus,
-            )
-
-        performCombatActionUseCase(arguments = combatActionArguments, currentAction = normalAttack)
+        arenaState.performCombatAction(currentAction = normalAttack)
     }
 
     fun onUseAbility(useAbilityArguments: UseAbilityArguments) {
@@ -174,18 +167,23 @@ class ArenaScreenViewModel(
     }
 
     private suspend fun UseAbilityArguments.onUseAbility() {
-        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
+        val arenaState = currentCombatState() ?: return
+        val currentAction = toDomain(combatActionState = arenaState.combatActionState)
 
+        arenaState.performCombatAction(currentAction = currentAction)
+    }
+
+    private fun currentCombatState(): ArenaState.Combat? =
+        _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.Combat
+
+    private suspend fun ArenaState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
-                playerMap = arenaState.playerMap.mapValues { it.value.toDomain() },
-                roundNumber = arenaState.roundNumber,
-                doublesBonus = arenaState.doublesBonus,
+                playerMap = playerMap.mapValues { it.value.toDomain() },
+                roundNumber = roundNumber,
+                doublesBonus = doublesBonus,
             )
-
-        val currentAction = toDomain(combatActionState = arenaState.combatActionState)
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
     }

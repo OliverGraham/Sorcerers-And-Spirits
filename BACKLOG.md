@@ -744,22 +744,25 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   profile, independent of which specific stats are recorded. This is the foundation the rest of the
   stats work builds on (forfeit/finished updates SS-071, the stats schema SS-072, the Leaderboard
   SS-065), so keep it stat-agnostic — we just need a way to save stats before deciding what they are.
-- **Resolution:** Added a stat-agnostic `stats` map (`Map<String, Long>`) to the `Profile` domain
-  model and `ProfileEntity` (serialization default `emptyMap()`, so in-flight profiles still
-  deserialize), persisted under a `stats` map field on the profile document (`FireStoreKeys.STATS`).
-  - **Write path:** `ProfileRepository.incrementStats(userId, increments: Map<String, Int>)`,
-    implemented in `FirebaseProfileRepository` via `updateFields { FieldPath(STATS, key) to
-    FieldValue.increment(amount) }`. Using per-key `FieldValue.increment` (a) updates only the
-    touched counters so concurrent match writes don't clobber each other, and (b) auto-creates the
-    nested `stats.<key>` field from 0, so no read-modify-write or pre-seeding is needed. Empty-map
-    calls short-circuit.
-  - **Domain use case:** `UpdateProfileStatsUseCase(increments: Map<String, Int>)` resolves the
-    signed-in user via `AuthenticationRepository.getUserId()` (no-ops if absent or increments empty)
-    and forwards to the repository. Registered in DI (`Modules.kt`).
-  - **Stat-agnostic by design:** keys stay open `String`s and increments are the only write verb, so
-    SS-072 can introduce a typed stat-key enum and SS-071 can call this on match outcomes without any
-    change to this infrastructure. Read totals are `Long` (Firestore 64-bit integers); per-write
-    deltas are `Int` (what gitlive's `FieldValue.increment` accepts).
+- **Resolution:** Added a typed `ProfileStats` data class (`wins`/`losses` `Long`s for now, growing
+  to more fields and nested data classes under SS-072) to the `Profile` domain model and a mirroring
+  `ProfileStatsEntity` on `ProfileEntity` (serialization defaults `ProfileStatsEntity()`, so in-flight
+  profiles still deserialize), persisted under a nested `stats` map field on the profile document
+  (`FireStoreKeys.STATS`).
+  - **Write path:** `ProfileRepository.incrementStats(userId, delta: ProfileStats)`, implemented in
+    `FirebaseProfileRepository`. The data layer maps the delta to per-field increments
+    (`ProfileStats.toStatIncrements()`, skipping zero fields) and writes them via
+    `updateFields { FieldPath(STATS, key) to FieldValue.increment(amount) }`. Using per-field
+    `FieldValue.increment` (a) updates only the touched counters so concurrent match writes don't
+    clobber each other, and (b) auto-creates the nested `stats.<key>` field from 0, so no
+    read-modify-write or pre-seeding is needed. An all-zero delta short-circuits.
+  - **Domain use case:** `UpdateProfileStatsUseCase(delta: ProfileStats)` resolves the signed-in user
+    via `AuthenticationRepository.getUserId()` (no-ops if absent or `delta.isEmpty`) and forwards to
+    the repository. Registered in DI (`Modules.kt`).
+  - **Extensible by design:** `ProfileStats` doubles as the stored totals and the per-write delta, so
+    SS-072 can add fields (and nested data classes) and SS-071 can call this on match outcomes with
+    only a new line in `toStatIncrements()`/`isEmpty`. Read totals are `Long` (Firestore 64-bit
+    integers); per-write deltas are narrowed to `Int` (what gitlive's `FieldValue.increment` accepts).
 - **Verification:** `composeApp` Android debug compiles clean; new `UpdateProfileStatsUseCaseTest`
   (forwards increments / no signed-in user / empty increments) passes, and the Profile/Tavern/
   AppViewModel suites remain green.

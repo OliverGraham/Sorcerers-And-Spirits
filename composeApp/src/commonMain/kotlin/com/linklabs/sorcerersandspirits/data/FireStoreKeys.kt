@@ -9,4 +9,6 @@ object FireStoreKeys {
     const val PROFILES = "Profiles"
     const val DISPLAY_NAME = "displayName"
     const val STATS = "stats"
+    const val WINS = "wins"
+    const val LOSSES = "losses"
 }

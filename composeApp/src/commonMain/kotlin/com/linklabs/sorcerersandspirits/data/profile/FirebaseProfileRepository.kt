@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.data.profile
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
+import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import dev.gitlive.firebase.firestore.FieldPath
 import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
@@ -41,7 +42,8 @@ class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository
         }
     }
 
-    override suspend fun incrementStats(userId: String, increments: Map<String, Int>) {
+    override suspend fun incrementStats(userId: String, delta: ProfileStats) {
+        val increments = delta.toStatIncrements()
         if (increments.isEmpty()) return
 
         profilesCollection.document(documentPath = userId).updateFields {

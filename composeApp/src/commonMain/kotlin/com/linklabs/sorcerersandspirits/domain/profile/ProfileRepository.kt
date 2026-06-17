@@ -13,5 +13,5 @@ interface ProfileRepository {
 
     suspend fun updateDisplayName(userId: String, newDisplayName: String)
 
-    suspend fun incrementStats(userId: String, increments: Map<String, Int>)
+    suspend fun incrementStats(userId: String, delta: ProfileStats)
 }

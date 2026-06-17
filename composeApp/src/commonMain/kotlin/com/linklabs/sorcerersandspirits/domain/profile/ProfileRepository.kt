@@ -12,4 +12,6 @@ interface ProfileRepository {
     fun getProfileFlow(userId: String): Flow<Profile?>
 
     suspend fun updateDisplayName(userId: String, newDisplayName: String)
+
+    suspend fun incrementStats(userId: String, increments: Map<String, Int>)
 }

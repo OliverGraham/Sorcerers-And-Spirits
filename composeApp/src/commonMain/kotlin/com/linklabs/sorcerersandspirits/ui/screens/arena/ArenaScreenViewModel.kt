@@ -192,7 +192,7 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
     }
 
-    // TODO(SS-021) Arena: Need a leave that updates stats with a forfeit, and one that triggers
+    // TODO(SS-071) Arena: Need a leave that updates stats with a forfeit, and one that triggers
     // when game
     //  is finished. Update stats only when user leaves (could be after multiple matches)
 

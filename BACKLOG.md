@@ -244,7 +244,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   no code change to the interface.
 
 ### SS-014 — Handle match/timer expiration per state
-- [ ] Not completed
+- [x] Completed
 - **Sources:**
   - `ArenaScreen.kt:78` (`/* TODO */` in `ArenaEvent.MatchTimedOut` handling)
   - `ArenaScreenViewModel.kt:292` (timer expiration in `ChoosingClasses`)
@@ -252,8 +252,25 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   - `ArenaScreenViewModel.kt:300` (timer expiration in `Finished`)
 - **Goal:** Define and implement what happens when the timer expires in each `ArenaState`, and how
   the `MatchTimedOut` event is surfaced to the user.
-- **Steps:** Decide per-state behavior (auto-pick class, skip/auto-resolve turn, finish handling);
-  implement; surface `MatchTimedOut` in the UI.
+- **Decision (per state):**
+  - **ChoosingClasses:** auto-pick for the user. The active player's client auto-selects the class
+    they had highlighted (`selectedClass`) if any, otherwise a random still-available class, routed
+    through the existing `onChooseCharacterClass` flow. Guarded on `isItThisUsersTurn` so only the
+    owing client acts.
+  - **Combat:** auto-resolve the owed action (`autoResolveCombatForUser`), guarded on
+    `combatControls.isEmpty()` so only the client that owes a roll acts. `Idle` (turn start) →
+    auto-attack a random *living* opponent; `NormalAttack`/`AbilityRoll` (mid-action) → auto-roll
+    the owed die via the existing `onAttack`/`onUseAbility` paths (Persuade/Charm gets a random
+    target from the ability's own `targetableUserIds`). No domain change.
+  - **WaitingForAllPlayers:** the match never filled, so `leaveTimedOutMatch()` exits the arena,
+    frees the traveler, and emits `ArenaEvent.MatchTimedOut`, which `ArenaScreen` now handles by
+    navigating back to the Tavern.
+  - **Finished:** no auto-action — the timer is stopped in `Finished` and the user stays/leaves
+    through the match-finished decision dialog.
+- **Also (timer UX):** timer durations lengthened (Waiting/Choosing 30s, Combat 45s) and the
+  countdown is hidden until 15s remaining (`isTimerVisible`) and turns red + pulses from 10s
+  (`isTimerUrgent`). Timer-start strategy resolved under SS-032.
+- **Verification:** `composeApp` Android debug compiles clean; all `*Arena*` unit tests pass.
 
 ### SS-015 — Delete unused ArenaActions
 - [x] Completed
@@ -369,9 +386,19 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Goal:** Refactor the flagged state-mapping code. Likely overlaps SS-017.
 
 ### SS-032 — Decide timer-start strategy
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaScreenState.kt:204` (`// TODO: Hmm, how should timers be started? Based on NextCombatAction?`)
 - **Goal:** Decide and document how timers should be started (e.g. based on `NextCombatAction`).
+- **Decision:** The timer belongs to the action a player currently owes, so it (re)starts only when
+  that owed action changes and otherwise keeps running across unrelated state updates (e.g. an
+  incoming message). In `determineTimerAction`:
+  - **Combat:** start when entering combat or when `combatActionState` changes (derived from
+    `NextCombatAction` — a new turn or roll); otherwise `TimerAction.None`. This replaces the old
+    behavior that restarted the combat timer on every emission.
+  - **ChoosingClasses:** start when entering the phase or when `activePlayerUserId` changes, so each
+    player gets their own fresh clock for their turn (previously a single timer spanned the whole
+    phase).
+- **Verification:** `composeApp` Android debug compiles clean; all `*Arena*` unit tests pass.
 
 ---
 

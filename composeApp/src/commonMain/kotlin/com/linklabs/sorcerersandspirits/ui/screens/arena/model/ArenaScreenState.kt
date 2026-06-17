@@ -9,6 +9,12 @@ import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
+private const val TIMER_VISIBLE_THRESHOLD_SECONDS = 15
+private const val TIMER_URGENT_THRESHOLD_SECONDS = 10
+private const val WAITING_TIMER_DURATION_SECONDS = 30
+private const val CHOOSING_CLASSES_TIMER_DURATION_SECONDS = 30
+private const val COMBAT_TIMER_DURATION_SECONDS = 45
+
 @Immutable
 data class ArenaScreenState(
     val messages: List<ArenaMessageState>,
@@ -22,6 +28,10 @@ data class ArenaScreenState(
     val characterClasses: List<CharacterClassState> =
         CharacterClass.getAllClasses().map { it.toState() },
 ) {
+    val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
+
+    val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
+
     val latestMessage: ArenaMessageState? =
         messages.getOrNull(
             index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
@@ -212,22 +222,33 @@ private fun determineTimerAction(previous: ArenaState?, next: ArenaState): Timer
     when (next) {
         is ArenaState.WaitingForAllPlayers ->
             if (previous == null) {
-                TimerAction.Start(timerDuration = 20)
+                TimerAction.Start(timerDuration = WAITING_TIMER_DURATION_SECONDS)
             } else {
                 TimerAction.None
             }
 
         is ArenaState.ChoosingClasses ->
-            if (previous !is ArenaState.ChoosingClasses) {
-                TimerAction.Start(timerDuration = 15)
+            if (
+                previous !is ArenaState.ChoosingClasses ||
+                    previous.activePlayerUserId != next.activePlayerUserId
+            ) {
+                TimerAction.Start(timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS)
             } else {
                 TimerAction.None
             }
 
-        is ArenaState.Combat -> {
-            // TODO(SS-032): Hmm, how should timers be started? Based on NextCombatAction?
-            TimerAction.Start(timerDuration = 20)
-        }
+        // The combat clock belongs to the action a player currently owes, so it (re)starts only
+        // when that action changes (a new turn or roll) and keeps running across unrelated updates
+        // such as incoming messages.
+        is ArenaState.Combat ->
+            if (
+                previous !is ArenaState.Combat ||
+                    previous.combatActionState != next.combatActionState
+            ) {
+                TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS)
+            } else {
+                TimerAction.None
+            }
 
         is ArenaState.Finished -> TimerAction.Stop
     }

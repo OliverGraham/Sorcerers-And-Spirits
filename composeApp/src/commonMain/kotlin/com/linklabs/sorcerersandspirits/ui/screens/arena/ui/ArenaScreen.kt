@@ -74,10 +74,7 @@ private fun Flow<ArenaEvent>.collectEvents(onBack: () -> Unit) {
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
-                ArenaEvent.MatchTimedOut -> {
-                    /* TODO(SS-014) */
-                }
-
+                ArenaEvent.MatchTimedOut -> onBack()
                 ArenaEvent.NavigateBack -> onBack()
             }
         }

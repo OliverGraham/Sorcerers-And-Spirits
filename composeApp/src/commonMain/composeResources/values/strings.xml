@@ -23,6 +23,10 @@
     <string name="challenge_dialog_button_decline">Decline</string>
     <string name="challenge_dialog_button_accept">Accept Challenge</string>
 
+    <string name="arena_choosing_classes_title">Choose Your Class</string>
+    <string name="arena_choosing_classes_waiting">%1$s is choosing their class…</string>
+    <string name="arena_choosing_classes_confirm">Confirm Selection</string>
+
     <string name="arena_message_round">ROUND %1$s</string>
     <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>

@@ -391,9 +391,19 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   `ExitArenaUseCaseTest` pass. Related: SS-045 (left-early UI), SS-071 (stats flush on leave).
 
 ### SS-023 — Resources + split functions in ArenaChoosingClasses
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaChoosingClasses.kt:37` (`// TODO Arena: resources, put back into separate functions`)
 - **Goal:** Extract string resources and split the composable back into separate functions.
+- **Resolution:** Replaced the three hardcoded UI strings with string resources —
+  `arena_choosing_classes_title` ("Choose Your Class"),
+  `arena_choosing_classes_waiting` ("%1$s is choosing their class…") and
+  `arena_choosing_classes_confirm` ("Confirm Selection") — pulled via `stringResource(...)`. Split the
+  one monolithic `ArenaChoosingClasses` body into focused composables: `ChoosingClassesTitle`
+  (turn-aware heading), `ChoosingClassesCards` (the class pager) and `ConfirmSelectionButton`, leaving
+  the top-level composable as a readable three-call `Column`. The `Modifier.weight(1f)` is applied at
+  the call site so it stays in `ColumnScope`; the cards/button stay `ArenaState.ChoosingClasses`
+  extensions so they read the in-flight selection state directly. Removed the SS-023 TODO.
+- **Verification:** `composeApp` Android debug compiles clean.
 
 ### SS-024 — Possibly add finished-state content
 - [ ] Not completed

@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 
 @Immutable
 sealed interface CombatActionState {
@@ -129,6 +130,45 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
                 originalTurnUserId = combatActionState.originalTurnUserId,
             )
     }
+
+/**
+ * Maps the user's ability input to its domain counterpart. The combatant ids come from the
+ * in-flight [combatActionState] when responding to an ability roll already in progress, or from the
+ * user and their selected target when activating an ability on their own turn.
+ */
+internal fun UseAbilityArguments.toDomain(
+    combatActionState: CombatActionState
+): CurrentCombatAction.AbilityRoll {
+    // TODO(SS-020): This Charm logic is done oddly or incorrectly
+    val purpose =
+        if (
+                abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
+                    targetedOpponentUserId.isNotEmpty()
+            ) {
+                abilityActionState.copy(selectedCharmTargetUserId = targetedOpponentUserId)
+            } else {
+                abilityActionState
+            }
+            .toDomain()
+
+    return when (combatActionState) {
+        is CombatActionState.AbilityRoll ->
+            CurrentCombatAction.AbilityRoll(
+                purpose = purpose,
+                attackerUserId = combatActionState.attackerUserId,
+                defenderUserId = combatActionState.defenderUserId,
+                originalTurnUserId = combatActionState.originalTurnUserId,
+            )
+
+        else ->
+            CurrentCombatAction.AbilityRoll(
+                purpose = purpose,
+                attackerUserId = userPlayerId,
+                defenderUserId = targetedOpponentUserId.ifEmpty { userPlayerId },
+                originalTurnUserId = userPlayerId,
+            )
+    }
+}
 
 internal fun AbilityActionState.toDomain(): AbilityAction =
     when (this) {

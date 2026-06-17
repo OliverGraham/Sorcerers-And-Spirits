@@ -283,9 +283,23 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   references).
 
 ### SS-016 — Rename/refactor ArenaActions
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaActions.kt:38` (`// TODO: Rename/refactor`)
 - **Goal:** Rename/refactor the flagged ArenaActions construct for clarity.
+- **Decision:** The field names (`targetedOpponentUserId`/`userPlayerId`) are already the
+  project-wide convention (`ArenaScreenState`, `ArenaCombat`, etc.), so renaming wasn't the win. The
+  real defect was an **asymmetry**: `AttackArguments` had a clean `AttackArguments.toDomain()` mapper
+  in `CombatActionState.kt`, while `UseAbilityArguments`'s equivalent input→domain mapping was
+  sprawled inline in `ArenaScreenViewModel.onUseAbility()` (Charm resolution + a combatant-id `when`),
+  making the two combat-input handlers look unrelated.
+- **Resolution:** Extracted a parallel `UseAbilityArguments.toDomain(combatActionState)` extension
+  into `CombatActionState.kt` (next to `AttackArguments.toDomain()`), carrying the in-flight
+  `CombatActionState` as a parameter since an ability's combatant ids come from the ongoing action
+  (not from the argument itself, unlike an attack). `onUseAbility()` now mirrors `onAttack()` —
+  build `CombatActionArguments`, map via `toDomain(...)`, dispatch. Removed the now-unused
+  `CurrentCombatAction` import from the ViewModel. The Charm-resolution block moved verbatim and keeps
+  its own `// TODO(SS-020)` marker (behavior unchanged; SS-020 still owns that fix).
+- **Verification:** `composeApp` Android debug compiles clean; `ArenaScreenViewModelTest` is green.
 
 ### SS-017 — Refactor ArenaScreenViewModel
 - [ ] Not completed

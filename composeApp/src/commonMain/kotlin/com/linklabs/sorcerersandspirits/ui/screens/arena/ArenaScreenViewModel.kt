@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
@@ -178,17 +177,6 @@ class ArenaScreenViewModel(
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
         val arenaState = loadedState.arenaState as? ArenaState.Combat ?: return
 
-        // TODO(SS-020): This Charm logic is done oddly or incorrectly
-        val resolvedAbilityActionState =
-            if (
-                abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
-                    targetedOpponentUserId.isNotEmpty()
-            ) {
-                abilityActionState.copy(selectedCharmTargetUserId = targetedOpponentUserId)
-            } else {
-                abilityActionState
-            }
-
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
@@ -197,28 +185,7 @@ class ArenaScreenViewModel(
                 doublesBonus = arenaState.doublesBonus,
             )
 
-        val currentAction =
-            when (val actionState = arenaState.combatActionState) {
-                // Responding to an ability roll in progress: the combatant ids come from the
-                // ongoing action
-                is CombatActionState.AbilityRoll ->
-                    CurrentCombatAction.AbilityRoll(
-                        purpose = resolvedAbilityActionState.toDomain(),
-                        attackerUserId = actionState.attackerUserId,
-                        defenderUserId = actionState.defenderUserId,
-                        originalTurnUserId = actionState.originalTurnUserId,
-                    )
-
-                // Activated ability used on the user's own turn against their selected target
-                // (or themselves when no target is required)
-                else ->
-                    CurrentCombatAction.AbilityRoll(
-                        purpose = resolvedAbilityActionState.toDomain(),
-                        attackerUserId = userPlayerId,
-                        defenderUserId = targetedOpponentUserId.ifEmpty { userPlayerId },
-                        originalTurnUserId = userPlayerId,
-                    )
-            }
+        val currentAction = toDomain(combatActionState = arenaState.combatActionState)
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
     }

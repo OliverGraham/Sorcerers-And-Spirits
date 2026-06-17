@@ -20,6 +20,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
@@ -65,6 +66,7 @@ class ArenaScreenViewModelTest {
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase = mockk(relaxed = true)
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase =
         mockk(relaxed = true)
+    private val updateProfileStatsUseCase: UpdateProfileStatsUseCase = mockk(relaxed = true)
 
     private val combatActionArgumentsSlot = slot<CombatActionArguments>()
     private val currentCombatActionSlot = slot<CurrentCombatAction>()
@@ -104,6 +106,7 @@ class ArenaScreenViewModelTest {
             removeArenaMatchUseCase = removeArenaMatchUseCase,
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
             setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
+            updateProfileStatsUseCase = updateProfileStatsUseCase,
         )
 
     /**

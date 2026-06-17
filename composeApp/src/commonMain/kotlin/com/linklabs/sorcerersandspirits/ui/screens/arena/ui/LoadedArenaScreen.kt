@@ -20,6 +20,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
@@ -54,6 +55,7 @@ internal fun LoadedArenaScreen(
             arenaState = screenState.arenaState,
             characterClasses = screenState.characterClasses,
             gauntletProgress = screenState.gauntletProgress,
+            latestMessage = screenState.latestMessage,
             paddingValues = paddingValues,
         )
     }
@@ -76,6 +78,7 @@ private fun ScreenContent(
     arenaState: ArenaState,
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
+    latestMessage: ArenaMessageState?,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -87,6 +90,7 @@ private fun ScreenContent(
             transitionState = transition,
             characterClasses = characterClasses,
             gauntletProgress = gauntletProgress,
+            latestMessage = latestMessage,
         )
     }
 }
@@ -97,6 +101,7 @@ private fun ArenaStateContent(
     transitionState: Transition<ArenaState>,
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
+    latestMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
 ) {
     transitionState.Crossfade(
@@ -108,7 +113,7 @@ private fun ArenaStateContent(
                 arenaState.ArenaChoosingClasses(characterClasses = characterClasses)
             }
 
-            is ArenaState.Combat -> arenaState.ArenaCombat()
+            is ArenaState.Combat -> arenaState.ArenaCombat(latestMessage = latestMessage)
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

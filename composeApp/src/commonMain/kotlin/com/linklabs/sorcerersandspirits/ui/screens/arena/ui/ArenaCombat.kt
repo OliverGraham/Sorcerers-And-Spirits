@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,8 +37,10 @@ import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.animation.CombatAnimationOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -49,19 +52,28 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
-    SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = activeUserIds, label = TRANSITION_LABEL) { _ ->
-            SharedTransitionProvider(
-                sharedTransitionScope = this@SharedTransitionLayout,
-                animatedVisibilityScope = this@AnimatedContent,
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    CombatContent(modifier = Modifier.weight(1f))
-                    UserStatsRow(userPlayer = userPlayer)
+internal fun ArenaState.Combat.ArenaCombat(
+    latestMessage: ArenaMessageState? = null,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier.fillMaxSize()) {
+        SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
+            AnimatedContent(targetState = activeUserIds, label = TRANSITION_LABEL) { _ ->
+                SharedTransitionProvider(
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@AnimatedContent,
+                ) {
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        CombatContent(modifier = Modifier.weight(1f))
+                        UserStatsRow(userPlayer = userPlayer)
+                    }
                 }
             }
         }
+
+        // Full-screen effect for whatever just happened. Draws nothing for purely textual
+        // events or until the matching Lottie asset exists, so it is safe to always compose.
+        CombatAnimationOverlay(latestMessage = latestMessage, modifier = Modifier.fillMaxSize())
     }
 }
 

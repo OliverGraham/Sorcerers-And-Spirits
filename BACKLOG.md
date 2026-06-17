@@ -302,15 +302,35 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Verification:** `composeApp` Android debug compiles clean; `ArenaScreenViewModelTest` is green.
 
 ### SS-017 — Refactor ArenaScreenViewModel
-- [ ] Not completed
-- **Source:** `ArenaScreenViewModel.kt:40` (`// TODO: This is all fucked`)
+- [x] Completed
+- **Source:** `ArenaScreenViewModel.kt:42` (`// TODO(SS-017): This is all fucked`)
 - **Goal:** Address the broad "this is all fucked" flag — clean up the ViewModel section it marks.
-- **Steps:** Read the surrounding block; identify the specific problem; refactor with tests.
+- **Resolution:** The blanket marker predated the targeted cleanups already done across SS-015
+  (delete dead actions), SS-016 (combat-input mapper symmetry), SS-019 (doublesBonus), and SS-032
+  (timer-start strategy), which left the ViewModel mostly tidy. The one real remaining smell was the
+  duplicated combat-dispatch boilerplate: `onAttack` and `onUseAbility` each re-fetched the loaded
+  state, re-cast `arenaState` to `ArenaState.Combat`, and rebuilt an identical `CombatActionArguments`
+  before dispatching. Extracted that shared path into two private helpers — `currentCombatState()`
+  (the loaded → `Combat` cast) and an `ArenaState.Combat.performCombatAction(currentAction:
+  CurrentCombatAction)` extension that builds the args and calls `performCombatActionUseCase`. Both
+  handlers now read as a two-line "resolve the domain action, dispatch it" mirror of each other,
+  matching the symmetry SS-016 established for the input→domain mappers. Removed the stale top-of-file
+  TODO. The broader state-mapping refactor remains owned by SS-031.
+- **Verification:** `composeApp` Android debug compiles clean; all `*Arena*` unit tests pass.
 
 ### SS-018 — Better userId resolution
-- [ ] Not completed
-- **Source:** `ArenaScreenViewModel.kt:73` (`// TODO: Figure out better way for userId`)
+- [x] Completed
+- **Source:** `ArenaScreenViewModel.kt:87` (`// TODO(SS-018): Figure out better way for userId`)
 - **Goal:** Establish a cleaner way to obtain the current user's id.
+- **Resolution:** The smell was `getUserIdUseCase().orEmpty()` — a null id (no signed-in user)
+  silently became `""`, which then flowed through `updateScreenState`/`toUpdatedState` as the
+  current-user id. An empty id never matches any player, so the whole Arena would misbehave silently
+  (no combat controls, wrong "is it this user's turn", etc.) instead of failing. Replaced the
+  `.orEmpty()` swallow with an explicit null check that emits `UiState.Error` and bails out of the
+  load. By the time the Arena loads the user is always signed in (anonymous auth at startup), so a
+  null id is a genuine error — and `UiState.Error` is already user-retryable via the existing
+  `retry()`/`ErrorContent` path (SS-007).
+- **Verification:** `composeApp` Android debug compiles clean; all `*Arena*` unit tests pass.
 
 ### SS-019 — Track doublesBonus in ArenaState.Combat
 - [x] Completed

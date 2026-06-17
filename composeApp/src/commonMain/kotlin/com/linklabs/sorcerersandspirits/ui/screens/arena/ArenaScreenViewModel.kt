@@ -14,6 +14,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -52,7 +53,10 @@ class ArenaScreenViewModel(
     private val removeArenaMatchUseCase: RemoveArenaMatchUseCase,
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
+    private val updateProfileStatsUseCase: UpdateProfileStatsUseCase,
 ) : ViewModel() {
+
+    private val sessionStats = ArenaSessionStats()
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
     val eventChannelFlow = _eventChannelFlow.receiveAsFlow()
@@ -131,6 +135,8 @@ class ArenaScreenViewModel(
                     arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
             )
 
+            sessionStats.onClassSelected(classType = selectedArenaPlayer.characterClass.type)
+
             _uiStateFlow.updateLoaded { screenState ->
                 val nextArenaState =
                     if (screenState.arenaState is ArenaState.ChoosingClasses) {
@@ -192,21 +198,25 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = true) }
     }
 
-    // TODO(SS-071) Arena: Need a leave that updates stats with a forfeit, and one that triggers
-    // when game
-    //  is finished. Update stats only when user leaves (could be after multiple matches)
-
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
+
+        val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
+        sessionStats.onLeave(userKnockedOut = userKnockedOut)
 
         viewModelScope.launch {
             exitArenaUseCase(arenaId = arguments.arenaId)
             setCurrentTravelerAvailableUseCase()
+            flushSessionStats()
             // TODO(SS-022): If is last person leaving, then removeArenaMatchUseCase(arenaId =
             // arguments.arenaId)
             _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
         }
+    }
+
+    private suspend fun flushSessionStats() {
+        updateProfileStatsUseCase(delta = sessionStats.consumeDelta())
     }
 
     fun onDismissForfeitDialog() {
@@ -229,10 +239,13 @@ class ArenaScreenViewModel(
 
             viewModelScope.launch {
                 setCurrentTravelerAvailableUseCase()
+                flushSessionStats()
                 _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
             }
             return
         }
+
+        sessionStats.onMatchUpdate(match = this, userId = userId)
 
         val updatedArenaStateUpdate =
             toUpdatedState(
@@ -290,6 +303,7 @@ class ArenaScreenViewModel(
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()
+        flushSessionStats()
         _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
     }
 

@@ -805,14 +805,37 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   aggregation, query/ordering strategy, and the screen UI.
 
 ### SS-071 — Forfeit vs finished leave + stats update
-- [ ] Not completed
+- [x] Completed
 - **Source:** `ArenaScreenViewModel.kt:195` (`// TODO(SS-071) Arena: Need a leave that updates stats with a forfeit...`)
 - **Goal:** Distinguish a forfeit-leave from a leave after the match finished, and update stats only
   when the user actually leaves (possibly after multiple matches). First concrete consumer of the
   SS-021 stats infrastructure — the forfeit/finished distinction matters so the stats record a
   forfeit vs a completed-match outcome.
-- **Steps:** Define the two leave paths; wire the stats update (via SS-021's `UpdateProfileStatsUseCase`)
-  to the correct one. Related: SS-021, SS-045, SS-022.
+- **Resolution:** Added `ArenaSessionStats`, a mutable accumulator the `ArenaScreenViewModel` holds
+  for the whole Arena session (across multiple matches/Gauntlets). It folds per-write `ProfileStats`
+  deltas and is flushed once, via `UpdateProfileStatsUseCase`, on every leave path
+  (`onConfirmLeaveArena`, the waiting-room timeout, and the match-removed flow). `consumeDelta()`
+  resets after a flush so re-entrant leaves never double-write.
+  - **Forfeit vs finished:** a match that reaches `ArenaMatch.Finished` is scored win/loss by
+    `onMatchUpdate` (user won iff their player is still conscious). Leaving with a match still in
+    progress is scored by `onLeave`: a **loss** if the player was knocked out, otherwise a
+    **forfeit**. Leaving after the final match has finished records nothing new.
+  - **New stat fields:** added `matchesForfeited` + `gauntletsForfeited` to `GameStats` /
+    `GameStatsEntity` (plus `FireStoreKeys` constants and `toFieldIncrements`) following the SS-072
+    extension recipe, so a forfeit is distinct from a loss in the persisted data. Added `plus`
+    operators on `GameStats`/`ProfileStats` for accumulation.
+  - **Gauntlet outcome (chosen semantics):** a Gauntlet is **won only on a clean 3/3 sweep**, else
+    lost; it is credited to a class only when the player used that same class for all three matches
+    (mixed-class runs credit `overall` only — keeps per-class `gauntletsWon` meaningful for SS-074).
+    Joining mid-Gauntlet (first observed match ≠ 1) suppresses Gauntlet-outcome writes. Per-match
+    outcomes and `timesSelected` are always credited to the class played that match.
+  - **Scope:** wired the match/Gauntlet outcomes (played/won/lost/forfeited) + `timesSelected`. The
+    per-action combat counters (`knockoutsDealt`/`attacksMade`/`abilitiesUsed`) are deferred to a
+    follow-up.
+- **Verification:** `composeApp` Android debug unit-test sources compile clean; new
+  `ArenaSessionStatsTest` (11 cases) and the updated `ArenaScreenViewModelTest` (46 cases) pass.
+- **Steps:** ~~Define the two leave paths; wire the stats update (via SS-021's
+  `UpdateProfileStatsUseCase`) to the correct one.~~ Done. Related: SS-021, SS-045, SS-022.
 
 ### SS-072 — Define which game stats to record
 - [x] Completed
@@ -859,6 +882,34 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   event state) plus an `achievements` field on `Profile`/`ProfileEntity` recording unlock state.
   Illusionist-impersonation achievements need extra per-impersonated-class tracking beyond today's
   counters. Related: SS-072, SS-021, SS-065, SS-067.
+
+### SS-075 — Flush stat outcomes incrementally (shrink the loss window)
+- [ ] Not completed
+- **Source:** `ArenaSessionStats`/`ArenaScreenViewModel` (SS-071) accumulate the whole session in
+  memory and only flush on a leave path.
+- **Goal:** Flush each match's outcome to Firestore the moment it finishes (and each `timesSelected`
+  as it happens) instead of holding the full session delta until the user leaves, so a process
+  death loses at most the current in-progress match rather than every match played this session.
+- **Notes:** Firestore offline persistence is on by default (`single { Firebase.firestore }`) and
+  `incrementStats` uses commutative `FieldValue.increment`, so an *issued* write already survives
+  network loss and app restarts — the gap SS-071 leaves is only the in-memory delta that was never
+  handed to Firestore. Per-match flush leans on that existing durability. The `consumeDelta()`/reset
+  pattern already lets a per-match flush and the on-leave flush compose without double-counting; the
+  forfeit determination still happens on leave for the one match still in progress. Likely makes
+  SS-076 unnecessary for most cases. Related: SS-071, SS-021.
+
+### SS-076 — Durable local pending-stats store for crash resilience
+- [ ] Not completed
+- **Goal:** Persist the unflushed stat delta locally (Room or DataStore) and replay it on next
+  launch, so a crash or kill mid-match cannot lose outcomes — an at-least-once guarantee for stat
+  writes that does not depend on Firestore's in-process write queue.
+- **Notes:** Scope is specifically the window Firestore offline persistence does *not* cover: a delta
+  computed in memory but never issued as a write before the process dies. Depends on / may be reduced
+  to a thin remaining case by SS-075 (which removes the multi-match in-memory window using Firestore's
+  own durable queue). Decide Room vs DataStore based on whether other features want an offline-first
+  local store; if stats are the only consumer, a small DataStore-backed pending-delta may be enough.
+  Replay must stay idempotent under `FieldValue.increment` (clear the local record only after the
+  write is acknowledged). Related: SS-075, SS-071, SS-021.
 
 ---
 

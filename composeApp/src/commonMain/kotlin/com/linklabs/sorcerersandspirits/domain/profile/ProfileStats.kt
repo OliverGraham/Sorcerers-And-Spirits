@@ -15,4 +15,16 @@ data class ProfileStats(
 ) {
     val isEmpty: Boolean
         get() = overall.isEmpty && perClass.values.all { it.isEmpty }
+
+    operator fun plus(other: ProfileStats): ProfileStats {
+        val classes = perClass.keys + other.perClass.keys
+        return ProfileStats(
+            overall = overall + other.overall,
+            perClass =
+                classes.associateWith { classType ->
+                    (perClass[classType] ?: GameStats()) +
+                        (other.perClass[classType] ?: GameStats())
+                },
+        )
+    }
 }

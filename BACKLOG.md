@@ -769,6 +769,33 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Depends on the authenticated profile identity (Related: SS-061). Consumers: SS-071,
   SS-072. Surfaced by: SS-064 (ProfileScreen), SS-065 (Leaderboard).
 
+### SS-073 — "Gauntlet" concept: group 3 consecutive matches as one unit
+- [ ] Not completed
+- **Goal:** Introduce a new game-term, **Gauntlet**, sitting above `Match` in the hierarchy
+  (`Turn` → `Round` → `Match` → `Gauntlet`). A Gauntlet is a fixed run of `MATCHES_PER_GAUNTLET`
+  (= 3) consecutive matches in the same Arena. Because outcomes are highly random and matches are
+  quick, 3 is the minimum unit of play before stats are recorded — a Gauntlet is what gets a single
+  stats write (SS-072/SS-071). This is the prerequisite that gives the stats tickets a real unit to
+  attribute wins/losses to.
+- **Behavior:**
+  - Track the current match number within the Gauntlet (1-based, 1..3) on the shared
+    `ArenaMatchEntity` so every client sees the same progress; it persists across the
+    intra-match state transitions and increments when a match resets to the next.
+  - When a match finishes, surface Gauntlet progress (Match 1/3, 2/3, 3/3). For non-final matches the
+    decision dialog offers only **Continue** (no leave option — players can still forfeit via back).
+  - Only on the final match (3/3) are players asked **Go Again** (start a fresh Gauntlet, resetting
+    the counter to 1) or **Leave**.
+- **Decisions (this pass):** Count is a fixed constant (`MATCHES_PER_GAUNTLET = 3`); making it
+  configurable per Arena — and a rating multiplier for longer Gauntlets — is deferred.
+- **Steps:** Add the `MATCHES_PER_GAUNTLET` constant (domain) + `matchNumberInGauntlet` on
+  `ArenaMatch`/`ArenaMatchEntity` (default 1, threaded through the cross-variant transitions:
+  ConnectToArena, ChooseCharacterClass, FirebaseArenaRepository, ExitArena; incremented/wrapped in
+  StayForAnotherMatch). Expose `GauntletProgress` on `ArenaScreenState`; gate the match-finished
+  dialog/content on `isFinalMatch`.
+- **Notes:** Prerequisite for SS-071 (forfeit vs finished — stats per completed Gauntlet) and SS-072
+  (stat schema). The new term must be explained on the GameRulesScreen (SS-067) alongside
+  Turn/Round/Match. Related: SS-021, SS-071, SS-072, SS-067.
+
 ### SS-065 — LeaderboardScreen
 - [ ] Not completed
 - **Goal:** Once game stats are recorded on user profiles (SS-021 infrastructure + SS-072 schema),
@@ -815,8 +842,9 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Goal:** A screen, accessible from the drawer (SS-063), where users can read the game rules and
   class abilities.
 - **Steps:** Decide the rules content source (static resource vs. RemoteConfig-driven); build a
-  readable/navigable layout (core combat rules + per-class abilities); link to the rules chatbot
-  (SS-066) if/when it exists.
+  readable/navigable layout (core combat rules + per-class abilities); explain the game-terms
+  hierarchy Turn → Round → Match → Gauntlet (SS-073); link to the rules chatbot (SS-066) if/when it
+  exists.
 
 ---
 

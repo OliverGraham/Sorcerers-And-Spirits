@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
+import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
 
@@ -47,12 +48,22 @@ internal class StayForAnotherMatch(private val userId: String) {
                     activePlayerUserId = resetPlayers.keys.random(), // Or some other logic
                     messages = emptyList(),
                     numberOfNewMessages = 0,
+                    matchNumberInGauntlet = match.nextMatchNumberInGauntlet(),
                 )
             }
         } else {
             match.withUpdatedPlayers(updatedPlayers)
         }
     }
+
+    // Advancing within the Gauntlet (1 -> 2 -> 3); once the final match is done, "Go Again" wraps
+    // back to 1 to start a fresh Gauntlet.
+    private fun ArenaMatchEntity.nextMatchNumberInGauntlet(): Int =
+        if (matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET) {
+            1
+        } else {
+            matchNumberInGauntlet + 1
+        }
 
     private fun ArenaMatchEntity.withUpdatedPlayers(
         updatedPlayers: Map<String, ArenaPlayerEntity>

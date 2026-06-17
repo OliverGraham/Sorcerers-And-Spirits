@@ -80,6 +80,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     messages = existingMatch.messages + newMessages,
                     numberOfNewMessages = newMessages.size,
                     playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
+                    matchNumberInGauntlet = existingMatch.matchNumberInGauntlet,
                 )
             } else {
                 ArenaMatchEntity.Combat(
@@ -91,6 +92,7 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
                     roundNumber = result.roundNumber,
                     isNewRound = result.isNewRound,
                     doublesBonusEntity = result.doublesBonus?.toEntity(),
+                    matchNumberInGauntlet = existingMatch.matchNumberInGauntlet,
                 )
             }
         }

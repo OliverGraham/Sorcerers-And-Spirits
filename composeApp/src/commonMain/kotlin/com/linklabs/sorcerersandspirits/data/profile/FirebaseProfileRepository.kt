@@ -47,8 +47,8 @@ class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository
         if (increments.isEmpty()) return
 
         profilesCollection.document(documentPath = userId).updateFields {
-            increments.forEach { (statKey, amount) ->
-                FieldPath(FireStoreKeys.STATS, statKey) to FieldValue.increment(value = amount)
+            increments.forEach { (fieldPathSegments, amount) ->
+                FieldPath(*fieldPathSegments.toTypedArray()) to FieldValue.increment(value = amount)
             }
         }
     }

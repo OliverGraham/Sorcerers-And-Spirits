@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.profile.usecase
 
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
+import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import io.mockk.coVerify
@@ -49,6 +50,6 @@ class UpdateProfileStatsUseCaseTest {
 
     private companion object {
         const val USER_ID = "user-1"
-        val DELTA = ProfileStats(wins = 1, losses = 0)
+        val DELTA = ProfileStats(overall = GameStats(matchesWon = 1))
     }
 }

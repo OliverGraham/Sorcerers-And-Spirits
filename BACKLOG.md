@@ -770,7 +770,7 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   SS-072. Surfaced by: SS-064 (ProfileScreen), SS-065 (Leaderboard).
 
 ### SS-073 — "Gauntlet" concept: group 3 consecutive matches as one unit
-- [ ] Not completed
+- [x] Completed
 - **Goal:** Introduce a new game-term, **Gauntlet**, sitting above `Match` in the hierarchy
   (`Turn` → `Round` → `Match` → `Gauntlet`). A Gauntlet is a fixed run of `MATCHES_PER_GAUNTLET`
   (= 3) consecutive matches in the same Arena. Because outcomes are highly random and matches are
@@ -815,14 +815,50 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   to the correct one. Related: SS-021, SS-045, SS-022.
 
 ### SS-072 — Define which game stats to record
-- [ ] Not completed
+- [x] Completed
 - **Goal:** Decide the concrete set of game statistics to persist per profile (e.g. matches played,
   wins, losses, forfeits, K.O.s dealt, per-class records, etc.). Deferred until the SS-021
   infrastructure exists — design the stats schema once the mechanism for saving them is in place,
   since the stats will directly influence the Leaderboard.
-- **Steps:** Enumerate candidate stats and how each is derived from match outcomes; finalize the
+- **Resolution:** Defined the stats schema as an **extensible, scope-uniform** structure rather than
+  an exhaustive enumeration — the priority is that a new stat (or a future achievement) can be added
+  with minimal edits, since many more are anticipated (per SS-074).
+  - **`GameStats` (domain):** one reusable counter bundle reused for every scope, with per-match and
+    per-gauntlet pairs plus shared counters: `matchesPlayed/Won/Lost`, `gauntletsPlayed/Won/Lost`,
+    `knockoutsDealt`, `attacksMade`, `abilitiesUsed`, `timesSelected`. `isEmpty` is derived from
+    equality with an all-zero instance, so adding a counter never touches it.
+  - **`ProfileStats` (domain):** now `overall: GameStats` + `perClass: Map<CharacterClassType,
+    GameStats>`. The Gauntlet (SS-073) is the unit a stats write is attributed to. Per-class records
+    are rich enough to derive class milestones (e.g. "win a Gauntlet with every class") without
+    enumerating achievements here. Replaces the old flat `wins`/`losses` fields.
+  - **Data layer:** `ProfileStatsEntity`/`GameStatsEntity` mirror the domain shape (serialization
+    defaults keep in-flight profiles deserializable; unknown `perClass` keys are dropped on read).
+    `ProfileStats.toStatIncrements()` flattens non-zero counters into nested Firestore field paths
+    (`stats.overall.<stat>`, `stats.perClass.<ClassName>.<stat>`), and
+    `FirebaseProfileRepository.incrementStats` writes each via a spread `FieldPath(*segments)` +
+    `FieldValue.increment` — so concurrent writes only touch their own counters and nested fields
+    auto-create from 0. **Adding a stat = add a field to `GameStats` + `GameStatsEntity`, one line in
+    `toFieldIncrements()`, the two entity mappings, and a `FireStoreKeys` constant.**
+- **Verification:** `composeApp` Android debug + unit-test sources compile clean; new
+  `ProfileStatsMappingTest` (5 cases: nested flattening, zero-omission, empty, entity round-trip,
+  unknown-class drop) and the updated `UpdateProfileStatsUseCaseTest` (3 cases) pass.
+- **Steps:** ~~Enumerate candidate stats and how each is derived from match outcomes; finalize the
   Firestore field schema on top of SS-021's generic payload; define how they feed the Leaderboard
-  (SS-065). Related: SS-021, SS-065, SS-064.
+  (SS-065).~~ Done. Match-outcome derivation/wiring of deltas is SS-071. Related: SS-021, SS-065,
+  SS-064, SS-073, SS-074.
+
+### SS-074 — Achievements
+- [ ] Not completed
+- **Goal:** Award players achievements derived from their recorded stats and match events. Examples:
+  win a Match with every class; win a Gauntlet with every class; win a Match/Gauntlet as the
+  Illusionist after Impersonating every class. The set will keep growing, so the priority is an
+  architecture where a new achievement can be added in one place — not enumerating every one now.
+- **Notes:** Builds on the SS-072 stats schema. Most class-based achievements are derivable from the
+  per-class `GameStats` already persisted (e.g. `CharacterClassType.entries.all { perClass[it]?...}`),
+  so the likely shape is a list of achievement definitions (predicate over `ProfileStats` + any extra
+  event state) plus an `achievements` field on `Profile`/`ProfileEntity` recording unlock state.
+  Illusionist-impersonation achievements need extra per-impersonated-class tracking beyond today's
+  counters. Related: SS-072, SS-021, SS-065, SS-067.
 
 ---
 

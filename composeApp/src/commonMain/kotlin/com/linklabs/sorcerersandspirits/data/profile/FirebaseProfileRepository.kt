@@ -3,6 +3,8 @@ package com.linklabs.sorcerersandspirits.data.profile
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
+import dev.gitlive.firebase.firestore.FieldPath
+import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -36,6 +38,16 @@ class FirebaseProfileRepository(database: FirebaseFirestore) : ProfileRepository
     override suspend fun updateDisplayName(userId: String, newDisplayName: String) {
         profilesCollection.document(documentPath = userId).updateFields {
             FireStoreKeys.DISPLAY_NAME to newDisplayName
+        }
+    }
+
+    override suspend fun incrementStats(userId: String, increments: Map<String, Int>) {
+        if (increments.isEmpty()) return
+
+        profilesCollection.document(documentPath = userId).updateFields {
+            increments.forEach { (statKey, amount) ->
+                FieldPath(FireStoreKeys.STATS, statKey) to FieldValue.increment(value = amount)
+            }
         }
     }
 }

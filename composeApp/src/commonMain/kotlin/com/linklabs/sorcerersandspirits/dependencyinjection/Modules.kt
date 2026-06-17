@@ -26,6 +26,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
@@ -95,6 +96,7 @@ private fun Module.initializeUseCases() {
     singleOf(::StayForAnotherMatchUseCase)
     singleOf(::UpdateChallengerStatusUseCase)
     singleOf(::UpdateProfileDisplayNameUseCase)
+    singleOf(::UpdateProfileStatsUseCase)
 }
 
 private fun Module.initializeViewModels() {

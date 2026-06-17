@@ -370,13 +370,6 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Verification:** `composeApp` Android debug compiles clean; `ArenaScreenViewModelTest` is green,
   including a new case asserting an untargetable (Bard self) selection is rejected.
 
-### SS-021 — Forfeit vs finished leave + stats update
-- [ ] Not completed
-- **Source:** `ArenaScreenViewModel.kt:215` (`// TODO Arena: Need a leave that updates stats with a forfeit...`)
-- **Goal:** Distinguish a forfeit-leave from a leave after the match finished, and update stats only
-  when the user actually leaves (possibly after multiple matches).
-- **Steps:** Define the two leave paths; wire stats update to the correct one.
-
 ### SS-022 — Remove arena match when last player leaves
 - [ ] Not completed
 - **Source:** `ArenaScreenViewModel.kt:224` (`// TODO: If is last person leaving, then removeArenaMatchUseCase(...)`)
@@ -527,7 +520,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ### SS-045 — UI when match ends due to early leave
 - [ ] Not completed
 - **Source:** `ExitArena.kt:8` (`// TODO Arena: When it's finished because someone left early...`)
-- **Goal:** Ensure there is clear UI when a match ends because a player left early. Related: SS-021.
+- **Goal:** Ensure there is clear UI when a match ends because a player left early. Related: SS-071.
 
 ---
 
@@ -737,16 +730,69 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 
 ---
 
-## Stats & Leaderboard
+## Game Stats & Leaderboard
+
+Game statistics are recorded on each user's Firestore profile and will be a large part of the game —
+directly driving the Leaderboard and other features. The work is staged deliberately: **first** build
+the generic infrastructure for persisting stats to a profile (SS-021), keeping it stat-agnostic;
+**then** decide which concrete stats to record (SS-072) and wire them into match outcomes (SS-071);
+and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
+
+### SS-021 — Infrastructure for saving game stats to user profiles (Firestore)
+- [x] Completed
+- **Goal:** Establish the generic mechanism for persisting game statistics onto a user's Firestore
+  profile, independent of which specific stats are recorded. This is the foundation the rest of the
+  stats work builds on (forfeit/finished updates SS-071, the stats schema SS-072, the Leaderboard
+  SS-065), so keep it stat-agnostic — we just need a way to save stats before deciding what they are.
+- **Resolution:** Added a stat-agnostic `stats` map (`Map<String, Long>`) to the `Profile` domain
+  model and `ProfileEntity` (serialization default `emptyMap()`, so in-flight profiles still
+  deserialize), persisted under a `stats` map field on the profile document (`FireStoreKeys.STATS`).
+  - **Write path:** `ProfileRepository.incrementStats(userId, increments: Map<String, Int>)`,
+    implemented in `FirebaseProfileRepository` via `updateFields { FieldPath(STATS, key) to
+    FieldValue.increment(amount) }`. Using per-key `FieldValue.increment` (a) updates only the
+    touched counters so concurrent match writes don't clobber each other, and (b) auto-creates the
+    nested `stats.<key>` field from 0, so no read-modify-write or pre-seeding is needed. Empty-map
+    calls short-circuit.
+  - **Domain use case:** `UpdateProfileStatsUseCase(increments: Map<String, Int>)` resolves the
+    signed-in user via `AuthenticationRepository.getUserId()` (no-ops if absent or increments empty)
+    and forwards to the repository. Registered in DI (`Modules.kt`).
+  - **Stat-agnostic by design:** keys stay open `String`s and increments are the only write verb, so
+    SS-072 can introduce a typed stat-key enum and SS-071 can call this on match outcomes without any
+    change to this infrastructure. Read totals are `Long` (Firestore 64-bit integers); per-write
+    deltas are `Int` (what gitlive's `FieldValue.increment` accepts).
+- **Verification:** `composeApp` Android debug compiles clean; new `UpdateProfileStatsUseCaseTest`
+  (forwards increments / no signed-in user / empty increments) passes, and the Profile/Tavern/
+  AppViewModel suites remain green.
+- **Notes:** Depends on the authenticated profile identity (Related: SS-061). Consumers: SS-071,
+  SS-072. Surfaced by: SS-064 (ProfileScreen), SS-065 (Leaderboard).
 
 ### SS-065 — LeaderboardScreen
 - [ ] Not completed
-- **Goal:** Once game stats are recorded on user profiles (and general game-stat handling lands —
-  see related stats tickets), add a screen showing the top players. Accessible from the drawer
-  (SS-063).
-- **Notes:** Depends on stats existing/being persisted (Related: SS-021 forfeit/finished stats
-  update). Likely splits into multiple tickets as work begins — stats schema/aggregation, query/
-  ordering strategy, and the screen UI.
+- **Goal:** Once game stats are recorded on user profiles (SS-021 infrastructure + SS-072 schema),
+  add a screen showing the top players. Accessible from the drawer (SS-063).
+- **Notes:** Depends on stats existing/being persisted (Related: SS-021, SS-072; SS-071 forfeit/
+  finished stats update). Likely splits into multiple tickets as work begins — stats schema/
+  aggregation, query/ordering strategy, and the screen UI.
+
+### SS-071 — Forfeit vs finished leave + stats update
+- [ ] Not completed
+- **Source:** `ArenaScreenViewModel.kt:195` (`// TODO(SS-071) Arena: Need a leave that updates stats with a forfeit...`)
+- **Goal:** Distinguish a forfeit-leave from a leave after the match finished, and update stats only
+  when the user actually leaves (possibly after multiple matches). First concrete consumer of the
+  SS-021 stats infrastructure — the forfeit/finished distinction matters so the stats record a
+  forfeit vs a completed-match outcome.
+- **Steps:** Define the two leave paths; wire the stats update (via SS-021's `UpdateProfileStatsUseCase`)
+  to the correct one. Related: SS-021, SS-045, SS-022.
+
+### SS-072 — Define which game stats to record
+- [ ] Not completed
+- **Goal:** Decide the concrete set of game statistics to persist per profile (e.g. matches played,
+  wins, losses, forfeits, K.O.s dealt, per-class records, etc.). Deferred until the SS-021
+  infrastructure exists — design the stats schema once the mechanism for saving them is in place,
+  since the stats will directly influence the Leaderboard.
+- **Steps:** Enumerate candidate stats and how each is derived from match outcomes; finalize the
+  Firestore field schema on top of SS-021's generic payload; define how they feed the Leaderboard
+  (SS-065). Related: SS-021, SS-065, SS-064.
 
 ---
 

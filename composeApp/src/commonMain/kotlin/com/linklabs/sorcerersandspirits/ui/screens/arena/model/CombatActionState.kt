@@ -139,17 +139,7 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
 internal fun UseAbilityArguments.toDomain(
     combatActionState: CombatActionState
 ): CurrentCombatAction.AbilityRoll {
-    // TODO(SS-020): This Charm logic is done oddly or incorrectly
-    val purpose =
-        if (
-                abilityActionState is AbilityActionState.Passive.Persuade.Charm &&
-                    targetedOpponentUserId.isNotEmpty()
-            ) {
-                abilityActionState.copy(selectedCharmTargetUserId = targetedOpponentUserId)
-            } else {
-                abilityActionState
-            }
-            .toDomain()
+    val purpose = abilityActionState.withSelectedCharmTarget(targetUserId = targetedOpponentUserId)
 
     return when (combatActionState) {
         is CombatActionState.AbilityRoll ->
@@ -169,6 +159,20 @@ internal fun UseAbilityArguments.toDomain(
             )
     }
 }
+
+/**
+ * Resolves the Bard's chosen Charm target into the domain ability. Only Persuade's Charm consumes a
+ * target, and only a [targetUserId] the Domain already vetted as charmable (a conscious opponent
+ * that is neither the Bard nor the attacker, per
+ * [AbilityActionState.Passive.Persuade.Charm.targetableUserIds]) is accepted; any other input
+ * leaves the target unset. Every other ability ignores [targetUserId].
+ */
+private fun AbilityActionState.withSelectedCharmTarget(targetUserId: String): AbilityAction =
+    if (this is AbilityActionState.Passive.Persuade.Charm && targetUserId in targetableUserIds) {
+        copy(selectedCharmTargetUserId = targetUserId).toDomain()
+    } else {
+        toDomain()
+    }
 
 internal fun AbilityActionState.toDomain(): AbilityAction =
     when (this) {

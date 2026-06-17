@@ -352,11 +352,23 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   `composeApp` compiles clean; `ArenaScreenViewModel` and `PerformCombatAction` suites are green.
 
 ### SS-020 — Fix Charm logic in onUseAbility
-- [ ] Not completed
-- **Source:** `ArenaScreenViewModel.kt:164` (`// TODO: This Charm logic is done oddly or incorrectly`)
+- [x] Completed
+- **Source:** `CombatActionState.kt:142` (`// TODO(SS-020): This Charm logic is done oddly or
+  incorrectly`) — the Charm-resolution block was moved here from `ArenaScreenViewModel.onUseAbility`
+  under SS-016.
 - **Goal:** Correct how `selectedCharmTargetUserId` is resolved for Persuade/Charm. Related: SS-049.
-- **Steps:** Verify against Bard Persuade rules; ensure target cannot be self/Bard; clean up the
-  conditional.
+- **Resolution:** The inline conditional in `UseAbilityArguments.toDomain` set the Charm target
+  whenever `targetedOpponentUserId.isNotEmpty()` — a magic empty-string sentinel that performed **no
+  validation** that the selected id was actually a legal target. Per the Bard Persuade rule a charmed
+  attacker cannot be redirected at the Bard or at the attacker themselves, and the Domain already
+  encodes this: `PersuadeHandler.strumLuteToCharm` builds `targetableUserIds` as the conscious
+  players minus the attacker minus the defender (Bard). Extracted a named
+  `AbilityActionState.withSelectedCharmTarget(targetUserId)` that only applies the target when
+  `targetUserId in targetableUserIds`, so an illegal/self/Bard/empty id leaves
+  `selectedCharmTargetUserId` unset (the Domain `charm()` then no-ops via its `?: return`). Every
+  non-Charm ability ignores the target, as before.
+- **Verification:** `composeApp` Android debug compiles clean; `ArenaScreenViewModelTest` is green,
+  including a new case asserting an untargetable (Bard self) selection is rejected.
 
 ### SS-021 — Forfeit vs finished leave + stats update
 - [ ] Not completed

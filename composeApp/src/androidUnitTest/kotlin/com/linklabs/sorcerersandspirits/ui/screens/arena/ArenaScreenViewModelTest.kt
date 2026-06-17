@@ -1234,6 +1234,40 @@ class ArenaScreenViewModelTest {
             )
         }
 
+    @Test
+    fun `When the user's Bard charms an untargetable player, then no charm target is set`() =
+        runTest {
+            val viewModel =
+                combatViewModel(
+                    nextCombatAction =
+                        abilityRollAction(
+                            purpose =
+                                AbilityAction.Passive.Persuade.Charm(
+                                    targetableUserIds = setOf(SECOND_OPPONENT_ID)
+                                ),
+                            attackerUserId = OPPONENT_ID,
+                            defenderUserId = USER_ID,
+                            activeUserIds = setOf(USER_ID),
+                        ),
+                    playerMap =
+                        threePlayerMap(
+                            userClass = CharacterClass.getBard(),
+                            firstOpponentClass = CharacterClass.getRogue(),
+                            secondOpponentClass = CharacterClass.getMage(),
+                        ),
+                )
+            val control = viewModel.requireCombatState().abilityRollControl()
+
+            // The Bard (USER_ID) is not among the charmable targets, so selecting itself is
+            // rejected.
+            viewModel.useAbility(action = control.action, targetedOpponentUserId = USER_ID)
+            runCurrent()
+
+            val abilityRoll = capturedAbilityRoll()
+            val charm = assertIs<AbilityAction.Passive.Persuade.Charm>(value = abilityRoll.purpose)
+            assertNull(actual = charm.selectedCharmTargetUserId)
+        }
+
     companion object {
         private const val USER_ID = "user_123"
         private const val OPPONENT_ID = "opponent_456"

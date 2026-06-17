@@ -41,6 +41,8 @@ internal fun LoadedArenaScreen(
         sheetDragHandle = {
             ArenaMessageLogHandle(
                 secondsRemaining = screenState.secondsRemaining,
+                isTimerVisible = screenState.isTimerVisible,
+                isTimerUrgent = screenState.isTimerUrgent,
                 latestMessage = screenState.latestMessage,
                 unhandledMessagesCount = screenState.unhandledMessagesCount,
             )

@@ -303,22 +303,94 @@ class ArenaScreenViewModel(
     private suspend fun onTimerExpiration() {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
 
-        when (loadedState.arenaState) {
-            is ArenaState.WaitingForAllPlayers -> {
-                _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
-            }
+        when (val arenaState = loadedState.arenaState) {
+            is ArenaState.WaitingForAllPlayers -> leaveTimedOutMatch()
 
-            is ArenaState.ChoosingClasses -> {
-                // TODO(SS-014)
-            }
+            is ArenaState.ChoosingClasses ->
+                autoChooseCharacterClassForUser(
+                    arenaState = arenaState,
+                    characterClasses = loadedState.characterClasses,
+                )
 
-            is ArenaState.Combat -> {
-                // TODO(SS-014)
-            }
+            is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
 
-            is ArenaState.Finished -> {
-                // TODO(SS-014)
-            }
+            // The match is over; the user leaves or stays through the match-finished decision
+            // dialog, and the timer is stopped in Finished, so there is nothing to resolve here.
+            is ArenaState.Finished -> Unit
         }
+    }
+
+    private suspend fun leaveTimedOutMatch() {
+        screenStateFlowJob?.cancel()
+
+        exitArenaUseCase(arenaId = arguments.arenaId)
+        setCurrentTravelerAvailableUseCase()
+        _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
+    }
+
+    private fun autoResolveCombatForUser(arenaState: ArenaState.Combat) {
+        // An empty control list means the user owes no action right now (it is another player's
+        // turn, or a roll the user does not own), so there is nothing to auto-resolve.
+        if (arenaState.combatControls.isEmpty()) return
+
+        when (val actionState = arenaState.combatActionState) {
+            is CombatActionState.Idle -> autoAttackRandomOpponent(arenaState = arenaState)
+
+            is CombatActionState.NormalAttack ->
+                onAttack(
+                    attackArguments =
+                        AttackArguments(
+                            combatActionState = actionState,
+                            targetedOpponentUserId = actionState.defenderUserId,
+                            userPlayerId = arenaState.userPlayerId,
+                        )
+                )
+
+            is CombatActionState.AbilityRoll ->
+                onUseAbility(
+                    useAbilityArguments =
+                        UseAbilityArguments(
+                            abilityActionState = actionState.action,
+                            targetedOpponentUserId =
+                                (actionState.action as? AbilityActionState.Passive.Persuade.Charm)
+                                    ?.targetableUserIds
+                                    ?.randomOrNull()
+                                    .orEmpty(),
+                            userPlayerId = arenaState.userPlayerId,
+                        )
+                )
+        }
+    }
+
+    private fun autoAttackRandomOpponent(arenaState: ArenaState.Combat) {
+        val targetUserId = randomLivingOpponentId(arenaState = arenaState) ?: return
+
+        onAttack(
+            attackArguments =
+                AttackArguments(
+                    combatActionState = arenaState.combatActionState,
+                    targetedOpponentUserId = targetUserId,
+                    userPlayerId = arenaState.userPlayerId,
+                )
+        )
+    }
+
+    private fun randomLivingOpponentId(arenaState: ArenaState.Combat): String? =
+        arenaState.otherPlayers.values
+            .filter { player -> player.characterClass.hitPoints > 0 }
+            .randomOrNull()
+            ?.userId
+
+    private fun autoChooseCharacterClassForUser(
+        arenaState: ArenaState.ChoosingClasses,
+        characterClasses: List<CharacterClassState>,
+    ) {
+        if (!arenaState.isItThisUsersTurn) return
+
+        val availableClasses = characterClasses.filterNot { it in arenaState.unavailableClasses }
+        val chosenClass = arenaState.selectedClass ?: availableClasses.randomOrNull() ?: return
+        val userPlayer = arenaState.playerMap.getValue(key = arenaState.userPlayerId)
+
+        onChooseCharacterClass(playerState = userPlayer, characterClassState = chosenClass)
     }
 }

@@ -552,9 +552,18 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   in the ProfileScreen edit flow stays with SS-064.
 
 ### SS-040 — Paginate / separate node for arena messages
-- [ ] Not completed
+- [x] Completed
 - **Source:** `FirebaseArenaRepository.kt:23` (`// TODO Arena: Paginate messages and/or have a separate node...`)
 - **Goal:** Reduce payload size by paginating messages or moving them to a separate RTDB node.
+- **Outcome:** Cap the inline message log to the most recent `MAX_RETAINED_MESSAGES` (30) via
+  `List<ArenaMessageEntity>.appendCapped` (`Common.kt`), applied at every append site
+  (`FirebaseArenaRepository.applyCombatResult`, `ChooseCharacterClass`). This bounds both the
+  transaction read/write size and each `getArenaMatchFlow` snapshot payload as a match runs long.
+  No domain/UI changes were needed: the message-log UI only displays recent messages and tracks
+  unhandled ones relative to the tail of the list, so they stay correct after older entries drop.
+- **Notes:** Chose capping over a separate RTDB node — there is no full-history viewing UI to
+  justify archiving older messages on demand. A separate node (or `limitToLast` pagination) remains
+  a future option if message history is ever surfaced.
 
 ### SS-041 — Refactor flagged arena repo code
 - [ ] Not completed

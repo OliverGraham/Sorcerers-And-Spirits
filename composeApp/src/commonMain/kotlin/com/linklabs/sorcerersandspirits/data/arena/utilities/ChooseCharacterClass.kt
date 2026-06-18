@@ -112,7 +112,10 @@ internal class ChooseCharacterClass(
             val selectionMessage =
                 listOf(element = messagesReference.generateCharacterSelectionMessage())
 
-            return Pair(first = previousMessages + selectionMessage, second = selectionMessage.size)
+            return Pair(
+                first = previousMessages.appendCapped(newMessages = selectionMessage),
+                second = selectionMessage.size,
+            )
         }
 
         fun generateCombatStartingMessages(
@@ -125,7 +128,10 @@ internal class ChooseCharacterClass(
                 )
 
             val newMessages = listOf(selectionMessage) + combatStartingMessages
-            return Pair(first = previousMessages + newMessages, second = newMessages.size)
+            return Pair(
+                first = previousMessages.appendCapped(newMessages = newMessages),
+                second = newMessages.size,
+            )
         }
 
         private fun DatabaseReference.generateCharacterSelectionMessage() =

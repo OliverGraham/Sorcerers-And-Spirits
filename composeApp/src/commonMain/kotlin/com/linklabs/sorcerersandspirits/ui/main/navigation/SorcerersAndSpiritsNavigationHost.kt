@@ -13,11 +13,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
 import com.linklabs.sorcerersandspirits.ui.main.AppState
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
+import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.TopBar
@@ -31,6 +33,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
     modifier: Modifier = Modifier,
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
+    val appUpgradeStatus by viewModel.appUpgradeStatusFlow.collectAsState()
 
     when (val state = uiState) {
         is UiState.Error -> ErrorContent(onRetry = viewModel::retry, modifier = modifier)
@@ -60,6 +63,12 @@ internal fun SorcerersAndSpiritsNavigationHost(
         }
 
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
+    }
+
+    // Overlays every state (including loading) so an unsupported client is gated before it can
+    // touch the shared game state.
+    if (appUpgradeStatus != AppUpgradeStatus.UP_TO_DATE) {
+        AppUpgradeDialog(status = appUpgradeStatus, onDismiss = viewModel::onDismissUpdateNudge)
     }
 }
 

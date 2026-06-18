@@ -1251,7 +1251,7 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 ## Release & versioning
 
 ### SS-070 — Investigate app version control & force-upgrade
-- [ ] Not completed
+- [x] Completed
 - **Goal:** Establish a way to gate clients by app version so an outdated client can be soft- or
   force-upgraded — important since all clients share one RTDB game-state schema and a stale client
   could read/write incompatible data.
@@ -1263,3 +1263,13 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   comparison + where it runs (launch/`AppViewModel`); design the soft-update prompt vs. hard
   force-upgrade block UI with store deep-links (Play / App Store) for both platforms; consider how
   this interacts with the shared game-state schema versioning. Related: SS-047.
+- **Outcome:** RemoteConfig is the version source — `minimum_supported_version` (below it = hard
+  force-upgrade block; this is the lever to bump when a breaking RTDB-schema change ships) and
+  `latest_version` (below it but at/above the minimum = dismissible "update available" nudge). Both
+  default to `0` so a missing/failed config never gates anyone. Comparison is an integer build-code
+  compare (`CheckAppVersionUseCase`) using `CurrentAppVersionProvider` (Android `versionCode` /
+  iOS `CFBundleVersion`) vs. `SupportedAppVersionProvider` (RemoteConfig). Runs in `AppViewModel`
+  after config fetch/activate; `AppUpgradeDialog` overlays every UI state and deep-links the store
+  via `LocalUriHandler`.
+- **Follow-up:** iOS `appStoreUrl()` uses a placeholder App Store id (app unpublished) — swap in the
+  real id at publish time (TODO tagged SS-070 in `AppStoreUrl.ios.kt`).

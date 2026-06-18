@@ -11,6 +11,13 @@
 
     <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 
+    <string name="app_update_force_title">Update required</string>
+    <string name="app_update_force_message">This version of Sorcerers &amp; Spirits is no longer supported. Update to keep playing.</string>
+    <string name="app_update_available_title">Update available</string>
+    <string name="app_update_available_message">A new version of Sorcerers &amp; Spirits is available with the latest improvements.</string>
+    <string name="app_update_button">Update</string>
+    <string name="app_update_dismiss_button">Later</string>
+
     <string name="error_generic_message">Something went wrong. Please try again.</string>
     <string name="retry_button">Try again</string>
 

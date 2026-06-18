@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSour
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigRandomNameProvider
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigSupportedAppVersionProvider
 import com.linklabs.sorcerersandspirits.data.profile.FirebaseProfileRepository
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
@@ -36,6 +37,8 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowU
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
+import com.linklabs.sorcerersandspirits.domain.version.SupportedAppVersionProvider
+import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
@@ -76,6 +79,7 @@ private fun Module.initializeRepositories() {
     singleOf(::FirebaseRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }
     singleOf(::RemoteConfigRandomNameProvider) { bind<RandomNameProvider>() }
+    singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
@@ -83,6 +87,7 @@ private fun Module.initializeRepositories() {
 
 private fun Module.initializeUseCases() {
     singleOf(::ChooseCharacterClassUseCase)
+    singleOf(::CheckAppVersionUseCase)
     singleOf(::CoordinateArenaMatchUseCase)
     singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)

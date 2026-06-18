@@ -1,6 +1,9 @@
 package com.linklabs.sorcerersandspirits.data.config
 
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource.Companion.UNGATED_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CHARACTER_CLASS_STATS
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.LATEST_VERSION
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.MINIMUM_SUPPORTED_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.RANDOM_TRAVELER_NAMES
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfig
@@ -32,6 +35,8 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         remoteConfig.setDefaults(
             CHARACTER_CLASS_STATS to json.encodeToString(value = defaultStats),
             RANDOM_TRAVELER_NAMES to json.encodeToString(value = defaultNames),
+            MINIMUM_SUPPORTED_VERSION to UNGATED_VERSION,
+            LATEST_VERSION to UNGATED_VERSION,
         )
         remoteConfig.fetchAndActivate()
     }
@@ -63,6 +68,11 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
             }
             .getOrDefault(defaultValue = defaultNames)
             .ifEmpty { defaultNames }
+
+    override fun minimumSupportedVersionCode(): Long =
+        remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
+
+    override fun latestVersionCode(): Long = remoteConfig.getValue(key = LATEST_VERSION).asLong()
 
     companion object {
         val MINIMUM_FETCH_INTERVAL: Duration = 1.hours

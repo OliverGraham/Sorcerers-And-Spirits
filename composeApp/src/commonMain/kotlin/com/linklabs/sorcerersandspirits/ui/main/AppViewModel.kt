@@ -12,6 +12,8 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUse
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
+import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
+import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.Job
@@ -26,6 +28,7 @@ import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class AppViewModel(
+    private val checkAppVersionUseCase: CheckAppVersionUseCase,
     private val connectivityObserver: ConnectivityObserver,
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
@@ -40,12 +43,28 @@ class AppViewModel(
     private val _uiStateFlow = MutableStateFlow<UiState<AppState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
+    private val _appUpgradeStatusFlow = MutableStateFlow(value = AppUpgradeStatus.UP_TO_DATE)
+    val appUpgradeStatusFlow = _appUpgradeStatusFlow.asStateFlow()
+
     private var screenStateJob: Job? = null
 
     init {
-        viewModelScope.launch { initializeGameConfigUseCase() }
+        viewModelScope.launch {
+            // The version thresholds live in RemoteConfig, so the gate can only be evaluated once
+            // the config has been fetched/activated.
+            initializeGameConfigUseCase()
+            _appUpgradeStatusFlow.value = checkAppVersionUseCase()
+        }
 
         loadScreenState()
+    }
+
+    fun onDismissUpdateNudge() {
+        // Only the soft "update available" nudge is dismissible; a force-upgrade block stays put.
+        val isDismissibleNudge = _appUpgradeStatusFlow.value == AppUpgradeStatus.UPDATE_AVAILABLE
+        if (isDismissibleNudge) {
+            _appUpgradeStatusFlow.value = AppUpgradeStatus.UP_TO_DATE
+        }
     }
 
     fun retry() {

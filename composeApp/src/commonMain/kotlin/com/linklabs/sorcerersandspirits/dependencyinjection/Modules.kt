@@ -25,6 +25,7 @@ import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfig
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.RandomNameProvider
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -85,6 +86,7 @@ private fun Module.initializeUseCases() {
     singleOf(::CoordinateArenaMatchUseCase)
     singleOf(::ConnectTravelerPresenceUseCase)
     singleOf(::CreateProfileUseCase)
+    singleOf(::DeleteProfileUseCase)
     singleOf(::ExitArenaUseCase)
     singleOf(::GetCharacterClassesUseCase)
     singleOf(::GetProfileFlowUseCase)

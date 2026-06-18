@@ -35,7 +35,21 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
     }
 
     override suspend fun deleteProfile(userId: String) {
-        profilesCollection.document(documentPath = userId).delete()
+        val profileRef = profilesCollection.document(documentPath = userId)
+
+        database.runTransaction {
+            // Firestore requires all reads before any writes, so read the reserved name first.
+            val reservedDisplayName =
+                get(documentRef = profileRef).data<ProfileEntity?>()?.displayName?.takeIf {
+                    it.isNotBlank()
+                }
+
+            delete(documentRef = profileRef)
+
+            if (reservedDisplayName != null) {
+                delete(documentRef = displayNameReference(displayName = reservedDisplayName))
+            }
+        }
     }
 
     override suspend fun getProfile(userId: String): Profile? {

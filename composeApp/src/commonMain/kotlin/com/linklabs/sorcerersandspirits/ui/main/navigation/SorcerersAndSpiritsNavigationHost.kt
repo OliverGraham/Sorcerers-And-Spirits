@@ -53,6 +53,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
                 SorcerersAndSpirits(
                     appState = data,
                     onUpdateDisplayName = viewModel::onUpdateDisplayName,
+                    onDeleteProfile = viewModel::onDeleteProfile,
                     modifier = modifier,
                 )
             }
@@ -66,6 +67,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
 private fun SorcerersAndSpirits(
     appState: AppState,
     onUpdateDisplayName: (String) -> Unit,
+    onDeleteProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(navigationRoutesConfiguration, Route.TavernScreen)
@@ -93,6 +95,7 @@ private fun SorcerersAndSpirits(
                     backStack = backStack,
                     displayName = appState.displayName,
                     onUpdateDisplayName = onUpdateDisplayName,
+                    onDeleteProfile = onDeleteProfile,
                     modifier = modifier,
                 )
             }

@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -28,6 +29,7 @@ class AppViewModel(
     private val connectivityObserver: ConnectivityObserver,
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
+    private val deleteProfileUseCase: DeleteProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
@@ -67,6 +69,30 @@ class AppViewModel(
 
     fun onUpdateDisplayName(newDisplayName: String) {
         viewModelScope.launch { updateProfileDisplayNameUseCase(displayName = newDisplayName) }
+    }
+
+    fun onDeleteProfile() {
+        viewModelScope.launch {
+            // Stop collecting the now-deleted profile before its node is removed.
+            screenStateJob?.cancel()
+            _uiStateFlow.value = UiState.Loading
+
+            deleteProfileUseCase()
+
+            // The anonymous identity persists, so silently start a fresh profile with a random name
+            // rather than forcing the sign-in dialog. A deliberate profile-creation / sign-in flow
+            // (and converting the anonymous account) is future work (SS-061).
+            val newProfileResult =
+                createProfileUseCase(displayName = getRandomTravelerNameUseCase())
+
+            if (newProfileResult == DisplayNameResult.SUCCESS) {
+                loadScreenState()
+            } else {
+                // Fallback so a failed silent creation (e.g. a rare random-name collision) can't
+                // strand the user without a profile.
+                showSignInDialog()
+            }
+        }
     }
 
     fun createProfile(newDisplayName: String) {

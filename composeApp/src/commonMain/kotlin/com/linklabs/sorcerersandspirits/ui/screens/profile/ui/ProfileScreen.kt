@@ -9,10 +9,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,15 +29,16 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 // TODO(SS-064): Placeholder ProfileScreen. Promote to a route + ViewModel, reuse
-//  UpdateProfileDisplayNameUseCase for the edit flow, add profile deletion (SS-062) and per-user
-//  stats (SS-021/SS-072).
+//  UpdateProfileDisplayNameUseCase for the edit flow, and add per-user stats (SS-021/SS-072).
 @Composable
 internal fun ProfileScreen(
     displayName: String,
     onUpdateDisplayName: (String) -> Unit,
+    onDeleteProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var pendingDisplayName by rememberSaveable { mutableStateOf(displayName) }
+    var isDeleteConfirmationShown by rememberSaveable { mutableStateOf(false) }
 
     // Keep local field in sync if displayName changes from outside.
     LaunchedEffect(displayName) { pendingDisplayName = displayName }
@@ -72,11 +77,57 @@ internal fun ProfileScreen(
                 Text("Cancel")
             }
         }
+
+        Spacer(modifier = Modifier.height(height = 32.dp))
+
+        OutlinedButton(
+            onClick = { isDeleteConfirmationShown = true },
+            colors =
+                ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+        ) {
+            Text("Delete Profile")
+        }
     }
+
+    if (isDeleteConfirmationShown) {
+        DeleteProfileConfirmationDialog(
+            onConfirm = {
+                isDeleteConfirmationShown = false
+                onDeleteProfile()
+            },
+            onDismiss = { isDeleteConfirmationShown = false },
+        )
+    }
+}
+
+@Composable
+private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Delete Profile?") },
+        text = {
+            Text(
+                "This permanently deletes your profile, including your display name and game " +
+                    "stats. This can't be undone."
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors =
+                    ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                Text("Delete")
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+    )
 }
 
 @Preview
 @Composable
 private fun ProfileScreenPreview() {
-    SorcerersAndSpiritsTheme { ProfileScreen(displayName = "Gandalf", onUpdateDisplayName = {}) }
+    SorcerersAndSpiritsTheme {
+        ProfileScreen(displayName = "Gandalf", onUpdateDisplayName = {}, onDeleteProfile = {})
+    }
 }

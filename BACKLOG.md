@@ -978,6 +978,22 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   hierarchy Turn → Round → Match → Gauntlet (SS-073); link to the rules chatbot (SS-066) if/when it
   exists.
 
+### SS-081 — Class ability/stat copy in RemoteConfig (long + short variants)
+- [ ] Not completed
+- **Source:** SS-079 hardcoded the stat/ability descriptions as string literals in
+  `CharacterClassWheel.kt` (`offensiveAbilityDescription`/`defensiveAbilityDescription` +
+  `HEALTH/ARMOR/SPEED_DESCRIPTION`) to ship the expandable stat card.
+- **Goal:** Move all class ability + stat copy out of code and into RemoteConfig, with two registers:
+  a **full** description (for the GameRulesScreen, SS-067) and a **short** one (for space-constrained
+  in-UI surfaces like the wheel's stat card and combat). Lets us tune copy without a release and keeps
+  the tight surfaces from overflowing.
+- **Steps:** Define the RemoteConfig schema (per ability/stat: long + short text); thread through the
+  existing `CharacterClassProvider`/`GetCharacterClassesUseCase` (or a parallel copy provider) the way
+  stats are in SS-047; replace the literals in `CharacterClassWheel` with the short variant; have
+  GameRulesScreen consume the long variant; pick a static fallback for offline/first-run.
+- **Notes:** Overlaps SS-033 (move CharacterClassCard text to resources) and SS-047 (RemoteConfig
+  class stats). Related: SS-067, SS-079, SS-033, SS-047.
+
 ---
 
 ## UI overhaul & input
@@ -1035,6 +1051,102 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Steps:** Decide on-screen location relative to the combat controls; pick size/scale across form
   factors; choose colors/theme alignment; define resting state vs. held/shaking state appearance.
 - **Notes:** Depends on SS-077. Related: SS-069, SS-077, SS-068.
+
+### SS-079 — Spinning-wheel class selector (replace CharacterClassCards)
+- [ ] In progress — interaction + structure built; Figma visual fidelity remains.
+- **Progress:** `CharacterClassWheel.kt` built and wired into TavernScreen + ArenaChoosingClasses
+  (replacing `CharacterClassCards` at both call sites). Single `Animatable`/float rotation as the
+  source of truth; **angular drag** (rotate by the angle the finger sweeps around the centre, so the
+  grabbed point tracks the thumb at any clock position); snap-to-nearest spoke on release; each
+  avatar is `clickable` to spin-and-select that class. Per-class spoke colors, labels rotated inline
+  with their spoke, downsampled avatar/icon assets (see [[downsample-figma-raster-assets]]).
+  Per-frame recomposition avoided via `derivedStateOf`. Bottom stats are an expandable `ElevatedCard`
+  with `animateIntAsState` value animations and ability/stat descriptions. Removed the top selection
+  pointer. Also deleted the now-dead `CharacterClassCards.kt` pager (the singular `CharacterClassCard`
+  stays — still used by ArenaCombat). Remaining is split out: visual fidelity → SS-084, responsive
+  scaling → SS-080, copy source → SS-081.
+- **Source:** Figma `Android Medium - 1`
+  (https://www.figma.com/design/hCcLwQRgRvNFMrzGdMiRlf/appSorcerers-spirits?node-id=1-2). Child of
+  SS-068; supersedes the current `HorizontalPager`-based `CharacterClassCards`/`CharacterClassCard`.
+- **Goal:** Replace the card pager with a circular, rotatable wheel selector. Eight class spokes
+  radiate from a center hub at 45° increments, each with its class name aligned to the spoke and its
+  character art ringing the outside. The user spins the wheel to bring a class to a fixed selection
+  pointer; the selected class's stats render in the bottom stat bar.
+- **Design notes:**
+  - 8 classes (matches `CharacterClass.getAllClasses()`): Rogue, Gambler, Duelist, Necromancer,
+    Bard, Illusionist, Mage, Paladin. Each spoke is a rounded "capsule" (~173dp long, 27dp thick)
+    with a per-class color (e.g. Rogue red `#9D2920`→`#581310`, Gambler gold `#DAA73B`,
+    Illusionist blue `#1F3A5D`, Bard/Necromancer greens `#3C461E`/`#49533B`, Mage `#243346`).
+  - Selected spoke is visually highlighted (Figma shows `#852B1A`); names rotate to follow their
+    spoke angle.
+  - Bottom stat bar shows the selected class's stats with icons: Health (heart), Armor
+    (CornerArmor), Speed, and SPC/ability markers — sourced from `CharacterClassState`.
+  - Top bar is a themed header band.
+- **Steps:** Build a rotatable wheel composable (drag-to-spin + snap-to-nearest, with a fixed
+  pointer); drive selection off rotation angle → class index; render per-class spoke colors and
+  ringed avatars from `characterClasses`; render the selected class's stat bar; thread the existing
+  `selectedClass` / `unavailableClasses` / `classSelections` / `onClassSelected` contract through so
+  the Arena/Tavern selection flow is unchanged; obtain/slice the avatar + stat-icon assets
+  (download from Figma); add a `@Preview`.
+- **Notes:** Likely lets us retire SS-033 (CharacterClassCard "slop"/resources) and fold SS-034
+  (selection logic) into the wheel. Keep the no-duplicate-class rule (`unavailableClasses`). A pager
+  may still back the wheel internally per SS-068. Related: SS-068, SS-033, SS-034.
+
+### SS-084 — Spinning-wheel visual fidelity (match Figma)
+- [ ] Not completed
+- **Source:** Child of SS-079. The wheel's interaction + structure shipped under SS-079; this ticket
+  is the look. Figma will keep iterating on icons/colors, so this is intentionally split out.
+- **Goal:** Bring `CharacterClassWheel` to Figma fidelity:
+  - Themed top header band and bottom stat band (the radial-gradient bars from the Figma frame).
+  - Background image behind the wheel.
+  - Spoke geometry/proportions — length, thickness, corner radius, gap from hub — tuned to the Figma
+    `SPOKE_*` / `AVATAR_*` / `HUB_*` fractions instead of the current eyeballed values.
+  - Final per-class spoke colors and the final avatar + stat icons (`ic_health`/`ic_armor`/`ic_speed`/
+    `ic_spc`) once delivered from Figma (placeholders downsampled today — see
+    [[downsample-figma-raster-assets]]).
+  - Selected-spoke highlight treatment and hub styling; label typography/placement polish.
+- **Steps:** Pull updated Figma assets/colors when ready; replace placeholder drawables; tune the
+  layout fraction constants; add the header/stat bands and background; revisit the selected-state
+  highlight.
+- **Notes:** Gated on Figma updates. Coordinate with SS-080 (responsive) and SS-081 (copy). Related:
+  SS-079, SS-068.
+
+---
+
+## Responsive & form factors
+
+### SS-080 — Responsive scaling for small/medium phones
+- [ ] Not completed
+- **Source:** Observed on the spinning-wheel selector (SS-079): on a Small Phone the bottom stats
+  card is cut off; on a Medium phone the *expanded* stats card overflows (description copy clipped).
+- **Goal:** Make the Tavern/Arena class-selection layout (wheel + stats card) fit within the smallest
+  supported phone, collapsed and expanded, without clipping.
+- **Steps:** Audit the class-selection screens across the small/medium phone reference sizes; make
+  the wheel size and the stats card height adapt (e.g. cap/scale the wheel by available height, let
+  the expanded card scroll or size to content within a constrained viewport); verify on Small +
+  Medium previews/emulators. Short copy (SS-081) will also reduce overflow.
+- **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081.
+
+### SS-082 — Decide on landscape support
+- [ ] Not completed
+- **Goal:** Make a product + technical decision on whether the app supports landscape orientation,
+  and to what extent (all screens, or lock to portrait). The wheel selector and Arena combat layouts
+  assume portrait today.
+- **Steps:** Decide scope (lock portrait vs. full landscape vs. per-screen); if supported, define how
+  the wheel + stats card and ArenaScreen reflow; otherwise set the orientation lock and remove the
+  ambiguity. Record the decision here.
+- **Notes:** Interacts with SS-080 (responsive) and SS-083 (tablet, where landscape is more expected).
+
+### SS-083 — Tablet support
+- [ ] Not completed
+- **Goal:** Define and implement how the app presents on tablets / large screens (the layouts are
+  phone-first today).
+- **Steps:** Decide the target (basic "scaled-up phone" vs. adaptive multi-pane layouts); set max
+  content widths / adaptive breakpoints; review the wheel selector, Tavern, Arena, and profile/stats
+  screens at expanded window sizes. The `~/.android/skills/jetpack-compose/adaptive` skill is the
+  reference for adaptive layouts.
+- **Notes:** Likely depends on SS-082 (landscape) since tablets are commonly used landscape. Related:
+  SS-080, SS-082.
 
 ---
 

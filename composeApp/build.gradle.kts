@@ -34,6 +34,10 @@ kotlin {
             implementation(dependencyNotation = compose.preview)
             implementation(dependencyNotation = libs.androidx.activity.compose)
 
+            implementation(dependencyNotation = libs.androidx.credentials)
+            implementation(dependencyNotation = libs.androidx.credentials.play.services.auth)
+            implementation(dependencyNotation = libs.googleid)
+
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)
         }

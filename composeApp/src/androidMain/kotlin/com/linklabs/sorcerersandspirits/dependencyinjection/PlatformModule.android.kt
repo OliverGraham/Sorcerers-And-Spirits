@@ -10,6 +10,7 @@ import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.haptics.Haptics
 import com.linklabs.sorcerersandspirits.domain.sensor.ShakeDetector
 import com.linklabs.sorcerersandspirits.domain.version.CurrentAppVersionProvider
+import com.linklabs.sorcerersandspirits.platform.CurrentActivityHolder
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -18,5 +19,8 @@ actual fun platformModule(): Module = module {
     single<ShakeDetector> { AndroidShakeDetector(context = get()) }
     single<Haptics> { AndroidHaptics(context = get()) }
     single<CurrentAppVersionProvider> { AndroidCurrentAppVersionProvider(context = get()) }
-    single<SocialSignInProvider> { AndroidSocialSignInProvider() }
+    single { CurrentActivityHolder() }
+    single<SocialSignInProvider> {
+        AndroidSocialSignInProvider(context = get(), currentActivityHolder = get())
+    }
 }

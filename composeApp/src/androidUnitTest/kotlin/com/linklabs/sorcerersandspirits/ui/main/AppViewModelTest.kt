@@ -2,6 +2,9 @@ package com.linklabs.sorcerersandspirits.ui.main
 
 import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
@@ -49,6 +52,7 @@ class AppViewModelTest {
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
+    private val linkAccountUseCase: LinkAccountUseCase = mockk(relaxed = true)
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase =
         mockk(relaxed = true)
 
@@ -81,6 +85,7 @@ class AppViewModelTest {
             getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
             initializeGameConfigUseCase = initializeGameConfigUseCase,
             isUserSignedInUseCase = isUserSignedInUseCase,
+            linkAccountUseCase = linkAccountUseCase,
             updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
         )
 
@@ -252,6 +257,96 @@ class AppViewModelTest {
         }
 
     @Test
+    fun `When a chosen social sign-in method is unavailable, then the dialog stays up carrying the failure reason`() =
+        runTest {
+            coEvery { isUserSignedInUseCase() } returns false
+            isOnlineFlow.value = true
+            coEvery { createProfileUseCase(displayName = ENTERED_NAME) } returns
+                DisplayNameResult.SUCCESS
+            coEvery { linkAccountUseCase(method = SignInMethod.GOOGLE) } returns
+                LinkAccountResult.NOT_AVAILABLE
+            val viewModel = createViewModel()
+
+            viewModel.uiStateFlow.test {
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+                assertTrue(actual = awaitItem().loaded().showSignInDialog)
+
+                viewModel.onLinkWithSocialMethod(
+                    displayName = ENTERED_NAME,
+                    method = SignInMethod.GOOGLE,
+                )
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                val data = awaitItem().loaded()
+                assertTrue(actual = data.showSignInDialog)
+                assertEquals(expected = LinkAccountResult.NOT_AVAILABLE, actual = data.linkResult)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            coVerify { createProfileUseCase(displayName = ENTERED_NAME) }
+        }
+
+    @Test
+    fun `When email linking succeeds, then the profile is created and the app is entered without the dialog`() =
+        runTest {
+            coEvery { isUserSignedInUseCase() } returns false
+            isOnlineFlow.value = true
+            coEvery { createProfileUseCase(displayName = ENTERED_NAME) } answers
+                {
+                    profileFlow.value = Profile(userId = USER_ID, displayName = ENTERED_NAME)
+                    DisplayNameResult.SUCCESS
+                }
+            coEvery { linkAccountUseCase.withEmail(email = EMAIL, password = PASSWORD) } returns
+                LinkAccountResult.SUCCESS
+            val viewModel = createViewModel()
+
+            viewModel.uiStateFlow.test {
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+                assertTrue(actual = awaitItem().loaded().showSignInDialog)
+
+                viewModel.onLinkWithEmail(
+                    displayName = ENTERED_NAME,
+                    email = EMAIL,
+                    password = PASSWORD,
+                )
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                val data = awaitItem().loaded()
+                assertFalse(actual = data.showSignInDialog)
+                assertEquals(expected = ENTERED_NAME, actual = data.displayName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            coVerify { linkAccountUseCase.withEmail(email = EMAIL, password = PASSWORD) }
+        }
+
+    @Test
+    fun `When linking the current account from the profile screen, then the link result is published and no profile is created`() =
+        runTest {
+            coEvery { linkAccountUseCase.withEmail(email = EMAIL, password = PASSWORD) } returns
+                LinkAccountResult.CREDENTIAL_IN_USE
+            val viewModel = createViewModel()
+
+            viewModel.profileLinkResultFlow.test {
+                assertEquals(expected = null, actual = awaitItem())
+
+                viewModel.onLinkProfileWithEmail(email = EMAIL, password = PASSWORD)
+
+                assertEquals(expected = LinkAccountResult.CREDENTIAL_IN_USE, actual = awaitItem())
+
+                viewModel.onDismissProfileLinkResult()
+                assertEquals(expected = null, actual = awaitItem())
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            // Linking from the profile upgrades the existing account in place — no new profile.
+            coVerify(exactly = 0) { createProfileUseCase(displayName = any()) }
+        }
+
+    @Test
     fun `Given the build is below the minimum supported version, then the force-upgrade gate is exposed`() =
         runTest {
             every { checkAppVersionUseCase() } returns AppUpgradeStatus.FORCE_UPGRADE
@@ -302,5 +397,7 @@ class AppViewModelTest {
         private const val DISPLAY_NAME = "Gandalf the Grey"
         private const val ENTERED_NAME = "Radagast"
         private const val RANDOM_NAME = "a mysterious traveler"
+        private const val EMAIL = "radagast@example.com"
+        private const val PASSWORD = "hunter2!"
     }
 }

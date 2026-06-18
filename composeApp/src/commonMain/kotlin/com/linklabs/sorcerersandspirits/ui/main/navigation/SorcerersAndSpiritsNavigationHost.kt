@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.rememberNavBackStack
+import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
@@ -25,7 +27,13 @@ import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.TopBar
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_credential_in_use
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_generic
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_invalid_credential
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_unavailable
 
 @Composable
 internal fun SorcerersAndSpiritsNavigationHost(
@@ -46,17 +54,36 @@ internal fun SorcerersAndSpiritsNavigationHost(
                     displayName = data.displayName,
                     isOffline = data.isOffline,
                     isNameTaken = data.isNameTaken,
+                    linkStatusMessage = linkErrorMessage(result = data.linkResult),
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
+                    onSocialMethodClick = { method ->
+                        viewModel.onLinkWithSocialMethod(
+                            displayName = data.displayName,
+                            method = method,
+                        )
+                    },
+                    onEmailLink = { email, password ->
+                        viewModel.onLinkWithEmail(
+                            displayName = data.displayName,
+                            email = email,
+                            password = password,
+                        )
+                    },
                     // A profile is required before the app is usable, so the sign-in dialog is
                     // intentionally non-dismissible: dismiss attempts keep it on screen.
                     onDismissRequest = {},
                 )
             } else {
+                val profileLinkResult by viewModel.profileLinkResultFlow.collectAsState()
+
                 SorcerersAndSpirits(
                     appState = data,
                     onUpdateDisplayName = viewModel::onUpdateDisplayName,
                     onDeleteProfile = viewModel::onDeleteProfile,
+                    onLinkWithSocialMethod = viewModel::onLinkProfileWithSocialMethod,
+                    onLinkWithEmail = viewModel::onLinkProfileWithEmail,
+                    profileLinkResult = profileLinkResult,
                     modifier = modifier,
                 )
             }
@@ -72,11 +99,36 @@ internal fun SorcerersAndSpiritsNavigationHost(
     }
 }
 
+// SUCCESS and CANCELLED don't warrant an in-dialog message (success navigates away; cancel is the
+// player's own choice), so they map to no message.
+@Composable
+private fun linkErrorMessage(result: LinkAccountResult?): String? =
+    when (result) {
+        LinkAccountResult.CREDENTIAL_IN_USE ->
+            stringResource(resource = Res.string.link_account_error_credential_in_use)
+
+        LinkAccountResult.INVALID_CREDENTIAL ->
+            stringResource(resource = Res.string.link_account_error_invalid_credential)
+
+        LinkAccountResult.NOT_AVAILABLE ->
+            stringResource(resource = Res.string.link_account_error_unavailable)
+
+        LinkAccountResult.NO_CURRENT_USER,
+        LinkAccountResult.ERROR -> stringResource(resource = Res.string.link_account_error_generic)
+
+        LinkAccountResult.SUCCESS,
+        LinkAccountResult.CANCELLED,
+        null -> null
+    }
+
 @Composable
 private fun SorcerersAndSpirits(
     appState: AppState,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
+    onLinkWithSocialMethod: (SignInMethod) -> Unit,
+    onLinkWithEmail: (email: String, password: String) -> Unit,
+    profileLinkResult: LinkAccountResult?,
     modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(navigationRoutesConfiguration, Route.TavernScreen)
@@ -105,6 +157,9 @@ private fun SorcerersAndSpirits(
                     displayName = appState.displayName,
                     onUpdateDisplayName = onUpdateDisplayName,
                     onDeleteProfile = onDeleteProfile,
+                    onLinkWithSocialMethod = onLinkWithSocialMethod,
+                    onLinkWithEmail = onLinkWithEmail,
+                    profileLinkResult = profileLinkResult,
                     modifier = modifier,
                 )
             }

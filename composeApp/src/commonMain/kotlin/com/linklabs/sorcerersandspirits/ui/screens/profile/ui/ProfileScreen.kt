@@ -26,7 +26,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import org.jetbrains.compose.resources.stringResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_credential_in_use
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_generic
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_invalid_credential
+import sorcerersandspirits.composeapp.generated.resources.link_account_error_unavailable
+import sorcerersandspirits.composeapp.generated.resources.link_account_success
 
 // TODO(SS-064): Placeholder ProfileScreen. Promote to a route + ViewModel, reuse
 //  UpdateProfileDisplayNameUseCase for the edit flow, and add per-user stats (SS-021/SS-072).
@@ -35,6 +45,9 @@ internal fun ProfileScreen(
     displayName: String,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
+    onLinkWithSocialMethod: (SignInMethod) -> Unit,
+    onLinkWithEmail: (email: String, password: String) -> Unit,
+    linkResult: LinkAccountResult?,
     modifier: Modifier = Modifier,
 ) {
     var pendingDisplayName by rememberSaveable { mutableStateOf(displayName) }
@@ -80,6 +93,16 @@ internal fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(height = 32.dp))
 
+        val isLinkSuccess = linkResult == LinkAccountResult.SUCCESS
+        SignInMethodsSection(
+            onSocialMethodClick = onLinkWithSocialMethod,
+            onEmailLink = onLinkWithEmail,
+            statusMessage = linkStatusMessage(result = linkResult),
+            isStatusError = !isLinkSuccess,
+        )
+
+        Spacer(modifier = Modifier.height(height = 32.dp))
+
         OutlinedButton(
             onClick = { isDeleteConfirmationShown = true },
             colors =
@@ -99,6 +122,29 @@ internal fun ProfileScreen(
         )
     }
 }
+
+// Unlike the first-launch dialog (which navigates away on success), the player stays on this screen
+// afterwards, so SUCCESS gets its own confirmation message. CANCELLED is the player's own choice.
+@Composable
+private fun linkStatusMessage(result: LinkAccountResult?): String? =
+    when (result) {
+        LinkAccountResult.SUCCESS -> stringResource(resource = Res.string.link_account_success)
+
+        LinkAccountResult.CREDENTIAL_IN_USE ->
+            stringResource(resource = Res.string.link_account_error_credential_in_use)
+
+        LinkAccountResult.INVALID_CREDENTIAL ->
+            stringResource(resource = Res.string.link_account_error_invalid_credential)
+
+        LinkAccountResult.NOT_AVAILABLE ->
+            stringResource(resource = Res.string.link_account_error_unavailable)
+
+        LinkAccountResult.NO_CURRENT_USER,
+        LinkAccountResult.ERROR -> stringResource(resource = Res.string.link_account_error_generic)
+
+        LinkAccountResult.CANCELLED,
+        null -> null
+    }
 
 @Composable
 private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -128,6 +174,13 @@ private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: ()
 @Composable
 private fun ProfileScreenPreview() {
     SorcerersAndSpiritsTheme {
-        ProfileScreen(displayName = "Gandalf", onUpdateDisplayName = {}, onDeleteProfile = {})
+        ProfileScreen(
+            displayName = "Gandalf",
+            onUpdateDisplayName = {},
+            onDeleteProfile = {},
+            onLinkWithSocialMethod = {},
+            onLinkWithEmail = { _, _ -> },
+            linkResult = null,
+        )
     }
 }

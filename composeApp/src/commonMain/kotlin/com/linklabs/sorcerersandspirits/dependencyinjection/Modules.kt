@@ -20,6 +20,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
@@ -98,6 +99,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::GetTavernDataFlowUseCase)
     factoryOf(::GetUserIdUseCase)
     factoryOf(::IsUserSignedInUseCase)
+    factoryOf(::LinkAccountUseCase)
     factoryOf(::PerformCombatActionUseCase)
     factoryOf(::SetCurrentTravelerAvailableUseCase)
     factoryOf(::SendChallengeUseCase)

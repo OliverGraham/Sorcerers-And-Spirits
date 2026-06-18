@@ -12,6 +12,8 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUse
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
+import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
+import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -37,6 +39,7 @@ class AppViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val checkAppVersionUseCase: CheckAppVersionUseCase = mockk()
     private val connectivityObserver: ConnectivityObserver = mockk()
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase =
         mockk(relaxed = true)
@@ -58,6 +61,7 @@ class AppViewModelTest {
         every { getProfileFlowUseCase() } returns profileFlow
         every { getRandomTravelerNameUseCase() } returns RANDOM_NAME
         every { connectivityObserver.isOnline } returns isOnlineFlow
+        every { checkAppVersionUseCase() } returns AppUpgradeStatus.UP_TO_DATE
         coEvery { isUserSignedInUseCase() } returns true
     }
 
@@ -68,6 +72,7 @@ class AppViewModelTest {
 
     private fun createViewModel() =
         AppViewModel(
+            checkAppVersionUseCase = checkAppVersionUseCase,
             connectivityObserver = connectivityObserver,
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
             createProfileUseCase = createProfileUseCase,
@@ -244,6 +249,52 @@ class AppViewModelTest {
 
             coVerify(exactly = 1) { deleteProfileUseCase() }
             coVerify(exactly = 1) { createProfileUseCase(displayName = RANDOM_NAME) }
+        }
+
+    @Test
+    fun `Given the build is below the minimum supported version, then the force-upgrade gate is exposed`() =
+        runTest {
+            every { checkAppVersionUseCase() } returns AppUpgradeStatus.FORCE_UPGRADE
+
+            val viewModel = createViewModel()
+            viewModel.appUpgradeStatusFlow.test {
+                assertEquals(expected = AppUpgradeStatus.UP_TO_DATE, actual = awaitItem())
+                assertEquals(expected = AppUpgradeStatus.FORCE_UPGRADE, actual = awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given a soft update nudge, when it is dismissed, then the gate clears`() = runTest {
+        every { checkAppVersionUseCase() } returns AppUpgradeStatus.UPDATE_AVAILABLE
+
+        val viewModel = createViewModel()
+        viewModel.appUpgradeStatusFlow.test {
+            assertEquals(expected = AppUpgradeStatus.UP_TO_DATE, actual = awaitItem())
+            assertEquals(expected = AppUpgradeStatus.UPDATE_AVAILABLE, actual = awaitItem())
+
+            viewModel.onDismissUpdateNudge()
+            assertEquals(expected = AppUpgradeStatus.UP_TO_DATE, actual = awaitItem())
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `Given a force-upgrade gate, when a dismiss is attempted, then the gate stays put`() =
+        runTest {
+            every { checkAppVersionUseCase() } returns AppUpgradeStatus.FORCE_UPGRADE
+
+            val viewModel = createViewModel()
+            viewModel.appUpgradeStatusFlow.test {
+                assertEquals(expected = AppUpgradeStatus.UP_TO_DATE, actual = awaitItem())
+                assertEquals(expected = AppUpgradeStatus.FORCE_UPGRADE, actual = awaitItem())
+
+                viewModel.onDismissUpdateNudge()
+                expectNoEvents()
+
+                cancelAndIgnoreRemainingEvents()
+            }
         }
 
     private companion object {

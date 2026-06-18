@@ -970,13 +970,30 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   entry point (likely from the GameRulesScreen or drawer). Investigation only for now.
 
 ### SS-067 — GameRulesScreen
-- [ ] Not completed
+- [x] Completed
 - **Goal:** A screen, accessible from the drawer (SS-063), where users can read the game rules and
   class abilities.
-- **Steps:** Decide the rules content source (static resource vs. RemoteConfig-driven); build a
-  readable/navigable layout (core combat rules + per-class abilities); explain the game-terms
-  hierarchy Turn → Round → Match → Gauntlet (SS-073); link to the rules chatbot (SS-066) if/when it
-  exists.
+- **Decision (content source):** Static inline copy for now, consistent with how SS-079 shipped the
+  class wheel's ability/stat literals. SS-081 owns moving the per-class ability/stat copy to
+  RemoteConfig (long variant) — when it lands, this screen consumes the long variant. Core combat
+  rules + the game-terms hierarchy are stable game definitions and stay static.
+- **Resolution:** Replaced the placeholder `GameRulesScreen` with a scrollable `LazyColumn` of three
+  sections: **How Combat Works** (2–8 players, the 2d6 Armor-then-Health attack sequence, knockout/
+  skip/end conditions, the doubles +1 consecutive-roll rule), **Game Terms** (Turn → Round → Match →
+  Gauntlet, the Gauntlet definition from SS-073), and **Classes & Abilities** — one `Card` per class
+  driven by `CharacterClass.getAllClasses().map { it.toState() }`, showing each class's Health/Armor/
+  Speed and its offensive + defensive ability name and description.
+  - **De-duplicated copy:** the per-class ability name/description functions and the Health/Armor/
+    Speed stat descriptions were previously private literals in `CharacterClassWheel.kt`. Extracted
+    them into a shared `ui/common/characterclasses/CharacterClassCopy.kt` (`internal`), now consumed
+    by both the wheel and the rules screen — single source for the class copy (and the single place
+    SS-081 will point at RemoteConfig). Tagged with a `TODO(SS-081)`.
+  - No ViewModel/route changes needed — the screen is already registered as `Route.GameRulesScreen`
+    and wired from `SettingsDrawer` → `NavigationDisplay` (SS-063); the static class list keeps it
+    ViewModel-free like the sibling placeholder screens.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean.
+- **Deferred:** rules-chatbot link (SS-066) when/if it exists; moving ability/stat copy to
+  RemoteConfig (SS-081).
 
 ### SS-081 — Class ability/stat copy in RemoteConfig (long + short variants)
 - [ ] Not completed

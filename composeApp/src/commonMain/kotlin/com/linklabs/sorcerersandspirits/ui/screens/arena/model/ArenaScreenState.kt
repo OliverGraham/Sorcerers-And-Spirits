@@ -98,7 +98,11 @@ sealed interface ArenaState {
         val combatControls = deriveCombatControls()
     }
 
-    @Immutable data object Finished : ArenaState
+    @Immutable
+    data class Finished(val players: List<PlayerState.Selected>) : ArenaState {
+        val survivors = players.filter { it.characterClass.isConscious }
+        val winner = survivors.singleOrNull()
+    }
 }
 
 @Immutable
@@ -170,7 +174,13 @@ internal fun ArenaMatch.toUpdatedState(
                 )
             }
 
-            is ArenaMatch.Finished -> ArenaState.Finished
+            is ArenaMatch.Finished ->
+                ArenaState.Finished(
+                    players =
+                        playerMap.values
+                            .map { it.toState() }
+                            .filterIsInstance<PlayerState.Selected>()
+                )
         }
 
     val nextScreenState =

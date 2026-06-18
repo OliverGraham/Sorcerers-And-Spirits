@@ -112,7 +112,11 @@ private fun ArenaStateContent(
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
-            is ArenaState.Finished -> MatchFinishedContent(gauntletProgress = gauntletProgress)
+            is ArenaState.Finished ->
+                MatchFinishedContent(
+                    finishedState = arenaState,
+                    gauntletProgress = gauntletProgress,
+                )
         }
     }
 }

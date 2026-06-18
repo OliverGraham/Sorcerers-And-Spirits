@@ -15,6 +15,7 @@ data class CharacterClassState(
     val defensiveAbility: DefensiveAbilityState,
 ) {
     val className: String = type.name
+    val isConscious: Boolean = hitPoints > 0
 }
 
 internal fun CharacterClass.toState() =

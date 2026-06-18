@@ -65,7 +65,7 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given the match has finished, then a match-finished decision is offered`() {
-        val state = screenState(arenaState = ArenaState.Finished)
+        val state = screenState(arenaState = ArenaState.Finished(players = emptyList()))
 
         assertEquals(expected = MatchDecision.MatchFinished, actual = state.matchDecision)
     }

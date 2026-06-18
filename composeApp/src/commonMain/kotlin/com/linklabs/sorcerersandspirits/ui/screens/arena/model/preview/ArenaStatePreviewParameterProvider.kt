@@ -38,7 +38,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             getExampleScreenState(arenaState = getExampleArenaState()),
             getExampleScreenState(arenaState = getExampleChoosingClassesState()),
             getExampleScreenState(arenaState = getExampleCombatState()),
-            getExampleScreenState(arenaState = ArenaState.Finished),
+            getExampleScreenState(arenaState = getExampleFinishedState()),
         )
 
     private fun getExampleScreenState(
@@ -62,6 +62,23 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         )
 
     private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers
+
+    private fun getExampleFinishedState() =
+        ArenaState.Finished(
+            players =
+                listOf(
+                    PlayerState.Selected(
+                        userId = "player1",
+                        displayName = "Sorcerer Supreme",
+                        characterClass = mageState,
+                    ),
+                    PlayerState.Selected(
+                        userId = "player2",
+                        displayName = "Spirit Walker",
+                        characterClass = rogueState.copy(hitPoints = 0),
+                    ),
+                )
+        )
 
     private fun getExampleChoosingClassesState(
         playerMap: Map<String, PlayerState> = getExamplePlayers(),

@@ -406,9 +406,28 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Verification:** `composeApp` Android debug compiles clean.
 
 ### SS-024 — Possibly add finished-state content
-- [ ] Not completed
+- [x] Completed
 - **Source:** `MatchFinishedContent.kt:29` (`// TODO add something here if it makes sense...`)
 - **Goal:** Decide whether the finished-match screen needs additional content; add it or keep as-is.
+- **Decision:** Add a match outcome. The finished screen previously showed only the
+  headline + "Match X of Y" — it never told players who actually won. The data was already there
+  (`ArenaMatch.Finished.playerMap` carries every player with their class and HP), it just wasn't
+  threaded into the UI state.
+- **Resolution:**
+  - Converted `ArenaState.Finished` from a bare `data object` into a `data class` carrying
+    `players: List<PlayerState.Selected>`, with derived `survivors`/`winner` (the single conscious
+    player, or `null` for a mutual-KO draw). Populated it in `toUpdatedState` by mapping the domain
+    `playerMap`. Added a derived `isConscious` (`hitPoints > 0`) to `CharacterClassState` so the UI
+    computes survival from existing state rather than re-deriving inline (per the derived-UI-state
+    convention).
+  - `MatchFinishedContent` now renders a **WinnerBanner** ("{name} wins as the {Class}!" or
+    "No survivors — it's a draw") plus a **MatchRecap** — one card per player showing class and a
+    Survived / Knocked-out badge — under the existing Gauntlet/Match-progress header. Wrapped in a
+    vertical scroll for larger rosters.
+  - Updated the preview provider's Finished example and the `ArenaScreenStateTest` construction to
+    the new signature.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean; `ArenaScreenStateTest`
+  and the full `*Arena*` unit suite pass.
 
 ### SS-025 — Improve message-log animation
 - [ ] Not completed

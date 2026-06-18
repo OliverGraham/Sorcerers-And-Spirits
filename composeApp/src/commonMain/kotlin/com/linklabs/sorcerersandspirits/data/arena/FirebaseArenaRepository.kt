@@ -10,6 +10,7 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
+import com.linklabs.sorcerersandspirits.data.arena.utilities.appendCapped
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
@@ -19,10 +20,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
-
-// TODO(SS-040) Arena: Paginate messages and/or have a separate node for them to make more
-//  efficient. Could also save all messages and get on demand, and only have the latest 30 or
-//  something
 
 class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
@@ -77,14 +74,14 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
 
             if (result.isMatchFinished) {
                 ArenaMatchEntity.Finished(
-                    messages = existingMatch.messages + newMessages,
+                    messages = existingMatch.messages.appendCapped(newMessages = newMessages),
                     numberOfNewMessages = newMessages.size,
                     playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
                     matchNumberInGauntlet = existingMatch.matchNumberInGauntlet,
                 )
             } else {
                 ArenaMatchEntity.Combat(
-                    messages = existingMatch.messages + newMessages,
+                    messages = existingMatch.messages.appendCapped(newMessages = newMessages),
                     numberOfNewMessages = newMessages.size,
                     playerEntitiesMap =
                         result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },

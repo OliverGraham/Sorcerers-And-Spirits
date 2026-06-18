@@ -798,7 +798,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Profile & Auth
 
 ### SS-061 — Investigate Firebase Authentication for user profiles
-- [ ] Not completed
+- [x] Completed
 - **Goal:** Choose the easiest and most robust way for users to create and own a profile. Evaluate
   Firebase Auth providers — Google Sign-In and phone (mobile) auth are the leading candidates — for a
   KMP (Android + iOS) app, and decide which to support. This unblocks tying profiles/stats to a real
@@ -808,6 +808,36 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   anonymous auth as the first-launch default with later upgrade/link to a permanent provider; document
   a recommendation and the migration path for existing anonymous profiles. Related: SS-036 (signed-in
   user with missing profile), SS-064 (ProfileScreen).
+- **Findings:** gitlive `firebase-auth` 2.4.0 exposes the *credential* layer cross-platform
+  (`signInWithCredential`, `FirebaseUser.linkWithCredential`, and the `GoogleAuthProvider` /
+  `OAuthProvider` / `EmailAuthProvider` credential builders). What is **not** cross-platform is
+  *obtaining* a federated token: that needs platform UI (Credential Manager on Android, the
+  GoogleSignIn / AuthenticationServices SDKs on iOS). Email/password (and email-link) are fully
+  pure-gitlive. Phone auth was rejected: per-SMS cost, SMS-pumping fraud risk, and the heaviest
+  setup (Play Integrity / APNs). Email-*link* is awkward post-Firebase-Dynamic-Links-sunset.
+- **Decision:** Anonymous-first (unchanged silent default), then **link** a permanent provider onto
+  the existing anonymous account via `linkWithCredential`, which preserves the `userId` and every
+  profile/stats record already keyed to it — so there is no migration for existing anonymous
+  profiles. Chosen providers: **Google + Apple** (Apple is mandatory on iOS once Google is offered)
+  **+ Email/password**.
+- **Resolution (reusable scaffolding built):**
+  - Domain: `SignInMethod`, `LinkAccountResult`, `SocialSignInProvider` (+ `SocialTokenResult`), and
+    a reusable `LinkAccountUseCase` (`invoke(method)` for Google/Apple, `withEmail(...)` for email).
+    `AuthenticationRepository` gained `linkWithGoogle` / `linkWithApple` / `linkWithEmail`.
+  - Data: `FirebaseAuthenticationRepository` implements all three by building the gitlive credential
+    and calling `currentUser.linkWithCredential`, mapping collisions/invalid creds to
+    `LinkAccountResult`.
+  - UI: reusable `SignInMethodsSection` (the three buttons + inline email form + the "signing in is
+    optional…" copy, which never mentions the anonymous account) wired into the first-launch
+    `SignInNameDialog`; ready to drop into ProfileScreen (SS-064). `AppViewModel` orchestrates
+    create-profile-then-link and surfaces `LinkAccountResult` back into the dialog.
+  - Email/password linking is **fully functional and unit-tested**. Google/Apple compile end-to-end
+    but their native token acquisition is stubbed (`Android/IosSocialSignInProvider` return
+    `NotAvailable`) pending the native SDK + Firebase console setup below.
+- **Remaining (native + console, follow-ups):** SS-086 (Android Google via Credential Manager),
+  SS-087 (iOS Google + Apple via GoogleSignIn / AuthenticationServices), SS-088 (Firebase console:
+  enable Google/Apple providers, OAuth client IDs, SHA fingerprints, Apple Services ID). Grep
+  `TODO(SS-061)` for the exact insertion points. Also unblocks SS-036 and feeds SS-064.
 
 ### SS-062 — Profile deletion in Firestore
 - [x] Completed
@@ -862,7 +892,41 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   exists, the user's own game statistics.
 - **Steps:** Create the route + screen + ViewModel; move the display-name edit flow here (reusing
   `UpdateProfileDisplayNameUseCase`); wire profile deletion (SS-062) behind a confirmation; leave a
-  placeholder for per-user stats. Related: SS-035, SS-039, SS-061, SS-065.
+  placeholder for per-user stats. Lay the screen out in a `LazyColumn` (it is currently a plain
+  `Column` and will grow past one screen once stats land) and replace the placeholder copy — the
+  section labels, button text, and the bare `"Profile"`/`"Display Name"`/`"Save"`/`"Cancel"`
+  strings are all stand-ins and need finalized, localized wording moved into `strings.xml`. The
+  reusable `SignInMethodsSection` + `LinkAccountUseCase` (SS-061) is **already wired** into the
+  placeholder ProfileScreen (links the current account in place via `AppViewModel.onLinkProfileWith*`,
+  status surfaced through `profileLinkResultFlow`); carry it over when promoting the screen to its
+  own route + ViewModel. Related: SS-035, SS-039, SS-061, SS-065.
+
+### SS-086 — Android: native Google Sign-In token acquisition
+- [ ] Not completed
+- **Source:** SS-061 follow-up. `AndroidSocialSignInProvider` currently returns `NotAvailable`.
+- **Goal:** Implement the Google account picker on Android via `androidx.credentials`
+  (`CredentialManager` + `GetSignInWithGoogleOption` using the Firebase web client ID) and return
+  `SocialTokenResult.Google(idToken)`. `LinkAccountUseCase` + `linkWithGoogle` already consume it.
+- **Steps:** Add the `androidx.credentials` + `googleid` deps; thread an Activity/context into the
+  provider; map cancel/error to `SocialTokenResult.Cancelled`/`Error`. Depends on SS-088. Grep
+  `TODO(SS-061)` in `AndroidSocialSignInProvider`.
+
+### SS-087 — iOS: native Google + Apple Sign-In token acquisition
+- [ ] Not completed
+- **Source:** SS-061 follow-up. `IosSocialSignInProvider` currently returns `NotAvailable`.
+- **Goal:** Implement Google (GoogleSignIn SDK → `SocialTokenResult.Google(idToken)`) and Apple
+  (`AuthenticationServices` / `ASAuthorizationAppleIDProvider` → `SocialTokenResult.Apple(idToken,
+  rawNonce)` with a SHA256-hashed nonce) on iOS.
+- **Steps:** Add the GoogleSignIn pod + the Sign in with Apple capability; implement the provider in
+  `iosMain`; map cancel/error. Depends on SS-088. Grep `TODO(SS-061)` in `IosSocialSignInProvider`.
+
+### SS-088 — Firebase console: enable Google/Apple auth providers
+- [ ] Not completed
+- **Source:** SS-061 follow-up (console-only; no app code).
+- **Goal:** Turn on the Google and Apple sign-in providers in the Firebase console so the linked
+  credentials from SS-086/SS-087 are accepted.
+- **Steps:** Enable Google (capture the web client ID for SS-086) and Apple providers; register
+  Android SHA-1/SHA-256 fingerprints; create the Apple Services ID + key. Blocks SS-086 and SS-087.
 
 ---
 

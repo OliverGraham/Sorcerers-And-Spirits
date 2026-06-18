@@ -3,6 +3,9 @@ package com.linklabs.sorcerersandspirits.ui.main
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
@@ -37,6 +40,7 @@ class AppViewModel(
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
+    private val linkAccountUseCase: LinkAccountUseCase,
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
 ) : ViewModel() {
 
@@ -46,7 +50,16 @@ class AppViewModel(
     private val _appUpgradeStatusFlow = MutableStateFlow(value = AppUpgradeStatus.UP_TO_DATE)
     val appUpgradeStatusFlow = _appUpgradeStatusFlow.asStateFlow()
 
+    // Result of the most recent link attempt from the ProfileScreen. Kept off AppState so the
+    // profile flow re-emitting (e.g. a connectivity change) can't wipe the feedback mid-view.
+    private val _profileLinkResultFlow = MutableStateFlow<LinkAccountResult?>(value = null)
+    val profileLinkResultFlow = _profileLinkResultFlow.asStateFlow()
+
     private var screenStateJob: Job? = null
+
+    // Once a profile exists (anonymously) this session, the dialog's actions only need to enter the
+    // app rather than create another profile — re-creating would collide with the reserved name.
+    private var hasCreatedProfile = false
 
     init {
         viewModelScope.launch {
@@ -105,10 +118,12 @@ class AppViewModel(
                 createProfileUseCase(displayName = getRandomTravelerNameUseCase())
 
             if (newProfileResult == DisplayNameResult.SUCCESS) {
+                hasCreatedProfile = true
                 loadScreenState()
             } else {
                 // Fallback so a failed silent creation (e.g. a rare random-name collision) can't
                 // strand the user without a profile.
+                hasCreatedProfile = false
                 showSignInDialog()
             }
         }
@@ -116,6 +131,12 @@ class AppViewModel(
 
     fun createProfile(newDisplayName: String) {
         viewModelScope.launch {
+            // A link attempt may have already created the anonymous profile; just enter the app.
+            if (hasCreatedProfile) {
+                collectScreenState()
+                return@launch
+            }
+
             if (!connectivityObserver.isOnline.first()) {
                 // Signing in requires the network. Keep the dialog up with an offline notice
                 // instead of hanging on the loading indicator.
@@ -134,7 +155,10 @@ class AppViewModel(
             _uiStateFlow.value = UiState.Loading
 
             when (createProfileUseCase(displayName = newDisplayName)) {
-                DisplayNameResult.SUCCESS -> collectScreenState()
+                DisplayNameResult.SUCCESS -> {
+                    hasCreatedProfile = true
+                    collectScreenState()
+                }
 
                 DisplayNameResult.NAME_TAKEN ->
                     _uiStateFlow.value =
@@ -154,6 +178,100 @@ class AppViewModel(
                         )
             }
         }
+    }
+
+    fun onLinkWithSocialMethod(displayName: String, method: SignInMethod) {
+        linkFromSignInDialog(displayName = displayName) { linkAccountUseCase(method = method) }
+    }
+
+    fun onLinkWithEmail(displayName: String, email: String, password: String) {
+        linkFromSignInDialog(displayName = displayName) {
+            linkAccountUseCase.withEmail(email = email, password = password)
+        }
+    }
+
+    // Linking upgrades an existing account in place, so a profile (anonymous) must exist first; the
+    // chosen name is reserved as part of that creation. The link is then a best-effort upgrade: on
+    // success we enter the app, and on failure we keep the dialog up with the reason so the player
+    // can retry (their anonymous profile is already safe).
+    private fun linkFromSignInDialog(displayName: String, link: suspend () -> LinkAccountResult) {
+        viewModelScope.launch {
+            if (!connectivityObserver.isOnline.first()) {
+                _uiStateFlow.value =
+                    UiState.Loaded(
+                        data =
+                            AppState(
+                                displayName = displayName,
+                                showSignInDialog = true,
+                                isOffline = true,
+                            )
+                    )
+                return@launch
+            }
+
+            if (!hasCreatedProfile) {
+                _uiStateFlow.value = UiState.Loading
+                when (createProfileUseCase(displayName = displayName)) {
+                    DisplayNameResult.SUCCESS -> hasCreatedProfile = true
+
+                    DisplayNameResult.NAME_TAKEN -> {
+                        _uiStateFlow.value =
+                            UiState.Loaded(
+                                data =
+                                    AppState(
+                                        displayName = displayName,
+                                        showSignInDialog = true,
+                                        isNameTaken = true,
+                                    )
+                            )
+                        return@launch
+                    }
+
+                    DisplayNameResult.ERROR -> {
+                        _uiStateFlow.value =
+                            UiState.Loaded(
+                                data = AppState(displayName = displayName, showSignInDialog = true)
+                            )
+                        return@launch
+                    }
+                }
+            }
+
+            _uiStateFlow.value = UiState.Loading
+
+            val linkResult = link()
+            if (linkResult == LinkAccountResult.SUCCESS) {
+                collectScreenState()
+            } else {
+                _uiStateFlow.value =
+                    UiState.Loaded(
+                        data =
+                            AppState(
+                                displayName = displayName,
+                                showSignInDialog = true,
+                                linkResult = linkResult,
+                            )
+                    )
+            }
+        }
+    }
+
+    // From the ProfileScreen a profile (and anonymous account) already exists, so linking is a
+    // direct in-place upgrade — no profile creation, just surface the outcome.
+    fun onLinkProfileWithSocialMethod(method: SignInMethod) {
+        linkCurrentAccount { linkAccountUseCase(method = method) }
+    }
+
+    fun onLinkProfileWithEmail(email: String, password: String) {
+        linkCurrentAccount { linkAccountUseCase.withEmail(email = email, password = password) }
+    }
+
+    fun onDismissProfileLinkResult() {
+        _profileLinkResultFlow.value = null
+    }
+
+    private fun linkCurrentAccount(link: suspend () -> LinkAccountResult) {
+        viewModelScope.launch { _profileLinkResultFlow.value = link() }
     }
 
     fun getRandomName() {

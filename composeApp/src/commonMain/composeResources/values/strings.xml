@@ -9,6 +9,19 @@
     <string name="sign_in_offline_message">Couldn\'t reach the realm. Check your connection and try again.</string>
     <string name="sign_in_name_taken_message">That name is already taken. Choose another.</string>
 
+    <string name="link_account_optional_note">Signing in is optional — it just keeps your name and stats safe if you switch devices.</string>
+    <string name="link_account_google">Continue with Google</string>
+    <string name="link_account_apple">Continue with Apple</string>
+    <string name="link_account_email">Continue with email</string>
+    <string name="link_account_email_label">Email</string>
+    <string name="link_account_password_label">Password</string>
+    <string name="link_account_email_submit">Link email</string>
+    <string name="link_account_error_credential_in_use">That account is already linked to another player. Try a different one.</string>
+    <string name="link_account_error_invalid_credential">Check your email and password (at least 6 characters) and try again.</string>
+    <string name="link_account_error_unavailable">This sign-in option isn\'t available yet.</string>
+    <string name="link_account_error_generic">Couldn\'t finish signing in. Please try again.</string>
+    <string name="link_account_success">You\'re all set — your progress is saved.</string>
+
     <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 
     <string name="app_update_force_title">Update required</string>

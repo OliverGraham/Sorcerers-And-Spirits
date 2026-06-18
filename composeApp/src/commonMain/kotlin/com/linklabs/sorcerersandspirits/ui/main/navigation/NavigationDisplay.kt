@@ -9,6 +9,8 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
@@ -21,6 +23,9 @@ internal fun NavigationDisplay(
     displayName: String,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
+    onLinkWithSocialMethod: (SignInMethod) -> Unit,
+    onLinkWithEmail: (email: String, password: String) -> Unit,
+    profileLinkResult: LinkAccountResult?,
     modifier: Modifier = Modifier,
 ) {
     NavDisplay(
@@ -31,6 +36,9 @@ internal fun NavigationDisplay(
                 displayName = displayName,
                 onUpdateDisplayName = onUpdateDisplayName,
                 onDeleteProfile = onDeleteProfile,
+                onLinkWithSocialMethod = onLinkWithSocialMethod,
+                onLinkWithEmail = onLinkWithEmail,
+                profileLinkResult = profileLinkResult,
             )
         },
         onBack = { backStack.removeLastOrNull() },
@@ -44,6 +52,9 @@ private fun NavKey.toScreen(
     displayName: String,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
+    onLinkWithSocialMethod: (SignInMethod) -> Unit,
+    onLinkWithEmail: (email: String, password: String) -> Unit,
+    profileLinkResult: LinkAccountResult?,
 ): NavEntry<NavKey> =
     when (this) {
         Route.TavernScreen ->
@@ -74,6 +85,9 @@ private fun NavKey.toScreen(
                     displayName = displayName,
                     onUpdateDisplayName = onUpdateDisplayName,
                     onDeleteProfile = onDeleteProfile,
+                    onLinkWithSocialMethod = onLinkWithSocialMethod,
+                    onLinkWithEmail = onLinkWithEmail,
+                    linkResult = profileLinkResult,
                 )
             }
 

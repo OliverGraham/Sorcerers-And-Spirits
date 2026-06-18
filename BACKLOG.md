@@ -548,8 +548,8 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   methods and their use cases (`CreateProfileUseCase`, `UpdateProfileDisplayNameUseCase`) return the
   new `DisplayNameResult` enum (`SUCCESS`/`NAME_TAKEN`/`ERROR`); `AppViewModel.createProfile` surfaces
   `NAME_TAKEN` by keeping the sign-in dialog up with a "name is already taken" notice (`AppState.nameTaken`).
-- **Notes:** Reservation cleanup on profile deletion stays with SS-062; consuming the update result
-  in the ProfileScreen edit flow stays with SS-064.
+- **Notes:** Reservation cleanup on profile deletion was completed in SS-062; consuming the update
+  result in the ProfileScreen edit flow stays with SS-064.
 
 ### SS-040 — Paginate / separate node for arena messages
 - [x] Completed
@@ -800,7 +800,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   user with missing profile), SS-064 (ProfileScreen).
 
 ### SS-062 — Profile deletion in Firestore
-- [ ] Not completed
+- [x] Completed
 - **Source:** `FirebaseProfileRepository.kt` (profile data layer).
 - **Goal:** Add the ability to delete a user's profile from Firestore, with the corresponding
   domain use case and repository method.
@@ -808,6 +808,22 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   data is cleaned up (the unique display-name reservation from SS-039, any stats records, the auth
   account if appropriate per SS-061); surface it from the ProfileScreen (SS-064) behind a
   confirmation.
+- **Resolution:** Made `FirebaseProfileRepository.deleteProfile` atomic via `runTransaction`: it
+  reads the profile's reserved display name first (Firestore requires reads before writes), deletes
+  the profile document (which carries the nested `stats`, so stats are cleaned up with it), and
+  releases the SS-039 display-name reservation in the same transaction. Added `DeleteProfileUseCase`
+  (resolves the signed-in `userId` via `AuthenticationRepository`, no-ops when unauthenticated) and
+  registered it in DI. Surfaced it in `ProfileScreen` as a "Delete Profile" outlined button gated
+  behind an `AlertDialog` confirmation; on confirm, `AppViewModel.onDeleteProfile` cancels the
+  profile-collection job, runs the use case, then **silently creates a fresh profile** with a random
+  traveler name (reusing `createProfileUseCase`) rather than forcing the sign-in dialog — the
+  anonymous identity persists, so this is a smoother UX. The sign-in dialog remains only as a
+  fallback if that silent creation fails (e.g. a rare random-name collision).
+- **Out of scope:** Deleting/converting the Firebase Auth account and a deliberate
+  profile-creation / sign-in UI are left to SS-061 — auth is still anonymous, so the `userId`
+  persists and a new profile is created immediately after deletion.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean; new
+  `DeleteProfileUseCaseTest` + an `AppViewModel` deletion test pass.
 
 ### SS-063 — App Drawer cleanup
 - [x] Completed

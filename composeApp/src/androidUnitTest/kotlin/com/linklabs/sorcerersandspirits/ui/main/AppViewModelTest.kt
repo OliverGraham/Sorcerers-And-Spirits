@@ -4,8 +4,10 @@ import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -39,6 +41,7 @@ class AppViewModelTest {
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase =
         mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
+    private val deleteProfileUseCase: DeleteProfileUseCase = mockk(relaxed = true)
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
@@ -68,6 +71,7 @@ class AppViewModelTest {
             connectivityObserver = connectivityObserver,
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
             createProfileUseCase = createProfileUseCase,
+            deleteProfileUseCase = deleteProfileUseCase,
             getProfileFlowUseCase = getProfileFlowUseCase,
             getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
             initializeGameConfigUseCase = initializeGameConfigUseCase,
@@ -209,6 +213,38 @@ class AppViewModelTest {
 
         coVerify { createProfileUseCase(displayName = ENTERED_NAME) }
     }
+
+    @Test
+    fun `When the user deletes their profile, then a fresh one is created silently and shown without the sign-in dialog`() =
+        runTest {
+            isOnlineFlow.value = true
+            coEvery { createProfileUseCase(displayName = RANDOM_NAME) } answers
+                {
+                    profileFlow.value = Profile(userId = USER_ID, displayName = RANDOM_NAME)
+                    DisplayNameResult.SUCCESS
+                }
+            val viewModel = createViewModel()
+
+            viewModel.uiStateFlow.test {
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
+                assertEquals(expected = DISPLAY_NAME, actual = awaitItem().loaded().displayName)
+
+                viewModel.onDeleteProfile()
+                // Deletion flips the screen back to Loading while it works.
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                val data = awaitItem().loaded()
+                assertFalse(actual = data.showSignInDialog)
+                assertEquals(expected = RANDOM_NAME, actual = data.displayName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            coVerify(exactly = 1) { deleteProfileUseCase() }
+            coVerify(exactly = 1) { createProfileUseCase(displayName = RANDOM_NAME) }
+        }
 
     private companion object {
         private const val USER_ID = "user_123"

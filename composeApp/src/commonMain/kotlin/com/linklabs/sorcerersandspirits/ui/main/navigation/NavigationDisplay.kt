@@ -20,6 +20,7 @@ internal fun NavigationDisplay(
     backStack: NavBackStack<NavKey>,
     displayName: String,
     onUpdateDisplayName: (String) -> Unit,
+    onDeleteProfile: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     NavDisplay(
@@ -29,6 +30,7 @@ internal fun NavigationDisplay(
                 backStack = backStack,
                 displayName = displayName,
                 onUpdateDisplayName = onUpdateDisplayName,
+                onDeleteProfile = onDeleteProfile,
             )
         },
         onBack = { backStack.removeLastOrNull() },
@@ -41,6 +43,7 @@ private fun NavKey.toScreen(
     backStack: NavBackStack<NavKey>,
     displayName: String,
     onUpdateDisplayName: (String) -> Unit,
+    onDeleteProfile: () -> Unit,
 ): NavEntry<NavKey> =
     when (this) {
         Route.TavernScreen ->
@@ -67,7 +70,11 @@ private fun NavKey.toScreen(
 
         Route.ProfileScreen ->
             NavEntry(key = this) {
-                ProfileScreen(displayName = displayName, onUpdateDisplayName = onUpdateDisplayName)
+                ProfileScreen(
+                    displayName = displayName,
+                    onUpdateDisplayName = onUpdateDisplayName,
+                    onDeleteProfile = onDeleteProfile,
+                )
             }
 
         Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }

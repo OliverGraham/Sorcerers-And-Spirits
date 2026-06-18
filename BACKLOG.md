@@ -503,9 +503,17 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## App / Main
 
 ### SS-035 — Random names from RemoteConfig
-- [ ] Not completed
+- [x] Completed
 - **Source:** `AppViewModel.kt:21` (`// TODO: Get random names from remote config`)
 - **Goal:** Source random traveler names from RemoteConfig instead of hardcoding.
+- **Resolution:** Added `RemoteConfigKeys.RANDOM_TRAVELER_NAMES` (`random_traveler_names`), a JSON
+  string-array value. The name pool now lives **only** in the version-controlled bundled resource
+  `composeResources/files/remote_config/random_traveler_names.json`; `FirebaseRemoteConfigDataSource`
+  reads it at `initialize()` and uses it for both `setDefaults` and the offline/first-launch
+  fallback (a single `FALLBACK_TRAVELER_NAME` const guards only the pre-initialize window). A domain
+  `RandomNameProvider` (`RemoteConfigRandomNameProvider`) and `GetRandomTravelerNameUseCase` feed
+  `AppViewModel`, which no longer hardcodes the list. Establishes the bundled-default pattern that
+  SS-085 generalizes. Related: SS-004, SS-059, SS-085.
 
 ### SS-036 — Handle signed-in user with missing profile
 - [ ] Not completed
@@ -628,22 +636,51 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   RemoteConfig data source. Defer until the full set of desired values is decided.
 
 ### SS-059 — Single-source class stats via bundled JSON (drop factory stat literals)
-- [ ] Not completed
-- **Source:** Design follow-on to SS-047. Today the default class stat numbers exist in three places:
+- [x] Completed (core) — factory-literal removal intentionally deferred, see below
+- **Source:** Design follow-on to SS-047. Default class stat numbers used to exist in three places:
   the `CharacterClass` factory literals, the `defaultCharacterClassStats()` payload derived from them,
   and the Firebase Console value (`remote-config/character_class_stats.json`).
-- **Goal:** Make the version-controlled `remote-config/character_class_stats.json` the single source
-  of default stats. Bundle it as a `commonMain` resource and use it as both the RemoteConfig in-app
-  default (`setDefaults`) and the provider's offline/first-launch fallback, then remove the stat
-  literals from the `CharacterClass` factories (which shrink to type + abilities only).
-- **Notes / cost:**
-  - Resource reads are `suspend` (`Res.readBytes`), so parse the bundled JSON once during
-    `CharacterClassProvider.refresh()` and cache it; keep `getAllClasses()` synchronous off the cache.
-  - The factories can't read the resource (pure domain, no IO), so the provider becomes the sole
-    assembler of stat-bearing `CharacterClass` instances. Tests/combat that use
-    `CharacterClass.getRogue().hitPoints` etc. must instead source classes from the provider (fake
-    stats source) or a test helper — this is the test refactor deferred from SS-047.
-  - Could later layer disk-caching of the last fetched remote value on top of the bundled default.
+- **Goal:** Make the version-controlled `character_class_stats.json` the single source of default
+  stats: bundle it as a `commonMain` resource and use it as both the RemoteConfig in-app default
+  (`setDefaults`) and the offline/first-launch fallback.
+- **Resolution:** `character_class_stats.json` moved into the bundled
+  `composeResources/files/remote_config/` dir (same place as the names file).
+  `FirebaseRemoteConfigDataSource` reads it at `initialize()` via the shared `loadBundledDefault`
+  helper and uses it for `setDefaults` and the offline fallback — class stats now follow the exact
+  same bundled-default path as `random_traveler_names` (SS-085). Drift between the bundled JSON and
+  the synchronous in-app values is now impossible: `BundledRemoteConfigDefaultsTest` asserts the
+  bundled JSON equals `defaultCharacterClassStats()`.
+- **Deferred (deliberate):** the `CharacterClass` factory stat literals were **kept** as the
+  provider's last-resort per-class fallback rather than removed. Production never relies on them
+  (in-match classes come from `CharacterClassEntity`; the selection list is JSON-overlaid by the
+  provider), and removing them forces ~130 combat-test/preview references off synchronous factory
+  access onto an async/provider or test-helper source — high churn, pure test risk, near-zero
+  product value now that the drift guard prevents divergence. Reopen as its own ticket if the
+  factories ever need to shrink to type + abilities only. Related: SS-085, SS-047.
+
+### SS-085 — Bundled-JSON in-app defaults for all RemoteConfig keys
+- [x] Completed
+- **Source:** Generalized from SS-035/SS-059. We don't want per-parameter default values duplicated
+  as hardcoded Kotlin lists/maps that must be hand-synced with the Firebase Console value.
+- **Goal:** One small loader reads each parameter's version-controlled JSON from
+  `composeApp/src/commonMain/composeResources/files/remote_config/<key>.json` and uses it as both the
+  RemoteConfig in-app default (`setDefaults`) and the offline/first-launch fallback, so the bundled
+  file is the single source of truth for every key. No hardcoded Kotlin default copies.
+- **Resolution:** Both current keys (`random_traveler_names` via SS-035, `character_class_stats` via
+  SS-059) load through one reusable `loadBundledDefault(path, fallback)` helper in
+  `FirebaseRemoteConfigDataSource.initialize()`, reused for `setDefaults` and the offline fallback.
+  New keys: drop a `<key>.json` in the bundled `remote_config/` dir, add a `BUNDLED_*_PATH` const, a
+  seed fallback, and one `loadBundledDefault` line. The `**Constraint**` below is satisfied per key:
+  class stats seed from the factory-derived map, names from a single `FALLBACK_TRAVELER_NAME` const.
+  - **Constraint (resolved):** resource reads are `suspend` (`Res.readBytes`), but the data-source
+    getters are synchronous and may run before `initialize()` finishes (e.g. `AppViewModel`
+    generating a name before config init). Each key seeds a crash-safe pre-init value, so a getter
+    that races ahead of the load still returns a sane non-empty default.
+- **Deploy side (done):** `remote-config/remoteconfig.template.json` is the single combined Firebase
+  template (all parameters, stringified values), generated from the per-key source files by
+  `remote-config/build-template.py` and deployed with `firebase deploy --only remoteconfig`. As new
+  keys are added, register their source file in that script's `SOURCES` map.
+- **Notes:** Keep `remote-config/README.md` in step as keys migrate. Related: SS-035, SS-059, SS-047.
 
 ### SS-048 — Die-value enum
 - [ ] Not completed

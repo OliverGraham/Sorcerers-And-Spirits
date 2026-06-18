@@ -17,4 +17,10 @@ interface RemoteConfigDataSource {
      * shipped class values) when nothing has been fetched or the payload can't be parsed.
      */
     fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity>
+
+    /**
+     * The currently active pool of random traveler names. Falls back to the in-app defaults when
+     * nothing has been fetched or the payload can't be parsed.
+     */
+    fun randomTravelerNames(): List<String>
 }

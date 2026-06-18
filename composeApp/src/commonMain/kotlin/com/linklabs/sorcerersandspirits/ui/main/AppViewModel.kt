@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfig
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -22,52 +23,13 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
-// TODO(SS-035): Get random names from remote config
-private val randomNames =
-    listOf(
-        "a mysterious traveler",
-        "a nameless traveler",
-        "a shadowed traveler",
-        "a wandering stranger",
-        "an unknown wanderer",
-        "a cloaked drifter",
-        "a faceless traveler",
-        "a lone wayfarer",
-        "a silent wanderer",
-        "a hooded stranger",
-        "an enigmatic traveler",
-        "a forgotten wanderer",
-        "a weathered traveler",
-        "a restless drifter",
-        "a veiled traveler",
-        "a duskbound wanderer",
-        "a road-worn stranger",
-        "a secretive traveler",
-        "a grim wanderer",
-        "a dust-covered drifter",
-        "a hidden wayfarer",
-        "a pale wanderer",
-        "a quiet traveler",
-        "a haunted drifter",
-        "an aimless stranger",
-        "a hooded wayfarer",
-        "a ragged traveler",
-        "a grim-faced wanderer",
-        "a roadbound stranger",
-        "a wandering soul",
-        "a cryptic traveler",
-        "a forlorn wanderer",
-        "a dark-cloaked stranger",
-        "a moonlit traveler",
-        "an ash-covered drifter",
-    )
-
 @KoinViewModel
 class AppViewModel(
     private val connectivityObserver: ConnectivityObserver,
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
+    private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
@@ -150,20 +112,21 @@ class AppViewModel(
     }
 
     fun getRandomName() {
-        _uiStateFlow.updateLoaded { it.copy(displayName = randomNames.random()) }
+        _uiStateFlow.updateLoaded { it.copy(displayName = getRandomTravelerNameUseCase()) }
     }
 
     private fun showSignInDialog() {
         _uiStateFlow.value =
             UiState.Loaded(
-                data = AppState(displayName = randomNames.random(), showSignInDialog = true)
+                data =
+                    AppState(displayName = getRandomTravelerNameUseCase(), showSignInDialog = true)
             )
     }
 
     private suspend fun collectScreenState() {
         // Reused if we show the offline shell before a profile is ever loaded, so the name stays
         // stable across connectivity changes.
-        val displayNameWhenOffline = randomNames.random()
+        val displayNameWhenOffline = getRandomTravelerNameUseCase()
 
         combine(getProfileFlowUseCase(), connectivityObserver.isOnline) { profile, isOnline ->
                 profile to isOnline

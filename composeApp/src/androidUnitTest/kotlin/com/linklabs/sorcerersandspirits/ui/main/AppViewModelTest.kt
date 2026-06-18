@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfig
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -39,6 +40,7 @@ class AppViewModelTest {
         mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
+    private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase =
@@ -51,6 +53,7 @@ class AppViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { getProfileFlowUseCase() } returns profileFlow
+        every { getRandomTravelerNameUseCase() } returns RANDOM_NAME
         every { connectivityObserver.isOnline } returns isOnlineFlow
         coEvery { isUserSignedInUseCase() } returns true
     }
@@ -66,6 +69,7 @@ class AppViewModelTest {
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
             createProfileUseCase = createProfileUseCase,
             getProfileFlowUseCase = getProfileFlowUseCase,
+            getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
             initializeGameConfigUseCase = initializeGameConfigUseCase,
             isUserSignedInUseCase = isUserSignedInUseCase,
             updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
@@ -210,5 +214,6 @@ class AppViewModelTest {
         private const val USER_ID = "user_123"
         private const val DISPLAY_NAME = "Gandalf the Grey"
         private const val ENTERED_NAME = "Radagast"
+        private const val RANDOM_NAME = "a mysterious traveler"
     }
 }

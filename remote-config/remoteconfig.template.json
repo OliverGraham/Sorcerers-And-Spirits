@@ -1,0 +1,16 @@
+{
+  "parameters": {
+    "character_class_stats": {
+      "defaultValue": {
+        "value": "{\"Rogue\":{\"hitPoints\":5,\"maxHitPoints\":5,\"armorClass\":6,\"speed\":8},\"Gambler\":{\"hitPoints\":3,\"maxHitPoints\":3,\"armorClass\":4,\"speed\":7},\"Duelist\":{\"hitPoints\":4,\"maxHitPoints\":4,\"armorClass\":4,\"speed\":6},\"Necromancer\":{\"hitPoints\":7,\"maxHitPoints\":7,\"armorClass\":7,\"speed\":5},\"Bard\":{\"hitPoints\":5,\"maxHitPoints\":5,\"armorClass\":5,\"speed\":4},\"Illusionist\":{\"hitPoints\":5,\"maxHitPoints\":5,\"armorClass\":5,\"speed\":3},\"Mage\":{\"hitPoints\":4,\"maxHitPoints\":4,\"armorClass\":4,\"speed\":2},\"Paladin\":{\"hitPoints\":7,\"maxHitPoints\":7,\"armorClass\":7,\"speed\":1}}"
+      },
+      "valueType": "JSON"
+    },
+    "random_traveler_names": {
+      "defaultValue": {
+        "value": "[\"a mysterious traveler\",\"a nameless traveler\",\"a shadowed traveler\",\"a wandering stranger\",\"an unknown wanderer\",\"a cloaked drifter\",\"a faceless traveler\",\"a lone wayfarer\",\"a silent wanderer\",\"a hooded stranger\",\"an enigmatic traveler\",\"a forgotten wanderer\",\"a weathered traveler\",\"a restless drifter\",\"a veiled traveler\",\"a duskbound wanderer\",\"a road-worn stranger\",\"a secretive traveler\",\"a grim wanderer\",\"a dust-covered drifter\",\"a hidden wayfarer\",\"a pale wanderer\",\"a quiet traveler\",\"a haunted drifter\",\"an aimless stranger\",\"a hooded wayfarer\",\"a ragged traveler\",\"a grim-faced wanderer\",\"a roadbound stranger\",\"a wandering soul\",\"a cryptic traveler\",\"a forlorn wanderer\",\"a dark-cloaked stranger\",\"a moonlit traveler\",\"an ash-covered drifter\"]"
+      },
+      "valueType": "JSON"
+    }
+  }
+}

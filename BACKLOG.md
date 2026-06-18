@@ -902,14 +902,28 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   own route + ViewModel. Related: SS-035, SS-039, SS-061, SS-065.
 
 ### SS-086 — Android: native Google Sign-In token acquisition
-- [ ] Not completed
-- **Source:** SS-061 follow-up. `AndroidSocialSignInProvider` currently returns `NotAvailable`.
+- [x] Completed (dormant until SS-088)
+- **Source:** SS-061 follow-up. `AndroidSocialSignInProvider` previously returned `NotAvailable`.
 - **Goal:** Implement the Google account picker on Android via `androidx.credentials`
   (`CredentialManager` + `GetSignInWithGoogleOption` using the Firebase web client ID) and return
   `SocialTokenResult.Google(idToken)`. `LinkAccountUseCase` + `linkWithGoogle` already consume it.
 - **Steps:** Add the `androidx.credentials` + `googleid` deps; thread an Activity/context into the
   provider; map cancel/error to `SocialTokenResult.Cancelled`/`Error`. Depends on SS-088. Grep
   `TODO(SS-061)` in `AndroidSocialSignInProvider`.
+- **Resolution:** Added `androidx.credentials` + `credentials-play-services-auth` (1.5.0) and
+  `googleid` (1.1.1). `AndroidSocialSignInProvider` now drives the Credential Manager
+  `GetSignInWithGoogleOption` flow: parses the returned `GoogleIdTokenCredential` into
+  `SocialTokenResult.Google(idToken)`, maps `GetCredentialCancellationException` /
+  `NoCredentialException` → `Cancelled` and parse/other `GetCredentialException` → `Error`. The
+  account picker needs an Activity, so a `CurrentActivityHolder` (Koin singleton) is populated/cleared
+  across `MainActivity`'s `onCreate`/`onDestroy` and injected into the provider. The web client ID is
+  read **reflectively** from the google-services-generated `default_web_client_id` string resource,
+  so it stays `NotAvailable` (no behaviour change) until SS-088 adds the OAuth web client to
+  `google-services.json` — at which point Google sign-in **flips on with no code change**. Apple on
+  Android stays `NotAvailable` (needs a web OAuth flow, not Credential Manager).
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean with the new deps. End-to-
+  end sign-in is **not yet verifiable** — it requires SS-088 (console Google provider + web client +
+  SHA fingerprints) and a device/emulator with Play Services and a Google account.
 
 ### SS-087 — iOS: native Google + Apple Sign-In token acquisition
 - [ ] Not completed
@@ -922,11 +936,39 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers
 - [ ] Not completed
-- **Source:** SS-061 follow-up (console-only; no app code).
-- **Goal:** Turn on the Google and Apple sign-in providers in the Firebase console so the linked
-  credentials from SS-086/SS-087 are accepted.
-- **Steps:** Enable Google (capture the web client ID for SS-086) and Apple providers; register
-  Android SHA-1/SHA-256 fingerprints; create the Apple Services ID + key. Blocks SS-086 and SS-087.
+- **Source:** SS-061 follow-up (console + Apple Developer portal; no app code beyond re-downloading
+  `google-services.json`). Project: `sorcerers-and-spirits`. Blocks SS-086 (Android Google) and
+  SS-087 (iOS Google + Apple).
+- **Goal:** Turn on the Google and Apple sign-in providers so the credentials linked by SS-086/SS-087
+  are accepted, and get the generated `default_web_client_id` into the app so SS-086 flips on.
+- **Steps — Android Google (unblocks SS-086):**
+  1. Firebase console → **Authentication → Sign-in method → Add new provider → Google → Enable**, set
+     a support email, **Save**. Enabling Google auto-creates an OAuth **Web client** ("Web client
+     (auto created by Google Service)").
+  2. Register the app's signing-cert fingerprints so Credential Manager trusts the build: console →
+     **Project settings → Your apps → Android app → Add fingerprint**, add both **SHA-1** and
+     **SHA-256** for every keystore that ships a build:
+     - Debug: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android`
+     - Release / Play App Signing: copy the SHA-1 + SHA-256 from **Play Console → Release → Setup →
+       App signing** (and the upload key too).
+  3. **Re-download `google-services.json`** and replace `composeApp/src/google-services.json`. Confirm
+     it now contains an `oauth_client` with `client_type: 3` (the web client). The google-services
+     Gradle plugin then generates the `default_web_client_id` string resource, which
+     `AndroidSocialSignInProvider` reads reflectively — Google sign-in goes live with no code change.
+  4. Verify: clean build, tap **Continue with Google** on a device/emulator with Play Services + a
+     Google account; the account picker should appear and linking should succeed.
+- **Steps — Apple (unblocks SS-087's Apple path):**
+  1. Apple Developer portal → create a **Services ID**, enable **Sign in with Apple**, and configure
+     the return URL to the Firebase handler (`https://sorcerers-and-spirits.firebaseapp.com/__/auth/handler`).
+  2. Create a **Sign in with Apple key** (.p8) and note the Key ID + Team ID.
+  3. Firebase console → **Authentication → Sign-in method → Apple → Enable**, enter the Services ID,
+     Apple Team ID, Key ID, and the .p8 private key, **Save**.
+  4. Add the **Sign in with Apple** capability to the iOS app target in Xcode (SS-087).
+- **Steps — iOS Google (unblocks SS-087's Google path):** the iOS Firebase config carries a
+  `REVERSED_CLIENT_ID`; add it as a URL scheme in the iOS target's Info.plist and re-download
+  `GoogleService-Info.plist` after enabling Google above (SS-087 wires the GoogleSignIn pod).
+- **Note:** Anonymous auth is already enabled and unaffected; existing anonymous accounts upgrade in
+  place via `linkWithCredential` (no user migration).
 
 ---
 

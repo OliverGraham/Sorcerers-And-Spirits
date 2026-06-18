@@ -46,5 +46,7 @@ class RemoteConfigCharacterClassProviderTest {
         override suspend fun initialize() = Unit
 
         override fun characterClassStats() = stats
+
+        override fun randomTravelerNames() = emptyList<String>()
     }
 }

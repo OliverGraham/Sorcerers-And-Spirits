@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticati
 import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigRandomNameProvider
 import com.linklabs.sorcerersandspirits.data.profile.FirebaseProfileRepository
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
@@ -22,8 +23,10 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
+import com.linklabs.sorcerersandspirits.domain.profile.RandomNameProvider
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
@@ -71,6 +74,7 @@ private fun Module.initializeRepositories() {
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
     singleOf(::FirebaseRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }
+    singleOf(::RemoteConfigRandomNameProvider) { bind<RandomNameProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
@@ -84,6 +88,7 @@ private fun Module.initializeUseCases() {
     singleOf(::ExitArenaUseCase)
     singleOf(::GetCharacterClassesUseCase)
     singleOf(::GetProfileFlowUseCase)
+    singleOf(::GetRandomTravelerNameUseCase)
     singleOf(::InitializeGameConfigUseCase)
     singleOf(::GetTavernDataFlowUseCase)
     singleOf(::GetUserIdUseCase)

@@ -734,14 +734,24 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Dependency injection
 
 ### SS-055 — Scope DI definitions instead of single
-- [ ] Not completed
+- [x] Completed
 - **Source:** `Modules.kt:42` (`// TODO: Someday, scope these instead of single for everything`)
 - **Goal:** Introduce appropriate Koin scopes rather than `single` for everything.
+- **Resolution:** Use cases are stateless orchestrators, so `initializeUseCases` now binds
+  them with `factoryOf` (a fresh instance per resolution, released with the consuming
+  ViewModel) instead of `singleOf`. Data-layer roots (repositories, data sources, providers,
+  Firebase clients, the shared IO scope) stay `single` because they hold Firebase references /
+  caches and back shared flows; duplicating them would spawn duplicate listeners. ViewModels
+  remain `viewModelOf`, scoped to the screen/ViewModelStore.
 
 ### SS-056 — Name DI definition
-- [ ] Not completed
+- [x] Completed
 - **Source:** `Modules.kt:52` (`// TODO: What to name this?`)
 - **Goal:** Give the flagged DI definition a meaningful name.
+- **Resolution:** Renamed `initializeParameters` to `initializeExternalDependencies` — it
+  provides the framework-owned singletons (Firebase database/firestore/remoteConfig clients and
+  the shared `Dispatchers.IO` CoroutineScope) that the rest of the graph is built on, as opposed
+  to our own repositories/use-cases/view-models.
 
 ---
 

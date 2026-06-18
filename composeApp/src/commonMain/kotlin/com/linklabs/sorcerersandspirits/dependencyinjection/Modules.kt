@@ -51,22 +51,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.core.module.Module
 import org.koin.core.module.dsl.bind
+import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
 
-// TODO(SS-055): Someday, scope these instead of single for everything
-
 val commonModule = module {
     includes(platformModule())
-    initializeParameters()
+    initializeExternalDependencies()
     initializeRepositories()
     initializeUseCases()
     initializeViewModels()
 }
 
-// TODO(SS-056): What to name this?
-private fun Module.initializeParameters() {
+private fun Module.initializeExternalDependencies() {
     single { Firebase.database }
     single { Firebase.firestore }
     single { Firebase.remoteConfig }
@@ -86,27 +84,27 @@ private fun Module.initializeRepositories() {
 }
 
 private fun Module.initializeUseCases() {
-    singleOf(::ChooseCharacterClassUseCase)
-    singleOf(::CheckAppVersionUseCase)
-    singleOf(::CoordinateArenaMatchUseCase)
-    singleOf(::ConnectTravelerPresenceUseCase)
-    singleOf(::CreateProfileUseCase)
-    singleOf(::DeleteProfileUseCase)
-    singleOf(::ExitArenaUseCase)
-    singleOf(::GetCharacterClassesUseCase)
-    singleOf(::GetProfileFlowUseCase)
-    singleOf(::GetRandomTravelerNameUseCase)
-    singleOf(::InitializeGameConfigUseCase)
-    singleOf(::GetTavernDataFlowUseCase)
-    singleOf(::GetUserIdUseCase)
-    singleOf(::IsUserSignedInUseCase)
-    singleOf(::PerformCombatActionUseCase)
-    singleOf(::SetCurrentTravelerAvailableUseCase)
-    singleOf(::SendChallengeUseCase)
-    singleOf(::StayForAnotherMatchUseCase)
-    singleOf(::UpdateChallengerStatusUseCase)
-    singleOf(::UpdateProfileDisplayNameUseCase)
-    singleOf(::UpdateProfileStatsUseCase)
+    factoryOf(::ChooseCharacterClassUseCase)
+    factoryOf(::CheckAppVersionUseCase)
+    factoryOf(::CoordinateArenaMatchUseCase)
+    factoryOf(::ConnectTravelerPresenceUseCase)
+    factoryOf(::CreateProfileUseCase)
+    factoryOf(::DeleteProfileUseCase)
+    factoryOf(::ExitArenaUseCase)
+    factoryOf(::GetCharacterClassesUseCase)
+    factoryOf(::GetProfileFlowUseCase)
+    factoryOf(::GetRandomTravelerNameUseCase)
+    factoryOf(::InitializeGameConfigUseCase)
+    factoryOf(::GetTavernDataFlowUseCase)
+    factoryOf(::GetUserIdUseCase)
+    factoryOf(::IsUserSignedInUseCase)
+    factoryOf(::PerformCombatActionUseCase)
+    factoryOf(::SetCurrentTravelerAvailableUseCase)
+    factoryOf(::SendChallengeUseCase)
+    factoryOf(::StayForAnotherMatchUseCase)
+    factoryOf(::UpdateChallengerStatusUseCase)
+    factoryOf(::UpdateProfileDisplayNameUseCase)
+    factoryOf(::UpdateProfileStatsUseCase)
 }
 
 private fun Module.initializeViewModels() {

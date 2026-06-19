@@ -50,6 +50,20 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ArenaScreenState.kt:79` (`// TODO: Need to refactor this badly`)
 - **Goal:** Refactor the flagged state-mapping code. Likely overlaps SS-017.
 
+### SS-108 — Lock a player to one class for the whole Gauntlet
+- [ ] Not completed
+- **Goal:** A player picks their class once and stays that same character for the entire Gauntlet
+  (all matches in the arena session), instead of re-choosing between matches.
+- **Implications:**
+  - **UI flow:** remove the choose-classes state between matches; class selection happens once at
+    the start. Related: SS-034, SS-079.
+  - **Between-match dialog:** the dialog currently shown between matches and at the end of the
+    Gauntlet is now meaningless — remove it.
+  - **Finished state:** on the `Finished` arena state, show UI for players to either continue
+    forward (next match / stay) or leave. Related: SS-045, SS-098.
+  - **Stats:** a locked class per Gauntlet affects how stats are recorded/attributed — account for
+    per-class continuity across matches. Related: SS-058, Game Stats & Leaderboard.
+
 ---
 
 ## Common UI
@@ -340,6 +354,13 @@ are archived in [COMPLETED.md](COMPLETED.md).
   3. Xcode: add the **Sign in with Apple** capability to the `iosApp` target — see SS-087.
   4. Verify on device/simulator: the Apple button presents the sheet and linking succeeds.
 
+### SS-109 — ProfileScreen name-change success/failure feedback
+- [ ] Not completed
+- **Goal:** After a name change on the ProfileScreen, show a confirmation message (likely a
+  snackbar) reporting whether the change succeeded or failed.
+- **Steps:** Surface the result of the name-change operation to the UI; show a success snackbar on
+  success and an error message on failure.
+
 ---
 
 ## Game Stats & Leaderboard
@@ -513,6 +534,18 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   highlight.
 - **Notes:** Gated on Figma updates. Coordinate with SS-080 (responsive) and SS-081 (copy). Related:
   SS-079, SS-068.
+
+### SS-110 — Screen-transition (navigation) animations
+- [ ] Not completed
+- **Goal:** Improve the enter/exit animations when navigating between screens. The current default
+  is most noticeably rough on back navigation.
+- **Options to evaluate:** Navigation Compose's per-destination `enterTransition` / `exitTransition`
+  / `popEnterTransition` / `popExitTransition` (slide/fade/scale via `AnimatedContentTransitionScope`);
+  shared-element / shared-bounds transitions for continuity; predictive-back gesture support on
+  Android. Pick a consistent transition language and apply it across the nav graph.
+- **Steps:** Survey the current nav setup; decide the transition style per screen pair (especially
+  forward vs. pop/back); implement and tune durations/easing; verify back/predictive-back feels
+  right. Related: SS-068.
 
 ---
 

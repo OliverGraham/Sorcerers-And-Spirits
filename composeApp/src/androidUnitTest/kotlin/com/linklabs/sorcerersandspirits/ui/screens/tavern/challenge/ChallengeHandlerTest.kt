@@ -56,7 +56,6 @@ class ChallengeHandlerTest {
                             status = ChallengerStatus.Pending,
                         )
                 ),
-            startTimeMillis = endTimeMillis - 60_000L,
             endTimeMillis = endTimeMillis,
         )
 

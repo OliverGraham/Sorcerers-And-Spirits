@@ -531,9 +531,24 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 ## Data layer
 
 ### SS-038 — Determine if IOSNullableStringSerializer is needed
-- [ ] Not completed
+- [x] Completed
 - **Source:** `IOSNullableStringSerializer.kt:10` (`// TODO: Figure out if this is needed or useful`)
 - **Goal:** Decide whether this serializer is required; keep with justification or delete.
+- **Decision:** Delete it. The serializer sanitized gitlive's iOS RTDB "fake null" decode (the literal
+  `"<null>"`/`"null"` string → real Kotlin `null`), but it was **dead code** — never wired to any
+  field anywhere in git history (no `@Serializable(with = …)` ever referenced it). It was added
+  speculatively during the "Get iOS working!" migration (86bb4cf) that replaced the old Swift
+  `TavernCodable`/`TravelerCodable` bridges.
+- **Why it isn't needed:** The only persisted nullable-`String` entity field is
+  `CharmEntity.selectedCharmTargetUserId` (the `Int?` roll fields are unaffected). It is `null`-defaulted
+  and RTDB omits null keys on write, so on read the key is absent and kotlinx-serialization falls back
+  to the `= null` default — the fake-null-string path never triggers. iOS has shipped (SS-087/SS-090)
+  with no `"<null>"` corruption observed.
+- **Resolution:** Removed `IOSNullableStringSerializer.kt`. Consistent with the project's delete-dead-code
+  convention (SS-015, SS-022); the ~10-line sanitizer is trivial to reintroduce and apply precisely to a
+  specific field if a real case ever surfaces.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` + `:composeApp:compileKotlinIosSimulatorArm64`
+  compile clean.
 
 ### SS-039 — Unique user-names collection
 - [x] Completed

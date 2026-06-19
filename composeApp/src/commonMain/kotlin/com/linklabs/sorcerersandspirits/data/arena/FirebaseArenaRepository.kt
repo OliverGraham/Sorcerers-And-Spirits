@@ -5,12 +5,11 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
+import com.linklabs.sorcerersandspirits.data.arena.utilities.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
-import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
-import com.linklabs.sorcerersandspirits.data.arena.utilities.appendCapped
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
@@ -59,40 +58,9 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .setValue(value = arenaPlayer.toEntity())
     }
 
-    // TODO(SS-041) Arena: Look at this, refactor
     override suspend fun applyCombatResult(arenaId: String, result: ActionOutcome) {
-        val arenaReference = arenaMatchesReference.child(path = arenaId)
-
-        arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
-            if (existingMatch !is ArenaMatchEntity.Combat) return@runTransaction existingMatch
-
-            val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
-            val newMessages =
-                result.messages.map { outgoingArenaMessage ->
-                    outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
-                }
-
-            if (result.isMatchFinished) {
-                ArenaMatchEntity.Finished(
-                    messages = existingMatch.messages.appendCapped(newMessages = newMessages),
-                    numberOfNewMessages = newMessages.size,
-                    playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
-                    matchNumberInGauntlet = existingMatch.matchNumberInGauntlet,
-                )
-            } else {
-                ArenaMatchEntity.Combat(
-                    messages = existingMatch.messages.appendCapped(newMessages = newMessages),
-                    numberOfNewMessages = newMessages.size,
-                    playerEntitiesMap =
-                        result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
-                    nextCombatActionEntity = result.nextCombatAction.toEntity(),
-                    roundNumber = result.roundNumber,
-                    isNewRound = result.isNewRound,
-                    doublesBonusEntity = result.doublesBonus?.toEntity(),
-                    matchNumberInGauntlet = existingMatch.matchNumberInGauntlet,
-                )
-            }
-        }
+        ApplyCombatResult(result = result)
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =

@@ -90,8 +90,12 @@ sealed interface ArenaMessageState {
     }
 
     @Immutable
-    data class SummonMinion(override val id: String, val necroName: String, val singleDie: Int) :
-        ArenaMessageState
+    data class SummonMinion(
+        override val id: String,
+        val necroName: String,
+        val singleDie: Int,
+        val outcome: SummonMinionOutcome,
+    ) : ArenaMessageState
 
     @Immutable
     sealed interface Persuade : ArenaMessageState {
@@ -184,8 +188,12 @@ sealed interface ArenaMessageState {
     }
 
     @Immutable
-    data class AllIn(override val id: String, val gamblerName: String, val singleDie: Int) :
-        ArenaMessageState
+    data class AllIn(
+        override val id: String,
+        val gamblerName: String,
+        val singleDie: Int,
+        val outcome: AllInOutcome,
+    ) : ArenaMessageState
 
     @Immutable
     data class PrepareAttack(
@@ -197,6 +205,44 @@ sealed interface ArenaMessageState {
         val isSuccessful: Boolean,
     ) : ArenaMessageState
 }
+
+/** The four distinct results of a Necromancer's Summon Minion roll, keyed off the rolled die. */
+enum class SummonMinionOutcome {
+    Fizzle,
+    Skeleton,
+    SkeletonAndHeal,
+    Golem,
+}
+
+/** The three distinct results of a Gambler's All-In roll, keyed off the rolled die. */
+enum class AllInOutcome {
+    SelfKnockout,
+    NoEffect,
+    DoubleAttack,
+}
+
+private fun summonMinionOutcomeFor(singleDie: Int): SummonMinionOutcome =
+    when (singleDie) {
+        2,
+        3 -> SummonMinionOutcome.Skeleton
+
+        4,
+        5 -> SummonMinionOutcome.SkeletonAndHeal
+
+        6 -> SummonMinionOutcome.Golem
+
+        else -> SummonMinionOutcome.Fizzle
+    }
+
+private fun allInOutcomeFor(singleDie: Int): AllInOutcome =
+    when (singleDie) {
+        1 -> AllInOutcome.SelfKnockout
+
+        5,
+        6 -> AllInOutcome.DoubleAttack
+
+        else -> AllInOutcome.NoEffect
+    }
 
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
@@ -224,6 +270,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
                 id = id,
                 gamblerName = displayNames.resolve(userId = gamblerUserId),
                 singleDie = singleDie,
+                outcome = allInOutcomeFor(singleDie = singleDie),
             )
 
         is ArenaMessage.Dodge ->
@@ -371,6 +418,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
                 id = id,
                 necroName = displayNames.resolve(userId = necroUserId),
                 singleDie = singleDie,
+                outcome = summonMinionOutcomeFor(singleDie = singleDie),
             )
 
         is ArenaMessage.Teleport.Result ->

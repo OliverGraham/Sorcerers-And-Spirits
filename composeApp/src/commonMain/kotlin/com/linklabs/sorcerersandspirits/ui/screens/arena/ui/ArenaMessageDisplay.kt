@@ -2,10 +2,14 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.runtime.Composable
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.SummonMinionOutcome
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.arena_message_all_in
+import sorcerersandspirits.composeapp.generated.resources.arena_message_all_in_double_attack
+import sorcerersandspirits.composeapp.generated.resources.arena_message_all_in_no_effect
+import sorcerersandspirits.composeapp.generated.resources.arena_message_all_in_self_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_chose_character_class
 import sorcerersandspirits.composeapp.generated.resources.arena_message_dodge_armor_increased
 import sorcerersandspirits.composeapp.generated.resources.arena_message_dodge_armor_unchanged
@@ -52,7 +56,10 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_round
 import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency
-import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_fizzle
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_golem
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton_heal
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_escaped
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_roll
@@ -192,7 +199,35 @@ internal fun ArenaMessageState.getDisplayString(): String =
             }
 
         is ArenaMessageState.SummonMinion ->
-            stringResource(resource = Res.string.arena_message_summon_minion, necroName, singleDie)
+            when (outcome) {
+                SummonMinionOutcome.Fizzle ->
+                    stringResource(
+                        resource = Res.string.arena_message_summon_minion_fizzle,
+                        necroName,
+                        singleDie,
+                    )
+
+                SummonMinionOutcome.Skeleton ->
+                    stringResource(
+                        resource = Res.string.arena_message_summon_minion_skeleton,
+                        necroName,
+                        singleDie,
+                    )
+
+                SummonMinionOutcome.SkeletonAndHeal ->
+                    stringResource(
+                        resource = Res.string.arena_message_summon_minion_skeleton_heal,
+                        necroName,
+                        singleDie,
+                    )
+
+                SummonMinionOutcome.Golem ->
+                    stringResource(
+                        resource = Res.string.arena_message_summon_minion_golem,
+                        necroName,
+                        singleDie,
+                    )
+            }
 
         is ArenaMessageState.Persuade.Trigger ->
             stringResource(resource = Res.string.arena_message_persuade_trigger)
@@ -337,7 +372,28 @@ internal fun ArenaMessageState.getDisplayString(): String =
             )
 
         is ArenaMessageState.AllIn ->
-            stringResource(resource = Res.string.arena_message_all_in, gamblerName, singleDie)
+            when (outcome) {
+                AllInOutcome.SelfKnockout ->
+                    stringResource(
+                        resource = Res.string.arena_message_all_in_self_knockout,
+                        gamblerName,
+                        singleDie,
+                    )
+
+                AllInOutcome.NoEffect ->
+                    stringResource(
+                        resource = Res.string.arena_message_all_in_no_effect,
+                        gamblerName,
+                        singleDie,
+                    )
+
+                AllInOutcome.DoubleAttack ->
+                    stringResource(
+                        resource = Res.string.arena_message_all_in_double_attack,
+                        gamblerName,
+                        singleDie,
+                    )
+            }
 
         is ArenaMessageState.PrepareAttack ->
             if (isSuccessful) {

@@ -163,21 +163,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   instant they are emitted. **To remove:** delete `TemporaryDiceDebugOverlay.kt` and the single
   `TODO(SS-091)` block in `LoadedArenaScreen.kt` (grep `SS-091`).
 
-### SS-093 — Ability outcome messages must reflect the actual roll result
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** Every ability message shown in the UI must communicate the *specific outcome* of the
-  roll, not a generic "ability used" line. The exact copy is derivable from the rolled number plus
-  the ability's rules, so the correct `stringResource` can be chosen per outcome.
-  - **Lucky Coin:** on a 1, copy about the Gambler knocking themselves out; on a no-effect result,
-    say so explicitly; on a success, call out the success.
-  - **Summon Minion:** distinguish fizzle (1) / gain skeleton / gain skeleton + heal / gain golem +
-    heal.
-  - Apply the same per-outcome treatment to every other ability with multiple roll outcomes
-    (All-In, Prepare Attack, Riposte, Encore, Persuade, Mirror Image, Teleport, Holy Shield, etc.).
-- **Notes:** Broad messaging-correctness fix. Related: SS-052 (LuckyCoin message approach), SS-051
-  (ArenaMessage field review), SS-094, SS-097, SS-100, SS-107.
-
 ### SS-094 — Reword the Persuade ability message copy
 - [ ] Not completed
 - **Source:** Reported bug.

@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.tavern
 
-import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
+import com.linklabs.sorcerersandspirits.domain.utilities.CHALLENGE_DURATION_SECONDS
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -31,14 +31,16 @@ class ChallengeTest {
     fun `secondsRemaining falls back to the full duration when no deadline is set`() {
         val challenge = challenge(endTimeMillis = null)
 
-        assertEquals(expected = SIXTY_SECONDS, actual = challenge.secondsRemaining(nowMillis = NOW))
+        assertEquals(
+            expected = CHALLENGE_DURATION_SECONDS,
+            actual = challenge.secondsRemaining(nowMillis = NOW),
+        )
     }
 
     private fun challenge(endTimeMillis: Long?): Challenge =
         Challenge(
             challengeId = "challenge-1",
             challengers = emptyMap(),
-            startTimeMillis = endTimeMillis?.minus(60_000L),
             endTimeMillis = endTimeMillis,
         )
 

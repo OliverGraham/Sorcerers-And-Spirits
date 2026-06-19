@@ -598,12 +598,38 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   unit tests pass.
 
 ### SS-042 — Challenge timestamp handling
-- [ ] Not completed
+- [x] Completed
 - **Sources:**
-  - `ChallengeEntity.kt:8` (`// TODO: Look into time part`)
-  - `Challenge.kt:3` (`// TODO: Look into time part`)
+  - `ChallengeEntity.kt` (`// TODO(SS-042): Look into time part`)
+  - `Challenge.kt` (`// TODO(SS-042): Look into time part`)
 - **Goal:** Resolve how the challenge timestamp is represented/serialized across the data entity and
   domain model.
+- **Decision:** SS-057 already settled persistence (the backend stamps a single `startTimeMillis` via
+  RTDB `ServerValue.TIMESTAMP`; the deadline is derived). What these TODOs still flagged was the
+  *modeling*: the raw start time leaked into the domain and the countdown fallback was coupled to the
+  wrong constant.
+- **Resolution:**
+  - **One representation per layer.** `ChallengeEntity` keeps the single server-stamped
+    `startTimeMillis: Long?` as the authoritative source (documented with KDoc explaining the
+    `ServerValue.TIMESTAMP` origin and that the deadline is derived). The **domain** `Challenge` now
+    carries only the derived `endTimeMillis` deadline — the field it actually reasons about. Dropped
+    the redundant `startTimeMillis` from the domain model: it was set by `toDomain()` but never read in
+    production (only the deadline drives `secondsRemaining`/the countdown), so holding both the raw
+    start and its derived deadline was duplication.
+  - **Decoupled the duration constant.** `secondsRemaining`'s no-deadline fallback used the generic
+    `SIXTY_SECONDS` (also the seconds-per-minute divisor and the default `Timer` duration), so a change
+    to the challenge length would silently desync the fallback from the deadline. Added
+    `CHALLENGE_DURATION_SECONDS` as the single source the challenge length is built from
+    (`CHALLENGE_DURATION_MILLIS = CHALLENGE_DURATION_SECONDS * ONE_SECOND`), and pointed the fallback at
+    it. Also converted `secondsRemaining`'s `?.let { } ?: …` to an explicit null check
+    ([[prefer-null-checks-over-let]]).
+  - Updated the two domain-`Challenge` test constructors (`ChallengeTest`, `ChallengeHandlerTest`) to
+    drop `startTimeMillis`; the `SendChallengeUseCaseTest` server-timestamp assertion is on the
+    *entity* and is unchanged. Decided against modeling time as `kotlin.time.Instant`/`Duration` —
+    RTDB stores raw `Long` millis and `ServerValue.TIMESTAMP` resolves to one, so `Long` at the
+    persistence boundary is correct and an `Instant` wrapper would only add mapping churn.
+- **Verification:** Android + iOS (`compileKotlinIosSimulatorArm64`) compile clean; `*Challenge*` /
+  `*Tavern*` / `*SendChallenge*` / `*ConnectTravelerPresence*` unit tests pass. Related: SS-057.
 
 ### SS-043 — Extract class to separate file
 - [x] Completed

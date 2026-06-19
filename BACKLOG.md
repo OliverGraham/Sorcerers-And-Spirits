@@ -594,9 +594,20 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   domain model.
 
 ### SS-043 — Extract class to separate file
-- [ ] Not completed
-- **Source:** `FirebaseTavernRepository.kt:434` (`// TODO: Move to separate file`)
+- [x] Completed
+- **Source:** `FirebaseTavernRepository.kt` (`// TODO(SS-043): Move to separate file`)
 - **Goal:** Move the flagged class out of `FirebaseTavernRepository` into its own file.
+- **Resolution:** The flagged block was not a class but a cluster of file-level helper functions left
+  at the bottom of `FirebaseTavernRepository.kt`: the RTDB update-map mutators (`removeChallenge`,
+  `clearMailbox`, `clearMailboxes`), the `ChallengeEntity.isExpired()` expiry predicate, and the
+  `String.toChallengesPath()` / `toChallengeMailBoxesPath()` path builders (the latter two already
+  `internal` and shared with `FirebaseTavernDataSource`). Moved all of them into a new
+  `FirebaseTavernChallenges.kt` in the same `data.tavern` package, promoting the three `private` mutators
+  + `isExpired` to `internal` (they now live in a separate file but are only used within the module).
+  Removed the now-unused `CHALLENGES_PATH`, `CHALLENGE_MAILBOXES_PATH`, `CHALLENGE_DURATION_MILLIS`, and
+  `Clock` imports from the repository (`ExperimentalTime` stays — still used by `getChallengeEntity`).
+  Converted `isExpired`'s `?.let { } == true` to an explicit null check while relocating it.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean.
 
 ### SS-044 — Connecting messages in ConnectToArena
 - [ ] Not completed

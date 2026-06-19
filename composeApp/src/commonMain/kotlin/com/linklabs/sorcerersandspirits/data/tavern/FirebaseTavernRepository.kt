@@ -1,7 +1,5 @@
 package com.linklabs.sorcerersandspirits.data.tavern
 
-import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGES_PATH
-import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_PATH
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -9,8 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import com.linklabs.sorcerersandspirits.domain.utilities.CHALLENGE_DURATION_MILLIS
-import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -318,27 +314,3 @@ class FirebaseTavernRepository(
         const val SEND_RESULT_FAILURE_MESSAGE = "Something went wrong, please try again."
     }
 }
-
-// TODO(SS-043): Move to separate file
-
-private fun MutableMap<String, Any?>.removeChallenge(challengeId: String) {
-    this[challengeId.toChallengesPath()] = null
-}
-
-private fun MutableMap<String, Any?>.clearMailbox(userId: String) {
-    this[userId.toChallengeMailBoxesPath()] = null
-}
-
-private fun MutableMap<String, Any?>.clearMailboxes(userIds: List<String>) {
-    userIds.forEach(action = ::clearMailbox)
-}
-
-@OptIn(ExperimentalTime::class)
-private fun ChallengeEntity.isExpired(): Boolean =
-    startTimeMillis?.let {
-        it + CHALLENGE_DURATION_MILLIS <= Clock.System.now().toEpochMilliseconds()
-    } == true
-
-internal fun String.toChallengesPath(): String = "$CHALLENGES_PATH/$this"
-
-internal fun String.toChallengeMailBoxesPath(): String = "$CHALLENGE_MAILBOXES_PATH/$this"

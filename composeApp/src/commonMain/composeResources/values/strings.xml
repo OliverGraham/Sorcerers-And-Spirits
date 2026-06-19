@@ -98,7 +98,10 @@
     <string name="arena_message_riposte_en_garde_success">En garde! Rolled %1$s and %2$s — the counter lands</string>
     <string name="arena_message_riposte_en_garde_failed">En garde! Rolled %1$s and %2$s — the counter fails</string>
 
-    <string name="arena_message_summon_minion">%1$s rolled a %2$s to summon a minion</string>
+    <string name="arena_message_summon_minion_fizzle">%1$s rolled a %2$s — the summoning fizzles</string>
+    <string name="arena_message_summon_minion_skeleton">%1$s rolled a %2$s and raises a skeleton</string>
+    <string name="arena_message_summon_minion_skeleton_heal">%1$s rolled a %2$s, raising a skeleton and healing to full</string>
+    <string name="arena_message_summon_minion_golem">%1$s rolled a %2$s, raising a golem and healing to full</string>
 
     <string name="arena_message_persuade_trigger">Persuade! A song begins…</string>
     <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>
@@ -130,7 +133,9 @@
     <string name="arena_message_holy_shield_prayer_failed">Rolled %1$s and %2$s — the prayer goes unanswered</string>
     <string name="arena_message_holy_shield_wrath">%1$s's wrath strikes %2$s for %3$s</string>
 
-    <string name="arena_message_all_in">%1$s goes all in and rolled a %2$s!</string>
+    <string name="arena_message_all_in_self_knockout">%1$s goes all in, rolls a %2$s — and knocks themselves out!</string>
+    <string name="arena_message_all_in_no_effect">%1$s goes all in, rolls a %2$s — no effect</string>
+    <string name="arena_message_all_in_double_attack">%1$s goes all in, rolls a %2$s — and attacks twice this round!</string>
 
     <string name="arena_message_prepare_attack_success">%1$s studied %2$s, rolled %3$s and %4$s — the next attack is prepared!</string>
     <string name="arena_message_prepare_attack_failed">%1$s studied %2$s, rolled %3$s and %4$s — the preparation fails</string>

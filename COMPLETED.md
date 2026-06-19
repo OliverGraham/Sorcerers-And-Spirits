@@ -76,6 +76,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-090** — First-launch "Continue with Google" must recover an existing account, not error
 - **SS-095** — Lock target selection once an attack roll is committed: After a player has rolled against a target for a normal attack (i.e. committed the Armor-class roll), they must not be able to change targets or switch to an activated ability mid-action. The UI must also not highlight…
 - **SS-096** — Keep the rolled-against opponent targeted through ability resolution: Ensure the originally-targeted opponent remains the target through the full resolution of an in-flight attack (including defensive-ability roll-offs that bounce back to the attacker).
+- **SS-093** — Ability outcome messages must reflect the actual roll result: Give Summon Minion (fizzle/skeleton/skeleton+heal/golem+heal) and All-In (self-KO/no-effect/double-attack) per-outcome message copy keyed off the rolled die; every other multi-outcome ability already carried its specific outcome.
 
 ## Profile & Auth
 

@@ -4,7 +4,6 @@ import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
-import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
@@ -12,11 +11,9 @@ import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
 import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
@@ -52,16 +49,12 @@ class AppViewModelTest {
     private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase =
         mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
-    private val deleteProfileUseCase: DeleteProfileUseCase = mockk(relaxed = true)
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
     private val getProfileUseCase: GetProfileUseCase = mockk()
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
-    private val linkAccountUseCase: LinkAccountUseCase = mockk(relaxed = true)
     private val signInWithSocialUseCase: SignInWithSocialUseCase = mockk(relaxed = true)
-    private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase =
-        mockk(relaxed = true)
 
     private val profileFlow = MutableStateFlow<Profile?>(null)
     private val isOnlineFlow = MutableStateFlow(value = true)
@@ -88,15 +81,12 @@ class AppViewModelTest {
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
             createProfileForCurrentUserUseCase = createProfileForCurrentUserUseCase,
             createProfileUseCase = createProfileUseCase,
-            deleteProfileUseCase = deleteProfileUseCase,
             getProfileFlowUseCase = getProfileFlowUseCase,
             getProfileUseCase = getProfileUseCase,
             getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
             initializeGameConfigUseCase = initializeGameConfigUseCase,
             isUserSignedInUseCase = isUserSignedInUseCase,
-            linkAccountUseCase = linkAccountUseCase,
             signInWithSocialUseCase = signInWithSocialUseCase,
-            updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
         )
 
     private fun UiState<AppState>.loaded(): AppState =
@@ -235,38 +225,6 @@ class AppViewModelTest {
     }
 
     @Test
-    fun `When the user deletes their profile, then a fresh one is created silently and shown without the sign-in dialog`() =
-        runTest {
-            isOnlineFlow.value = true
-            coEvery { createProfileUseCase(displayName = RANDOM_NAME) } answers
-                {
-                    profileFlow.value = Profile(userId = USER_ID, displayName = RANDOM_NAME)
-                    DisplayNameResult.SUCCESS
-                }
-            val viewModel = createViewModel()
-
-            viewModel.uiStateFlow.test {
-                assertEquals(expected = UiState.Loading, actual = awaitItem())
-
-                profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
-                assertEquals(expected = DISPLAY_NAME, actual = awaitItem().loaded().displayName)
-
-                viewModel.onDeleteProfile()
-                // Deletion flips the screen back to Loading while it works.
-                assertEquals(expected = UiState.Loading, actual = awaitItem())
-
-                val data = awaitItem().loaded()
-                assertFalse(actual = data.showSignInDialog)
-                assertEquals(expected = RANDOM_NAME, actual = data.displayName)
-
-                cancelAndIgnoreRemainingEvents()
-            }
-
-            coVerify(exactly = 1) { deleteProfileUseCase() }
-            coVerify(exactly = 1) { createProfileUseCase(displayName = RANDOM_NAME) }
-        }
-
-    @Test
     fun `When a chosen social sign-in method is unavailable, then the dialog stays up carrying the failure reason`() =
         runTest {
             coEvery { isUserSignedInUseCase() } returns false
@@ -368,30 +326,6 @@ class AppViewModelTest {
             }
 
             coVerify(exactly = 0) { createProfileForCurrentUserUseCase(displayName = any()) }
-        }
-
-    @Test
-    fun `When linking the current account from the profile screen, then the link result is published and no profile is created`() =
-        runTest {
-            coEvery { linkAccountUseCase.withEmail(email = EMAIL, password = PASSWORD) } returns
-                LinkAccountResult.CREDENTIAL_IN_USE
-            val viewModel = createViewModel()
-
-            viewModel.profileLinkResultFlow.test {
-                assertEquals(expected = null, actual = awaitItem())
-
-                viewModel.onLinkProfileWithEmail(email = EMAIL, password = PASSWORD)
-
-                assertEquals(expected = LinkAccountResult.CREDENTIAL_IN_USE, actual = awaitItem())
-
-                viewModel.onDismissProfileLinkResult()
-                assertEquals(expected = null, actual = awaitItem())
-
-                cancelAndIgnoreRemainingEvents()
-            }
-
-            // Linking from the profile upgrades the existing account in place — no new profile.
-            coVerify(exactly = 0) { createProfileUseCase(displayName = any()) }
         }
 
     @Test

@@ -9,8 +9,6 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
-import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
-import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
@@ -18,44 +16,17 @@ import com.linklabs.sorcerersandspirits.ui.screens.profile.ui.ProfileScreen
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreen
 
 @Composable
-internal fun NavigationDisplay(
-    backStack: NavBackStack<NavKey>,
-    displayName: String,
-    onUpdateDisplayName: (String) -> Unit,
-    onDeleteProfile: () -> Unit,
-    onLinkWithSocialMethod: (SignInMethod) -> Unit,
-    onLinkWithEmail: (email: String, password: String) -> Unit,
-    profileLinkResult: LinkAccountResult?,
-    modifier: Modifier = Modifier,
-) {
+internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifier = Modifier) {
     NavDisplay(
         backStack = backStack,
-        entryProvider = { key ->
-            key.toScreen(
-                backStack = backStack,
-                displayName = displayName,
-                onUpdateDisplayName = onUpdateDisplayName,
-                onDeleteProfile = onDeleteProfile,
-                onLinkWithSocialMethod = onLinkWithSocialMethod,
-                onLinkWithEmail = onLinkWithEmail,
-                profileLinkResult = profileLinkResult,
-            )
-        },
+        entryProvider = { key -> key.toScreen(backStack = backStack) },
         onBack = { backStack.removeLastOrNull() },
         entryDecorators = getRouteScopedEntryDecorators(),
         modifier = modifier,
     )
 }
 
-private fun NavKey.toScreen(
-    backStack: NavBackStack<NavKey>,
-    displayName: String,
-    onUpdateDisplayName: (String) -> Unit,
-    onDeleteProfile: () -> Unit,
-    onLinkWithSocialMethod: (SignInMethod) -> Unit,
-    onLinkWithEmail: (email: String, password: String) -> Unit,
-    profileLinkResult: LinkAccountResult?,
-): NavEntry<NavKey> =
+private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
     when (this) {
         Route.TavernScreen ->
             NavEntry(key = this) {
@@ -81,14 +52,7 @@ private fun NavKey.toScreen(
 
         Route.ProfileScreen ->
             NavEntry(key = this) {
-                ProfileScreen(
-                    displayName = displayName,
-                    onUpdateDisplayName = onUpdateDisplayName,
-                    onDeleteProfile = onDeleteProfile,
-                    onLinkWithSocialMethod = onLinkWithSocialMethod,
-                    onLinkWithEmail = onLinkWithEmail,
-                    linkResult = profileLinkResult,
-                )
+                ProfileScreen(onProfileDeleted = { backStack.removeLastOrNull() })
             }
 
         Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }

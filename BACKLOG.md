@@ -908,7 +908,7 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean.
 
 ### SS-064 — ProfileScreen
-- [ ] Not completed
+- [x] Completed
 - **Goal:** Add a ProfileScreen, accessed from the app drawer (SS-063). It contains the name-change
   capability (moved out of `SettingsDrawer`), profile deletion (SS-062), and, once game-stat handling
   exists, the user's own game statistics.
@@ -922,6 +922,31 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   placeholder ProfileScreen (links the current account in place via `AppViewModel.onLinkProfileWith*`,
   status surfaced through `profileLinkResultFlow`); carry it over when promoting the screen to its
   own route + ViewModel. Related: SS-035, SS-039, SS-061, SS-065.
+- **Resolution:** Promoted ProfileScreen to its own route-scoped `ProfileScreenViewModel`
+  (`@KoinViewModel` + manual `viewModelOf(::ProfileScreenViewModel)` in `Modules.kt`, matching the
+  App/Arena/Tavern convention). The VM owns everything the screen needs, so the whole
+  `displayName` / `onUpdateDisplayName` / `onDeleteProfile` / `onLinkProfileWith*` /
+  `profileLinkResultFlow` thread was **removed** from `AppViewModel` → `SorcerersAndSpiritsNavigationHost`
+  → `NavigationDisplay`; `ProfileScreen()` now resolves its VM via `koinViewModel()` and only takes an
+  `onProfileDeleted` callback (the back-stack pop). The VM:
+  - observes `GetProfileFlowUseCase` for the display name, exposing `UiState<ProfileState>`;
+  - edits the name via `UpdateProfileDisplayNameUseCase`;
+  - on delete, runs `DeleteProfileUseCase` then silently re-provisions a fresh anonymous profile
+    (`CreateProfileUseCase` + `GetRandomTravelerNameUseCase`) and emits `ProfileEvent.ProfileDeleted`
+    so the screen pops back — `AppViewModel`'s live profile flow reactively picks up the new name (no
+    app-level reload needed). The delete-and-recreate orchestration moved off `AppViewModel` entirely;
+  - links the current account via `LinkAccountUseCase`, surfacing the result on a separate
+    `linkResultFlow` (kept off `ProfileState` so a profile re-emission can't wipe the feedback).
+  Rebuilt the screen as a `LazyColumn` with a stats-placeholder card (`TODO(SS-064)` → SS-072/074) and
+  moved all copy into `strings.xml` (`profile_*`). Migrated the deletion + link tests out of
+  `AppViewModelTest` into a new `ProfileScreenViewModelTest`; trimmed the now-unused `AppViewModel`
+  deps. **Also fixed in passing:** this project's KSP-generated Koin module isn't included
+  (registration is manual `viewModelOf`), and `GameRulesScreenViewModel` (SS-067) was annotated
+  `@KoinViewModel` but missing from the list — it would have crashed when opened from the drawer.
+  Registered it too.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean; full
+  `:composeApp:testDebugUnitTest` suite green (new `ProfileScreenViewModelTest` + trimmed
+  `AppViewModelTest`).
 
 ### SS-086 — Android: native Google Sign-In token acquisition
 - [x] Completed (dormant until SS-088)

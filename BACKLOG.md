@@ -1570,6 +1570,67 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 ---
 
+## Computer opponent
+
+### SS-092 — Computer enemy: challenge from the Tavern, fight in the Arena
+- [ ] Not completed
+- **Goal:** Let a player challenge a computer-controlled opponent from The Tavern and fight it in the
+  Arena. Start with a single possible computer enemy; design so a human can later set up multiple
+  computer opponents. The computer must take a short "thinking" delay before each decision —
+  reacting, choosing who to attack, or rolling an ability.
+- **Design:**
+  - **Domain `ComputerOpponent`** (`domain/computer/`): a `ComputerOpponent(userId, displayName)`
+    plus a `ComputerOpponents` registry holding the single `default` bot and an `isComputer(userId)`
+    predicate keyed off a `"computer-"` id prefix (so multiple bots and human/bot detection extend
+    cleanly).
+  - **Tavern (bot as a traveler):** the computer shows up as a permanent, always-`Available`
+    traveler in `TheBar` (injected in the UI `TavernData.toState`, not Firebase presence). Selecting
+    it and pressing Challenge does **not** run the human Firebase challenge handshake (the bot has no
+    presence to claim/mailbox, so `claimChallengers` would reject it). Instead
+    `TavernScreenViewModel` short-circuits to a direct computer-match start: it builds
+    `ArenaScreenViewModelArguments` with a freshly generated `arenaId`, `expectedNumberOfPlayers`,
+    and the selected `computerOpponents`, and fires `TavernEvent.NavigateToArena`. MVP scope: a
+    selection containing the computer starts a user-vs-computer(s) match (human co-challengees in the
+    same match are deferred).
+  - **Seeding the match:** `ArenaScreenViewModelArguments` / its navigation-serializable mirror carry
+    the `computerOpponents`. `CoordinateArenaMatchUseCase` connects each computer into the arena
+    (reusing the idempotent `connectToArena`) **before** connecting the user, so the user connects
+    last and becomes the first active chooser.
+  - **Driving the bot (the human's client):** in a user-vs-computer match only the human's client is
+    present, so it drives the bot. After each match-state emission `ArenaScreenViewModel` checks
+    whether a computer currently owes the action (it is the active class-chooser, or its id is in the
+    combat `activeUserIds` for a turn or an owed reaction roll). If so it schedules the action after a
+    randomized "thinking" delay, keyed on an action signature so unrelated emissions (e.g. incoming
+    messages) don't re-trigger or double-fire. The decision engine reuses the existing SS-014 timeout
+    auto-resolve, generalized from "the user" to an arbitrary acting player id: pick a random
+    available class; attack a random living opponent; auto-roll any owed ability/reaction (random
+    legal Charm target). Session stats stay attributed to the human only.
+  - **Cleanup / lifecycle:** `ExitArena` deletes the whole match when no **human** players remain
+    (a computer-only match is dead), preventing an orphaned match the bot can never leave.
+    `StayForAnotherMatchUseCase` gains an explicit player-id param so the human's client also readies
+    up the computer(s) when staying, letting a computer match restart instead of hanging on the
+    never-ready bot.
+  - **Lightly-smart combat:** the bot's free turn-start choice (`CombatActionState.Idle`) is biased
+    rather than random — it attacks the **weakest (lowest-HP) living opponent** (ties broken at
+    random) to secure kills, and activates an offensive ability only when **clearly favorable**
+    (currently just the Necromancer's Summon Minion while below max HP or with no minions; the risky
+    gambits — All-In self-knockout, Prepare Attack forgoing a hit, Impersonate — fall back to a
+    normal attack). Owed reaction/continuation rolls remain forced. The user's own timed-out turn
+    keeps the simple random-target behavior; only the computer uses the biased policy, injected as a
+    turn-action strategy into the shared resolver.
+- **Architecture note:** the bot is **client-driven** (the challenging human's client owns and drives
+  it), because this game has no game-logic backend — Firebase RTDB only stores shared state; all
+  rules run in Kotlin `commonMain` on clients. A true backend-driven bot (the authoritative-server
+  model most games use) would mean a Cloud Function reimplementing/sharing the combat rules, which is
+  only worth it once *all* combat resolution moves server-side (whole-game anti-cheat) or bots must
+  persist with zero humans connected. The decision *policy* is portable, so it can move to a backend
+  driver later with minimal rewiring. Client-driving also gives precise control over the "thinking"
+  delay (vs. Cloud Function cold-start latency).
+- **Deferred (follow-ups):** richer combat heuristics (use Prepare Attack vs. tanky targets, All-In
+  when behind, Impersonate the strongest opponent); mixed human+computer matches in one arena
+  (needs a deterministic "which client drives the bot" rule with failover); per-bot
+  difficulty/personality; Tavern UI to configure multiple computer opponents.
+
 ## Release & versioning
 
 ### SS-070 — Investigate app version control & force-upgrade

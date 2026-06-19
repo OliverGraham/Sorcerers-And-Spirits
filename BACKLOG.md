@@ -1141,12 +1141,31 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   Turn/Round/Match. Related: SS-021, SS-071, SS-072, SS-067.
 
 ### SS-065 — LeaderboardScreen
-- [ ] Not completed
+- [x] Completed
 - **Goal:** Once game stats are recorded on user profiles (SS-021 infrastructure + SS-072 schema),
   add a screen showing the top players. Accessible from the drawer (SS-063).
+- **Resolution:** Built the route-driven screen on top of the persisted stats. Ranks by overall
+  **Gauntlets won** — the unit a stats write is attributed to (SS-073) — so the leaderboard reflects
+  completed runs rather than individual matches.
+  - **Data layer:** `ProfileRepository.getTopProfiles(limit)` + `FirebaseProfileRepository` impl
+    queries the `Profiles` collection with a single `orderBy(stats.overall.gauntletsWon,
+    DESCENDING).limit(limit)` (single-field order needs no composite index) and maps the documents
+    through the existing `ProfileEntity.toDomain()`. The dotted field path is a compile-time const
+    built from the existing `FireStoreKeys`.
+  - **Domain:** `GetLeaderboardUseCase` reads the top profiles (size constant = 50), assigns 1-based
+    ranks by order, and tags the signed-in user's own row (`isCurrentUser`, via
+    `AuthenticationRepository.getUserId()`) so the screen can highlight it. New `LeaderboardEntry`
+    domain model (rank, displayName, gauntletsWon, matchesWon, isCurrentUser).
+  - **UI:** `LeaderboardScreenViewModel` (`UiState.Loading/Loaded/Error` with `onRetry`) +
+    `LeaderboardState`/`LeaderboardRowState`. `LeaderboardScreen` renders a ranked `LazyColumn`
+    (rank, name + "You" badge for the current user, match-wins subtitle, Gauntlet-wins headline),
+    an empty state, and the shared `ErrorContent`. Wired in DI (`Modules.kt`); the drawer entry
+    (SS-063) and `Route.LeaderboardScreen` already existed.
+- **Verification:** `composeApp` Android debug + unit-test sources compile clean; new
+  `GetLeaderboardUseCaseTest` (3 cases) and `LeaderboardScreenViewModelTest` (3 cases) pass.
 - **Notes:** Depends on stats existing/being persisted (Related: SS-021, SS-072; SS-071 forfeit/
-  finished stats update). Likely splits into multiple tickets as work begins — stats schema/
-  aggregation, query/ordering strategy, and the screen UI.
+  finished stats update). Future work: pagination beyond the top 50, alternate ranking metrics, and
+  jumping to the current user's row when they fall outside the top slice.
 
 ### SS-071 — Forfeit vs finished leave + stats update
 - [x] Completed

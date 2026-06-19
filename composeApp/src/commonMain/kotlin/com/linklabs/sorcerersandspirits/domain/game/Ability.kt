@@ -72,3 +72,11 @@ sealed interface OffensiveAbility : Ability {
 
     data object None : OffensiveAbility
 }
+
+/**
+ * The offensive ability whose effect actually applies. An Illusionist that has Impersonated an
+ * opponent attacks with the copied ability, so [OffensiveAbility.Impersonate] resolves to the
+ * ability it copied; every other ability is itself.
+ */
+val OffensiveAbility.effective: OffensiveAbility
+    get() = if (this is OffensiveAbility.Impersonate) impersonatedAbility else this

@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.effective
 
 internal class NormalAttackRollHandler(
     private val firstDie: Int,
@@ -41,7 +42,8 @@ internal class NormalAttackRollHandler(
 
     private fun CombatMutator.handleSpellPotencyIfApplicable(): Boolean {
         val isSpellPotencyRoll =
-            attacker.offensiveAbility is OffensiveAbility.SpellPotency && firstDie == secondDie
+            attacker.offensiveAbility.effective is OffensiveAbility.SpellPotency &&
+                firstDie == secondDie
 
         if (isSpellPotencyRoll) {
             SpellPotencyRoll(combatMutator = this, diceTotal = diceTotal).invoke()
@@ -90,7 +92,7 @@ internal class NormalAttackRollHandler(
             return
         }
 
-        if (attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
+        if (attacker.offensiveAbility.effective == OffensiveAbility.KillingMomentum) {
             TriggerKillingMomentum(combatMutator = this).invoke()
             return
         }
@@ -98,7 +100,7 @@ internal class NormalAttackRollHandler(
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,
-                offensiveAbility = attacker.offensiveAbility,
+                offensiveAbility = attacker.offensiveAbility.effective,
             )
         if (wasEncoreTriggered) return
 
@@ -114,7 +116,7 @@ internal class NormalAttackRollHandler(
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,
-                offensiveAbility = attacker.offensiveAbility,
+                offensiveAbility = attacker.offensiveAbility.effective,
             )
         if (wasEncoreTriggered) return
 

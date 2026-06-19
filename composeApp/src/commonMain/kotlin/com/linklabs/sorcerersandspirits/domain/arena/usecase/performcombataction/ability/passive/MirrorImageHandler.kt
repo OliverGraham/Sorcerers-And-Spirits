@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.effective
 
 internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
@@ -59,15 +60,40 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             )
         }
 
+        val rolledMirrorImage = rollSelectedDie(mirrorImage = mirrorImage)
         val rerolledDie =
-            if (mirrorImage.firstDie.isRerolled) mirrorImage.firstDie else mirrorImage.secondDie
+            if (rolledMirrorImage.firstDie.isRerolled) {
+                rolledMirrorImage.firstDie
+            } else {
+                rolledMirrorImage.secondDie
+            }
 
-        resolveModifiedRoll(mirrorImage = mirrorImage) { outcome ->
+        resolveModifiedRoll(mirrorImage = rolledMirrorImage) { outcome ->
             ArenaMessage.MirrorImage.TemptFate(
                 rerolledMirrorImageDie = rerolledDie,
                 attackerUserId = attackerUserId,
                 outcome = outcome,
             )
+        }
+    }
+
+    /**
+     * Rolls a fresh 1d6 for the die the Illusionist chose to reroll. The roll's `-1` adjustment is
+     * applied later by [MirrorImageDie.finalValue].
+     */
+    private fun CombatMutator.rollSelectedDie(
+        mirrorImage: AbilityAction.Passive.MirrorImage
+    ): AbilityAction.Passive.MirrorImage {
+        val rolledDie = diceRoller.roll1D6(userId = defenderUserId).total
+
+        return when (mirrorImage.rerollSelection) {
+            AbilityAction.Passive.MirrorImage.RerollSelection.First ->
+                mirrorImage.copy(firstDie = mirrorImage.firstDie.copy(reroll = rolledDie))
+
+            AbilityAction.Passive.MirrorImage.RerollSelection.Second ->
+                mirrorImage.copy(secondDie = mirrorImage.secondDie.copy(reroll = rolledDie))
+
+            AbilityAction.Passive.MirrorImage.RerollSelection.None -> mirrorImage
         }
     }
 
@@ -125,7 +151,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 )
         )
 
-        if (isKnockout && attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
+        if (isKnockout && attacker.offensiveAbility.effective == OffensiveAbility.KillingMomentum) {
             TriggerKillingMomentum(combatMutator = this).invoke()
             return
         }
@@ -133,7 +159,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,
-                offensiveAbility = attacker.offensiveAbility,
+                offensiveAbility = attacker.offensiveAbility.effective,
             )
         if (wasEncoreTriggered) return
 

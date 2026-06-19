@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.effective
 
 internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
@@ -65,7 +66,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.prayerFailure() {
-        val attackerAbility = attacker.offensiveAbility
+        val attackerAbility = attacker.offensiveAbility.effective
 
         when (attackerAbility) {
             OffensiveAbility.KillingMomentum ->
@@ -108,7 +109,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.resolveWrath() {
         val isAttackerConscious = attacker.isConscious()
         val shouldTriggerEncore =
-            isAttackerConscious && attacker.offensiveAbility == OffensiveAbility.Encore
+            isAttackerConscious && attacker.offensiveAbility.effective == OffensiveAbility.Encore
 
         if (shouldTriggerEncore) {
             EncoreHandler(combatMutator = combatMutator).triggerEncore()

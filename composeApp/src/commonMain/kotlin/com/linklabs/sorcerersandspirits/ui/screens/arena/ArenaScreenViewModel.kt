@@ -12,6 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatch
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -184,9 +185,33 @@ class ArenaScreenViewModel(
 
     private suspend fun UseAbilityArguments.onUseAbility() {
         val arenaState = currentCombatState() ?: return
-        val currentAction = toDomain(combatActionState = arenaState.combatActionState)
+        val resolvedArguments = withImpersonatedTarget(arenaState = arenaState)
+        val currentAction =
+            resolvedArguments.toDomain(combatActionState = arenaState.combatActionState)
 
         arenaState.performCombatAction(currentAction = currentAction)
+    }
+
+    /**
+     * Impersonate copies the offensive ability of the opponent the Illusionist targeted, so the
+     * copied ability is resolved here from the live [arenaState] rather than baked into the control
+     * (which is built before a target is chosen). Every other ability is returned unchanged.
+     */
+    private fun UseAbilityArguments.withImpersonatedTarget(
+        arenaState: ArenaState.Combat
+    ): UseAbilityArguments {
+        if (abilityActionState !is AbilityActionState.Activated.Impersonate) return this
+
+        val target = arenaState.playerMap[targetedOpponentUserId] ?: return this
+        val copiedAbility = target.characterClass.offensiveAbility.toDomain()
+
+        return copy(
+            abilityActionState =
+                AbilityActionState.Activated.Impersonate(
+                    impersonateAbility =
+                        OffensiveAbility.Impersonate(impersonatedAbility = copiedAbility)
+                )
+        )
     }
 
     private fun currentCombatState(): ArenaState.Combat? =

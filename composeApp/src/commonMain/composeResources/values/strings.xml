@@ -22,6 +22,17 @@
     <string name="link_account_error_generic">Couldn\'t finish signing in. Please try again.</string>
     <string name="link_account_success">You\'re all set — your progress is saved.</string>
 
+    <string name="profile_title">Profile</string>
+    <string name="profile_display_name_label">Display name</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_cancel">Cancel</string>
+    <string name="profile_stats_title">Your stats</string>
+    <string name="profile_stats_placeholder">Your battle record will appear here soon.</string>
+    <string name="profile_delete">Delete profile</string>
+    <string name="profile_delete_confirm_title">Delete profile?</string>
+    <string name="profile_delete_confirm_message">This permanently deletes your profile, including your display name and game stats. This can\'t be undone.</string>
+    <string name="profile_delete_confirm_button">Delete</string>
+
     <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 
     <string name="app_update_force_title">Update required</string>

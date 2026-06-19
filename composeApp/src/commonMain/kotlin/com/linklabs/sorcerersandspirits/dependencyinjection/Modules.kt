@@ -45,6 +45,8 @@ import com.linklabs.sorcerersandspirits.domain.version.SupportedAppVersionProvid
 import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.database.database
@@ -118,5 +120,7 @@ private fun Module.initializeUseCases() {
 private fun Module.initializeViewModels() {
     viewModelOf(::AppViewModel)
     viewModelOf(::ArenaScreenViewModel)
+    viewModelOf(::GameRulesScreenViewModel)
+    viewModelOf(::ProfileScreenViewModel)
     viewModelOf(::TavernScreenViewModel)
 }

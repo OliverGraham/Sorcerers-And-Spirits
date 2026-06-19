@@ -5,18 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
-import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
 import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
@@ -39,15 +36,12 @@ class AppViewModel(
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
-    private val deleteProfileUseCase: DeleteProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
-    private val linkAccountUseCase: LinkAccountUseCase,
     private val signInWithSocialUseCase: SignInWithSocialUseCase,
-    private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
 ) : ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<AppState>>(value = UiState.Loading)
@@ -55,11 +49,6 @@ class AppViewModel(
 
     private val _appUpgradeStatusFlow = MutableStateFlow(value = AppUpgradeStatus.UP_TO_DATE)
     val appUpgradeStatusFlow = _appUpgradeStatusFlow.asStateFlow()
-
-    // Result of the most recent link attempt from the ProfileScreen. Kept off AppState so the
-    // profile flow re-emitting (e.g. a connectivity change) can't wipe the feedback mid-view.
-    private val _profileLinkResultFlow = MutableStateFlow<LinkAccountResult?>(value = null)
-    val profileLinkResultFlow = _profileLinkResultFlow.asStateFlow()
 
     private var screenStateJob: Job? = null
 
@@ -103,36 +92,6 @@ class AppViewModel(
                     showSignInDialog()
                 }
             }
-    }
-
-    fun onUpdateDisplayName(newDisplayName: String) {
-        viewModelScope.launch { updateProfileDisplayNameUseCase(displayName = newDisplayName) }
-    }
-
-    fun onDeleteProfile() {
-        viewModelScope.launch {
-            // Stop collecting the now-deleted profile before its node is removed.
-            screenStateJob?.cancel()
-            _uiStateFlow.value = UiState.Loading
-
-            deleteProfileUseCase()
-
-            // The anonymous identity persists, so silently start a fresh profile with a random name
-            // rather than forcing the sign-in dialog. A deliberate profile-creation / sign-in flow
-            // (and converting the anonymous account) is future work (SS-061).
-            val newProfileResult =
-                createProfileUseCase(displayName = getRandomTravelerNameUseCase())
-
-            if (newProfileResult == DisplayNameResult.SUCCESS) {
-                hasCreatedProfile = true
-                loadScreenState()
-            } else {
-                // Fallback so a failed silent creation (e.g. a rare random-name collision) can't
-                // strand the user without a profile.
-                hasCreatedProfile = false
-                showSignInDialog()
-            }
-        }
     }
 
     fun createProfile(newDisplayName: String) {
@@ -272,26 +231,6 @@ class AppViewModel(
                         data = AppState(displayName = displayName, showSignInDialog = true)
                     )
         }
-    }
-
-    /**
-     * From the ProfileScreen a profile (and anonymous account) already exists, so linking is a
-     * direct in-place upgrade — no profile creation, just surface the outcome.
-     */
-    fun onLinkProfileWithSocialMethod(method: SignInMethod) {
-        linkCurrentAccount { linkAccountUseCase(method = method) }
-    }
-
-    fun onLinkProfileWithEmail(email: String, password: String) {
-        linkCurrentAccount { linkAccountUseCase.withEmail(email = email, password = password) }
-    }
-
-    fun onDismissProfileLinkResult() {
-        _profileLinkResultFlow.value = null
-    }
-
-    private fun linkCurrentAccount(link: suspend () -> LinkAccountResult) {
-        viewModelScope.launch { _profileLinkResultFlow.value = link() }
     }
 
     fun getRandomName() {

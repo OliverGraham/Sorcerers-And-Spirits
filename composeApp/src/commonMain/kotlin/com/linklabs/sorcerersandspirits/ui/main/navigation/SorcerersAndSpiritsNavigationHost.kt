@@ -14,7 +14,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
-import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
@@ -75,17 +74,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
                     onDismissRequest = {},
                 )
             } else {
-                val profileLinkResult by viewModel.profileLinkResultFlow.collectAsState()
-
-                SorcerersAndSpirits(
-                    appState = data,
-                    onUpdateDisplayName = viewModel::onUpdateDisplayName,
-                    onDeleteProfile = viewModel::onDeleteProfile,
-                    onLinkWithSocialMethod = viewModel::onLinkProfileWithSocialMethod,
-                    onLinkWithEmail = viewModel::onLinkProfileWithEmail,
-                    profileLinkResult = profileLinkResult,
-                    modifier = modifier,
-                )
+                SorcerersAndSpirits(appState = data, modifier = modifier)
             }
         }
 
@@ -124,15 +113,7 @@ private fun linkErrorMessage(result: LinkAccountResult?): String? =
     }
 
 @Composable
-private fun SorcerersAndSpirits(
-    appState: AppState,
-    onUpdateDisplayName: (String) -> Unit,
-    onDeleteProfile: () -> Unit,
-    onLinkWithSocialMethod: (SignInMethod) -> Unit,
-    onLinkWithEmail: (email: String, password: String) -> Unit,
-    profileLinkResult: LinkAccountResult?,
-    modifier: Modifier = Modifier,
-) {
+private fun SorcerersAndSpirits(appState: AppState, modifier: Modifier = Modifier) {
     val backStack = rememberNavBackStack(navigationRoutesConfiguration, Route.TavernScreen)
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -154,16 +135,7 @@ private fun SorcerersAndSpirits(
             Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
                 OfflineBanner(isOffline = appState.isOffline)
 
-                NavigationDisplay(
-                    backStack = backStack,
-                    displayName = appState.displayName,
-                    onUpdateDisplayName = onUpdateDisplayName,
-                    onDeleteProfile = onDeleteProfile,
-                    onLinkWithSocialMethod = onLinkWithSocialMethod,
-                    onLinkWithEmail = onLinkWithEmail,
-                    profileLinkResult = profileLinkResult,
-                    modifier = modifier,
-                )
+                NavigationDisplay(backStack = backStack, modifier = modifier)
             }
         }
     }

@@ -25,6 +25,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWith
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
+import com.linklabs.sorcerersandspirits.domain.leaderboard.usecase.GetLeaderboardUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.RandomNameProvider
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
@@ -46,6 +47,7 @@ import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUs
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import dev.gitlive.firebase.Firebase
@@ -99,6 +101,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::DeleteProfileUseCase)
     factoryOf(::ExitArenaUseCase)
     factoryOf(::GetCharacterClassesUseCase)
+    factoryOf(::GetLeaderboardUseCase)
     factoryOf(::GetProfileFlowUseCase)
     factoryOf(::GetProfileUseCase)
     factoryOf(::GetRandomTravelerNameUseCase)
@@ -121,6 +124,7 @@ private fun Module.initializeViewModels() {
     viewModelOf(::AppViewModel)
     viewModelOf(::ArenaScreenViewModel)
     viewModelOf(::GameRulesScreenViewModel)
+    viewModelOf(::LeaderboardScreenViewModel)
     viewModelOf(::ProfileScreenViewModel)
     viewModelOf(::TavernScreenViewModel)
 }

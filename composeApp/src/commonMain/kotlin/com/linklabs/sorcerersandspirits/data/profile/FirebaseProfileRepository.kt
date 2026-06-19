@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
+import dev.gitlive.firebase.firestore.Direction
 import dev.gitlive.firebase.firestore.DocumentReference
 import dev.gitlive.firebase.firestore.FieldPath
 import dev.gitlive.firebase.firestore.FieldValue
@@ -58,6 +59,14 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
         return profileDocument.data<ProfileEntity?>()?.toDomain()
     }
 
+    override suspend fun getTopProfiles(limit: Int): List<Profile> =
+        profilesCollection
+            .orderBy(field = OVERALL_GAUNTLETS_WON_PATH, direction = Direction.DESCENDING)
+            .limit(limit = limit)
+            .get()
+            .documents
+            .mapNotNull { document -> document.data<ProfileEntity?>()?.toDomain() }
+
     override fun getProfileFlow(userId: String): Flow<Profile?> =
         profilesCollection.document(documentPath = userId).snapshots.map { snapshot ->
             snapshot.data<ProfileEntity?>()?.toDomain()
@@ -108,6 +117,10 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
     private fun displayNameReference(displayName: String): DocumentReference =
         displayNamesCollection.document(documentPath = displayName.normalize())
 }
+
+/** Dotted Firestore field path to the overall Gauntlets-won counter the leaderboard ranks by. */
+private const val OVERALL_GAUNTLETS_WON_PATH =
+    FireStoreKeys.STATS + "." + FireStoreKeys.OVERALL + "." + FireStoreKeys.GAUNTLETS_WON
 
 /**
  * The key a display name is reserved under. Names are unique case-insensitively, with surrounding

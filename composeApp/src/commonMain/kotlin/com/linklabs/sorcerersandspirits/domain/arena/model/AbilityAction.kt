@@ -31,8 +31,6 @@ sealed interface AbilityAction {
 
             data object StrumLute : Persuade
 
-            // TODO(SS-049) Persuade: In UI - need to pass in selectedCharmTargetUserId so the
-            //  defenderUserId is Bard's selected target
             data class Charm(
                 val targetableUserIds: Set<String>,
                 val selectedCharmTargetUserId: String? = null,

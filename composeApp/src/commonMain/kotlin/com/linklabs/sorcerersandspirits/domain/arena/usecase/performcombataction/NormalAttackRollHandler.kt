@@ -90,7 +90,6 @@ internal class NormalAttackRollHandler(
             return
         }
 
-        // TODO(SS-050) KillingMomentum
         if (attacker.offensiveAbility == OffensiveAbility.KillingMomentum) {
             TriggerKillingMomentum(combatMutator = this).invoke()
             return

@@ -95,18 +95,20 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         resolveWrath()
     }
 
+    /**
+     * Wrath is only reached after a successful Holy Shield, so the Paladin survived: the attacker
+     * scored no knockout and Killing Momentum is not earned. The attacker did still deal damage,
+     * however, so a still-conscious Bard's Encore applies.
+     */
     private fun CombatMutator.resolveWrath() {
         val isAttackerConscious = attacker.isConscious()
-        val attackerAbility = attacker.offensiveAbility
+        val shouldTriggerEncore =
+            isAttackerConscious && attacker.offensiveAbility == OffensiveAbility.Encore
 
-        when {
-            isAttackerConscious && attackerAbility == OffensiveAbility.KillingMomentum ->
-                TriggerKillingMomentum(combatMutator = this).invoke()
-
-            isAttackerConscious && attackerAbility == OffensiveAbility.Encore ->
-                EncoreHandler(combatMutator = combatMutator).triggerEncore()
-
-            else -> resolveTurnEnd()
+        if (shouldTriggerEncore) {
+            EncoreHandler(combatMutator = combatMutator).triggerEncore()
+        } else {
+            resolveTurnEnd()
         }
     }
 

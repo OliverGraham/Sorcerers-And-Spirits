@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import kotlin.test.Test
@@ -70,6 +71,74 @@ class ArenaScreenStateTest {
         assertEquals(expected = MatchDecision.MatchFinished, actual = state.matchDecision)
     }
 
+    @Test
+    fun `Given the user owes a follow-up roll for their own normal attack, then the target is locked to the defender`() {
+        val state =
+            combatState(
+                combatActionState =
+                    CombatActionState.NormalAttack(
+                        roll = NormalAttackType.Health,
+                        attackerUserId = USER_ID,
+                        defenderUserId = OPPONENT_ID,
+                        originalTurnUserId = USER_ID,
+                        activeUserIds = setOf(element = USER_ID),
+                    )
+            )
+
+        assertEquals(expected = OPPONENT_ID, actual = state.lockedTargetUserId)
+    }
+
+    @Test
+    fun `Given it is the user's turn to start, then no target is locked`() {
+        val state =
+            combatState(
+                combatActionState = CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+            )
+
+        assertNull(actual = state.lockedTargetUserId)
+    }
+
+    @Test
+    fun `Given an opponent is mid normal attack, then the user has no locked target`() {
+        val state =
+            combatState(
+                combatActionState =
+                    CombatActionState.NormalAttack(
+                        roll = NormalAttackType.Health,
+                        attackerUserId = OPPONENT_ID,
+                        defenderUserId = USER_ID,
+                        originalTurnUserId = OPPONENT_ID,
+                        activeUserIds = setOf(element = OPPONENT_ID),
+                    )
+            )
+
+        assertNull(actual = state.lockedTargetUserId)
+    }
+
+    @Test
+    fun `Given the user owes an ability roll, then no target is locked`() {
+        val state =
+            combatState(
+                combatActionState =
+                    holyShieldRoll(
+                        action = AbilityActionState.Passive.HolyShield.Prayer,
+                        defenderUserId = USER_ID,
+                    )
+            )
+
+        assertNull(actual = state.lockedTargetUserId)
+    }
+
+    private fun combatState(combatActionState: CombatActionState) =
+        ArenaState.Combat(
+            playerMap = players(),
+            userPlayerId = USER_ID,
+            combatActionState = combatActionState,
+            roundNumber = 1,
+            isNewRound = false,
+            doublesBonus = null,
+        )
+
     private fun holyShieldRoll(
         action: AbilityActionState.Passive.HolyShield,
         defenderUserId: String,
@@ -90,15 +159,7 @@ class ArenaScreenStateTest {
         screenState(
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasMadeKnockoutDecision = hasMadeKnockoutDecision,
-            arenaState =
-                ArenaState.Combat(
-                    playerMap = players(),
-                    userPlayerId = USER_ID,
-                    combatActionState = combatActionState,
-                    roundNumber = 1,
-                    isNewRound = false,
-                    doublesBonus = null,
-                ),
+            arenaState = combatState(combatActionState = combatActionState),
         )
 
     private fun screenState(

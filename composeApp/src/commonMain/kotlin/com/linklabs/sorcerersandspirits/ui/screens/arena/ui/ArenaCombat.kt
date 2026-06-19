@@ -68,8 +68,17 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
-    var targetedOpponentUserId by remember(key1 = activeUserIds) { mutableStateOf(value = "") }
-    var isTargetLocked by remember(key1 = activeUserIds) { mutableStateOf(value = false) }
+    var selectedOpponentUserId by remember(key1 = activeUserIds) { mutableStateOf(value = "") }
+    var isTargetLockedOptimistically by
+        remember(key1 = activeUserIds) { mutableStateOf(value = false) }
+
+    // Once the user commits an Armor-class roll, the Domain pins the defender (lockedTargetUserId);
+    // the UI then shows that locked opponent and stops offering others, so the target survives the
+    // intervening defensive-ability roll-offs. The optimistic flag locks the instant the user
+    // rolls,
+    // before the pinned state arrives.
+    val targetedOpponentUserId = lockedTargetUserId ?: selectedOpponentUserId
+    val isTargetLocked = lockedTargetUserId != null || isTargetLockedOptimistically
 
     val opponents = playerMap.values.filter { it.userId != userPlayerId }
 
@@ -84,7 +93,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
                 isItThisUsersTurn = isItThisUsersTurn,
                 isTargetLocked = isTargetLocked,
                 targetedOpponentUserId = targetedOpponentUserId,
-                onUpdateTargetedOpponentId = { opponentId -> targetedOpponentUserId = opponentId },
+                onUpdateTargetedOpponentId = { opponentId -> selectedOpponentUserId = opponentId },
             )
         }
 
@@ -93,7 +102,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
                 RollDiceSection(
                     combatControls = combatControls,
                     targetedOpponentUserId = targetedOpponentUserId,
-                    updateIsTargetLocked = { isTargetLocked = true },
+                    updateIsTargetLocked = { isTargetLockedOptimistically = true },
                 )
             }
         }

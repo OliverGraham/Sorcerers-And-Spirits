@@ -96,6 +96,7 @@ sealed interface ArenaState {
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
         val combatControls = deriveCombatControls()
+        val lockedTargetUserId = deriveLockedTargetUserId()
     }
 
     @Immutable
@@ -109,6 +110,19 @@ sealed interface ArenaState {
 sealed interface ActiveState : ArenaState {
     val playerMap: Map<UserId, PlayerState>
     val userPlayerId: String
+}
+
+/**
+ * The opponent the user is committed to attacking while one of their own normal attacks is
+ * mid-resolution — the Armor-class roll is already committed and a follow-up roll is owed. The UI
+ * pins the target to this opponent and stops offering others, so the user cannot change targets
+ * after rolling. Null when the user is free to choose a target: at the start of their turn or when
+ * an ability selects its own target.
+ */
+private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
+    val inFlightAttack = combatActionState as? CombatActionState.NormalAttack ?: return null
+    val isUsersOwnAttack = inFlightAttack.attackerUserId == userPlayerId
+    return if (isUsersOwnAttack) inFlightAttack.defenderUserId else null
 }
 
 // TODO(SS-031): Need to refactor this badly

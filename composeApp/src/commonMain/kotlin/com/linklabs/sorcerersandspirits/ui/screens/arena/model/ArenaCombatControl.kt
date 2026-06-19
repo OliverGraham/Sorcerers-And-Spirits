@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.RerollSelection as MirrorImageReroll
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
@@ -68,18 +69,49 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
             if (
                 isItThisUsersTurn && actionState.action.isUserTheRoller(userPlayerId = userPlayerId)
             ) {
-                listOf(
-                    element =
-                        ArenaCombatControl.AbilityRoll(
-                            action = actionState.action,
-                            label = actionState.action.label,
-                            requiresTarget = actionState.action.requiresTarget,
-                        )
-                )
+                actionState.action.toAbilityRollControls()
             } else {
                 emptyList()
             }
     }
+
+/**
+ * The controls for an ability roll the user owns. Most abilities are a single roll, but Mirror
+ * Image is a choice: reroll either of the attacker's two dice, or keep the roll as-is.
+ */
+private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl> =
+    when (this) {
+        is AbilityActionState.Passive.MirrorImage -> mirrorImageControls()
+
+        else ->
+            listOf(
+                element =
+                    ArenaCombatControl.AbilityRoll(
+                        action = this,
+                        label = label,
+                        requiresTarget = requiresTarget,
+                    )
+            )
+    }
+
+private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<ArenaCombatControl> =
+    listOf(
+        ArenaCombatControl.AbilityRoll(
+            action = copy(rerollSelection = MirrorImageReroll.First),
+            label = "Reroll the ${firstDie.originalRoll}",
+            requiresTarget = false,
+        ),
+        ArenaCombatControl.AbilityRoll(
+            action = copy(rerollSelection = MirrorImageReroll.Second),
+            label = "Reroll the ${secondDie.originalRoll}",
+            requiresTarget = false,
+        ),
+        ArenaCombatControl.AbilityRoll(
+            action = copy(rerollSelection = MirrorImageReroll.None),
+            label = "Keep roll",
+            requiresTarget = false,
+        ),
+    )
 
 /**
  * The user is already in [CombatActionState.activeUserIds] when this is checked. Teleport is the

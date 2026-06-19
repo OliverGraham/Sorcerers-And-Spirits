@@ -907,21 +907,53 @@ class ArenaScreenViewModelTest {
         }
 
     @Test
-    fun `Given a Mirror Image roll that belongs to the user's Illusionist, then a Mirror Image control is offered without a target`() =
+    fun `Given a Mirror Image roll that belongs to the user's Illusionist, then reroll-either-die and keep controls are offered`() =
         runTest {
-            assertPassiveRollControl(
-                purpose =
-                    AbilityAction.Passive.MirrorImage(
-                        firstDie =
-                            AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
-                        secondDie =
-                            AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 4),
-                        attackType = NormalAttackType.ArmorClass,
-                        mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            val combatState =
+                combatViewModel(
+                        nextCombatAction =
+                            abilityRollAction(
+                                purpose =
+                                    AbilityAction.Passive.MirrorImage(
+                                        firstDie =
+                                            AbilityAction.Passive.MirrorImage.MirrorImageDie(
+                                                originalRoll = 3
+                                            ),
+                                        secondDie =
+                                            AbilityAction.Passive.MirrorImage.MirrorImageDie(
+                                                originalRoll = 4
+                                            ),
+                                        attackType = NormalAttackType.ArmorClass,
+                                        mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                                    ),
+                                attackerUserId = OPPONENT_ID,
+                                defenderUserId = USER_ID,
+                                activeUserIds = setOf(USER_ID),
+                            ),
+                        playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
+                    )
+                    .requireCombatState()
+
+            val controls =
+                combatState.combatControls.filterIsInstance<ArenaCombatControl.AbilityRoll>()
+            assertEquals(
+                expected = listOf("Reroll the 3", "Reroll the 4", "Keep roll"),
+                actual = controls.map { it.label },
+            )
+            assertTrue(actual = controls.none { it.requiresTarget })
+
+            val selections =
+                controls.map {
+                    (it.action as AbilityActionState.Passive.MirrorImage).rerollSelection
+                }
+            assertEquals(
+                expected =
+                    listOf(
+                        AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                        AbilityAction.Passive.MirrorImage.RerollSelection.Second,
+                        AbilityAction.Passive.MirrorImage.RerollSelection.None,
                     ),
-                userClass = CharacterClass.getIllusionist(),
-                expectedLabel = "Mirror Image",
-                expectedRequiresTarget = false,
+                actual = selections,
             )
         }
 
@@ -988,12 +1020,16 @@ class ArenaScreenViewModelTest {
         }
 
     @Test
-    fun `When the user activates Impersonate with a target, then an Impersonate ability action targets that opponent`() =
+    fun `When the user activates Impersonate with a target, then an Impersonate action copies that opponent's offensive ability`() =
         runTest {
             val viewModel =
                 combatViewModel(
                     nextCombatAction = idleTurn(USER_ID),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
+                    playerMap =
+                        twoPlayerMap(
+                            userClass = CharacterClass.getIllusionist(),
+                            opponentClass = CharacterClass.getMage(),
+                        ),
                 )
             val control =
                 viewModel
@@ -1004,9 +1040,15 @@ class ArenaScreenViewModelTest {
             runCurrent()
 
             val abilityRoll = capturedAbilityRoll()
-            assertIs<AbilityAction.Activated.Impersonate>(value = abilityRoll.purpose)
+            val impersonate =
+                assertIs<AbilityAction.Activated.Impersonate>(value = abilityRoll.purpose)
             assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
             assertEquals(expected = OPPONENT_ID, actual = abilityRoll.defenderUserId)
+            // The targeted Mage's offensive ability is copied, not the Illusionist's own (None).
+            assertEquals(
+                expected = OffensiveAbility.SpellPotency,
+                actual = impersonate.impersonateAbility.impersonatedAbility,
+            )
         }
 
     @Test

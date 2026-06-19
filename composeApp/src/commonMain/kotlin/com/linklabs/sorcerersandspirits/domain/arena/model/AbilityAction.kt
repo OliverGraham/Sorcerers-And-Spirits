@@ -50,8 +50,16 @@ sealed interface AbilityAction {
             val secondDie: MirrorImageDie,
             val attackType: NormalAttackType,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
+            val rerollSelection: RerollSelection = RerollSelection.None,
         ) : Passive {
-            val isReroll = firstDie.isRerolled || secondDie.isRerolled
+            val isReroll = rerollSelection != RerollSelection.None
+
+            /** Which of the attacker's two dice the Illusionist chose to reroll, if any. */
+            enum class RerollSelection {
+                None,
+                First,
+                Second,
+            }
 
             data class MirrorImageDie(val originalRoll: Int, val reroll: Int? = null) {
                 val isRerolled = reroll != null

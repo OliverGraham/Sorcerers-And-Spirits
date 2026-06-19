@@ -260,6 +260,37 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `Given an Illusionist impersonating Killing Momentum, when they knock out a defender, then Killing Momentum triggers and they act again`() {
+        // Arrange
+        val illusionist =
+            CharacterClass.getIllusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility = OffensiveAbility.KillingMomentum
+                        )
+                )
+        val arguments = createThreePlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val illusionistUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = illusionistUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert: the impersonated Killing Momentum lets the Illusionist take another turn.
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = nextAction.isThisUserNext(userId = illusionistUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
+
+        val defender = outcome.getPlayerById(userId = currentAction.defenderUserId)
+        assertTrue(actual = defender.characterClass.hitPoints <= 0)
+    }
+
+    @Test
     fun `When an attacker misses a Rogue's armor, then Dodge triggers and the Rogue's armor bonus increases`() {
         // Arrange
         val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getRogue())
@@ -1068,15 +1099,17 @@ class PerformCombatActionUseCaseTest {
     fun `When an Illusionist uses Mirror Image to reroll and attacker misses, then the turn ends and the ability is reset`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
-                firstDie =
-                    AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3, reroll = 2),
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
             )
 
+        // Reroll of 2 becomes a final value of 1, so the total of 4 misses the Illusionist's armor.
         mirrorImageTest(
             mirrorImagePurpose = mirrorImagePurpose,
+            rerollDie = 2,
             expectedUsedThisAttack = false,
             expectedIsNextActionIdle = true,
         )
@@ -1103,15 +1136,17 @@ class PerformCombatActionUseCaseTest {
     fun `When an Illusionist uses Mirror Image during ArmorClass, they cannot use it again during the Health roll`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
-                firstDie =
-                    AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3, reroll = 6),
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
             )
 
+        // Reroll of 6 becomes a final value of 5, so the total of 8 breaks the Illusionist's armor.
         mirrorImageTest(
             mirrorImagePurpose = mirrorImagePurpose,
+            rerollDie = 6,
             expectedUsedThisAttack = true,
             expectedIsNextActionNormalAttack = true,
         )
@@ -1120,6 +1155,7 @@ class PerformCombatActionUseCaseTest {
     private fun mirrorImageTest(
         mirrorImagePurpose: AbilityAction.Passive.MirrorImage,
         expectedUsedThisAttack: Boolean,
+        rerollDie: Int? = null,
         expectedIsNextActionIdle: Boolean = false,
         expectedIsNextActionNormalAttack: Boolean = false,
     ) {
@@ -1127,6 +1163,10 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getIllusionist())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
+
+        if (rerollDie != null) {
+            setupOneDiceRoll(userId = currentAction.defenderUserId, die = rerollDie)
+        }
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)

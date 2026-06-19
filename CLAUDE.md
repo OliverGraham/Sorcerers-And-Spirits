@@ -9,9 +9,12 @@ other clients
 
 The game uses Firebase's RealTime Database as the shared persisted game-state source.
 
-Outstanding work is tracked as tickets in BACKLOG.md. TODO comments in the code are tagged with
-their ticket ID, e.g. `// TODO(SS-019): ...`; grep an ID to find every related TODO. When asked to
-work a ticket, read its entry in BACKLOG.md and check the box there when it's done.
+Outstanding work is tracked as tickets in BACKLOG.md (active tickets only); finished tickets are
+archived as one-line entries in COMPLETED.md, with full resolution detail in the git history (commit
++ PR per ticket). IDs are stable and globally unique, so a `grep` for an ID finds it in either file.
+TODO comments in the code are tagged with their ticket ID, e.g. `// TODO(SS-019): ...`; grep an ID to
+find every related TODO. When asked to work a ticket, read its entry in BACKLOG.md; when it's done,
+move it from BACKLOG.md to COMPLETED.md (as a one-line entry) rather than checking a box.
 
 Game terminology:
 

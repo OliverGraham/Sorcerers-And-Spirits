@@ -4,6 +4,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -50,12 +52,29 @@ internal fun LoadedArenaScreen(
         },
         sheetContent = { ArenaMessageLog(messages = screenState.filteredMessages) },
     ) { paddingValues ->
-        ScreenContent(
-            arenaState = screenState.arenaState,
-            characterClasses = screenState.characterClasses,
-            gauntletProgress = screenState.gauntletProgress,
-            paddingValues = paddingValues,
-        )
+        Box {
+            ScreenContent(
+                arenaState = screenState.arenaState,
+                characterClasses = screenState.characterClasses,
+                gauntletProgress = screenState.gauntletProgress,
+                paddingValues = paddingValues,
+            )
+
+            // TODO(SS-091): TEMPORARY dice debug overlay. Remove this block (and
+            //  TemporaryDiceDebugOverlay.kt) once combat is stable.
+            val isInOrAfterCombat =
+                screenState.arenaState is ArenaState.Combat ||
+                    screenState.arenaState is ArenaState.Finished
+            if (isInOrAfterCombat) {
+                TemporaryDiceDebugOverlay(
+                    messages = screenState.messages,
+                    modifier =
+                        Modifier.align(alignment = Alignment.TopCenter)
+                            .padding(paddingValues = paddingValues)
+                            .padding(all = 8.dp),
+                )
+            }
+        }
     }
 
     if (screenState.showForfeitDialog) {

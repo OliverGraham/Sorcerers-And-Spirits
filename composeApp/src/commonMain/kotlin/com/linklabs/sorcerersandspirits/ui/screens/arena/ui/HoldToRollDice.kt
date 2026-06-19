@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,16 +45,14 @@ private const val HOLDING_DIE_SCALE_LABEL = "HoldingDieScale"
 private const val BUZZ_LINGER_MILLIS = 200L
 
 /**
- * Roll the dice three ways (SS-069):
- * - press-and-hold and shake for as little or as long as you like, then release;
- * - double-tap the dice; or
- * - press the Roll button.
+ * Roll the dice two ways (SS-069):
+ * - press-and-hold and shake for as little or as long as you like, then release; or
+ * - double-tap the dice.
  *
  * The hold gesture consumes its touch (`awaitEachGesture` + `consume`) so the surrounding scrolling
- * combat list can't steal the press and cancel the hold. The Roll button and double-tap roll
- * without shaking, keeping turns playable on emulators and devices without a usable accelerometer.
- * Visuals are intentionally a placeholder; SS-077 and SS-078 own the final dice rendering and
- * styling.
+ * combat list can't steal the press and cancel the hold. Double-tap rolls without shaking, keeping
+ * turns playable on emulators and devices without a usable accelerometer. Visuals are intentionally
+ * a placeholder; SS-077 and SS-078 own the final dice rendering and styling.
  */
 @Composable
 internal fun HoldToRollDice(
@@ -136,15 +133,6 @@ internal fun HoldToRollDice(
                 )
             }
         }
-
-        RollButton(enabled = enabled, onRoll = roll)
-    }
-}
-
-@Composable
-private fun RollButton(enabled: Boolean, onRoll: () -> Unit, modifier: Modifier = Modifier) {
-    OutlinedButton(onClick = onRoll, enabled = enabled, modifier = modifier.fillMaxWidth()) {
-        Text(text = "Roll")
     }
 }
 
@@ -256,5 +244,5 @@ private fun captionFor(
         !enabled -> label
         isHolding && isArmed -> "Release to roll"
         isHolding -> "Shake!"
-        else -> "Hold & shake, double-tap, or press Roll · $label"
+        else -> "Hold & shake or double-tap · $label"
     }

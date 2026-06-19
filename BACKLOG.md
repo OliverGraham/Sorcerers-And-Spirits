@@ -805,12 +805,17 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Goal:** Add docstrings/cleanup to `SpellPotencyRoll`.
 
 ### SS-054 — SpellPotency splash-damage attacker case
-- [ ] Not completed
+- [x] Completed
 - **Source:** `HolyShieldHandler.kt:88` (`// TODO SpellPotency - what if is splash damage?`)
 - **Goal:** Handle the Paladin Holy Shield retaliation when the incoming damage was SpellPotency
   splash damage (who is the "attacker"?).
-- **Steps:** Define the intended interaction between Mage Spell Potency splash and Holy Shield;
-  implement and test.
+- **Resolution:** The "attacker" is the Mage in both the direct-hit and splash cases, so Wrath
+  already retaliates against `attackerUserId` correctly — no behavior change needed. The
+  `setNextAbilityRoll` `defenderUserId` override already promotes a splash-KO'd Paladin to defender
+  for the Prayer/Wrath rolls while leaving the Mage as the attacker. Replaced the TODO with a
+  docstring documenting the decision, and extended the Spell Potency splash Holy Shield test to
+  drive the full splash → Prayer → Wrath chain, asserting the Mage takes the unblockable Wrath
+  damage and the Paladin survives with 1 HP.
 
 ---
 

@@ -1559,6 +1559,67 @@ class PerformCombatActionUseCaseTest {
             assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
         assertTrue(actual = !outcome.isMatchFinished)
+
+        // The Paladin rolls a successful Prayer (10) and survives with 1 HP.
+        val prayerArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                playerMap = outcome.updatedPlayerMap,
+                roundNumber = outcome.roundNumber,
+                doublesBonus = null,
+            )
+        val prayerAction =
+            getAbilityRollAction(
+                purpose = AbilityAction.Passive.HolyShield.Prayer,
+                attackerUserId = currentAction.attackerUserId,
+                defenderUserId = THIRD_PLAYER_ID,
+            )
+        setupTwoDiceRoll(userId = THIRD_PLAYER_ID, firstDie = 4, secondDie = 6)
+        val prayerOutcome =
+            getPerformCombatAction(arguments = prayerArguments).invoke(currentAction = prayerAction)
+
+        val wrathNextAction = prayerOutcome.nextCombatAction
+        assertTrue(actual = wrathNextAction is NextCombatAction.AbilityRoll)
+        assertTrue(actual = wrathNextAction.purpose is AbilityAction.Passive.HolyShield.Wrath)
+
+        // The Paladin's Wrath deals unblockable damage to the Mage, the splash attacker.
+        val mageHitPointsBeforeWrath =
+            prayerOutcome
+                .getPlayerById(userId = currentAction.attackerUserId)
+                .characterClass
+                .hitPoints
+        val wrathArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                playerMap = prayerOutcome.updatedPlayerMap,
+                roundNumber = prayerOutcome.roundNumber,
+                doublesBonus = null,
+            )
+        val wrathAction =
+            getAbilityRollAction(
+                purpose = AbilityAction.Passive.HolyShield.Wrath,
+                attackerUserId = currentAction.attackerUserId,
+                defenderUserId = THIRD_PLAYER_ID,
+            )
+        val wrathDamage = 4
+        setupOneDiceRoll(userId = THIRD_PLAYER_ID, die = wrathDamage)
+        val wrathOutcome =
+            getPerformCombatAction(arguments = wrathArguments).invoke(currentAction = wrathAction)
+
+        assertEquals(
+            expected = mageHitPointsBeforeWrath - wrathDamage,
+            actual =
+                wrathOutcome
+                    .getPlayerById(userId = currentAction.attackerUserId)
+                    .characterClass
+                    .hitPoints,
+        )
+        assertEquals(
+            expected = 1,
+            actual = wrathOutcome.getPlayerById(userId = THIRD_PLAYER_ID).characterClass.hitPoints,
+        )
+        assertTrue(actual = wrathOutcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = !wrathOutcome.isMatchFinished)
     }
 
     @Test

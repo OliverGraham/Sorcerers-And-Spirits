@@ -77,6 +77,12 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         }
     }
 
+    /**
+     * Wrath retaliates against the attacker: the player whose turn dealt the damage. This holds
+     * even when the Paladin was knocked out by Mage Spell Potency splash damage rather than a
+     * direct hit, because the Mage is still the attacker, so the unblockable Wrath damage lands on
+     * them.
+     */
     private fun CombatMutator.wrathRoll() {
         val result = diceRoller.roll1D6(userId = defenderUserId).total
 
@@ -84,8 +90,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             message =
                 ArenaMessage.HolyShield.Wrath(
                     paladinUserId = defenderUserId,
-                    attackerUserId =
-                        attackerUserId, // TODO(SS-054) SpellPotency - what if is splash damage?
+                    attackerUserId = attackerUserId,
                     singleDie = result,
                 )
         )

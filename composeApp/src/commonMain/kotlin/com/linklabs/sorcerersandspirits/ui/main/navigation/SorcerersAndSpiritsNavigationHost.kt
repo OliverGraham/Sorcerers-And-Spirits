@@ -58,13 +58,13 @@ internal fun SorcerersAndSpiritsNavigationHost(
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
                     onSocialMethodClick = { method ->
-                        viewModel.onLinkWithSocialMethod(
+                        viewModel.onSignInWithSocialMethod(
                             displayName = data.displayName,
                             method = method,
                         )
                     },
                     onEmailLink = { email, password ->
-                        viewModel.onLinkWithEmail(
+                        viewModel.onSignInWithEmail(
                             displayName = data.displayName,
                             email = email,
                             password = password,
@@ -99,8 +99,10 @@ internal fun SorcerersAndSpiritsNavigationHost(
     }
 }
 
-// SUCCESS and CANCELLED don't warrant an in-dialog message (success navigates away; cancel is the
-// player's own choice), so they map to no message.
+/**
+ * SUCCESS and CANCELLED don't warrant an in-dialog message (success navigates away; cancel is the
+ * player's own choice), so they map to no message.
+ */
 @Composable
 private fun linkErrorMessage(result: LinkAccountResult?): String? =
     when (result) {

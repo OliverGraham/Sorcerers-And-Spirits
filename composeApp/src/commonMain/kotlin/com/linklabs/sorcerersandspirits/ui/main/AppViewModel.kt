@@ -6,12 +6,15 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
@@ -34,13 +37,16 @@ class AppViewModel(
     private val checkAppVersionUseCase: CheckAppVersionUseCase,
     private val connectivityObserver: ConnectivityObserver,
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
+    private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val deleteProfileUseCase: DeleteProfileUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
+    private val getProfileUseCase: GetProfileUseCase,
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
     private val linkAccountUseCase: LinkAccountUseCase,
+    private val signInWithSocialUseCase: SignInWithSocialUseCase,
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
 ) : ViewModel() {
 
@@ -180,21 +186,24 @@ class AppViewModel(
         }
     }
 
-    fun onLinkWithSocialMethod(displayName: String, method: SignInMethod) {
-        linkFromSignInDialog(displayName = displayName) { linkAccountUseCase(method = method) }
+    fun onSignInWithSocialMethod(displayName: String, method: SignInMethod) {
+        signInFromDialog(displayName = displayName) { signInWithSocialUseCase(method = method) }
     }
 
-    fun onLinkWithEmail(displayName: String, email: String, password: String) {
-        linkFromSignInDialog(displayName = displayName) {
-            linkAccountUseCase.withEmail(email = email, password = password)
+    fun onSignInWithEmail(displayName: String, email: String, password: String) {
+        signInFromDialog(displayName = displayName) {
+            signInWithSocialUseCase.withEmail(email = email, password = password)
         }
     }
 
-    // Linking upgrades an existing account in place, so a profile (anonymous) must exist first; the
-    // chosen name is reserved as part of that creation. The link is then a best-effort upgrade: on
-    // success we enter the app, and on failure we keep the dialog up with the reason so the player
-    // can retry (their anonymous profile is already safe).
-    private fun linkFromSignInDialog(displayName: String, link: suspend () -> LinkAccountResult) {
+    /**
+     * From the first-launch dialog a provider sign-in either recovers an existing account (e.g. a
+     * returning player who reinstalled) or provisions a new one — there is no anonymous data to
+     * preserve, so we sign in rather than link. On success we make sure the account has a profile
+     * (recovered accounts already do; brand-new ones get one with the typed name) and enter the
+     * app; on failure the dialog stays up with the reason.
+     */
+    private fun signInFromDialog(displayName: String, signIn: suspend () -> LinkAccountResult) {
         viewModelScope.launch {
             if (!connectivityObserver.isOnline.first()) {
                 _uiStateFlow.value =
@@ -209,39 +218,11 @@ class AppViewModel(
                 return@launch
             }
 
-            if (!hasCreatedProfile) {
-                _uiStateFlow.value = UiState.Loading
-                when (createProfileUseCase(displayName = displayName)) {
-                    DisplayNameResult.SUCCESS -> hasCreatedProfile = true
-
-                    DisplayNameResult.NAME_TAKEN -> {
-                        _uiStateFlow.value =
-                            UiState.Loaded(
-                                data =
-                                    AppState(
-                                        displayName = displayName,
-                                        showSignInDialog = true,
-                                        isNameTaken = true,
-                                    )
-                            )
-                        return@launch
-                    }
-
-                    DisplayNameResult.ERROR -> {
-                        _uiStateFlow.value =
-                            UiState.Loaded(
-                                data = AppState(displayName = displayName, showSignInDialog = true)
-                            )
-                        return@launch
-                    }
-                }
-            }
-
             _uiStateFlow.value = UiState.Loading
 
-            val linkResult = link()
-            if (linkResult == LinkAccountResult.SUCCESS) {
-                collectScreenState()
+            val signInResult = signIn()
+            if (signInResult == LinkAccountResult.SUCCESS) {
+                enterAppEnsuringProfile(displayName = displayName)
             } else {
                 _uiStateFlow.value =
                     UiState.Loaded(
@@ -249,15 +230,54 @@ class AppViewModel(
                             AppState(
                                 displayName = displayName,
                                 showSignInDialog = true,
-                                linkResult = linkResult,
+                                linkResult = signInResult,
                             )
                     )
             }
         }
     }
 
-    // From the ProfileScreen a profile (and anonymous account) already exists, so linking is a
-    // direct in-place upgrade — no profile creation, just surface the outcome.
+    /**
+     * A recovered account already has a profile; a brand-new provider account does not, so create
+     * one with the typed name before entering (otherwise the screen would hang waiting for a
+     * profile).
+     */
+    private suspend fun enterAppEnsuringProfile(displayName: String) {
+        if (getProfileUseCase() != null) {
+            hasCreatedProfile = true
+            collectScreenState()
+            return
+        }
+
+        when (createProfileForCurrentUserUseCase(displayName = displayName)) {
+            DisplayNameResult.SUCCESS -> {
+                hasCreatedProfile = true
+                collectScreenState()
+            }
+
+            DisplayNameResult.NAME_TAKEN ->
+                _uiStateFlow.value =
+                    UiState.Loaded(
+                        data =
+                            AppState(
+                                displayName = displayName,
+                                showSignInDialog = true,
+                                isNameTaken = true,
+                            )
+                    )
+
+            DisplayNameResult.ERROR ->
+                _uiStateFlow.value =
+                    UiState.Loaded(
+                        data = AppState(displayName = displayName, showSignInDialog = true)
+                    )
+        }
+    }
+
+    /**
+     * From the ProfileScreen a profile (and anonymous account) already exists, so linking is a
+     * direct in-place upgrade — no profile creation, just surface the outcome.
+     */
     fun onLinkProfileWithSocialMethod(method: SignInMethod) {
         linkCurrentAccount { linkAccountUseCase(method = method) }
     }

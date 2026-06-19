@@ -123,8 +123,10 @@ internal fun ProfileScreen(
     }
 }
 
-// Unlike the first-launch dialog (which navigates away on success), the player stays on this screen
-// afterwards, so SUCCESS gets its own confirmation message. CANCELLED is the player's own choice.
+/**
+ * Unlike the first-launch dialog (which navigates away on success), the player stays on this screen
+ * afterwards, so SUCCESS gets its own confirmation message. CANCELLED is the player's own choice.
+ */
 @Composable
 private fun linkStatusMessage(result: LinkAccountResult?): String? =
     when (result) {

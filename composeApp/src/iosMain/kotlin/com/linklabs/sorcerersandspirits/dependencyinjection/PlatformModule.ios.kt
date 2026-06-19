@@ -18,5 +18,5 @@ actual fun platformModule(): Module = module {
     single<ShakeDetector> { IosShakeDetector() }
     single<Haptics> { IosHaptics() }
     single<CurrentAppVersionProvider> { IosCurrentAppVersionProvider() }
-    single<SocialSignInProvider> { IosSocialSignInProvider() }
+    single<SocialSignInProvider> { IosSocialSignInProvider(bridge = get()) }
 }

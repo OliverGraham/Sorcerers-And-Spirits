@@ -27,14 +27,23 @@ class LinkAccountUseCaseTest {
     fun `Given a Google token is granted, when linking Google, then the repository links with that token`() =
         runTest {
             coEvery { socialSignInProvider.requestToken(method = SignInMethod.GOOGLE) } returns
-                SocialTokenResult.Google(idToken = ID_TOKEN)
-            coEvery { authenticationRepository.linkWithGoogle(idToken = ID_TOKEN) } returns
-                LinkAccountResult.SUCCESS
+                SocialTokenResult.Google(idToken = ID_TOKEN, accessToken = ACCESS_TOKEN)
+            coEvery {
+                authenticationRepository.linkWithGoogle(
+                    idToken = ID_TOKEN,
+                    accessToken = ACCESS_TOKEN,
+                )
+            } returns LinkAccountResult.SUCCESS
 
             val result = useCase(method = SignInMethod.GOOGLE)
 
             assertEquals(expected = LinkAccountResult.SUCCESS, actual = result)
-            coVerify { authenticationRepository.linkWithGoogle(idToken = ID_TOKEN) }
+            coVerify {
+                authenticationRepository.linkWithGoogle(
+                    idToken = ID_TOKEN,
+                    accessToken = ACCESS_TOKEN,
+                )
+            }
         }
 
     @Test
@@ -63,7 +72,9 @@ class LinkAccountUseCaseTest {
             val result = useCase(method = SignInMethod.GOOGLE)
 
             assertEquals(expected = LinkAccountResult.CANCELLED, actual = result)
-            coVerify(exactly = 0) { authenticationRepository.linkWithGoogle(idToken = any()) }
+            coVerify(exactly = 0) {
+                authenticationRepository.linkWithGoogle(idToken = any(), accessToken = any())
+            }
         }
 
     @Test
@@ -92,6 +103,7 @@ class LinkAccountUseCaseTest {
 
     private companion object {
         private const val ID_TOKEN = "id-token-123"
+        private const val ACCESS_TOKEN = "access-token-789"
         private const val NONCE = "raw-nonce-456"
         private const val EMAIL = "wizard@example.com"
         private const val PASSWORD = "spellbook"

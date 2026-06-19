@@ -21,14 +21,17 @@ import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepo
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.RandomNameProvider
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
@@ -89,11 +92,13 @@ private fun Module.initializeUseCases() {
     factoryOf(::CheckAppVersionUseCase)
     factoryOf(::CoordinateArenaMatchUseCase)
     factoryOf(::ConnectTravelerPresenceUseCase)
+    factoryOf(::CreateProfileForCurrentUserUseCase)
     factoryOf(::CreateProfileUseCase)
     factoryOf(::DeleteProfileUseCase)
     factoryOf(::ExitArenaUseCase)
     factoryOf(::GetCharacterClassesUseCase)
     factoryOf(::GetProfileFlowUseCase)
+    factoryOf(::GetProfileUseCase)
     factoryOf(::GetRandomTravelerNameUseCase)
     factoryOf(::InitializeGameConfigUseCase)
     factoryOf(::GetTavernDataFlowUseCase)
@@ -103,6 +108,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::PerformCombatActionUseCase)
     factoryOf(::SetCurrentTravelerAvailableUseCase)
     factoryOf(::SendChallengeUseCase)
+    factoryOf(::SignInWithSocialUseCase)
     factoryOf(::StayForAnotherMatchUseCase)
     factoryOf(::UpdateChallengerStatusUseCase)
     factoryOf(::UpdateProfileDisplayNameUseCase)

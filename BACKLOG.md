@@ -761,14 +761,33 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - **Goal:** Consider a type-safe enum for die faces (1–6) instead of raw Ints.
 
 ### SS-049 — Persuade: pass selectedCharmTargetUserId from UI
-- [ ] Not completed
+- [x] Completed
 - **Source:** `AbilityAction.kt:34` (`// TODO Persuade: In UI - need to pass in selectedCharmTargetUserId...`)
 - **Goal:** Ensure the UI supplies the Charm target id for Persuade. Related: SS-020.
+- **Resolution:** The end-to-end wiring was already in place from SS-020; this ticket verified it and
+  removed the stale TODO. The Charm flow: `ArenaCombatControl.requiresTarget` marks Charm as needing
+  a target so `ArenaCombat` shows the opponent picker; `AbilityControl` passes the chosen
+  `targetedOpponentUserId` into `UseAbilityArguments`; `UseAbilityArguments.toDomain` →
+  `withSelectedCharmTarget` validates the id against the Domain-vetted `targetableUserIds` and only
+  then sets `selectedCharmTargetUserId`; `PersuadeHandler.charm` consumes it as the redirected
+  attack's `defenderUserId` (no-ops via `?: return` when unset). Auto-resolve and
+  `ComputerOpponentHandler` supply a random charmable target the same way.
+- **Verification:** `ArenaScreenViewModelTest` covers both the chosen-target happy path and the
+  untargetable (Bard self) rejection.
 
 ### SS-050 — Implement KillingMomentum
-- [ ] Not completed
+- [x] Completed
 - **Source:** `NormalAttackRollHandler.kt:93` (`// TODO KillingMomentum`)
 - **Goal:** Implement the Rogue "Killing Momentum" rule — on a K.O., attack another chosen player.
+- **Resolution:** The behavior was already implemented; this ticket verified it and removed the stale
+  TODO. On a knockout by a `KillingMomentum` Rogue, `TriggerKillingMomentum` sets the next action to
+  `NextCombatAction.Idle` with the attacker as the sole active user, so the Rogue chooses another
+  target and takes a fresh normal attack (chaining if it KOs again). It is invoked from all three
+  knockout-resolution sites — `NormalAttackRollHandler.resolveKnockout`, `MirrorImageHandler`, and
+  `HolyShieldHandler` — and short-circuits before Encore. The consecutive doubles-bonus carry (the
+  Rogue keeps the dice, per CLAUDE.md) flows through unchanged.
+- **Verification:** `PerformCombatActionUseCaseTest` covers the basic trigger (Rogue acts again in a
+  3-player game) and the doubles-bonus preservation across the Killing Momentum follow-up.
 
 ### SS-051 — Review ArenaMessage field (Maybe?)
 - [ ] Not completed

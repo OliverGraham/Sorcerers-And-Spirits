@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
@@ -20,6 +21,7 @@ import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -1464,6 +1466,56 @@ class PerformCombatActionUseCaseTest {
             expected = attackerStartingHitPoints - wrathDamage,
             actual = updatedAttacker.hitPoints,
         )
+        assertTrue(actual = !outcome.isMatchFinished)
+    }
+
+    @Test
+    fun `When a Rogue's attack is repelled by a successful Holy Shield, then Killing Momentum does not trigger`() {
+        // Arrange
+        val attackerStartingHitPoints = 10
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass =
+                    CharacterClass.getRogue().copy(hitPoints = attackerStartingHitPoints),
+                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 1),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Wrath)
+        val paladinUserId = currentAction.defenderUserId
+
+        setupOneDiceRoll(userId = paladinUserId, die = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert: the Paladin survived, so the Rogue earns no Killing Momentum follow-up.
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = paladinUserId))
+        assertFalse(actual = outcome.messages.contains(element = ArenaMessage.KillingMomentum))
+        assertTrue(actual = !outcome.isMatchFinished)
+    }
+
+    @Test
+    fun `When a Bard's attack is repelled by a successful Holy Shield, then Encore still triggers because damage was dealt`() {
+        // Arrange
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass = CharacterClass.getBard().copy(hitPoints = 10),
+                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 1),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Wrath)
+        val bardUserId = currentAction.attackerUserId
+
+        setupOneDiceRoll(userId = currentAction.defenderUserId, die = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert: the Paladin survived, but the Bard dealt damage, so Encore is owed to the Bard.
+        val nextAction = assertIs<NextCombatAction.AbilityRoll>(value = outcome.nextCombatAction)
+        assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Encore)
+        assertTrue(actual = nextAction.isThisUserNext(userId = bardUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
 

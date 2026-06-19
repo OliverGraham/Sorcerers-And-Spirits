@@ -5,13 +5,16 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
@@ -46,13 +49,17 @@ class AppViewModelTest {
     private val connectivityObserver: ConnectivityObserver = mockk()
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase =
         mockk(relaxed = true)
+    private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase =
+        mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
     private val deleteProfileUseCase: DeleteProfileUseCase = mockk(relaxed = true)
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
+    private val getProfileUseCase: GetProfileUseCase = mockk()
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
     private val linkAccountUseCase: LinkAccountUseCase = mockk(relaxed = true)
+    private val signInWithSocialUseCase: SignInWithSocialUseCase = mockk(relaxed = true)
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase =
         mockk(relaxed = true)
 
@@ -79,13 +86,16 @@ class AppViewModelTest {
             checkAppVersionUseCase = checkAppVersionUseCase,
             connectivityObserver = connectivityObserver,
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
+            createProfileForCurrentUserUseCase = createProfileForCurrentUserUseCase,
             createProfileUseCase = createProfileUseCase,
             deleteProfileUseCase = deleteProfileUseCase,
             getProfileFlowUseCase = getProfileFlowUseCase,
+            getProfileUseCase = getProfileUseCase,
             getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
             initializeGameConfigUseCase = initializeGameConfigUseCase,
             isUserSignedInUseCase = isUserSignedInUseCase,
             linkAccountUseCase = linkAccountUseCase,
+            signInWithSocialUseCase = signInWithSocialUseCase,
             updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
         )
 
@@ -261,9 +271,7 @@ class AppViewModelTest {
         runTest {
             coEvery { isUserSignedInUseCase() } returns false
             isOnlineFlow.value = true
-            coEvery { createProfileUseCase(displayName = ENTERED_NAME) } returns
-                DisplayNameResult.SUCCESS
-            coEvery { linkAccountUseCase(method = SignInMethod.GOOGLE) } returns
+            coEvery { signInWithSocialUseCase(method = SignInMethod.GOOGLE) } returns
                 LinkAccountResult.NOT_AVAILABLE
             val viewModel = createViewModel()
 
@@ -271,7 +279,7 @@ class AppViewModelTest {
                 assertEquals(expected = UiState.Loading, actual = awaitItem())
                 assertTrue(actual = awaitItem().loaded().showSignInDialog)
 
-                viewModel.onLinkWithSocialMethod(
+                viewModel.onSignInWithSocialMethod(
                     displayName = ENTERED_NAME,
                     method = SignInMethod.GOOGLE,
                 )
@@ -284,28 +292,31 @@ class AppViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
 
-            coVerify { createProfileUseCase(displayName = ENTERED_NAME) }
+            // A failed sign-in must not provision a profile.
+            coVerify(exactly = 0) { createProfileForCurrentUserUseCase(displayName = any()) }
         }
 
     @Test
-    fun `When email linking succeeds, then the profile is created and the app is entered without the dialog`() =
+    fun `When email sign-in succeeds for a new account, then a profile is created and the app is entered`() =
         runTest {
             coEvery { isUserSignedInUseCase() } returns false
             isOnlineFlow.value = true
-            coEvery { createProfileUseCase(displayName = ENTERED_NAME) } answers
+            coEvery {
+                signInWithSocialUseCase.withEmail(email = EMAIL, password = PASSWORD)
+            } returns LinkAccountResult.SUCCESS
+            coEvery { getProfileUseCase() } returns null
+            coEvery { createProfileForCurrentUserUseCase(displayName = ENTERED_NAME) } answers
                 {
                     profileFlow.value = Profile(userId = USER_ID, displayName = ENTERED_NAME)
                     DisplayNameResult.SUCCESS
                 }
-            coEvery { linkAccountUseCase.withEmail(email = EMAIL, password = PASSWORD) } returns
-                LinkAccountResult.SUCCESS
             val viewModel = createViewModel()
 
             viewModel.uiStateFlow.test {
                 assertEquals(expected = UiState.Loading, actual = awaitItem())
                 assertTrue(actual = awaitItem().loaded().showSignInDialog)
 
-                viewModel.onLinkWithEmail(
+                viewModel.onSignInWithEmail(
                     displayName = ENTERED_NAME,
                     email = EMAIL,
                     password = PASSWORD,
@@ -319,7 +330,44 @@ class AppViewModelTest {
                 cancelAndIgnoreRemainingEvents()
             }
 
-            coVerify { linkAccountUseCase.withEmail(email = EMAIL, password = PASSWORD) }
+            coVerify { createProfileForCurrentUserUseCase(displayName = ENTERED_NAME) }
+        }
+
+    @Test
+    fun `Given a returning player signs in with an existing provider account, then their profile is recovered without creating a new one`() =
+        runTest {
+            coEvery { isUserSignedInUseCase() } returns false
+            isOnlineFlow.value = true
+            coEvery { signInWithSocialUseCase(method = SignInMethod.GOOGLE) } returns
+                LinkAccountResult.SUCCESS
+            // The recovered account already has a profile.
+            coEvery { getProfileUseCase() } returns
+                Profile(userId = USER_ID, displayName = DISPLAY_NAME)
+            val viewModel = createViewModel()
+
+            viewModel.uiStateFlow.test {
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+                assertTrue(actual = awaitItem().loaded().showSignInDialog)
+
+                // collectScreenState observes the profile flow for the recovered account.
+                profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
+
+                viewModel.onSignInWithSocialMethod(
+                    displayName = ENTERED_NAME,
+                    method = SignInMethod.GOOGLE,
+                )
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                val data = awaitItem().loaded()
+                assertFalse(actual = data.showSignInDialog)
+                // The recovered profile's name is shown, not the throwaway name typed in the
+                // dialog.
+                assertEquals(expected = DISPLAY_NAME, actual = data.displayName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            coVerify(exactly = 0) { createProfileForCurrentUserUseCase(displayName = any()) }
         }
 
     @Test

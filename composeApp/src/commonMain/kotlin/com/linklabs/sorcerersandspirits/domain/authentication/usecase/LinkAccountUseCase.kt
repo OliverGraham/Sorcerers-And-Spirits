@@ -21,7 +21,10 @@ class LinkAccountUseCase(
     suspend operator fun invoke(method: SignInMethod): LinkAccountResult =
         when (val token = socialSignInProvider.requestToken(method = method)) {
             is SocialTokenResult.Google ->
-                authenticationRepository.linkWithGoogle(idToken = token.idToken)
+                authenticationRepository.linkWithGoogle(
+                    idToken = token.idToken,
+                    accessToken = token.accessToken,
+                )
 
             is SocialTokenResult.Apple ->
                 authenticationRepository.linkWithApple(

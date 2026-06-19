@@ -58,7 +58,9 @@ class AndroidSocialSignInProvider(
 
             if (isGoogleIdToken) {
                 val googleIdToken = GoogleIdTokenCredential.createFrom(data = credential.data)
-                SocialTokenResult.Google(idToken = googleIdToken.idToken)
+                // Credential Manager's ID-token flow doesn't surface an OAuth access token; the
+                // Android Firebase Google credential doesn't need one.
+                SocialTokenResult.Google(idToken = googleIdToken.idToken, accessToken = null)
             } else {
                 SocialTokenResult.Error
             }

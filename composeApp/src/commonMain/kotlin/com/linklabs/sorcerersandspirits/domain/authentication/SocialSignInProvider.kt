@@ -13,7 +13,10 @@ interface SocialSignInProvider {
 
 /** A federated token harvested from a provider's account picker, ready to hand to Firebase. */
 sealed interface SocialTokenResult {
-    data class Google(val idToken: String) : SocialTokenResult
+    // accessToken is required to build the Google credential on iOS (credentialWithIDToken:
+    // accessToken:); Android's Credential Manager ID-token flow doesn't surface one, so it passes
+    // null there.
+    data class Google(val idToken: String, val accessToken: String?) : SocialTokenResult
 
     data class Apple(val idToken: String, val rawNonce: String) : SocialTokenResult
 

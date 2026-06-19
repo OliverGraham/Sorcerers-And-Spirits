@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseCore
+import GoogleSignIn
 import ComposeApp
 
 class AppDelegate: NSObject, UIApplicationDelegate {
@@ -8,8 +9,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
-        InitializeKoinKt.initializeKoin()
+        InitializeKoinKt.initializeKoin(socialSignInBridge: SocialSignInBridge())
         return true
+    }
+
+    func application(
+        _ application: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+    ) -> Bool {
+        return GIDSignIn.sharedInstance.handle(url)
     }
 }
 

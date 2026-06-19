@@ -793,6 +793,28 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   Shield roll is still owed; gate the `shouldShowMatchDecisionDialog` derivation on there being no
   pending Holy Shield roll for the user; verify the dialog reappears correctly if the roll fails.
 
+### SS-090 — First-launch "Continue with Google" must recover an existing account, not error
+- [x] Completed
+- **Source:** Reported bug. Repro: sign in with Google (links to anonymous account A) → delete the
+  app → reopen → first-launch dialog → "Continue with Google" with the same address → got *"That
+  account is already linked to another player. Try a different one."* instead of signing in.
+- **Cause:** The first-launch dialog's social/email path created a throwaway **anonymous** account
+  first, then `linkWithCredential`. On reinstall the Google credential already belonged to account A,
+  so the link collided (`FirebaseAuthUserCollisionException` → `CREDENTIAL_IN_USE`). It also leaked an
+  orphan anonymous account + profile + display-name reservation on every attempt.
+- **Resolution:** Split the two intents. The **dialog now signs in** (recover-or-create) instead of
+  linking; **ProfileScreen still links** (attach a provider to existing anonymous data, where a
+  collision genuinely is an error). Added `AuthenticationRepository.signInWith{Google,Apple,Email}`
+  (Google/Apple via `signInWithCredential`; email via `createUser…` then `signIn…` on collision — which
+  also dodges email-enumeration protection), a `SignInWithSocialUseCase`, plus `GetProfileUseCase` and
+  `CreateProfileForCurrentUserUseCase` (creates a profile for the just-signed-in user *without*
+  re-authenticating anonymously). `AppViewModel` now signs in, then enters the app — recovered
+  accounts keep their existing profile (no new profile created); brand-new provider accounts get one
+  with the typed name. No anonymous account is created on this path, so the orphan leak is gone.
+- **Verification:** Android + iOS compile clean; full unit suite passes, incl. a new regression test
+  (returning player recovers their profile without creating a new one) + `SignInWithSocialUseCaseTest`.
+  On-device tap-through of the original repro still to be confirmed by the owner.
+
 ---
 
 ## Profile & Auth
@@ -921,27 +943,67 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   so it stays `NotAvailable` (no behaviour change) until SS-088 adds the OAuth web client to
   `google-services.json` — at which point Google sign-in **flips on with no code change**. Apple on
   Android stays `NotAvailable` (needs a web OAuth flow, not Credential Manager).
-- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean with the new deps. End-to-
-  end sign-in is **not yet verifiable** — it requires SS-088 (console Google provider + web client +
-  SHA fingerprints) and a device/emulator with Play Services and a Google account.
+- **Verification:** SS-088 done for Android — `google-services.json` now carries the WEB (type 3)
+  oauth client, the build generates `default_web_client_id`
+  (`848564605750-agimo9…apps.googleusercontent.com`), which is exactly what the provider reads
+  reflectively, and `:composeApp:assembleDebug` builds clean. **Google sign-in is now live (no longer
+  dormant).** Remaining: an on-device tap-through with a Google account, and release/Play SHA
+  fingerprints before a store build.
 
 ### SS-087 — iOS: native Google + Apple Sign-In token acquisition
-- [ ] Not completed
-- **Source:** SS-061 follow-up. `IosSocialSignInProvider` currently returns `NotAvailable`.
-- **Goal:** Implement Google (GoogleSignIn SDK → `SocialTokenResult.Google(idToken)`) and Apple
-  (`AuthenticationServices` / `ASAuthorizationAppleIDProvider` → `SocialTokenResult.Apple(idToken,
-  rawNonce)` with a SHA256-hashed nonce) on iOS.
-- **Steps:** Add the GoogleSignIn pod + the Sign in with Apple capability; implement the provider in
-  `iosMain`; map cancel/error. Depends on SS-088. Grep `TODO(SS-061)` in `IosSocialSignInProvider`.
+- [x] Completed (code) — needs the manual Xcode + SS-088 steps below to go live
+- **Source:** SS-061 follow-up. `IosSocialSignInProvider` previously returned `NotAvailable`.
+- **Goal:** Implement Google (GoogleSignIn SDK → `SocialTokenResult.Google(idToken, accessToken)`)
+  and Apple (`AuthenticationServices` / `ASAuthorizationAppleIDProvider` →
+  `SocialTokenResult.Apple(idToken, rawNonce)` with a SHA256-hashed nonce) on iOS.
+- **Resolution (code):** Native sign-in lives in Swift via **Swift Package Manager** (no CocoaPods —
+  consistent with the existing `firebase-ios-sdk` SPM setup):
+  - Shared `iosMain` defines `IosSocialSignInBridge` (+ `IosGoogleSignInResult` / `IosAppleSignInResult`
+    DTOs — objects, not multi-arg closures, so the Swift side gets plain `Bool`s rather than boxed
+    `KotlinBoolean`). `IosSocialSignInProvider` delegates Google/Apple to the bridge via
+    `suspendCancellableCoroutine`, mapping to `SocialTokenResult`. The bridge is injected from Swift
+    through `initializeKoin(socialSignInBridge:)` and resolved in `PlatformModule.ios.kt`.
+  - `iosApp/iosApp/SocialSignInBridge.swift` implements it: GoogleSignIn (reads the Firebase
+    `clientID`, returns id + access token) and Apple (`ASAuthorizationController` with a CryptoKit
+    SHA-256-hashed nonce, returning the identity token + raw nonce). `iOSApp.swift` builds the bridge
+    and adds the `GIDSignIn.handle(url)` callback. The new `.swift` file is picked up automatically
+    (Xcode 16 synchronized file group).
+  - Domain change rippled from this: `SocialTokenResult.Google` / `linkWithGoogle` now carry an
+    `accessToken` (required by iOS `credentialWithIDToken:accessToken:`); Android passes `null`.
+  - Like Android, both paths stay dormant until configured: Google no-ops (treated as cancel) until
+    the Firebase `clientID` exists, and Apple linking needs the console provider — both SS-088.
+- **Remaining — manual Xcode (GUI, not hand-editable safely):**
+  1. **Add the GoogleSignIn SPM package:** Xcode → File → Add Package Dependencies →
+     `https://github.com/google/GoogleSignIn-iOS` → add the **GoogleSignIn** product to the `iosApp`
+     target (mirrors how `firebase-ios-sdk` is already added).
+  2. **Add the "Sign in with Apple" capability** to the `iosApp` target (Signing & Capabilities tab;
+     creates the entitlement).
+  3. After SS-088 supplies a Google-enabled `GoogleService-Info.plist`, add the **`REVERSED_CLIENT_ID`**
+     as a URL scheme in the iOS target (Info → URL Types).
+- **Verification:** `:composeApp:compileKotlinIosSimulatorArm64` + the Android target compile clean;
+  full unit suite passes (incl. the updated `LinkAccountUseCaseTest`). The Swift bridge and full
+  iOS app build are **not verifiable here** — they need Xcode with the SPM package, the Apple
+  capability, SS-088, and a device/simulator with a Google account.
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers
-- [ ] Not completed
+- [~] Partially done — **Android Google: DONE & verified live.** iOS Google + Apple: pending.
 - **Source:** SS-061 follow-up (console + Apple Developer portal; no app code beyond re-downloading
-  `google-services.json`). Project: `sorcerers-and-spirits`. Blocks SS-086 (Android Google) and
+  the Firebase config files). Project: `sorcerers-and-spirits`. Blocks SS-086 (Android Google) and
   SS-087 (iOS Google + Apple).
 - **Goal:** Turn on the Google and Apple sign-in providers so the credentials linked by SS-086/SS-087
   are accepted, and get the generated `default_web_client_id` into the app so SS-086 flips on.
-- **Steps — Android Google (unblocks SS-086):**
+- **Status:** Android Google completed — Google enabled in console, debug SHA-1/SHA-256 registered,
+  `google-services.json` re-downloaded (now has the type-3 web client), build generates
+  `default_web_client_id`, `assembleDebug` clean → Android Google sign-in is live. **Outstanding:**
+  release/Play SHA fingerprints (at store-release time), the whole iOS Google sub-section, and the
+  whole Apple sub-section.
+- **Apple is deferred until App Store release:** Sign in with Apple requires a **paid Apple Developer
+  Program membership** ($99/yr), which the owner plans to buy at release time. It is also **mandatory**
+  per **App Store Review Guideline 4.8** — once we offer Google on iOS, we MUST offer Sign in with
+  Apple — but that's only enforced at App Store review, which coincides with enrollment. So Apple
+  (and the iOS Google portal work) stays parked until then; the Apple button is dormant meanwhile and
+  nothing breaks. See SS-089.
+- **Steps — Android Google (unblocks SS-086) — ✅ DONE:**
   1. Firebase console → **Authentication → Sign-in method → Add new provider → Google → Enable**, set
      a support email, **Save**. Enabling Google auto-creates an OAuth **Web client** ("Web client
      (auto created by Google Service)").
@@ -965,10 +1027,25 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
      Apple Team ID, Key ID, and the .p8 private key, **Save**.
   4. Add the **Sign in with Apple** capability to the iOS app target in Xcode (SS-087).
 - **Steps — iOS Google (unblocks SS-087's Google path):** the iOS Firebase config carries a
-  `REVERSED_CLIENT_ID`; add it as a URL scheme in the iOS target's Info.plist and re-download
-  `GoogleService-Info.plist` after enabling Google above (SS-087 wires the GoogleSignIn pod).
+  `REVERSED_CLIENT_ID`; re-download `GoogleService-Info.plist` after enabling Google above and add
+  the `REVERSED_CLIENT_ID` as a URL scheme in the iOS target (SS-087 already added the GoogleSignIn
+  SPM package wiring in code).
 - **Note:** Anonymous auth is already enabled and unaffected; existing anonymous accounts upgrade in
   place via `linkWithCredential` (no user migration).
+
+### SS-089 — Enable Sign in with Apple before App Store release
+- [ ] Not completed — **blocking for iOS App Store release; parked until Apple Developer enrollment.**
+- **Source:** SS-061 / SS-087 follow-up. The Apple *code* is done (SS-087); this ticket tracks the
+  account-gated config that can only happen with a paid membership.
+- **Why mandatory:** **App Store Review Guideline 4.8** — offering Google sign-in on iOS requires
+  also offering Sign in with Apple. Enforced at App Store review.
+- **Blocked by:** a **paid Apple Developer Program membership** ($99/yr), planned for release time.
+  Until then the iOS Apple button is dormant and the app still works.
+- **Steps (do together once enrolled):**
+  1. Apple Developer portal: Services ID + Sign in with Apple key (.p8) — see SS-088 "Steps — Apple".
+  2. Firebase console: enable the Apple provider with those values — see SS-088 "Steps — Apple".
+  3. Xcode: add the **Sign in with Apple** capability to the `iosApp` target — see SS-087.
+  4. Verify on device/simulator: the Apple button presents the sheet and linking succeeds.
 
 ---
 

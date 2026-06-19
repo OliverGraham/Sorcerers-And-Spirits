@@ -581,9 +581,21 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   a future option if message history is ever surfaced.
 
 ### SS-041 — Refactor flagged arena repo code
-- [ ] Not completed
-- **Source:** `FirebaseArenaRepository.kt:65` (`// TODO Arena: Look at this, refactor`)
+- [x] Completed
+- **Source:** `FirebaseArenaRepository.kt` (`// TODO(SS-041) Arena: Look at this, refactor`)
 - **Goal:** Refactor the flagged section of `FirebaseArenaRepository`.
+- **Resolution:** `applyCombatResult` was the asymmetric repository method — every other operation
+  (`chooseCharacterClass`, `connectToArena`, `exitArena`, `stayForAnotherMatch`) delegates to a
+  dedicated invokable class in `data.arena.utilities`, but `applyCombatResult`'s entire `runTransaction`
+  body was inlined in the repository. Extracted it into a new `ApplyCombatResult` class following the
+  same convention (input in the constructor, `suspend operator fun invoke(arenaReference)`, transaction
+  logic in a private `ArenaMatchEntity` extension). Decomposed the monolithic lambda into a guarded
+  `applyCombatResultTransaction` plus two builder methods, `ArenaMatchEntity.Combat.toFinished` and
+  `toUpdatedCombat`, mirroring the helper-method style of the sibling utilities. The repository method
+  is now a two-line delegation like its peers; removed the now-unused `addNewKey` / `appendCapped`
+  imports from the repository.
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean; `*Arena*` + `*Combat*`
+  unit tests pass.
 
 ### SS-042 — Challenge timestamp handling
 - [ ] Not completed

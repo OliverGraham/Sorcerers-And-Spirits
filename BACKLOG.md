@@ -656,6 +656,11 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - [ ] Not completed
 - **Source:** `ExitArena.kt:8` (`// TODO Arena: When it's finished because someone left early...`)
 - **Goal:** Ensure there is clear UI when a match ends because a player left early. Related: SS-071.
+- **Concrete case (2-player forfeit):** In a 2-player match, when one player forfeits/leaves, the
+  remaining player must be notified that the opponent left and the Arena must transition to
+  `Finished` so the remaining player can still see the match outcome and any stats accrued up to that
+  point — rather than being stranded in `Combat` or dropped silently. Reported bug. Related: SS-098
+  (defer the `Finished` transition until end-of-match messages/animations play), SS-071, SS-022.
 
 ---
 
@@ -798,6 +803,8 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
 - [ ] Not completed
 - **Source:** `ArenaMessage.kt:41` (`// TODO LuckyCoin is this the right approach for messages?`)
 - **Goal:** Confirm the messaging approach for the Gambler Lucky Coin ability is correct.
+- **Notes:** Related: SS-093 (per-outcome ability message copy — the broader fix this LuckyCoin
+  question is an instance of) and SS-105 (Lucky Coin on a 6 retaliation mechanic bug).
 
 ### SS-053 — Docstrings for SpellPotencyRoll
 - [ ] Not completed
@@ -923,6 +930,173 @@ A tracked list of work items ("tickets") for Sorcerers and Spirits.
   `arenaState is ArenaState.Combat`. It reads the raw `screenState.messages` list, so dice show the
   instant they are emitted. **To remove:** delete `TemporaryDiceDebugOverlay.kt` and the single
   `TODO(SS-091)` block in `LoadedArenaScreen.kt` (grep `SS-091`).
+
+### SS-093 — Ability outcome messages must reflect the actual roll result
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** Every ability message shown in the UI must communicate the *specific outcome* of the
+  roll, not a generic "ability used" line. The exact copy is derivable from the rolled number plus
+  the ability's rules, so the correct `stringResource` can be chosen per outcome.
+  - **Lucky Coin:** on a 1, copy about the Gambler knocking themselves out; on a no-effect result,
+    say so explicitly; on a success, call out the success.
+  - **Summon Minion:** distinguish fizzle (1) / gain skeleton / gain skeleton + heal / gain golem +
+    heal.
+  - Apply the same per-outcome treatment to every other ability with multiple roll outcomes
+    (All-In, Prepare Attack, Riposte, Encore, Persuade, Mirror Image, Teleport, Holy Shield, etc.).
+- **Notes:** Broad messaging-correctness fix. Related: SS-052 (LuckyCoin message approach), SS-051
+  (ArenaMessage field review), SS-094, SS-097, SS-100, SS-107.
+
+### SS-094 — Reword the Persuade ability message copy
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** Replace the current Persuade copy ("Bard begins strumming a lute") with clearer,
+  finalized wording for the Bard Persuade outcomes.
+- **Notes:** Related: SS-093 (per-outcome ability copy), SS-097 (class-name usage in messages).
+
+### SS-095 — Lock target selection once an attack roll is committed
+- [x] Completed
+- **Source:** Reported bug.
+- **Goal:** After a player has rolled against a target for a normal attack (i.e. committed the
+  Armor-class roll), they must not be able to change targets or switch to an activated ability
+  mid-action. The UI must also not highlight / offer other players as targetable at that point.
+- **Resolution:** The lock was previously local UI state in `ArenaCombat.CombatContent`
+  (`targetedOpponentUserId` / `isTargetLocked`, both `remember(key1 = activeUserIds)`). Because
+  `activeUserIds` changes when an intervening defensive-ability roll-off fires (e.g. the defender's
+  Persuade) and again when control returns to the attacker, that local state **reset mid-attack**,
+  re-enabling the opponent cards and dropping the highlight. Moved the lock to a domain-derived value:
+  added `ArenaState.Combat.lockedTargetUserId` (via `deriveLockedTargetUserId()` in
+  `ArenaScreenState.kt`) which returns the pinned `defenderUserId` whenever the user owes a follow-up
+  roll for **their own** `CombatActionState.NormalAttack`, and null otherwise (turn start, an
+  opponent's attack, or an ability that selects its own target like Charm). `CombatContent` now uses
+  `lockedTargetUserId ?: selectedOpponentUserId` for the shown target and locks the grid when
+  `lockedTargetUserId != null`, so the target survives the roll-off round-trip. Kept an optimistic
+  local flag so the grid also locks the instant the user rolls, before the pinned state arrives.
+  Switching to an activated ability mid-attack was already prevented by `deriveCombatControls`
+  (a `NormalAttack` continuation only offers the Attack control).
+- **Verification:** `:composeApp:compileDebugKotlinAndroid` compiles clean; `ArenaScreenStateTest`
+  (new cases: own-attack locks to defender, Idle/opponent-attack/ability-roll all unlocked) passes.
+- **Notes:** This also fixes SS-096 (the locked target now persists through ability resolution).
+  Related: SS-096, SS-101 (auto-target in 2-player attack-only turns).
+
+### SS-096 — Keep the rolled-against opponent targeted through ability resolution
+- [x] Completed (via SS-095)
+- **Source:** Reported bug. Repro: Rogue attacked the Bard, the Bard failed to Persuade, resolution
+  returned to the Rogue — but the Bard was no longer shown as the target. Expected: the Bard stays
+  targeted, since it is illegal to change targets or use an ability after committing the Armor-class
+  roll.
+- **Goal:** Ensure the originally-targeted opponent remains the target through the full resolution of
+  an in-flight attack (including defensive-ability roll-offs that bounce back to the attacker).
+- **Resolution:** This was the same root cause as SS-095 — the shown target lived in
+  `remember(key1 = activeUserIds)` local state that reset across the Persuade roll-off. SS-095's
+  domain-derived `ArenaState.Combat.lockedTargetUserId` (the Domain's pinned `defenderUserId`) is now
+  used as the displayed target, so when control returns to the attacker for the Health roll the
+  original defender is still highlighted. It was indeed UI-only; the Domain always kept the correct
+  `defenderUserId`. Covered by the SS-095 `ArenaScreenStateTest` cases.
+- **Notes:** Related: SS-095.
+
+### SS-097 — ArenaMessages must use the character class name, never the displayName
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** All ArenaMessages must refer to players by their character class name (e.g. "Rogue",
+  "Bard"), never the user's `displayName`. The **only** exception is the class-selection message
+  during `ChoosingClasses` (e.g. "PlayerX chose the Rogue"), which legitimately uses the displayName.
+- **Notes:** Audit every ArenaMessage construction site. Related: SS-093, SS-094, SS-100.
+
+### SS-098 — Defer the Finished transition until end-of-match messages/animations play
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** When a match ends, the Arena must not transition immediately to the `Finished` state.
+  The final messages and animations (the knockout that ends the match, etc.) must play out first,
+  then the state advances to `Finished`. Today the abrupt transition can cut off the closing
+  messages/animations.
+- **Notes:** Related: SS-025 (message-log animation), SS-068 (animation pass), SS-045 (early-leave /
+  2-player forfeit finish), SS-103 (messages disappearing).
+
+### SS-099 — Disable Impersonate for a class the Illusionist has already copied
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** When the Illusionist has already impersonated the targeted class's offensive ability, the
+  Impersonate button for that class must be disabled (re-copying the same class is a no-op).
+- **Notes:** Follows the recent "Wire Illusionist Mirror Image and Impersonate in the UI" work
+  (PR #90). Related: SS-093.
+
+### SS-100 — Holy Shield trigger copy should read as damage, not a knockout
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** When an attack triggers the Paladin's Holy Shield, the message must not read as "someone
+  knocked out Paladin" — thematically the Paladin is not knocked out yet (the survival roll is still
+  pending). It should instead read like a damage line, e.g. "Rogue damaged Paladin for 11!".
+- **Notes:** Related: SS-060 (suppress KnockedOut dialog during the Holy Shield roll), SS-093
+  (per-outcome ability copy), SS-097 (class-name usage).
+
+### SS-101 — Auto-target the lone opponent in a 2-player attack-only turn
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** In a 2-player match, when the acting player can only make a normal attack (their class
+  has no activated ability available), the single opponent should be auto-targeted rather than
+  requiring a manual target selection.
+- **Notes:** Related: SS-095 (target locking), SS-096 (target persistence).
+
+### SS-102 — Track Necromancer minion shields as effective hit points (display + absorption)
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** Summon Minion users need their skeleton count, golem count, and the resulting shield
+  state fully tracked. Skeletons/golems are stored **separately** from the Necromancer's base hit
+  points, but they **count as effective hit points** — they add to the Necromancer's effective health
+  pool and are consumed before base HP.
+  - **Shield values:** each skeleton is a +1 Health shield, each golem is a +2 Health shield (per the
+    Summon Minion rules), so the shield total is `skeletons * 1 + golems * 2`.
+  - **Display:** the Necromancer's hit points must show the base plus the shield contribution
+    distinctly, e.g. `7 + 2` (base 7, with +2 of shields from minions) rather than collapsing to a
+    single `9` — so the player can see how much of their health is base vs. minion shield.
+  - **Damage absorption:** when the Necromancer takes damage, shields (skeletons/golems) are
+    destroyed *first*, absorbing damage, before any damage reaches base hit points. Example: with 2
+    skeletons (+2 shield), 4 incoming damage destroys both skeletons and then deals 2 to the
+    Necromancer's base HP.
+- **Notes:** SS-046 added `maxHitPoints` and noted shields are tracked as separate counts; this
+  ticket covers modeling them as effective HP, the absorption ordering, and the `base + shield` UI
+  display. Domain + UI. Related: SS-046.
+
+### SS-103 — ArenaMessages permanently disappearing in some flows
+- [ ] Not completed
+- **Source:** Reported bug. Observed: all messages vanished (never to return) after using All-In and
+  attacking the Bard and missing; also seen when a match advances from match 1 to match 2 (not every
+  time).
+- **Goal:** Identify and fix the conditions under which the ArenaMessage log is wiped and never
+  repopulates.
+- **Notes:** Investigate the message-cap/append path and the match-reset transition. Related: SS-040
+  (message cap / retention), SS-025, SS-098, SS-104 (All-In).
+
+### SS-104 — All-In success must grant the Gambler a second attack
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** On an All-In success (5 or 6), the Gambler should get to perform two attacks this round
+  (provided they survive the first). Currently the extra attack is not granted.
+- **Notes:** Domain layer. Related: SS-103 (messages disappearing after All-In), SS-093.
+
+### SS-105 — Lucky Coin on a 6 must give the Gambler a retaliation damage die
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** When the Gambler's Lucky Coin rolls a 6, it should immediately give the Gambler a single
+  die to roll for damage dealt directly to the attacker. This is currently not working correctly.
+- **Notes:** Domain layer. Related: SS-052 (LuckyCoin message approach), SS-093.
+
+### SS-106 — Verify SpellPotency emits messages and state updates correctly
+- [ ] Not completed
+- **Source:** Reported bug (suspected).
+- **Goal:** Audit the Mage Spell Potency flow end-to-end and confirm it produces the correct
+  ArenaMessages and state updates — full dice-total damage to the target, half to all other
+  opponents, then end turn.
+- **Notes:** Related: SS-053 (SpellPotencyRoll docstrings), SS-054 (splash-damage attacker case),
+  SS-093.
+
+### SS-107 — Add a Doubles ArenaMessage and UI indication
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** Doubles handling appears implemented (the +1 consecutive-roll bonus, SS-019), but there
+  is no ArenaMessage for rolling doubles and no UI indication of the bonus. Ensure a Doubles message
+  exists. Deep UI work can wait since the Arena UI is slated to change.
+- **Notes:** Related: SS-019 (doublesBonus tracking), SS-068 (UI overhaul), SS-093.
 
 ---
 

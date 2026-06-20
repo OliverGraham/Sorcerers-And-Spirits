@@ -76,6 +76,33 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
     }
 
 /**
+ * Whether [control] is an Impersonate the Illusionist cannot meaningfully use against the chosen
+ * target. Re-copying a class whose offensive ability has already been impersonated is a no-op, so
+ * its control is disabled while that target is selected.
+ */
+internal fun ArenaState.Combat.isImpersonateRedundant(
+    control: ArenaCombatControl,
+    targetedOpponentUserId: String,
+): Boolean {
+    val isImpersonateControl =
+        control is ArenaCombatControl.ActivatedAbility &&
+            control.action is AbilityActionState.Activated.Impersonate
+    if (!isImpersonateControl) return false
+
+    val impersonateAbility = userPlayer.characterClass.offensiveAbility
+    val copiedAbility =
+        if (impersonateAbility is OffensiveAbilityState.Impersonate) {
+            impersonateAbility.impersonatedAbility
+        } else {
+            OffensiveAbilityState.None
+        }
+    if (copiedAbility is OffensiveAbilityState.None) return false
+
+    val target = playerMap[targetedOpponentUserId] ?: return false
+    return target.characterClass.offensiveAbility::class == copiedAbility::class
+}
+
+/**
  * The controls for an ability roll the user owns. Most abilities are a single roll, but Mirror
  * Image is a choice: reroll either of the attacker's two dice, or keep the roll as-is.
  */

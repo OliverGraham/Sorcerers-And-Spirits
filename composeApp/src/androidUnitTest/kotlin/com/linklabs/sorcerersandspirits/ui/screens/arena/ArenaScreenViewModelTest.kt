@@ -29,6 +29,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatContro
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -877,6 +878,69 @@ class ArenaScreenViewModelTest {
                 combatState.activatedControlFor<AbilityActionState.Activated.PrepareAttack>()
             assertEquals(expected = "Prepare Attack", actual = prepareAttackControl.label)
             assertTrue(actual = prepareAttackControl.requiresTarget)
+        }
+
+    @Test
+    fun `Given the Illusionist already impersonated a class, then Impersonate is redundant only for an opponent of that same class`() =
+        runTest {
+            val illusionist =
+                TestCharacterClasses.illusionist()
+                    .copy(
+                        offensiveAbility =
+                            OffensiveAbility.Impersonate(
+                                impersonatedAbility = OffensiveAbility.PrepareAttack
+                            )
+                    )
+
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap =
+                            threePlayerMap(
+                                userClass = illusionist,
+                                firstOpponentClass = TestCharacterClasses.duelist(),
+                                secondOpponentClass = TestCharacterClasses.mage(),
+                            ),
+                    )
+                    .requireCombatState()
+
+            val impersonateControl =
+                combatState.activatedControlFor<AbilityActionState.Activated.Impersonate>()
+            assertTrue(
+                actual =
+                    combatState.isImpersonateRedundant(
+                        control = impersonateControl,
+                        targetedOpponentUserId = OPPONENT_ID,
+                    )
+            )
+            assertFalse(
+                actual =
+                    combatState.isImpersonateRedundant(
+                        control = impersonateControl,
+                        targetedOpponentUserId = SECOND_OPPONENT_ID,
+                    )
+            )
+        }
+
+    @Test
+    fun `Given the Illusionist has copied nothing, then Impersonate is never redundant`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.illusionist()),
+                    )
+                    .requireCombatState()
+
+            val impersonateControl =
+                combatState.activatedControlFor<AbilityActionState.Activated.Impersonate>()
+            assertFalse(
+                actual =
+                    combatState.isImpersonateRedundant(
+                        control = impersonateControl,
+                        targetedOpponentUserId = OPPONENT_ID,
+                    )
+            )
         }
 
     // ---------- Controls while an attack is in progress ----------

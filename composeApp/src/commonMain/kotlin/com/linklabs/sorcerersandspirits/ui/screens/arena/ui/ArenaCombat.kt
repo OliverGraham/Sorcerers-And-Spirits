@@ -42,6 +42,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceCount
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val TRANSITION_LABEL = "ArenaCombatTransition"
@@ -326,8 +327,13 @@ private fun ArenaState.Combat.AbilityControls(
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
         controls.forEach { control ->
-            val isEnabled =
-                control.enabled && (!control.requiresTarget || targetedOpponentUserId.isNotEmpty())
+            val hasRequiredTarget = !control.requiresTarget || targetedOpponentUserId.isNotEmpty()
+            val isRedundantImpersonate =
+                isImpersonateRedundant(
+                    control = control,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                )
+            val isEnabled = control.enabled && hasRequiredTarget && !isRedundantImpersonate
 
             val onClick =
                 rollActionFor(

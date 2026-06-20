@@ -461,6 +461,23 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Steps:** Decide on-screen location relative to the combat controls; pick size/scale across form
   factors; choose colors/theme alignment; define resting state vs. held/shaking state appearance.
 - **Notes:** Depends on SS-077; do after SS-112. Related: SS-069, SS-077, SS-068, SS-112, SS-113.
+- **Post-SS-112 follow-up (do here):**
+  - **Feel-tuning, not yet validated on device:** the shake impulse strength
+    (`MIN/MAX_SHAKE_IMPULSE_DP` in `Die3d.kt`) and the double-tap roll duration
+    (`DOUBLE_TAP_ROLL_MILLIS = 1000` in `DiceTray.kt`) are first-guess constants. Confirm/tune by
+    hand on a real device.
+  - **Single-tap jostle:** holding starts the live physics so shaking shows a live bounce, so a
+    stray single tap on the dice makes them throw-and-settle without rolling. Harmless feedback; if
+    it reads as a bug, gate the physics behind a brief minimum hold before it kicks in.
+  - **Placement:** the dice tray (`DiceTray.kt`) currently sits in a plain persistent row between
+    the combat content and `UserStatsRow`, drawn at `TRAY_WIDTH_DP`/`TRAY_HEIGHT_DP` per die. Size,
+    spacing, color/theming, and the caption styling are all still placeholder — this ticket owns
+    finalizing them. The dice are the ONLY roll control now (no roll button), so factor the
+    shake/double-tap caption into the final visual.
+  - **Latency reveal:** on release the dice settle on the previous value, then re-tumble to the new
+    one when the rolled result arrives; if there's network latency the brief rest on the old value
+    is visible. Tied to [[connectivity-resilience-priority]] — consider whether the reveal should
+    wait for the result instead of settling first.
 
 ### SS-079 — Spinning-wheel class selector (replace CharacterClassCards)
 - [ ] In progress — interaction + structure built; Figma visual fidelity remains.

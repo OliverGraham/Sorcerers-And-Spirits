@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
@@ -12,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
@@ -28,7 +28,6 @@ import kotlin.math.exp
 import kotlin.math.sin
 import kotlin.random.Random
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 private const val DIE_SIDE_DP = 64
@@ -81,9 +80,10 @@ private const val EDGE_STROKE_PX = 1.5f
 // Faces angled away from the camera darken to this fraction of full brightness for depth shading.
 private const val SHADE_MIN = 0.55f
 
-private const val SPIN_X_STEP_DEGREES = 540f
-private const val SPIN_Y_STEP_DEGREES = 720f
-private const val SPIN_STEP_MILLIS = 600
+// Each detected shake kicks the held die with a random impulse in this speed range (dp/sec); a few
+// shakes stack up into a lively bounce, while friction bleeds it back down between them.
+private const val MIN_SHAKE_IMPULSE_DP = 450f
+private const val MAX_SHAKE_IMPULSE_DP = 950f
 
 // Once the die stops bouncing it rights itself over this long so the rolled face reads up.
 private const val RIGHTING_MILLIS = 450
@@ -98,20 +98,22 @@ private val DIE_EDGE = Color(color = 0x33000000)
 
 /**
  * A real 3D die (SS-077 prototype): an actual cube projected with perspective and back-face
- * culling, drawn entirely in Compose [Canvas]. While [isRolling] it tumbles in place in the centre
- * of the tray; when the hold releases or [value] changes because any player rolled (SS-112), it is
- * thrown with a random velocity and a tiny per-frame physics simulation [tumbleDieAroundTray] sends
- * it ricocheting off the tray walls, tumbling and slowing under friction until it comes to rest
- * somewhere inside the tray (SS-113). Only then does it right itself so the face carrying [value]
- * reads up — the way a physical die settles after it stops rolling. The landing value is exact
- * because the righting target is the orientation that puts that face up, independent of the chaotic
- * path the die took to get there.
+ * culling, drawn entirely in Compose [Canvas]. While [isRolling] it bounces around the tray and
+ * each [shakeTick] (one per phone shake) kicks it with a fresh impulse, so shaking the device
+ * throws the dice around live (SS-112); a tiny per-frame physics simulation [runDiePhysics]
+ * ricochets it off the tray walls, tumbling and slowing under friction (SS-113). On release the
+ * motion the shaking built up carries through and settles, and when [value] changes because any
+ * player rolled, a fresh throw reveals it. Only once it comes to rest does it right itself so the
+ * face carrying [value] reads up — the way a physical die settles after it stops rolling. The
+ * landing value is exact because the righting target is the orientation that puts that face up,
+ * independent of the chaotic path the die took to get there.
  */
 @Composable
 internal fun Die3d(
     value: Int,
     isRolling: Boolean,
     enabled: Boolean,
+    shakeTick: Int,
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current
@@ -128,46 +130,85 @@ internal fun Die3d(
     // The die rests on its current face the first time it lays out, then tumbles for every change
     // after that: while held, and on any value change once a roll (by any player) lands (SS-112).
     var isFirstLayout by remember { mutableStateOf(value = true) }
+    // The value the die last settled on, so a later change can be told apart from a release.
+    var previousValue by remember { mutableStateOf(value = value) }
+    // The die's live velocity is handed from the held shake-physics loop to the release settle, so
+    // releasing continues the motion the shaking built up rather than starting over.
+    val velocity = remember { mutableStateOf(value = Offset.Zero) }
+    // Read inside the physics loop so each new shake is seen without restarting the loop.
+    val currentShakeTick by rememberUpdatedState(newValue = shakeTick)
 
     LaunchedEffect(key1 = isRolling, key2 = value) {
         val target = faceAngles(value = value)
+        val restSpeed = REST_SPEED_DP * density.density
         if (isRolling) {
             isFirstLayout = false
-            center.snapTo(targetValue = trayCenter)
-            coroutineScope {
-                launch {
-                    while (isActive) {
-                        angleX.animateTo(
-                            targetValue = angleX.value + SPIN_X_STEP_DEGREES,
-                            animationSpec =
-                                tween(durationMillis = SPIN_STEP_MILLIS, easing = LinearEasing),
-                        )
-                    }
-                }
-                launch {
-                    while (isActive) {
-                        angleY.animateTo(
-                            targetValue = angleY.value + SPIN_Y_STEP_DEGREES,
-                            animationSpec =
-                                tween(durationMillis = SPIN_STEP_MILLIS, easing = LinearEasing),
-                        )
-                    }
-                }
-            }
-        } else if (isFirstLayout) {
-            isFirstLayout = false
-            angleX.snapTo(targetValue = target.first)
-            angleY.snapTo(targetValue = target.second)
-            center.snapTo(targetValue = trayCenter)
-        } else {
-            tumbleDieAroundTray(
+            var lastShakeTick = currentShakeTick
+            // While held the die bounces around the tray, and every shake of the phone kicks it
+            // with a fresh impulse; friction bleeds the motion away between shakes (SS-112). The
+            // loop never settles on its own — it ends when the hold releases and this effect is
+            // cancelled, leaving [velocity] for the release settle to continue from.
+            runDiePhysics(
                 center = center,
                 angleX = angleX,
                 angleY = angleY,
                 trayWidthPx = trayWidthPx,
                 trayHeightPx = trayHeightPx,
                 density = density.density,
+                startVelocity = randomThrowVelocity(density = density.density),
+                onVelocityChanged = { latest -> velocity.value = latest },
+                nextImpulse = {
+                    val tick = currentShakeTick
+                    val hasShaken = tick != lastShakeTick
+                    if (hasShaken) {
+                        lastShakeTick = tick
+                        randomShakeImpulse(density = density.density)
+                    } else {
+                        Offset.Zero
+                    }
+                },
+                isAtRest = { false },
             )
+        } else if (isFirstLayout) {
+            isFirstLayout = false
+            previousValue = value
+            angleX.snapTo(targetValue = target.first)
+            angleY.snapTo(targetValue = target.second)
+            center.snapTo(targetValue = trayCenter)
+        } else {
+            val hasValueChanged = value != previousValue
+            previousValue = value
+            val heldVelocity = velocity.value
+            velocity.value = Offset.Zero
+
+            val settleVelocity =
+                when {
+                    // Released after shaking: keep the momentum the shaking built up.
+                    heldVelocity.getDistance() > restSpeed -> heldVelocity
+
+                    // A new value landed (this player's result or another player's roll): reveal it
+                    // with a fresh throw across the tray.
+                    hasValueChanged -> randomThrowVelocity(density = density.density)
+
+                    // Released without rolling: nothing to throw, just right the face below.
+                    else -> Offset.Zero
+                }
+
+            if (settleVelocity != Offset.Zero) {
+                runDiePhysics(
+                    center = center,
+                    angleX = angleX,
+                    angleY = angleY,
+                    trayWidthPx = trayWidthPx,
+                    trayHeightPx = trayHeightPx,
+                    density = density.density,
+                    startVelocity = settleVelocity,
+                    onVelocityChanged = {},
+                    nextImpulse = { Offset.Zero },
+                    isAtRest = { speed -> speed <= restSpeed },
+                )
+            }
+
             coroutineScope {
                 launch {
                     angleX.animateTo(
@@ -197,32 +238,33 @@ internal fun Die3d(
 }
 
 /**
- * Throws the die and simulates it bouncing around the tray. It starts from [center]'s current spot
- * with a random direction and speed, then each frame coasts forward, loses speed to friction,
- * reverses (losing energy) whenever it reaches a wall, and tumbles [angleX]/[angleY] in proportion
- * to how far it moved. The loop ends once the die slows below the rest threshold; [density] (px per
- * dp) converts the dp-based tuning into the pixel space the tray and animatables work in.
+ * Integrates the die bouncing around the tray, one frame at a time. Starting from [center]'s
+ * current spot and [startVelocity], each frame adds [nextImpulse] (a shake's kick, or zero), loses
+ * speed to friction, reverses (losing energy) whenever it reaches a wall, and tumbles
+ * [angleX]/[angleY] in proportion to how far it moved. [onVelocityChanged] reports the running
+ * velocity so a caller can hand it from one phase to the next, and the loop ends when [isAtRest]
+ * accepts the current speed — the held phase passes a predicate that never rests, so it runs until
+ * the effect is cancelled. [density] (px per dp) converts the dp-based tuning into the pixel space
+ * the animatables work in.
  */
-private suspend fun tumbleDieAroundTray(
+private suspend fun runDiePhysics(
     center: Animatable<Offset, *>,
     angleX: Animatable<Float, *>,
     angleY: Animatable<Float, *>,
     trayWidthPx: Float,
     trayHeightPx: Float,
     density: Float,
+    startVelocity: Offset,
+    onVelocityChanged: (Offset) -> Unit,
+    nextImpulse: () -> Offset,
+    isAtRest: (Float) -> Boolean,
 ) {
     val radius = DIE_SIDE_DP * density * DIE_RADIUS_FRACTION
     val spanX = radius..(trayWidthPx - radius)
     val spanY = radius..(trayHeightPx - radius)
-    val restSpeed = REST_SPEED_DP * density
     val degreesPerPx = ROLL_DEGREES_PER_DP / density
 
-    val throwAngle = Random.nextFloat() * 2f * PI
-    val throwSpeed =
-        (MIN_THROW_SPEED_DP + Random.nextFloat() * (MAX_THROW_SPEED_DP - MIN_THROW_SPEED_DP)) *
-            density
-    var velocity =
-        Offset(x = cos(x = throwAngle) * throwSpeed, y = sin(x = throwAngle) * throwSpeed)
+    var velocity = startVelocity
     var position = center.value
     var previousFrame = withFrameNanos { it }
 
@@ -231,6 +273,7 @@ private suspend fun tumbleDieAroundTray(
         val seconds = ((now - previousFrame) / NANOS_PER_SECOND).coerceAtMost(MAX_FRAME_SECONDS)
         previousFrame = now
 
+        velocity += nextImpulse()
         velocity *= exp(x = -FRICTION_PER_SECOND * seconds)
         var nextX = position.x + velocity.x * seconds
         var nextY = position.y + velocity.y * seconds
@@ -249,12 +292,31 @@ private suspend fun tumbleDieAroundTray(
         velocity = Offset(x = velocityX, y = velocityY)
         position = Offset(x = nextX, y = nextY)
 
+        onVelocityChanged(velocity)
         center.snapTo(targetValue = position)
         angleX.snapTo(targetValue = angleX.value + velocityY * seconds * degreesPerPx)
         angleY.snapTo(targetValue = angleY.value + velocityX * seconds * degreesPerPx)
 
-        if (velocity.getDistance() <= restSpeed) return
+        if (isAtRest(velocity.getDistance())) return
     }
+}
+
+/** A throw across the tray in a random direction at a random speed, in pixels per second. */
+private fun randomThrowVelocity(density: Float): Offset {
+    val angle = Random.nextFloat() * 2f * PI
+    val speed =
+        (MIN_THROW_SPEED_DP + Random.nextFloat() * (MAX_THROW_SPEED_DP - MIN_THROW_SPEED_DP)) *
+            density
+    return Offset(x = cos(x = angle) * speed, y = sin(x = angle) * speed)
+}
+
+/** A single shake's kick in a random direction, in pixels per second. */
+private fun randomShakeImpulse(density: Float): Offset {
+    val angle = Random.nextFloat() * 2f * PI
+    val speed =
+        (MIN_SHAKE_IMPULSE_DP +
+            Random.nextFloat() * (MAX_SHAKE_IMPULSE_DP - MIN_SHAKE_IMPULSE_DP)) * density
+    return Offset(x = cos(x = angle) * speed, y = sin(x = angle) * speed)
 }
 
 private fun DrawScope.drawDie(angleX: Float, angleY: Float, center: Offset, enabled: Boolean) {

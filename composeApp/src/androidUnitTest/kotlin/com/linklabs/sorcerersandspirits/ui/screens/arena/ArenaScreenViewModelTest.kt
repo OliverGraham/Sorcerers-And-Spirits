@@ -3,8 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
@@ -39,6 +41,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
@@ -531,6 +534,41 @@ class ArenaScreenViewModelTest {
 
             assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
+        }
+
+    // ---------- Deferred Finished transition (SS-098) ----------
+
+    @Test
+    fun `Given a match finishes with closing messages, then the Finished transition is deferred until the messages are handled`() =
+        runTest {
+            val playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue())
+            val viewModel =
+                combatViewModel(nextCombatAction = idleTurn(OPPONENT_ID), playerMap = playerMap)
+
+            arenaMatchFlow.value =
+                ArenaMatch.Finished(
+                    messages =
+                        listOf(
+                            IncomingArenaMessage(
+                                id = "message-1",
+                                message = ArenaMessage.NewRound(roundNumber = 1),
+                            )
+                        ),
+                    numberOfNewMessages = 1,
+                    playerMap = playerMap,
+                )
+            runCurrent()
+
+            val deferredState = (viewModel.uiStateFlow.value as UiState.Loaded).data
+            assertIs<ArenaState.Combat>(deferredState.arenaState)
+            assertNotNull(deferredState.pendingFinishedState)
+
+            viewModel.onIncomingMessageHandled()
+            runCurrent()
+
+            val finishedState = (viewModel.uiStateFlow.value as UiState.Loaded).data
+            assertIs<ArenaState.Finished>(finishedState.arenaState)
+            assertNull(finishedState.pendingFinishedState)
         }
 
     // ---------- Forfeit dialog ----------

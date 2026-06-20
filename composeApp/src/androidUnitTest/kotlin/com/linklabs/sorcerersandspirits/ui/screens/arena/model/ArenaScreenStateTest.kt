@@ -159,6 +159,74 @@ class ArenaScreenStateTest {
         assertNotNull(actual = nextState.latestMessage)
     }
 
+    @Test
+    fun `Given a match finishes while closing messages remain, then the combat view is held and the finished state is pending`() {
+        val previousState =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    )
+            )
+        val finishedMatch = finishedMatch(messageCount = 3, numberOfNewMessages = 3)
+
+        val nextState =
+            finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
+
+        assertTrue(actual = nextState.arenaState is ArenaState.Combat)
+        assertNotNull(actual = nextState.pendingFinishedState)
+    }
+
+    @Test
+    fun `Given a match finishes while closing messages remain, then the combat timer is stopped`() {
+        val previousState =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    )
+            )
+        val finishedMatch = finishedMatch(messageCount = 3, numberOfNewMessages = 3)
+
+        val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
+
+        assertEquals(expected = TimerAction.Stop, actual = update.timerAction)
+    }
+
+    @Test
+    fun `Given a match finishes with no unhandled messages, then it advances straight to the finished screen`() {
+        val previousState =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    )
+            )
+        val finishedMatch = finishedMatch(messageCount = 0, numberOfNewMessages = 0)
+
+        val nextState =
+            finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
+
+        assertTrue(actual = nextState.arenaState is ArenaState.Finished)
+        assertNull(actual = nextState.pendingFinishedState)
+    }
+
+    private fun finishedMatch(messageCount: Int, numberOfNewMessages: Int) =
+        ArenaMatch.Finished(
+            messages =
+                (1..messageCount).map { index ->
+                    IncomingArenaMessage(
+                        id = "message-$index",
+                        message = ArenaMessage.NewRound(roundNumber = index),
+                    )
+                },
+            numberOfNewMessages = numberOfNewMessages,
+            playerMap = combatPlayers(),
+        )
+
     private fun combatMatch(messageCount: Int, numberOfNewMessages: Int) =
         ArenaMatch.Combat(
             messages =

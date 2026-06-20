@@ -25,6 +25,7 @@ data class ArenaScreenState(
     val participantClassNames: Map<String, String>,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
+    val pendingFinishedState: ArenaState.Finished? = null,
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
 
@@ -49,10 +50,15 @@ data class ArenaScreenState(
     /**
      * Whether to prompt a knocked-out user to observe or leave. A knocked-out Paladin who is still
      * acting (owes a Holy Shield survival roll) has not yet been definitively knocked out, so no
-     * prompt is offered, and none is offered once the user has already chosen to stay.
+     * prompt is offered, and none is offered once the user has already chosen to stay. While the
+     * match is finishing (SS-098), the closing animation plays uninterrupted, so no prompt is
+     * offered until it advances to the Finished screen.
      */
     val isKnockedOutDecisionOffered: Boolean =
-        !hasReadiedForNextMatch && isUserPlayerKnockedOut && !isUserPlayerActing
+        !hasReadiedForNextMatch &&
+            isUserPlayerKnockedOut &&
+            !isUserPlayerActing &&
+            pendingFinishedState == null
 }
 
 @Immutable
@@ -169,7 +175,7 @@ internal fun ArenaMatch.toUpdatedState(
             previousState?.hasReadiedForNextMatch ?: false
         }
 
-    val nextArenaState =
+    val computedArenaState =
         when (this) {
             is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
 
@@ -207,6 +213,13 @@ internal fun ArenaMatch.toUpdatedState(
                 )
         }
 
+    val (displayedArenaState, pendingFinishedState) =
+        deferFinishUntilMessagesPlay(
+            computedState = computedArenaState,
+            previousState = previousState?.arenaState,
+            hasUnhandledMessages = unhandledMessagesCount > 0,
+        )
+
     val nextScreenState =
         ArenaScreenState(
             messages = messages,
@@ -215,14 +228,21 @@ internal fun ArenaMatch.toUpdatedState(
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
-            arenaState = nextArenaState,
+            arenaState = displayedArenaState,
             participantClassNames = participantClassNames,
             gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
             characterClasses = characterClasses,
+            pendingFinishedState = pendingFinishedState,
         )
 
+    // While the Finished transition is deferred, the match is over, so the combat clock is stopped
+    // rather than left running against the held combat view.
     val timerAction =
-        determineTimerAction(previous = previousState?.arenaState, next = nextArenaState)
+        if (pendingFinishedState != null) {
+            TimerAction.Stop
+        } else {
+            determineTimerAction(previous = previousState?.arenaState, next = displayedArenaState)
+        }
 
     val finalState =
         when (timerAction) {
@@ -235,6 +255,39 @@ internal fun ArenaMatch.toUpdatedState(
         }
 
     return ArenaStateUpdate(nextState = finalState, timerAction = timerAction)
+}
+
+/**
+ * Defers the [ArenaState.Finished] transition while the match's closing messages and animations are
+ * still playing (SS-098). When the match has just finished but unhandled messages remain, the
+ * combat view is held in place—updated to show the final knockout—and the finished state is
+ * returned as pending, to be advanced to once the messages drain. Otherwise the computed state is
+ * shown as is.
+ */
+private fun deferFinishUntilMessagesPlay(
+    computedState: ArenaState,
+    previousState: ArenaState?,
+    hasUnhandledMessages: Boolean,
+): Pair<ArenaState, ArenaState.Finished?> {
+    if (computedState !is ArenaState.Finished) return computedState to null
+    if (previousState !is ArenaState.Combat) return computedState to null
+    if (!hasUnhandledMessages) return computedState to null
+
+    val heldCombatState = previousState.withFinalPlayers(finishedPlayers = computedState.players)
+    return heldCombatState to computedState
+}
+
+/**
+ * Returns this combat view with each player replaced by their final, match-end state, so the held
+ * view reflects the closing knockout while the deferred Finished transition waits (SS-098).
+ */
+private fun ArenaState.Combat.withFinalPlayers(
+    finishedPlayers: List<PlayerState.Selected>
+): ArenaState.Combat {
+    val finalPlayersById = finishedPlayers.associateBy { it.userId }
+    val updatedPlayerMap =
+        playerMap.mapValues { (userId, player) -> finalPlayersById[userId] ?: player }
+    return copy(playerMap = updatedPlayerMap)
 }
 
 private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(

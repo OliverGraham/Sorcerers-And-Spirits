@@ -170,16 +170,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   finalized wording for the Bard Persuade outcomes.
 - **Notes:** Related: SS-093 (per-outcome ability copy), SS-097 (class-name usage in messages).
 
-### SS-098 — Defer the Finished transition until end-of-match messages/animations play
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** When a match ends, the Arena must not transition immediately to the `Finished` state.
-  The final messages and animations (the knockout that ends the match, etc.) must play out first,
-  then the state advances to `Finished`. Today the abrupt transition can cut off the closing
-  messages/animations.
-- **Notes:** Related: SS-025 (message-log animation), SS-068 (animation pass), SS-045 (early-leave /
-  2-player forfeit finish), SS-103 (messages disappearing).
-
 ### SS-099 — Disable Impersonate for a class the Illusionist has already copied
 - [ ] Not completed
 - **Source:** Reported bug.

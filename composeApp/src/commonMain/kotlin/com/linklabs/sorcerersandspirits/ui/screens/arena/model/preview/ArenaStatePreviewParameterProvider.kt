@@ -48,7 +48,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         secondsRemaining: Int = 20,
         showForfeitDialog: Boolean = false,
         isUserPlayerKnockedOut: Boolean = false,
-        hasMadeKnockoutDecision: Boolean = false,
+        hasReadiedForNextMatch: Boolean = false,
     ) =
         ArenaScreenState(
             messages = messages,
@@ -56,7 +56,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             secondsRemaining = secondsRemaining,
             showForfeitDialog = showForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
-            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
+            hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
             participantNames = getExamplePlayers().mapValues { it.value.displayName },
         )

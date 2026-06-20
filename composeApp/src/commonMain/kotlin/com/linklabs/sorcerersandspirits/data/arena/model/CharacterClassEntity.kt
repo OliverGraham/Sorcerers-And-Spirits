@@ -17,6 +17,23 @@ data class CharacterClassEntity(
     val className = type.name
 }
 
+/**
+ * Restores a class to its selection-time state for the next match of the Gauntlet, keeping the
+ * stats the player locked in (including any RemoteConfig overlay) rather than rebuilding from
+ * defaults. Health returns to full, the per-match armor Dodge accumulated is undone, and ability
+ * state clears.
+ */
+internal fun CharacterClassEntity.resetForNewMatch(): CharacterClassEntity {
+    val dodgeArmorBonus = (defensiveAbility as? DefensiveAbilityEntity.Dodge)?.armorBonus ?: 0
+
+    return copy(
+        hitPoints = maxHitPoints,
+        armorClass = armorClass - dodgeArmorBonus,
+        offensiveAbility = offensiveAbility.resetForNewMatch(),
+        defensiveAbility = defensiveAbility.resetForNewMatch(),
+    )
+}
+
 internal fun CharacterClassEntity.toDomain(): CharacterClass =
     CharacterClass(
         type = type,

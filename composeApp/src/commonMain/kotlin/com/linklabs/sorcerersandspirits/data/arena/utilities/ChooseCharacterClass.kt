@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
@@ -141,22 +140,5 @@ internal class ChooseCharacterClass(
                     selectedArenaPlayer.characterClassEntity.toCharacterClassMessageInfoEntity(),
                 displayName = selectedArenaPlayer.displayName,
             )
-
-        private fun DatabaseReference.generateInitialCombatRoundMessages(
-            startingCharacterClass: CharacterClassEntity
-        ) = buildList {
-            add(element = ArenaMessageEntity.NewRound(id = addNewKey(), roundNumber = 1))
-            add(
-                element =
-                    ArenaMessageEntity.NewTurn(
-                        id = addNewKey(),
-                        characterClassInfo =
-                            startingCharacterClass.toCharacterClassMessageInfoEntity(),
-                    )
-            )
-        }
-
-        private fun CharacterClassEntity.toCharacterClassMessageInfoEntity() =
-            CharacterClassMessageInfoEntity(className = className, type = type)
     }
 }

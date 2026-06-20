@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.resetForNewMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
@@ -10,13 +12,16 @@ internal class StayForAnotherMatch(private val userId: String) {
     suspend operator fun invoke(arenaReference: DatabaseReference) {
         val strategy =
             nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
+        val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
 
         arenaReference.runTransaction(strategy = strategy) { match ->
-            match.stayForAnotherMatchTransaction()
+            match.stayForAnotherMatchTransaction(messagesReference = messagesReference)
         }
     }
 
-    private fun ArenaMatchEntity?.stayForAnotherMatchTransaction(): ArenaMatchEntity? {
+    private fun ArenaMatchEntity?.stayForAnotherMatchTransaction(
+        messagesReference: DatabaseReference
+    ): ArenaMatchEntity? {
         val match = this ?: return null
 
         val updatedPlayers = match.playerEntitiesMap.toMutableMap()
@@ -28,42 +33,89 @@ internal class StayForAnotherMatch(private val userId: String) {
                 is ArenaPlayerEntity.Unselected -> currentPlayer.copy(isReadyForNextMatch = true)
             }
 
-        val allReady = updatedPlayers.values.all { it.isReadyForNextMatch }
+        val areAllReady = updatedPlayers.values.all { it.isReadyForNextMatch }
 
-        return if (allReady) {
-            // Reset match
-            val resetPlayers =
-                updatedPlayers.mapValues { (_, player) ->
-                    ArenaPlayerEntity.Unselected(
-                        userId = player.userId,
-                        displayName = player.displayName,
-                    )
-                }
-
-            if (resetPlayers.size < 2) {
-                null
-            } else {
-                ArenaMatchEntity.ChoosingClasses(
-                    playerEntitiesMap = resetPlayers,
-                    activePlayerUserId = resetPlayers.keys.random(), // Or some other logic
-                    messages = emptyList(),
-                    numberOfNewMessages = 0,
-                    matchNumberInGauntlet = match.nextMatchNumberInGauntlet(),
-                )
-            }
+        return if (areAllReady) {
+            match.startNextMatch(players = updatedPlayers, messagesReference = messagesReference)
         } else {
-            match.withUpdatedPlayers(updatedPlayers)
+            match.withUpdatedPlayers(updatedPlayers = updatedPlayers)
         }
     }
 
-    // Advancing within the Gauntlet (1 -> 2 -> 3); once the final match is done, "Go Again" wraps
-    // back to 1 to start a fresh Gauntlet.
-    private fun ArenaMatchEntity.nextMatchNumberInGauntlet(): Int =
-        if (matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET) {
-            1
+    /**
+     * Within a Gauntlet players keep their locked class (SS-108): the next match skips class
+     * selection and goes straight to Combat with each class reset to a fresh, full-health instance.
+     * Once the final match of the Gauntlet is done, "Go Again" starts a brand-new Gauntlet, so it
+     * returns to class selection. Returns null to end the session when fewer than two players
+     * remain.
+     */
+    private fun ArenaMatchEntity.startNextMatch(
+        players: Map<String, ArenaPlayerEntity>,
+        messagesReference: DatabaseReference,
+    ): ArenaMatchEntity? {
+        val isFinalMatch = matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET
+
+        return if (isFinalMatch) {
+            startNewGauntlet(players = players)
         } else {
-            matchNumberInGauntlet + 1
+            startNextGauntletMatch(players = players, messagesReference = messagesReference)
         }
+    }
+
+    private fun ArenaMatchEntity.startNextGauntletMatch(
+        players: Map<String, ArenaPlayerEntity>,
+        messagesReference: DatabaseReference,
+    ): ArenaMatchEntity? {
+        val freshPlayers =
+            players.values.filterIsInstance<ArenaPlayerEntity.Selected>().associate { player ->
+                player.userId to
+                    player.copy(
+                        isReadyForNextMatch = false,
+                        characterClassEntity = player.characterClassEntity.resetForNewMatch(),
+                    )
+            }
+
+        if (freshPlayers.size < 2) return null
+
+        val fastestPlayer = freshPlayers.getFastestPlayer()
+        val newMessages =
+            messagesReference.generateInitialCombatRoundMessages(
+                startingCharacterClass = fastestPlayer.characterClassEntity
+            )
+
+        return ArenaMatchEntity.Combat(
+            playerEntitiesMap = freshPlayers,
+            messages = newMessages,
+            numberOfNewMessages = newMessages.size,
+            nextCombatActionEntity =
+                NextCombatActionEntity.IdleEntity(
+                    activeUserIds = setOf(element = fastestPlayer.userId)
+                ),
+            roundNumber = 1,
+            isNewRound = true,
+            matchNumberInGauntlet = matchNumberInGauntlet + 1,
+        )
+    }
+
+    private fun startNewGauntlet(players: Map<String, ArenaPlayerEntity>): ArenaMatchEntity? {
+        val resetPlayers =
+            players.mapValues { (_, player) ->
+                ArenaPlayerEntity.Unselected(
+                    userId = player.userId,
+                    displayName = player.displayName,
+                )
+            }
+
+        if (resetPlayers.size < 2) return null
+
+        return ArenaMatchEntity.ChoosingClasses(
+            playerEntitiesMap = resetPlayers,
+            activePlayerUserId = resetPlayers.keys.random(),
+            messages = emptyList(),
+            numberOfNewMessages = 0,
+            matchNumberInGauntlet = 1,
+        )
+    }
 
     private fun ArenaMatchEntity.withUpdatedPlayers(
         updatedPlayers: Map<String, ArenaPlayerEntity>

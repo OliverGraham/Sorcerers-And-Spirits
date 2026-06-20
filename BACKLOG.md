@@ -50,20 +50,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ArenaScreenState.kt:79` (`// TODO: Need to refactor this badly`)
 - **Goal:** Refactor the flagged state-mapping code. Likely overlaps SS-017.
 
-### SS-108 — Lock a player to one class for the whole Gauntlet
-- [ ] Not completed
-- **Goal:** A player picks their class once and stays that same character for the entire Gauntlet
-  (all matches in the arena session), instead of re-choosing between matches.
-- **Implications:**
-  - **UI flow:** remove the choose-classes state between matches; class selection happens once at
-    the start. Related: SS-034, SS-079.
-  - **Between-match dialog:** the dialog currently shown between matches and at the end of the
-    Gauntlet is now meaningless — remove it.
-  - **Finished state:** on the `Finished` arena state, show UI for players to either continue
-    forward (next match / stay) or leave. Related: SS-045, SS-098.
-  - **Stats:** a locked class per Gauntlet affects how stats are recorded/attributed — account for
-    per-class continuity across matches. Related: SS-058, Game Stats & Leaderboard.
-
 ---
 
 ## Common UI

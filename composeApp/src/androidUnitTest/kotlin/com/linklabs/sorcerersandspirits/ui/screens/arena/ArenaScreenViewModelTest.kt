@@ -633,13 +633,13 @@ class ArenaScreenViewModelTest {
             awaitItem()
             // Loaded
             val initialState = awaitItem() as UiState.Loaded
-            assertFalse(initialState.data.hasMadeKnockoutDecision)
+            assertFalse(initialState.data.hasReadiedForNextMatch)
 
             viewModel.onStayForAnotherMatch()
 
             // Loaded (updated)
             val updatedState = awaitItem() as UiState.Loaded
-            assertTrue(updatedState.data.hasMadeKnockoutDecision)
+            assertTrue(updatedState.data.hasReadiedForNextMatch)
         }
 
         coVerify { stayForAnotherMatchUseCase(arenaId = arguments.arenaId) }

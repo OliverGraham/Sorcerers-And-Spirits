@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
@@ -35,6 +36,7 @@ internal fun MatchFinishedContent(
     finishedState: ArenaState.Finished,
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
+    secondsRemaining: Int,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -72,6 +74,7 @@ internal fun MatchFinishedContent(
         MatchDecisionControls(
             isFinalMatch = gauntletProgress.isFinalMatch,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
+            secondsRemaining = secondsRemaining,
         )
     }
 }
@@ -80,29 +83,77 @@ internal fun MatchFinishedContent(
 private fun MatchDecisionControls(
     isFinalMatch: Boolean,
     hasReadiedForNextMatch: Boolean,
+    secondsRemaining: Int,
     modifier: Modifier = Modifier,
 ) {
+    val isCountdownRunning = secondsRemaining > 0
+    val nextStepName = if (isFinalMatch) "new gauntlet" else "next match"
+
     if (hasReadiedForNextMatch) {
-        Text(
+        Column(
             modifier = modifier.fillMaxWidth(),
-            text = "Waiting for the other players…",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = "Waiting for the other players…",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            if (isCountdownRunning) {
+                CountdownText(
+                    prefix = "Starting the $nextStepName in",
+                    secondsRemaining = secondsRemaining,
+                )
+            }
+        }
         return
     }
 
     val continueText = if (isFinalMatch) "Go Again" else "Next Match"
 
     val actions = ArenaActionsProvider.current
-    Row(
+    Column(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        if (isCountdownRunning) {
+            CountdownText(
+                prefix = "The $nextStepName starts in",
+                secondsRemaining = secondsRemaining,
+            )
+        }
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            OutlinedButton(onClick = actions.onConfirmLeaveArena) { Text(text = "Leave") }
+            Button(onClick = actions.onStayForAnotherMatch) { Text(text = continueText) }
+        }
+    }
+}
+
+@Composable
+private fun CountdownText(prefix: String, secondsRemaining: Int, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        OutlinedButton(onClick = actions.onConfirmLeaveArena) { Text(text = "Leave") }
-        Button(onClick = actions.onStayForAnotherMatch) { Text(text = continueText) }
+        Text(
+            text = prefix,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        AnimatedSeconds(seconds = secondsRemaining) { seconds ->
+            Text(
+                text = "${seconds}s",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 
@@ -205,6 +256,7 @@ private fun MatchFinishedContentPreview() {
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
+            secondsRemaining = 0,
         )
     }
 }
@@ -217,6 +269,20 @@ private fun MatchFinishedContentFinalPreview() {
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 3),
             hasReadiedForNextMatch = false,
+            secondsRemaining = 0,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MatchFinishedContentCountdownPreview() {
+    SorcerersAndSpiritsTheme {
+        MatchFinishedContent(
+            finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
+            gauntletProgress = GauntletProgress(currentMatch = 2),
+            hasReadiedForNextMatch = false,
+            secondsRemaining = 45,
         )
     }
 }
@@ -226,9 +292,10 @@ private fun MatchFinishedContentFinalPreview() {
 private fun MatchFinishedContentWaitingPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
-            finishedState = exampleFinishedState(),
+            finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = true,
+            secondsRemaining = 45,
         )
     }
 }

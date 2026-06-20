@@ -49,6 +49,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -569,6 +570,31 @@ class ArenaScreenViewModelTest {
             val finishedState = (viewModel.uiStateFlow.value as UiState.Loaded).data
             assertIs<ArenaState.Finished>(finishedState.arenaState)
             assertNull(finishedState.pendingFinishedState)
+        }
+
+    @Test
+    fun `Given the finished countdown expires and the user has not readied, then the user is auto-readied`() =
+        runTest {
+            val playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue())
+            val viewModel =
+                combatViewModel(nextCombatAction = idleTurn(OPPONENT_ID), playerMap = playerMap)
+
+            // The opponent readying starts the shared countdown while the user has not readied.
+            val countdownPlayerMap =
+                playerMap +
+                    (OPPONENT_ID to
+                        playerMap.getValue(OPPONENT_ID).copy(isReadyForNextMatch = true))
+            arenaMatchFlow.value =
+                ArenaMatch.Finished(
+                    messages = emptyList(),
+                    numberOfNewMessages = 0,
+                    playerMap = countdownPlayerMap,
+                )
+            runCurrent()
+
+            advanceUntilIdle()
+
+            coVerify { stayForAnotherMatchUseCase(arenaId = arguments.arenaId) }
         }
 
     // ---------- Forfeit dialog ----------

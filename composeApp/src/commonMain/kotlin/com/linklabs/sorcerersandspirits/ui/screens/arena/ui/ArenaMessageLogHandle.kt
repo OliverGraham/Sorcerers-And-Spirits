@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
 import com.linklabs.sorcerersandspirits.ui.common.WeightSpacer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
@@ -47,15 +48,7 @@ internal fun ArenaMessageLogHandle(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (isTimerVisible) {
-            AnimatedContent(
-                targetState = secondsRemaining,
-                transitionSpec = {
-                    scaleIn(
-                        initialScale = 0.92f,
-                        animationSpec = tween(220, delayMillis = 90),
-                    ) togetherWith scaleOut(animationSpec = tween(220))
-                },
-            ) { seconds ->
+            AnimatedSeconds(seconds = secondsRemaining) { seconds ->
                 TimerText(seconds = seconds, isUrgent = isTimerUrgent)
             }
         }

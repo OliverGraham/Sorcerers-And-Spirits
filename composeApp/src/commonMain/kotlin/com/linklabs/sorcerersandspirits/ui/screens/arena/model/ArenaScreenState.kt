@@ -22,7 +22,7 @@ data class ArenaScreenState(
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
-    val hasMadeKnockoutDecision: Boolean,
+    val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState,
     val participantNames: Map<String, String>,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
@@ -44,24 +44,13 @@ data class ArenaScreenState(
     private val isUserPlayerActing: Boolean =
         (arenaState as? ArenaState.Combat)?.isItThisUsersTurn ?: false
 
-    val matchDecision: MatchDecision? =
-        when {
-            hasMadeKnockoutDecision -> null
-            arenaState is ArenaState.Finished -> MatchDecision.MatchFinished
-            isUserPlayerKnockedOut && !isUserPlayerActing -> MatchDecision.KnockedOut
-            else -> null
-        }
-}
-
-/**
- * A choice the user must make to continue: stay for another match once it has finished, or stay to
- * observe after being knocked out. A knocked-out Paladin who is still acting (owes a Holy Shield
- * survival roll) has not yet been definitively knocked out, so no decision is offered.
- */
-@Immutable
-enum class MatchDecision {
-    KnockedOut,
-    MatchFinished,
+    /**
+     * Whether to prompt a knocked-out user to observe or leave. A knocked-out Paladin who is still
+     * acting (owes a Holy Shield survival roll) has not yet been definitively knocked out, so no
+     * prompt is offered, and none is offered once the user has already chosen to stay.
+     */
+    val isKnockedOutDecisionOffered: Boolean =
+        !hasReadiedForNextMatch && isUserPlayerKnockedOut && !isUserPlayerActing
 }
 
 @Immutable
@@ -152,11 +141,16 @@ internal fun ArenaMatch.toUpdatedState(
     val isUserPlayerKnockedOut =
         (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious()?.not() ?: false
 
-    val hasMadeKnockoutDecision =
-        if (this is ArenaMatch.ChoosingClasses) {
+    // The stay/leave choice is per-match, so it resets whenever a new match begins: at class
+    // selection, and (with classes locked for the Gauntlet) when the next match starts combat
+    // straight from the previous match's Finished screen.
+    val isStartingNewMatch =
+        this is ArenaMatch.Combat && previousState?.arenaState is ArenaState.Finished
+    val hasReadiedForNextMatch =
+        if (this is ArenaMatch.ChoosingClasses || isStartingNewMatch) {
             false
         } else {
-            previousState?.hasMadeKnockoutDecision ?: false
+            previousState?.hasReadiedForNextMatch ?: false
         }
 
     val nextArenaState =
@@ -204,7 +198,7 @@ internal fun ArenaMatch.toUpdatedState(
             secondsRemaining = previousSeconds,
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
-            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
+            hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = nextArenaState,
             participantNames = participantNames,
             gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),

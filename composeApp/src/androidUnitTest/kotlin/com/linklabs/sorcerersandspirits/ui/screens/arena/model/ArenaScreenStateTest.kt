@@ -5,12 +5,14 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ArenaScreenStateTest {
 
     @Test
-    fun `Given the user's Paladin is knocked out but still owes a Holy Shield roll, then no match decision is offered`() {
+    fun `Given the user's Paladin is knocked out but still owes a Holy Shield roll, then no knocked-out decision is offered`() {
         val state =
             combatScreenState(
                 isUserPlayerKnockedOut = true,
@@ -21,7 +23,7 @@ class ArenaScreenStateTest {
                     ),
             )
 
-        assertNull(actual = state.matchDecision)
+        assertFalse(actual = state.isKnockedOutDecisionOffered)
     }
 
     @Test
@@ -33,7 +35,7 @@ class ArenaScreenStateTest {
                     CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
             )
 
-        assertEquals(expected = MatchDecision.KnockedOut, actual = state.matchDecision)
+        assertTrue(actual = state.isKnockedOutDecisionOffered)
     }
 
     @Test
@@ -48,27 +50,27 @@ class ArenaScreenStateTest {
                     ),
             )
 
-        assertEquals(expected = MatchDecision.KnockedOut, actual = state.matchDecision)
+        assertTrue(actual = state.isKnockedOutDecisionOffered)
     }
 
     @Test
-    fun `Given the user already made their decision, then no match decision is offered`() {
+    fun `Given the user already readied for the next match, then no knocked-out decision is offered`() {
         val state =
             combatScreenState(
                 isUserPlayerKnockedOut = true,
-                hasMadeKnockoutDecision = true,
+                hasReadiedForNextMatch = true,
                 combatActionState =
                     CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
             )
 
-        assertNull(actual = state.matchDecision)
+        assertFalse(actual = state.isKnockedOutDecisionOffered)
     }
 
     @Test
-    fun `Given the match has finished, then a match-finished decision is offered`() {
+    fun `Given the match has finished, then no knocked-out decision is offered`() {
         val state = screenState(arenaState = ArenaState.Finished(players = emptyList()))
 
-        assertEquals(expected = MatchDecision.MatchFinished, actual = state.matchDecision)
+        assertFalse(actual = state.isKnockedOutDecisionOffered)
     }
 
     @Test
@@ -154,18 +156,18 @@ class ArenaScreenStateTest {
     private fun combatScreenState(
         isUserPlayerKnockedOut: Boolean,
         combatActionState: CombatActionState,
-        hasMadeKnockoutDecision: Boolean = false,
+        hasReadiedForNextMatch: Boolean = false,
     ) =
         screenState(
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
-            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
+            hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = combatState(combatActionState = combatActionState),
         )
 
     private fun screenState(
         arenaState: ArenaState,
         isUserPlayerKnockedOut: Boolean = false,
-        hasMadeKnockoutDecision: Boolean = false,
+        hasReadiedForNextMatch: Boolean = false,
     ) =
         ArenaScreenState(
             messages = emptyList(),
@@ -173,7 +175,7 @@ class ArenaScreenStateTest {
             secondsRemaining = 0,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
-            hasMadeKnockoutDecision = hasMadeKnockoutDecision,
+            hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
             participantNames = emptyMap(),
         )

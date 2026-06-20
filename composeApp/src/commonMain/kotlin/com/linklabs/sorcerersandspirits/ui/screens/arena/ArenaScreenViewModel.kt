@@ -263,7 +263,7 @@ class ArenaScreenViewModel(
             computerOpponentHandler.readyUpForNextMatch()
 
             _uiStateFlow.updateLoaded { screenState ->
-                screenState.copy(hasMadeKnockoutDecision = true)
+                screenState.copy(hasReadiedForNextMatch = true)
             }
         }
     }
@@ -332,8 +332,8 @@ class ArenaScreenViewModel(
 
             is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
 
-            // The match is over; the user leaves or stays through the match-finished decision
-            // dialog, and the timer is stopped in Finished, so there is nothing to resolve here.
+            // The match is over; the user leaves or stays via the Finished screen, and the timer is
+            // stopped in Finished, so there is nothing to resolve here.
             is ArenaState.Finished -> Unit
         }
     }

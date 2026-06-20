@@ -18,9 +18,14 @@ move it from BACKLOG.md to COMPLETED.md (as a one-line entry) rather than checki
 
 Game terminology:
 
+- "Gauntlet" A fixed run of consecutive matches (currently 3) within the same arena. It sits above
+  Match in the hierarchy: Turn -> Round -> Match -> Gauntlet. A player keeps the same class for the
+  whole Gauntlet; starting a new Gauntlet (e.g. "Go Again" after the final match) returns to class
+  selection.
 - "Match" Entire Arena battle from start to end. Players can join an arena and play for as many
   matches as they want
-- "Round" A round consists of every player acting
+- "Round" A round consists of every player acting. A new round begins once every player has acted
+  and the cycle starts again (the first round of a match is round 1).
 - "Turn" A player attacking or using their ability
 - "Activated Ability" an ability that is used instead of attacking (Impersonate and Allin are an
   exceptions and don't use up an attack).

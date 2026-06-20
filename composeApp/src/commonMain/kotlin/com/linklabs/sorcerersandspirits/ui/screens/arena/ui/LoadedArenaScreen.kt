@@ -57,6 +57,7 @@ internal fun LoadedArenaScreen(
                 arenaState = screenState.arenaState,
                 characterClasses = screenState.characterClasses,
                 gauntletProgress = screenState.gauntletProgress,
+                hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
                 paddingValues = paddingValues,
             )
 
@@ -81,12 +82,8 @@ internal fun LoadedArenaScreen(
         ForfeitDialog()
     }
 
-    val matchDecision = screenState.matchDecision
-    if (matchDecision != null) {
-        MatchDecisionDialog(
-            decision = matchDecision,
-            gauntletProgress = screenState.gauntletProgress,
-        )
+    if (screenState.isKnockedOutDecisionOffered) {
+        KnockedOutDialog()
     }
 }
 
@@ -95,6 +92,7 @@ private fun ScreenContent(
     arenaState: ArenaState,
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
+    hasReadiedForNextMatch: Boolean,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -106,6 +104,7 @@ private fun ScreenContent(
             transitionState = transition,
             characterClasses = characterClasses,
             gauntletProgress = gauntletProgress,
+            hasReadiedForNextMatch = hasReadiedForNextMatch,
         )
     }
 }
@@ -116,6 +115,7 @@ private fun ArenaStateContent(
     transitionState: Transition<ArenaState>,
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
+    hasReadiedForNextMatch: Boolean,
     modifier: Modifier = Modifier,
 ) {
     transitionState.Crossfade(
@@ -135,6 +135,7 @@ private fun ArenaStateContent(
                 MatchFinishedContent(
                     finishedState = arenaState,
                     gauntletProgress = gauntletProgress,
+                    hasReadiedForNextMatch = hasReadiedForNextMatch,
                 )
         }
     }

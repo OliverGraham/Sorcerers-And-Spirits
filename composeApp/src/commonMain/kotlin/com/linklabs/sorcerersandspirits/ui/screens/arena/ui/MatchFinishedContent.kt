@@ -9,18 +9,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -30,6 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 internal fun MatchFinishedContent(
     finishedState: ArenaState.Finished,
     gauntletProgress: GauntletProgress,
+    hasReadiedForNextMatch: Boolean,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -61,6 +66,43 @@ internal fun MatchFinishedContent(
         Spacer(modifier = Modifier.padding(12.dp))
 
         MatchRecap(players = finishedState.players)
+
+        Spacer(modifier = Modifier.padding(12.dp))
+
+        MatchDecisionControls(
+            isFinalMatch = gauntletProgress.isFinalMatch,
+            hasReadiedForNextMatch = hasReadiedForNextMatch,
+        )
+    }
+}
+
+@Composable
+private fun MatchDecisionControls(
+    isFinalMatch: Boolean,
+    hasReadiedForNextMatch: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (hasReadiedForNextMatch) {
+        Text(
+            modifier = modifier.fillMaxWidth(),
+            text = "Waiting for the other players…",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        return
+    }
+
+    val continueText = if (isFinalMatch) "Go Again" else "Next Match"
+
+    val actions = ArenaActionsProvider.current
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        OutlinedButton(onClick = actions.onConfirmLeaveArena) { Text(text = "Leave") }
+        Button(onClick = actions.onStayForAnotherMatch) { Text(text = continueText) }
     }
 }
 
@@ -162,6 +204,7 @@ private fun MatchFinishedContentPreview() {
         MatchFinishedContent(
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 2),
+            hasReadiedForNextMatch = false,
         )
     }
 }
@@ -173,6 +216,19 @@ private fun MatchFinishedContentFinalPreview() {
         MatchFinishedContent(
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 3),
+            hasReadiedForNextMatch = false,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MatchFinishedContentWaitingPreview() {
+    SorcerersAndSpiritsTheme {
+        MatchFinishedContent(
+            finishedState = exampleFinishedState(),
+            gauntletProgress = GauntletProgress(currentMatch = 2),
+            hasReadiedForNextMatch = true,
         )
     }
 }

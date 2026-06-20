@@ -1,6 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,7 +20,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerId
 import androidx.compose.ui.input.pointer.PointerInputChange
@@ -36,13 +33,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-private const val HOLDING_DIE_SCALE = 1.15f
-private const val RESTING_DIE_SCALE = 1f
-private const val HOLDING_DIE_SCALE_LABEL = "HoldingDieScale"
-
 // How long the continuous buzz lingers after the last detected shake, bridging brief gaps in
 // movement so the buzz stays smooth instead of stuttering.
 private const val BUZZ_LINGER_MILLIS = 200L
+
+private const val DIE_RESTING_FACE = 1
 
 /**
  * Roll the dice two ways (SS-069):
@@ -51,8 +46,8 @@ private const val BUZZ_LINGER_MILLIS = 200L
  *
  * The hold gesture consumes its touch (`awaitEachGesture` + `consume`) so the surrounding scrolling
  * combat list can't steal the press and cancel the hold. Double-tap rolls without shaking, keeping
- * turns playable on emulators and devices without a usable accelerometer. Visuals are intentionally
- * a placeholder; SS-077 and SS-078 own the final dice rendering and styling.
+ * turns playable on emulators and devices without a usable accelerometer. Dice are drawn by the
+ * Canvas-based 3D [Die3d] (SS-077); SS-078 owns final placement and styling.
  */
 @Composable
 internal fun HoldToRollDice(
@@ -67,6 +62,15 @@ internal fun HoldToRollDice(
     val currentOnRoll by rememberUpdatedState(newValue = onRoll)
     var isHolding by remember { mutableStateOf(value = false) }
     var isArmed by remember { mutableStateOf(value = false) }
+    // The faces the dice settle on are the most recent roll the Domain emitted, so the dice land on
+    // the value the player actually rolled. Before any roll arrives they rest on ones (SS-077).
+    val latestRollDice = LocalLatestRollDice.current
+    val dieFaces =
+        remember(latestRollDice, diceCount) {
+            List(size = diceCount) { index ->
+                latestRollDice.getOrElse(index = index) { DIE_RESTING_FACE }
+            }
+        }
 
     ContinuousBuzzWhileShaking(
         isHolding = isHolding,
@@ -110,8 +114,8 @@ internal fun HoldToRollDice(
                 verticalArrangement = Arrangement.spacedBy(space = 8.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(space = 12.dp)) {
-                    repeat(times = diceCount) {
-                        DiePlaceholder(isHolding = isHolding, enabled = enabled)
+                    dieFaces.forEach { face ->
+                        Die3d(value = face, isRolling = isHolding, enabled = enabled)
                     }
                 }
                 Text(
@@ -211,27 +215,6 @@ private suspend fun AwaitPointerEventScope.awaitPointerUp(
         change.consume()
         if (!change.pressed) return change
     }
-}
-
-@Composable
-private fun DiePlaceholder(isHolding: Boolean, enabled: Boolean, modifier: Modifier = Modifier) {
-    val scale by
-        animateFloatAsState(
-            targetValue = if (isHolding) HOLDING_DIE_SCALE else RESTING_DIE_SCALE,
-            label = HOLDING_DIE_SCALE_LABEL,
-        )
-
-    Surface(
-        modifier = modifier.size(size = 48.dp).scale(scale = scale),
-        shape = RoundedCornerShape(size = 10.dp),
-        color =
-            if (enabled) {
-                MaterialTheme.colorScheme.primaryContainer
-            } else {
-                MaterialTheme.colorScheme.surface
-            },
-        tonalElevation = 2.dp,
-    ) {}
 }
 
 private fun captionFor(

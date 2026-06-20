@@ -38,6 +38,11 @@ data class ArenaScreenState(
     val filteredMessages: List<ArenaMessageState> =
         messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
+    /**
+     * Faces of the most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077).
+     */
+    val latestRolledDice: List<Int> = messages.latestRolledDice()
+
     private val isUserPlayerActing: Boolean =
         (arenaState as? ArenaState.Combat)?.isItThisUsersTurn ?: false
 

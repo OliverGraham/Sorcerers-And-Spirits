@@ -16,6 +16,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,53 +38,55 @@ internal fun LoadedArenaScreen(
     modifier: Modifier = Modifier,
     scaffoldState: BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
 ) {
-    BottomSheetScaffold(
-        scaffoldState = scaffoldState,
-        modifier = modifier.fillMaxSize(),
-        sheetPeekHeight = 48.dp,
-        sheetDragHandle = {
-            ArenaMessageLogHandle(
-                secondsRemaining = screenState.secondsRemaining,
-                isTimerVisible = screenState.isTimerVisible,
-                isTimerUrgent = screenState.isTimerUrgent,
-                latestMessage = screenState.latestMessage,
-                unhandledMessagesCount = screenState.unhandledMessagesCount,
-            )
-        },
-        sheetContent = { ArenaMessageLog(messages = screenState.filteredMessages) },
-    ) { paddingValues ->
-        Box {
-            ScreenContent(
-                arenaState = screenState.arenaState,
-                characterClasses = screenState.characterClasses,
-                gauntletProgress = screenState.gauntletProgress,
-                hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
-                paddingValues = paddingValues,
-            )
-
-            // TODO(SS-091): TEMPORARY dice debug overlay. Remove this block (and
-            //  TemporaryDiceDebugOverlay.kt) once combat is stable.
-            val isInOrAfterCombat =
-                screenState.arenaState is ArenaState.Combat ||
-                    screenState.arenaState is ArenaState.Finished
-            if (isInOrAfterCombat) {
-                TemporaryDiceDebugOverlay(
-                    messages = screenState.messages,
-                    modifier =
-                        Modifier.align(alignment = Alignment.TopCenter)
-                            .padding(paddingValues = paddingValues)
-                            .padding(all = 8.dp),
+    CompositionLocalProvider(LocalLatestRollDice provides screenState.latestRolledDice) {
+        BottomSheetScaffold(
+            scaffoldState = scaffoldState,
+            modifier = modifier.fillMaxSize(),
+            sheetPeekHeight = 48.dp,
+            sheetDragHandle = {
+                ArenaMessageLogHandle(
+                    secondsRemaining = screenState.secondsRemaining,
+                    isTimerVisible = screenState.isTimerVisible,
+                    isTimerUrgent = screenState.isTimerUrgent,
+                    latestMessage = screenState.latestMessage,
+                    unhandledMessagesCount = screenState.unhandledMessagesCount,
                 )
+            },
+            sheetContent = { ArenaMessageLog(messages = screenState.filteredMessages) },
+        ) { paddingValues ->
+            Box {
+                ScreenContent(
+                    arenaState = screenState.arenaState,
+                    characterClasses = screenState.characterClasses,
+                    gauntletProgress = screenState.gauntletProgress,
+                    hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
+                    paddingValues = paddingValues,
+                )
+
+                // TODO(SS-091): TEMPORARY dice debug overlay. Remove this block (and
+                //  TemporaryDiceDebugOverlay.kt) once combat is stable.
+                val isInOrAfterCombat =
+                    screenState.arenaState is ArenaState.Combat ||
+                        screenState.arenaState is ArenaState.Finished
+                if (isInOrAfterCombat) {
+                    TemporaryDiceDebugOverlay(
+                        messages = screenState.messages,
+                        modifier =
+                            Modifier.align(alignment = Alignment.TopCenter)
+                                .padding(paddingValues = paddingValues)
+                                .padding(all = 8.dp),
+                    )
+                }
             }
         }
-    }
 
-    if (screenState.showForfeitDialog) {
-        ForfeitDialog()
-    }
+        if (screenState.showForfeitDialog) {
+            ForfeitDialog()
+        }
 
-    if (screenState.isKnockedOutDecisionOffered) {
-        KnockedOutDialog()
+        if (screenState.isKnockedOutDecisionOffered) {
+            KnockedOutDialog()
+        }
     }
 }
 

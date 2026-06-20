@@ -24,6 +24,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-113** — Dice physically roll around their container and bounce off the walls: `Die3d` now lives in a tray larger than the die and runs a tiny per-frame 2D physics integrator (`tumbleDieAroundTray`) — on release the die gets a random velocity, ricochets off the tray walls with restitution, tumbles in proportion to its travel, and slows under friction until it comes to rest, then rights itself onto the rolled face. Replaces the earlier scripted single-arc path.
 - **SS-108** — Lock a player to one class for the whole Gauntlet: A player keeps the same class for all 3 matches of a Gauntlet; between matches the lobby skips ChoosingClasses and rebuilds Combat directly with fresh full-health classes, while "Go Again" after the final match starts a new Gauntlet back at class selection. The between-match/gauntlet-complete dialog is removed and Next Match/Go Again/Leave now live on the Finished screen.
 - **SS-013** — Review ArenaEvent (empty TODO): Empty placeholder TODO — determine intent (likely additional events) or remove.
 - **SS-014** — Handle match/timer expiration per state: Define and implement what happens when the timer expires in each `ArenaState`, and how the `MatchTimedOut` event is surfaced to the user.

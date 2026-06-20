@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
@@ -12,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -19,15 +21,46 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlin.math.cos
-import kotlin.math.floor
+import kotlin.math.exp
 import kotlin.math.sin
+import kotlin.random.Random
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 private const val DIE_SIDE_DP = 64
+
+// The die lives in a tray larger than itself so it has room to be thrown and bounce around inside
+// it (SS-113). On release the die is given a random velocity and integrated frame-by-frame,
+// ricocheting off the tray walls and slowing under friction until it comes to rest.
+private const val TRAY_WIDTH_DP = 116
+private const val TRAY_HEIGHT_DP = 88
+
+// Random throw speed range, in dp per second.
+private const val MIN_THROW_SPEED_DP = 600f
+private const val MAX_THROW_SPEED_DP = 1150f
+
+// Fraction of speed the die keeps after bouncing off a wall; the rest is lost to the impact.
+private const val WALL_RESTITUTION = 0.62f
+
+// Velocity decays by e^(-FRICTION_PER_SECOND * dt) each frame, so the die coasts to a stop.
+private const val FRICTION_PER_SECOND = 1.8f
+
+// At or below this speed (dp/sec) the die is treated as at rest and stops bouncing.
+private const val REST_SPEED_DP = 45f
+
+// How fast the die tumbles as it travels: degrees of spin per dp of travel.
+private const val ROLL_DEGREES_PER_DP = 0.7f
+
+// The die's half-extent (as a fraction of its side) used as the bounce radius against the walls.
+private const val DIE_RADIUS_FRACTION = 0.34f
+
+// A long frame after a stall is clamped to this many seconds so the die can't tunnel through a
+// wall.
+private const val MAX_FRAME_SECONDS = 0.033f
 
 // Camera sits this many cube-half-widths back along +Z; larger means a gentler perspective.
 private const val CAMERA_DISTANCE = 10f
@@ -51,10 +84,9 @@ private const val SHADE_MIN = 0.55f
 private const val SPIN_X_STEP_DEGREES = 540f
 private const val SPIN_Y_STEP_DEGREES = 720f
 private const val SPIN_STEP_MILLIS = 600
-private const val SETTLE_MILLIS = 900
-private const val SETTLE_EXTRA_TURNS_X = 1
-private const val SETTLE_EXTRA_TURNS_Y = 2
-private const val MIN_FORWARD_DEGREES = 1f
+
+// Once the die stops bouncing it rights itself over this long so the rolled face reads up.
+private const val RIGHTING_MILLIS = 450
 
 private val DIE_BODY_ENABLED = Color(color = 0xFFF4ECDA)
 private val DIE_SHADOW_ENABLED = Color(color = 0xFF9C8F70)
@@ -66,10 +98,13 @@ private val DIE_EDGE = Color(color = 0x33000000)
 
 /**
  * A real 3D die (SS-077 prototype): an actual cube projected with perspective and back-face
- * culling, drawn entirely in Compose [Canvas]. While [isRolling] it tumbles; on release it
- * decelerates and settles so the face carrying [value] comes to rest on top — the way you read a
- * physical die. The landing is exact because the settle target is the orientation that puts that
- * face up, not a snap after a canned animation.
+ * culling, drawn entirely in Compose [Canvas]. While [isRolling] it tumbles in place in the centre
+ * of the tray; on release it is thrown with a random velocity and a tiny per-frame physics
+ * simulation [tumbleDieAroundTray] sends it ricocheting off the tray walls, tumbling and slowing
+ * under friction until it comes to rest somewhere inside the tray (SS-113). Only then does it right
+ * itself so the face carrying [value] reads up — the way a physical die settles after it stops
+ * rolling. The landing value is exact because the righting target is the orientation that puts that
+ * face up, independent of the chaotic path the die took to get there.
  */
 @Composable
 internal fun Die3d(
@@ -78,15 +113,24 @@ internal fun Die3d(
     enabled: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val density = LocalDensity.current
+    val trayWidthPx = with(density) { TRAY_WIDTH_DP.dp.toPx() }
+    val trayHeightPx = with(density) { TRAY_HEIGHT_DP.dp.toPx() }
+    val trayCenter =
+        remember(trayWidthPx, trayHeightPx) { Offset(x = trayWidthPx / 2f, y = trayHeightPx / 2f) }
     val restAngles = remember(value) { faceAngles(value = value) }
     val angleX = remember { Animatable(initialValue = restAngles.first) }
     val angleY = remember { Animatable(initialValue = restAngles.second) }
+    val center = remember {
+        Animatable(initialValue = trayCenter, typeConverter = Offset.VectorConverter)
+    }
     var hasRolledOnce by remember { mutableStateOf(value = false) }
 
     LaunchedEffect(key1 = isRolling, key2 = value) {
         val target = faceAngles(value = value)
         if (isRolling) {
             hasRolledOnce = true
+            center.snapTo(targetValue = trayCenter)
             coroutineScope {
                 launch {
                     while (isActive) {
@@ -110,42 +154,106 @@ internal fun Die3d(
         } else if (!hasRolledOnce) {
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
+            center.snapTo(targetValue = trayCenter)
         } else {
-            val settleX =
-                settleAngle(
-                    current = angleX.value,
-                    faceAngle = target.first,
-                    extraTurns = SETTLE_EXTRA_TURNS_X,
-                )
-            val settleY =
-                settleAngle(
-                    current = angleY.value,
-                    faceAngle = target.second,
-                    extraTurns = SETTLE_EXTRA_TURNS_Y,
-                )
+            tumbleDieAroundTray(
+                center = center,
+                angleX = angleX,
+                angleY = angleY,
+                trayWidthPx = trayWidthPx,
+                trayHeightPx = trayHeightPx,
+                density = density.density,
+            )
             coroutineScope {
                 launch {
                     angleX.animateTo(
-                        targetValue = settleX,
+                        targetValue =
+                            rightingAngle(current = angleX.value, faceAngle = target.first),
                         animationSpec =
-                            tween(durationMillis = SETTLE_MILLIS, easing = LinearOutSlowInEasing),
+                            tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
                     )
                 }
                 angleY.animateTo(
-                    targetValue = settleY,
+                    targetValue = rightingAngle(current = angleY.value, faceAngle = target.second),
                     animationSpec =
-                        tween(durationMillis = SETTLE_MILLIS, easing = LinearOutSlowInEasing),
+                        tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
                 )
             }
         }
     }
 
-    Canvas(modifier = modifier.size(size = DIE_SIDE_DP.dp)) {
-        drawDie(angleX = angleX.value, angleY = angleY.value, enabled = enabled)
+    Canvas(modifier = modifier.size(width = TRAY_WIDTH_DP.dp, height = TRAY_HEIGHT_DP.dp)) {
+        drawDie(
+            angleX = angleX.value,
+            angleY = angleY.value,
+            center = center.value,
+            enabled = enabled,
+        )
     }
 }
 
-private fun DrawScope.drawDie(angleX: Float, angleY: Float, enabled: Boolean) {
+/**
+ * Throws the die and simulates it bouncing around the tray. It starts from [center]'s current spot
+ * with a random direction and speed, then each frame coasts forward, loses speed to friction,
+ * reverses (losing energy) whenever it reaches a wall, and tumbles [angleX]/[angleY] in proportion
+ * to how far it moved. The loop ends once the die slows below the rest threshold; [density] (px per
+ * dp) converts the dp-based tuning into the pixel space the tray and animatables work in.
+ */
+private suspend fun tumbleDieAroundTray(
+    center: Animatable<Offset, *>,
+    angleX: Animatable<Float, *>,
+    angleY: Animatable<Float, *>,
+    trayWidthPx: Float,
+    trayHeightPx: Float,
+    density: Float,
+) {
+    val radius = DIE_SIDE_DP * density * DIE_RADIUS_FRACTION
+    val spanX = radius..(trayWidthPx - radius)
+    val spanY = radius..(trayHeightPx - radius)
+    val restSpeed = REST_SPEED_DP * density
+    val degreesPerPx = ROLL_DEGREES_PER_DP / density
+
+    val throwAngle = Random.nextFloat() * 2f * PI
+    val throwSpeed =
+        (MIN_THROW_SPEED_DP + Random.nextFloat() * (MAX_THROW_SPEED_DP - MIN_THROW_SPEED_DP)) *
+            density
+    var velocity =
+        Offset(x = cos(x = throwAngle) * throwSpeed, y = sin(x = throwAngle) * throwSpeed)
+    var position = center.value
+    var previousFrame = withFrameNanos { it }
+
+    while (true) {
+        val now = withFrameNanos { it }
+        val seconds = ((now - previousFrame) / NANOS_PER_SECOND).coerceAtMost(MAX_FRAME_SECONDS)
+        previousFrame = now
+
+        velocity *= exp(x = -FRICTION_PER_SECOND * seconds)
+        var nextX = position.x + velocity.x * seconds
+        var nextY = position.y + velocity.y * seconds
+        var velocityX = velocity.x
+        var velocityY = velocity.y
+        val hasHitSideWall = nextX !in spanX
+        val hasHitTopOrBottomWall = nextY !in spanY
+        if (hasHitSideWall) {
+            nextX = nextX.coerceIn(range = spanX)
+            velocityX = -velocityX * WALL_RESTITUTION
+        }
+        if (hasHitTopOrBottomWall) {
+            nextY = nextY.coerceIn(range = spanY)
+            velocityY = -velocityY * WALL_RESTITUTION
+        }
+        velocity = Offset(x = velocityX, y = velocityY)
+        position = Offset(x = nextX, y = nextY)
+
+        center.snapTo(targetValue = position)
+        angleX.snapTo(targetValue = angleX.value + velocityY * seconds * degreesPerPx)
+        angleY.snapTo(targetValue = angleY.value + velocityX * seconds * degreesPerPx)
+
+        if (velocity.getDistance() <= restSpeed) return
+    }
+}
+
+private fun DrawScope.drawDie(angleX: Float, angleY: Float, center: Offset, enabled: Boolean) {
     val bodyColor = if (enabled) DIE_BODY_ENABLED else DIE_BODY_DISABLED
     val shadowColor = if (enabled) DIE_SHADOW_ENABLED else DIE_SHADOW_DISABLED
     val pipColor = if (enabled) DIE_PIP_ENABLED else DIE_PIP_DISABLED
@@ -156,8 +264,7 @@ private fun DrawScope.drawDie(angleX: Float, angleY: Float, enabled: Boolean) {
             rotationX(degrees = angleX) *
             rotationY(degrees = angleY)
 
-    val center = Offset(x = size.width / 2f, y = size.height / 2f)
-    val halfWidth = size.minDimension * CUBE_HALF_FRACTION
+    val halfWidth = DIE_SIDE_DP.dp.toPx() * CUBE_HALF_FRACTION
 
     CUBE_FACES.forEach { face ->
         val rotatedNormal = rotation * face.normal
@@ -203,14 +310,13 @@ private fun project(point: Vec3, center: Offset, halfWidth: Float): Offset {
 }
 
 /**
- * The accumulated angle to ease to so the die ends presenting [faceAngle] (modulo a full turn),
- * after rolling forward through [extraTurns] more rotations for a natural decelerating finish.
+ * The angle nearest [current] that presents [faceAngle] (modulo a full turn), reached by the
+ * shortest rotation in either direction. Used to right the die onto its rolled face after it stops
+ * bouncing, so it ticks into place rather than spinning a long way around.
  */
-private fun settleAngle(current: Float, faceAngle: Float, extraTurns: Int): Float {
-    val normalized = ((faceAngle % 360f) + 360f) % 360f
-    var candidate = floor(current / 360f) * 360f + normalized
-    while (candidate < current + MIN_FORWARD_DEGREES) candidate += 360f
-    return candidate + extraTurns * 360f
+private fun rightingAngle(current: Float, faceAngle: Float): Float {
+    val delta = (((faceAngle - current) % 360f) + 540f) % 360f - 180f
+    return current + delta
 }
 
 /**
@@ -284,6 +390,8 @@ private fun rotationY(degrees: Float): Mat3 {
 }
 
 private const val PI_OVER_180 = 0.017453292f
+private const val PI = 3.1415927f
+private const val NANOS_PER_SECOND = 1_000_000_000f
 
 private val CORNER_SIGNS = listOf(1f to 1f, 1f to -1f, -1f to -1f, -1f to 1f)
 

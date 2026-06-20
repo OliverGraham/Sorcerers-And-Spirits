@@ -471,17 +471,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
     dice are display-only.
 - **Notes:** Do BEFORE SS-078. Builds on SS-077 (`Die3d` Canvas prototype). Related: SS-069, SS-078.
 
-### SS-113 — Dice physically roll across their container into a resting slot
-- [ ] Not completed
-- **Goal:** Animate the dice physically traveling across their container (enter/arc/bounce) and
-  decelerating into a resting slot, instead of tumbling in place — the originally envisioned dice
-  feel.
-- **Steps:** Animate the die's screen-space position (`Die3d`'s projection center) on an
-  `Animatable<Offset>` along a path, synchronized with the tumble rotation; size the container as a
-  tray with a defined resting slot; settle position and face together.
-- **Notes:** Canvas-friendly (position is just an offset to animate); a baked Lottie clip can't do
-  this value-accurately. Related: SS-077, SS-078, SS-112.
-
 ### SS-078 — Finalize dice UI (placement, size, color)
 - [ ] Not completed
 - **Goal:** Once the rendering tech is chosen (SS-077), finalize the dice presentation: where the

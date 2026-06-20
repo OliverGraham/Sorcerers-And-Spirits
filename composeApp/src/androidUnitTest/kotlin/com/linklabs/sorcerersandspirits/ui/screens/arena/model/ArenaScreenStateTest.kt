@@ -18,68 +18,6 @@ import kotlin.test.assertTrue
 class ArenaScreenStateTest {
 
     @Test
-    fun `Given the user's Paladin is knocked out but still owes a Holy Shield roll, then no knocked-out decision is offered`() {
-        val state =
-            combatScreenState(
-                isUserPlayerKnockedOut = true,
-                combatActionState =
-                    holyShieldRoll(
-                        action = AbilityActionState.Passive.HolyShield.Prayer,
-                        defenderUserId = USER_ID,
-                    ),
-            )
-
-        assertFalse(actual = state.isKnockedOutDecisionOffered)
-    }
-
-    @Test
-    fun `Given the user is knocked out after Holy Shield resolves, then a knocked-out decision is offered`() {
-        val state =
-            combatScreenState(
-                isUserPlayerKnockedOut = true,
-                combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
-            )
-
-        assertTrue(actual = state.isKnockedOutDecisionOffered)
-    }
-
-    @Test
-    fun `Given another player owes a Holy Shield roll while the user is knocked out, then a knocked-out decision is offered`() {
-        val state =
-            combatScreenState(
-                isUserPlayerKnockedOut = true,
-                combatActionState =
-                    holyShieldRoll(
-                        action = AbilityActionState.Passive.HolyShield.Prayer,
-                        defenderUserId = OPPONENT_ID,
-                    ),
-            )
-
-        assertTrue(actual = state.isKnockedOutDecisionOffered)
-    }
-
-    @Test
-    fun `Given the user already readied for the next match, then no knocked-out decision is offered`() {
-        val state =
-            combatScreenState(
-                isUserPlayerKnockedOut = true,
-                hasReadiedForNextMatch = true,
-                combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
-            )
-
-        assertFalse(actual = state.isKnockedOutDecisionOffered)
-    }
-
-    @Test
-    fun `Given the match has finished, then no knocked-out decision is offered`() {
-        val state = screenState(arenaState = ArenaState.Finished(players = emptyList()))
-
-        assertFalse(actual = state.isKnockedOutDecisionOffered)
-    }
-
-    @Test
     fun `Given the user owes a follow-up roll for their own normal attack, then the target is locked to the defender`() {
         val state =
             combatState(
@@ -214,7 +152,34 @@ class ArenaScreenStateTest {
         assertNull(actual = nextState.pendingFinishedState)
     }
 
-    private fun finishedMatch(messageCount: Int, numberOfNewMessages: Int) =
+    @Test
+    fun `Given the user has readied in the match data, then the finished screen shows them as readied`() {
+        val finishedMatch =
+            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = true)
+
+        val nextState =
+            finishedMatch.toUpdatedState(previousState = null, userId = USER_ID).nextState
+
+        assertTrue(actual = nextState.hasReadiedForNextMatch)
+    }
+
+    @Test
+    fun `Given the user readied last match but the next match has not, then readiness does not carry over`() {
+        val previousState = screenState(hasReadiedForNextMatch = true)
+        val finishedMatch =
+            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = false)
+
+        val nextState =
+            finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
+
+        assertFalse(actual = nextState.hasReadiedForNextMatch)
+    }
+
+    private fun finishedMatch(
+        messageCount: Int,
+        numberOfNewMessages: Int,
+        isUserReady: Boolean = false,
+    ) =
         ArenaMatch.Finished(
             messages =
                 (1..messageCount).map { index ->
@@ -224,7 +189,7 @@ class ArenaScreenStateTest {
                     )
                 },
             numberOfNewMessages = numberOfNewMessages,
-            playerMap = combatPlayers(),
+            playerMap = combatPlayers(isUserReady = isUserReady),
         )
 
     private fun combatMatch(messageCount: Int, numberOfNewMessages: Int) =
@@ -244,12 +209,13 @@ class ArenaScreenStateTest {
             doublesBonus = null,
         )
 
-    private fun combatPlayers() =
+    private fun combatPlayers(isUserReady: Boolean = false) =
         mapOf(
             USER_ID to
                 ArenaPlayer.Selected(
                     userId = USER_ID,
                     displayName = "Paladin",
+                    isReadyForNextMatch = isUserReady,
                     characterClass = TestCharacterClasses.paladin(),
                 ),
             OPPONENT_ID to
@@ -282,29 +248,17 @@ class ArenaScreenStateTest {
             activeUserIds = setOf(defenderUserId),
         )
 
-    private fun combatScreenState(
-        isUserPlayerKnockedOut: Boolean,
-        combatActionState: CombatActionState,
-        hasReadiedForNextMatch: Boolean = false,
-    ) =
-        screenState(
-            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
-            hasReadiedForNextMatch = hasReadiedForNextMatch,
-            arenaState = combatState(combatActionState = combatActionState),
-        )
-
     private fun screenState(
         arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
-        isUserPlayerKnockedOut: Boolean = false,
-        hasReadiedForNextMatch: Boolean = false,
         unhandledMessagesCount: Int = 0,
+        hasReadiedForNextMatch: Boolean = false,
     ) =
         ArenaScreenState(
             messages = emptyList(),
             unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = 0,
             showForfeitDialog = false,
-            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
+            isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
             participantClassNames = emptyMap(),

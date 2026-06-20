@@ -43,22 +43,6 @@ data class ArenaScreenState(
      * Faces of the most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077).
      */
     val latestRolledDice: List<Int> = messages.latestRolledDice()
-
-    private val isUserPlayerActing: Boolean =
-        (arenaState as? ArenaState.Combat)?.isItThisUsersTurn ?: false
-
-    /**
-     * Whether to prompt a knocked-out user to observe or leave. A knocked-out Paladin who is still
-     * acting (owes a Holy Shield survival roll) has not yet been definitively knocked out, so no
-     * prompt is offered, and none is offered once the user has already chosen to stay. While the
-     * match is finishing (SS-098), the closing animation plays uninterrupted, so no prompt is
-     * offered until it advances to the Finished screen.
-     */
-    val isKnockedOutDecisionOffered: Boolean =
-        !hasReadiedForNextMatch &&
-            isUserPlayerKnockedOut &&
-            !isUserPlayerActing &&
-            pendingFinishedState == null
 }
 
 @Immutable
@@ -163,17 +147,10 @@ internal fun ArenaMatch.toUpdatedState(
     val isUserPlayerKnockedOut =
         (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious()?.not() ?: false
 
-    // The stay/leave choice is per-match, so it resets whenever a new match begins: at class
-    // selection, and (with classes locked for the Gauntlet) when the next match starts combat
-    // straight from the previous match's Finished screen.
-    val isStartingNewMatch =
-        this is ArenaMatch.Combat && previousState?.arenaState is ArenaState.Finished
-    val hasReadiedForNextMatch =
-        if (this is ArenaMatch.ChoosingClasses || isStartingNewMatch) {
-            false
-        } else {
-            previousState?.hasReadiedForNextMatch ?: false
-        }
+    // Readiness comes from the shared match state, the same flag the data layer uses to start the
+    // next match, rather than being tracked locally per client. This keeps every player's Finished
+    // screen in step with that decision and resets automatically when a new match begins.
+    val hasReadiedForNextMatch = userPlayer.isReadyForNextMatch
 
     val computedArenaState =
         when (this) {

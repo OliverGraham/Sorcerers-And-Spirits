@@ -2,10 +2,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
@@ -116,7 +115,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =
-        CharacterClass.getAllClasses().map { it.toState() }
+        previewCharacterClassStates()
 
     private fun getExamplePlayers() =
         mapOf(

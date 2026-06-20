@@ -1,8 +1,9 @@
 package com.linklabs.sorcerersandspirits.domain.game
 
 /**
- * Supplies the playable classes with their currently-active stats. Ability wiring always comes from
- * [CharacterClass]'s factories; the numeric stats may be overlaid from RemoteConfig.
+ * Supplies the playable classes with their currently-active stats. Numeric stats always come from
+ * RemoteConfig (the single source of truth); ability wiring is resolved in code by
+ * [CharacterClass.create] from the class type.
  */
 interface CharacterClassProvider {
 

@@ -4,10 +4,8 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
 private const val TIMER_VISIBLE_THRESHOLD_SECONDS = 15
 private const val TIMER_URGENT_THRESHOLD_SECONDS = 10
@@ -26,8 +24,7 @@ data class ArenaScreenState(
     val arenaState: ArenaState,
     val participantNames: Map<String, String>,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
-    val characterClasses: List<CharacterClassState> =
-        CharacterClass.getAllClasses().map { it.toState() },
+    val characterClasses: List<CharacterClassState> = emptyList(),
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
 
@@ -119,8 +116,7 @@ private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
-    characterClasses: List<CharacterClassState> =
-        CharacterClass.getAllClasses().map { it.toState() },
+    characterClasses: List<CharacterClassState> = emptyList(),
 ): ArenaStateUpdate {
     val userPlayer = playerMap.getValue(key = userId)
 

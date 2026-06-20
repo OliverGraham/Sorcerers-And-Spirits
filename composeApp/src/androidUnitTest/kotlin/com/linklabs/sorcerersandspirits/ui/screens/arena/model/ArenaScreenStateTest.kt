@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -186,13 +186,13 @@ class ArenaScreenStateTest {
                 PlayerState.Selected(
                     userId = USER_ID,
                     displayName = "Paladin",
-                    characterClass = CharacterClass.getPaladin().toState(),
+                    characterClass = TestCharacterClasses.paladin().toState(),
                 ),
             OPPONENT_ID to
                 PlayerState.Selected(
                     userId = OPPONENT_ID,
                     displayName = "Rogue",
-                    characterClass = CharacterClass.getRogue().toState(),
+                    characterClass = TestCharacterClasses.rogue().toState(),
                 ),
         )
 

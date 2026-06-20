@@ -12,10 +12,11 @@ class RemoteConfigCharacterClassProvider(
     override fun getAllClasses(): List<CharacterClass> {
         val statsByType = remoteConfigDataSource.characterClassStats()
 
-        return CharacterClass.getAllClasses().map { characterClass ->
-            val stats = statsByType[characterClass.type] ?: return@map characterClass
+        return CharacterClass.playableTypes().mapNotNull { type ->
+            val stats = statsByType[type] ?: return@mapNotNull null
 
-            characterClass.copy(
+            CharacterClass.create(
+                type = type,
                 hitPoints = stats.hitPoints,
                 maxHitPoints = stats.maxHitPoints,
                 armorClass = stats.armorClass,

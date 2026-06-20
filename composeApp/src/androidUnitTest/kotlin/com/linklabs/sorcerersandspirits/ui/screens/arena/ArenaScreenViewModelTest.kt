@@ -18,6 +18,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -77,7 +78,7 @@ class ArenaScreenViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         coEvery { getUserIdUseCase() } returns USER_ID
-        every { getCharacterClassesUseCase() } returns CharacterClass.getAllClasses()
+        every { getCharacterClassesUseCase() } returns TestCharacterClasses.all()
         coEvery { coordinateArenaMatchUseCase(any(), any()) } returns arenaMatchFlow
         coEvery {
             performCombatActionUseCase(
@@ -123,7 +124,7 @@ class ArenaScreenViewModelTest {
     private fun TestScope.createViewModelWithCombatState(
         nextCombatAction: NextCombatAction,
         userClass: CharacterClass,
-        opponentClass: CharacterClass = CharacterClass.getMage(),
+        opponentClass: CharacterClass = TestCharacterClasses.mage(),
     ): Pair<ArenaScreenViewModel, ArenaState.Combat> {
         val viewModel =
             combatViewModel(
@@ -199,7 +200,7 @@ class ArenaScreenViewModelTest {
     private fun TestScope.assertPassiveRollControl(
         purpose: AbilityAction,
         userClass: CharacterClass,
-        opponentClass: CharacterClass = CharacterClass.getMage(),
+        opponentClass: CharacterClass = TestCharacterClasses.mage(),
         attackerUserId: String = OPPONENT_ID,
         defenderUserId: String = USER_ID,
         expectedLabel: String,
@@ -231,7 +232,7 @@ class ArenaScreenViewModelTest {
             val (_, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
-                    userClass = CharacterClass.getGambler(),
+                    userClass = TestCharacterClasses.gambler(),
                 )
 
             assertTrue(actual = combatState.isItThisUsersTurn)
@@ -256,7 +257,7 @@ class ArenaScreenViewModelTest {
     fun `Given the user's Gambler already used All In this turn, then the All In control is disabled but still visible`() =
         runTest {
             val gambler =
-                CharacterClass.getGambler()
+                TestCharacterClasses.gambler()
                     .copy(
                         offensiveAbility =
                             OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
@@ -282,7 +283,7 @@ class ArenaScreenViewModelTest {
             val (_, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
-                    userClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.duelist(),
                 )
 
             val attackControl =
@@ -309,7 +310,7 @@ class ArenaScreenViewModelTest {
             val (_, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
-                    userClass = CharacterClass.getNecromancer(),
+                    userClass = TestCharacterClasses.necromancer(),
                 )
 
             val summonMinionControl =
@@ -326,7 +327,7 @@ class ArenaScreenViewModelTest {
         val (_, combatState) =
             createViewModelWithCombatState(
                 nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(OPPONENT_ID)),
-                userClass = CharacterClass.getGambler(),
+                userClass = TestCharacterClasses.gambler(),
             )
 
         assertFalse(actual = combatState.isItThisUsersTurn)
@@ -348,7 +349,7 @@ class ArenaScreenViewModelTest {
                             originalTurnUserId = USER_ID,
                             activeUserIds = setOf(USER_ID),
                         ),
-                    userClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.duelist(),
                 )
 
             val attackControl = combatState.combatControls.single()
@@ -362,8 +363,8 @@ class ArenaScreenViewModelTest {
             val (_, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = createTeleportRollOff(attackerRoll = 4, defenderRoll = null),
-                    userClass = CharacterClass.getMage(),
-                    opponentClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.mage(),
+                    opponentClass = TestCharacterClasses.duelist(),
                 )
 
             val teleportControl = combatState.combatControls.single()
@@ -385,8 +386,8 @@ class ArenaScreenViewModelTest {
                             originalTurnUserId = USER_ID,
                             activeUserIds = setOf(OPPONENT_ID),
                         ),
-                    userClass = CharacterClass.getGambler(),
-                    opponentClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.gambler(),
+                    opponentClass = TestCharacterClasses.duelist(),
                 )
 
             assertTrue(actual = combatState.combatControls.isEmpty())
@@ -400,7 +401,7 @@ class ArenaScreenViewModelTest {
             val (viewModel, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
-                    userClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.duelist(),
                 )
 
             viewModel.onAttack(
@@ -435,7 +436,7 @@ class ArenaScreenViewModelTest {
             val (viewModel, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
-                    userClass = CharacterClass.getGambler(),
+                    userClass = TestCharacterClasses.gambler(),
                 )
 
             val allInControl =
@@ -469,7 +470,7 @@ class ArenaScreenViewModelTest {
             val (viewModel, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
-                    userClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.duelist(),
                 )
 
             val prepareAttackControl =
@@ -501,8 +502,8 @@ class ArenaScreenViewModelTest {
             val (viewModel, combatState) =
                 createViewModelWithCombatState(
                     nextCombatAction = createTeleportRollOff(attackerRoll = 4, defenderRoll = null),
-                    userClass = CharacterClass.getMage(),
-                    opponentClass = CharacterClass.getDuelist(),
+                    userClass = TestCharacterClasses.mage(),
+                    opponentClass = TestCharacterClasses.duelist(),
                 )
 
             val teleportControl =
@@ -691,7 +692,7 @@ class ArenaScreenViewModelTest {
         runTest {
             combatViewModel(
                     nextCombatAction = idleTurn(USER_ID),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getRogue()),
+                    playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue()),
                 )
                 .requireCombatState()
                 .assertOnlyAttackOffered()
@@ -702,7 +703,7 @@ class ArenaScreenViewModelTest {
         runTest {
             combatViewModel(
                     nextCombatAction = idleTurn(USER_ID),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getBard()),
+                    playerMap = twoPlayerMap(userClass = TestCharacterClasses.bard()),
                 )
                 .requireCombatState()
                 .assertOnlyAttackOffered()
@@ -713,7 +714,7 @@ class ArenaScreenViewModelTest {
         runTest {
             combatViewModel(
                     nextCombatAction = idleTurn(USER_ID),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getMage()),
+                    playerMap = twoPlayerMap(userClass = TestCharacterClasses.mage()),
                 )
                 .requireCombatState()
                 .assertOnlyAttackOffered()
@@ -724,7 +725,7 @@ class ArenaScreenViewModelTest {
         runTest {
             combatViewModel(
                     nextCombatAction = idleTurn(USER_ID),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getPaladin()),
+                    playerMap = twoPlayerMap(userClass = TestCharacterClasses.paladin()),
                 )
                 .requireCombatState()
                 .assertOnlyAttackOffered()
@@ -736,7 +737,7 @@ class ArenaScreenViewModelTest {
             val combatState =
                 combatViewModel(
                         nextCombatAction = idleTurn(USER_ID),
-                        playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.illusionist()),
                     )
                     .requireCombatState()
 
@@ -756,7 +757,7 @@ class ArenaScreenViewModelTest {
     fun `Given the user's Illusionist has impersonated All In, then both Impersonate and the copied All In controls are offered`() =
         runTest {
             val illusionist =
-                CharacterClass.getIllusionist()
+                TestCharacterClasses.illusionist()
                     .copy(
                         offensiveAbility =
                             OffensiveAbility.Impersonate(
@@ -787,7 +788,7 @@ class ArenaScreenViewModelTest {
     fun `Given the user's Illusionist has impersonated Prepare Attack, then the copied control requires a target`() =
         runTest {
             val illusionist =
-                CharacterClass.getIllusionist()
+                TestCharacterClasses.illusionist()
                     .copy(
                         offensiveAbility =
                             OffensiveAbility.Impersonate(
@@ -821,7 +822,7 @@ class ArenaScreenViewModelTest {
                                 attackerUserId = OPPONENT_ID,
                                 defenderUserId = USER_ID,
                             ),
-                        playerMap = twoPlayerMap(userClass = CharacterClass.getRogue()),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue()),
                     )
                     .requireCombatState()
 
@@ -838,8 +839,8 @@ class ArenaScreenViewModelTest {
                             createTeleportRollOff(attackerRoll = null, defenderRoll = 5),
                         playerMap =
                             twoPlayerMap(
-                                userClass = CharacterClass.getMage(),
-                                opponentClass = CharacterClass.getDuelist(),
+                                userClass = TestCharacterClasses.mage(),
+                                opponentClass = TestCharacterClasses.duelist(),
                             ),
                     )
                     .requireCombatState()
@@ -854,8 +855,8 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.Riposte(attackerRollTotal = 7),
-                userClass = CharacterClass.getDuelist(),
-                opponentClass = CharacterClass.getRogue(),
+                userClass = TestCharacterClasses.duelist(),
+                opponentClass = TestCharacterClasses.rogue(),
                 expectedLabel = "Riposte",
                 expectedRequiresTarget = false,
             )
@@ -866,7 +867,7 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = 8),
-                userClass = CharacterClass.getGambler(),
+                userClass = TestCharacterClasses.gambler(),
                 expectedLabel = "Lucky Coin",
                 expectedRequiresTarget = false,
             )
@@ -877,7 +878,7 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.LuckyCoin.HighRoller(attackerRollTotal = 9),
-                userClass = CharacterClass.getGambler(),
+                userClass = TestCharacterClasses.gambler(),
                 expectedLabel = "Lucky Coin",
                 expectedRequiresTarget = false,
             )
@@ -888,7 +889,7 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.Persuade.StrumLute,
-                userClass = CharacterClass.getBard(),
+                userClass = TestCharacterClasses.bard(),
                 expectedLabel = "Persuade",
                 expectedRequiresTarget = false,
             )
@@ -900,7 +901,7 @@ class ArenaScreenViewModelTest {
             assertPassiveRollControl(
                 purpose =
                     AbilityAction.Passive.Persuade.Charm(targetableUserIds = setOf(OPPONENT_ID)),
-                userClass = CharacterClass.getBard(),
+                userClass = TestCharacterClasses.bard(),
                 expectedLabel = "Persuade",
                 expectedRequiresTarget = true,
             )
@@ -930,7 +931,7 @@ class ArenaScreenViewModelTest {
                                 defenderUserId = USER_ID,
                                 activeUserIds = setOf(USER_ID),
                             ),
-                        playerMap = twoPlayerMap(userClass = CharacterClass.getIllusionist()),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.illusionist()),
                     )
                     .requireCombatState()
 
@@ -962,8 +963,8 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.HolyShield.Prayer,
-                userClass = CharacterClass.getPaladin(),
-                opponentClass = CharacterClass.getRogue(),
+                userClass = TestCharacterClasses.paladin(),
+                opponentClass = TestCharacterClasses.rogue(),
                 expectedLabel = "Holy Shield",
                 expectedRequiresTarget = false,
             )
@@ -974,8 +975,8 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.HolyShield.Wrath,
-                userClass = CharacterClass.getPaladin(),
-                opponentClass = CharacterClass.getRogue(),
+                userClass = TestCharacterClasses.paladin(),
+                opponentClass = TestCharacterClasses.rogue(),
                 expectedLabel = "Holy Shield",
                 expectedRequiresTarget = false,
             )
@@ -986,7 +987,7 @@ class ArenaScreenViewModelTest {
         runTest {
             assertPassiveRollControl(
                 purpose = AbilityAction.Passive.Encore,
-                userClass = CharacterClass.getBard(),
+                userClass = TestCharacterClasses.bard(),
                 attackerUserId = USER_ID,
                 defenderUserId = OPPONENT_ID,
                 expectedLabel = "Encore",
@@ -1002,7 +1003,7 @@ class ArenaScreenViewModelTest {
             val viewModel =
                 combatViewModel(
                     nextCombatAction = idleTurn(USER_ID),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getNecromancer()),
+                    playerMap = twoPlayerMap(userClass = TestCharacterClasses.necromancer()),
                 )
             val control =
                 viewModel
@@ -1027,8 +1028,8 @@ class ArenaScreenViewModelTest {
                     nextCombatAction = idleTurn(USER_ID),
                     playerMap =
                         twoPlayerMap(
-                            userClass = CharacterClass.getIllusionist(),
-                            opponentClass = CharacterClass.getMage(),
+                            userClass = TestCharacterClasses.illusionist(),
+                            opponentClass = TestCharacterClasses.mage(),
                         ),
                 )
             val control =
@@ -1055,7 +1056,7 @@ class ArenaScreenViewModelTest {
     fun `When the user activates a copied All In via Impersonate, then an All In ability action is sent to the Domain`() =
         runTest {
             val illusionist =
-                CharacterClass.getIllusionist()
+                TestCharacterClasses.illusionist()
                     .copy(
                         offensiveAbility =
                             OffensiveAbility.Impersonate(
@@ -1092,7 +1093,7 @@ class ArenaScreenViewModelTest {
                             defenderUserId = OPPONENT_ID,
                             activeUserIds = setOf(USER_ID),
                         ),
-                    playerMap = twoPlayerMap(userClass = CharacterClass.getDuelist()),
+                    playerMap = twoPlayerMap(userClass = TestCharacterClasses.duelist()),
                 )
             val combatState = viewModel.requireCombatState()
 
@@ -1122,8 +1123,8 @@ class ArenaScreenViewModelTest {
                         ),
                     playerMap =
                         twoPlayerMap(
-                            userClass = CharacterClass.getDuelist(),
-                            opponentClass = CharacterClass.getRogue(),
+                            userClass = TestCharacterClasses.duelist(),
+                            opponentClass = TestCharacterClasses.rogue(),
                         ),
                 )
             val control = viewModel.requireCombatState().abilityRollControl()
@@ -1152,8 +1153,8 @@ class ArenaScreenViewModelTest {
                         ),
                     playerMap =
                         twoPlayerMap(
-                            userClass = CharacterClass.getPaladin(),
-                            opponentClass = CharacterClass.getRogue(),
+                            userClass = TestCharacterClasses.paladin(),
+                            opponentClass = TestCharacterClasses.rogue(),
                         ),
                 )
             val control = viewModel.requireCombatState().abilityRollControl()
@@ -1177,9 +1178,9 @@ class ArenaScreenViewModelTest {
                         nextCombatAction = idleTurn(USER_ID),
                         playerMap =
                             threePlayerMap(
-                                userClass = CharacterClass.getDuelist(),
-                                firstOpponentClass = CharacterClass.getRogue(),
-                                secondOpponentClass = CharacterClass.getMage(),
+                                userClass = TestCharacterClasses.duelist(),
+                                firstOpponentClass = TestCharacterClasses.rogue(),
+                                secondOpponentClass = TestCharacterClasses.mage(),
                             ),
                     )
                     .requireCombatState()
@@ -1199,9 +1200,9 @@ class ArenaScreenViewModelTest {
                         nextCombatAction = idleTurn(OPPONENT_ID),
                         playerMap =
                             threePlayerMap(
-                                userClass = CharacterClass.getRogue(),
-                                firstOpponentClass = CharacterClass.getDuelist(),
-                                secondOpponentClass = CharacterClass.getMage(),
+                                userClass = TestCharacterClasses.rogue(),
+                                firstOpponentClass = TestCharacterClasses.duelist(),
+                                secondOpponentClass = TestCharacterClasses.mage(),
                             ),
                     )
                     .requireCombatState()
@@ -1218,9 +1219,9 @@ class ArenaScreenViewModelTest {
                     nextCombatAction = idleTurn(USER_ID),
                     playerMap =
                         threePlayerMap(
-                            userClass = CharacterClass.getRogue(),
-                            firstOpponentClass = CharacterClass.getDuelist(),
-                            secondOpponentClass = CharacterClass.getMage(),
+                            userClass = TestCharacterClasses.rogue(),
+                            firstOpponentClass = TestCharacterClasses.duelist(),
+                            secondOpponentClass = TestCharacterClasses.mage(),
                         ),
                 )
             val combatState = viewModel.requireCombatState()
@@ -1254,9 +1255,9 @@ class ArenaScreenViewModelTest {
                         ),
                     playerMap =
                         threePlayerMap(
-                            userClass = CharacterClass.getBard(),
-                            firstOpponentClass = CharacterClass.getRogue(),
-                            secondOpponentClass = CharacterClass.getMage(),
+                            userClass = TestCharacterClasses.bard(),
+                            firstOpponentClass = TestCharacterClasses.rogue(),
+                            secondOpponentClass = TestCharacterClasses.mage(),
                         ),
                 )
             val control = viewModel.requireCombatState().abilityRollControl()
@@ -1293,9 +1294,9 @@ class ArenaScreenViewModelTest {
                         ),
                     playerMap =
                         threePlayerMap(
-                            userClass = CharacterClass.getBard(),
-                            firstOpponentClass = CharacterClass.getRogue(),
-                            secondOpponentClass = CharacterClass.getMage(),
+                            userClass = TestCharacterClasses.bard(),
+                            firstOpponentClass = TestCharacterClasses.rogue(),
+                            secondOpponentClass = TestCharacterClasses.mage(),
                         ),
                 )
             val control = viewModel.requireCombatState().abilityRollControl()
@@ -1328,7 +1329,7 @@ class ArenaScreenViewModelTest {
 
         private fun twoPlayerMap(
             userClass: CharacterClass,
-            opponentClass: CharacterClass = CharacterClass.getMage(),
+            opponentClass: CharacterClass = TestCharacterClasses.mage(),
         ) =
             mapOf(
                 USER_ID to selectedPlayer(USER_ID, "User", userClass),

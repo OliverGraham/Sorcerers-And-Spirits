@@ -17,105 +17,60 @@ data class CharacterClass(
     fun isConscious() = hitPoints > 0
 
     companion object {
-        fun getAllClasses() =
-            listOf(
-                getRogue(),
-                getGambler(),
-                getDuelist(),
-                getNecromancer(),
-                getBard(),
-                getIllusionist(),
-                getMage(),
-                getPaladin(),
+        /**
+         * The classes a player can pick, in display order: every [CharacterClassType] except
+         * [CharacterClassType.None].
+         */
+        fun playableTypes(): List<CharacterClassType> =
+            CharacterClassType.entries.filter { type -> type != CharacterClassType.None }
+
+        /**
+         * Builds a class from its remotely-tuned stats, wiring the fixed abilities that belong to
+         * [type]. Stats are the only tunable data and always come from config; the ability wiring
+         * is code, resolved through [offensiveAbilityFor]/[defensiveAbilityFor].
+         */
+        fun create(
+            type: CharacterClassType,
+            hitPoints: Int,
+            maxHitPoints: Int,
+            armorClass: Int,
+            speed: Int,
+        ): CharacterClass =
+            CharacterClass(
+                type = type,
+                hitPoints = hitPoints,
+                maxHitPoints = maxHitPoints,
+                armorClass = armorClass,
+                speed = speed,
+                offensiveAbility = offensiveAbilityFor(type = type),
+                defensiveAbility = defensiveAbilityFor(type = type),
             )
 
-        fun getRogue() =
-            CharacterClass(
-                type = CharacterClassType.Rogue,
-                hitPoints = 5,
-                maxHitPoints = 5,
-                armorClass = 6,
-                speed = 8,
-                offensiveAbility = OffensiveAbility.KillingMomentum,
-                defensiveAbility = DefensiveAbility.Dodge(),
-            )
+        private fun offensiveAbilityFor(type: CharacterClassType): OffensiveAbility =
+            when (type) {
+                CharacterClassType.Rogue -> OffensiveAbility.KillingMomentum
+                CharacterClassType.Gambler -> OffensiveAbility.AllIn()
+                CharacterClassType.Duelist -> OffensiveAbility.PrepareAttack
+                CharacterClassType.Necromancer -> OffensiveAbility.SummonMinion()
+                CharacterClassType.Bard -> OffensiveAbility.Encore
+                CharacterClassType.Illusionist -> OffensiveAbility.Impersonate()
+                CharacterClassType.Mage -> OffensiveAbility.SpellPotency
+                CharacterClassType.Paladin -> OffensiveAbility.None
+                CharacterClassType.None -> OffensiveAbility.None
+            }
 
-        fun getGambler() =
-            CharacterClass(
-                type = CharacterClassType.Gambler,
-                hitPoints = 3,
-                maxHitPoints = 3,
-                armorClass = 4,
-                speed = 7,
-                offensiveAbility = OffensiveAbility.AllIn(),
-                defensiveAbility = DefensiveAbility.LuckyCoin,
-            )
-
-        fun getDuelist() =
-            CharacterClass(
-                type = CharacterClassType.Duelist,
-                hitPoints = 4,
-                maxHitPoints = 4,
-                armorClass = 4,
-                speed = 6,
-                offensiveAbility = OffensiveAbility.PrepareAttack,
-                defensiveAbility = DefensiveAbility.Riposte,
-            )
-
-        fun getNecromancer() =
-            CharacterClass(
-                type = CharacterClassType.Necromancer,
-                hitPoints = 7,
-                maxHitPoints = 7,
-                armorClass = 7,
-                speed = 5,
-                offensiveAbility = OffensiveAbility.SummonMinion(),
-                defensiveAbility = DefensiveAbility.None,
-            )
-
-        fun getBard() =
-            CharacterClass(
-                type = CharacterClassType.Bard,
-                hitPoints = 5,
-                maxHitPoints = 5,
-                armorClass = 5,
-                speed = 4,
-                offensiveAbility = OffensiveAbility.Encore,
-                defensiveAbility = DefensiveAbility.Persuade,
-            )
-
-        fun getIllusionist() =
-            CharacterClass(
-                type = CharacterClassType.Illusionist,
-                hitPoints = 5,
-                maxHitPoints = 5,
-                armorClass = 5,
-                speed = 3,
-                offensiveAbility = OffensiveAbility.Impersonate(),
-                defensiveAbility = DefensiveAbility.MirrorImage(),
-            )
-
-        fun getMage() =
-            CharacterClass(
-                type = CharacterClassType.Mage,
-                hitPoints = 4,
-                maxHitPoints = 4,
-                armorClass = 4,
-                speed = 2,
-                offensiveAbility = OffensiveAbility.SpellPotency,
-                defensiveAbility = DefensiveAbility.Teleport,
-            )
-
-        fun getPaladin() =
-            CharacterClass(
-                type = CharacterClassType.Paladin,
-                hitPoints = 7,
-                maxHitPoints = 7,
-                armorClass = 7,
-                speed = 1,
-                offensiveAbility = OffensiveAbility.None,
-                defensiveAbility = DefensiveAbility.HolyShield(),
-            )
+        private fun defensiveAbilityFor(type: CharacterClassType): DefensiveAbility =
+            when (type) {
+                CharacterClassType.Rogue -> DefensiveAbility.Dodge()
+                CharacterClassType.Gambler -> DefensiveAbility.LuckyCoin
+                CharacterClassType.Duelist -> DefensiveAbility.Riposte
+                CharacterClassType.Necromancer -> DefensiveAbility.None
+                CharacterClassType.Bard -> DefensiveAbility.Persuade
+                CharacterClassType.Illusionist -> DefensiveAbility.MirrorImage()
+                CharacterClassType.Mage -> DefensiveAbility.Teleport
+                CharacterClassType.Paladin -> DefensiveAbility.HolyShield()
+                CharacterClassType.None -> DefensiveAbility.None
+            }
     }
 }
 

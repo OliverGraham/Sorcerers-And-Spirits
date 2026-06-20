@@ -164,7 +164,21 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState ->
             if (screenState.unhandledMessagesCount <= 0) return@updateLoaded screenState
 
-            screenState.copy(unhandledMessagesCount = screenState.unhandledMessagesCount - 1)
+            val remainingMessagesCount = screenState.unhandledMessagesCount - 1
+            val pendingFinishedState = screenState.pendingFinishedState
+            val hasDrainedClosingMessages = remainingMessagesCount == 0
+
+            // Once the closing messages/animations have all played, the deferred Finished
+            // transition (SS-098) advances to the Finished screen.
+            if (pendingFinishedState != null && hasDrainedClosingMessages) {
+                screenState.copy(
+                    unhandledMessagesCount = remainingMessagesCount,
+                    arenaState = pendingFinishedState,
+                    pendingFinishedState = null,
+                )
+            } else {
+                screenState.copy(unhandledMessagesCount = remainingMessagesCount)
+            }
         }
     }
 

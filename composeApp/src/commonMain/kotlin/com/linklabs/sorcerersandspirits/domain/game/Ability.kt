@@ -46,6 +46,13 @@ interface SummonMinionAbility {
     val golemCount: Int
 }
 
+/**
+ * The shield total contributed by summoned minions, counted as effective hit points: each skeleton
+ * is a +1 shield and each golem is a +2 shield.
+ */
+val SummonMinionAbility.shieldPoints: Int
+    get() = skeletonCount + golemCount * 2
+
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T
 }

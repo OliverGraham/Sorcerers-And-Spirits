@@ -247,7 +247,7 @@ private fun UserStatsRow(userPlayer: PlayerState.Selected, modifier: Modifier = 
         ) {
             StatItem(label = "Class", value = characterClass.className)
             StatItem(label = "AC", value = characterClass.armorClass.toString())
-            StatItem(label = "HP", value = characterClass.hitPoints.toString())
+            StatItem(label = "HP", value = characterClass.hitPointsDisplay)
             StatItem(label = "Speed", value = characterClass.speed.toString())
         }
     }

@@ -1,11 +1,17 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -131,6 +137,61 @@ class ArenaScreenStateTest {
         assertNull(actual = state.lockedTargetUserId)
     }
 
+    @Test
+    fun `Given leftover unhandled messages from the prior match exceed the fresh log, then the count is clamped so the log still shows`() {
+        val previousState = screenState(unhandledMessagesCount = 10)
+        val freshMatch = combatMatch(messageCount = 2, numberOfNewMessages = 2)
+
+        val nextState =
+            freshMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
+
+        assertEquals(expected = 2, actual = nextState.unhandledMessagesCount)
+        assertNotNull(actual = nextState.latestMessage)
+    }
+
+    @Test
+    fun `Given a combat result adds more new messages than the capped log holds, then the count is clamped to the log size`() {
+        val match = combatMatch(messageCount = 3, numberOfNewMessages = 50)
+
+        val nextState = match.toUpdatedState(previousState = null, userId = USER_ID).nextState
+
+        assertEquals(expected = 3, actual = nextState.unhandledMessagesCount)
+        assertNotNull(actual = nextState.latestMessage)
+    }
+
+    private fun combatMatch(messageCount: Int, numberOfNewMessages: Int) =
+        ArenaMatch.Combat(
+            messages =
+                (1..messageCount).map { index ->
+                    IncomingArenaMessage(
+                        id = "message-$index",
+                        message = ArenaMessage.NewRound(roundNumber = index),
+                    )
+                },
+            numberOfNewMessages = numberOfNewMessages,
+            playerMap = combatPlayers(),
+            nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(element = USER_ID)),
+            roundNumber = 1,
+            isNewRound = true,
+            doublesBonus = null,
+        )
+
+    private fun combatPlayers() =
+        mapOf(
+            USER_ID to
+                ArenaPlayer.Selected(
+                    userId = USER_ID,
+                    displayName = "Paladin",
+                    characterClass = TestCharacterClasses.paladin(),
+                ),
+            OPPONENT_ID to
+                ArenaPlayer.Selected(
+                    userId = OPPONENT_ID,
+                    displayName = "Rogue",
+                    characterClass = TestCharacterClasses.rogue(),
+                ),
+        )
+
     private fun combatState(combatActionState: CombatActionState) =
         ArenaState.Combat(
             playerMap = players(),
@@ -165,13 +226,14 @@ class ArenaScreenStateTest {
         )
 
     private fun screenState(
-        arenaState: ArenaState,
+        arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
         isUserPlayerKnockedOut: Boolean = false,
         hasReadiedForNextMatch: Boolean = false,
+        unhandledMessagesCount: Int = 0,
     ) =
         ArenaScreenState(
             messages = emptyList(),
-            unhandledMessagesCount = 0,
+            unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = 0,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,

@@ -233,16 +233,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   ticket covers modeling them as effective HP, the absorption ordering, and the `base + shield` UI
   display. Domain + UI. Related: SS-046.
 
-### SS-103 — ArenaMessages permanently disappearing in some flows
-- [ ] Not completed
-- **Source:** Reported bug. Observed: all messages vanished (never to return) after using All-In and
-  attacking the Bard and missing; also seen when a match advances from match 1 to match 2 (not every
-  time).
-- **Goal:** Identify and fix the conditions under which the ArenaMessage log is wiped and never
-  repopulates.
-- **Notes:** Investigate the message-cap/append path and the match-reset transition. Related: SS-040
-  (message cap / retention), SS-025, SS-098, SS-104 (All-In).
-
 ### SS-104 — All-In success must grant the Gambler a second attack
 - [ ] Not completed
 - **Source:** Reported bug.

@@ -179,14 +179,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Related: SS-060 (suppress KnockedOut dialog during the Holy Shield roll), SS-093
   (per-outcome ability copy), SS-097 (class-name usage).
 
-### SS-101 — Auto-target the lone opponent in a 2-player attack-only turn
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** In a 2-player match, when the acting player can only make a normal attack (their class
-  has no activated ability available), the single opponent should be auto-targeted rather than
-  requiring a manual target selection.
-- **Notes:** Related: SS-095 (target locking), SS-096 (target persistence).
-
 ### SS-102 — Track Necromancer minion shields as effective hit points (display + absorption)
 - [ ] Not completed
 - **Source:** Reported bug.

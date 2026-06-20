@@ -803,6 +803,64 @@ class ArenaScreenViewModelTest {
         }
 
     @Test
+    fun `Given a two-player attack-only idle turn, then the lone opponent is auto-targeted`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue()),
+                    )
+                    .requireCombatState()
+
+            combatState.assertOnlyAttackOffered()
+            assertEquals(expected = OPPONENT_ID, actual = combatState.autoTargetedOpponentUserId)
+        }
+
+    @Test
+    fun `Given an attack-only idle turn with two opponents, then no opponent is auto-targeted`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap =
+                            threePlayerMap(
+                                userClass = TestCharacterClasses.rogue(),
+                                firstOpponentClass = TestCharacterClasses.mage(),
+                                secondOpponentClass = TestCharacterClasses.paladin(),
+                            ),
+                    )
+                    .requireCombatState()
+
+            assertNull(actual = combatState.autoTargetedOpponentUserId)
+        }
+
+    @Test
+    fun `Given a two-player idle turn with an activated ability available, then no opponent is auto-targeted`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.duelist()),
+                    )
+                    .requireCombatState()
+
+            assertNull(actual = combatState.autoTargetedOpponentUserId)
+        }
+
+    @Test
+    fun `Given a two-player attack-only opponent turn, then no opponent is auto-targeted`() =
+        runTest {
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(OPPONENT_ID),
+                        playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue()),
+                    )
+                    .requireCombatState()
+
+            assertNull(actual = combatState.autoTargetedOpponentUserId)
+        }
+
+    @Test
     fun `Given an idle turn for the user's Illusionist, then an Impersonate control that requires a target is offered`() =
         runTest {
             val combatState =

@@ -179,26 +179,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Related: SS-060 (suppress KnockedOut dialog during the Holy Shield roll), SS-093
   (per-outcome ability copy), SS-097 (class-name usage).
 
-### SS-102 — Track Necromancer minion shields as effective hit points (display + absorption)
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** Summon Minion users need their skeleton count, golem count, and the resulting shield
-  state fully tracked. Skeletons/golems are stored **separately** from the Necromancer's base hit
-  points, but they **count as effective hit points** — they add to the Necromancer's effective health
-  pool and are consumed before base HP.
-  - **Shield values:** each skeleton is a +1 Health shield, each golem is a +2 Health shield (per the
-    Summon Minion rules), so the shield total is `skeletons * 1 + golems * 2`.
-  - **Display:** the Necromancer's hit points must show the base plus the shield contribution
-    distinctly, e.g. `7 + 2` (base 7, with +2 of shields from minions) rather than collapsing to a
-    single `9` — so the player can see how much of their health is base vs. minion shield.
-  - **Damage absorption:** when the Necromancer takes damage, shields (skeletons/golems) are
-    destroyed *first*, absorbing damage, before any damage reaches base hit points. Example: with 2
-    skeletons (+2 shield), 4 incoming damage destroys both skeletons and then deals 2 to the
-    Necromancer's base HP.
-- **Notes:** SS-046 added `maxHitPoints` and noted shields are tracked as separate counts; this
-  ticket covers modeling them as effective HP, the absorption ordering, and the `base + shield` UI
-  display. Domain + UI. Related: SS-046.
-
 ### SS-104 — All-In success must grant the Gambler a second attack
 - [ ] Not completed
 - **Source:** Reported bug.

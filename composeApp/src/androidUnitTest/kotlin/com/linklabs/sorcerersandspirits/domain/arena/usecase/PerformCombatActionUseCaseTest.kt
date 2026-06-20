@@ -835,6 +835,34 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `When a Necromancer with skeletons is hit, then the shields absorb damage before base hit points`() {
+        // Arrange
+        val necromancer =
+            TestCharacterClasses.necromancer()
+                .copy(
+                    hitPoints = 7,
+                    offensiveAbility = OffensiveAbility.SummonMinion(skeletonCount = 2),
+                )
+        val arguments = createTwoPlayerArguments(defenderClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 2, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedNecro =
+            outcome.getPlayerById(userId = currentAction.defenderUserId).characterClass
+        val updatedSummon =
+            assertIs<OffensiveAbility.SummonMinion>(value = updatedNecro.offensiveAbility)
+        assertEquals(expected = 0, actual = updatedSummon.skeletonCount)
+        assertEquals(expected = 5, actual = updatedNecro.hitPoints)
+        assertTrue(actual = updatedNecro.isConscious())
+    }
+
+    @Test
     fun `When Bard deals damage, then Encore triggers`() {
         // Arrange
         val bard = TestCharacterClasses.bard()

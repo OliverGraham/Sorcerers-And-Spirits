@@ -23,9 +23,7 @@ internal class SpellPotencyRoll(
     }
 
     private fun CombatMutator.applyFullDamageToDefender() {
-        updateDefenderClass { defender ->
-            defender.copy(hitPoints = defender.hitPoints - diceTotal)
-        }
+        updateDefenderClass { defender -> defender.takeDamage(damage = diceTotal) }
     }
 
     private fun CombatMutator.applySplashDamage(splashDamage: Int) {
@@ -33,7 +31,7 @@ internal class SpellPotencyRoll(
             .filter { it.userId != attackerUserId && it.userId != defenderUserId }
             .forEach { player ->
                 updatePlayerClass(userId = player.userId) { playerClass ->
-                    playerClass.copy(hitPoints = playerClass.hitPoints - splashDamage)
+                    playerClass.takeDamage(damage = splashDamage)
                 }
             }
     }

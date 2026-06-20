@@ -66,9 +66,7 @@ internal class NormalAttackRollHandler(
             triggerMirrorImageIfApplicable(attackType = NormalAttackType.Health)
         if (wasMirrorImageTriggered) return
 
-        updateDefenderClass { defenderClass ->
-            defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
-        }
+        updateDefenderClass { defenderClass -> defenderClass.takeDamage(damage = diceTotal) }
 
         return if (!defender.isConscious()) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)

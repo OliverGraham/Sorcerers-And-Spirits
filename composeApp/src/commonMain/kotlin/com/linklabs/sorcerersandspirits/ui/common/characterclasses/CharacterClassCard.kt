@@ -99,7 +99,10 @@ private fun CardContent(selectedBy: String?, characterClass: CharacterClassState
             defensiveAbility = characterClass.defensiveAbility,
             modifier = Modifier.weight(weight = 1f),
         )
-        Footer(armorClass = characterClass.armorClass, hitPoints = characterClass.hitPoints)
+        Footer(
+            armorClass = characterClass.armorClass,
+            hitPointsDisplay = characterClass.hitPointsDisplay,
+        )
     }
 }
 
@@ -146,14 +149,14 @@ private fun Body(
 }
 
 @Composable
-private fun Footer(armorClass: Int, hitPoints: Int, modifier: Modifier = Modifier) {
+private fun Footer(armorClass: Int, hitPointsDisplay: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Bottom,
     ) {
         Text(text = "AC: $armorClass", style = MaterialTheme.typography.titleMedium)
-        Text(text = "HP: $hitPoints", style = MaterialTheme.typography.titleMedium)
+        Text(text = "HP: $hitPointsDisplay", style = MaterialTheme.typography.titleMedium)
     }
 }
 

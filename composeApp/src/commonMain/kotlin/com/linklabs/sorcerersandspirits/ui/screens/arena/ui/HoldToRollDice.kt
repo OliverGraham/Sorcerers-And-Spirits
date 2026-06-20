@@ -2,9 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,13 +9,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.PointerId
@@ -37,40 +34,31 @@ import kotlinx.coroutines.launch
 // movement so the buzz stays smooth instead of stuttering.
 private const val BUZZ_LINGER_MILLIS = 200L
 
-private const val DIE_RESTING_FACE = 1
-
 /**
- * Roll the dice two ways (SS-069):
+ * A roll control that triggers an attack or ability two ways (SS-069):
  * - press-and-hold and shake for as little or as long as you like, then release; or
- * - double-tap the dice.
+ * - double-tap it.
  *
  * The hold gesture consumes its touch (`awaitEachGesture` + `consume`) so the surrounding scrolling
  * combat list can't steal the press and cancel the hold. Double-tap rolls without shaking, keeping
- * turns playable on emulators and devices without a usable accelerometer. Dice are drawn by the
- * Canvas-based 3D [Die3d] (SS-077); SS-078 owns final placement and styling.
+ * turns playable on emulators and devices without a usable accelerometer. The dice themselves now
+ * live in the persistent [DiceTray] (SS-112); [onHoldChange] reports the hold so the tray's dice
+ * spin while the control is held and settle on the result when released.
  */
 @Composable
 internal fun HoldToRollDice(
     label: String,
-    diceCount: Int,
     enabled: Boolean,
     onRoll: () -> Unit,
+    onHoldChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val shakeDetector = LocalShakeDetector.current
     val haptics = LocalHaptics.current
     val currentOnRoll by rememberUpdatedState(newValue = onRoll)
+    val currentOnHoldChange by rememberUpdatedState(newValue = onHoldChange)
     var isHolding by remember { mutableStateOf(value = false) }
     var isArmed by remember { mutableStateOf(value = false) }
-    // The faces the dice settle on are the most recent roll the Domain emitted, so the dice land on
-    // the value the player actually rolled. Before any roll arrives they rest on ones (SS-077).
-    val latestRollDice = LocalLatestRollDice.current
-    val dieFaces =
-        remember(latestRollDice, diceCount) {
-            List(size = diceCount) { index ->
-                latestRollDice.getOrElse(index = index) { DIE_RESTING_FACE }
-            }
-        }
 
     ContinuousBuzzWhileShaking(
         isHolding = isHolding,
@@ -79,64 +67,56 @@ internal fun HoldToRollDice(
         onShake = { isArmed = true },
     )
 
+    // If this control leaves composition mid-hold (a state update ends the turn before the finger
+    // lifts), the release never fires, so settle the shared tray here rather than leave it
+    // spinning.
+    DisposableEffect(key1 = Unit) { onDispose { currentOnHoldChange(false) } }
+
     val roll = {
         haptics.vibrate(strength = HapticStrength.HEAVY)
         currentOnRoll()
     }
 
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+    Surface(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .holdToRollGesture(
+                    enabled = enabled,
+                    onHoldStart = {
+                        isArmed = false
+                        isHolding = true
+                        currentOnHoldChange(true)
+                    },
+                    onRelease = { isDoubleTap ->
+                        isHolding = false
+                        currentOnHoldChange(false)
+                        val shouldRoll = isArmed || isDoubleTap
+                        if (shouldRoll) roll()
+                    },
+                ),
+        shape = RoundedCornerShape(size = 16.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        tonalElevation = 4.dp,
     ) {
-        Surface(
-            modifier =
-                Modifier.fillMaxWidth()
-                    .holdToRollGesture(
-                        enabled = enabled,
-                        onHoldStart = {
-                            isArmed = false
-                            isHolding = true
-                        },
-                        onRelease = { isDoubleTap ->
-                            isHolding = false
-                            val shouldRoll = isArmed || isDoubleTap
-                            if (shouldRoll) roll()
-                        },
-                    ),
-            shape = RoundedCornerShape(size = 16.dp),
-            color = MaterialTheme.colorScheme.surfaceVariant,
-            tonalElevation = 4.dp,
-        ) {
-            Column(
-                modifier = Modifier.padding(all = 16.dp).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(space = 8.dp),
-            ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(space = 12.dp)) {
-                    dieFaces.forEach { face ->
-                        Die3d(value = face, isRolling = isHolding, enabled = enabled)
-                    }
-                }
-                Text(
-                    text =
-                        captionFor(
-                            label = label,
-                            enabled = enabled,
-                            isHolding = isHolding,
-                            isArmed = isArmed,
-                        ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color =
-                        if (enabled) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.outline
-                        },
-                )
-            }
-        }
+        Text(
+            text =
+                captionFor(
+                    label = label,
+                    enabled = enabled,
+                    isHolding = isHolding,
+                    isArmed = isArmed,
+                ),
+            modifier = Modifier.padding(all = 16.dp).fillMaxWidth(),
+            style = MaterialTheme.typography.bodyMedium,
+            textAlign = TextAlign.Center,
+            color =
+                if (enabled) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                } else {
+                    MaterialTheme.colorScheme.outline
+                },
+        )
     }
 }
 

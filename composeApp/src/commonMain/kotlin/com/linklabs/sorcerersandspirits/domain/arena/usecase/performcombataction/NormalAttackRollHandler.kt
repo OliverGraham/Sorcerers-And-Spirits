@@ -70,7 +70,7 @@ internal class NormalAttackRollHandler(
             defenderClass.copy(hitPoints = defenderClass.hitPoints - diceTotal)
         }
 
-        return if (diceTotal >= defender.hitPoints) {
+        return if (!defender.isConscious()) {
             addNormalRollMessage(type = NormalRollMessageType.Knockout)
             resolveKnockout()
         } else {

@@ -261,6 +261,43 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `Given a 3-player game, when a Rogue deals damage but no knockout, then Killing Momentum does not trigger and the turn moves on`() {
+        // Arrange
+        val defenderClass = createCharacterClass(hitPoints = 7)
+        val arguments =
+            createThreePlayerArguments(
+                attackerClass = TestCharacterClasses.rogue(),
+                defenderClass = defenderClass,
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val rogueUserId = currentAction.attackerUserId
+
+        val firstDie = 2
+        val secondDie = 2
+        val rollTotal = firstDie + secondDie
+        setupTwoDiceRoll(userId = rogueUserId, firstDie = firstDie, secondDie = secondDie)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert: the defender survives, so Killing Momentum must not hand the turn back to the
+        // Rogue.
+        val defenderUserId = currentAction.defenderUserId
+        val updatedDefender = outcome.getPlayerById(userId = defenderUserId).characterClass
+        assertEquals(
+            expected = defenderClass.hitPoints - rollTotal,
+            actual = updatedDefender.hitPoints,
+        )
+        assertTrue(actual = updatedDefender.isConscious())
+
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.Idle)
+        assertTrue(actual = !nextAction.isThisUserNext(userId = rogueUserId))
+        assertTrue(actual = !outcome.isMatchFinished)
+    }
+
+    @Test
     fun `Given an Illusionist impersonating Killing Momentum, when they knock out a defender, then Killing Momentum triggers and they act again`() {
         // Arrange
         val illusionist =

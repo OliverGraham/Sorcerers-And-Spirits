@@ -51,23 +51,39 @@ private const val ROLL_DICE_KEY = "RollDiceKey"
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
+    // The dice tray lives outside the per-turn AnimatedContent so it persists across every turn
+    // (SS-112). The roll controls report their hold gesture up here so the tray's dice spin while
+    // the user holds, even though the dice themselves are no longer inside those controls.
+    var isRollingDice by remember { mutableStateOf(value = false) }
+
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = activeUserIds, label = TRANSITION_LABEL) { _ ->
-            SharedTransitionProvider(
-                sharedTransitionScope = this@SharedTransitionLayout,
-                animatedVisibilityScope = this@AnimatedContent,
-            ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    CombatContent(modifier = Modifier.weight(1f))
-                    UserStatsRow(userPlayer = userPlayer)
+        Column(modifier = Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = activeUserIds,
+                label = TRANSITION_LABEL,
+                modifier = Modifier.weight(weight = 1f),
+            ) { _ ->
+                SharedTransitionProvider(
+                    sharedTransitionScope = this@SharedTransitionLayout,
+                    animatedVisibilityScope = this@AnimatedContent,
+                ) {
+                    CombatContent(
+                        onRollHoldChange = { isHolding -> isRollingDice = isHolding },
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
             }
+            DiceTray(isRolling = isRollingDice)
+            UserStatsRow(userPlayer = userPlayer)
         }
     }
 }
 
 @Composable
-private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
+private fun ArenaState.Combat.CombatContent(
+    onRollHoldChange: (Boolean) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     var selectedOpponentUserId by remember(key1 = activeUserIds) { mutableStateOf(value = "") }
     var isTargetLockedOptimistically by
         remember(key1 = activeUserIds) { mutableStateOf(value = false) }
@@ -103,6 +119,7 @@ private fun ArenaState.Combat.CombatContent(modifier: Modifier = Modifier) {
                     combatControls = combatControls,
                     targetedOpponentUserId = targetedOpponentUserId,
                     updateIsTargetLocked = { isTargetLockedOptimistically = true },
+                    onRollHoldChange = onRollHoldChange,
                 )
             }
         }
@@ -194,6 +211,7 @@ private fun ArenaState.Combat.RollDiceSection(
     combatControls: List<ArenaCombatControl>,
     targetedOpponentUserId: String,
     updateIsTargetLocked: () -> Unit,
+    onRollHoldChange: (Boolean) -> Unit,
 ) {
     Column(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
@@ -218,6 +236,7 @@ private fun ArenaState.Combat.RollDiceSection(
                         userPlayerId = userPlayerId,
                         requiresTarget = combatControl.requiresTarget,
                         diceCount = combatControl.diceCount,
+                        onRollHoldChange = onRollHoldChange,
                     )
 
                 is ArenaCombatControl.ActivatedAbility ->
@@ -230,6 +249,7 @@ private fun ArenaState.Combat.RollDiceSection(
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
                         diceCount = combatControl.diceCount,
+                        onRollHoldChange = onRollHoldChange,
                     )
 
                 is ArenaCombatControl.AbilityRoll ->
@@ -242,6 +262,7 @@ private fun ArenaState.Combat.RollDiceSection(
                         updateIsTargetLocked = updateIsTargetLocked,
                         userPlayerId = userPlayerId,
                         diceCount = combatControl.diceCount,
+                        onRollHoldChange = onRollHoldChange,
                     )
             }
         }
@@ -258,6 +279,7 @@ private fun AbilityControl(
     updateIsTargetLocked: () -> Unit,
     userPlayerId: String,
     diceCount: Int?,
+    onRollHoldChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onUseAbility = ArenaActionsProvider.current.onUseAbility
@@ -279,9 +301,9 @@ private fun AbilityControl(
     if (diceCount != null) {
         HoldToRollDice(
             label = label,
-            diceCount = diceCount,
             enabled = isEnabled,
             onRoll = performAbility,
+            onHoldChange = onRollHoldChange,
             modifier = modifier,
         )
     } else {
@@ -299,6 +321,7 @@ private fun AttackControl(
     userPlayerId: String,
     requiresTarget: Boolean,
     diceCount: Int?,
+    onRollHoldChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -320,9 +343,9 @@ private fun AttackControl(
     if (diceCount != null) {
         HoldToRollDice(
             label = "Attack",
-            diceCount = diceCount,
             enabled = isEnabled,
             onRoll = performAttack,
+            onHoldChange = onRollHoldChange,
             modifier = modifier,
         )
     } else {

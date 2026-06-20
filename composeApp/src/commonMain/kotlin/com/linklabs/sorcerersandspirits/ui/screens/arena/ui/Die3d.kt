@@ -99,12 +99,13 @@ private val DIE_EDGE = Color(color = 0x33000000)
 /**
  * A real 3D die (SS-077 prototype): an actual cube projected with perspective and back-face
  * culling, drawn entirely in Compose [Canvas]. While [isRolling] it tumbles in place in the centre
- * of the tray; on release it is thrown with a random velocity and a tiny per-frame physics
- * simulation [tumbleDieAroundTray] sends it ricocheting off the tray walls, tumbling and slowing
- * under friction until it comes to rest somewhere inside the tray (SS-113). Only then does it right
- * itself so the face carrying [value] reads up — the way a physical die settles after it stops
- * rolling. The landing value is exact because the righting target is the orientation that puts that
- * face up, independent of the chaotic path the die took to get there.
+ * of the tray; when the hold releases or [value] changes because any player rolled (SS-112), it is
+ * thrown with a random velocity and a tiny per-frame physics simulation [tumbleDieAroundTray] sends
+ * it ricocheting off the tray walls, tumbling and slowing under friction until it comes to rest
+ * somewhere inside the tray (SS-113). Only then does it right itself so the face carrying [value]
+ * reads up — the way a physical die settles after it stops rolling. The landing value is exact
+ * because the righting target is the orientation that puts that face up, independent of the chaotic
+ * path the die took to get there.
  */
 @Composable
 internal fun Die3d(
@@ -124,12 +125,14 @@ internal fun Die3d(
     val center = remember {
         Animatable(initialValue = trayCenter, typeConverter = Offset.VectorConverter)
     }
-    var hasRolledOnce by remember { mutableStateOf(value = false) }
+    // The die rests on its current face the first time it lays out, then tumbles for every change
+    // after that: while held, and on any value change once a roll (by any player) lands (SS-112).
+    var isFirstLayout by remember { mutableStateOf(value = true) }
 
     LaunchedEffect(key1 = isRolling, key2 = value) {
         val target = faceAngles(value = value)
         if (isRolling) {
-            hasRolledOnce = true
+            isFirstLayout = false
             center.snapTo(targetValue = trayCenter)
             coroutineScope {
                 launch {
@@ -151,7 +154,8 @@ internal fun Die3d(
                     }
                 }
             }
-        } else if (!hasRolledOnce) {
+        } else if (isFirstLayout) {
+            isFirstLayout = false
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
             center.snapTo(targetValue = trayCenter)

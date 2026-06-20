@@ -454,23 +454,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Steps:** Prototype the leading option(s); decide; record the choice and rationale here.
 - **Notes:** Blocks SS-078. Related: SS-069, SS-078, SS-068 (broader animation pass).
 
-### SS-112 — Persist dice on screen; re-roll animation on any player's roll
-- [ ] Not completed
-- **Goal:** Keep the dice visible throughout combat, not only on the user's turn. The dice show the
-  most recent roll and re-run the roll animation whenever ANY player rolls — so the user always sees
-  the dice they just rolled, and sees them tumble to a new value when another player rolls.
-- **Why:** Today the dice live inside the per-turn combat controls (`RollDiceSection`), so they
-  disappear when it isn't the user's turn. The user wants a persistent dice display.
-- **Steps:**
-  - Lift the dice out of the per-turn controls into a persistent spot in `ArenaCombat`.
-  - Drive the displayed faces from `ArenaScreenState.latestRolledDice` (already derived in the state
-    layer during SS-077).
-  - Make `Die3d` trigger a tumble-and-settle on value change (any player's roll), in addition to the
-    existing hold/shake/release gesture.
-  - Keep the interactive hold/shake-to-roll gesture enabled only on the user's turn; otherwise the
-    dice are display-only.
-- **Notes:** Do BEFORE SS-078. Builds on SS-077 (`Die3d` Canvas prototype). Related: SS-069, SS-078.
-
 ### SS-078 — Finalize dice UI (placement, size, color)
 - [ ] Not completed
 - **Goal:** Once the rendering tech is chosen (SS-077), finalize the dice presentation: where the

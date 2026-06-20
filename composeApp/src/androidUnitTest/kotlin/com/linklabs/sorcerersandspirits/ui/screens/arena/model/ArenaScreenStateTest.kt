@@ -175,6 +175,49 @@ class ArenaScreenStateTest {
         assertFalse(actual = nextState.hasReadiedForNextMatch)
     }
 
+    @Test
+    fun `Given the match finishes with nobody readied, then the finished screen has no countdown`() {
+        val previousState =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    )
+            )
+        val finishedMatch =
+            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = false)
+
+        val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
+
+        assertEquals(expected = TimerAction.Stop, actual = update.timerAction)
+    }
+
+    @Test
+    fun `Given the first player readies on the finished screen, then a one-minute countdown starts`() {
+        val previousState = screenState(arenaState = ArenaState.Finished(players = emptyList()))
+        val finishedMatch =
+            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = true)
+
+        val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
+
+        assertEquals(expected = TimerAction.Start(timerDuration = 60), actual = update.timerAction)
+    }
+
+    @Test
+    fun `Given the countdown is already running, then another player readying does not restart it`() {
+        val previousState =
+            screenState(
+                arenaState = ArenaState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
+            )
+        val finishedMatch =
+            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = true)
+
+        val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
+
+        assertEquals(expected = TimerAction.None, actual = update.timerAction)
+    }
+
     private fun finishedMatch(
         messageCount: Int,
         numberOfNewMessages: Int,

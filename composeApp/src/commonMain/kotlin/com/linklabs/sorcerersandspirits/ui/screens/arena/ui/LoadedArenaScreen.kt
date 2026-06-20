@@ -60,6 +60,7 @@ internal fun LoadedArenaScreen(
                     characterClasses = screenState.characterClasses,
                     gauntletProgress = screenState.gauntletProgress,
                     hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
+                    secondsRemaining = screenState.secondsRemaining,
                     paddingValues = paddingValues,
                 )
 
@@ -92,6 +93,7 @@ private fun ScreenContent(
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
+    secondsRemaining: Int,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -104,6 +106,7 @@ private fun ScreenContent(
             characterClasses = characterClasses,
             gauntletProgress = gauntletProgress,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
+            secondsRemaining = secondsRemaining,
         )
     }
 }
@@ -115,6 +118,7 @@ private fun ArenaStateContent(
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
+    secondsRemaining: Int,
     modifier: Modifier = Modifier,
 ) {
     transitionState.Crossfade(
@@ -135,6 +139,7 @@ private fun ArenaStateContent(
                     finishedState = arenaState,
                     gauntletProgress = gauntletProgress,
                     hasReadiedForNextMatch = hasReadiedForNextMatch,
+                    secondsRemaining = secondsRemaining,
                 )
         }
     }

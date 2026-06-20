@@ -27,6 +27,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.determineTimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -161,16 +162,18 @@ class ArenaScreenViewModel(
     }
 
     fun onIncomingMessageHandled() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        if (loadedState.unhandledMessagesCount <= 0) return
+
+        val remainingMessagesCount = loadedState.unhandledMessagesCount - 1
+        val pendingFinishedState = loadedState.pendingFinishedState
+        val hasDrainedClosingMessages = remainingMessagesCount == 0
+        // Once the closing messages/animations have all played, the deferred Finished transition
+        // (SS-098) advances to the Finished screen.
+        val isAdvancingToFinished = pendingFinishedState != null && hasDrainedClosingMessages
+
         _uiStateFlow.updateLoaded { screenState ->
-            if (screenState.unhandledMessagesCount <= 0) return@updateLoaded screenState
-
-            val remainingMessagesCount = screenState.unhandledMessagesCount - 1
-            val pendingFinishedState = screenState.pendingFinishedState
-            val hasDrainedClosingMessages = remainingMessagesCount == 0
-
-            // Once the closing messages/animations have all played, the deferred Finished
-            // transition (SS-098) advances to the Finished screen.
-            if (pendingFinishedState != null && hasDrainedClosingMessages) {
+            if (isAdvancingToFinished) {
                 screenState.copy(
                     unhandledMessagesCount = remainingMessagesCount,
                     arenaState = pendingFinishedState,
@@ -179,6 +182,15 @@ class ArenaScreenViewModel(
             } else {
                 screenState.copy(unhandledMessagesCount = remainingMessagesCount)
             }
+        }
+
+        // The deferred advance bypasses the normal state-update timer logic, so the Finished
+        // countdown is (re)evaluated here. This matters when another player readied during this
+        // client's closing animation: the countdown must start as soon as the screen is reached.
+        if (isAdvancingToFinished && pendingFinishedState != null) {
+            val timerAction =
+                determineTimerAction(previous = loadedState.arenaState, next = pendingFinishedState)
+            handleTimerAction(timerAction = timerAction)
         }
     }
 
@@ -346,9 +358,11 @@ class ArenaScreenViewModel(
 
             is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
 
-            // The match is over; the user leaves or stays via the Finished screen, and the timer is
-            // stopped in Finished, so there is nothing to resolve here.
-            is ArenaState.Finished -> Unit
+            // The Finished countdown runs only once another player has readied, so when it expires
+            // the user is auto-readied into the next match (or new Gauntlet) rather than being left
+            // behind. A user who already readied has nothing left to do.
+            is ArenaState.Finished ->
+                if (!loadedState.hasReadiedForNextMatch) onStayForAnotherMatch()
         }
     }
 

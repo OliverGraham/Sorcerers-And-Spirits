@@ -46,15 +46,48 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val TRANSITION_LABEL = "ArenaCombatTransition"
 private const val GRID_CARDS_KEY = "GridCardsKey"
-private const val ROLL_DICE_KEY = "RollDiceKey"
+private const val ABILITY_CONTROLS_KEY = "AbilityControlsKey"
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
-    // The dice tray lives outside the per-turn AnimatedContent so it persists across every turn
-    // (SS-112). The roll controls report their hold gesture up here so the tray's dice spin while
-    // the user holds, even though the dice themselves are no longer inside those controls.
-    var isRollingDice by remember { mutableStateOf(value = false) }
+    // Target selection is hoisted here so both the opponent grid (inside the per-turn content) and
+    // the persistent dice tray (the roll control) share one source of truth.
+    var selectedOpponentUserId by remember(key1 = activeUserIds) { mutableStateOf(value = "") }
+    var isTargetLockedOptimistically by
+        remember(key1 = activeUserIds) { mutableStateOf(value = false) }
+
+    // Once the user commits an Armor-class roll, the Domain pins the defender (lockedTargetUserId);
+    // the UI then shows that locked opponent and stops offering others, so the target survives the
+    // intervening defensive-ability roll-offs. The optimistic flag locks the instant the user
+    // rolls,
+    // before the pinned state arrives.
+    val targetedOpponentUserId = lockedTargetUserId ?: selectedOpponentUserId
+    val isTargetLocked = lockedTargetUserId != null || isTargetLockedOptimistically
+
+    val onAttack = ArenaActionsProvider.current.onAttack
+    val onUseAbility = ArenaActionsProvider.current.onUseAbility
+    val lockTarget = { isTargetLockedOptimistically = true }
+
+    // The dice are the only way to roll: one control drives them (the normal attack, or the single
+    // ability roll-off when there's no attack); everything else stays a button below.
+    val primaryRollControl = primaryRollControl()
+    val secondaryControls = combatControls.filterNot { it == primaryRollControl }
+
+    val isTargetMissing =
+        primaryRollControl?.requiresTarget == true && targetedOpponentUserId.isEmpty()
+    val onPrimaryRoll: (() -> Unit)? =
+        if (primaryRollControl != null && primaryRollControl.enabled && !isTargetMissing) {
+            rollActionFor(
+                control = primaryRollControl,
+                targetedOpponentUserId = targetedOpponentUserId,
+                onAttack = onAttack,
+                onUseAbility = onUseAbility,
+                lockTarget = lockTarget,
+            )
+        } else {
+            null
+        }
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -68,34 +101,101 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
                     animatedVisibilityScope = this@AnimatedContent,
                 ) {
                     CombatContent(
-                        onRollHoldChange = { isHolding -> isRollingDice = isHolding },
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        isTargetLocked = isTargetLocked,
+                        onSelectTarget = { opponentId -> selectedOpponentUserId = opponentId },
+                        secondaryControls = secondaryControls,
+                        onAttack = onAttack,
+                        onUseAbility = onUseAbility,
+                        lockTarget = lockTarget,
                         modifier = Modifier.fillMaxSize(),
                     )
                 }
             }
-            DiceTray(isRolling = isRollingDice)
+            DiceTray(onRoll = onPrimaryRoll, needsTargetHint = isTargetMissing)
             UserStatsRow(userPlayer = userPlayer)
         }
     }
 }
 
+/**
+ * The single control the dice gesture rolls: the normal attack when it's available, otherwise the
+ * lone ability roll-off. Multi-choice steps (e.g. Mirror Image's reroll options) have no single
+ * roll, so the dice stay display-only and every option shows as a button.
+ */
+private fun ArenaState.Combat.primaryRollControl(): ArenaCombatControl? =
+    combatControls.firstOrNull { it is ArenaCombatControl.NormalAttack }
+        ?: combatControls.filter { it.diceCount != null }.singleOrNull()
+
+/** Builds the action a control fires when rolled: a normal attack, or using an ability. */
+private fun ArenaState.Combat.rollActionFor(
+    control: ArenaCombatControl,
+    targetedOpponentUserId: String,
+    onAttack: (AttackArguments) -> Unit,
+    onUseAbility: (UseAbilityArguments) -> Unit,
+    lockTarget: () -> Unit,
+): () -> Unit =
+    when (control) {
+        is ArenaCombatControl.NormalAttack -> {
+            {
+                lockTarget()
+                onAttack(
+                    AttackArguments(
+                        combatActionState = combatActionState,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        userPlayerId = userPlayerId,
+                    )
+                )
+            }
+        }
+
+        is ArenaCombatControl.ActivatedAbility ->
+            abilityAction(
+                action = control.action,
+                requiresTarget = control.requiresTarget,
+                targetedOpponentUserId = targetedOpponentUserId,
+                onUseAbility = onUseAbility,
+                lockTarget = lockTarget,
+            )
+
+        is ArenaCombatControl.AbilityRoll ->
+            abilityAction(
+                action = control.action,
+                requiresTarget = control.requiresTarget,
+                targetedOpponentUserId = targetedOpponentUserId,
+                onUseAbility = onUseAbility,
+                lockTarget = lockTarget,
+            )
+    }
+
+private fun ArenaState.Combat.abilityAction(
+    action: AbilityActionState,
+    requiresTarget: Boolean,
+    targetedOpponentUserId: String,
+    onUseAbility: (UseAbilityArguments) -> Unit,
+    lockTarget: () -> Unit,
+): () -> Unit = {
+    if (requiresTarget) lockTarget()
+    onUseAbility(
+        UseAbilityArguments(
+            abilityActionState = action,
+            targetedOpponentUserId = targetedOpponentUserId,
+            userPlayerId = userPlayerId,
+        )
+    )
+}
+
 @Composable
 private fun ArenaState.Combat.CombatContent(
-    onRollHoldChange: (Boolean) -> Unit,
+    targetedOpponentUserId: String,
+    isTargetLocked: Boolean,
+    onSelectTarget: (String) -> Unit,
+    secondaryControls: List<ArenaCombatControl>,
+    onAttack: (AttackArguments) -> Unit,
+    onUseAbility: (UseAbilityArguments) -> Unit,
+    lockTarget: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var selectedOpponentUserId by remember(key1 = activeUserIds) { mutableStateOf(value = "") }
-    var isTargetLockedOptimistically by
-        remember(key1 = activeUserIds) { mutableStateOf(value = false) }
-
-    // Once the user commits an Armor-class roll, the Domain pins the defender (lockedTargetUserId);
-    // the UI then shows that locked opponent and stops offering others, so the target survives the
-    // intervening defensive-ability roll-offs. The optimistic flag locks the instant the user
-    // rolls,
-    // before the pinned state arrives.
-    val targetedOpponentUserId = lockedTargetUserId ?: selectedOpponentUserId
-    val isTargetLocked = lockedTargetUserId != null || isTargetLockedOptimistically
-
     val opponents = playerMap.values.filter { it.userId != userPlayerId }
 
     LazyColumn(
@@ -109,17 +209,18 @@ private fun ArenaState.Combat.CombatContent(
                 isItThisUsersTurn = isItThisUsersTurn,
                 isTargetLocked = isTargetLocked,
                 targetedOpponentUserId = targetedOpponentUserId,
-                onUpdateTargetedOpponentId = { opponentId -> selectedOpponentUserId = opponentId },
+                onUpdateTargetedOpponentId = onSelectTarget,
             )
         }
 
-        if (combatControls.isNotEmpty()) {
-            item(key = ROLL_DICE_KEY) {
-                RollDiceSection(
-                    combatControls = combatControls,
+        if (secondaryControls.isNotEmpty()) {
+            item(key = ABILITY_CONTROLS_KEY) {
+                AbilityControls(
+                    controls = secondaryControls,
                     targetedOpponentUserId = targetedOpponentUserId,
-                    updateIsTargetLocked = { isTargetLockedOptimistically = true },
-                    onRollHoldChange = onRollHoldChange,
+                    onAttack = onAttack,
+                    onUseAbility = onUseAbility,
+                    lockTarget = lockTarget,
                 )
             }
         }
@@ -206,151 +307,40 @@ private fun GridPlayerCard(
     )
 }
 
+/**
+ * The actions the user can take instead of the dice roll — class abilities and roll-off choices —
+ * each a button that fires immediately; the dice tray then animates whatever roll results.
+ */
 @Composable
-private fun ArenaState.Combat.RollDiceSection(
-    combatControls: List<ArenaCombatControl>,
+private fun ArenaState.Combat.AbilityControls(
+    controls: List<ArenaCombatControl>,
     targetedOpponentUserId: String,
-    updateIsTargetLocked: () -> Unit,
-    onRollHoldChange: (Boolean) -> Unit,
+    onAttack: (AttackArguments) -> Unit,
+    onUseAbility: (UseAbilityArguments) -> Unit,
+    lockTarget: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        modifier = modifier.fillMaxWidth().padding(top = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        if (targetedOpponentUserId.isEmpty() && combatControls.any { it.requiresTarget }) {
-            Text(
-                text = "Tap an enemy card to select your target",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-            )
-        }
+        controls.forEach { control ->
+            val isEnabled =
+                control.enabled && (!control.requiresTarget || targetedOpponentUserId.isNotEmpty())
 
-        combatControls.forEach { combatControl ->
-            when (combatControl) {
-                is ArenaCombatControl.NormalAttack ->
-                    AttackControl(
-                        combatActionState = combatActionState,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        updateIsTargetLocked = updateIsTargetLocked,
-                        userPlayerId = userPlayerId,
-                        requiresTarget = combatControl.requiresTarget,
-                        diceCount = combatControl.diceCount,
-                        onRollHoldChange = onRollHoldChange,
-                    )
+            val onClick =
+                rollActionFor(
+                    control = control,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    onAttack = onAttack,
+                    onUseAbility = onUseAbility,
+                    lockTarget = lockTarget,
+                )
 
-                is ArenaCombatControl.ActivatedAbility ->
-                    AbilityControl(
-                        label = combatControl.label,
-                        abilityActionState = combatControl.action,
-                        requiresTarget = combatControl.requiresTarget,
-                        enabled = combatControl.enabled,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        updateIsTargetLocked = updateIsTargetLocked,
-                        userPlayerId = userPlayerId,
-                        diceCount = combatControl.diceCount,
-                        onRollHoldChange = onRollHoldChange,
-                    )
-
-                is ArenaCombatControl.AbilityRoll ->
-                    AbilityControl(
-                        label = combatControl.label,
-                        abilityActionState = combatControl.action,
-                        requiresTarget = combatControl.requiresTarget,
-                        enabled = combatControl.enabled,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        updateIsTargetLocked = updateIsTargetLocked,
-                        userPlayerId = userPlayerId,
-                        diceCount = combatControl.diceCount,
-                        onRollHoldChange = onRollHoldChange,
-                    )
+            Button(onClick = onClick, enabled = isEnabled, modifier = Modifier.fillMaxWidth()) {
+                Text(text = control.label)
             }
-        }
-    }
-}
-
-@Composable
-private fun AbilityControl(
-    label: String,
-    abilityActionState: AbilityActionState,
-    requiresTarget: Boolean,
-    enabled: Boolean,
-    targetedOpponentUserId: String,
-    updateIsTargetLocked: () -> Unit,
-    userPlayerId: String,
-    diceCount: Int?,
-    onRollHoldChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val onUseAbility = ArenaActionsProvider.current.onUseAbility
-    val isEnabled = enabled && (!requiresTarget || targetedOpponentUserId.isNotEmpty())
-
-    val performAbility = {
-        if (requiresTarget) updateIsTargetLocked()
-
-        val useAbilityArguments =
-            UseAbilityArguments(
-                abilityActionState = abilityActionState,
-                targetedOpponentUserId = targetedOpponentUserId,
-                userPlayerId = userPlayerId,
-            )
-
-        onUseAbility(useAbilityArguments)
-    }
-
-    if (diceCount != null) {
-        HoldToRollDice(
-            label = label,
-            enabled = isEnabled,
-            onRoll = performAbility,
-            onHoldChange = onRollHoldChange,
-            modifier = modifier,
-        )
-    } else {
-        Button(onClick = performAbility, enabled = isEnabled, modifier = modifier.fillMaxWidth()) {
-            Text(text = label)
-        }
-    }
-}
-
-@Composable
-private fun AttackControl(
-    combatActionState: CombatActionState,
-    targetedOpponentUserId: String,
-    updateIsTargetLocked: () -> Unit,
-    userPlayerId: String,
-    requiresTarget: Boolean,
-    diceCount: Int?,
-    onRollHoldChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val onAttack = ArenaActionsProvider.current.onAttack
-    val isEnabled = !requiresTarget || targetedOpponentUserId.isNotEmpty()
-
-    val performAttack = {
-        updateIsTargetLocked()
-
-        val attackArguments =
-            AttackArguments(
-                combatActionState = combatActionState,
-                targetedOpponentUserId = targetedOpponentUserId,
-                userPlayerId = userPlayerId,
-            )
-
-        onAttack(attackArguments)
-    }
-
-    if (diceCount != null) {
-        HoldToRollDice(
-            label = "Attack",
-            enabled = isEnabled,
-            onRoll = performAttack,
-            onHoldChange = onRollHoldChange,
-            modifier = modifier,
-        )
-    } else {
-        Button(onClick = performAttack, enabled = isEnabled, modifier = modifier.fillMaxWidth()) {
-            Text(text = "Attack")
         }
     }
 }

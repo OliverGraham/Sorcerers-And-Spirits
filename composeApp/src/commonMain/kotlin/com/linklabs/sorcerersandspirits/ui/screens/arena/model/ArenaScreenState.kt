@@ -135,7 +135,15 @@ internal fun ArenaMatch.toUpdatedState(
                 displayNames = participantNames,
             )
         }
-    val unhandledMessagesCount = (previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages
+    // The log is capped (oldest entries scroll off) and resets to a fresh, small list when a new
+    // match begins, so the running unhandled count can outrun what the log actually holds — e.g. a
+    // big combat result, or leftover unhandled messages carried over from the prior match. If it
+    // exceeds the list size, latestMessage resolves to null and filteredMessages to empty, wiping
+    // the log with no way to recover, so it can never hold more than the messages that remain.
+    val unhandledMessagesCount =
+        ((previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages).coerceAtMost(
+            maximumValue = messages.size
+        )
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 

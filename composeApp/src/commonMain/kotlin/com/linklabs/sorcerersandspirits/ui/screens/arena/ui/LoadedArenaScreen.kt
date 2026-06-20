@@ -83,10 +83,6 @@ internal fun LoadedArenaScreen(
         if (screenState.showForfeitDialog) {
             ForfeitDialog()
         }
-
-        if (screenState.isKnockedOutDecisionOffered) {
-            KnockedOutDialog()
-        }
     }
 }
 

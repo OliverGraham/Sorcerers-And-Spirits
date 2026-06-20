@@ -79,6 +79,7 @@ sealed interface ArenaState {
         val isItThisUsersTurn = userPlayerId in activeUserIds
         val combatControls = deriveCombatControls()
         val lockedTargetUserId = deriveLockedTargetUserId()
+        val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()
     }
 
     @Immutable
@@ -108,6 +109,23 @@ private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
     val inFlightAttack = combatActionState as? CombatActionState.NormalAttack ?: return null
     val isUsersOwnAttack = inFlightAttack.attackerUserId == userPlayerId
     return if (isUsersOwnAttack) inFlightAttack.defenderUserId else null
+}
+
+/**
+ * The lone opponent to pre-target when the user has nothing to choose this turn. With a single
+ * opponent and a normal attack as the only available action, there is no target decision to make,
+ * so the UI selects that opponent automatically rather than requiring a manual tap. Null whenever a
+ * real choice exists: more than one opponent, an activated ability is also available, or it is not
+ * the user's free-choice turn.
+ */
+private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
+    val isStartOfUsersTurn = isItThisUsersTurn && combatActionState is CombatActionState.Idle
+    if (!isStartOfUsersTurn) return null
+
+    val isNormalAttackOnlyAction = combatControls.singleOrNull() is ArenaCombatControl.NormalAttack
+    if (!isNormalAttackOnlyAction) return null
+
+    return playerMap.keys.singleOrNull { it != userPlayerId }
 }
 
 // TODO(SS-031): Need to refactor this badly

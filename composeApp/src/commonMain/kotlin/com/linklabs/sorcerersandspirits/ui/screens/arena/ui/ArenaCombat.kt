@@ -63,7 +63,11 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     // intervening defensive-ability roll-offs. The optimistic flag locks the instant the user
     // rolls,
     // before the pinned state arrives.
-    val targetedOpponentUserId = lockedTargetUserId ?: selectedOpponentUserId
+    // With a single opponent and only a normal attack to make, there is no target to pick, so the
+    // lone opponent is pre-selected; an explicit tap still takes precedence (SS-101).
+    val targetedOpponentUserId =
+        lockedTargetUserId
+            ?: selectedOpponentUserId.ifEmpty { autoTargetedOpponentUserId.orEmpty() }
     val isTargetLocked = lockedTargetUserId != null || isTargetLockedOptimistically
 
     val onAttack = ArenaActionsProvider.current.onAttack

@@ -247,7 +247,7 @@ private fun allInOutcomeFor(singleDie: Int): AllInOutcome =
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMessageState =
+fun ArenaMessage.toState(id: String, classNames: Map<String, String>): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
             ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
@@ -268,7 +268,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.AllIn ->
             ArenaMessageState.AllIn(
                 id = id,
-                gamblerName = displayNames.resolve(userId = gamblerUserId),
+                gamblerName = classNames.resolveClassName(userId = gamblerUserId),
                 singleDie = singleDie,
                 outcome = allInOutcomeFor(singleDie = singleDie),
             )
@@ -288,8 +288,8 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.HolyShield.Wrath ->
             ArenaMessageState.HolyShield.Wrath(
                 id = id,
-                paladinName = displayNames.resolve(userId = paladinUserId),
-                attackerName = displayNames.resolve(userId = attackerUserId),
+                paladinName = classNames.resolveClassName(userId = paladinUserId),
+                attackerName = classNames.resolveClassName(userId = attackerUserId),
                 singleDie = singleDie,
             )
 
@@ -306,7 +306,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.Impersonate ->
             ArenaMessageState.Impersonate(
                 id = id,
-                illusionistName = displayNames.resolve(userId = illusionistUserId),
+                illusionistName = classNames.resolveClassName(userId = illusionistUserId),
                 impersonatedAbilityName =
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )
@@ -330,7 +330,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.LuckyCoin.HighRollerTrigger ->
             ArenaMessageState.LuckyCoin.HighRollerTrigger(
                 id = id,
-                targetName = displayNames.resolve(userId = targetUserId),
+                targetName = classNames.resolveClassName(userId = targetUserId),
             )
 
         is ArenaMessage.LuckyCoin.Trigger -> ArenaMessageState.LuckyCoin.Trigger(id = id)
@@ -338,7 +338,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.MirrorImage.Pass ->
             ArenaMessageState.MirrorImage.Pass(
                 id = id,
-                attackerName = displayNames.resolve(userId = attackerUserId),
+                attackerName = classNames.resolveClassName(userId = attackerUserId),
                 outcome = outcome,
             )
 
@@ -349,15 +349,15 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
                 id = id,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 finalRoll = rerolledMirrorImageDie.finalValue,
-                attackerName = displayNames.resolve(userId = attackerUserId),
+                attackerName = classNames.resolveClassName(userId = attackerUserId),
                 outcome = outcome,
             )
 
         is ArenaMessage.NormalRoll ->
             ArenaMessageState.NormalRoll(
                 id = id,
-                attackerName = displayNames.resolve(userId = attackerUserId),
-                defenderName = displayNames.resolve(userId = defenderUserId),
+                attackerName = classNames.resolveClassName(userId = attackerUserId),
+                defenderName = classNames.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 type = type,
@@ -366,8 +366,8 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageState.Persuade.Charm(
                 id = id,
-                attackerName = displayNames.resolve(userId = attackerUserId),
-                defenderName = displayNames.resolve(userId = defenderUserId),
+                attackerName = classNames.resolveClassName(userId = attackerUserId),
+                defenderName = classNames.resolveClassName(userId = defenderUserId),
             )
 
         is ArenaMessage.Persuade.CharmActivation ->
@@ -387,8 +387,8 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.PrepareAttack ->
             ArenaMessageState.PrepareAttack(
                 id = id,
-                duelistName = displayNames.resolve(userId = duelistUserId),
-                targetName = displayNames.resolve(userId = targetUserId),
+                duelistName = classNames.resolveClassName(userId = duelistUserId),
+                targetName = classNames.resolveClassName(userId = targetUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 isSuccessful = isSuccessful,
@@ -407,8 +407,8 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.SpellPotency ->
             ArenaMessageState.SpellPotency(
                 id = id,
-                mageName = displayNames.resolve(userId = mageUserId),
-                mainTargetName = displayNames.resolve(userId = mainTargetUserId),
+                mageName = classNames.resolveClassName(userId = mageUserId),
+                mainTargetName = classNames.resolveClassName(userId = mainTargetUserId),
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,
             )
@@ -416,7 +416,7 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.SummonMinion ->
             ArenaMessageState.SummonMinion(
                 id = id,
-                necroName = displayNames.resolve(userId = necroUserId),
+                necroName = classNames.resolveClassName(userId = necroUserId),
                 singleDie = singleDie,
                 outcome = summonMinionOutcomeFor(singleDie = singleDie),
             )
@@ -427,14 +427,14 @@ fun ArenaMessage.toState(id: String, displayNames: Map<String, String>): ArenaMe
         is ArenaMessage.Teleport.Roll ->
             ArenaMessageState.Teleport.Roll(
                 id = id,
-                playerName = displayNames.resolve(userId = userId),
+                playerName = classNames.resolveClassName(userId = userId),
                 singleDie = singleDie,
             )
 
         is ArenaMessage.Teleport.Trigger -> ArenaMessageState.Teleport.Trigger(id = id)
     }
 
-private fun Map<String, String>.resolve(userId: String): String = this[userId] ?: userId
+private fun Map<String, String>.resolveClassName(userId: String): String = this[userId] ?: userId
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =
     CharacterClassMessageInfoState(className = className, type = type)

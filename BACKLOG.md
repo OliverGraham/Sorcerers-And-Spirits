@@ -170,14 +170,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   finalized wording for the Bard Persuade outcomes.
 - **Notes:** Related: SS-093 (per-outcome ability copy), SS-097 (class-name usage in messages).
 
-### SS-097 — ArenaMessages must use the character class name, never the displayName
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** All ArenaMessages must refer to players by their character class name (e.g. "Rogue",
-  "Bard"), never the user's `displayName`. The **only** exception is the class-selection message
-  during `ChoosingClasses` (e.g. "PlayerX chose the Rogue"), which legitimately uses the displayName.
-- **Notes:** Audit every ArenaMessage construction site. Related: SS-093, SS-094, SS-100.
-
 ### SS-098 — Defer the Finished transition until end-of-match messages/animations play
 - [ ] Not completed
 - **Source:** Reported bug.

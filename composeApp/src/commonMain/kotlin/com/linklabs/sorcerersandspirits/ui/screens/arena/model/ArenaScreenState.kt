@@ -22,7 +22,7 @@ data class ArenaScreenState(
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState,
-    val participantNames: Map<String, String>,
+    val participantClassNames: Map<String, String>,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
 ) {
@@ -125,14 +125,21 @@ internal fun ArenaMatch.toUpdatedState(
 ): ArenaStateUpdate {
     val userPlayer = playerMap.getValue(key = userId)
 
-    val currentNames = playerMap.mapValues { it.value.displayName }
-    val participantNames = (previousState?.participantNames ?: emptyMap()) + currentNames
+    // ArenaMessages refer to players by class name (SS-097), so the resolution map is keyed on the
+    // class each player selected. Players who have left the arena are retained so their earlier
+    // messages still resolve.
+    val currentClassNames =
+        playerMap.values.filterIsInstance<ArenaPlayer.Selected>().associate {
+            it.userId to it.characterClass.className
+        }
+    val participantClassNames =
+        (previousState?.participantClassNames ?: emptyMap()) + currentClassNames
 
     val messages =
         messages.map { incomingMessage ->
             incomingMessage.message.toState(
                 id = incomingMessage.id,
-                displayNames = participantNames,
+                classNames = participantClassNames,
             )
         }
     // The log is capped (oldest entries scroll off) and resets to a fresh, small list when a new
@@ -209,7 +216,7 @@ internal fun ArenaMatch.toUpdatedState(
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = nextArenaState,
-            participantNames = participantNames,
+            participantClassNames = participantClassNames,
             gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
             characterClasses = characterClasses,
         )

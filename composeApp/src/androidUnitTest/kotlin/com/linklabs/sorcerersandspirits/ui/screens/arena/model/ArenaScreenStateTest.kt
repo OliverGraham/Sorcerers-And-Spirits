@@ -239,7 +239,7 @@ class ArenaScreenStateTest {
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
-            participantNames = emptyMap(),
+            participantClassNames = emptyMap(),
         )
 
     private fun players() =

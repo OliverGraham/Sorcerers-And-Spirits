@@ -82,6 +82,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-096** — Keep the rolled-against opponent targeted through ability resolution: Ensure the originally-targeted opponent remains the target through the full resolution of an in-flight attack (including defensive-ability roll-offs that bounce back to the attacker).
 - **SS-093** — Ability outcome messages must reflect the actual roll result: Give Summon Minion (fizzle/skeleton/skeleton+heal/golem+heal) and All-In (self-KO/no-effect/double-attack) per-outcome message copy keyed off the rolled die; every other multi-outcome ability already carried its specific outcome.
 - **SS-103** — ArenaMessages permanently disappearing in some flows: Clamp the running unhandled-message count to the (capped/reset) log size in toUpdatedState so it can't outrun the messages that remain — otherwise latestMessage resolved to null and filteredMessages to empty, wiping the log with no way to recover (seen after big combat results and on match transitions).
+- **SS-097** — ArenaMessages must use the character class name, never the displayName: The userId→name resolution map fed to ArenaMessage.toState now holds each player's class name (built from Selected players, persisted across leaves), so all combat messages read as "Rogue"/"Bard"; only the pre-class lifecycle messages (ChoseCharacterClass, ConnectedToArena) still carry their own displayName.
 
 ## Profile & Auth
 

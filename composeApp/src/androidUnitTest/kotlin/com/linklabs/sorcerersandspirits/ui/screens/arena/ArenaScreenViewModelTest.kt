@@ -647,41 +647,47 @@ class ArenaScreenViewModelTest {
     }
 
     @Test
-    fun `participantNames maintains names even after players leave`() = runTest {
+    fun `participantClassNames maintains class names even after players leave`() = runTest {
         val viewModel = createViewModel()
 
         viewModel.uiStateFlow.test {
             // Loading
             awaitItem()
 
-            // 1. Initial Match with two players
+            // 1. Initial Match with two players who have chosen classes
             arenaMatchFlow.value =
                 ArenaMatch.WaitingForAllPlayers(
                     messages = emptyList(),
                     numberOfNewMessages = 0,
                     playerMap =
                         mapOf(
-                            USER_ID to ArenaPlayer.Unselected(USER_ID, "Alice"),
-                            OPPONENT_ID to ArenaPlayer.Unselected(OPPONENT_ID, "Bob"),
+                            USER_ID to
+                                selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue()),
+                            OPPONENT_ID to
+                                selectedPlayer(OPPONENT_ID, "Bob", TestCharacterClasses.mage()),
                         ),
                 )
 
             val state1 = (awaitItem() as UiState.Loaded).data
-            assertEquals("Alice", state1.participantNames[USER_ID])
-            assertEquals("Bob", state1.participantNames[OPPONENT_ID])
+            assertEquals(CharacterClassType.Rogue.name, state1.participantClassNames[USER_ID])
+            assertEquals(CharacterClassType.Mage.name, state1.participantClassNames[OPPONENT_ID])
 
             // 2. Opponent leaves
             arenaMatchFlow.value =
                 ArenaMatch.WaitingForAllPlayers(
                     messages = emptyList(),
                     numberOfNewMessages = 0,
-                    playerMap = mapOf(USER_ID to ArenaPlayer.Unselected(USER_ID, "Alice")),
+                    playerMap =
+                        mapOf(
+                            USER_ID to
+                                selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue())
+                        ),
                 )
 
             val state2 = (awaitItem() as UiState.Loaded).data
-            assertEquals("Alice", state2.participantNames[USER_ID])
-            // Bob should still be here!
-            assertEquals("Bob", state2.participantNames[OPPONENT_ID])
+            assertEquals(CharacterClassType.Rogue.name, state2.participantClassNames[USER_ID])
+            // Bob's class should still be here so their earlier messages still resolve!
+            assertEquals(CharacterClassType.Mage.name, state2.participantClassNames[OPPONENT_ID])
         }
     }
 

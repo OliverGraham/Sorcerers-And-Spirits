@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -11,15 +10,13 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
 import com.linklabs.sorcerersandspirits.domain.utilities.SIXTY_SECONDS
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
 @Immutable
 data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
     val challenge: ChallengeState?,
-    val characterClasses: List<CharacterClassState> =
-        CharacterClass.getAllClasses().map { it.toState() },
+    val characterClasses: List<CharacterClassState> = emptyList(),
 )
 
 @Immutable

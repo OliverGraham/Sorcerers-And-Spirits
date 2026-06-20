@@ -1,28 +1,31 @@
 package com.linklabs.sorcerersandspirits.data.config
 
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlinx.serialization.json.Json
 
 /**
- * Pins the version-controlled bundled JSON (the in-app RemoteConfig default + Firebase-published
- * value) to the values the rest of the app uses synchronously, so the two can never silently drift.
- * This is what lets the `CharacterClass` factory stat literals stay as the provider's last-resort
- * fallback without becoming a second, divergent source of truth (SS-059).
+ * Guards the version-controlled bundled JSON (the in-app RemoteConfig default + Firebase-published
+ * value), which is the single source of truth for class stats (SS-111). The stats payload must
+ * parse and cover every playable class, since production has no hardcoded stat fallback to fall
+ * back on.
  */
 class BundledRemoteConfigDefaultsTest {
 
     private val json = Json { ignoreUnknownKeys = true }
 
     @Test
-    fun `bundled character_class_stats JSON matches the in-app factory defaults`() {
+    fun `bundled character_class_stats JSON covers every playable class`() {
         val parsed =
             json.decodeFromString<Map<String, CharacterClassStatsEntity>>(
                 string = bundledClassStatsJson()
             )
 
-        assertEquals(expected = defaultCharacterClassStats(), actual = parsed)
+        val expectedTypeNames = CharacterClass.playableTypes().map { it.name }.toSet()
+
+        assertEquals(expected = expectedTypeNames, actual = parsed.keys)
     }
 
     @Test

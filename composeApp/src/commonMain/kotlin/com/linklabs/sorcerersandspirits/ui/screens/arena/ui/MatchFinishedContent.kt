@@ -22,8 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
@@ -177,8 +177,8 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
 }
 
 private fun exampleFinishedState(): ArenaState.Finished {
-    val mage = CharacterClass.getMage().toState()
-    val rogue = CharacterClass.getRogue().toState()
+    val mage = previewCharacterClassState(type = CharacterClassType.Mage)
+    val rogue = previewCharacterClassState(type = CharacterClassType.Rogue)
 
     return ArenaState.Finished(
         players =

@@ -20,7 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -161,7 +161,9 @@ private fun Footer(armorClass: Int, hitPoints: Int, modifier: Modifier = Modifie
 @Composable
 private fun RogueCardPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCard(characterClass = CharacterClass.getRogue().toState())
+        CharacterClassCard(
+            characterClass = previewCharacterClassState(type = CharacterClassType.Rogue)
+        )
     }
 }
 
@@ -169,7 +171,9 @@ private fun RogueCardPreview() {
 @Composable
 private fun MageCardPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCard(characterClass = CharacterClass.getMage().toState())
+        CharacterClassCard(
+            characterClass = previewCharacterClassState(type = CharacterClassType.Mage)
+        )
     }
 }
 
@@ -177,6 +181,8 @@ private fun MageCardPreview() {
 @Composable
 private fun PaladinCardPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassCard(characterClass = CharacterClass.getPaladin().toState())
+        CharacterClassCard(
+            characterClass = previewCharacterClassState(type = CharacterClassType.Paladin)
+        )
     }
 }

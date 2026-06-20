@@ -52,7 +52,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlin.math.PI
@@ -559,6 +558,6 @@ private fun spokeColor(type: CharacterClassType): Color =
 @Composable
 private fun CharacterClassWheelPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassWheel(characterClasses = CharacterClass.getAllClasses().map { it.toState() })
+        CharacterClassWheel(characterClasses = previewCharacterClassStates())
     }
 }

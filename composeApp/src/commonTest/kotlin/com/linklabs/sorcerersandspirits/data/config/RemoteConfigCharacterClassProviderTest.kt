@@ -2,13 +2,14 @@ package com.linklabs.sorcerersandspirits.data.config
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class RemoteConfigCharacterClassProviderTest {
 
     @Test
-    fun `overlays remote stats onto a class while keeping its abilities`() {
+    fun `builds a class from remote stats with the type's wired abilities`() {
         val tunedRogue =
             CharacterClassStatsEntity(hitPoints = 9, maxHitPoints = 9, armorClass = 2, speed = 3)
         val provider =
@@ -20,24 +21,44 @@ class RemoteConfigCharacterClassProviderTest {
             )
 
         val rogue = provider.getAllClasses().single { it.type == CharacterClassType.Rogue }
-        val factoryRogue = CharacterClass.getRogue()
+        val wiredRogue = TestCharacterClasses.rogue()
 
         assertEquals(expected = 9, actual = rogue.hitPoints)
         assertEquals(expected = 9, actual = rogue.maxHitPoints)
         assertEquals(expected = 2, actual = rogue.armorClass)
         assertEquals(expected = 3, actual = rogue.speed)
-        assertEquals(expected = factoryRogue.offensiveAbility, actual = rogue.offensiveAbility)
-        assertEquals(expected = factoryRogue.defensiveAbility, actual = rogue.defensiveAbility)
+        assertEquals(expected = wiredRogue.offensiveAbility, actual = rogue.offensiveAbility)
+        assertEquals(expected = wiredRogue.defensiveAbility, actual = rogue.defensiveAbility)
     }
 
     @Test
-    fun `falls back to factory stats for classes without remote overrides`() {
+    fun `omits classes that have no remote stats`() {
         val provider =
             RemoteConfigCharacterClassProvider(
                 remoteConfigDataSource = FakeRemoteConfigDataSource(stats = emptyMap())
             )
 
-        assertEquals(expected = CharacterClass.getAllClasses(), actual = provider.getAllClasses())
+        assertEquals(expected = emptyList<CharacterClass>(), actual = provider.getAllClasses())
+    }
+
+    @Test
+    fun `builds every playable class when all stats are present`() {
+        val stats =
+            TestCharacterClasses.all().associate { characterClass ->
+                characterClass.type to
+                    CharacterClassStatsEntity(
+                        hitPoints = characterClass.hitPoints,
+                        maxHitPoints = characterClass.maxHitPoints,
+                        armorClass = characterClass.armorClass,
+                        speed = characterClass.speed,
+                    )
+            }
+        val provider =
+            RemoteConfigCharacterClassProvider(
+                remoteConfigDataSource = FakeRemoteConfigDataSource(stats = stats)
+            )
+
+        assertEquals(expected = TestCharacterClasses.all(), actual = provider.getAllClasses())
     }
 
     private class FakeRemoteConfigDataSource(

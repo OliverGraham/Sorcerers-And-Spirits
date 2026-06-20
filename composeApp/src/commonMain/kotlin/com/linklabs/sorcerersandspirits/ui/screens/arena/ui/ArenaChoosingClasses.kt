@@ -15,10 +15,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassWheel
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -129,8 +128,6 @@ private fun ArenaChoosingClassesPreview() {
                 classSelections = emptyMap(),
             )
 
-        mockState.ArenaChoosingClasses(
-            characterClasses = CharacterClass.getAllClasses().map { it.toState() }
-        )
+        mockState.ArenaChoosingClasses(characterClasses = previewCharacterClassStates())
     }
 }

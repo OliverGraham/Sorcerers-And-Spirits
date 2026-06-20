@@ -28,10 +28,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassCard
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
@@ -336,8 +336,8 @@ private fun AttackControl(
 @Composable
 private fun ArenaCombatYourTurnPreview() {
     SorcerersAndSpiritsTheme {
-        val rogue = CharacterClass.getRogue().toState()
-        val mage = CharacterClass.getMage().toState()
+        val rogue = previewCharacterClassState(type = CharacterClassType.Rogue)
+        val mage = previewCharacterClassState(type = CharacterClassType.Mage)
         val userPlayer =
             PlayerState.Selected(userId = "1", displayName = "User", characterClass = rogue)
         val enemy = PlayerState.Selected(userId = "2", displayName = "Enemy", characterClass = mage)
@@ -367,9 +367,9 @@ private fun ArenaCombatYourTurnPreview() {
 @Composable
 private fun ArenaCombatEnemyTurnPreview() {
     SorcerersAndSpiritsTheme {
-        val rogue = CharacterClass.getRogue().toState()
-        val mage = CharacterClass.getMage().toState()
-        val paladin = CharacterClass.getPaladin().toState()
+        val rogue = previewCharacterClassState(type = CharacterClassType.Rogue)
+        val mage = previewCharacterClassState(type = CharacterClassType.Mage)
+        val paladin = previewCharacterClassState(type = CharacterClassType.Paladin)
         val userPlayer =
             PlayerState.Selected(userId = "1", displayName = "User", characterClass = rogue)
         val enemy1 =

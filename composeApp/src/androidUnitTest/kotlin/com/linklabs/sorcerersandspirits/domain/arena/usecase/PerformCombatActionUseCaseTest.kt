@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
@@ -239,7 +240,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `Given a 3-player game, when a Rogue knocks out a defender, then Killing Momentum triggers and the Rogue acts again`() {
         // Arrange
-        val arguments = createThreePlayerArguments(attackerClass = CharacterClass.getRogue())
+        val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
         val rogueUserId = currentAction.attackerUserId
@@ -263,7 +264,7 @@ class PerformCombatActionUseCaseTest {
     fun `Given an Illusionist impersonating Killing Momentum, when they knock out a defender, then Killing Momentum triggers and they act again`() {
         // Arrange
         val illusionist =
-            CharacterClass.getIllusionist()
+            TestCharacterClasses.illusionist()
                 .copy(
                     offensiveAbility =
                         OffensiveAbility.Impersonate(
@@ -293,7 +294,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker misses a Rogue's armor, then Dodge triggers and the Rogue's armor bonus increases`() {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getRogue())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
@@ -309,7 +310,7 @@ class PerformCombatActionUseCaseTest {
             assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = 1, actual = updatedDodge.armorBonus)
         assertEquals(
-            expected = CharacterClass.getRogue().armorClass + 1,
+            expected = TestCharacterClasses.rogue().armorClass + 1,
             actual = updatedDefender.armorClass,
         )
         assertTrue(actual = !outcome.isMatchFinished)
@@ -320,9 +321,9 @@ class PerformCombatActionUseCaseTest {
         // Arrange
         val startingArmorBonus = 2
         val rogueWithMaxDodge =
-            CharacterClass.getRogue()
+            TestCharacterClasses.rogue()
                 .copy(
-                    armorClass = CharacterClass.getRogue().armorClass + startingArmorBonus,
+                    armorClass = TestCharacterClasses.rogue().armorClass + startingArmorBonus,
                     defensiveAbility = DefensiveAbility.Dodge(armorBonus = startingArmorBonus),
                 )
         val arguments = createTwoPlayerArguments(defenderClass = rogueWithMaxDodge)
@@ -341,7 +342,7 @@ class PerformCombatActionUseCaseTest {
             assertIs<DefensiveAbility.Dodge>(value = updatedDefender.defensiveAbility)
         assertEquals(expected = startingArmorBonus, actual = updatedDodge.armorBonus)
         assertEquals(
-            expected = CharacterClass.getRogue().armorClass + startingArmorBonus,
+            expected = TestCharacterClasses.rogue().armorClass + startingArmorBonus,
             actual = updatedDefender.armorClass,
         )
         assertTrue(actual = !outcome.isMatchFinished)
@@ -350,7 +351,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Gambler uses All-In and rolls a 1, then the Gambler is knocked out`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAllInAction(gambler = gambler)
@@ -371,7 +372,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Gambler uses All-In and rolls a 6, then the Gambler gets another attack`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAllInAction(gambler = gambler)
@@ -394,7 +395,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Gambler uses All-In and rolls a 3, then nothing happens`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAllInAction(gambler = gambler)
@@ -417,7 +418,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When someone attacks the Gambler and LuckyCoin stops the attack, it is the next player's turn`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 6
@@ -438,7 +439,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When someone attacks the Gambler and LuckyCoin does not stop the attack, the attacker rolls against Gambler's health`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 6
@@ -461,7 +462,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When someone attacks the Gambler and rolls a 6, then High Roller triggers`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 6
@@ -484,7 +485,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `Given a 2-player game, when a Gambler uses High Roller and deals damage that knocks out the attacker, then the match ends`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val arguments = createTwoPlayerArguments(defenderClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val attackerRollTotal = 10
@@ -507,7 +508,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Gambler uses High Roller and deals damage but the attacker survives, then the attacker rolls against health`() {
         // Arrange
-        val gambler = CharacterClass.getGambler()
+        val gambler = TestCharacterClasses.gambler()
         val attackerClass = createCharacterClass(hitPoints = 10)
         val arguments =
             createTwoPlayerArguments(attackerClass = attackerClass, defenderClass = gambler)
@@ -538,7 +539,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Duelist uses Prepare Attack and rolls a 10, then the defender is knocked out`() {
         // Arrange
-        val duelist = CharacterClass.getDuelist()
+        val duelist = TestCharacterClasses.duelist()
         val arguments = createTwoPlayerArguments(attackerClass = duelist)
 
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -560,7 +561,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Duelist uses Prepare Attack and rolls a 7, then nothing happens and the turn ends`() {
         // Arrange
-        val duelist = CharacterClass.getDuelist()
+        val duelist = TestCharacterClasses.duelist()
         val arguments = createTwoPlayerArguments(attackerClass = duelist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getPrepareAttackAction()
@@ -582,7 +583,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker passes a Duelist's ArmorClass, then Riposte triggers`() {
         // Arrange
-        val duelist = CharacterClass.getDuelist()
+        val duelist = TestCharacterClasses.duelist()
         val arguments = createTwoPlayerArguments(defenderClass = duelist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
@@ -606,7 +607,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Duelist rolls a successful Riposte, then the Duelist attacks the attacker`() {
         // Arrange
-        val duelist = CharacterClass.getDuelist()
+        val duelist = TestCharacterClasses.duelist()
         val arguments = createTwoPlayerArguments(defenderClass = duelist)
 
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -634,7 +635,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Duelist rolls a failed Riposte, then the attacker rolls against the Duelist's health`() {
         // Arrange
-        val duelist = CharacterClass.getDuelist()
+        val duelist = TestCharacterClasses.duelist()
         val arguments = createTwoPlayerArguments(defenderClass = duelist)
 
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -663,7 +664,7 @@ class PerformCombatActionUseCaseTest {
     fun `Given a 3-player game, when a Duelist performs a Riposte counter-attack and the turn ends, then the Duelist acts next if they have the highest remaining speed`() {
         // Arrange
         val attackerClass = createCharacterClass()
-        val duelist = CharacterClass.getDuelist()
+        val duelist = TestCharacterClasses.duelist()
         val attackerUserId = DEFAULT_ATTACKER_ID
         val duelistUserId = DEFAULT_DEFENDER_ID
         val thirdClass = createCharacterClass(speed = 5)
@@ -766,7 +767,7 @@ class PerformCombatActionUseCaseTest {
     ) {
         // Arrange
         val necromancer =
-            CharacterClass.getNecromancer()
+            TestCharacterClasses.necromancer()
                 .copy(
                     hitPoints = startingHitPoints,
                     offensiveAbility =
@@ -799,7 +800,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Bard deals damage, then Encore triggers`() {
         // Arrange
-        val bard = CharacterClass.getBard()
+        val bard = TestCharacterClasses.bard()
         val arguments = createTwoPlayerArguments(attackerClass = bard)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
@@ -830,7 +831,7 @@ class PerformCombatActionUseCaseTest {
 
     private fun encoreRollTest(dieRoll: Int, expectedNextUserId: String) {
         // Arrange
-        val arguments = createTwoPlayerArguments(attackerClass = CharacterClass.getBard())
+        val arguments = createTwoPlayerArguments(attackerClass = TestCharacterClasses.bard())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.Encore)
 
@@ -848,7 +849,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker passes a Bard's ArmorClass, then Persuade triggers`() {
         // Arrange
-        val bard = CharacterClass.getBard()
+        val bard = TestCharacterClasses.bard()
         val arguments = createTwoPlayerArguments(defenderClass = bard)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
@@ -894,7 +895,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Bard selects a Charm target, then the attacker performs a new ArmorClass roll against that target and hits`() {
         // Arrange
-        val bard = CharacterClass.getBard()
+        val bard = TestCharacterClasses.bard()
         val arguments = createThreePlayerArguments(thirdClass = bard)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
@@ -944,7 +945,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Bard selects a Charm target, then the attacker performs a new ArmorClass roll against that target and misses`() {
         // Arrange
-        val bard = CharacterClass.getBard()
+        val bard = TestCharacterClasses.bard()
         val arguments = createThreePlayerArguments(thirdClass = bard)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
@@ -992,7 +993,7 @@ class PerformCombatActionUseCaseTest {
         isThreePlayer: Boolean = false,
     ) {
         // Arrange
-        val bard = CharacterClass.getBard()
+        val bard = TestCharacterClasses.bard()
         val arguments =
             if (isThreePlayer) {
                 createThreePlayerArguments(defenderClass = bard)
@@ -1049,7 +1050,8 @@ class PerformCombatActionUseCaseTest {
         abilityToImpersonate: OffensiveAbility,
     ) {
         // Arrange
-        val illusionist = CharacterClass.getIllusionist().copy(offensiveAbility = startingAbility)
+        val illusionist =
+            TestCharacterClasses.illusionist().copy(offensiveAbility = startingAbility)
         val arguments = createTwoPlayerArguments(attackerClass = illusionist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getImpersonateAction(abilityToImpersonate = abilityToImpersonate)
@@ -1074,7 +1076,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker hits an Illusionist's ArmorClass, then Mirror Image triggers`() {
         // Arrange
-        val illusionist = CharacterClass.getIllusionist()
+        val illusionist = TestCharacterClasses.illusionist()
         val arguments = createTwoPlayerArguments(defenderClass = illusionist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
@@ -1160,7 +1162,7 @@ class PerformCombatActionUseCaseTest {
         expectedIsNextActionNormalAttack: Boolean = false,
     ) {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getIllusionist())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
 
@@ -1217,7 +1219,7 @@ class PerformCombatActionUseCaseTest {
         isThreePlayer: Boolean = false,
     ) {
         // Arrange
-        val mage = CharacterClass.getMage()
+        val mage = TestCharacterClasses.mage()
         val arguments =
             if (isThreePlayer) {
                 createThreePlayerArguments(attackerClass = mage)
@@ -1268,7 +1270,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker passes a Mage's ArmorClass, then Teleport triggers`() {
         // Arrange
-        val mage = CharacterClass.getMage()
+        val mage = TestCharacterClasses.mage()
         val arguments = createTwoPlayerArguments(defenderClass = mage)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
@@ -1290,7 +1292,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When an attacker rolls for Teleport, then the Teleport action is updated with the attacker's roll`() {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getMage())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.mage())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
         val purpose =
@@ -1336,7 +1338,7 @@ class PerformCombatActionUseCaseTest {
         isMageExpectedToWin: Boolean,
     ) {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getMage())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.mage())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
         val purpose =
@@ -1374,7 +1376,7 @@ class PerformCombatActionUseCaseTest {
             createTwoPlayerArguments(
                 attackerUserId = attackerUserId,
                 defenderUserId = mageUserId,
-                defenderClass = CharacterClass.getMage(),
+                defenderClass = TestCharacterClasses.mage(),
                 doublesBonus = DoublesBonus(userId = attackerUserId),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -1405,7 +1407,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Paladin is knocked out, then Holy Shield triggers`() {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.paladin())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
         val paladinUserId = currentAction.defenderUserId
@@ -1431,7 +1433,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Paladin rolls a successful Holy Shield Prayer, then the Paladin survives with 1 HP and performs Wrath`() {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.paladin())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Prayer)
         val paladinUserId = currentAction.defenderUserId
@@ -1457,7 +1459,7 @@ class PerformCombatActionUseCaseTest {
         // Arrange
         val arguments =
             createTwoPlayerArguments(
-                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 0)
+                defenderClass = TestCharacterClasses.paladin().copy(hitPoints = 0)
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Prayer)
@@ -1483,7 +1485,7 @@ class PerformCombatActionUseCaseTest {
         val arguments =
             createTwoPlayerArguments(
                 attackerClass = attackerClass,
-                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 1),
+                defenderClass = TestCharacterClasses.paladin().copy(hitPoints = 1),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Wrath)
@@ -1516,8 +1518,8 @@ class PerformCombatActionUseCaseTest {
         val arguments =
             createTwoPlayerArguments(
                 attackerClass =
-                    CharacterClass.getRogue().copy(hitPoints = attackerStartingHitPoints),
-                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 1),
+                    TestCharacterClasses.rogue().copy(hitPoints = attackerStartingHitPoints),
+                defenderClass = TestCharacterClasses.paladin().copy(hitPoints = 1),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Wrath)
@@ -1540,8 +1542,8 @@ class PerformCombatActionUseCaseTest {
         // Arrange
         val arguments =
             createTwoPlayerArguments(
-                attackerClass = CharacterClass.getBard().copy(hitPoints = 10),
-                defenderClass = CharacterClass.getPaladin().copy(hitPoints = 1),
+                attackerClass = TestCharacterClasses.bard().copy(hitPoints = 10),
+                defenderClass = TestCharacterClasses.paladin().copy(hitPoints = 1),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Wrath)
@@ -1565,9 +1567,9 @@ class PerformCombatActionUseCaseTest {
         val defenderStartingHitPoints = 10
         val arguments =
             createThreePlayerArguments(
-                attackerClass = CharacterClass.getMage(),
+                attackerClass = TestCharacterClasses.mage(),
                 defenderClass = createCharacterClass(hitPoints = defenderStartingHitPoints),
-                thirdClass = CharacterClass.getPaladin().copy(hitPoints = 2),
+                thirdClass = TestCharacterClasses.paladin().copy(hitPoints = 2),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
@@ -1667,8 +1669,8 @@ class PerformCombatActionUseCaseTest {
         // Arrange
         val arguments =
             createTwoPlayerArguments(
-                attackerClass = CharacterClass.getDuelist(),
-                defenderClass = CharacterClass.getPaladin(),
+                attackerClass = TestCharacterClasses.duelist(),
+                defenderClass = TestCharacterClasses.paladin(),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getPrepareAttackAction()
@@ -1701,9 +1703,9 @@ class PerformCombatActionUseCaseTest {
                 attackerUserId = duelistUserId,
                 defenderUserId = paladinUserId,
                 thirdUserId = mageUserId,
-                attackerClass = CharacterClass.getDuelist(),
-                defenderClass = CharacterClass.getPaladin(),
-                thirdClass = CharacterClass.getMage(),
+                attackerClass = TestCharacterClasses.duelist(),
+                defenderClass = TestCharacterClasses.paladin(),
+                thirdClass = TestCharacterClasses.mage(),
             )
 
         // 1. Duelist attacks Paladin with 12
@@ -1746,8 +1748,8 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When Duelist uses Prepare Attack and rolls a 10 against a Paladin, then Holy Shield triggers`() {
         // Arrange
-        val duelist = CharacterClass.getDuelist()
-        val paladin = CharacterClass.getPaladin()
+        val duelist = TestCharacterClasses.duelist()
+        val paladin = TestCharacterClasses.paladin()
         val arguments = createTwoPlayerArguments(attackerClass = duelist, defenderClass = paladin)
 
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -1812,7 +1814,7 @@ class PerformCombatActionUseCaseTest {
         val arguments =
             createTwoPlayerArguments(
                 attackerUserId = attackerUserId,
-                defenderClass = CharacterClass.getDuelist(),
+                defenderClass = TestCharacterClasses.duelist(),
                 doublesBonus = DoublesBonus(userId = attackerUserId),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -1875,7 +1877,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Rogue rolls doubles to knockout a defender, Killing Momentum triggers and the doubles bonus is preserved in the outcome`() {
         // Arrange
-        val arguments = createThreePlayerArguments(attackerClass = CharacterClass.getRogue())
+        val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
         val rogueUserId = currentAction.attackerUserId
@@ -1895,7 +1897,7 @@ class PerformCombatActionUseCaseTest {
     @Test
     fun `When a Paladin rolls 10 (doubles) for Holy Shield Prayer, the doubles bonus is preserved for the subsequent Wrath roll`() {
         // Arrange
-        val arguments = createTwoPlayerArguments(defenderClass = CharacterClass.getPaladin())
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.paladin())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Prayer)
         val paladinUserId = currentAction.defenderUserId
@@ -1917,7 +1919,7 @@ class PerformCombatActionUseCaseTest {
     fun `When a Gambler with two attacks rolls doubles on their first attack's Health roll, the doubles bonus is preserved in the outcome`() {
         // Arrange
         val gambler =
-            CharacterClass.getGambler()
+            TestCharacterClasses.gambler()
                 .copy(
                     offensiveAbility =
                         OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)

@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import kotlin.test.Test
@@ -15,7 +16,7 @@ class ArenaSessionStatsTest {
     @Test
     fun `a finished match is recorded once as a win for the user's class`() {
         val sessionStats = ArenaSessionStats()
-        val finished = finishedMatch(matchNumber = 1, userClass = CharacterClass.getRogue())
+        val finished = finishedMatch(matchNumber = 1, userClass = TestCharacterClasses.rogue())
 
         // Re-emitted twice (e.g. a follow-up message) but only scored once.
         sessionStats.onMatchUpdate(match = finished, userId = USER_ID)
@@ -55,7 +56,10 @@ class ArenaSessionStatsTest {
         (1..3).forEach { matchNumber ->
             sessionStats.onMatchUpdate(
                 match =
-                    finishedMatch(matchNumber = matchNumber, userClass = CharacterClass.getMage()),
+                    finishedMatch(
+                        matchNumber = matchNumber,
+                        userClass = TestCharacterClasses.mage(),
+                    ),
                 userId = USER_ID,
             )
         }
@@ -87,9 +91,9 @@ class ArenaSessionStatsTest {
     fun `a gauntlet won with mixed classes is credited only to overall, not per-class`() {
         val sessionStats = ArenaSessionStats()
 
-        sessionStats.onMatchUpdate(finishedMatch(1, CharacterClass.getRogue()), USER_ID)
-        sessionStats.onMatchUpdate(finishedMatch(2, CharacterClass.getBard()), USER_ID)
-        sessionStats.onMatchUpdate(finishedMatch(3, CharacterClass.getMage()), USER_ID)
+        sessionStats.onMatchUpdate(finishedMatch(1, TestCharacterClasses.rogue()), USER_ID)
+        sessionStats.onMatchUpdate(finishedMatch(2, TestCharacterClasses.bard()), USER_ID)
+        sessionStats.onMatchUpdate(finishedMatch(3, TestCharacterClasses.mage()), USER_ID)
 
         val delta = sessionStats.consumeDelta()
         assertEquals(expected = 1, actual = delta.overall.gauntletsWon)
@@ -100,7 +104,7 @@ class ArenaSessionStatsTest {
     fun `leaving a match in progress forfeits the match and gauntlet`() {
         val sessionStats = ArenaSessionStats()
         sessionStats.onMatchUpdate(
-            choosingMatch(matchNumber = 1, CharacterClass.getDuelist()),
+            choosingMatch(matchNumber = 1, TestCharacterClasses.duelist()),
             USER_ID,
         )
 
@@ -119,7 +123,7 @@ class ArenaSessionStatsTest {
     fun `leaving while knocked out records a loss but a forfeited gauntlet`() {
         val sessionStats = ArenaSessionStats()
         sessionStats.onMatchUpdate(
-            choosingMatch(matchNumber = 1, CharacterClass.getRogue()),
+            choosingMatch(matchNumber = 1, TestCharacterClasses.rogue()),
             USER_ID,
         )
 
@@ -150,7 +154,7 @@ class ArenaSessionStatsTest {
     fun `joining mid-gauntlet does not record a forfeited gauntlet on leave`() {
         val sessionStats = ArenaSessionStats()
         sessionStats.onMatchUpdate(
-            choosingMatch(matchNumber = 2, CharacterClass.getRogue()),
+            choosingMatch(matchNumber = 2, TestCharacterClasses.rogue()),
             USER_ID,
         )
 
@@ -187,7 +191,7 @@ class ArenaSessionStatsTest {
 
     private fun finishedMatch(
         matchNumber: Int,
-        userClass: CharacterClass = CharacterClass.getRogue(),
+        userClass: CharacterClass = TestCharacterClasses.rogue(),
         userWon: Boolean = true,
     ): ArenaMatch.Finished {
         val survivingClass = if (userWon) userClass else userClass.copy(hitPoints = 0)
@@ -200,7 +204,7 @@ class ArenaSessionStatsTest {
                     OPPONENT_ID to
                         selectedPlayer(
                             userId = OPPONENT_ID,
-                            characterClass = CharacterClass.getMage().copy(hitPoints = 0),
+                            characterClass = TestCharacterClasses.mage().copy(hitPoints = 0),
                         ),
                 ),
             matchNumberInGauntlet = matchNumber,

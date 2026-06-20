@@ -17,9 +17,9 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
 
     private val json = Json { ignoreUnknownKeys = true }
 
-    // Loaded from the bundled JSON in initialize(); seeded so a getter racing ahead of that load
-    // never sees an empty payload. BundledRemoteConfigDefaultsTest pins the stats JSON to the seed.
-    private var defaultStats: Map<String, CharacterClassStatsEntity> = defaultCharacterClassStats()
+    // Empty until initialize() loads the bundled JSON at app start (before any class is built). The
+    // bundled JSON is the single source of truth for default stats, so there is no code-level seed.
+    private var defaultStats: Map<String, CharacterClassStatsEntity> = emptyMap()
 
     private var defaultNames: List<String> = listOf(FALLBACK_TRAVELER_NAME)
 

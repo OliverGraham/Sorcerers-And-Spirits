@@ -170,14 +170,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   finalized wording for the Bard Persuade outcomes.
 - **Notes:** Related: SS-093 (per-outcome ability copy), SS-097 (class-name usage in messages).
 
-### SS-099 — Disable Impersonate for a class the Illusionist has already copied
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** When the Illusionist has already impersonated the targeted class's offensive ability, the
-  Impersonate button for that class must be disabled (re-copying the same class is a no-op).
-- **Notes:** Follows the recent "Wire Illusionist Mirror Image and Impersonate in the UI" work
-  (PR #90). Related: SS-093.
-
 ### SS-100 — Holy Shield trigger copy should read as damage, not a knockout
 - [ ] Not completed
 - **Source:** Reported bug.

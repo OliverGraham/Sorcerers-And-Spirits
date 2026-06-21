@@ -255,19 +255,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 ---
 
-## Rules & Help
-
-### SS-066 — Explore an in-app game-rules chatbot
-- [ ] Not completed
-- **Goal:** Explore a chatbot that answers questions about the game rules — including for players
-  using the app alongside a physical game to settle rules edge-cases. The rules in CLAUDE.md / the
-  GameRulesScreen content (SS-067) form the knowledge base.
-- **Steps:** Decide the backend (default to the Claude API with a current Claude model, grounded on
-  the rules text); scope question types (rules lookups vs. ability-interaction edge cases); design the
-  entry point (likely from the GameRulesScreen or drawer). Investigation only for now.
-
----
-
 ## UI overhaul & input
 
 ### SS-068 — Lottie animation pass & UI overhaul (Arena + Tavern)

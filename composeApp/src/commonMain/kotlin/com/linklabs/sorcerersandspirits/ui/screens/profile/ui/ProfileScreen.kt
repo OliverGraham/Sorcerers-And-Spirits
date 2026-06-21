@@ -17,6 +17,9 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -24,6 +27,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -31,6 +36,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
@@ -39,6 +45,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewMode
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -53,10 +60,13 @@ import sorcerersandspirits.composeapp.generated.resources.profile_delete_confirm
 import sorcerersandspirits.composeapp.generated.resources.profile_delete_confirm_message
 import sorcerersandspirits.composeapp.generated.resources.profile_delete_confirm_title
 import sorcerersandspirits.composeapp.generated.resources.profile_display_name_label
+import sorcerersandspirits.composeapp.generated.resources.profile_name_update_error
+import sorcerersandspirits.composeapp.generated.resources.profile_name_update_success
 import sorcerersandspirits.composeapp.generated.resources.profile_save
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_placeholder
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_title
 import sorcerersandspirits.composeapp.generated.resources.profile_title
+import sorcerersandspirits.composeapp.generated.resources.sign_in_name_taken_message
 
 @Composable
 internal fun ProfileScreen(
@@ -64,10 +74,28 @@ internal fun ProfileScreen(
     viewModel: ProfileScreenViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+
+    val nameUpdateSuccessMessage = stringResource(resource = Res.string.profile_name_update_success)
+    val nameTakenMessage = stringResource(resource = Res.string.sign_in_name_taken_message)
+    val nameUpdateErrorMessage = stringResource(resource = Res.string.profile_name_update_error)
+
     LaunchedEffect(Unit) {
         viewModel.eventChannelFlow.collect { event ->
             when (event) {
                 is ProfileEvent.ProfileDeleted -> onProfileDeleted()
+
+                is ProfileEvent.DisplayNameUpdated -> {
+                    val message =
+                        when (event.result) {
+                            DisplayNameResult.SUCCESS -> nameUpdateSuccessMessage
+                            DisplayNameResult.NAME_TAKEN -> nameTakenMessage
+                            DisplayNameResult.ERROR -> nameUpdateErrorMessage
+                        }
+                    // Shown on its own scope so a lingering snackbar never stalls later events.
+                    coroutineScope.launch { snackbarHostState.showSnackbar(message = message) }
+                }
             }
         }
     }
@@ -75,15 +103,18 @@ internal fun ProfileScreen(
     val uiState by viewModel.uiStateFlow.collectAsState()
     val linkResult by viewModel.linkResultFlow.collectAsState()
 
-    ProfileScreen(
-        uiState = uiState,
-        linkResult = linkResult,
-        onUpdateDisplayName = viewModel::onUpdateDisplayName,
-        onDeleteProfile = viewModel::onDeleteProfile,
-        onLinkWithSocialMethod = viewModel::onLinkWithSocialMethod,
-        onLinkWithEmail = viewModel::onLinkWithEmail,
-        modifier = modifier,
-    )
+    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) {
+        paddingValues ->
+        ProfileScreen(
+            uiState = uiState,
+            linkResult = linkResult,
+            onUpdateDisplayName = viewModel::onUpdateDisplayName,
+            onDeleteProfile = viewModel::onDeleteProfile,
+            onLinkWithSocialMethod = viewModel::onLinkWithSocialMethod,
+            onLinkWithEmail = viewModel::onLinkWithEmail,
+            modifier = Modifier.padding(paddingValues = paddingValues),
+        )
+    }
 }
 
 @Composable

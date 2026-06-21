@@ -284,13 +284,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   3. Xcode: add the **Sign in with Apple** capability to the `iosApp` target — see SS-087.
   4. Verify on device/simulator: the Apple button presents the sheet and linking succeeds.
 
-### SS-109 — ProfileScreen name-change success/failure feedback
-- [ ] Not completed
-- **Goal:** After a name change on the ProfileScreen, show a confirmation message (likely a
-  snackbar) reporting whether the change succeeded or failed.
-- **Steps:** Surface the result of the name-change operation to the UI; show a success snackbar on
-  success and an error message on failure.
-
 ---
 
 ## Game Stats & Leaderboard

@@ -24,6 +24,8 @@
 
     <string name="profile_title">Profile</string>
     <string name="profile_display_name_label">Display name</string>
+    <string name="profile_name_update_success">Name updated.</string>
+    <string name="profile_name_update_error">Couldn\'t update your name. Please try again.</string>
     <string name="profile_save">Save</string>
     <string name="profile_cancel">Cancel</string>
     <string name="profile_stats_title">Your stats</string>

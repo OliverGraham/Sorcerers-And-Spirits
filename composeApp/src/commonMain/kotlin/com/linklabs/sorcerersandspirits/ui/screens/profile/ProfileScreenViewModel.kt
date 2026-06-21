@@ -49,7 +49,10 @@ class ProfileScreenViewModel(
     }
 
     fun onUpdateDisplayName(newDisplayName: String) {
-        viewModelScope.launch { updateProfileDisplayNameUseCase(displayName = newDisplayName) }
+        viewModelScope.launch {
+            val result = updateProfileDisplayNameUseCase(displayName = newDisplayName)
+            _eventChannelFlow.send(element = ProfileEvent.DisplayNameUpdated(result = result))
+        }
     }
 
     fun onDeleteProfile() {

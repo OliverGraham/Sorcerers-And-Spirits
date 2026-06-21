@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.profile
 import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
@@ -92,6 +93,25 @@ class ProfileScreenViewModelTest {
 
         coVerify(exactly = 1) { updateProfileDisplayNameUseCase(displayName = NEW_NAME) }
     }
+
+    @Test
+    fun `When the display name update finishes, then its result is emitted as an event`() =
+        runTest {
+            coEvery { updateProfileDisplayNameUseCase(displayName = NEW_NAME) } returns
+                DisplayNameResult.NAME_TAKEN
+            val viewModel = createViewModel()
+
+            viewModel.eventChannelFlow.test {
+                viewModel.onUpdateDisplayName(newDisplayName = NEW_NAME)
+                assertEquals(
+                    expected =
+                        ProfileEvent.DisplayNameUpdated(result = DisplayNameResult.NAME_TAKEN),
+                    actual = awaitItem(),
+                )
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
 
     @Test
     fun `When the profile is deleted, then a fresh one is provisioned and the deleted event is emitted`() =

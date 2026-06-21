@@ -113,16 +113,20 @@ private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
 
 /**
  * The lone opponent to pre-target when the user has nothing to choose this turn. With a single
- * opponent and a normal attack as the only available action, there is no target decision to make,
- * so the UI selects that opponent automatically rather than requiring a manual tap. Null whenever a
- * real choice exists: more than one opponent, an activated ability is also available, or it is not
- * the user's free-choice turn.
+ * opponent and a normal attack as the only action the user can actually take, there is no target
+ * decision to make, so the UI selects that opponent automatically rather than requiring a manual
+ * tap. Only enabled controls count: a disabled ability is not a real choice, so leaving it in the
+ * list must not suppress auto-targeting — otherwise the Gambler's granted All-In second attack,
+ * which sits in an idle turn alongside the now-disabled All-In control, could never be rolled in a
+ * two-player match (SS-116). Null whenever a real choice exists: more than one opponent, another
+ * enabled activated ability is available, or it is not the user's free-choice turn.
  */
 private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
     val isStartOfUsersTurn = isItThisUsersTurn && combatActionState is CombatActionState.Idle
     if (!isStartOfUsersTurn) return null
 
-    val isNormalAttackOnlyAction = combatControls.singleOrNull() is ArenaCombatControl.NormalAttack
+    val enabledControls = combatControls.filter { it.enabled }
+    val isNormalAttackOnlyAction = enabledControls.singleOrNull() is ArenaCombatControl.NormalAttack
     if (!isNormalAttackOnlyAction) return null
 
     return playerMap.keys.singleOrNull { it != userPlayerId }

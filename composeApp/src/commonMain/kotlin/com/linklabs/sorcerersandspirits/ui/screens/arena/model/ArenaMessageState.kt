@@ -151,10 +151,18 @@ sealed interface ArenaMessageState {
         data class TemptFate(
             override val id: String,
             val originalRoll: Int,
+            val rawReroll: Int,
             val finalRoll: Int,
             val attackerName: String,
             val outcome: NormalRollMessageType,
-        ) : MirrorImage
+        ) : MirrorImage {
+            /**
+             * The reroll shown as the raw die and its -1 penalty (e.g. "4 - 1"), mirroring the
+             * Summon Minion hit-point display, so the player sees what was rolled and the penalty
+             * Mirror Image applied to it.
+             */
+            val rerollDisplay: String = "$rawReroll - 1"
+        }
     }
 
     @Immutable
@@ -348,6 +356,7 @@ fun ArenaMessage.toState(id: String, classNames: Map<String, String>): ArenaMess
             ArenaMessageState.MirrorImage.TemptFate(
                 id = id,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
+                rawReroll = rerolledMirrorImageDie.reroll ?: rerolledMirrorImageDie.originalRoll,
                 finalRoll = rerolledMirrorImageDie.finalValue,
                 attackerName = classNames.resolveClassName(userId = attackerUserId),
                 outcome = outcome,

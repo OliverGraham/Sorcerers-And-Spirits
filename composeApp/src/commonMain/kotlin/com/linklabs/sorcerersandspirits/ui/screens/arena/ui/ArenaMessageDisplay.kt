@@ -310,28 +310,28 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_armor_broke,
-                        finalRoll,
+                        rerollDisplay,
                         attackerName,
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_armor_held,
-                        finalRoll,
+                        rerollDisplay,
                         attackerName,
                     )
 
                 NormalRollMessageType.Damage ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_damage,
-                        finalRoll,
+                        rerollDisplay,
                         attackerName,
                     )
 
                 NormalRollMessageType.Knockout ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_knockout,
-                        finalRoll,
+                        rerollDisplay,
                         attackerName,
                     )
             }

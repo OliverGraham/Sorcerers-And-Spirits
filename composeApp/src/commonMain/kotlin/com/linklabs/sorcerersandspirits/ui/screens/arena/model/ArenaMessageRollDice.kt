@@ -19,7 +19,7 @@ internal fun ArenaMessageState.rolledDice(): List<Int>? =
         is ArenaMessageState.Persuade.StrumLute -> listOf(diceRoll)
         is ArenaMessageState.Encore.Roll -> listOf(encoreDie)
         is ArenaMessageState.AllIn -> listOf(singleDie)
-        is ArenaMessageState.MirrorImage.TemptFate -> listOf(finalRoll)
+        is ArenaMessageState.MirrorImage.TemptFate -> listOf(rawReroll)
         else -> null
     }
 

@@ -235,18 +235,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   consumer of that value (or its transitions between counts), not the count logic. Related:
   SS-112/SS-113 (persistent DiceTray + physics), SS-077/SS-078 (dice tech + finalization), SS-068.
 
-### SS-118 — Mirror Image: show the rerolled value and its -1 in the UI
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** When the Illusionist's Mirror Image rerolls a die, the UI should show what the die rolled
-  and then a "-1" next to it (the ability gives the rerolled result -1, result can be 0). Model it on
-  Summon Minion, which shows the Necromancer's hit points plus the skeleton/golem additions, so the
-  player can see the raw roll and the adjustment that produced the final value.
-- **Notes:** UI (plus whatever message field is needed to carry the raw roll). Mirror Image is
-  already wired into the UI by commit `f22f123` ("Wire Illusionist Mirror Image and Impersonate in
-  the UI") — this ticket is the display of the raw roll + its -1, building on that. Related:
-  `MirrorImageHandler.kt`, SS-117 (dice display), SS-107 (roll/adjustment indication), SS-093.
-
 ---
 
 ## Profile & Auth

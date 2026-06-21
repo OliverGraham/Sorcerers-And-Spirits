@@ -45,27 +45,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ArenaCombatControl.kt:164` (`// TODO: Always StringResources`)
 - **Goal:** Replace hardcoded strings with string resources.
 
-### SS-031 — Refactor ArenaScreenState mapping
-- [ ] Not completed
-- **Source:** `ArenaScreenState.kt:79` (`// TODO: Need to refactor this badly`)
-- **Goal:** Refactor the flagged state-mapping code. Likely overlaps SS-017.
-
----
-
-## Common UI
-
-### SS-033 — Replace "slop" + resources in CharacterClassCard
-- [ ] Not completed
-- **Sources:**
-  - `CharacterClassCard.kt:27` (`// TODO: Update Slop`)
-  - `CharacterClassCard.kt:85` (`// TODO Arena: resource, update the slop`)
-- **Goal:** Clean up placeholder ("slop") content and move text to string resources.
-
-### SS-034 — Update class-selection logic
-- [ ] Not completed
-- **Source:** `CharacterClassCards.kt:18` (`// TODO Arena: Update class-selection logic`)
-- **Goal:** Revisit the class-selection logic (no duplicate classes, selection UX).
-
 ---
 
 ## App / Main
@@ -75,20 +54,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `AppViewModel.kt:76` (`// TODO: if user isSignedIn but their profile doesn't exist, then the app will hang`)
 - **Goal:** Prevent the app hang when a signed-in user has no profile.
 - **Steps:** Detect the missing-profile case; create a profile or route to an error/recovery flow.
-
-### SS-037 — Decide SettingsDrawer content
-- [ ] Not completed
-- **Source:** `SettingsDrawer.kt:32` (`// TODO: What to do with this?`)
-- **Goal:** Determine the SettingsDrawer's purpose/content or remove it.
-
----
-
-## Data layer
-
-### SS-044 — Connecting messages in ConnectToArena
-- [ ] Not completed
-- **Source:** `ConnectToArena.kt:51` (`// TODO Arena: Add messages for connecting here?`)
-- **Goal:** Decide whether to emit connection messages while joining an arena; add if useful.
 
 ---
 
@@ -110,23 +75,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - [ ] Not completed
 - **Source:** `DiceRoller.kt:16` (`// TODO Enums for values 1 through 6?`)
 - **Goal:** Consider a type-safe enum for die faces (1–6) instead of raw Ints.
-
-### SS-051 — Review ArenaMessage field (Maybe?)
-- [ ] Not completed
-- **Source:** `ArenaMessage.kt:18` (`// TODO: Maybe?`)
-- **Goal:** Resolve the uncertain message field — keep or remove based on actual usage.
-
-### SS-052 — LuckyCoin message approach
-- [ ] Not completed
-- **Source:** `ArenaMessage.kt:41` (`// TODO LuckyCoin is this the right approach for messages?`)
-- **Goal:** Confirm the messaging approach for the Gambler Lucky Coin ability is correct.
-- **Notes:** Related: SS-093 (per-outcome ability message copy — the broader fix this LuckyCoin
-  question is an instance of) and SS-105 (Lucky Coin on a 6 retaliation mechanic bug).
-
-### SS-053 — Docstrings for SpellPotencyRoll
-- [ ] Not completed
-- **Source:** `SpellPotencyRoll.kt:7` (`// TODO: Docstring, etc.`)
-- **Goal:** Add docstrings/cleanup to `SpellPotencyRoll`.
 
 ---
 

@@ -6,17 +6,13 @@ import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponent
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
+import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
-import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeHandler
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge.ChallengeUpdate
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
-import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlin.random.Random
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -34,7 +30,6 @@ import org.koin.core.annotation.KoinViewModel
 class TavernScreenViewModel(
     private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
     private val sendChallengeUseCase: SendChallengeUseCase,
-    private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
 ) : ViewModel() {
 
@@ -46,11 +41,6 @@ class TavernScreenViewModel(
     private val _uiStateFlow = MutableStateFlow<UiState<TavernState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
-    private val loadedUiState
-        get() = (_uiStateFlow.value as? UiState.Loaded)?.data
-
-    private val challengeHandler = initializeChallengeHandler()
-
     private var tavernDataJob: Job? = null
 
     init {
@@ -60,25 +50,6 @@ class TavernScreenViewModel(
     fun retry() {
         _uiStateFlow.value = UiState.Loading
         loadTavernData()
-    }
-
-    private fun loadTavernData() {
-        tavernDataJob?.cancel()
-        tavernDataJob =
-            viewModelScope.launch {
-                getTavernDataFlowUseCase()
-                    .filterNotNull()
-                    .catch { _uiStateFlow.value = UiState.Error }
-                    .collect { data -> updateScreenState(data = data) }
-            }
-    }
-
-    fun showChallengeDialog() {
-        updateChallengeDialogVisibility(isVisible = true)
-    }
-
-    fun hideChallengeDialog() {
-        updateChallengeDialogVisibility(isVisible = false)
     }
 
     fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
@@ -93,11 +64,51 @@ class TavernScreenViewModel(
         }
 
         viewModelScope.launch {
-            challengeHandler.sendChallenges(
-                userTraveler = userTraveler,
-                selectedTravelerStates = selectedTravelerStates,
-            )
+            val event =
+                sendChallenges(
+                    userTraveler = userTraveler,
+                    selectedTravelerStates = selectedTravelerStates,
+                )
+
+            if (event != null) _eventChannelFlow.send(element = event)
         }
+    }
+
+    private suspend fun sendChallenges(
+        userTraveler: TravelerState,
+        selectedTravelerStates: Set<TravelerState>,
+    ): TavernEvent? {
+        val instigator =
+            userTraveler.toChallenger(isInstigator = true, status = ChallengerStatus.Accepted)
+
+        val invitees =
+            selectedTravelerStates.map { travelerState ->
+                travelerState.toChallenger(isInstigator = false, status = ChallengerStatus.Pending)
+            }
+
+        return when (
+            val result = sendChallengeUseCase(instigator = instigator, invitees = invitees)
+        ) {
+            is SendChallengeResult.Success -> null
+
+            is SendChallengeResult.NotEnoughChallengersAvailable ->
+                TavernEvent.NotEnoughChallengersAvailable(
+                    challengerStates = result.unavailableChallengers.map { it.toChallengerState() }
+                )
+
+            is SendChallengeResult.Failure -> TavernEvent.ShowChallengeSendFailed
+        }
+    }
+
+    private fun loadTavernData() {
+        tavernDataJob?.cancel()
+        tavernDataJob =
+            viewModelScope.launch {
+                getTavernDataFlowUseCase()
+                    .filterNotNull()
+                    .catch { _uiStateFlow.value = UiState.Error }
+                    .collect { data -> updateScreenState(data = data) }
+            }
     }
 
     /**
@@ -128,78 +139,9 @@ class TavernScreenViewModel(
         "${ComputerOpponents.ID_PREFIX}match-" +
             "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(from = 0, until = 1_000_000)}"
 
-    fun onAcceptChallenge(challengeId: String) {
-        updateChallengeStatus(challengeId = challengeId, status = ChallengerStatus.Accepted)
-    }
+    private fun updateScreenState(data: TavernData) {
+        val tavernState = data.toState(characterClasses = characterClasses) ?: return
 
-    fun onDeclineChallenge(challengeId: String) {
-        updateChallengeStatus(challengeId = challengeId, status = ChallengerStatus.Declined)
-    }
-
-    private suspend fun updateScreenState(data: TavernData) {
-        val challengeUpdate =
-            challengeHandler.handleChallengeUpdate(
-                previousChallengeState = loadedUiState?.challenge,
-                updatedChallenge = data.challenge,
-                userId = data.profile.userId,
-            )
-
-        when (challengeUpdate) {
-            is ChallengeUpdate.ReadyToStart ->
-                _eventChannelFlow.send(
-                    element = TavernEvent.NavigateToArena(arguments = challengeUpdate.arguments)
-                )
-
-            is ChallengeUpdate.Ongoing -> {
-                val tavernState =
-                    data.toState(
-                        challengeState = challengeUpdate.challengeState,
-                        characterClasses = characterClasses,
-                    ) ?: return
-
-                _uiStateFlow.value = UiState.Loaded(data = tavernState)
-            }
-        }
-    }
-
-    private fun initializeChallengeHandler() =
-        ChallengeHandler(
-            challengeTimer =
-                Timer(
-                    coroutineScope = viewModelScope,
-                    onTimerTick = ::updateChallengeStateSeconds,
-                    onTimerExpiration = ::declineChallenge,
-                ),
-            sendChallengeUseCase = sendChallengeUseCase,
-            updateChallengerStatusUseCase = updateChallengerStatusUseCase,
-        )
-
-    private fun declineChallenge() {
-        val challengeId = loadedUiState?.challenge?.challengeId ?: return
-
-        onDeclineChallenge(challengeId = challengeId)
-    }
-
-    private fun updateChallengeStatus(challengeId: String, status: ChallengerStatus) {
-        viewModelScope.launch {
-            challengeHandler.updateChallengerStatus(challengeId = challengeId, status = status)
-            updateChallengeDialogVisibility(isVisible = false)
-        }
-    }
-
-    private fun updateChallengeDialogVisibility(isVisible: Boolean) {
-        _uiStateFlow.updateLoaded { tavernState ->
-            val challenge = tavernState.challenge ?: return@updateLoaded tavernState
-
-            tavernState.copy(challenge = challenge.copy(showChallengeDialog = isVisible))
-        }
-    }
-
-    private fun updateChallengeStateSeconds(secondsRemaining: Int) {
-        _uiStateFlow.updateLoaded { tavernState ->
-            val challenge = tavernState.challenge ?: return@updateLoaded tavernState
-
-            tavernState.copy(challenge = challenge.copy(secondsRemaining = secondsRemaining))
-        }
+        _uiStateFlow.value = UiState.Loaded(data = tavernState)
     }
 }

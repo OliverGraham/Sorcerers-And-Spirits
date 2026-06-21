@@ -15,7 +15,6 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
-    val challenge: ChallengeState?,
     val characterClasses: List<CharacterClassState> = emptyList(),
 )
 
@@ -53,10 +52,7 @@ data class ChallengerState(
     val status: ChallengerStatus,
 )
 
-internal fun TavernData.toState(
-    challengeState: ChallengeState?,
-    characterClasses: List<CharacterClassState>,
-): TavernState? {
+internal fun TavernData.toState(characterClasses: List<CharacterClassState>): TavernState? {
     val (userTravelers, otherTravelers) =
         travelers.partition { traveler -> traveler.userId == profile.userId }
 
@@ -75,7 +71,6 @@ internal fun TavernData.toState(
                 otherTravelers.map { traveler ->
                     traveler.toTravelerState(isThisTravelerTheUser = false)
                 },
-        challenge = challengeState,
         characterClasses = characterClasses,
     )
 }

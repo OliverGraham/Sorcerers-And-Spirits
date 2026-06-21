@@ -7,11 +7,11 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 class GetTavernDataFlowUseCase(
     private val authenticationRepository: AuthenticationRepository,
@@ -28,14 +28,8 @@ class GetTavernDataFlowUseCase(
             .filterNotNull()
             .distinctUntilChanged(areEquivalent = ::isSameSession)
             .flatMapLatest { profile ->
-                combine(
-                    flow = tavernRepository.getTavernTravelersFlow().distinctUntilChanged(),
-                    flow2 =
-                        tavernRepository
-                            .getActiveChallengeFlow(userId = profile.userId)
-                            .distinctUntilChanged(),
-                ) { travelers, challenge ->
-                    TavernData(profile = profile, travelers = travelers, challenge = challenge)
+                tavernRepository.getTavernTravelersFlow().distinctUntilChanged().map { travelers ->
+                    TavernData(profile = profile, travelers = travelers)
                 }
             }
     }

@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import io.mockk.mockk
@@ -20,7 +19,6 @@ class ChallengeHandlerTest {
         ChallengeHandler(
             challengeTimer =
                 Timer(coroutineScope = backgroundScope, onTimerTick = {}, onTimerExpiration = {}),
-            sendChallengeUseCase = mockk<SendChallengeUseCase>(relaxed = true),
             updateChallengerStatusUseCase = mockk<UpdateChallengerStatusUseCase>(relaxed = true),
             now = { NOW },
         )

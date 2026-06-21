@@ -41,9 +41,10 @@ data class ArenaScreenState(
         messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
     /**
-     * Faces of the most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077).
+     * The most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077) and a new
+     * roll is told apart from the previous one even when it lands on the same faces (SS-117).
      */
-    val latestRolledDice: List<Int> = messages.latestRolledDice()
+    internal val latestRoll: LatestRoll = messages.latestRoll()
 }
 
 @Immutable

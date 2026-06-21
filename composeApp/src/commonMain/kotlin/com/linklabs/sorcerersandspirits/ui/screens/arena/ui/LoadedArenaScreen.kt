@@ -42,7 +42,7 @@ internal fun LoadedArenaScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     scaffoldState: BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
 ) {
-    CompositionLocalProvider(LocalLatestRollDice provides screenState.latestRolledDice) {
+    CompositionLocalProvider(LocalLatestRoll provides screenState.latestRoll) {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             modifier = modifier.fillMaxSize(),

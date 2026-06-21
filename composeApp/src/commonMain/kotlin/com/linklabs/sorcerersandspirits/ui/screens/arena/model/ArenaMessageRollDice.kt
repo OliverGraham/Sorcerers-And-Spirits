@@ -1,5 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
+import androidx.compose.runtime.Immutable
+
 /**
  * The raw die faces this message reported, or null for messages that carry no roll. Single-die
  * rolls return one face; two-die rolls return both. Used to drive the shake-to-roll dice so they
@@ -24,7 +26,17 @@ internal fun ArenaMessageState.rolledDice(): List<Int>? =
     }
 
 /**
- * The die faces of the most recent roll across all players, or empty if nothing has been rolled.
+ * The most recent roll across all players: its die faces, and the id of the message that carried it
+ * so a fresh roll can be told apart from the previous one even when it lands on the same faces.
  */
-internal fun List<ArenaMessageState>.latestRolledDice(): List<Int> =
-    asReversed().firstNotNullOfOrNull { it.rolledDice() } ?: emptyList()
+@Immutable
+internal data class LatestRoll(val dice: List<Int> = emptyList(), val messageId: String? = null)
+
+/** The most recent roll across all players, or an empty [LatestRoll] if nothing has been rolled. */
+internal fun List<ArenaMessageState>.latestRoll(): LatestRoll {
+    for (message in asReversed()) {
+        val dice = message.rolledDice()
+        if (dice != null) return LatestRoll(dice = dice, messageId = message.id)
+    }
+    return LatestRoll()
+}

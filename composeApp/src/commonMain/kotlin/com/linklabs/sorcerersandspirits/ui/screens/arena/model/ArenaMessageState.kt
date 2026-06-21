@@ -212,6 +212,9 @@ sealed interface ArenaMessageState {
         val secondDie: Int,
         val isSuccessful: Boolean,
     ) : ArenaMessageState
+
+    @Immutable
+    data class Doubles(override val id: String, val playerName: String) : ArenaMessageState
 }
 
 /** The four distinct results of a Necromancer's Summon Minion roll, keyed off the rolled die. */
@@ -441,6 +444,12 @@ fun ArenaMessage.toState(id: String, classNames: Map<String, String>): ArenaMess
             )
 
         is ArenaMessage.Teleport.Trigger -> ArenaMessageState.Teleport.Trigger(id = id)
+
+        is ArenaMessage.Doubles ->
+            ArenaMessageState.Doubles(
+                id = id,
+                playerName = classNames.resolveClassName(userId = userId),
+            )
     }
 
 private fun Map<String, String>.resolveClassName(userId: String): String = this[userId] ?: userId

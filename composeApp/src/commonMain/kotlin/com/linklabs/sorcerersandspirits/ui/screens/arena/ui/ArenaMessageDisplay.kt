@@ -13,6 +13,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_all_in_s
 import sorcerersandspirits.composeapp.generated.resources.arena_message_chose_character_class
 import sorcerersandspirits.composeapp.generated.resources.arena_message_dodge_armor_increased
 import sorcerersandspirits.composeapp.generated.resources.arena_message_dodge_armor_unchanged
+import sorcerersandspirits.composeapp.generated.resources.arena_message_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_message_encore_roll_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_encore_roll_success
 import sorcerersandspirits.composeapp.generated.resources.arena_message_encore_trigger
@@ -394,6 +395,9 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         singleDie,
                     )
             }
+
+        is ArenaMessageState.Doubles ->
+            stringResource(resource = Res.string.arena_message_doubles, playerName)
 
         is ArenaMessageState.PrepareAttack ->
             if (isSuccessful) {

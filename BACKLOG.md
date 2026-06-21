@@ -180,14 +180,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Cross-layer (domain message field semantics + UI string). Related: SS-106 (audit),
   SS-054 (splash-damage attacker case).
 
-### SS-107 — Add a Doubles ArenaMessage and UI indication
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** Doubles handling appears implemented (the +1 consecutive-roll bonus, SS-019), but there
-  is no ArenaMessage for rolling doubles and no UI indication of the bonus. Ensure a Doubles message
-  exists. Deep UI work can wait since the Arena UI is slated to change.
-- **Notes:** Related: SS-019 (doublesBonus tracking), SS-068 (UI overhaul), SS-093.
-
 ### SS-116 — All-In bugs (2-player game, observed playing Gambler + Illusionist)
 - [~] In progress — root cause found and fixed; one latent sub-bug split out below.
 - **Source:** Reported bug. Three symptoms seen in one 2-player session; all concern the Gambler's

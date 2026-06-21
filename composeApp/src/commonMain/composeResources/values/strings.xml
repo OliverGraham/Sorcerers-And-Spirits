@@ -81,6 +81,8 @@
 
     <string name="arena_message_killing_momentum">Killing Momentum! The attack presses on</string>
 
+    <string name="arena_message_doubles">Doubles! %1$s rolled a matching pair</string>
+
     <string name="arena_message_dodge_armor_increased">Dodge! Armor class increased</string>
     <string name="arena_message_dodge_armor_unchanged">Dodge! Armor class unchanged</string>
 

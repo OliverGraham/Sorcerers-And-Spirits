@@ -121,6 +121,7 @@ class ArenaMessageEntityTest {
                     secondDie = 6,
                     isSuccessful = true,
                 ),
+                ArenaMessage.Doubles(userId = "attacker"),
             )
     }
 }

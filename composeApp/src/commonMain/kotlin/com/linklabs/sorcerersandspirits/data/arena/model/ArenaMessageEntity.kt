@@ -253,6 +253,10 @@ sealed interface ArenaMessageEntity {
         val isSuccessful: Boolean,
     ) : ArenaMessageEntity
 
+    @Serializable
+    @SerialName(value = DOUBLES)
+    data class Doubles(override val id: String, val userId: String) : ArenaMessageEntity
+
     companion object {
         private const val CHOSE_CHARACTER_CLASS = "ChoseCharacterClass"
         private const val CONNECTED_TO_ARENA = "ConnectedToArena"
@@ -295,6 +299,7 @@ sealed interface ArenaMessageEntity {
         private const val KILLING_MOMENTUM = "KillingMomentum"
         private const val ALL_IN = "AllIn"
         private const val PREPARE_ATTACK = "PrepareAttack"
+        private const val DOUBLES = "Doubles"
     }
 }
 
@@ -443,6 +448,8 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     secondDie = secondDie,
                     isSuccessful = isSuccessful,
                 )
+
+            is ArenaMessageEntity.Doubles -> ArenaMessage.Doubles(userId = userId)
         }
 
     return IncomingArenaMessage(id = id, message = message)
@@ -622,6 +629,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 secondDie = secondDie,
                 isSuccessful = isSuccessful,
             )
+
+        is ArenaMessage.Doubles -> ArenaMessageEntity.Doubles(id = id, userId = userId)
     }
 
 private fun CharacterClassMessageInfo.toEntity() =

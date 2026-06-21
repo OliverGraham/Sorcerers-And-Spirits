@@ -176,6 +176,11 @@ internal class NormalAttackRollHandler(
                     type = type,
                 )
         )
+
+        val isDoubles = firstDie == secondDie
+        if (isDoubles) {
+            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+        }
     }
 
     private fun CombatMutator.triggerMirrorImageIfApplicable(

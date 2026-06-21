@@ -220,23 +220,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
   grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
 
-### SS-117 — Dice UI: problems showing 1 die vs 2 dice
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** Many issues toggling the dice display between a single die and two dice. Steps that roll
-  1d6 (All-In, Summon Minion, Encore, Lucky Coin, Mirror Image reroll, Teleport/HolyShield roll-offs,
-  etc.) vs. steps that roll 2d6 (normal attack, Prepare Attack) don't render the correct number of
-  dice consistently. Audit the DiceTray / roll controls so the number of dice shown always matches the
-  current combat step.
-- **Notes:** UI. The per-step count already exists — `CombatControlDiceCount.kt`'s
-  `ArenaCombatControl.diceCount` returns 1/2/`null` for every control (e.g. All-In/SummonMinion/
-  LuckyCoin/Encore/Teleport = 1, NormalAttack/PrepareAttack/Riposte = 2, Impersonate/Charm = null,
-  Mirror Image = 1 only once a reroll target is selected). So the bug is in the DiceTray/roll-control
-  consumer of that value (or its transitions between counts), not the count logic. Related:
-  SS-112/SS-113 (persistent DiceTray + physics), SS-077/SS-078 (dice tech + finalization), SS-068.
-
----
-
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers
@@ -424,9 +407,9 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Depends on SS-077; do after SS-112. Related: SS-069, SS-077, SS-068, SS-112, SS-113.
 - **Post-SS-112 follow-up (do here):**
   - **Feel-tuning, not yet validated on device:** the shake impulse strength
-    (`MIN/MAX_SHAKE_IMPULSE_DP` in `Die3d.kt`) and the double-tap roll duration
-    (`DOUBLE_TAP_ROLL_MILLIS = 1000` in `DiceTray.kt`) are first-guess constants. Confirm/tune by
-    hand on a real device.
+    (`MIN/MAX_SHAKE_IMPULSE_DP` in `Die3d.kt`) and the await-tumble impulse cadence
+    (`ROLL_TUMBLE_IMPULSE_MILLIS` in `DiceTray.kt`, added in SS-117) are first-guess constants.
+    Confirm/tune by hand on a real device.
   - **Single-tap jostle:** holding starts the live physics so shaking shows a live bounce, so a
     stray single tap on the dice makes them throw-and-settle without rolling. Harmless feedback; if
     it reads as a bug, gate the physics behind a brief minimum hold before it kicks in.
@@ -435,10 +418,16 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
     spacing, color/theming, and the caption styling are all still placeholder — this ticket owns
     finalizing them. The dice are the ONLY roll control now (no roll button), so factor the
     shake/double-tap caption into the final visual.
-  - **Latency reveal:** on release the dice settle on the previous value, then re-tumble to the new
-    one when the rolled result arrives; if there's network latency the brief rest on the old value
-    is visible. Tied to [[connectivity-resilience-priority]] — consider whether the reveal should
-    wait for the result instead of settling first.
+  - **Dice-count transition (1 ↔ 2 dice):** SS-117 made the tray show the correct number of dice for
+    the current step, but the count still pops abruptly — e.g. a single-die ability roll followed by
+    the player's two-die attack snaps from one die to two, which reads as a bug. Design how the tray
+    should add/remove a die gracefully (slide/fade the second die in/out, hold a consistent footprint,
+    or always show two dice and dim the unused one, etc.). UX/design decision, owned here.
+  - **Latency reveal — resolved in SS-117:** the dice used to settle on the previous value on release
+    and only re-tumble once the result arrived (a visible rest on the old value under network
+    latency). SS-117 now keeps them tumbling for the whole round trip and settles only on the result.
+    Tied to [[connectivity-resilience-priority]]; nothing left to do here unless device testing shows
+    the await needs a visible "waiting" treatment when latency is high.
 
 ### SS-079 — Spinning-wheel class selector (replace CharacterClassCards)
 - [ ] In progress — interaction + structure built; Figma visual fidelity remains.

@@ -79,6 +79,10 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
     val primaryRollControl = primaryRollControl()
     val secondaryControls = combatControls.filterNot { it == primaryRollControl }
 
+    // The die count of the roll the dice gesture commits, so while that roll is in flight the tray
+    // tumbles the right number of dice for it rather than the previous roll's shape (SS-117).
+    val expectedDiceCount = primaryRollControl?.diceCount
+
     val isTargetMissing =
         primaryRollControl?.requiresTarget == true && targetedOpponentUserId.isEmpty()
     val onPrimaryRoll: (() -> Unit)? =
@@ -117,7 +121,11 @@ internal fun ArenaState.Combat.ArenaCombat(modifier: Modifier = Modifier) {
                     )
                 }
             }
-            DiceTray(onRoll = onPrimaryRoll, needsTargetHint = isTargetMissing)
+            DiceTray(
+                onRoll = onPrimaryRoll,
+                needsTargetHint = isTargetMissing,
+                expectedDiceCount = expectedDiceCount,
+            )
             UserStatsRow(userPlayer = userPlayer)
         }
     }

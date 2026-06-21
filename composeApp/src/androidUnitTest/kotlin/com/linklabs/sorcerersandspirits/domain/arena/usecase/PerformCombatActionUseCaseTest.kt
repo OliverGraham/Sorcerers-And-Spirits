@@ -453,6 +453,131 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `When an Illusionist plays a copied All-In and rolls a 6, then the copied All-In updates and the Impersonate wrapper is kept`() {
+        // Arrange
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.AllIn())
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            getAbilityRollAction(
+                purpose = AbilityAction.Activated.AllIn(allInAbility = OffensiveAbility.AllIn())
+            )
+        val illusionistUserId = currentAction.attackerUserId
+
+        setupOneDiceRoll(userId = illusionistUserId, die = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updated = outcome.getPlayerById(userId = illusionistUserId).characterClass
+        val impersonate = assertIs<OffensiveAbility.Impersonate>(value = updated.offensiveAbility)
+        val copiedAllIn = assertIs<OffensiveAbility.AllIn>(value = impersonate.impersonatedAbility)
+        assertTrue(actual = copiedAllIn.hasAnotherAttack)
+        assertTrue(actual = copiedAllIn.usedThisTurn)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = illusionistUserId))
+    }
+
+    @Test
+    fun `When an Illusionist with a copied pending second attack finishes their first attack, the wrapper is kept and they attack again`() {
+        // Arrange
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility =
+                                OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
+                        )
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val illusionistUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = illusionistUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updated = outcome.getPlayerById(userId = illusionistUserId).characterClass
+        val impersonate = assertIs<OffensiveAbility.Impersonate>(value = updated.offensiveAbility)
+        val copiedAllIn = assertIs<OffensiveAbility.AllIn>(value = impersonate.impersonatedAbility)
+        assertTrue(actual = !copiedAllIn.hasAnotherAttack)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = illusionistUserId))
+    }
+
+    @Test
+    fun `When a new round begins, an Illusionist who used a copied All-In can use it again`() {
+        // Arrange
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility = OffensiveAbility.AllIn(usedThisTurn = true)
+                        ),
+                    hasActedThisRound = true,
+                )
+        val arguments = createTwoPlayerArguments(defenderClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.isNewRound)
+        val updated = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        val impersonate = assertIs<OffensiveAbility.Impersonate>(value = updated.offensiveAbility)
+        val copiedAllIn = assertIs<OffensiveAbility.AllIn>(value = impersonate.impersonatedAbility)
+        assertTrue(actual = !copiedAllIn.usedThisTurn)
+    }
+
+    @Test
+    fun `When an Illusionist plays a copied Summon Minion, then the copied minion count grows and the wrapper is kept`() {
+        // Arrange
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility = OffensiveAbility.SummonMinion()
+                        )
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            getAbilityRollAction(
+                purpose =
+                    AbilityAction.Activated.SummonMinion(
+                        summonMinionAbility = OffensiveAbility.SummonMinion()
+                    )
+            )
+        val illusionistUserId = currentAction.attackerUserId
+
+        setupOneDiceRoll(userId = illusionistUserId, die = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updated = outcome.getPlayerById(userId = illusionistUserId).characterClass
+        val impersonate = assertIs<OffensiveAbility.Impersonate>(value = updated.offensiveAbility)
+        val copiedMinions =
+            assertIs<OffensiveAbility.SummonMinion>(value = impersonate.impersonatedAbility)
+        assertEquals(expected = 1, actual = copiedMinions.skeletonCount)
+    }
+
+    @Test
     fun `When someone attacks the Gambler and LuckyCoin stops the attack, it is the next player's turn`() {
         // Arrange
         val gambler = TestCharacterClasses.gambler()

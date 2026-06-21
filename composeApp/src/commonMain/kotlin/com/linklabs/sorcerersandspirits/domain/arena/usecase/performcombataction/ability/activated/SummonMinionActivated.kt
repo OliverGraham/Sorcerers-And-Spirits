@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.withEffective
 
 internal class SummonMinionActivated(
     private val combatMutator: CombatMutator,
@@ -45,7 +46,11 @@ internal class SummonMinionActivated(
                     skeletonCount = newSkeletonCount,
                     golemCount = newGolemCount,
                 )
-            attacker.copy(hitPoints = newHp, offensiveAbility = updatedSummonMinionAbility)
+            attacker.copy(
+                hitPoints = newHp,
+                offensiveAbility =
+                    attacker.offensiveAbility.withEffective(updatedSummonMinionAbility),
+            )
         }
 
         resolveTurnEnd()

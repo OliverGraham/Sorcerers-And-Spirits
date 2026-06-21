@@ -59,6 +59,27 @@ class CharacterClassTakeDamageTest {
         assertEquals(expected = 7, actual = damaged.hitPoints)
     }
 
+    @Test
+    fun `Given an Illusionist impersonating a Necromancer with minions, when it takes damage, then the shield absorbs and the Impersonate wrapper is kept`() {
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility =
+                                OffensiveAbility.SummonMinion(skeletonCount = 1, golemCount = 1)
+                        )
+                )
+
+        val damaged = illusionist.takeDamage(damage = 2)
+
+        val impersonate = assertIs<OffensiveAbility.Impersonate>(value = damaged.offensiveAbility)
+        val minions =
+            assertIs<OffensiveAbility.SummonMinion>(value = impersonate.impersonatedAbility)
+        assertEquals(expected = 1, actual = minions.shieldPoints)
+        assertEquals(expected = illusionist.hitPoints, actual = damaged.hitPoints)
+    }
+
     private fun necromancerWithMinions(
         skeletonCount: Int = 0,
         golemCount: Int = 0,

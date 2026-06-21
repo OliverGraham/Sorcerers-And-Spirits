@@ -87,3 +87,14 @@ sealed interface OffensiveAbility : Ability {
  */
 val OffensiveAbility.effective: OffensiveAbility
     get() = if (this is OffensiveAbility.Impersonate) impersonatedAbility else this
+
+/**
+ * Writes back an [updated] effective ability, keeping an Impersonate wrapper intact. An Illusionist
+ * keeps a copied ability until end of match or until another is chosen, so a copied ability that
+ * carries state across a turn (All-In's [OffensiveAbility.AllIn.usedThisTurn]/
+ * [OffensiveAbility.AllIn.hasAnotherAttack], Summon Minion's minion counts) must be re-wrapped
+ * after it mutates rather than replacing the [OffensiveAbility.Impersonate]. For every other
+ * ability this is simply [updated].
+ */
+fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility =
+    if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated

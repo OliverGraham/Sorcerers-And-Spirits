@@ -71,6 +71,43 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `Given a normal attack, when the roll is doubles, then a Doubles message is emitted for the attacker`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+        val attackerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 4, secondDie = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual =
+                outcome.messages.contains(element = ArenaMessage.Doubles(userId = attackerUserId))
+        )
+    }
+
+    @Test
+    fun `Given a normal attack, when the roll is not doubles, then no Doubles message is emitted`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+        val attackerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 5, secondDie = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
     fun `Given a 2-player game, when an attacker rolls equal to a defender's armor, the next combat action is a roll against the defender's health`() {
         // Arrange
         val defenderClass = createCharacterClass(armorClass = 8)

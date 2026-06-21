@@ -15,8 +15,7 @@ sealed interface ArenaMessage {
 
     data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : ArenaMessage
 
-    // TODO(SS-051): Maybe?
-    // data class Doubles(val userId: String) : ArenaMessage
+    data class Doubles(val userId: String) : ArenaMessage
 
     data class NormalRoll(
         val attackerUserId: String,

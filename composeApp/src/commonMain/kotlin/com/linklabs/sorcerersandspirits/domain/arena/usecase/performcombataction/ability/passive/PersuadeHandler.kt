@@ -25,7 +25,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.strumLute() {
         val result = diceRoller.roll1D6(userId = defenderUserId).total
-        if (result < LULL) {
+        if (result < abilityConfig.persuadeLullRoll) {
             handleStrumLuteFailure(persuadeDie = result)
         } else {
             handleStrumLuteSuccess(persuadeDie = result)
@@ -41,7 +41,9 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleStrumLuteSuccess(persuadeDie: Int) {
-        val isCharm = consciousPlayers.size >= 3 && persuadeDie == CHARM
+        val isCharm =
+            consciousPlayers.size >= CHARM_MINIMUM_PLAYERS &&
+                persuadeDie == abilityConfig.persuadeCharmRoll
         if (isCharm) {
             strumLuteToCharm(
                 targetableUserIds =
@@ -92,7 +94,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
-        private const val LULL = 5
-        private const val CHARM = 6
+        // Charm needs at least two non-Bard targets to redirect to, so three conscious players.
+        private const val CHARM_MINIMUM_PLAYERS = 3
     }
 }

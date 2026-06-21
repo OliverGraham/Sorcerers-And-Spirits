@@ -19,6 +19,19 @@ interface RemoteConfigDataSource {
     fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity>
 
     /**
+     * The currently active ability roll thresholds. Falls back to the in-app defaults (which equal
+     * the shipped balance) when nothing has been fetched or the payload can't be parsed.
+     */
+    fun abilityConfig(): AbilityConfigEntity
+
+    /**
+     * The currently active class stat + ability copy, keyed by [ClassCopyKeys]. Falls back to the
+     * in-app defaults (the bundled copy) when nothing has been fetched or the payload can't be
+     * parsed.
+     */
+    fun characterClassCopy(): Map<String, AbilityCopyEntity>
+
+    /**
      * The currently active pool of random traveler names. Falls back to the in-app defaults when
      * nothing has been fetched or the payload can't be parsed.
      */

@@ -10,10 +10,20 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
 
     private fun CombatMutator.prepareAttackOutcome() {
         val result = diceRoller.roll2D6(userId = attackerUserId)
+        val total = result.total
 
-        when (result.total) {
-            10,
-            11 -> {
+        when {
+            total == abilityConfig.prepareAttackBypassHolyShieldRoll -> {
+                updateDefenderHitPoints(hitPoints = 0)
+                HolyShieldHandler.bypassHolyShieldIfApplicable(
+                    combatMutator = this,
+                    defenderDefensiveAbility = defender.defensiveAbility,
+                )
+                addPrepareAttackMessage(result = result, isSuccessful = true)
+                resolveTurnEnd()
+            }
+
+            total in abilityConfig.prepareAttackKnockoutRange -> {
                 updateDefenderHitPoints(hitPoints = 0)
                 addPrepareAttackMessage(result = result, isSuccessful = true)
 
@@ -26,16 +36,6 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                 if (!wasHolyShieldTriggered) {
                     resolveTurnEnd()
                 }
-            }
-
-            12 -> {
-                updateDefenderHitPoints(hitPoints = 0)
-                HolyShieldHandler.bypassHolyShieldIfApplicable(
-                    combatMutator = this,
-                    defenderDefensiveAbility = defender.defensiveAbility,
-                )
-                addPrepareAttackMessage(result = result, isSuccessful = true)
-                resolveTurnEnd()
             }
 
             else -> {

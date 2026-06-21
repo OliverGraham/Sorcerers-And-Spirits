@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.gamerules
 
 import androidx.lifecycle.ViewModel
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -8,13 +9,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.koin.core.annotation.KoinViewModel
 
-// TODO(SS-081): Rules copy is assembled here from static literals. This ViewModel is the single
-//  seam to swap it for RemoteConfig — route the copy through GetCharacterClassesUseCase (or a
-//  parallel copy provider), surfacing UiState.Loading while it fetches and UiState.Error (retry())
-//  on failure.
 @KoinViewModel
-class GameRulesScreenViewModel(private val getCharacterClassesUseCase: GetCharacterClassesUseCase) :
-    ViewModel() {
+class GameRulesScreenViewModel(
+    private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
+    private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
+) : ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<GameRulesState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
@@ -29,7 +28,8 @@ class GameRulesScreenViewModel(private val getCharacterClassesUseCase: GetCharac
     }
 
     private fun loadGameRules() {
-        val classes = getCharacterClassesUseCase().map { it.toState().toRulesState() }
+        val copy = getCharacterClassCopyUseCase()
+        val classes = getCharacterClassesUseCase().map { it.toState().toRulesState(copy = copy) }
 
         _uiStateFlow.value =
             UiState.Loaded(

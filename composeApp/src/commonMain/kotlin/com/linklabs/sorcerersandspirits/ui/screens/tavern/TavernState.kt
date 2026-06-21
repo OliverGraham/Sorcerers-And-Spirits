@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -16,6 +17,7 @@ data class TavernState(
     val userTraveler: TravelerState,
     val otherTravelers: List<TravelerState>,
     val characterClasses: List<CharacterClassState> = emptyList(),
+    val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
 )
 
 @Immutable
@@ -52,7 +54,10 @@ data class ChallengerState(
     val status: ChallengerStatus,
 )
 
-internal fun TavernData.toState(characterClasses: List<CharacterClassState>): TavernState? {
+internal fun TavernData.toState(
+    characterClasses: List<CharacterClassState>,
+    classCopy: CharacterClassCopy,
+): TavernState? {
     val (userTravelers, otherTravelers) =
         travelers.partition { traveler -> traveler.userId == profile.userId }
 
@@ -72,6 +77,7 @@ internal fun TavernData.toState(characterClasses: List<CharacterClassState>): Ta
                     traveler.toTravelerState(isThisTravelerTheUser = false)
                 },
         characterClasses = characterClasses,
+        classCopy = classCopy,
     )
 }
 

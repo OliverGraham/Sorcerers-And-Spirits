@@ -3,6 +3,8 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
 import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSource
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigAbilityConfigProvider
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigRandomNameProvider
@@ -22,7 +24,10 @@ import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
+import com.linklabs.sorcerersandspirits.domain.game.AbilityConfigProvider
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.leaderboard.usecase.GetLeaderboardUseCase
@@ -86,6 +91,8 @@ private fun Module.initializeRepositories() {
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
     singleOf(::FirebaseRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }
+    singleOf(::RemoteConfigAbilityConfigProvider) { bind<AbilityConfigProvider>() }
+    singleOf(::RemoteConfigCharacterClassCopyProvider) { bind<CharacterClassCopyProvider>() }
     singleOf(::RemoteConfigRandomNameProvider) { bind<RandomNameProvider>() }
     singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
@@ -102,6 +109,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::CreateProfileUseCase)
     factoryOf(::DeleteProfileUseCase)
     factoryOf(::ExitArenaUseCase)
+    factoryOf(::GetCharacterClassCopyUseCase)
     factoryOf(::GetCharacterClassesUseCase)
     factoryOf(::GetLeaderboardUseCase)
     factoryOf(::GetActiveChallengeFlowUseCase)

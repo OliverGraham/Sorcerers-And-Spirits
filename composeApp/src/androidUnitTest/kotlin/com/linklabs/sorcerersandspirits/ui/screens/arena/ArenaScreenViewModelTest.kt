@@ -17,10 +17,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -65,6 +67,7 @@ class ArenaScreenViewModelTest {
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase = mockk()
     private val exitArenaUseCase: ExitArenaUseCase = mockk(relaxed = true)
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase = mockk()
+    private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase = mockk()
     private val getUserIdUseCase: GetUserIdUseCase = mockk()
     private val performCombatActionUseCase: PerformCombatActionUseCase = mockk()
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase = mockk(relaxed = true)
@@ -84,6 +87,7 @@ class ArenaScreenViewModelTest {
         Dispatchers.setMain(testDispatcher)
         coEvery { getUserIdUseCase() } returns USER_ID
         every { getCharacterClassesUseCase() } returns TestCharacterClasses.all()
+        every { getCharacterClassCopyUseCase() } returns CharacterClassCopy.EMPTY
         coEvery { coordinateArenaMatchUseCase(any(), any()) } returns arenaMatchFlow
         coEvery {
             performCombatActionUseCase(
@@ -105,6 +109,7 @@ class ArenaScreenViewModelTest {
             coordinateArenaMatchUseCase = coordinateArenaMatchUseCase,
             exitArenaUseCase = exitArenaUseCase,
             getCharacterClassesUseCase = getCharacterClassesUseCase,
+            getCharacterClassCopyUseCase = getCharacterClassCopyUseCase,
             getUserIdUseCase = getUserIdUseCase,
             performCombatActionUseCase = performCombatActionUseCase,
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,

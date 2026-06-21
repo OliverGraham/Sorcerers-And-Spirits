@@ -28,6 +28,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -52,7 +53,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlin.math.PI
 import kotlin.math.atan2
@@ -372,6 +375,7 @@ private fun ClassStatBar(
     modifier: Modifier = Modifier,
 ) {
     var isExpanded by remember { mutableStateOf(value = false) }
+    val classCopy = LocalCharacterClassCopy.current
 
     ElevatedCard(
         onClick = { isExpanded = !isExpanded },
@@ -423,15 +427,17 @@ private fun ClassStatBar(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AbilityChip(
-                    abilityName = offensiveAbilityName(ability = characterClass.offensiveAbility)
+                    abilityName =
+                        classCopy.forAbility(ability = characterClass.offensiveAbility).name
                 )
                 AbilityChip(
-                    abilityName = defensiveAbilityName(ability = characterClass.defensiveAbility)
+                    abilityName =
+                        classCopy.forAbility(ability = characterClass.defensiveAbility).name
                 )
             }
 
             if (isExpanded) {
-                ClassStatDetails(characterClass = characterClass)
+                ClassStatDetails(characterClass = characterClass, classCopy = classCopy)
             }
         }
     }
@@ -476,23 +482,33 @@ private fun AbilityChip(abilityName: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ClassStatDetails(characterClass: CharacterClassState, modifier: Modifier = Modifier) {
+private fun ClassStatDetails(
+    characterClass: CharacterClassState,
+    classCopy: CharacterClassCopy,
+    modifier: Modifier = Modifier,
+) {
+    val health = classCopy[ClassCopyKeys.HEALTH]
+    val armor = classCopy[ClassCopyKeys.ARMOR]
+    val speed = classCopy[ClassCopyKeys.SPEED]
+    val offensive = classCopy.forAbility(ability = characterClass.offensiveAbility)
+    val defensive = classCopy.forAbility(ability = characterClass.defensiveAbility)
+
     Column(
         modifier = modifier.fillMaxWidth().padding(top = 4.dp),
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
         HorizontalDivider()
-        DetailItem(title = "Health · ${characterClass.hitPoints}", description = HEALTH_DESCRIPTION)
-        DetailItem(title = "Armor · ${characterClass.armorClass}", description = ARMOR_DESCRIPTION)
-        DetailItem(title = "Speed · ${characterClass.speed}", description = SPEED_DESCRIPTION)
         DetailItem(
-            title = offensiveAbilityName(ability = characterClass.offensiveAbility),
-            description = offensiveAbilityDescription(ability = characterClass.offensiveAbility),
+            title = "${health.name} · ${characterClass.hitPoints}",
+            description = health.short,
         )
         DetailItem(
-            title = defensiveAbilityName(ability = characterClass.defensiveAbility),
-            description = defensiveAbilityDescription(ability = characterClass.defensiveAbility),
+            title = "${armor.name} · ${characterClass.armorClass}",
+            description = armor.short,
         )
+        DetailItem(title = "${speed.name} · ${characterClass.speed}", description = speed.short)
+        DetailItem(title = offensive.name, description = offensive.short)
+        DetailItem(title = defensive.name, description = defensive.short)
     }
 }
 
@@ -558,6 +574,8 @@ private fun spokeColor(type: CharacterClassType): Color =
 @Composable
 private fun CharacterClassWheelPreview() {
     SorcerersAndSpiritsTheme {
-        CharacterClassWheel(characterClasses = previewCharacterClassStates())
+        CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
+            CharacterClassWheel(characterClasses = previewCharacterClassStates())
+        }
     }
 }

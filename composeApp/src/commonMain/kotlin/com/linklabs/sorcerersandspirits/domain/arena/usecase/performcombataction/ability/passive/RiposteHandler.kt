@@ -25,7 +25,7 @@ internal class RiposteHandler(
 
     private fun CombatMutator.rollRiposte() {
         val result = diceRoller.roll2D6(userId = defenderUserId)
-        val isSuccessful = result.total in SUCCESS_RANGE
+        val isSuccessful = result.total in abilityConfig.riposteSuccessRange
 
         addMessage(
             message =
@@ -55,9 +55,5 @@ internal class RiposteHandler(
                     activeUserIds = setOf(element = defenderUserId),
                 )
         )
-    }
-
-    companion object {
-        private val SUCCESS_RANGE = 6..8
     }
 }

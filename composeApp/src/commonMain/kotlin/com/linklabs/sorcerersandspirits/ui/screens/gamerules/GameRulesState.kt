@@ -1,11 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.screens.gamerules
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.defensiveAbilityDescription
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.defensiveAbilityName
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.offensiveAbilityDescription
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.offensiveAbilityName
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.forAbility
 
 @Immutable
 data class GameRulesState(
@@ -26,20 +24,18 @@ data class ClassRulesState(
 
 @Immutable data class AbilityRulesState(val name: String, val description: String)
 
-internal fun CharacterClassState.toRulesState() =
-    ClassRulesState(
+internal fun CharacterClassState.toRulesState(copy: CharacterClassCopy): ClassRulesState {
+    val offensiveCopy = copy.forAbility(ability = offensiveAbility)
+    val defensiveCopy = copy.forAbility(ability = defensiveAbility)
+
+    return ClassRulesState(
         className = className,
         hitPoints = hitPoints,
         armorClass = armorClass,
         speed = speed,
         offensiveAbility =
-            AbilityRulesState(
-                name = offensiveAbilityName(ability = offensiveAbility),
-                description = offensiveAbilityDescription(ability = offensiveAbility),
-            ),
+            AbilityRulesState(name = offensiveCopy.name, description = offensiveCopy.long),
         defensiveAbility =
-            AbilityRulesState(
-                name = defensiveAbilityName(ability = defensiveAbility),
-                description = defensiveAbilityDescription(ability = defensiveAbility),
-            ),
+            AbilityRulesState(name = defensiveCopy.name, description = defensiveCopy.long),
     )
+}

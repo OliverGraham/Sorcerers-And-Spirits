@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
@@ -42,7 +43,10 @@ internal fun LoadedArenaScreen(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     scaffoldState: BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
 ) {
-    CompositionLocalProvider(LocalLatestRoll provides screenState.latestRoll) {
+    CompositionLocalProvider(
+        LocalLatestRoll provides screenState.latestRoll,
+        LocalCharacterClassCopy provides screenState.classCopy,
+    ) {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             modifier = modifier.fillMaxSize(),

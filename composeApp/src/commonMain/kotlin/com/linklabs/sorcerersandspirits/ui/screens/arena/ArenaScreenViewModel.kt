@@ -13,6 +13,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -50,6 +51,7 @@ class ArenaScreenViewModel(
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val exitArenaUseCase: ExitArenaUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
+    private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
     private val performCombatActionUseCase: PerformCombatActionUseCase,
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase,
@@ -66,6 +68,7 @@ class ArenaScreenViewModel(
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
+    private val classCopy by lazy { getCharacterClassCopyUseCase() }
 
     private val computerOpponentHandler =
         ComputerOpponentHandler(
@@ -316,6 +319,7 @@ class ArenaScreenViewModel(
                 previousState = _uiStateFlow.getLoadedStateOrNull(),
                 userId = userId,
                 characterClasses = characterClasses,
+                classCopy = classCopy,
             )
 
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)

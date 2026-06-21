@@ -17,14 +17,13 @@ internal class AllInActivated(
         addMessage(message = ArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = result))
 
         when (result) {
-            1 -> {
+            abilityConfig.allInSelfKnockoutRoll -> {
                 updateAttackerClass { attacker -> attacker.copy(hitPoints = 0) }
 
                 resolveTurnEnd()
             }
 
-            5,
-            6 -> {
+            in abilityConfig.allInAttackTwiceRange -> {
                 updateAttackerClass { attacker ->
                     val updatedAllIn = allIn.copy(hasAnotherAttack = true, usedThisTurn = true)
                     attacker.copy(

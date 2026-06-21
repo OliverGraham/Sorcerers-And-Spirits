@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 
@@ -26,6 +27,7 @@ data class ArenaScreenState(
     val participantClassNames: Map<String, String>,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
+    val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
     val pendingFinishedState: ArenaState.Finished? = null,
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
@@ -139,6 +141,7 @@ internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
     characterClasses: List<CharacterClassState> = emptyList(),
+    classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
 ): ArenaStateUpdate {
     val userPlayer = playerMap.getValue(key = userId)
 
@@ -237,6 +240,7 @@ internal fun ArenaMatch.toUpdatedState(
             participantClassNames = participantClassNames,
             gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
             characterClasses = characterClasses,
+            classCopy = classCopy,
             pendingFinishedState = pendingFinishedState,
         )
 

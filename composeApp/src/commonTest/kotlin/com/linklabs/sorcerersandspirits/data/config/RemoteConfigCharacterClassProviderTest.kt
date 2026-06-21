@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.config
 
+import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
@@ -67,6 +68,11 @@ class RemoteConfigCharacterClassProviderTest {
         override suspend fun initialize() = Unit
 
         override fun characterClassStats() = stats
+
+        override fun abilityConfig() =
+            AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
+
+        override fun characterClassCopy() = emptyMap<String, AbilityCopyEntity>()
 
         override fun randomTravelerNames() = emptyList<String>()
 

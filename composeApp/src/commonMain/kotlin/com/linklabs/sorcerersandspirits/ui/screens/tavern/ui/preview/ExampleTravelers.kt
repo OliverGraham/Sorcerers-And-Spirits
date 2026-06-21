@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview
 
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
@@ -97,4 +99,9 @@ val exampleRecipientChallengeState =
     )
 
 val exampleTavernState =
-    TavernState(userTraveler = exampleUserTraveler, otherTravelers = exampleOtherTravelers)
+    TavernState(
+        userTraveler = exampleUserTraveler,
+        otherTravelers = exampleOtherTravelers,
+        characterClasses = previewCharacterClassStates(),
+        classCopy = previewCharacterClassCopy(),
+    )

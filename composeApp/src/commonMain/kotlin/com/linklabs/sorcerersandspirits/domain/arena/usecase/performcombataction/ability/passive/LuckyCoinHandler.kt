@@ -26,7 +26,7 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.flipLuckyCoin() {
         val result = diceRoller.roll1D6(userId = defenderUserId).total
 
-        if (result == 6) {
+        if (result == abilityConfig.luckyCoinHighRollerRoll) {
             triggerHighRoller()
         } else {
             handleNormalRoll(luckyCoinArmorBonus = result)
@@ -59,7 +59,7 @@ internal class LuckyCoinHandler(
         if (isKnockout) {
             handleAttackerKnockout()
         } else {
-            handleNormalRoll(luckyCoinArmorBonus = 6)
+            handleNormalRoll(luckyCoinArmorBonus = abilityConfig.luckyCoinHighRollerRoll)
         }
     }
 

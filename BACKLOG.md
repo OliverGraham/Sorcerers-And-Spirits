@@ -213,33 +213,12 @@ are archived in [COMPLETED.md](COMPLETED.md).
   (ArenaScreenViewModelTest: disabled All-In beside attack → lone opponent auto-targeted); test 874
   (enabled Prepare Attack → no auto-target) still green, preserving the intentional "don't auto-
   attack when you have a real ability choice" behavior. Full unit suite green.
-- **Remaining (split to SS-119):** using an *impersonated* activated ability corrupts the Impersonate
-  wrapper — see SS-119. Not what blocked usage (that was the auto-target bug), but a real latent bug.
+- **Follow-up done (SS-119):** the latent Impersonate-wrapper corruption found during this diagnosis
+  has since been fixed and archived in COMPLETED.md.
 - **Verify on device:** confirm the Gambler can roll the granted second attack and re-use All-In each
   round in a live 2-player match; confirm an Illusionist can impersonate All-In and play it through.
 - **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
   grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
-
-### SS-119 — Using an impersonated activated ability destroys the Impersonate wrapper
-- [ ] Not completed
-- **Source:** Found while fixing SS-116.
-- **Goal:** When an Illusionist plays a *copied* activated ability, the domain handler overwrites the
-  Illusionist's `offensiveAbility` with the bare copied ability, losing the
-  `OffensiveAbility.Impersonate` wrapper. `AllInActivated` does
-  `updateAttackerClass { it.copy(offensiveAbility = allIn.copy(...)) }` (and `SummonMinionActivated`
-  does the same with the bare `SummonMinion`), so after one use the Illusionist is no longer an
-  Impersonator — breaking the rule that a copy lasts "until end of match or until another is chosen"
-  (they can no longer re-impersonate), and moving per-use state (All-In `usedThisTurn`/
-  `hasAnotherAttack`, Summon Minion `skeletonCount`/`golemCount`) onto a bare ability instead of the
-  wrapped copy.
-- **Steps:** Have the activated handlers preserve the wrapper — when the acting player's current
-  offensive ability is `Impersonate`, re-wrap the mutated copied ability as
-  `Impersonate(impersonatedAbility = …)` rather than replacing it. Add domain tests for an Illusionist
-  impersonating All-In (1/3/6 outcomes) and Summon Minion, asserting the wrapper survives and minion/
-  All-In state lands on the copied ability. PrepareAttack is a stateless `data object`, so it is
-  unaffected.
-- **Notes:** Domain (`AllInActivated`, `SummonMinionActivated`, and the `effective` resolution in
-  `Ability.kt`). Related: SS-116, SS-099 (redundant-Impersonate disable).
 
 ### SS-117 — Dice UI: problems showing 1 die vs 2 dice
 - [ ] Not completed

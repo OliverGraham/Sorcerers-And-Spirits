@@ -12,6 +12,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.effective
+import com.linklabs.sorcerersandspirits.domain.game.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
 internal class CombatMutator(
@@ -148,12 +150,15 @@ internal class CombatMutator(
      */
     private fun grantAllInSecondAttackIfApplicable(): Boolean {
         val turnPlayer = updatedPlayerMap.getValue(key = originalTurnUserId).characterClass
-        val allIn = turnPlayer.offensiveAbility as? OffensiveAbility.AllIn ?: return false
+        val allIn = turnPlayer.offensiveAbility.effective as? OffensiveAbility.AllIn ?: return false
         if (!allIn.hasAnotherAttack) return false
         if (!turnPlayer.isConscious()) return false
 
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
-            characterClass.copy(offensiveAbility = allIn.copy(hasAnotherAttack = false))
+            val clearedAllIn = allIn.copy(hasAnotherAttack = false)
+            characterClass.copy(
+                offensiveAbility = characterClass.offensiveAbility.withEffective(clearedAllIn)
+            )
         }
         setNextCombatAction(
             nextAction = NextCombatAction.Idle(activeUserIds = setOf(originalTurnUserId))
@@ -196,10 +201,13 @@ internal class CombatMutator(
 
     /**
      * Clears per-turn ability state so a new turn starts clean. All-In's [usedThisTurn] guards it
-     * to once per turn, so it must be released when the owner's next turn begins.
+     * to once per turn, so it must be released when the owner's next turn begins — including when
+     * an Illusionist is using a copied All-In, where it lives inside the Impersonate wrapper.
      */
-    private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility =
-        if (this is OffensiveAbility.AllIn) copy(usedThisTurn = false) else this
+    private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility {
+        val allIn = effective as? OffensiveAbility.AllIn ?: return this
+        return withEffective(allIn.copy(usedThisTurn = false))
+    }
 
     /**
      * Resets Mirror Image unless the next action is the Health roll of the same attack.

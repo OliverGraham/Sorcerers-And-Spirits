@@ -62,6 +62,15 @@ sealed interface OffensiveAbilityState : AbilityState {
     @Immutable data object None : OffensiveAbilityState
 }
 
+/**
+ * The offensive ability whose effect actually applies, mirroring the domain
+ * [com.linklabs.sorcerersandspirits.domain.game.effective]: an Illusionist that copied an ability
+ * resolves to the copy, so derived UI (e.g. the minion shield in the hit-point display) reflects
+ * the impersonated ability rather than the wrapper. Every other ability is itself.
+ */
+internal val OffensiveAbilityState.effective: OffensiveAbilityState
+    get() = if (this is OffensiveAbilityState.Impersonate) impersonatedAbility else this
+
 internal fun DefensiveAbility.toState(): DefensiveAbilityState =
     when (this) {
         is DefensiveAbility.Dodge -> DefensiveAbilityState.Dodge(armorBonus = armorBonus)

@@ -24,7 +24,7 @@ data class CharacterClass(
      */
     fun takeDamage(damage: Int): CharacterClass {
         val minions =
-            offensiveAbility as? OffensiveAbility.SummonMinion
+            offensiveAbility.effective as? OffensiveAbility.SummonMinion
                 ?: return copy(hitPoints = hitPoints - damage)
 
         val absorbedByShield = minOf(damage, minions.shieldPoints)
@@ -32,10 +32,11 @@ data class CharacterClass(
         val survivingGolems = minOf(minions.golemCount, survivingShield / 2)
         val survivingSkeletons = survivingShield - survivingGolems * 2
 
+        val survivingMinions =
+            minions.copy(skeletonCount = survivingSkeletons, golemCount = survivingGolems)
         return copy(
             hitPoints = hitPoints - (damage - absorbedByShield),
-            offensiveAbility =
-                minions.copy(skeletonCount = survivingSkeletons, golemCount = survivingGolems),
+            offensiveAbility = offensiveAbility.withEffective(survivingMinions),
         )
     }
 

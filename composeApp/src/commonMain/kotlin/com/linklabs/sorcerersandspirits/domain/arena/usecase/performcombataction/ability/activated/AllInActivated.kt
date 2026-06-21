@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.withEffective
 
 internal class AllInActivated(
     private val combatMutator: CombatMutator,
@@ -25,8 +26,9 @@ internal class AllInActivated(
             5,
             6 -> {
                 updateAttackerClass { attacker ->
+                    val updatedAllIn = allIn.copy(hasAnotherAttack = true, usedThisTurn = true)
                     attacker.copy(
-                        offensiveAbility = allIn.copy(hasAnotherAttack = true, usedThisTurn = true)
+                        offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn)
                     )
                 }
 
@@ -37,7 +39,10 @@ internal class AllInActivated(
 
             else -> {
                 updateAttackerClass { attacker ->
-                    attacker.copy(offensiveAbility = allIn.copy(usedThisTurn = true))
+                    val updatedAllIn = allIn.copy(usedThisTurn = true)
+                    attacker.copy(
+                        offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn)
+                    )
                 }
 
                 setNextCombatAction(

@@ -26,7 +26,7 @@ data class CharacterClassState(
 
     private fun buildHitPointsDisplay(): String {
         val shieldPoints =
-            (offensiveAbility as? OffensiveAbilityState.SummonMinion)?.shieldPoints ?: 0
+            (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.shieldPoints ?: 0
         return if (shieldPoints > 0) "$hitPoints + $shieldPoints" else hitPoints.toString()
     }
 }

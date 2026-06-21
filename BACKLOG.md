@@ -189,28 +189,57 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Related: SS-019 (doublesBonus tracking), SS-068 (UI overhaul), SS-093.
 
 ### SS-116 — All-In bugs (2-player game, observed playing Gambler + Illusionist)
-- [ ] Not completed
+- [~] In progress — root cause found and fixed; one latent sub-bug split out below.
 - **Source:** Reported bug. Three symptoms seen in one 2-player session; all concern the Gambler's
   All-In activated ability (`AllInActivated.kt`).
 - **Symptoms:**
   1. **Second attack not rollable in the UI.** All-In on a 5/6 (attack twice this round) resolved
      correctly in state, but the UI did not let the player roll the dice for the granted second
-     attack after the first attack finished. The domain grant works (SS-104); the roll just never
-     becomes available to the user — likely the combat controls / DiceTray don't re-arm for the
-     continued turn.
-  2. **usedThisTurn not resetting.** All-In should be usable again on the player's later turns/rounds,
-     but it stayed disabled after one use — i.e. it behaved once-per-match, not once-per-turn. SS-114
-     was meant to fix exactly this (clear `usedThisTurn` on new-round reset), so this is a regression
-     or an incomplete fix; verify `resetForNewTurn`/`resetPlayersForNewRound` actually fire in this
-     flow.
-  3. **Impersonated All-In unusable.** When the Illusionist Impersonated All-In, they were not able
-     to use it. The copied offensive ability does not become a usable activated control for the
-     Illusionist.
-- **Notes:** Domain + UI. Related: SS-104 (second-attack grant), SS-114 (usedThisTurn reset), and the
-  Illusionist Impersonate path. Likely splits into per-symptom tickets once root causes are known.
-  Foundation already landed: commit `f22f123` ("Wire Illusionist Mirror Image and Impersonate in the
-  UI") wired the Impersonate controls + `ArenaScreenViewModel`, so symptom 3 is a gap in that wiring,
-  not new work.
+     attack after the first attack finished.
+  2. **usedThisTurn not resetting.** All-In appeared stuck/unusable on later turns — looked like it
+     behaved once-per-match, not once-per-turn.
+  3. **Impersonated All-In unusable.** When the Illusionist Impersonated All-In, they could not see
+     the activation through (its follow-up attack could not be rolled).
+- **Root cause (FIXED 2026-06-20):** all three were the same UI bug, not domain. The domain is
+  correct and fully covered (PerformCombatActionUseCaseTest: second-attack grant, finish-second-
+  attack, new-round `usedThisTurn` reset, Impersonate). The break was
+  `ArenaScreenState.deriveAutoTargetedOpponentUserId` (SS-101): it suppressed the 2-player lone-
+  opponent auto-target whenever *any* second control was present, counting even a **disabled** one.
+  After All-In resolves, the Gambler sits in an idle turn with `[NormalAttack(enabled),
+  All-In(disabled)]`, so auto-target returned null and the dice stayed locked on "Tap an enemy to
+  target" — the granted second attack (and the impersonated All-In's follow-up attack) could never be
+  rolled, which also made All-In *feel* un-reset. Fix: only **enabled** controls count as a real
+  choice, so a lone disabled ability no longer suppresses auto-targeting. Regression test added
+  (ArenaScreenViewModelTest: disabled All-In beside attack → lone opponent auto-targeted); test 874
+  (enabled Prepare Attack → no auto-target) still green, preserving the intentional "don't auto-
+  attack when you have a real ability choice" behavior. Full unit suite green.
+- **Remaining (split to SS-119):** using an *impersonated* activated ability corrupts the Impersonate
+  wrapper — see SS-119. Not what blocked usage (that was the auto-target bug), but a real latent bug.
+- **Verify on device:** confirm the Gambler can roll the granted second attack and re-use All-In each
+  round in a live 2-player match; confirm an Illusionist can impersonate All-In and play it through.
+- **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
+  grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
+
+### SS-119 — Using an impersonated activated ability destroys the Impersonate wrapper
+- [ ] Not completed
+- **Source:** Found while fixing SS-116.
+- **Goal:** When an Illusionist plays a *copied* activated ability, the domain handler overwrites the
+  Illusionist's `offensiveAbility` with the bare copied ability, losing the
+  `OffensiveAbility.Impersonate` wrapper. `AllInActivated` does
+  `updateAttackerClass { it.copy(offensiveAbility = allIn.copy(...)) }` (and `SummonMinionActivated`
+  does the same with the bare `SummonMinion`), so after one use the Illusionist is no longer an
+  Impersonator — breaking the rule that a copy lasts "until end of match or until another is chosen"
+  (they can no longer re-impersonate), and moving per-use state (All-In `usedThisTurn`/
+  `hasAnotherAttack`, Summon Minion `skeletonCount`/`golemCount`) onto a bare ability instead of the
+  wrapped copy.
+- **Steps:** Have the activated handlers preserve the wrapper — when the acting player's current
+  offensive ability is `Impersonate`, re-wrap the mutated copied ability as
+  `Impersonate(impersonatedAbility = …)` rather than replacing it. Add domain tests for an Illusionist
+  impersonating All-In (1/3/6 outcomes) and Summon Minion, asserting the wrapper survives and minion/
+  All-In state lands on the copied ability. PrepareAttack is a stateless `data object`, so it is
+  unaffected.
+- **Notes:** Domain (`AllInActivated`, `SummonMinionActivated`, and the `effective` resolution in
+  `Ability.kt`). Related: SS-116, SS-099 (redundant-Impersonate disable).
 
 ### SS-117 — Dice UI: problems showing 1 die vs 2 dice
 - [ ] Not completed

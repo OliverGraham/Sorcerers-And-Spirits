@@ -897,6 +897,28 @@ class ArenaScreenViewModelTest {
         }
 
     @Test
+    fun `Given a two-player idle turn whose only enabled action is attack beside a disabled All-In, then the lone opponent is auto-targeted`() =
+        runTest {
+            val gambler =
+                TestCharacterClasses.gambler()
+                    .copy(
+                        offensiveAbility =
+                            OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
+                    )
+
+            val combatState =
+                combatViewModel(
+                        nextCombatAction = idleTurn(USER_ID),
+                        playerMap = twoPlayerMap(userClass = gambler),
+                    )
+                    .requireCombatState()
+
+            val allInControl = combatState.activatedControlFor<AbilityActionState.Activated.AllIn>()
+            assertFalse(actual = allInControl.enabled)
+            assertEquals(expected = OPPONENT_ID, actual = combatState.autoTargetedOpponentUserId)
+        }
+
+    @Test
     fun `Given an idle turn for the user's Illusionist, then an Impersonate control that requires a target is offered`() =
         runTest {
             val combatState =

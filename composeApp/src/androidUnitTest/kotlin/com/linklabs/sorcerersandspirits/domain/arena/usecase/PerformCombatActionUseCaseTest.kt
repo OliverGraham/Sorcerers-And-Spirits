@@ -2053,6 +2053,31 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
     }
 
+    @Test
+    fun `When a new round begins, a Gambler who already used All-In can use it again`() {
+        // Arrange
+        val gambler =
+            TestCharacterClasses.gambler()
+                .copy(
+                    offensiveAbility = OffensiveAbility.AllIn(usedThisTurn = true),
+                    hasActedThisRound = true,
+                )
+        val arguments = createTwoPlayerArguments(defenderClass = gambler)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.isNewRound)
+        val updatedGambler = outcome.getPlayerById(userId = DEFAULT_DEFENDER_ID).characterClass
+        val updatedAllIn = assertIs<OffensiveAbility.AllIn>(value = updatedGambler.offensiveAbility)
+        assertTrue(actual = !updatedAllIn.usedThisTurn)
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 

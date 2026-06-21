@@ -166,7 +166,7 @@ internal class CombatMutator(
         val newRoundNumber = roundNumber + 1
         updatedRoundNumber = newRoundNumber
 
-        resetAllPlayersActed()
+        resetPlayersForNewRound()
         messages.add(element = ArenaMessage.NewRound(roundNumber = newRoundNumber))
 
         val fastestPlayerNextRound = consciousPlayers.maxBy { it.characterClass.speed }
@@ -183,13 +183,23 @@ internal class CombatMutator(
         return candidates.maxByOrNull { it.characterClass.speed }
     }
 
-    private fun resetAllPlayersActed() {
+    private fun resetPlayersForNewRound() {
         consciousPlayers.forEach { player ->
             updatePlayerClass(userId = player.userId) { characterClass ->
-                characterClass.copy(hasActedThisRound = false)
+                characterClass.copy(
+                    hasActedThisRound = false,
+                    offensiveAbility = characterClass.offensiveAbility.resetForNewTurn(),
+                )
             }
         }
     }
+
+    /**
+     * Clears per-turn ability state so a new turn starts clean. All-In's [usedThisTurn] guards it
+     * to once per turn, so it must be released when the owner's next turn begins.
+     */
+    private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility =
+        if (this is OffensiveAbility.AllIn) copy(usedThisTurn = false) else this
 
     /**
      * Resets Mirror Image unless the next action is the Health roll of the same attack.

@@ -86,6 +86,8 @@ class ArenaScreenViewModel(
 
     private var screenStateFlowJob: Job? = null
 
+    private var previousPlayerNames: Map<String, String> = emptyMap()
+
     init {
         loadArenaMatch()
     }
@@ -307,6 +309,7 @@ class ArenaScreenViewModel(
         }
 
         sessionStats.onMatchUpdate(match = this, userId = userId)
+        notifyDepartedOpponents(userId = userId)
 
         val updatedArenaStateUpdate =
             toUpdatedState(
@@ -324,6 +327,27 @@ class ArenaScreenViewModel(
             arenaState = nextState.arenaState,
             characterClasses = nextState.characterClasses,
         )
+    }
+
+    /**
+     * Surfaces a one-off notice for every opponent who has left the arena since the last update
+     * (SS-045). A player only disappears from the shared player map by leaving, so any opponent
+     * present before and now absent has departed — for the last remaining player this is how they
+     * learn the match ended because the other player left rather than being dropped onto the
+     * Finished screen with no explanation.
+     */
+    private fun ArenaMatch.notifyDepartedOpponents(userId: String) {
+        val currentPlayerIds = playerMap.keys
+        val departedOpponentNames =
+            previousPlayerNames.filterKeys { id -> id != userId && id !in currentPlayerIds }.values
+
+        departedOpponentNames.forEach { displayName ->
+            viewModelScope.launch {
+                _eventChannelFlow.send(element = ArenaEvent.OpponentLeft(displayName = displayName))
+            }
+        }
+
+        previousPlayerNames = playerMap.mapValues { (_, player) -> player.displayName }
     }
 
     private fun handleTimerAction(timerAction: TimerAction) {

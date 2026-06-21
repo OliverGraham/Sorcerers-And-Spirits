@@ -90,16 +90,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ConnectToArena.kt:51` (`// TODO Arena: Add messages for connecting here?`)
 - **Goal:** Decide whether to emit connection messages while joining an arena; add if useful.
 
-### SS-045 — UI when match ends due to early leave
-- [ ] Not completed
-- **Source:** `ExitArena.kt:8` (`// TODO Arena: When it's finished because someone left early...`)
-- **Goal:** Ensure there is clear UI when a match ends because a player left early. Related: SS-071.
-- **Concrete case (2-player forfeit):** In a 2-player match, when one player forfeits/leaves, the
-  remaining player must be notified that the opponent left and the Arena must transition to
-  `Finished` so the remaining player can still see the match outcome and any stats accrued up to that
-  point — rather than being stranded in `Combat` or dropped silently. Reported bug. Related: SS-098
-  (defer the `Finished` transition until end-of-match messages/animations play), SS-071, SS-022.
-
 ---
 
 ## Domain layer

@@ -1,11 +1,14 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -21,6 +24,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -50,10 +54,19 @@ internal fun ArenaScreen(
     ) {
         InterceptBackNavigationToShowForfeitDialog()
 
-        viewModel.eventChannelFlow.collectEvents(onBack = onBack)
+        val snackbarHostState = remember { SnackbarHostState() }
+        viewModel.eventChannelFlow.collectEvents(
+            onBack = onBack,
+            snackbarHostState = snackbarHostState,
+        )
         val uiState by viewModel.uiStateFlow.collectAsState()
 
-        ArenaScreen(uiState = uiState, onRetry = viewModel::retry, modifier = modifier)
+        ArenaScreen(
+            uiState = uiState,
+            onRetry = viewModel::retry,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier,
+        )
     }
 }
 
@@ -62,23 +75,44 @@ internal fun ArenaScreen(
 private fun ArenaScreen(
     uiState: UiState<ArenaScreenState>,
     onRetry: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     when (uiState) {
         is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = modifier)
-        is UiState.Loaded -> LoadedArenaScreen(screenState = uiState.data, modifier = modifier)
+
+        is UiState.Loaded ->
+            LoadedArenaScreen(
+                screenState = uiState.data,
+                snackbarHostState = snackbarHostState,
+                modifier = modifier,
+            )
+
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }
 
 @Suppress("ComposableNaming")
 @Composable
-private fun Flow<ArenaEvent>.collectEvents(onBack: () -> Unit) {
+private fun Flow<ArenaEvent>.collectEvents(
+    onBack: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
+    val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
                 ArenaEvent.MatchTimedOut -> onBack()
+
                 ArenaEvent.NavigateBack -> onBack()
+
+                // Shown on its own scope so a lingering snackbar never stalls later events.
+                is ArenaEvent.OpponentLeft ->
+                    coroutineScope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "${event.displayName} left the arena"
+                        )
+                    }
             }
         }
     }

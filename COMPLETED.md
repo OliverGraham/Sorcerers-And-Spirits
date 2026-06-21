@@ -53,6 +53,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-041** — Refactor flagged arena repo code: Refactor the flagged section of `FirebaseArenaRepository`.
 - **SS-042** — Challenge timestamp handling: Resolve how the challenge timestamp is represented/serialized across the data entity and domain model.
 - **SS-043** — Extract class to separate file: Move the flagged class out of `FirebaseTavernRepository` into its own file.
+- **SS-045** — UI when match ends due to early leave: Notify the remaining player when an opponent leaves the arena via a snackbar, driven by an `ArenaEvent.OpponentLeft` the ViewModel emits when a player drops out of the shared player map. Related: SS-098, SS-071, SS-022.
 
 ## Domain layer
 

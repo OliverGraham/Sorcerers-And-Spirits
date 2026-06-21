@@ -13,10 +13,13 @@ import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,12 +39,14 @@ private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
 internal fun LoadedArenaScreen(
     screenState: ArenaScreenState,
     modifier: Modifier = Modifier,
+    snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     scaffoldState: BottomSheetScaffoldState = rememberBottomSheetScaffoldState(),
 ) {
     CompositionLocalProvider(LocalLatestRollDice provides screenState.latestRolledDice) {
         BottomSheetScaffold(
             scaffoldState = scaffoldState,
             modifier = modifier.fillMaxSize(),
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             sheetPeekHeight = 48.dp,
             sheetDragHandle = {
                 ArenaMessageLogHandle(

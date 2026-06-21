@@ -126,6 +126,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Rules & Help
 
+- **SS-066** — Explore an in-app game-rules chatbot: Investigated backends for a rules chatbot grounded on the CLAUDE.md / GameRulesScreen (SS-067) rules. Three options — (1) cloud LLM API (pay-per-use, needs a key-holding backend), (2) on-device LLM (free but platform-specific in KMP), (3) deterministic retrieval/FAQ (zero cost, most accurate). Conclusion: if implemented, take the free path — start with option 3, optionally layer option 2 later; reserve option 1 only if free-form quality demands it.
 - **SS-067** — GameRulesScreen: A screen, accessible from the drawer (SS-063), where users can read the game rules and class abilities.
 
 ## UI overhaul & input

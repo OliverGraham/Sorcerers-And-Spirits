@@ -32,6 +32,8 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassWheel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
@@ -56,13 +58,7 @@ internal fun TavernScreen(
 ) {
     CompositionLocalProvider(
         LocalTavernActions provides
-            TavernActions(
-                onSendChallengerNotifications = viewModel::onSendChallenge,
-                onAcceptChallenge = viewModel::onAcceptChallenge,
-                onDeclineChallenge = viewModel::onDeclineChallenge,
-                onShowChallengeDialog = viewModel::showChallengeDialog,
-                onHideChallengeDialog = viewModel::hideChallengeDialog,
-            )
+            TavernActions(onSendChallengerNotifications = viewModel::onSendChallenge)
     ) {
         viewModel.eventChannelFlow.collectEvents(onNavigateToArena = onNavigateToArena)
         val uiState by viewModel.uiStateFlow.collectAsState()
@@ -88,7 +84,7 @@ private fun TavernScreen(
 @Composable
 private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Modifier) {
     val scaffoldState = rememberBottomSheetScaffoldState()
-    val challengeState = tavernState.challenge
+    val hasActiveChallenge = LocalChallengeState.current != null
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -96,7 +92,7 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         sheetPeekHeight = 48.dp,
         sheetDragHandle = {
             SheetDragHandle(
-                showChallengeHandle = challengeState != null,
+                showChallengeHandle = hasActiveChallenge,
                 isExpanded = scaffoldState.bottomSheetState.currentValue == SheetValue.Expanded,
             )
         },
@@ -108,10 +104,6 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         },
     ) { padding ->
         ScreenContent(characterClasses = tavernState.characterClasses, padding = padding)
-    }
-
-    if (challengeState?.showChallengeDialog == true) {
-        ChallengeDialog(challengeState = challengeState)
     }
 }
 
@@ -185,7 +177,7 @@ private fun RowScope.ChallengeDialogHandle(
 ) {
     AnimatedVisibility(visible = showHandle, modifier = modifier.weight(weight = 1f)) {
         IconButton(
-            onClick = LocalTavernActions.current.onShowChallengeDialog,
+            onClick = LocalChallengeActions.current.onShowChallengeDialog,
             modifier = Modifier.fillMaxWidth().wrapContentWidth(align = contentAlignment),
         ) {
             Icon(

@@ -38,6 +38,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisp
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.ConnectTravelerPresenceUseCase
+import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
@@ -45,6 +46,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerSt
 import com.linklabs.sorcerersandspirits.domain.version.SupportedAppVersionProvider
 import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
+import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
@@ -102,6 +104,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::ExitArenaUseCase)
     factoryOf(::GetCharacterClassesUseCase)
     factoryOf(::GetLeaderboardUseCase)
+    factoryOf(::GetActiveChallengeFlowUseCase)
     factoryOf(::GetProfileFlowUseCase)
     factoryOf(::GetProfileUseCase)
     factoryOf(::GetRandomTravelerNameUseCase)
@@ -123,6 +126,7 @@ private fun Module.initializeUseCases() {
 private fun Module.initializeViewModels() {
     viewModelOf(::AppViewModel)
     viewModelOf(::ArenaScreenViewModel)
+    viewModelOf(::ChallengeViewModel)
     viewModelOf(::GameRulesScreenViewModel)
     viewModelOf(::LeaderboardScreenViewModel)
     viewModelOf(::ProfileScreenViewModel)

@@ -8,6 +8,8 @@ import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
@@ -20,10 +22,15 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
 import com.linklabs.sorcerersandspirits.ui.main.AppState
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
+import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.TopBar
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeActions
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.ChallengeDialog
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
@@ -113,30 +120,61 @@ private fun linkErrorMessage(result: LinkAccountResult?): String? =
     }
 
 @Composable
-private fun SorcerersAndSpirits(appState: AppState, modifier: Modifier = Modifier) {
+private fun SorcerersAndSpirits(
+    appState: AppState,
+    challengeViewModel: ChallengeViewModel = koinViewModel(),
+    modifier: Modifier = Modifier,
+) {
     val backStack = rememberNavBackStack(navigationRoutesConfiguration, Route.TavernScreen)
 
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
-        drawerContent = {
-            ModalDrawerSheet {
-                SettingsDrawer(backStack = backStack, drawerState = drawerState, scope = scope)
-            }
-        },
-        gesturesEnabled = true,
-    ) {
-        Scaffold(
-            modifier = modifier,
-            topBar = { TopBar(onMenuClick = { scope.launch { drawerState.open() } }) },
-        ) { innerPadding ->
-            Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
-                OfflineBanner(isOffline = appState.isOffline)
+    val challengeState by challengeViewModel.challengeStateFlow.collectAsState()
 
-                NavigationDisplay(backStack = backStack, modifier = modifier)
+    // Hosted above the NavDisplay so an accepted challenge can route to the arena from any screen.
+    LaunchedEffect(Unit) {
+        challengeViewModel.navigateToArenaFlow.collect { arguments ->
+            backStack.add(element = Route.ArenaScreen(arguments = arguments.toSerializable()))
+        }
+    }
+
+    CompositionLocalProvider(
+        LocalChallengeActions provides
+            ChallengeActions(
+                onAcceptChallenge = challengeViewModel::onAcceptChallenge,
+                onDeclineChallenge = challengeViewModel::onDeclineChallenge,
+                onShowChallengeDialog = challengeViewModel::showChallengeDialog,
+                onHideChallengeDialog = challengeViewModel::hideChallengeDialog,
+            ),
+        LocalChallengeState provides challengeState,
+    ) {
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            drawerContent = {
+                ModalDrawerSheet {
+                    SettingsDrawer(backStack = backStack, drawerState = drawerState, scope = scope)
+                }
+            },
+            gesturesEnabled = true,
+        ) {
+            Scaffold(
+                modifier = modifier,
+                topBar = { TopBar(onMenuClick = { scope.launch { drawerState.open() } }) },
+            ) { innerPadding ->
+                Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
+                    OfflineBanner(isOffline = appState.isOffline)
+
+                    NavigationDisplay(backStack = backStack, modifier = modifier)
+                }
             }
+        }
+
+        // A Dialog renders in its own window, so the challenge invite overlays whatever screen
+        // (Tavern, Profile, Leaderboard, Game Rules) is currently showing.
+        val activeChallenge = challengeState
+        if (activeChallenge?.showChallengeDialog == true) {
+            ChallengeDialog(challengeState = activeChallenge)
         }
     }
 }

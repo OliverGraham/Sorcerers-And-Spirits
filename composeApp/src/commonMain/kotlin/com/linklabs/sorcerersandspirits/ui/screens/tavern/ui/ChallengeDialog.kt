@@ -21,9 +21,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleInstigatorChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleRecipientChallengeState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -40,7 +40,7 @@ import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_title
 @Composable
 internal fun ChallengeDialog(challengeState: ChallengeState, modifier: Modifier = Modifier) {
     BasicAlertDialog(
-        onDismissRequest = TavernActionsProvider.current.onHideChallengeDialog,
+        onDismissRequest = ChallengeActionsProvider.current.onHideChallengeDialog,
         modifier = modifier,
     ) {
         Surface(
@@ -155,12 +155,12 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
             Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val onDeclineChallenge = TavernActionsProvider.current.onDeclineChallenge
+        val onDeclineChallenge = ChallengeActionsProvider.current.onDeclineChallenge
         TextButton(onClick = { onDeclineChallenge(challengeId) }) {
             Text(text = stringResource(resource = Res.string.challenge_dialog_button_decline))
         }
 
-        val onAcceptChallenge = TavernActionsProvider.current.onAcceptChallenge
+        val onAcceptChallenge = ChallengeActionsProvider.current.onAcceptChallenge
         Button(onClick = { onAcceptChallenge(challengeId) }) {
             Text(text = stringResource(resource = Res.string.challenge_dialog_button_accept))
         }

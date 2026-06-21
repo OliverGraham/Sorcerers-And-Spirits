@@ -7,11 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.utilities.EmptyTwoArgumentLambda
 
 internal data class TavernActions(
     val onSendChallengerNotifications: (TravelerState, Set<TravelerState>) -> Unit =
-        EmptyTwoArgumentLambda,
-    val onAcceptChallenge: (challengeId: String) -> Unit = {},
-    val onDeclineChallenge: (challengeId: String) -> Unit = {},
-    val onShowChallengeDialog: () -> Unit = {},
-    val onHideChallengeDialog: () -> Unit = {},
+        EmptyTwoArgumentLambda
 )
 
 internal val LocalTavernActions = staticCompositionLocalOf { TavernActions() }

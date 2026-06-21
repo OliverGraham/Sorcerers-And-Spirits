@@ -2,52 +2,20 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern.challenge
 
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
-import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
-import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.UpdateChallengerStatusUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengeState
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallenger
-import com.linklabs.sorcerersandspirits.ui.screens.tavern.toChallengerState
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
 @OptIn(ExperimentalTime::class)
 internal class ChallengeHandler(
     private val challengeTimer: Timer,
-    private val sendChallengeUseCase: SendChallengeUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
     private val now: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
-
-    suspend fun sendChallenges(
-        userTraveler: TravelerState,
-        selectedTravelerStates: Set<TravelerState>,
-    ): TavernEvent? {
-        val instigator =
-            userTraveler.toChallenger(isInstigator = true, status = ChallengerStatus.Accepted)
-
-        val invitees =
-            selectedTravelerStates.map { travelerState ->
-                travelerState.toChallenger(isInstigator = false, status = ChallengerStatus.Pending)
-            }
-
-        val result = sendChallengeUseCase(instigator = instigator, invitees = invitees)
-        return when (result) {
-            is SendChallengeResult.Success -> null
-
-            is SendChallengeResult.NotEnoughChallengersAvailable ->
-                TavernEvent.NotEnoughChallengersAvailable(
-                    challengerStates = result.unavailableChallengers.map { it.toChallengerState() }
-                )
-
-            is SendChallengeResult.Failure -> TavernEvent.ShowChallengeSendFailed
-        }
-    }
 
     fun handleChallengeUpdate(
         previousChallengeState: ChallengeState?,

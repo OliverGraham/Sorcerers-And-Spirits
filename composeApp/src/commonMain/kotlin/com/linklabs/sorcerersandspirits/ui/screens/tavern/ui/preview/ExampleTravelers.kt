@@ -97,8 +97,4 @@ val exampleRecipientChallengeState =
     )
 
 val exampleTavernState =
-    TavernState(
-        userTraveler = exampleUserTraveler,
-        otherTravelers = exampleOtherTravelers,
-        challenge = null,
-    )
+    TavernState(userTraveler = exampleUserTraveler, otherTravelers = exampleOtherTravelers)

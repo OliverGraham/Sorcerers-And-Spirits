@@ -13,6 +13,7 @@ import dev.gitlive.firebase.auth.FirebaseAuthWeakPasswordException
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
 import dev.gitlive.firebase.auth.auth
+import kotlinx.coroutines.flow.first
 
 private const val APPLE_PROVIDER_ID = "apple.com"
 
@@ -27,7 +28,13 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
 
     override fun getUserId() = auth.currentUser?.uid
 
-    override suspend fun isSignedIn() = auth.currentUser != null
+    /**
+     * Awaits the first auth-state emission instead of reading [currentUser] outright. Firebase
+     * restores the persisted user from disk asynchronously, and the auth-state listener only fires
+     * once that restore completes; reading the snapshot beforehand reports a returning user as
+     * signed-out, which on a cold start sends them back to the first-launch dialog.
+     */
+    override suspend fun isSignedIn() = auth.authStateChanged.first() != null
 
     override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
 

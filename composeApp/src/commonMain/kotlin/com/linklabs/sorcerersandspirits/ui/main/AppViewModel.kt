@@ -84,12 +84,22 @@ class AppViewModel(
         screenStateJob?.cancel()
         screenStateJob =
             viewModelScope.launch {
-                // TODO(SS-036): if user isSignedIn but their profile doesn't exist, then the app
-                // will hang
-                if (isUserSignedInUseCase()) {
-                    collectScreenState()
-                } else {
+                if (!isUserSignedInUseCase()) {
                     showSignInDialog()
+                    return@launch
+                }
+
+                // A signed-in account with no profile (e.g. sign-in succeeded but profile creation
+                // never did) would otherwise hang forever on the loading indicator, since the
+                // profile flow just keeps emitting null. Route back to the dialog to create one for
+                // the current account. Only checked while online: offline, the one-shot read can't
+                // tell "no profile" from "unreachable", so defer to collectScreenState's offline
+                // shell, which recovers once back online.
+                val isOnline = connectivityObserver.isOnline.first()
+                if (isOnline && getProfileUseCase() == null) {
+                    showSignInDialog()
+                } else {
+                    collectScreenState()
                 }
             }
     }
@@ -119,7 +129,17 @@ class AppViewModel(
 
             _uiStateFlow.value = UiState.Loading
 
-            when (createProfileUseCase(displayName = newDisplayName)) {
+            // The dialog also appears for an already-signed-in account that is missing its profile
+            // (see loadScreenState). There, create the profile for the current account rather than
+            // signing in anonymously again, which would orphan the existing one.
+            val createResult =
+                if (isUserSignedInUseCase()) {
+                    createProfileForCurrentUserUseCase(displayName = newDisplayName)
+                } else {
+                    createProfileUseCase(displayName = newDisplayName)
+                }
+
+            when (createResult) {
                 DisplayNameResult.SUCCESS -> {
                     hasCreatedProfile = true
                     collectScreenState()

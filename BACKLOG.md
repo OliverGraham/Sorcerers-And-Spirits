@@ -47,16 +47,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ---
 
-## App / Main
-
-### SS-036 — Handle signed-in user with missing profile
-- [ ] Not completed
-- **Source:** `AppViewModel.kt:76` (`// TODO: if user isSignedIn but their profile doesn't exist, then the app will hang`)
-- **Goal:** Prevent the app hang when a signed-in user has no profile.
-- **Steps:** Detect the missing-profile case; create a profile or route to an error/recovery flow.
-
----
-
 ## Domain layer
 
 ### SS-058 — Ability roll values from RemoteConfig

@@ -169,21 +169,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Related: SS-060 (suppress KnockedOut dialog during the Holy Shield roll), SS-093
   (per-outcome ability copy), SS-097 (class-name usage).
 
-### SS-105 — Lucky Coin on a 6 must give the Gambler a retaliation damage die
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** When the Gambler's Lucky Coin rolls a 6, it should immediately give the Gambler a single
-  die to roll for damage dealt directly to the attacker. This is currently not working correctly.
-- **Notes:** Domain layer. Related: SS-052 (LuckyCoin message approach), SS-093.
-- **Investigation (2026-06-20):** Could not reproduce statically. Verified every layer is correct and
-  largely covered by passing tests: domain `flipLuckyCoin` 6 → `triggerHighRoller` → `next=HighRoller`
-  (PerformCombatActionUseCaseTest); entity polymorphic serialization round-trips HighRoller (distinct
-  `"type"` discriminator from Flip); `deriveCombatControls` surfaces the roll to the active gambler
-  (ArenaScreenViewModelTest); messages are non-blocking (bottom sheet), DiceTray re-arms each
-  recomposition, computer handler ignores a human-owned roll. No Flip-vs-HighRoller asymmetry found.
-  May already be fixed since the report — keep on the lookout for recurrence (attacker was another
-  human when seen).
-
 ### SS-115 — Spell Potency message implies splash in a 2-player match
 - [ ] Not completed
 - **Source:** Noticed while auditing SS-106.
@@ -202,6 +187,57 @@ are archived in [COMPLETED.md](COMPLETED.md).
   is no ArenaMessage for rolling doubles and no UI indication of the bonus. Ensure a Doubles message
   exists. Deep UI work can wait since the Arena UI is slated to change.
 - **Notes:** Related: SS-019 (doublesBonus tracking), SS-068 (UI overhaul), SS-093.
+
+### SS-116 — All-In bugs (2-player game, observed playing Gambler + Illusionist)
+- [ ] Not completed
+- **Source:** Reported bug. Three symptoms seen in one 2-player session; all concern the Gambler's
+  All-In activated ability (`AllInActivated.kt`).
+- **Symptoms:**
+  1. **Second attack not rollable in the UI.** All-In on a 5/6 (attack twice this round) resolved
+     correctly in state, but the UI did not let the player roll the dice for the granted second
+     attack after the first attack finished. The domain grant works (SS-104); the roll just never
+     becomes available to the user — likely the combat controls / DiceTray don't re-arm for the
+     continued turn.
+  2. **usedThisTurn not resetting.** All-In should be usable again on the player's later turns/rounds,
+     but it stayed disabled after one use — i.e. it behaved once-per-match, not once-per-turn. SS-114
+     was meant to fix exactly this (clear `usedThisTurn` on new-round reset), so this is a regression
+     or an incomplete fix; verify `resetForNewTurn`/`resetPlayersForNewRound` actually fire in this
+     flow.
+  3. **Impersonated All-In unusable.** When the Illusionist Impersonated All-In, they were not able
+     to use it. The copied offensive ability does not become a usable activated control for the
+     Illusionist.
+- **Notes:** Domain + UI. Related: SS-104 (second-attack grant), SS-114 (usedThisTurn reset), and the
+  Illusionist Impersonate path. Likely splits into per-symptom tickets once root causes are known.
+  Foundation already landed: commit `f22f123` ("Wire Illusionist Mirror Image and Impersonate in the
+  UI") wired the Impersonate controls + `ArenaScreenViewModel`, so symptom 3 is a gap in that wiring,
+  not new work.
+
+### SS-117 — Dice UI: problems showing 1 die vs 2 dice
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** Many issues toggling the dice display between a single die and two dice. Steps that roll
+  1d6 (All-In, Summon Minion, Encore, Lucky Coin, Mirror Image reroll, Teleport/HolyShield roll-offs,
+  etc.) vs. steps that roll 2d6 (normal attack, Prepare Attack) don't render the correct number of
+  dice consistently. Audit the DiceTray / roll controls so the number of dice shown always matches the
+  current combat step.
+- **Notes:** UI. The per-step count already exists — `CombatControlDiceCount.kt`'s
+  `ArenaCombatControl.diceCount` returns 1/2/`null` for every control (e.g. All-In/SummonMinion/
+  LuckyCoin/Encore/Teleport = 1, NormalAttack/PrepareAttack/Riposte = 2, Impersonate/Charm = null,
+  Mirror Image = 1 only once a reroll target is selected). So the bug is in the DiceTray/roll-control
+  consumer of that value (or its transitions between counts), not the count logic. Related:
+  SS-112/SS-113 (persistent DiceTray + physics), SS-077/SS-078 (dice tech + finalization), SS-068.
+
+### SS-118 — Mirror Image: show the rerolled value and its -1 in the UI
+- [ ] Not completed
+- **Source:** Reported bug.
+- **Goal:** When the Illusionist's Mirror Image rerolls a die, the UI should show what the die rolled
+  and then a "-1" next to it (the ability gives the rerolled result -1, result can be 0). Model it on
+  Summon Minion, which shows the Necromancer's hit points plus the skeleton/golem additions, so the
+  player can see the raw roll and the adjustment that produced the final value.
+- **Notes:** UI (plus whatever message field is needed to carry the raw roll). Mirror Image is
+  already wired into the UI by commit `f22f123` ("Wire Illusionist Mirror Image and Impersonate in
+  the UI") — this ticket is the display of the raw roll + its -1, building on that. Related:
+  `MirrorImageHandler.kt`, SS-117 (dice display), SS-107 (roll/adjustment indication), SS-093.
 
 ---
 

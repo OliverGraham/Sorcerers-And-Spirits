@@ -13,6 +13,7 @@ data class CharacterClassEntity(
     val speed: Int,
     val offensiveAbility: OffensiveAbilityEntity,
     val defensiveAbility: DefensiveAbilityEntity,
+    val hasActedThisRound: Boolean = false,
 ) {
     val className = type.name
 }
@@ -31,6 +32,7 @@ internal fun CharacterClassEntity.resetForNewMatch(): CharacterClassEntity {
         armorClass = armorClass - dodgeArmorBonus,
         offensiveAbility = offensiveAbility.resetForNewMatch(),
         defensiveAbility = defensiveAbility.resetForNewMatch(),
+        hasActedThisRound = false,
     )
 }
 
@@ -43,6 +45,7 @@ internal fun CharacterClassEntity.toDomain(): CharacterClass =
         speed = speed,
         offensiveAbility = offensiveAbility.toDomain(),
         defensiveAbility = defensiveAbility.toDomain(),
+        hasActedThisRound = hasActedThisRound,
     )
 
 internal fun CharacterClass.toEntity(): CharacterClassEntity =
@@ -54,4 +57,5 @@ internal fun CharacterClass.toEntity(): CharacterClassEntity =
         speed = speed,
         offensiveAbility = offensiveAbility.toEntity(),
         defensiveAbility = defensiveAbility.toEntity(),
+        hasActedThisRound = hasActedThisRound,
     )

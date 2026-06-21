@@ -212,6 +212,22 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
   grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
 
+### SS-120 — Turn order regresses to fastest-first because hasActedThisRound is not persisted
+- [ ] Not completed
+- **Source:** Reported bug. Observed in a 3-player match (Rogue, Duelist, Bard): Rogue attacked and
+  missed, Duelist used Prepare Attack and missed, then instead of advancing to the Bard the turn went
+  back to the Rogue.
+- **Root cause:** `CharacterClass.hasActedThisRound` (Domain) has no counterpart on
+  `CharacterClassEntity` (Data), so it is dropped on every Firebase write and defaults back to
+  `false` on read. After the first persisted turn every player reads back as "not acted", so
+  `CombatMutator.calculateNextPlayerInRound` re-selects the highest-speed unacted player (the Rogue)
+  instead of the next player in the round. The Domain turn logic is correct; only the round-trip
+  loses the flag.
+- **Fix:** Add `hasActedThisRound` to `CharacterClassEntity` (default `false` for backward-compatible
+  reads) and carry it through `toDomain()`/`toEntity()`; reset it to `false` in `resetForNewMatch()`.
+- **Notes:** Cross-layer mapping gap. Files: `CharacterClassEntity.kt`, `CharacterClass.kt`,
+  `CombatMutator.kt` (consumer).
+
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

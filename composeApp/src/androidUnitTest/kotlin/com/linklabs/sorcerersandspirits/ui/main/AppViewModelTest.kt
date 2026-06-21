@@ -67,6 +67,10 @@ class AppViewModelTest {
         every { connectivityObserver.isOnline } returns isOnlineFlow
         every { checkAppVersionUseCase() } returns AppUpgradeStatus.UP_TO_DATE
         coEvery { isUserSignedInUseCase() } returns true
+        // The default signed-in user has a profile, so launch proceeds into the app; tests for the
+        // missing-profile recovery override this.
+        coEvery { getProfileUseCase() } returns
+            Profile(userId = USER_ID, displayName = DISPLAY_NAME)
     }
 
     @AfterTest
@@ -110,15 +114,39 @@ class AppViewModelTest {
         }
 
     @Test
-    fun `Given a signed-in user online whose profile has not loaded, then the app stays on the loading indicator`() =
+    fun `Given a signed-in user online whose profile is missing, then the sign-in dialog is shown for recovery instead of hanging`() =
         runTest {
             isOnlineFlow.value = true
-            profileFlow.value = null
+            coEvery { getProfileUseCase() } returns null
 
             createViewModel().uiStateFlow.test {
                 assertEquals(expected = UiState.Loading, actual = awaitItem())
-                expectNoEvents()
+                assertTrue(actual = awaitItem().loaded().showSignInDialog)
+                cancelAndIgnoreRemainingEvents()
             }
+        }
+
+    @Test
+    fun `Given a signed-in user is missing a profile, when they accept a name, then a profile is created for the current account rather than a new anonymous one`() =
+        runTest {
+            isOnlineFlow.value = true
+            coEvery { getProfileUseCase() } returns null
+            coEvery { createProfileForCurrentUserUseCase(displayName = ENTERED_NAME) } returns
+                DisplayNameResult.SUCCESS
+            val viewModel = createViewModel()
+
+            viewModel.uiStateFlow.test {
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+                assertTrue(actual = awaitItem().loaded().showSignInDialog)
+
+                viewModel.createProfile(newDisplayName = ENTERED_NAME)
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                cancelAndIgnoreRemainingEvents()
+            }
+
+            coVerify { createProfileForCurrentUserUseCase(displayName = ENTERED_NAME) }
+            coVerify(exactly = 0) { createProfileUseCase(displayName = any()) }
         }
 
     @Test

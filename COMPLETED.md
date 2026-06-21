@@ -44,6 +44,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 ## App / Main
 
 - **SS-035** — Random names from RemoteConfig: Source random traveler names from RemoteConfig instead of hardcoding.
+- **SS-036** — Handle signed-in user with missing profile: Detect a signed-in account with no profile (when online) and route back to the name dialog to create one for the current account instead of hanging on the loading indicator. Also fixed `isSignedIn()` to await the first auth-state emission so a cold start no longer reports a returning user as signed-out.
 
 ## Data layer
 

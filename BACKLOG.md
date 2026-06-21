@@ -179,13 +179,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Related: SS-060 (suppress KnockedOut dialog during the Holy Shield roll), SS-093
   (per-outcome ability copy), SS-097 (class-name usage).
 
-### SS-104 — All-In success must grant the Gambler a second attack
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** On an All-In success (5 or 6), the Gambler should get to perform two attacks this round
-  (provided they survive the first). Currently the extra attack is not granted.
-- **Notes:** Domain layer. Related: SS-103 (messages disappearing after All-In), SS-093.
-
 ### SS-105 — Lucky Coin on a 6 must give the Gambler a retaliation damage die
 - [ ] Not completed
 - **Source:** Reported bug.

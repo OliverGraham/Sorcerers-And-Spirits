@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
 internal class CombatMutator(
@@ -124,6 +125,9 @@ internal class CombatMutator(
             return
         }
 
+        val wasSecondAttackGranted = grantAllInSecondAttackIfApplicable()
+        if (wasSecondAttackGranted) return
+
         updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
 
         val nextPlayer = calculateNextPlayerInRound()
@@ -135,6 +139,27 @@ internal class CombatMutator(
         } else {
             goToNextRound()
         }
+    }
+
+    /**
+     * A Gambler whose All-In succeeded attacks twice this round. The second attack is granted here,
+     * once, after the first attack resolves: control stays with the Gambler instead of advancing,
+     * and the flag is cleared so the turn ends normally after that second attack.
+     */
+    private fun grantAllInSecondAttackIfApplicable(): Boolean {
+        val turnPlayer = updatedPlayerMap.getValue(key = originalTurnUserId).characterClass
+        val allIn = turnPlayer.offensiveAbility as? OffensiveAbility.AllIn ?: return false
+        if (!allIn.hasAnotherAttack) return false
+        if (!turnPlayer.isConscious()) return false
+
+        updatePlayerClass(userId = originalTurnUserId) { characterClass ->
+            characterClass.copy(offensiveAbility = allIn.copy(hasAnotherAttack = false))
+        }
+        setNextCombatAction(
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(originalTurnUserId))
+        )
+
+        return true
     }
 
     private fun goToNextRound() {

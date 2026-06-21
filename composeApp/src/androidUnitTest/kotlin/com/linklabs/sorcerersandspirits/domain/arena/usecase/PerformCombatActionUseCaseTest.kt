@@ -2004,6 +2004,55 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = DoublesBonus(userId = gamblerUserId), actual = outcome.doublesBonus)
     }
 
+    @Test
+    fun `When a Gambler with a pending second attack finishes their first attack, they attack again`() {
+        // Arrange
+        val gambler =
+            TestCharacterClasses.gambler()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val gamblerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = gamblerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedGambler = outcome.getPlayerById(userId = gamblerUserId).characterClass
+        val updatedAllIn = assertIs<OffensiveAbility.AllIn>(value = updatedGambler.offensiveAbility)
+        assertTrue(actual = !updatedAllIn.hasAnotherAttack)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = gamblerUserId))
+    }
+
+    @Test
+    fun `When a Gambler finishes their granted second attack, the turn passes to the next player`() {
+        // Arrange
+        val gambler =
+            TestCharacterClasses.gambler()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.AllIn(hasAnotherAttack = false, usedThisTurn = true)
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val gamblerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = gamblerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = DEFAULT_DEFENDER_ID))
+    }
+
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
         PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
 

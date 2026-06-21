@@ -19,7 +19,7 @@ internal class SpellPotencyRoll(
     operator fun invoke() = combatMutator.resolveSpellPotency()
 
     private fun CombatMutator.resolveSpellPotency() {
-        val splashDamage = diceTotal / 2
+        val splashDamage = diceTotal / abilityConfig.spellPotencySplashDivisor
         addSpellPotencyMessage(splashDamage = splashDamage)
         applyFullDamageToDefender()
         applySplashDamage(splashDamage = splashDamage)

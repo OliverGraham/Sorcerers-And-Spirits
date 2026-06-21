@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.preview
 
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesState
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.toRulesState
@@ -17,5 +18,8 @@ val exampleGameRulesState =
                 "Turn — one player attacking or using an ability.",
                 "Gauntlet — a run of 3 consecutive matches in the same Arena.",
             ),
-        classes = previewCharacterClassStates().map { it.toRulesState() },
+        classes =
+            previewCharacterClassStates().map {
+                it.toRulesState(copy = previewCharacterClassCopy())
+            },
     )

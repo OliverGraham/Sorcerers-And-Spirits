@@ -49,18 +49,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Domain layer
 
-### SS-058 — Ability roll values from RemoteConfig
-- [ ] Not completed
-- **Source:** `HolyShieldHandler.kt:114` (`// TODO(SS-058): From RemoteConfig in some way`,
-  `HOLY_SHIELD_SUCCESS_RANGE = 10..12`)
-- **Goal:** Drive the per-ability roll thresholds/ranges from RemoteConfig instead of hardcoding,
-  across all abilities — e.g. Holy Shield's `10..12` survival range, Duelist Riposte's `6..8` success
-  range, Prepare Attack's `10..12` K.O. range, All-In's outcome buckets, Summon Minion's per-face
-  results, Encore/Persuade/Mirror Image/Teleport roll-offs, etc.
-- **Steps:** Catalog every hardcoded ability roll value; design a config schema for them (likely a
-  per-ability stats block parallel to `character_class_stats`); overlay via the existing
-  RemoteConfig data source. Defer until the full set of desired values is decided.
-
 ### SS-048 — Die-value enum
 - [ ] Not completed
 - **Source:** `DiceRoller.kt:16` (`// TODO Enums for values 1 through 6?`)
@@ -277,22 +265,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Steps:** Decide the backend (default to the Claude API with a current Claude model, grounded on
   the rules text); scope question types (rules lookups vs. ability-interaction edge cases); design the
   entry point (likely from the GameRulesScreen or drawer). Investigation only for now.
-
-### SS-081 — Class ability/stat copy in RemoteConfig (long + short variants)
-- [ ] Not completed
-- **Source:** SS-079 hardcoded the stat/ability descriptions as string literals in
-  `CharacterClassWheel.kt` (`offensiveAbilityDescription`/`defensiveAbilityDescription` +
-  `HEALTH/ARMOR/SPEED_DESCRIPTION`) to ship the expandable stat card.
-- **Goal:** Move all class ability + stat copy out of code and into RemoteConfig, with two registers:
-  a **full** description (for the GameRulesScreen, SS-067) and a **short** one (for space-constrained
-  in-UI surfaces like the wheel's stat card and combat). Lets us tune copy without a release and keeps
-  the tight surfaces from overflowing.
-- **Steps:** Define the RemoteConfig schema (per ability/stat: long + short text); thread through the
-  existing `CharacterClassProvider`/`GetCharacterClassesUseCase` (or a parallel copy provider) the way
-  stats are in SS-047; replace the literals in `CharacterClassWheel` with the short variant; have
-  GameRulesScreen consume the long variant; pick a static fallback for offline/first-run.
-- **Notes:** Overlaps SS-033 (move CharacterClassCard text to resources) and SS-047 (RemoteConfig
-  class stats). Related: SS-067, SS-079, SS-033, SS-047.
 
 ---
 

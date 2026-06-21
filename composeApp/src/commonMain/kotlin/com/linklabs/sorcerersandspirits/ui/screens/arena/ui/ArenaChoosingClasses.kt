@@ -10,6 +10,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -17,6 +18,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassWheel
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
@@ -128,6 +131,8 @@ private fun ArenaChoosingClassesPreview() {
                 classSelections = emptyMap(),
             )
 
-        mockState.ArenaChoosingClasses(characterClasses = previewCharacterClassStates())
+        CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
+            mockState.ArenaChoosingClasses(characterClasses = previewCharacterClassStates())
+        }
     }
 }

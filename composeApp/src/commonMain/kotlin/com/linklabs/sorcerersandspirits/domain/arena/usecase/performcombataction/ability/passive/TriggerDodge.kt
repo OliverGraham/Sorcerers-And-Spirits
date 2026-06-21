@@ -13,7 +13,7 @@ internal class TriggerDodge(
     }
 
     private fun CombatMutator.triggerDodge() {
-        val didArmorIncrease = dodge.armorBonus < 2
+        val didArmorIncrease = dodge.armorBonus < abilityConfig.dodgeMaxArmorBonus
 
         if (didArmorIncrease) {
             val updatedDodge = dodge.copy(armorBonus = dodge.armorBonus + 1)

@@ -13,6 +13,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.RollResult
+import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -2261,7 +2262,11 @@ class PerformCombatActionUseCaseTest {
     }
 
     private fun getPerformCombatAction(arguments: CombatActionArguments) =
-        PerformCombatAction(arguments = arguments, diceRoller = diceRoller)
+        PerformCombatAction(
+            arguments = arguments,
+            diceRoller = diceRoller,
+            abilityConfig = AbilityConfig.DEFAULT,
+        )
 
     companion object {
         private const val DEFAULT_DISPLAY_NAME = "displayName"

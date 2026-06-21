@@ -38,7 +38,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.attemptPrayer() {
         val result = diceRoller.roll2D6(userId = defenderUserId)
-        val didSurvive = result.total in HOLY_SHIELD_SUCCESS_RANGE
+        val didSurvive = result.total in abilityConfig.holyShieldSuccessRange
 
         addMessage(
             message =
@@ -119,9 +119,6 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
-        // TODO(SS-058): From RemoteConfig in some way
-        private val HOLY_SHIELD_SUCCESS_RANGE = 10..12
-
         fun triggerHolyShieldIfApplicable(
             combatMutator: CombatMutator,
             defenderDefensiveAbility: DefensiveAbility,

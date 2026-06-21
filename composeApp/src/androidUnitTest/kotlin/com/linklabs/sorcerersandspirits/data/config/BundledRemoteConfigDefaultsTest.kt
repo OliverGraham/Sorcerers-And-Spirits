@@ -1,6 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.config
 
+import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
+import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,6 +31,24 @@ class BundledRemoteConfigDefaultsTest {
     }
 
     @Test
+    fun `bundled ability_config JSON matches the shipped AbilityConfig default`() {
+        val parsed =
+            json
+                .decodeFromString<AbilityConfigEntity>(string = bundledAbilityConfigJson())
+                .toDomain()
+
+        assertEquals(expected = AbilityConfig.DEFAULT, actual = parsed)
+    }
+
+    @Test
+    fun `bundled character_class_copy JSON covers every copy key`() {
+        val parsed =
+            json.decodeFromString<Map<String, AbilityCopyEntity>>(string = bundledClassCopyJson())
+
+        assertEquals(expected = ClassCopyKeys.ALL, actual = parsed.keys)
+    }
+
+    @Test
     fun `bundled random_traveler_names JSON contains the offline fallback name`() {
         val names = json.decodeFromString<List<String>>(string = bundledTravelerNamesJson())
 
@@ -40,6 +60,12 @@ class BundledRemoteConfigDefaultsTest {
 
     private fun bundledClassStatsJson(): String =
         readBundledResource(fileName = "character_class_stats.json")
+
+    private fun bundledAbilityConfigJson(): String =
+        readBundledResource(fileName = "ability_config.json")
+
+    private fun bundledClassCopyJson(): String =
+        readBundledResource(fileName = "character_class_copy.json")
 
     private fun bundledTravelerNamesJson(): String =
         readBundledResource(fileName = "random_traveler_names.json")

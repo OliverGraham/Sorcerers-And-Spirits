@@ -23,7 +23,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.rollEncore() {
         val result = diceRoller.roll1D6(userId = attackerUserId).total
-        val isSuccessful = result in ENCORE_SUCCESS_RANGE
+        val isSuccessful = result in abilityConfig.encoreSuccessRange
 
         addMessage(
             message = ArenaMessage.Encore.Roll(encoreDie = result, isSuccessful = isSuccessful)
@@ -39,8 +39,6 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
-        private val ENCORE_SUCCESS_RANGE = 5..6
-
         fun triggerEncoreIfApplicable(
             combatMutator: CombatMutator,
             offensiveAbility: OffensiveAbility,

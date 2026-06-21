@@ -15,10 +15,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
+import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 
 internal class PerformCombatAction(
     private val arguments: CombatActionArguments,
     private val diceRoller: DiceRoller,
+    private val abilityConfig: AbilityConfig,
 ) {
 
     private lateinit var combatMutator: CombatMutator
@@ -32,6 +34,7 @@ internal class PerformCombatAction(
                 roundNumber = arguments.roundNumber,
                 originalTurnUserId = currentAction.originalTurnUserId,
                 diceRoller = diceRoller,
+                abilityConfig = abilityConfig,
             )
 
         resolveAction(action = currentAction)

@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponent
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
+import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
@@ -31,9 +32,11 @@ class TavernScreenViewModel(
     private val getTavernDataFlowUseCase: GetTavernDataFlowUseCase,
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
+    private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
 ) : ViewModel() {
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
+    private val classCopy by lazy { getCharacterClassCopyUseCase() }
 
     private val _eventChannelFlow = Channel<TavernEvent>()
     val eventChannelFlow = _eventChannelFlow.receiveAsFlow()
@@ -140,7 +143,8 @@ class TavernScreenViewModel(
             "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(from = 0, until = 1_000_000)}"
 
     private fun updateScreenState(data: TavernData) {
-        val tavernState = data.toState(characterClasses = characterClasses) ?: return
+        val tavernState =
+            data.toState(characterClasses = characterClasses, classCopy = classCopy) ?: return
 
         _uiStateFlow.value = UiState.Loaded(data = tavernState)
     }

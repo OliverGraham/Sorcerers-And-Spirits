@@ -185,15 +185,25 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Goal:** When the Gambler's Lucky Coin rolls a 6, it should immediately give the Gambler a single
   die to roll for damage dealt directly to the attacker. This is currently not working correctly.
 - **Notes:** Domain layer. Related: SS-052 (LuckyCoin message approach), SS-093.
+- **Investigation (2026-06-20):** Could not reproduce statically. Verified every layer is correct and
+  largely covered by passing tests: domain `flipLuckyCoin` 6 → `triggerHighRoller` → `next=HighRoller`
+  (PerformCombatActionUseCaseTest); entity polymorphic serialization round-trips HighRoller (distinct
+  `"type"` discriminator from Flip); `deriveCombatControls` surfaces the roll to the active gambler
+  (ArenaScreenViewModelTest); messages are non-blocking (bottom sheet), DiceTray re-arms each
+  recomposition, computer handler ignores a human-owned roll. No Flip-vs-HighRoller asymmetry found.
+  May already be fixed since the report — keep on the lookout for recurrence (attacker was another
+  human when seen).
 
-### SS-106 — Verify SpellPotency emits messages and state updates correctly
+### SS-115 — Spell Potency message implies splash in a 2-player match
 - [ ] Not completed
-- **Source:** Reported bug (suspected).
-- **Goal:** Audit the Mage Spell Potency flow end-to-end and confirm it produces the correct
-  ArenaMessages and state updates — full dice-total damage to the target, half to all other
-  opponents, then end turn.
-- **Notes:** Related: SS-053 (SpellPotencyRoll docstrings), SS-054 (splash-damage attacker case),
-  SS-093.
+- **Source:** Noticed while auditing SS-106.
+- **Goal:** The Spell Potency ArenaMessage always carries a non-zero splashDamage (diceTotal / 2),
+  and the display string always appends "and splashed others for X" — even in a 2-player match where
+  there are no other opponents to splash. State is correct (no one is wrongly damaged); only the
+  message reads wrong. Suppress the splash clause when there are no other opponents (e.g. carry the
+  actual splashed-target damage, 0 when none, and branch the display string on splashDamage > 0).
+- **Notes:** Cross-layer (domain message field semantics + UI string). Related: SS-106 (audit),
+  SS-054 (splash-damage attacker case).
 
 ### SS-107 — Add a Doubles ArenaMessage and UI indication
 - [ ] Not completed

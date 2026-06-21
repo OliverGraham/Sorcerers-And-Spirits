@@ -1319,6 +1319,13 @@ class PerformCombatActionUseCaseTest {
             arguments.playerMap.getValue(defenderUserId).characterClass.hitPoints
         assertEquals(expected = initialDefenderHp - diceTotal, actual = updatedDefender.hitPoints)
 
+        // The casting mage never takes its own splash damage (SS-054)
+        val updatedMage =
+            outcome.getPlayerById(userId = currentAction.attackerUserId).characterClass
+        val initialMageHp =
+            arguments.playerMap.getValue(currentAction.attackerUserId).characterClass.hitPoints
+        assertEquals(expected = initialMageHp, actual = updatedMage.hitPoints)
+
         // Splash damage (if 3 players)
         if (isThreePlayer) {
             val thirdPlayer = outcome.getPlayerById(userId = THIRD_PLAYER_ID).characterClass
@@ -1326,6 +1333,19 @@ class PerformCombatActionUseCaseTest {
                 arguments.playerMap.getValue(THIRD_PLAYER_ID).characterClass.hitPoints
             assertEquals(expected = initialThirdHp - dieValue, actual = thirdPlayer.hitPoints)
         }
+
+        // Spell Potency message reports the mage, target, full damage, and splash amount
+        val spellPotencyMessage =
+            assertIs<ArenaMessage.SpellPotency>(
+                value = outcome.messages.single { it is ArenaMessage.SpellPotency }
+            )
+        assertEquals(
+            expected = currentAction.attackerUserId,
+            actual = spellPotencyMessage.mageUserId,
+        )
+        assertEquals(expected = defenderUserId, actual = spellPotencyMessage.mainTargetUserId)
+        assertEquals(expected = diceTotal, actual = spellPotencyMessage.mainDamage)
+        assertEquals(expected = diceTotal / 2, actual = spellPotencyMessage.splashDamage)
 
         // Turn ends
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)

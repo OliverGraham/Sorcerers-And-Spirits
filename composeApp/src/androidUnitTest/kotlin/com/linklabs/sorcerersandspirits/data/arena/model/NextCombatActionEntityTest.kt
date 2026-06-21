@@ -38,8 +38,7 @@ class NextCombatActionEntityTest {
                 .toDomain()
 
         val abilityRoll = assertIs<NextCombatAction.AbilityRoll>(roundTripped)
-        val mirrorImage =
-            assertIs<AbilityAction.Passive.MirrorImage>(abilityRoll.purpose)
+        val mirrorImage = assertIs<AbilityAction.Passive.MirrorImage>(abilityRoll.purpose)
         assertEquals(
             AbilityAction.Passive.MirrorImage.RerollSelection.Second,
             mirrorImage.rerollSelection,

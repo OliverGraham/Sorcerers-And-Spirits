@@ -37,7 +37,6 @@ sealed interface ArenaMessage {
         data class Result(val didDefenderEscape: Boolean) : Teleport
     }
 
-    // TODO(SS-052) LuckyCoin is this the right approach for messages?
     sealed interface LuckyCoin : ArenaMessage {
 
         data object Trigger : LuckyCoin

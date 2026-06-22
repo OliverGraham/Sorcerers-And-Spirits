@@ -366,6 +366,61 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 ---
 
+## Tavern
+
+### SS-124 — Search for a traveler to challenge in TheBar
+- [ ] Not completed
+- **Goal:** Let the user find a specific traveler to challenge by name, instead of scanning the whole
+  `BarFolk` list. Important once a busy Tavern (or a shard, see SS-126) holds more travelers than fit
+  comfortably on screen.
+- **Design:**
+  - Add a search text field at the top of `TheBar` (above `BarFolk`), bound to a `searchQuery`
+    state. Filter `otherTravelers` by case-insensitive `displayName` match before passing to
+    `BarFolk`. The computer traveler(s) injected in `TavernData.toState` are part of `otherTravelers`,
+    so they filter the same way.
+  - Keep the existing selection semantics: selections already drop out when a traveler leaves or goes
+    busy, so filtering the list must **not** clear selections of travelers who are merely filtered
+    out of view (selection lives in `selectedUserIds`, the challenge uses that set, not the visible
+    list).
+  - Show an empty-state message when the query matches no one. Keep the in-tavern count showing the
+    unfiltered total (or show "showing X of Y" — decide during impl).
+  - MVP is a pure client-side filter over the already-streamed list; no data-layer change. If/when
+    sharding (SS-126) means not every traveler is loaded locally, revisit to make search query across
+    shards (a presence/name index lookup) — noted as a follow-up there, not here.
+
+### SS-126 — Shard the Tavern so presence churn stays bounded at scale
+- [ ] Not completed
+- **Depends on:** SS-125 (delta-sync, done) — sharding caps how many travelers a client subscribes
+  to; delta-sync caps the cost per change. Only build this once a single shard's churn is actually
+  the bottleneck.
+- **Goal:** Keep per-client presence cost bounded regardless of total Tavern population. Even with
+  delta-sync, a single `TavernTravelers` node with ~50 people coming and going means every client
+  still receives every join/leave/status delta for everyone. Sharding partitions travelers into
+  capped rooms so each client only subscribes to its own shard.
+- **Design (to be refined):**
+  - Partition presence under `TavernTravelers/{shardId}/{userId}` with a soft cap per shard (e.g.
+    15–20). Assign a traveler to a shard on entry (fill-then-open: join the least-full non-full shard,
+    create a new shard when all are full). Store the assigned `shardId` so disconnect cleanup and
+    status writes target the right child; the existing `onDisconnect().removeValue()` registration
+    moves to the sharded path.
+  - Each client subscribes (via the SS-125 child-event delta sync, already in place) only to its own
+    shard, so fan-out is bounded by shard size, not total population.
+  - **Challenge across shards:** challenges already work by `userId` through the mailbox/challenge
+    paths (`ChallengeMailboxes`, `Challenges`), which are not shard-scoped, so cross-shard challenges
+    keep working as long as the challenge handshake addresses travelers by id, not by shared list
+    membership. Verify `claimChallengers` / presence transactions still resolve a traveler in another
+    shard.
+  - **Search across shards (ties to SS-124):** once a traveler isn't necessarily in your shard,
+    name search can no longer be a pure local filter. Add a lightweight name/presence index (e.g. a
+    flat `TavernTravelerIndex/{userId} -> {displayName, shardId, status}`) to look up and jump to /
+    challenge a traveler in another shard. Decide whether the index is worth it or whether search
+    stays shard-local.
+  - **Open questions:** rebalancing when shards drain unevenly; whether the computer traveler(s)
+    appear in every shard; how the in-tavern count is computed across shards; whether a global
+    population threshold gates sharding on/off so small taverns stay single-node.
+- **Note:** this is the larger, speculative piece — don't build it until population actually warrants
+  it. SS-125 is expected to carry the load until then.
+
 ## Computer opponent
 
 ### SS-092 — Computer enemy: challenge from the Tavern, fight in the Arena

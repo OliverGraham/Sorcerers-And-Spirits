@@ -53,6 +53,11 @@
     <string name="leaderboard_match_wins">%1$d Match wins</string>
     <string name="leaderboard_you">You</string>
 
+    <string name="achievements_title">Achievements</string>
+    <string name="achievements_progress">%1$d of %2$d unlocked</string>
+    <string name="achievements_unlocked">Unlocked</string>
+    <string name="achievements_locked">Locked</string>
+
     <string name="offline_banner_message">You\'re offline — reconnecting…</string>
 
     <string name="app_update_force_title">Update required</string>

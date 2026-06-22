@@ -41,6 +41,7 @@ internal fun SettingsDrawer(
         },
         onNavigateToProfile = { navigateTo(Route.ProfileScreen) },
         onNavigateToLeaderboard = { navigateTo(Route.LeaderboardScreen) },
+        onNavigateToAchievements = { navigateTo(Route.AchievementsScreen) },
         onNavigateToGameRules = { navigateTo(Route.GameRulesScreen) },
         modifier = modifier,
     )
@@ -51,6 +52,7 @@ private fun DrawerContent(
     onNavigateToHome: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToLeaderboard: () -> Unit,
+    onNavigateToAchievements: () -> Unit,
     onNavigateToGameRules: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -65,6 +67,7 @@ private fun DrawerContent(
         DrawerEntry(label = "Home", onClick = onNavigateToHome)
         DrawerEntry(label = "Profile", onClick = onNavigateToProfile)
         DrawerEntry(label = "Leaderboard", onClick = onNavigateToLeaderboard)
+        DrawerEntry(label = "Achievements", onClick = onNavigateToAchievements)
         DrawerEntry(label = "Game Rules", onClick = onNavigateToGameRules)
     }
 }

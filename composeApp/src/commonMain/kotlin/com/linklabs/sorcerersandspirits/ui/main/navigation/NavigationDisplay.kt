@@ -9,6 +9,7 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.linklabs.sorcerersandspirits.ui.screens.achievements.ui.AchievementsScreen
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
@@ -52,10 +53,15 @@ private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
 
         Route.ProfileScreen ->
             NavEntry(key = this) {
-                ProfileScreen(onProfileDeleted = { backStack.removeLastOrNull() })
+                ProfileScreen(
+                    onProfileDeleted = { backStack.removeLastOrNull() },
+                    onNavigateToAchievements = { backStack.add(element = Route.AchievementsScreen) },
+                )
             }
 
         Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }
+
+        Route.AchievementsScreen -> NavEntry(key = this) { AchievementsScreen() }
 
         Route.GameRulesScreen -> NavEntry(key = this) { GameRulesScreen() }
 

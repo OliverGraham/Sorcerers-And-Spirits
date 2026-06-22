@@ -83,6 +83,7 @@ import sorcerersandspirits.composeapp.generated.resources.sign_in_name_taken_mes
 @Composable
 internal fun ProfileScreen(
     onProfileDeleted: () -> Unit,
+    onNavigateToAchievements: () -> Unit,
     viewModel: ProfileScreenViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
 ) {
@@ -122,6 +123,7 @@ internal fun ProfileScreen(
             linkResult = linkResult,
             onUpdateDisplayName = viewModel::onUpdateDisplayName,
             onDeleteProfile = viewModel::onDeleteProfile,
+            onNavigateToAchievements = onNavigateToAchievements,
             onLinkWithSocialMethod = viewModel::onLinkWithSocialMethod,
             onLinkWithEmail = viewModel::onLinkWithEmail,
             modifier = Modifier.padding(paddingValues = paddingValues),
@@ -135,6 +137,7 @@ private fun ProfileScreen(
     linkResult: LinkAccountResult?,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
+    onNavigateToAchievements: () -> Unit,
     onLinkWithSocialMethod: (SignInMethod) -> Unit,
     onLinkWithEmail: (email: String, password: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -150,6 +153,7 @@ private fun ProfileScreen(
                 linkResult = linkResult,
                 onUpdateDisplayName = onUpdateDisplayName,
                 onDeleteProfile = onDeleteProfile,
+                onNavigateToAchievements = onNavigateToAchievements,
                 onLinkWithSocialMethod = onLinkWithSocialMethod,
                 onLinkWithEmail = onLinkWithEmail,
                 modifier = modifier,
@@ -163,6 +167,7 @@ private fun ProfileContent(
     linkResult: LinkAccountResult?,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
+    onNavigateToAchievements: () -> Unit,
     onLinkWithSocialMethod: (SignInMethod) -> Unit,
     onLinkWithEmail: (email: String, password: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -188,7 +193,7 @@ private fun ProfileContent(
             )
         }
 
-        item { StatsSection(state = state) }
+        item { StatsSection(state = state, onNavigateToAchievements = onNavigateToAchievements) }
 
         item {
             val isLinkSuccess = linkResult == LinkAccountResult.SUCCESS
@@ -269,7 +274,11 @@ private fun DisplayNameEditor(
 }
 
 @Composable
-private fun StatsSection(state: ProfileState, modifier: Modifier = Modifier) {
+private fun StatsSection(
+    state: ProfileState,
+    onNavigateToAchievements: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
@@ -281,7 +290,11 @@ private fun StatsSection(state: ProfileState, modifier: Modifier = Modifier) {
 
         RatingCard(rating = state.rating)
 
-        AchievementsCard(unlocked = state.achievementsUnlocked, total = state.achievementsTotal)
+        AchievementsCard(
+            unlocked = state.achievementsUnlocked,
+            total = state.achievementsTotal,
+            onClick = onNavigateToAchievements,
+        )
 
         if (state.hasRecord) {
             OverallRecordCard(overall = state.overall)
@@ -303,8 +316,13 @@ private fun RatingCard(rating: Long, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AchievementsCard(unlocked: Int, total: Int, modifier: Modifier = Modifier) {
-    Card(modifier = modifier.fillMaxWidth()) {
+private fun AchievementsCard(
+    unlocked: Int,
+    total: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(all = 16.dp)) {
             StatLabel(text = stringResource(resource = Res.string.profile_stats_achievements))
             Text(
@@ -500,6 +518,7 @@ private fun ProfileScreenPreview() {
             linkResult = null,
             onUpdateDisplayName = {},
             onDeleteProfile = {},
+            onNavigateToAchievements = {},
             onLinkWithSocialMethod = {},
             onLinkWithEmail = { _, _ -> },
         )

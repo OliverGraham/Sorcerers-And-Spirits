@@ -309,11 +309,16 @@ private fun GridPlayerCard(
     onUpdateTargetedOpponentId: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // A knocked-out opponent stays on screen but is skipped in combat, so its card must not be
+    // targetable — otherwise the user could select and attack a knocked-out player (SS-123).
+    val isOpponentTargetable =
+        isItThisUsersTurn && !isTargetLocked && opponent.characterClass.isConscious
+
     CharacterClassCard(
         characterClass = opponent.characterClass,
         isActive = isActive,
         isSelected = targetedOpponentUserId == opponent.userId,
-        enabled = isItThisUsersTurn && !isTargetLocked,
+        enabled = isOpponentTargetable,
         selectedBy = opponent.displayName,
         modifier = modifier.sharedBounds(key = opponent.userId),
         onClick = { onUpdateTargetedOpponentId(opponent.userId) },

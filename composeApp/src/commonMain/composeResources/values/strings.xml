@@ -57,6 +57,8 @@
 
     <string name="tavern_travelers_to_challenge">Travelers to challenge:</string>
     <string name="tavern_challenge_instruction">Tap travelers to challenge them into The Arena:</string>
+    <string name="tavern_search_travelers_hint">Search travelers by name</string>
+    <string name="tavern_search_no_matches">No travelers match \"%1$s\".</string>
 
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>

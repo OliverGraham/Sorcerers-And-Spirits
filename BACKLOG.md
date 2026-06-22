@@ -368,26 +368,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 ## Tavern
 
-### SS-124 — Search for a traveler to challenge in TheBar
-- [ ] Not completed
-- **Goal:** Let the user find a specific traveler to challenge by name, instead of scanning the whole
-  `BarFolk` list. Important once a busy Tavern (or a shard, see SS-126) holds more travelers than fit
-  comfortably on screen.
-- **Design:**
-  - Add a search text field at the top of `TheBar` (above `BarFolk`), bound to a `searchQuery`
-    state. Filter `otherTravelers` by case-insensitive `displayName` match before passing to
-    `BarFolk`. The computer traveler(s) injected in `TavernData.toState` are part of `otherTravelers`,
-    so they filter the same way.
-  - Keep the existing selection semantics: selections already drop out when a traveler leaves or goes
-    busy, so filtering the list must **not** clear selections of travelers who are merely filtered
-    out of view (selection lives in `selectedUserIds`, the challenge uses that set, not the visible
-    list).
-  - Show an empty-state message when the query matches no one. Keep the in-tavern count showing the
-    unfiltered total (or show "showing X of Y" — decide during impl).
-  - MVP is a pure client-side filter over the already-streamed list; no data-layer change. If/when
-    sharding (SS-126) means not every traveler is loaded locally, revisit to make search query across
-    shards (a presence/name index lookup) — noted as a follow-up there, not here.
-
 ### SS-126 — Shard the Tavern so presence churn stays bounded at scale
 - [ ] Not completed
 - **Depends on:** SS-125 (delta-sync, done) — sharding caps how many travelers a client subscribes

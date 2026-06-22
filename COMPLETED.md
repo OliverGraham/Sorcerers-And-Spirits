@@ -40,6 +40,8 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-022** — Remove arena match when last player leaves: When the last player leaves, remove the arena match.
 - **SS-023** — Resources + split functions in ArenaChoosingClasses: Extract string resources and split the composable back into separate functions.
 - **SS-024** — Possibly add finished-state content: Decide whether the finished-match screen needs additional content; add it or keep as-is.
+- **SS-026** — Add isThisPlayerTheUser to PlayerState: Decided against — the codebase already resolves "this user" everywhere by comparing `userId == userPlayerId` (e.g. ArenaScreenState, ArenaCombatControl); a per-player flag would duplicate that and need the user id threaded into the mapping for no UI gain. Removed the TODO.
+- **SS-027** — UI for waiting players: Replaced the bare loading spinner on `ArenaState.WaitingForAllPlayers` with a themed waiting screen — "Gathering Challengers" title, pulsing dots, flavor subtitle, and a card that rotates through class/combat tips so waiting players have something to read. Self-contained (the state carries no player data); copy in string resources.
 - **SS-030** — Rename/assign property in ArenaScreenState: Improve the flagged property's name and assignment.
 - **SS-032** — Decide timer-start strategy: Decide and document how timers should be started (e.g. based on `NextCombatAction`).
 

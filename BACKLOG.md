@@ -22,16 +22,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ArenaMessageLogHandle.kt:49` (`// TODO Arena: Improve animation`)
 - **Goal:** Improve the arena message-log animation.
 
-### SS-026 — Add isThisPlayerTheUser to PlayerState
-- [ ] Not completed
-- **Source:** `PlayerState.kt:9` (`// TODO: Add isThisPlayerTheUser ???`)
-- **Goal:** Decide whether `PlayerState` needs an `isThisPlayerTheUser` flag; add if it simplifies UI.
-
-### SS-027 — UI for waiting players
-- [ ] Not completed
-- **Source:** `ArenaWaitingForPlayers.kt:7` (`// TODO Arena: Loading for now, add some UI...`)
-- **Goal:** Replace the loading placeholder with engaging UI for players waiting for the match.
-
 ### SS-028 — Arena previews & enum-driven preview text
 - [ ] Not completed
 - **Sources:**

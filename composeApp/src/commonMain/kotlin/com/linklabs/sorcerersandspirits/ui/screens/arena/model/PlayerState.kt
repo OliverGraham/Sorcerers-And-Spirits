@@ -6,8 +6,6 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 
-// TODO(SS-026): Add isThisPlayerTheUser ???
-
 @Immutable
 sealed interface PlayerState {
     val userId: String

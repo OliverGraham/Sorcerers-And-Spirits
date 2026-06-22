@@ -12,9 +12,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMes
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
-// TODO(SS-028) Arena: update when state changes to use enums to determine the text (using
-// resources)
-
 class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenState> {
     private val classStates = createExampleCharacterClassStates()
     private val mageState = classStates.first { it.type == CharacterClassType.Mage }
@@ -29,8 +26,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
                         ArenaMessageState.ChoseCharacterClass(
                             id = "1",
                             displayName = "Spirit Walker",
-                            characterClassInfo =
-                                CharacterClassMessageInfoState("Rogue", CharacterClassType.Rogue),
+                            characterClassInfo = CharacterClassType.Rogue.toMessageInfoState(),
                         )
                     ),
             ),
@@ -139,20 +135,26 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             ArenaMessageState.ChoseCharacterClass(
                 id = "12",
                 displayName = "Sorcerer Supreme",
-                characterClassInfo = CharacterClassMessageInfoState("Mage", CharacterClassType.Mage),
+                characterClassInfo = CharacterClassType.Mage.toMessageInfoState(),
             ),
             ArenaMessageState.ChoseCharacterClass(
                 id = "21",
                 displayName = "Spirit Walker",
-                characterClassInfo =
-                    CharacterClassMessageInfoState("Rogue", CharacterClassType.Rogue),
+                characterClassInfo = CharacterClassType.Rogue.toMessageInfoState(),
             ),
             ArenaMessageState.ConnectedToArena(id = "1", displayName = "The battle begins!"),
             ArenaMessageState.NewRound(id = "2", roundNumber = "1"),
             ArenaMessageState.NewTurn(
                 id = "3",
-                characterClassInfo =
-                    CharacterClassMessageInfoState("Rogue", CharacterClassType.Rogue),
+                characterClassInfo = CharacterClassType.Rogue.toMessageInfoState(),
             ),
         )
 }
+
+/**
+ * Preview-only fixture. Class names are derived from [CharacterClassType] so the previews share the
+ * single enum source of truth rather than repeating string literals; the user-facing copy itself is
+ * still resolved from string resources at render time.
+ */
+private fun CharacterClassType.toMessageInfoState() =
+    CharacterClassMessageInfoState(className = name, type = this)

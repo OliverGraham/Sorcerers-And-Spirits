@@ -22,14 +22,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ArenaMessageLogHandle.kt:49` (`// TODO Arena: Improve animation`)
 - **Goal:** Improve the arena message-log animation.
 
-### SS-028 — Arena previews & enum-driven preview text
-- [ ] Not completed
-- **Sources:**
-  - `ArenaWaitingForPlayers.kt:14` (`// TODO Arena: Previews`)
-  - `ArenaStatePreviewParameterProvider.kt:16` (`// TODO Arena: update when state changes to use enums...`)
-- **Goal:** Add previews for waiting screen and update the preview parameter provider to use
-  enum/resource-driven text.
-
 ### SS-029 — Use StringResources in ArenaCombatControl
 - [ ] Not completed
 - **Source:** `ArenaCombatControl.kt:164` (`// TODO: Always StringResources`)

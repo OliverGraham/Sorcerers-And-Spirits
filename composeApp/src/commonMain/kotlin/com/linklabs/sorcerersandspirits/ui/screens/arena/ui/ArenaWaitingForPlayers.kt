@@ -34,7 +34,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -176,4 +178,8 @@ private fun RotatingTipCard(modifier: Modifier = Modifier) {
     }
 }
 
-// TODO(SS-028) Arena: Previews
+@Preview(showBackground = true)
+@Composable
+private fun ArenaWaitingForPlayersPreview() {
+    SorcerersAndSpiritsTheme { ArenaWaitingForPlayers() }
+}

@@ -98,8 +98,7 @@ class ProfileScreenViewModel(
                     .filterNotNull()
                     .catch { _uiStateFlow.value = UiState.Error }
                     .collect { profile ->
-                        _uiStateFlow.value =
-                            UiState.Loaded(data = ProfileState(displayName = profile.displayName))
+                        _uiStateFlow.value = UiState.Loaded(data = profile.toProfileState())
                     }
             }
     }

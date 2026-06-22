@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.leaderboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.leaderboard.LeaderboardEntry
 import com.linklabs.sorcerersandspirits.domain.leaderboard.usecase.GetLeaderboardUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,6 +17,9 @@ class LeaderboardScreenViewModel(private val getLeaderboardUseCase: GetLeaderboa
     private val _uiStateFlow = MutableStateFlow<UiState<LeaderboardState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
+    private var fetchedEntries: List<LeaderboardEntry> = emptyList()
+    private var selectedSort: LeaderboardSort = LeaderboardSort.GauntletsWon
+
     init {
         loadLeaderboard()
     }
@@ -24,21 +28,35 @@ class LeaderboardScreenViewModel(private val getLeaderboardUseCase: GetLeaderboa
         loadLeaderboard()
     }
 
+    /** Re-orders the already-fetched rows client-side; no network read. */
+    fun onSortSelected(sort: LeaderboardSort) {
+        if (sort == selectedSort) return
+
+        selectedSort = sort
+        if (_uiStateFlow.value is UiState.Loaded) {
+            _uiStateFlow.value = UiState.Loaded(data = buildState())
+        }
+    }
+
     private fun loadLeaderboard() {
         viewModelScope.launch {
             _uiStateFlow.value = UiState.Loading
 
-            val result = runCatching { getLeaderboardUseCase() }
+            val fetched = runCatching { getLeaderboardUseCase() }.getOrNull()
 
-            val loadedEntries = result.getOrNull()
             _uiStateFlow.value =
-                if (loadedEntries != null) {
-                    UiState.Loaded(
-                        data = LeaderboardState(entries = loadedEntries.map { it.toRowState() })
-                    )
+                if (fetched != null) {
+                    fetchedEntries = fetched
+                    UiState.Loaded(data = buildState())
                 } else {
                     UiState.Error
                 }
         }
     }
+
+    private fun buildState(): LeaderboardState =
+        LeaderboardState(
+            entries = fetchedEntries.toRowStates(sort = selectedSort),
+            sort = selectedSort,
+        )
 }

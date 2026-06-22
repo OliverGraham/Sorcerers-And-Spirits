@@ -52,6 +52,9 @@
     <string name="leaderboard_gauntlet_wins">%1$d Gauntlet wins</string>
     <string name="leaderboard_match_wins">%1$d Match wins</string>
     <string name="leaderboard_you">You</string>
+    <string name="leaderboard_sort_rating">Rating</string>
+    <string name="leaderboard_sort_gauntlets">Gauntlet wins</string>
+    <string name="leaderboard_sort_matches">Match wins</string>
 
     <string name="achievements_title">Achievements</string>
     <string name="achievements_progress">%1$d of %2$d unlocked</string>

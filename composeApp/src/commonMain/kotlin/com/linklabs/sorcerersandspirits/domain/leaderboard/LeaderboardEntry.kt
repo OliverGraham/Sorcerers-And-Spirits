@@ -1,11 +1,11 @@
 package com.linklabs.sorcerersandspirits.domain.leaderboard
 
 /**
- * A single ranked row of the leaderboard. [rank] is 1-based and assigned by ordering,
- * [isCurrentUser] marks the signed-in player's own row so the screen can highlight it.
+ * A single leaderboard player. Rows are ranked at display time (the UI can re-sort client-side, see
+ * SS-132), so no rank is carried here. [isCurrentUser] marks the signed-in player's own row so the
+ * screen can highlight it.
  */
 data class LeaderboardEntry(
-    val rank: Int,
     val displayName: String,
     val rating: Long,
     val gauntletsWon: Long,

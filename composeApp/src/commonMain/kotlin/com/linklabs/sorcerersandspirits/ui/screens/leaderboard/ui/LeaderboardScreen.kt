@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +30,7 @@ import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardRowState
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardSort
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -38,6 +42,9 @@ import sorcerersandspirits.composeapp.generated.resources.leaderboard_gauntlet_w
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_match_wins
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_rank
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_rating
+import sorcerersandspirits.composeapp.generated.resources.leaderboard_sort_gauntlets
+import sorcerersandspirits.composeapp.generated.resources.leaderboard_sort_matches
+import sorcerersandspirits.composeapp.generated.resources.leaderboard_sort_rating
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_subtitle
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_title
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_you
@@ -49,31 +56,48 @@ internal fun LeaderboardScreen(
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
 
-    LeaderboardScreen(uiState = uiState, onRetry = viewModel::onRetry, modifier = modifier)
+    LeaderboardScreen(
+        uiState = uiState,
+        onRetry = viewModel::onRetry,
+        onSortSelected = viewModel::onSortSelected,
+        modifier = modifier,
+    )
 }
 
 @Composable
 private fun LeaderboardScreen(
     uiState: UiState<LeaderboardState>,
     onRetry: () -> Unit,
+    onSortSelected: (LeaderboardSort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (uiState) {
         is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = modifier)
+
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
-        is UiState.Loaded -> LeaderboardContent(state = uiState.data, modifier = modifier)
+
+        is UiState.Loaded ->
+            LeaderboardContent(
+                state = uiState.data,
+                onSortSelected = onSortSelected,
+                modifier = modifier,
+            )
     }
 }
 
 @Composable
-private fun LeaderboardContent(state: LeaderboardState, modifier: Modifier = Modifier) {
+private fun LeaderboardContent(
+    state: LeaderboardState,
+    onSortSelected: (LeaderboardSort) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(space = 4.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(space = 8.dp)) {
                 Text(
                     text = stringResource(resource = Res.string.leaderboard_title),
                     style = MaterialTheme.typography.headlineMedium,
@@ -83,18 +107,47 @@ private fun LeaderboardContent(state: LeaderboardState, modifier: Modifier = Mod
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                LeaderboardSortControls(selectedSort = state.sort, onSortSelected = onSortSelected)
             }
         }
 
         if (state.entries.isEmpty()) {
             item { EmptyLeaderboard() }
         } else {
-            items(items = state.entries, key = { it.rank }) { entry ->
+            items(items = state.entries, key = { it.displayName }) { entry ->
                 LeaderboardRow(entry = entry)
             }
         }
     }
 }
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun LeaderboardSortControls(
+    selectedSort: LeaderboardSort,
+    onSortSelected: (LeaderboardSort) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    FlowRow(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
+    ) {
+        LeaderboardSort.entries.forEach { sort ->
+            FilterChip(
+                selected = sort == selectedSort,
+                onClick = { onSortSelected(sort) },
+                label = { Text(text = stringResource(resource = sort.labelResource())) },
+            )
+        }
+    }
+}
+
+private fun LeaderboardSort.labelResource() =
+    when (this) {
+        LeaderboardSort.Rating -> Res.string.leaderboard_sort_rating
+        LeaderboardSort.GauntletsWon -> Res.string.leaderboard_sort_gauntlets
+        LeaderboardSort.MatchesWon -> Res.string.leaderboard_sort_matches
+    }
 
 @Composable
 private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modifier) {
@@ -193,6 +246,7 @@ private fun LeaderboardScreenPreview() {
                 UiState.Loaded(
                     data =
                         LeaderboardState(
+                            sort = LeaderboardSort.GauntletsWon,
                             entries =
                                 listOf(
                                     LeaderboardRowState(
@@ -219,10 +273,11 @@ private fun LeaderboardScreenPreview() {
                                         matchesWon = 28,
                                         isCurrentUser = false,
                                     ),
-                                )
+                                ),
                         )
                 ),
             onRetry = {},
+            onSortSelected = {},
         )
     }
 }

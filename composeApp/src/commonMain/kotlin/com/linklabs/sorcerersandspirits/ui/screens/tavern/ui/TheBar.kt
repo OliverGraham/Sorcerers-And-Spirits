@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +44,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleUser
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_instruction
+import sorcerersandspirits.composeapp.generated.resources.tavern_search_no_matches
+import sorcerersandspirits.composeapp.generated.resources.tavern_search_travelers_hint
 import sorcerersandspirits.composeapp.generated.resources.tavern_travelers_to_challenge
 
 private const val TRAVELERS_IN_TAVERN_COUNT_LABEL = "TravelersInTavernCount"
@@ -56,10 +59,12 @@ internal fun TheBar(
     modifier: Modifier = Modifier,
 ) {
     var selectedUserIds by remember { mutableStateOf(setOf<String>()) }
+    var searchQuery by remember { mutableStateOf("") }
 
     // A traveler can only be challenged while present in the Tavern and available, so selections of
     // travelers who have since left or become busy drop out of the count and the outgoing
-    // challenge.
+    // challenge. Selection is derived from the full list rather than the search-filtered one, so a
+    // traveler that is picked and then filtered out of view stays in the outgoing challenge.
     val selectedTravelers =
         otherTravelers
             .filter { traveler ->
@@ -67,9 +72,23 @@ internal fun TheBar(
             }
             .toSet()
 
+    val trimmedQuery = searchQuery.trim()
+    val visibleTravelers =
+        if (trimmedQuery.isEmpty()) {
+            otherTravelers
+        } else {
+            otherTravelers.filter { traveler ->
+                traveler.displayName.contains(other = trimmedQuery, ignoreCase = true)
+            }
+        }
+
     Column(modifier = modifier.navigationBarsPadding()) {
+        TravelerSearchField(searchQuery = searchQuery, onSearchQueryChange = { searchQuery = it })
+
         BarFolk(
-            otherTravelers = otherTravelers,
+            visibleTravelers = visibleTravelers,
+            travelerCount = otherTravelers.size,
+            searchQuery = trimmedQuery,
             selectedUserIds = selectedTravelers.mapTo(mutableSetOf()) { it.userId },
             onToggleTraveler = { traveler ->
                 selectedUserIds =
@@ -91,12 +110,34 @@ internal fun TheBar(
 }
 
 @Composable
+private fun TravelerSearchField(
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    OutlinedTextField(
+        value = searchQuery,
+        onValueChange = onSearchQueryChange,
+        placeholder = {
+            Text(text = stringResource(resource = Res.string.tavern_search_travelers_hint))
+        },
+        singleLine = true,
+        modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+    )
+}
+
+@Composable
 private fun BarFolk(
-    otherTravelers: List<TravelerState>,
+    visibleTravelers: List<TravelerState>,
+    travelerCount: Int,
+    searchQuery: String,
     selectedUserIds: Set<String>,
     onToggleTraveler: (TravelerState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // An active search that matches nobody, as opposed to an empty Tavern, gets its own message.
+    val isSearchWithoutMatches = searchQuery.isNotEmpty() && visibleTravelers.isEmpty()
+
     LazyColumn(
         modifier = modifier.fillMaxWidth().padding(bottom = 24.dp),
         contentPadding = PaddingValues(vertical = 12.dp),
@@ -117,7 +158,7 @@ private fun BarFolk(
                 )
 
                 AnimatedContent(
-                    targetState = otherTravelers.size,
+                    targetState = travelerCount,
                     label = TRAVELERS_IN_TAVERN_COUNT_LABEL,
                 ) { count ->
                     Text(
@@ -137,7 +178,20 @@ private fun BarFolk(
             )
         }
 
-        items(items = otherTravelers) { travelerState ->
+        if (isSearchWithoutMatches) {
+            item {
+                Text(
+                    text =
+                        stringResource(resource = Res.string.tavern_search_no_matches, searchQuery),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                )
+            }
+        }
+
+        items(items = visibleTravelers) { travelerState ->
             travelerState.ToCard(
                 isSelected = travelerState.userId in selectedUserIds,
                 onClick = { onToggleTraveler(travelerState) },

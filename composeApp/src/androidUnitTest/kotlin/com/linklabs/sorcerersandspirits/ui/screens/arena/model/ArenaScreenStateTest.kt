@@ -232,8 +232,7 @@ class ArenaScreenStateTest {
                 numberOfNewMessages = 0,
                 playerMap =
                     mapOf(
-                        USER_ID to
-                            ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
+                        USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
                         OPPONENT_ID to
                             ArenaPlayer.Selected(
                                 userId = OPPONENT_ID,

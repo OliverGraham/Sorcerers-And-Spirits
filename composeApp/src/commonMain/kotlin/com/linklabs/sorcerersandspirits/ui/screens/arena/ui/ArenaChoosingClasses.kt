@@ -127,7 +127,7 @@ private fun ArenaChoosingClassesPreview() {
                 activePlayerUserId = mockPlayer.userId,
                 userPlayerId = mockPlayer.userId,
                 selectedClass = null,
-                unavailableClasses = emptyList(),
+                unavailableClasses = emptySet(),
                 classSelections = emptyMap(),
             )
 

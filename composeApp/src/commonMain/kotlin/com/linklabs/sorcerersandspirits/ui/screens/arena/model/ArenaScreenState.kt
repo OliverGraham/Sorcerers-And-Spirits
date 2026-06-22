@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 
@@ -60,8 +61,8 @@ sealed interface ArenaState {
         override val userPlayerId: String,
         val activePlayerUserId: String,
         val selectedClass: CharacterClassState?,
-        val unavailableClasses: List<CharacterClassState>,
-        val classSelections: Map<CharacterClassState, String>,
+        val unavailableClasses: Set<CharacterClassType>,
+        val classSelections: Map<CharacterClassType, String>,
     ) : ActiveState {
         val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
         val isItThisUsersTurn = activePlayerUserId == userPlayerId
@@ -301,16 +302,21 @@ private fun ArenaState.Combat.withFinalPlayers(
 
 private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     userId: String
-): Pair<List<CharacterClassState>, Map<CharacterClassState, String>> {
+): Pair<Set<CharacterClassType>, Map<CharacterClassType, String>> {
     val allPlayers = values.map { player -> player.toState() }
+    // Keyed on class type, not the full CharacterClassState: the no-duplicate-class rule and the
+    // "chosen by" labels are about class identity, and a player's selected state can differ from
+    // the master template by mutable fields (HP, ability counters), so value equality would let a
+    // duplicate slip through (SS-122).
     val unavailableClasses =
         allPlayers
             .filter { player -> player.userId != userId }
-            .mapNotNull { player -> (player as? PlayerState.Selected)?.characterClass }
+            .mapNotNull { player -> (player as? PlayerState.Selected)?.characterClass?.type }
+            .toSet()
 
     val classSelections =
         allPlayers.filterIsInstance<PlayerState.Selected>().associate { player ->
-            player.characterClass to player.displayName
+            player.characterClass.type to player.displayName
         }
 
     return unavailableClasses to classSelections

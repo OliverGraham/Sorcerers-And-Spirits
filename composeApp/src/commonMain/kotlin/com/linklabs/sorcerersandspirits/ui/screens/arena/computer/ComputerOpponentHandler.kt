@@ -129,7 +129,8 @@ internal class ComputerOpponentHandler(
     ) {
         if (arenaState.activePlayerUserId != computerId) return
 
-        val availableClasses = characterClasses.filterNot { it in arenaState.unavailableClasses }
+        val availableClasses =
+            characterClasses.filterNot { it.type in arenaState.unavailableClasses }
         val chosenClass = availableClasses.randomOrNull() ?: return
         val computerPlayer = arenaState.playerMap.getValue(key = computerId)
 

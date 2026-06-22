@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import kotlin.test.Test
@@ -216,6 +217,42 @@ class ArenaScreenStateTest {
         val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
 
         assertEquals(expected = TimerAction.None, actual = update.timerAction)
+    }
+
+    @Test
+    fun `Given an opponent selected a class whose stats diverge from the template, then that class type is still unavailable to the user`() {
+        // A selected player's class carries live, mutated stats (here reduced HP), so it is not
+        // value-equal to the master template. The no-duplicate rule keys on class type, so the
+        // type must still be excluded — otherwise a second chooser (e.g. the computer) could pick
+        // the same class (SS-122).
+        val woundedGambler = TestCharacterClasses.gambler().copy(hitPoints = 1)
+        val match =
+            ArenaMatch.ChoosingClasses(
+                messages = emptyList(),
+                numberOfNewMessages = 0,
+                playerMap =
+                    mapOf(
+                        USER_ID to
+                            ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
+                        OPPONENT_ID to
+                            ArenaPlayer.Selected(
+                                userId = OPPONENT_ID,
+                                displayName = "Gambler",
+                                characterClass = woundedGambler,
+                            ),
+                    ),
+                activePlayer = ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
+                activePlayerUserId = USER_ID,
+            )
+
+        val nextState =
+            match.toUpdatedState(previousState = null, userId = USER_ID).nextState.arenaState
+
+        assertTrue(actual = nextState is ArenaState.ChoosingClasses)
+        assertEquals(
+            expected = setOf(CharacterClassType.Gambler),
+            actual = nextState.unavailableClasses,
+        )
     }
 
     private fun finishedMatch(

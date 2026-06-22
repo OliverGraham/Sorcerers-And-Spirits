@@ -240,13 +240,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Depends on SS-130 (rating on `LeaderboardEntry`/`LeaderboardRowState`). Related:
   SS-130, SS-128, SS-065.
 
-### SS-131 — Achievements collection screen
-- [ ] Not completed
-- **Goal:** A screen to browse achievements — unlocked and still-locked — with per-achievement
-  progress, driven by the SS-074 engine (`AchievementCatalog` + string-resource copy).
-- **Notes:** Depends on SS-074 (+ SS-127 for the bulk of the set). Accessible from the drawer
-  (SS-063) and/or ProfileScreen (SS-129). Related: SS-074, SS-127, SS-129.
-
 ---
 
 ## UI overhaul & input

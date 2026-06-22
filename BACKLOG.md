@@ -111,6 +111,25 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
   grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
 
+### SS-122 — Computer opponent can pick a class the human already chose (duplicate classes)
+- [~] In progress — fixed; pending live verification.
+- **Source:** Reported bug. Observed in a 2-player user-vs-computer match: the user chose Gambler,
+  then the computer also chose Gambler. The no-duplicate-class rule must hold for computer picks too.
+- **Root cause:** every class-availability check compared full `CharacterClassState` by value
+  equality (`it in unavailableClasses`) — the bot (`ComputerOpponentHandler.kt`), the user timeout
+  auto-pick (`ArenaScreenViewModel.kt`), and the class wheel (`CharacterClassWheel.kt`). A selected
+  player's `CharacterClassState` carries live, mutable stats (HP, ability counters) that diverge from
+  the master template, so the `in` match failed, the class stayed "available", and a second chooser
+  could pick the duplicate. The bug surfaced for the bot because in 2-player the human chooses first
+  (all classes available to them); the same fragility was latent for a human choosing later in 3+.
+- **Fix:** `unavailableClasses` is now `Set<CharacterClassType>` and `classSelections` is keyed by
+  `CharacterClassType` (`ArenaScreenState.prepareClassSelectionInfo`); all four consumers compare by
+  `type`. Class identity, not mutable state, now drives the duplicate rule and the "chosen by" label.
+  Regression test added (`ArenaScreenStateTest`: an opponent's diverged-stats Gambler still makes the
+  Gambler *type* unavailable).
+- **Notes:** Child of SS-092 (computer opponent). Related: SS-079 (the wheel threads
+  `unavailableClasses`).
+
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

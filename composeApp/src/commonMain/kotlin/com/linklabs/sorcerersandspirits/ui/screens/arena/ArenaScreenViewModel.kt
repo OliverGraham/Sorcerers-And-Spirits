@@ -493,7 +493,8 @@ class ArenaScreenViewModel(
     ) {
         if (!arenaState.isItThisUsersTurn) return
 
-        val availableClasses = characterClasses.filterNot { it in arenaState.unavailableClasses }
+        val availableClasses =
+            characterClasses.filterNot { it.type in arenaState.unavailableClasses }
         val chosenClass = arenaState.selectedClass ?: availableClasses.randomOrNull() ?: return
         val userPlayer = arenaState.playerMap.getValue(key = arenaState.userPlayerId)
 

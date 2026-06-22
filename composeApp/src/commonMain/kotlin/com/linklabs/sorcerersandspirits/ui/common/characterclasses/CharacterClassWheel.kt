@@ -100,8 +100,8 @@ fun CharacterClassWheel(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
     selectedClass: CharacterClassState? = null,
-    unavailableClasses: List<CharacterClassState> = emptyList(),
-    classSelections: Map<CharacterClassState, String> = emptyMap(),
+    unavailableClasses: Set<CharacterClassType> = emptySet(),
+    classSelections: Map<CharacterClassType, String> = emptyMap(),
     onClassSelected: (CharacterClassState) -> Unit = {},
 ) {
     val count = characterClasses.size
@@ -145,7 +145,7 @@ fun CharacterClassWheel(
             targetDegrees = nearestRotationForIndex(index = index, fromDegrees = rotationDegrees)
         )
         val targetClass = characterClasses[index]
-        if (targetClass !in unavailableClasses) onClassSelected(targetClass)
+        if (targetClass.type !in unavailableClasses) onClassSelected(targetClass)
     }
 
     LaunchedEffect(key1 = selectedClass) {
@@ -229,7 +229,10 @@ fun CharacterClassWheel(
             }
         }
 
-        ClassStatBar(characterClass = centeredClass, selectedBy = classSelections[centeredClass])
+        ClassStatBar(
+            characterClass = centeredClass,
+            selectedBy = classSelections[centeredClass.type],
+        )
     }
 }
 
@@ -244,7 +247,7 @@ private val WHEEL_SNAP_SPEC =
 private fun RotatingWheel(
     characterClasses: List<CharacterClassState>,
     rotationDegrees: () -> Float,
-    unavailableClasses: List<CharacterClassState>,
+    unavailableClasses: Set<CharacterClassType>,
     wheelSize: Dp,
     onClassClick: (Int) -> Unit,
 ) {
@@ -258,7 +261,7 @@ private fun RotatingWheel(
 
         characterClasses.forEachIndexed { index, characterClass ->
             val baseAngle = index * DEGREES_PER_CLASS
-            val isAvailable = characterClass !in unavailableClasses
+            val isAvailable = characterClass.type !in unavailableClasses
 
             ClassLabel(
                 name = characterClass.className,

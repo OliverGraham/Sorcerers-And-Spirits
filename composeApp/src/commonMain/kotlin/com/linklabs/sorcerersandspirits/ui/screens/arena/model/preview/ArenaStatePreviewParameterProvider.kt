@@ -90,7 +90,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             userPlayerId = userPlayerId,
             activePlayerUserId = activePlayerUserId,
             selectedClass = null,
-            unavailableClasses = emptyList(),
+            unavailableClasses = emptySet(),
             classSelections = emptyMap(),
         )
 

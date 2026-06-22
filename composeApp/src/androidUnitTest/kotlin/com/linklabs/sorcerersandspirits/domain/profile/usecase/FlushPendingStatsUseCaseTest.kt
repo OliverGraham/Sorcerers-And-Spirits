@@ -25,6 +25,7 @@ class FlushPendingStatsUseCaseTest {
                 UpdateProfileStatsUseCase(
                     authenticationRepository = authenticationRepository,
                     profileRepository = profileRepository,
+                    unlockAchievementsUseCase = mockk(relaxed = true),
                 ),
         )
 

@@ -16,6 +16,12 @@ data class ProfileStats(
     val isEmpty: Boolean
         get() = overall.isEmpty && perClass.values.all { it.isEmpty }
 
+    fun hasMatchWinAs(classType: CharacterClassType): Boolean =
+        (perClass[classType]?.matchesWon ?: 0) >= 1
+
+    fun hasGauntletWinAs(classType: CharacterClassType): Boolean =
+        (perClass[classType]?.gauntletsWon ?: 0) >= 1
+
     operator fun plus(other: ProfileStats): ProfileStats {
         val classes = perClass.keys + other.perClass.keys
         return ProfileStats(

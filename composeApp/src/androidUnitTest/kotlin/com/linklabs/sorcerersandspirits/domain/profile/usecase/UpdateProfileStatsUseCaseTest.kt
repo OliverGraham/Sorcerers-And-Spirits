@@ -14,11 +14,13 @@ class UpdateProfileStatsUseCaseTest {
 
     private val authenticationRepository: AuthenticationRepository = mockk()
     private val profileRepository: ProfileRepository = mockk(relaxed = true)
+    private val unlockAchievementsUseCase: UnlockAchievementsUseCase = mockk(relaxed = true)
 
     private val useCase =
         UpdateProfileStatsUseCase(
             authenticationRepository = authenticationRepository,
             profileRepository = profileRepository,
+            unlockAchievementsUseCase = unlockAchievementsUseCase,
         )
 
     @Test
@@ -28,6 +30,15 @@ class UpdateProfileStatsUseCaseTest {
         useCase(delta = DELTA)
 
         coVerify(exactly = 1) { profileRepository.incrementStats(userId = USER_ID, delta = DELTA) }
+    }
+
+    @Test
+    fun `re-evaluates achievements for the user after writing`() = runTest {
+        every { authenticationRepository.getUserId() } returns USER_ID
+
+        useCase(delta = DELTA)
+
+        coVerify(exactly = 1) { unlockAchievementsUseCase(userId = USER_ID) }
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.profile
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
+import com.linklabs.sorcerersandspirits.domain.achievement.AchievementId
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
@@ -110,6 +111,20 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
         profilesCollection.document(documentPath = userId).updateFields {
             increments.forEach { (fieldPathSegments, amount) ->
                 FieldPath(*fieldPathSegments.toTypedArray()) to FieldValue.increment(value = amount)
+            }
+        }
+    }
+
+    override suspend fun unlockAchievements(
+        userId: String,
+        achievementIds: List<AchievementId>,
+        unlockedAt: Long,
+    ) {
+        if (achievementIds.isEmpty()) return
+
+        profilesCollection.document(documentPath = userId).updateFields {
+            achievementIds.forEach { achievementId ->
+                FieldPath(FireStoreKeys.UNLOCKED_ACHIEVEMENTS, achievementId.name) to unlockedAt
             }
         }
     }

@@ -92,6 +92,7 @@ class FakeTavernDataSource : TavernDataSource {
         userId: String,
         displayName: String,
         tavernStatus: TavernStatus,
+        rating: Long,
     ) {
         travelers.update { current ->
             val updated =
@@ -99,11 +100,13 @@ class FakeTavernDataSource : TavernDataSource {
                     userId = userId,
                     displayName = displayName,
                     tavernStatus = tavernStatus,
+                    rating = rating,
                 )
                     ?: TravelerEntity(
                         userId = userId,
                         displayName = displayName,
                         tavernStatus = tavernStatus,
+                        rating = rating,
                     )
             current + (userId to updated)
         }

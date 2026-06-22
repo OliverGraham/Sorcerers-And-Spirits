@@ -48,6 +48,7 @@
     <string name="leaderboard_subtitle">Top players by Gauntlets won</string>
     <string name="leaderboard_empty">No champions yet — win a Gauntlet to claim the top spot.</string>
     <string name="leaderboard_rank">#%1$d</string>
+    <string name="leaderboard_rating">Rating %1$d</string>
     <string name="leaderboard_gauntlet_wins">%1$d Gauntlet wins</string>
     <string name="leaderboard_match_wins">%1$d Match wins</string>
     <string name="leaderboard_you">You</string>
@@ -68,6 +69,7 @@
     <string name="tavern_challenge_instruction">Tap travelers to challenge them into The Arena:</string>
     <string name="tavern_search_travelers_hint">Search travelers by name</string>
     <string name="tavern_search_no_matches">No travelers match \"%1$s\".</string>
+    <string name="tavern_traveler_rating">Rating %1$d</string>
 
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>

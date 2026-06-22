@@ -21,6 +21,7 @@ class GetLeaderboardUseCase(
             LeaderboardEntry(
                 rank = index + 1,
                 displayName = profile.displayName,
+                rating = profile.stats.rating,
                 gauntletsWon = profile.stats.overall.gauntletsWon,
                 matchesWon = profile.stats.overall.matchesWon,
                 isCurrentUser = profile.userId == currentUserId,

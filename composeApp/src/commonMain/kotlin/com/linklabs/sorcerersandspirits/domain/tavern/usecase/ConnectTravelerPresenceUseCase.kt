@@ -8,6 +8,7 @@ class ConnectTravelerPresenceUseCase(private val tavernRepository: TavernReposit
         tavernRepository.connectTravelerPresence(
             userId = profile.userId,
             displayName = profile.displayName,
+            rating = profile.stats.rating,
         )
     }
 }

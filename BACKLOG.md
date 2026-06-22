@@ -224,13 +224,21 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Depends on SS-074. Domain Arena-combat is the source of truth — event hooks must read
   real combat resolution, not re-derive it. Related: SS-074, SS-072, SS-131.
 
-### SS-130 — Surface Rating across the app
+### SS-132 — LeaderboardScreen client-side sort/filter controls
 - [ ] Not completed
-- **Goal:** Show the player Rating wherever a player is presented. Specifically: Tavern/TheBar
-  traveler rows (next to the display name) and the LeaderboardScreen; optionally allow ranking the
-  leaderboard by rating instead of (or alongside) gauntlets won.
-- **Notes:** Depends on SS-128. Touches `GetLeaderboardUseCase`/`LeaderboardEntry` and the Tavern
-  traveler presentation. Related: SS-128, SS-065, SS-124.
+- **Goal:** Let the player re-order and filter the LeaderboardScreen results client-side — e.g.
+  sort by rating, gauntlets won, or matches won — on top of the rows already fetched. UI affordance
+  TBD (chips/dropdown/segmented control).
+- **Scope:** Operates on the already-fetched list in `LeaderboardState`; the sort/filter state lives
+  in `LeaderboardScreenViewModel` and re-derives the displayed (and re-ranked) rows. No new network
+  reads. Decide whether the displayed `rank` re-numbers to the chosen sort or stays the
+  gauntlets-won rank.
+- **Caveat:** This sorts only the fetched top-N (currently the top profiles by gauntlets won, the
+  one field Firestore orders on). A *globally* correct "top by rating" would need a denormalized
+  stored `rating` field on the profile doc to `orderBy` server-side — out of scope here; note it if
+  the fetched-window limitation becomes visible.
+- **Notes:** Depends on SS-130 (rating on `LeaderboardEntry`/`LeaderboardRowState`). Related:
+  SS-130, SS-128, SS-065.
 
 ### SS-131 — Achievements collection screen
 - [ ] Not completed

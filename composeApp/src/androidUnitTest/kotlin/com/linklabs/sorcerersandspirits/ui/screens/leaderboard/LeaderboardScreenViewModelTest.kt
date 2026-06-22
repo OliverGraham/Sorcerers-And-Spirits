@@ -93,6 +93,7 @@ class LeaderboardScreenViewModelTest {
             LeaderboardEntry(
                 rank = 1,
                 displayName = "Gandalf",
+                rating = 2_225,
                 gauntletsWon = 12,
                 matchesWon = 41,
                 isCurrentUser = true,

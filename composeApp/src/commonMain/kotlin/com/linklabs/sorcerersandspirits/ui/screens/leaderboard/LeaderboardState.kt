@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.leaderboard.LeaderboardEntry
 data class LeaderboardRowState(
     val rank: Int,
     val displayName: String,
+    val rating: Long,
     val gauntletsWon: Long,
     val matchesWon: Long,
     val isCurrentUser: Boolean,
@@ -18,6 +19,7 @@ internal fun LeaderboardEntry.toRowState() =
     LeaderboardRowState(
         rank = rank,
         displayName = displayName,
+        rating = rating,
         gauntletsWon = gauntletsWon,
         matchesWon = matchesWon,
         isCurrentUser = isCurrentUser,

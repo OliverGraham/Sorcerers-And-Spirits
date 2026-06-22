@@ -4,7 +4,9 @@ import com.linklabs.sorcerersandspirits.data.tavern.FakeTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
 import com.linklabs.sorcerersandspirits.data.tavern.challengeEntity
 import com.linklabs.sorcerersandspirits.data.tavern.challengerEntity
+import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
+import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -46,6 +48,21 @@ class ConnectTravelerPresenceUseCaseTest {
             assertEquals(expected = TavernStatus.Available, actual = traveler?.tavernStatus)
             assertTrue(actual = dataSource.disconnectRegistrations.contains(element = USER_ID))
         }
+
+    @Test
+    fun `writes the profile rating into the traveler's presence`() = runPresenceTest {
+        val ratedProfile =
+            Profile(
+                userId = USER_ID,
+                displayName = NAME,
+                stats = ProfileStats(overall = GameStats(gauntletsWon = 2, matchesWon = 4)),
+            )
+
+        useCase().invoke(profile = ratedProfile)
+        dataSource.connected.value = true
+
+        assertEquals(expected = 300L, actual = dataSource.traveler(userId = USER_ID)?.rating)
+    }
 
     @Test
     fun `does not touch presence while disconnected`() = runPresenceTest {

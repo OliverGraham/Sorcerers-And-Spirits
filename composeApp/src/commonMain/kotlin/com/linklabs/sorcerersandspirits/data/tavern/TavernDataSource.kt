@@ -43,6 +43,7 @@ interface TavernDataSource {
         userId: String,
         displayName: String,
         tavernStatus: TavernStatus,
+        rating: Long,
     )
 
     /**

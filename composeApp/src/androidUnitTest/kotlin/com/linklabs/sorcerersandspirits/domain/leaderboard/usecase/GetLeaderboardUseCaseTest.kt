@@ -26,7 +26,7 @@ class GetLeaderboardUseCaseTest {
         )
 
     @Test
-    fun `assigns 1-based ranks in the order the repository returns`() = runTest {
+    fun `maps profiles to entries in the order the repository returns`() = runTest {
         every { authenticationRepository.getUserId() } returns "someone-else"
         coEvery { profileRepository.getTopProfiles(limit = any()) } returns
             listOf(
@@ -36,8 +36,7 @@ class GetLeaderboardUseCaseTest {
 
         val entries = useCase()
 
-        assertEquals(expected = listOf(1, 2), actual = entries.map { it.rank })
-        assertEquals(expected = "Alice", actual = entries[0].displayName)
+        assertEquals(expected = listOf("Alice", "Bob"), actual = entries.map { it.displayName })
         assertEquals(expected = 5L, actual = entries[0].gauntletsWon)
         assertEquals(expected = 20L, actual = entries[0].matchesWon)
         // rating derived from stats: 100*5 gauntlet wins + 25*20 match wins

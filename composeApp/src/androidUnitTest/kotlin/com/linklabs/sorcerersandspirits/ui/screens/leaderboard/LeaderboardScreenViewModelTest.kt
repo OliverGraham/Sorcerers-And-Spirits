@@ -88,15 +88,63 @@ class LeaderboardScreenViewModelTest {
         }
     }
 
+    @Test
+    fun `When sorted by rating, then rows reorder and re-rank by rating`() = runTest {
+        // Returned in Gauntlets-won order: the grinder outranks the ace by gauntlets but not
+        // rating.
+        coEvery { getLeaderboardUseCase() } returns listOf(GRINDER, ACE)
+        val viewModel = createViewModel()
+
+        viewModel.uiStateFlow.test {
+            assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+            val byGauntlets = assertIs<UiState.Loaded<LeaderboardState>>(value = awaitItem()).data
+            assertEquals(
+                expected = listOf("Grinder", "Ace"),
+                actual = byGauntlets.entries.map { it.displayName },
+            )
+            assertEquals(expected = LeaderboardSort.GauntletsWon, actual = byGauntlets.sort)
+
+            viewModel.onSortSelected(sort = LeaderboardSort.Rating)
+
+            val byRating = assertIs<UiState.Loaded<LeaderboardState>>(value = awaitItem()).data
+            assertEquals(
+                expected = listOf("Ace", "Grinder"),
+                actual = byRating.entries.map { it.displayName },
+            )
+            assertEquals(expected = listOf(1, 2), actual = byRating.entries.map { it.rank })
+            assertEquals(expected = LeaderboardSort.Rating, actual = byRating.sort)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
     private companion object {
         val ENTRY =
             LeaderboardEntry(
-                rank = 1,
                 displayName = "Gandalf",
                 rating = 2_225,
                 gauntletsWon = 12,
                 matchesWon = 41,
                 isCurrentUser = true,
+            )
+
+        val GRINDER =
+            LeaderboardEntry(
+                displayName = "Grinder",
+                rating = 100,
+                gauntletsWon = 10,
+                matchesWon = 0,
+                isCurrentUser = false,
+            )
+
+        val ACE =
+            LeaderboardEntry(
+                displayName = "Ace",
+                rating = 900,
+                gauntletsWon = 1,
+                matchesWon = 0,
+                isCurrentUser = false,
             )
     }
 }

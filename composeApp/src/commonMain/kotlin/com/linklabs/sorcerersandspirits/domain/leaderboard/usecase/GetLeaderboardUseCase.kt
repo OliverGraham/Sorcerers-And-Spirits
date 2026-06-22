@@ -5,8 +5,9 @@ import com.linklabs.sorcerersandspirits.domain.leaderboard.LeaderboardEntry
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 
 /**
- * Reads the top players ranked by Gauntlets won — the unit a stats write is attributed to (SS-073)
- * — and tags the signed-in player's own row so the screen can highlight it.
+ * Reads the top players — fetched ordered by Gauntlets won, the unit a stats write is attributed to
+ * (SS-073) — and tags the signed-in player's own row so the screen can highlight it. The display
+ * order/rank is decided by the UI (SS-132).
  */
 class GetLeaderboardUseCase(
     private val profileRepository: ProfileRepository,
@@ -15,11 +16,8 @@ class GetLeaderboardUseCase(
     suspend operator fun invoke(): List<LeaderboardEntry> {
         val currentUserId = authenticationRepository.getUserId()
 
-        return profileRepository.getTopProfiles(limit = LEADERBOARD_SIZE).mapIndexed {
-            index,
-            profile ->
+        return profileRepository.getTopProfiles(limit = LEADERBOARD_SIZE).map { profile ->
             LeaderboardEntry(
-                rank = index + 1,
                 displayName = profile.displayName,
                 rating = profile.stats.rating,
                 gauntletsWon = profile.stats.overall.gauntletsWon,

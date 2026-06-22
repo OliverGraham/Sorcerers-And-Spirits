@@ -6,6 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
@@ -119,14 +121,26 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
+        /**
+         * Whether an unused Holy Shield would trigger for this defender. A pending Holy Shield
+         * means a knockout is not yet final — the survival roll still has to happen — so callers
+         * use this to phrase the triggering hit as damage rather than as a knockout.
+         */
+        @OptIn(ExperimentalContracts::class)
+        fun isHolyShieldAvailable(defenderDefensiveAbility: DefensiveAbility): Boolean {
+            contract {
+                returns(true) implies (defenderDefensiveAbility is DefensiveAbility.HolyShield)
+            }
+            return defenderDefensiveAbility is DefensiveAbility.HolyShield &&
+                !defenderDefensiveAbility.usedThisMatch
+        }
+
         fun triggerHolyShieldIfApplicable(
             combatMutator: CombatMutator,
             defenderDefensiveAbility: DefensiveAbility,
             holyShieldUserId: String = combatMutator.defenderUserId,
         ): Boolean {
-            val shouldTriggerHolyShield =
-                defenderDefensiveAbility is DefensiveAbility.HolyShield &&
-                    !defenderDefensiveAbility.usedThisMatch
+            val shouldTriggerHolyShield = isHolyShieldAvailable(defenderDefensiveAbility)
 
             if (shouldTriggerHolyShield) {
                 HolyShieldHandler(combatMutator = combatMutator)
@@ -144,10 +158,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             defenderDefensiveAbility: DefensiveAbility,
             holyShieldUserId: String = combatMutator.defenderUserId,
         ) {
-            if (
-                defenderDefensiveAbility is DefensiveAbility.HolyShield &&
-                    !defenderDefensiveAbility.usedThisMatch
-            ) {
+            if (isHolyShieldAvailable(defenderDefensiveAbility)) {
                 combatMutator.updatePlayerClass(userId = holyShieldUserId) { playerClass ->
                     playerClass.copy(
                         defensiveAbility = defenderDefensiveAbility.copy(usedThisMatch = true)

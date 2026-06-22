@@ -69,13 +69,24 @@ internal class NormalAttackRollHandler(
         updateDefenderClass { defenderClass -> defenderClass.takeDamage(damage = diceTotal) }
 
         return if (!defender.isConscious()) {
-            addNormalRollMessage(type = NormalRollMessageType.Knockout)
+            addNormalRollMessage(type = knockoutMessageType())
             resolveKnockout()
         } else {
             addNormalRollMessage(type = NormalRollMessageType.Damage)
             resolveDamage()
         }
     }
+
+    /**
+     * A pending Holy Shield means the downed Paladin still gets a survival roll, so the hit reads
+     * as damage rather than a knockout until that roll resolves.
+     */
+    private fun CombatMutator.knockoutMessageType(): NormalRollMessageType =
+        if (HolyShieldHandler.isHolyShieldAvailable(defender.defensiveAbility)) {
+            NormalRollMessageType.Damage
+        } else {
+            NormalRollMessageType.Knockout
+        }
 
     private fun CombatMutator.resolveKnockout() {
         val wasHolyShieldTriggered =

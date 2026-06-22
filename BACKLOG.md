@@ -79,33 +79,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   instant they are emitted. **To remove:** delete `TemporaryDiceDebugOverlay.kt` and the single
   `TODO(SS-091)` block in `LoadedArenaScreen.kt` (grep `SS-091`).
 
-### SS-094 — Reword the Persuade ability message copy
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** Replace the current Persuade copy ("Bard begins strumming a lute") with clearer,
-  finalized wording for the Bard Persuade outcomes.
-- **Notes:** Related: SS-093 (per-outcome ability copy), SS-097 (class-name usage in messages).
-
-### SS-100 — Holy Shield trigger copy should read as damage, not a knockout
-- [ ] Not completed
-- **Source:** Reported bug.
-- **Goal:** When an attack triggers the Paladin's Holy Shield, the message must not read as "someone
-  knocked out Paladin" — thematically the Paladin is not knocked out yet (the survival roll is still
-  pending). It should instead read like a damage line, e.g. "Rogue damaged Paladin for 11!".
-- **Notes:** Related: SS-060 (suppress KnockedOut dialog during the Holy Shield roll), SS-093
-  (per-outcome ability copy), SS-097 (class-name usage).
-
-### SS-115 — Spell Potency message implies splash in a 2-player match
-- [ ] Not completed
-- **Source:** Noticed while auditing SS-106.
-- **Goal:** The Spell Potency ArenaMessage always carries a non-zero splashDamage (diceTotal / 2),
-  and the display string always appends "and splashed others for X" — even in a 2-player match where
-  there are no other opponents to splash. State is correct (no one is wrongly damaged); only the
-  message reads wrong. Suppress the splash clause when there are no other opponents (e.g. carry the
-  actual splashed-target damage, 0 when none, and branch the display string on splashDamage > 0).
-- **Notes:** Cross-layer (domain message field semantics + UI string). Related: SS-106 (audit),
-  SS-054 (splash-damage attacker case).
-
 ### SS-116 — All-In bugs (2-player game, observed playing Gambler + Illusionist)
 - [~] In progress — root cause found and fixed; one latent sub-bug split out below.
 - **Source:** Reported bug. Three symptoms seen in one 2-player session; all concern the Gambler's
@@ -224,27 +197,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   event state) plus an `achievements` field on `Profile`/`ProfileEntity` recording unlock state.
   Illusionist-impersonation achievements need extra per-impersonated-class tracking beyond today's
   counters. Related: SS-072, SS-021, SS-065, SS-067.
-
-### SS-075 — Flush stat outcomes incrementally (shrink the loss window)
-- [ ] Not completed
-- **Source:** `ArenaSessionStats`/`ArenaScreenViewModel` (SS-071) accumulate the whole session in
-  memory and only flush on a leave path.
-- **Goal:** Flush each match's outcome to Firestore the moment it finishes (and each `timesSelected`
-  as it happens) instead of holding the full session delta until the user leaves, so a process
-  death loses at most the current in-progress match rather than every match played this session.
-- **Notes:** Firestore offline persistence is on by default (`single { Firebase.firestore }`) and
-  `incrementStats` uses commutative `FieldValue.increment`, so an *issued* write already survives
-  network loss and app restarts — the gap SS-071 leaves is only the in-memory delta that was never
-  handed to Firestore. Per-match flush leans on that existing durability. The `consumeDelta()`/reset
-  pattern already lets a per-match flush and the on-leave flush compose without double-counting; the
-  forfeit determination still happens on leave for the one match still in progress. Related:
-  SS-071, SS-021.
-- **Update (SS-076 done):** SS-076 added a DataStore-backed durable pending-delta that is saved
-  incrementally as each outcome/`timesSelected` is recorded and replayed on next launch, so the
-  process-death loss window this ticket targets is already covered — a crash now loses at most the
-  current in-progress match. What remains open here is the *original framing*: still flushing to
-  Firestore only on a leave path. Decide whether a true per-match Firestore flush is still worth it
-  on top of the local store, or whether this ticket should be closed as superseded by SS-076.
 
 ---
 

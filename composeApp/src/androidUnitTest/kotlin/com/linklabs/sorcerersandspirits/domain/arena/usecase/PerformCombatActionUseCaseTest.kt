@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
@@ -1508,7 +1509,10 @@ class PerformCombatActionUseCaseTest {
         )
         assertEquals(expected = defenderUserId, actual = spellPotencyMessage.mainTargetUserId)
         assertEquals(expected = diceTotal, actual = spellPotencyMessage.mainDamage)
-        assertEquals(expected = diceTotal / 2, actual = spellPotencyMessage.splashDamage)
+
+        // With no other opponents to splash (2-player), the message carries 0 splash (SS-115)
+        val expectedSplashDamage = if (isThreePlayer) diceTotal / 2 else 0
+        assertEquals(expected = expectedSplashDamage, actual = spellPotencyMessage.splashDamage)
 
         // Turn ends
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
@@ -1676,6 +1680,14 @@ class PerformCombatActionUseCaseTest {
             assertIs<DefensiveAbility.HolyShield>(value = updatedPaladin.defensiveAbility)
         assertTrue(actual = holyShield.usedThisMatch)
         assertTrue(actual = !outcome.isMatchFinished)
+
+        // The triggering hit reads as damage, not a knockout, while the survival roll is pending
+        // (SS-100)
+        val normalRoll =
+            assertIs<ArenaMessage.NormalRoll>(
+                value = outcome.messages.single { it is ArenaMessage.NormalRoll }
+            )
+        assertEquals(expected = NormalRollMessageType.Damage, actual = normalRoll.type)
     }
 
     @Test

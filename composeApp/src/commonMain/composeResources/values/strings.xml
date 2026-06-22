@@ -90,6 +90,16 @@
     <string name="arena_choosing_classes_waiting">%1$s is choosing their class…</string>
     <string name="arena_choosing_classes_confirm">Confirm Selection</string>
 
+    <string name="arena_waiting_title">Gathering Challengers</string>
+    <string name="arena_waiting_subtitle">The arena fills. Steel your nerve while the others arrive…</string>
+    <string name="arena_waiting_tips_label">While you wait</string>
+    <string name="arena_waiting_tip_doubles">Roll doubles and your next consecutive roll gains a +1 bonus — chain them to break armor and land the blow.</string>
+    <string name="arena_waiting_tip_rogue">The Rogue\'s Dodge stacks: every armor an opponent fails to break hardens it further, up to +2 for the match.</string>
+    <string name="arena_waiting_tip_mage">The Mage\'s Spell Potency turns doubles into a storm — full damage to your target, half to everyone else.</string>
+    <string name="arena_waiting_tip_duelist">The Duelist\'s Riposte can spin an attack right back at the attacker. Pass their armor at your peril.</string>
+    <string name="arena_waiting_tip_gambler">All-In is a gamble: a 1 knocks you out, but a 5 or 6 lets the Gambler strike twice this round.</string>
+    <string name="arena_waiting_tip_paladin">A Paladin can cheat death once a match — Holy Shield may leave them standing on 1 Health, then lash back.</string>
+
     <string name="arena_message_round">ROUND %1$s</string>
     <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>

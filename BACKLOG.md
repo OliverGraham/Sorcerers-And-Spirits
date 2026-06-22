@@ -224,34 +224,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Depends on SS-074. Domain Arena-combat is the source of truth — event hooks must read
   real combat resolution, not re-derive it. Related: SS-074, SS-072, SS-131.
 
-### SS-128 — Player Rating
-- [ ] Not completed
-- **Goal:** A single "rating" number summarizing a player's record, used across the app. Separate
-  from achievements (SS-074/SS-127).
-- **Formula (weights in Remote Config so they're tunable without a release):**
-  `rating = max(0, round( Wgw·gauntletsWon + Wmw·matchesWon + Wko·knockoutsDealt − Wgl·gauntletsLost
-  − Wml·matchesLost − Wf·forfeits ))`. Defaults to tune by hand: `Wgw=100, Wmw=25, Wko=2, Wgl=15,
-  Wml=5, Wf=20`.
-- **Steps:**
-  1. `rating_config` Remote Config key (weights) + entity + provider + bundled defaults, mirroring
-     the existing config pattern; add `RATING_CONFIG` to `RemoteConfigKeys`.
-  2. Compute rating from `ProfileStats.overall` in the domain (derived value owned by the type that
-     holds the stats; no per-Composable computation).
-  3. Expose it so SS-129/SS-130 can read it.
-- **Notes:** Additive weighted points (rewards skill and play volume); could be swapped for
-  Elo/Glicko later if true head-to-head skill rating is ever wanted. Related: SS-129, SS-130,
-  SS-065.
-
-### SS-129 — ProfileScreen stats display
-- [ ] Not completed
-- **Goal:** Surface the signed-in player's own stats on the ProfileScreen — the deferred half of
-  SS-064. Replace the `ProfileState`-is-just-`displayName` placeholder (`// TODO(SS-064)`).
-- **Steps:** Show overall + per-class `GameStats`, the player's Rating (SS-128), and achievement
-  collection progress (e.g. X of Y unlocked, linking to SS-131). Compute derived/display values in
-  the state model / ViewModel, not in Composables.
-- **Notes:** Depends on SS-128 (rating) and SS-074 (achievements progress). Related: SS-064,
-  SS-072, SS-128, SS-131.
-
 ### SS-130 — Surface Rating across the app
 - [ ] Not completed
 - **Goal:** Show the player Rating wherever a player is presented. Specifically: Tavern/TheBar

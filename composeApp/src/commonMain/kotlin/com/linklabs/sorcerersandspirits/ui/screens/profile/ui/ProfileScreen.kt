@@ -36,10 +36,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
+import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
+import com.linklabs.sorcerersandspirits.ui.screens.profile.ClassStatsState
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileEvent
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileState
@@ -63,7 +66,16 @@ import sorcerersandspirits.composeapp.generated.resources.profile_display_name_l
 import sorcerersandspirits.composeapp.generated.resources.profile_name_update_error
 import sorcerersandspirits.composeapp.generated.resources.profile_name_update_success
 import sorcerersandspirits.composeapp.generated.resources.profile_save
-import sorcerersandspirits.composeapp.generated.resources.profile_stats_placeholder
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_achievements
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_achievements_progress
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_class_record
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_empty
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_gauntlets
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_knockouts
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_matches
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_per_class_title
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_rating
+import sorcerersandspirits.composeapp.generated.resources.profile_stats_record
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_title
 import sorcerersandspirits.composeapp.generated.resources.profile_title
 import sorcerersandspirits.composeapp.generated.resources.sign_in_name_taken_message
@@ -176,7 +188,7 @@ private fun ProfileContent(
             )
         }
 
-        item { StatsPlaceholder() }
+        item { StatsSection(state = state) }
 
         item {
             val isLinkSuccess = linkResult == LinkAccountResult.SUCCESS
@@ -256,28 +268,147 @@ private fun DisplayNameEditor(
     }
 }
 
-// TODO(SS-064): Replace with the player's real game statistics once stat handling lands
-//  (SS-072 / SS-074).
 @Composable
-private fun StatsPlaceholder(modifier: Modifier = Modifier) {
+private fun StatsSection(state: ProfileState, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         Text(
             text = stringResource(resource = Res.string.profile_stats_title),
             style = MaterialTheme.typography.titleLarge,
         )
 
-        Card(modifier = Modifier.fillMaxWidth()) {
+        RatingCard(rating = state.rating)
+
+        AchievementsCard(unlocked = state.achievementsUnlocked, total = state.achievementsTotal)
+
+        if (state.hasRecord) {
+            OverallRecordCard(overall = state.overall)
+            if (state.perClass.isNotEmpty()) PerClassCard(perClass = state.perClass)
+        } else {
+            EmptyRecordCard()
+        }
+    }
+}
+
+@Composable
+private fun RatingCard(rating: Long, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(all = 16.dp)) {
+            StatLabel(text = stringResource(resource = Res.string.profile_stats_rating))
+            Text(text = rating.toString(), style = MaterialTheme.typography.headlineMedium)
+        }
+    }
+}
+
+@Composable
+private fun AchievementsCard(unlocked: Int, total: Int, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(all = 16.dp)) {
+            StatLabel(text = stringResource(resource = Res.string.profile_stats_achievements))
             Text(
-                text = stringResource(resource = Res.string.profile_stats_placeholder),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(all = 16.dp),
+                text =
+                    stringResource(
+                        resource = Res.string.profile_stats_achievements_progress,
+                        unlocked,
+                        total,
+                    ),
+                style = MaterialTheme.typography.bodyLarge,
             )
         }
     }
+}
+
+@Composable
+private fun OverallRecordCard(overall: GameStats, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+        ) {
+            LabeledStat(
+                label = stringResource(resource = Res.string.profile_stats_matches),
+                value =
+                    stringResource(
+                        resource = Res.string.profile_stats_record,
+                        overall.matchesWon,
+                        overall.matchesLost,
+                        overall.matchesPlayed,
+                    ),
+            )
+            LabeledStat(
+                label = stringResource(resource = Res.string.profile_stats_gauntlets),
+                value =
+                    stringResource(
+                        resource = Res.string.profile_stats_record,
+                        overall.gauntletsWon,
+                        overall.gauntletsLost,
+                        overall.gauntletsPlayed,
+                    ),
+            )
+            LabeledStat(
+                label = stringResource(resource = Res.string.profile_stats_knockouts),
+                value = overall.knockoutsDealt.toString(),
+            )
+        }
+    }
+}
+
+@Composable
+private fun PerClassCard(perClass: List<ClassStatsState>, modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+        ) {
+            Text(
+                text = stringResource(resource = Res.string.profile_stats_per_class_title),
+                style = MaterialTheme.typography.titleMedium,
+            )
+
+            perClass.forEach { classStats ->
+                LabeledStat(
+                    label = classStats.classType.name,
+                    value =
+                        stringResource(
+                            resource = Res.string.profile_stats_class_record,
+                            classStats.stats.matchesWon,
+                            classStats.stats.gauntletsWon,
+                        ),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyRecordCard(modifier: Modifier = Modifier) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = stringResource(resource = Res.string.profile_stats_empty),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(all = 16.dp),
+        )
+    }
+}
+
+@Composable
+private fun LabeledStat(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        StatLabel(text = label)
+        Text(text = value, style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun StatLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
 }
 
 /**
@@ -335,7 +466,37 @@ private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: ()
 private fun ProfileScreenPreview() {
     SorcerersAndSpiritsTheme {
         ProfileScreen(
-            uiState = UiState.Loaded(data = ProfileState(displayName = "Gandalf")),
+            uiState =
+                UiState.Loaded(
+                    data =
+                        ProfileState(
+                            displayName = "Gandalf",
+                            rating = 1_240L,
+                            overall =
+                                GameStats(
+                                    matchesPlayed = 40,
+                                    matchesWon = 22,
+                                    matchesLost = 18,
+                                    gauntletsPlayed = 12,
+                                    gauntletsWon = 7,
+                                    gauntletsLost = 5,
+                                    knockoutsDealt = 63,
+                                ),
+                            perClass =
+                                listOf(
+                                    ClassStatsState(
+                                        classType = CharacterClassType.Mage,
+                                        stats = GameStats(matchesWon = 14, gauntletsWon = 4),
+                                    ),
+                                    ClassStatsState(
+                                        classType = CharacterClassType.Paladin,
+                                        stats = GameStats(matchesWon = 8, gauntletsWon = 3),
+                                    ),
+                                ),
+                            achievementsUnlocked = 2,
+                            achievementsTotal = 4,
+                        )
+                ),
             linkResult = null,
             onUpdateDisplayName = {},
             onDeleteProfile = {},

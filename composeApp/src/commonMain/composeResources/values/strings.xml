@@ -29,7 +29,16 @@
     <string name="profile_save">Save</string>
     <string name="profile_cancel">Cancel</string>
     <string name="profile_stats_title">Your stats</string>
-    <string name="profile_stats_placeholder">Your battle record will appear here soon.</string>
+    <string name="profile_stats_empty">Play a match to start your battle record.</string>
+    <string name="profile_stats_rating">Rating</string>
+    <string name="profile_stats_achievements">Achievements</string>
+    <string name="profile_stats_achievements_progress">%1$d / %2$d unlocked</string>
+    <string name="profile_stats_matches">Matches</string>
+    <string name="profile_stats_gauntlets">Gauntlets</string>
+    <string name="profile_stats_knockouts">Knockouts dealt</string>
+    <string name="profile_stats_record">%1$d won · %2$d lost · %3$d played</string>
+    <string name="profile_stats_per_class_title">By class</string>
+    <string name="profile_stats_class_record">%1$d match wins · %2$d gauntlet wins</string>
     <string name="profile_delete">Delete profile</string>
     <string name="profile_delete_confirm_title">Delete profile?</string>
     <string name="profile_delete_confirm_message">This permanently deletes your profile, including your display name and game stats. This can\'t be undone.</string>

@@ -16,6 +16,26 @@ data class ProfileStats(
     val isEmpty: Boolean
         get() = overall.isEmpty && perClass.values.all { it.isEmpty }
 
+    /**
+     * A single number summarizing the player's overall record (SS-128): weighted wins and knockouts
+     * dealt, minus weighted losses and forfeits, floored at 0. Additive points reward both skill
+     * and play volume. Weights are tuned here in code; RemoteConfig tuning is deferred until
+     * there's a considered need.
+     */
+    val rating: Long
+        get() {
+            val earned =
+                GAUNTLET_WON_POINTS * overall.gauntletsWon +
+                    MATCH_WON_POINTS * overall.matchesWon +
+                    KNOCKOUT_POINTS * overall.knockoutsDealt
+            val forfeits = overall.matchesForfeited + overall.gauntletsForfeited
+            val penalties =
+                GAUNTLET_LOST_PENALTY * overall.gauntletsLost +
+                    MATCH_LOST_PENALTY * overall.matchesLost +
+                    FORFEIT_PENALTY * forfeits
+            return (earned - penalties).coerceAtLeast(minimumValue = 0)
+        }
+
     fun hasMatchWinAs(classType: CharacterClassType): Boolean =
         (perClass[classType]?.matchesWon ?: 0) >= 1
 
@@ -32,5 +52,14 @@ data class ProfileStats(
                         (other.perClass[classType] ?: GameStats())
                 },
         )
+    }
+
+    private companion object {
+        const val GAUNTLET_WON_POINTS = 100L
+        const val MATCH_WON_POINTS = 25L
+        const val KNOCKOUT_POINTS = 2L
+        const val GAUNTLET_LOST_PENALTY = 15L
+        const val MATCH_LOST_PENALTY = 5L
+        const val FORFEIT_PENALTY = 20L
     }
 }

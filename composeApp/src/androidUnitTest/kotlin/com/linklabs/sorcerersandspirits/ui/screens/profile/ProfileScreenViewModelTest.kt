@@ -1,10 +1,14 @@
 package com.linklabs.sorcerersandspirits.ui.screens.profile
 
 import app.cash.turbine.test
+import com.linklabs.sorcerersandspirits.domain.achievement.AchievementId
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
+import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
+import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
@@ -79,6 +83,43 @@ class ProfileScreenViewModelTest {
 
                 profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
                 assertEquals(expected = DISPLAY_NAME, actual = awaitItem().loaded().displayName)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+
+    @Test
+    fun `Given the profile has stats, then the state exposes rating, achievement progress and per-class records`() =
+        runTest {
+            val viewModel = createViewModel()
+
+            viewModel.uiStateFlow.test {
+                assertEquals(expected = UiState.Loading, actual = awaitItem())
+
+                profileFlow.value =
+                    Profile(
+                        userId = USER_ID,
+                        displayName = DISPLAY_NAME,
+                        stats =
+                            ProfileStats(
+                                overall = GameStats(matchesWon = 3, gauntletsWon = 1),
+                                perClass =
+                                    mapOf(
+                                        CharacterClassType.Mage to
+                                            GameStats(matchesWon = 3, gauntletsWon = 1)
+                                    ),
+                            ),
+                        unlockedAchievements = mapOf(AchievementId.WinAMatch to 1L),
+                    )
+
+                val state = awaitItem().loaded()
+                assertEquals(expected = 175L, actual = state.rating)
+                assertEquals(expected = 1, actual = state.achievementsUnlocked)
+                assertEquals(expected = 4, actual = state.achievementsTotal)
+                assertEquals(
+                    expected = listOf(CharacterClassType.Mage),
+                    actual = state.perClass.map { it.classType },
+                )
 
                 cancelAndIgnoreRemainingEvents()
             }

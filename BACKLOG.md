@@ -323,17 +323,24 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Gated on Figma updates. Coordinate with SS-080 (responsive) and SS-081 (copy). Related:
   SS-079, SS-068.
 
-### SS-110 — Screen-transition (navigation) animations
+### SS-133 — Refine screen-transition feel
 - [ ] Not completed
-- **Goal:** Improve the enter/exit animations when navigating between screens. The current default
-  is most noticeably rough on back navigation.
-- **Options to evaluate:** Navigation Compose's per-destination `enterTransition` / `exitTransition`
-  / `popEnterTransition` / `popExitTransition` (slide/fade/scale via `AnimatedContentTransitionScope`);
-  shared-element / shared-bounds transitions for continuity; predictive-back gesture support on
-  Android. Pick a consistent transition language and apply it across the nav graph.
-- **Steps:** Survey the current nav setup; decide the transition style per screen pair (especially
-  forward vs. pop/back); implement and tune durations/easing; verify back/predictive-back feels
-  right. Related: SS-068.
+- **Source:** Follow-up to SS-110 (which delivered the randomized forward presets + "burn to dust"
+  pop). The mechanism works, but the *feel* isn't quite right yet.
+- **Goal:** Tune the transitions so they feel intentional and polished rather than busy/off.
+- **Areas to explore:**
+  - Disintegration tuning in `DisintegrationEffect.kt` — particle density (`SAMPLE_STEP_PIXELS`),
+    duration (`EFFECT_DURATION_MILLIS`), drift/rise/wobble constants, and the left-to-right
+    `SWEEP_FRACTION`. Consider gravity/easing on the dust, a subtle glow/ember tint, and a
+    burn-edge front rather than a uniform strip fade.
+  - Whether random-per-navigation forward transitions actually feel good, or whether a curated
+    per-screen mapping (or fewer presets) reads as more deliberate.
+  - Forward/back coherence — the forward presets and the dust pop should feel like one language.
+  - Predictive-back: currently silent during the gesture, dust plays on commit (documented
+    SS-110 limitation). Investigate driving particles from live predictive-back progress.
+  - Performance pass on the dust (first-play jank from pixel sampling) on lower-end devices/iOS.
+- **Steps:** Run on device, iterate on the constants, decide selection strategy, verify
+  forward/back/predictive-back all feel cohesive. Related: SS-110, SS-068.
 
 ---
 

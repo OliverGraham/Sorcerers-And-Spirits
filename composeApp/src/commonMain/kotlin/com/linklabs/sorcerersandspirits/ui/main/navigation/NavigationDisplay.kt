@@ -1,7 +1,21 @@
 package com.linklabs.sorcerersandspirits.ui.main.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.layer.drawLayer
+import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavEntry
@@ -9,25 +23,69 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.DisintegrationEffect
+import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.ForwardScreenTransition
+import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.toContentTransform
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.ui.AchievementsScreen
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ui.ProfileScreen
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreen
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifier = Modifier) {
-    NavDisplay(
-        backStack = backStack,
-        entryProvider = { key -> key.toScreen(backStack = backStack) },
-        onBack = { backStack.removeLastOrNull() },
-        entryDecorators = getRouteScopedEntryDecorators(),
-        modifier = modifier,
-    )
+    val scope = rememberCoroutineScope()
+    val screenLayer = rememberGraphicsLayer()
+    var dustSnapshot by remember { mutableStateOf<ImageBitmap?>(value = null) }
+
+    // Backward navigation can't be expressed as a Nav3 ExitTransition, so the pop is intercepted:
+    // the outgoing screen is captured to a bitmap, then popped (revealing the destination beneath)
+    // while the captured pixels disintegrate into dust on top.
+    val popWithDust: () -> Unit = {
+        scope.launch {
+            dustSnapshot = screenLayer.toImageBitmap()
+            backStack.removeLastOrNull()
+        }
+        Unit
+    }
+
+    Box(modifier = modifier) {
+        NavDisplay(
+            backStack = backStack,
+            entryProvider = { key ->
+                key.toScreen(backStack = backStack, popWithDust = popWithDust)
+            },
+            onBack = { popWithDust() },
+            entryDecorators = getRouteScopedEntryDecorators(),
+            transitionSpec = { ForwardScreenTransition.entries.random().toContentTransform() },
+            // The dust overlay covers the outgoing screen, so the system pop must stay silent to
+            // avoid animating the same screen twice.
+            popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+            predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+            modifier =
+                Modifier.fillMaxSize().drawWithContent {
+                    screenLayer.record { this@drawWithContent.drawContent() }
+                    drawLayer(graphicsLayer = screenLayer)
+                },
+        )
+
+        val snapshot = dustSnapshot
+        if (snapshot != null) {
+            DisintegrationEffect(
+                snapshot = snapshot,
+                onComplete = { dustSnapshot = null },
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+    }
 }
 
-private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
+private fun NavKey.toScreen(
+    backStack: NavBackStack<NavKey>,
+    popWithDust: () -> Unit,
+): NavEntry<NavKey> =
     when (this) {
         Route.TavernScreen ->
             NavEntry(key = this) {
@@ -45,16 +103,13 @@ private fun NavKey.toScreen(backStack: NavBackStack<NavKey>): NavEntry<NavKey> =
 
         is Route.ArenaScreen ->
             NavEntry(key = this) {
-                ArenaScreen(
-                    arguments = arguments.toDomain(),
-                    onBack = { backStack.removeLastOrNull() },
-                )
+                ArenaScreen(arguments = arguments.toDomain(), onBack = popWithDust)
             }
 
         Route.ProfileScreen ->
             NavEntry(key = this) {
                 ProfileScreen(
-                    onProfileDeleted = { backStack.removeLastOrNull() },
+                    onProfileDeleted = popWithDust,
                     onNavigateToAchievements = { backStack.add(element = Route.AchievementsScreen) },
                 )
             }

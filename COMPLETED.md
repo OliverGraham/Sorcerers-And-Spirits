@@ -150,6 +150,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 ## UI overhaul & input
 
 - **SS-069** — Shake-to-roll dice UX: Investigate a dice-rolling interaction where the user taps and holds a pair of dice (or a single die, depending on what the current step requires), shakes the phone to simulate rolling, and on release the existing…
+- **SS-110** — Screen-transition (navigation) animations: Randomly-chosen forward transitions (portal / fade-through / slide+fade) plus a signature "burn to dust" disintegration on back, built cross-platform in commonMain via GraphicsLayer capture + Canvas particles.
 
 ## Release & versioning
 

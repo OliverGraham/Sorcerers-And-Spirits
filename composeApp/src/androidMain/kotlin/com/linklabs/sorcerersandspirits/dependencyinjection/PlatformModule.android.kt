@@ -1,8 +1,13 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
 import com.linklabs.sorcerersandspirits.data.authentication.AndroidSocialSignInProvider
 import com.linklabs.sorcerersandspirits.data.connectivity.AndroidConnectivityObserver
 import com.linklabs.sorcerersandspirits.data.haptics.AndroidHaptics
+import com.linklabs.sorcerersandspirits.data.profile.PENDING_STATS_DATASTORE_FILE
+import com.linklabs.sorcerersandspirits.data.profile.createPendingStatsDataStore
 import com.linklabs.sorcerersandspirits.data.sensor.AndroidShakeDetector
 import com.linklabs.sorcerersandspirits.data.version.AndroidCurrentAppVersionProvider
 import com.linklabs.sorcerersandspirits.domain.authentication.SocialSignInProvider
@@ -20,6 +25,12 @@ actual fun platformModule(): Module = module {
     single<Haptics> { AndroidHaptics(context = get()) }
     single<CurrentAppVersionProvider> { AndroidCurrentAppVersionProvider(context = get()) }
     single { CurrentActivityHolder() }
+    single<DataStore<Preferences>> {
+        val context: Context = get()
+        createPendingStatsDataStore {
+            context.filesDir.resolve(PENDING_STATS_DATASTORE_FILE).absolutePath
+        }
+    }
     single<SocialSignInProvider> {
         AndroidSocialSignInProvider(context = get(), currentActivityHolder = get())
     }

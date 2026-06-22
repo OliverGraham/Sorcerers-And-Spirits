@@ -123,6 +123,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-065** — LeaderboardScreen: Once game stats are recorded on user profiles (SS-021 infrastructure + SS-072 schema), add a screen showing the top players. Accessible from the drawer (SS-063).
 - **SS-071** — Forfeit vs finished leave + stats update: Distinguish a forfeit-leave from a leave after the match finished, and update stats only when the user actually leaves (possibly after multiple matches). First concrete consumer of the SS-021 stats infrastructure — the…
 - **SS-072** — Define which game stats to record: Decide the concrete set of game statistics to persist per profile (e.g. matches played, wins, losses, forfeits, K.O.s dealt, per-class records, etc.). Deferred until the SS-021 infrastructure exists — design the stats…
+- **SS-076** — Durable local pending-stats store for crash resilience: Persist the unflushed session stat delta in a DataStore as it grows during a match, and replay it on next launch (`FlushPendingStatsUseCase` in `AppViewModel`), so a crash/kill mid-match can no longer lose recorded outcomes — at-least-once stat writes that don't depend on Firestore's in-process queue. Also shrinks the SS-075 loss window. Related: SS-075, SS-071, SS-021.
 
 ## Rules & Help
 

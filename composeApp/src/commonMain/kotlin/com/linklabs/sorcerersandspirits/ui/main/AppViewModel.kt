@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfig
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.FlushPendingStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
@@ -36,6 +37,7 @@ class AppViewModel(
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
     private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
+    private val flushPendingStatsUseCase: FlushPendingStatsUseCase,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
     private val getProfileUseCase: GetProfileUseCase,
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
@@ -63,6 +65,10 @@ class AppViewModel(
             initializeGameConfigUseCase()
             _appUpgradeStatusFlow.value = checkAppVersionUseCase()
         }
+
+        // Replays any stat delta a previous session persisted but never flushed — e.g. a crash or
+        // kill mid-match (SS-076). Independent of the screen state, so it runs in its own job.
+        viewModelScope.launch { flushPendingStatsUseCase() }
 
         loadScreenState()
     }

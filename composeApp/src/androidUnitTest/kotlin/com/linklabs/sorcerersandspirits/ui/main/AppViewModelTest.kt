@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.FlushPendingStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
@@ -49,6 +50,7 @@ class AppViewModelTest {
     private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase =
         mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
+    private val flushPendingStatsUseCase: FlushPendingStatsUseCase = mockk(relaxed = true)
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
     private val getProfileUseCase: GetProfileUseCase = mockk()
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
@@ -85,6 +87,7 @@ class AppViewModelTest {
             connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
             createProfileForCurrentUserUseCase = createProfileForCurrentUserUseCase,
             createProfileUseCase = createProfileUseCase,
+            flushPendingStatsUseCase = flushPendingStatsUseCase,
             getProfileFlowUseCase = getProfileFlowUseCase,
             getProfileUseCase = getProfileUseCase,
             getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,

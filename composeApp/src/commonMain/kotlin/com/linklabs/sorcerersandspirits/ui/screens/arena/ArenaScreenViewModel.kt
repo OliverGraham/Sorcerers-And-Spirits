@@ -15,6 +15,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
@@ -57,6 +58,7 @@ class ArenaScreenViewModel(
     private val stayForAnotherMatchUseCase: StayForAnotherMatchUseCase,
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
     private val updateProfileStatsUseCase: UpdateProfileStatsUseCase,
+    private val pendingStatsStore: PendingStatsStore,
 ) : ViewModel() {
 
     private val sessionStats = ArenaSessionStats()
@@ -152,7 +154,9 @@ class ArenaScreenViewModel(
                     arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
             )
 
-            sessionStats.onClassSelected(classType = selectedArenaPlayer.characterClass.type)
+            val recordedStat =
+                sessionStats.onClassSelected(classType = selectedArenaPlayer.characterClass.type)
+            if (recordedStat) persistPendingStats()
 
             _uiStateFlow.updateLoaded { screenState ->
                 val nextArenaState =
@@ -280,8 +284,29 @@ class ArenaScreenViewModel(
         }
     }
 
+    /**
+     * Hands the session's accumulated delta to the profile store and reconciles the durable local
+     * copy: cleared once the write is made, otherwise kept (e.g. signed out) so it can be replayed
+     * on a later launch (SS-076).
+     */
     private suspend fun flushSessionStats() {
-        updateProfileStatsUseCase(delta = sessionStats.consumeDelta())
+        val delta = sessionStats.consumeDelta()
+        val wasWritten = updateProfileStatsUseCase(delta = delta)
+        if (wasWritten || delta.isEmpty) {
+            pendingStatsStore.clear()
+        } else {
+            pendingStatsStore.save(delta)
+        }
+    }
+
+    /**
+     * Mirrors the in-memory session delta to durable storage as it grows, so a crash or kill
+     * mid-match loses at most the current in-progress match rather than the whole session (SS-076,
+     * shrinking the SS-075 loss window). Awaited inline with the state stream so it cannot race the
+     * clear in [flushSessionStats], which only runs after that stream is cancelled.
+     */
+    private suspend fun persistPendingStats() {
+        pendingStatsStore.save(delta = sessionStats.peekDelta())
     }
 
     fun onDismissForfeitDialog() {
@@ -299,7 +324,7 @@ class ArenaScreenViewModel(
         }
     }
 
-    private fun ArenaMatch?.updateScreenState(userId: String) {
+    private suspend fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
             screenStateFlowJob?.cancel()
 
@@ -311,7 +336,8 @@ class ArenaScreenViewModel(
             return
         }
 
-        sessionStats.onMatchUpdate(match = this, userId = userId)
+        val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
+        if (recordedStat) persistPendingStats()
         notifyDepartedOpponents(userId = userId)
 
         val updatedArenaStateUpdate =

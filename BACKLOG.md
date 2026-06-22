@@ -237,21 +237,14 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   network loss and app restarts — the gap SS-071 leaves is only the in-memory delta that was never
   handed to Firestore. Per-match flush leans on that existing durability. The `consumeDelta()`/reset
   pattern already lets a per-match flush and the on-leave flush compose without double-counting; the
-  forfeit determination still happens on leave for the one match still in progress. Likely makes
-  SS-076 unnecessary for most cases. Related: SS-071, SS-021.
-
-### SS-076 — Durable local pending-stats store for crash resilience
-- [ ] Not completed
-- **Goal:** Persist the unflushed stat delta locally (Room or DataStore) and replay it on next
-  launch, so a crash or kill mid-match cannot lose outcomes — an at-least-once guarantee for stat
-  writes that does not depend on Firestore's in-process write queue.
-- **Notes:** Scope is specifically the window Firestore offline persistence does *not* cover: a delta
-  computed in memory but never issued as a write before the process dies. Depends on / may be reduced
-  to a thin remaining case by SS-075 (which removes the multi-match in-memory window using Firestore's
-  own durable queue). Decide Room vs DataStore based on whether other features want an offline-first
-  local store; if stats are the only consumer, a small DataStore-backed pending-delta may be enough.
-  Replay must stay idempotent under `FieldValue.increment` (clear the local record only after the
-  write is acknowledged). Related: SS-075, SS-071, SS-021.
+  forfeit determination still happens on leave for the one match still in progress. Related:
+  SS-071, SS-021.
+- **Update (SS-076 done):** SS-076 added a DataStore-backed durable pending-delta that is saved
+  incrementally as each outcome/`timesSelected` is recorded and replayed on next launch, so the
+  process-death loss window this ticket targets is already covered — a crash now loses at most the
+  current in-progress match. What remains open here is the *original framing*: still flushing to
+  Firestore only on a leave path. Decide whether a true per-match Firestore flush is still worth it
+  on top of the local store, or whether this ticket should be closed as superseded by SS-076.
 
 ---
 

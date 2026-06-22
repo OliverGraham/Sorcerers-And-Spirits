@@ -33,7 +33,8 @@ class ArenaSessionStats {
     private var participatedInGauntlet = false
     private var gauntletRecorded = false
 
-    fun onMatchUpdate(match: ArenaMatch, userId: String) {
+    /** Returns whether this update recorded a new outcome, so a caller can persist the delta. */
+    fun onMatchUpdate(match: ArenaMatch, userId: String): Boolean = recordingChange {
         if (match.matchNumberInGauntlet != lastSeenMatchNumber) {
             if (match.matchNumberInGauntlet == 1) startNewGauntlet()
             beginNewMatch(matchNumber = match.matchNumberInGauntlet)
@@ -51,7 +52,7 @@ class ArenaSessionStats {
         }
     }
 
-    fun onClassSelected(classType: CharacterClassType) {
+    fun onClassSelected(classType: CharacterClassType): Boolean = recordingChange {
         accumulate(stats = GameStats(timesSelected = 1), classType = classType)
     }
 
@@ -61,7 +62,7 @@ class ArenaSessionStats {
      * part in is recorded as forfeited. A leave after the final match has finished records nothing
      * new.
      */
-    fun onLeave(userKnockedOut: Boolean) {
+    fun onLeave(userKnockedOut: Boolean): Boolean = recordingChange {
         if (!currentMatchRecorded && currentUserClass != null) {
             val matchStats =
                 if (userKnockedOut) {
@@ -84,11 +85,20 @@ class ArenaSessionStats {
         }
     }
 
+    /** The delta accumulated so far, without resetting — for persisting a durable copy (SS-076). */
+    fun peekDelta(): ProfileStats = accumulated
+
     /** Returns the accumulated delta and resets it, so a second flush writes nothing. */
     fun consumeDelta(): ProfileStats {
         val delta = accumulated
         accumulated = ProfileStats()
         return delta
+    }
+
+    private fun recordingChange(record: () -> Unit): Boolean {
+        val before = accumulated
+        record()
+        return accumulated != before
     }
 
     private fun recordFinishedMatch(userWon: Boolean) {

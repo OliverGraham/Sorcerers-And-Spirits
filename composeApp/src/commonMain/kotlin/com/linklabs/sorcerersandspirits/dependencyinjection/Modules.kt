@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassPr
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigRandomNameProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigSupportedAppVersionProvider
+import com.linklabs.sorcerersandspirits.data.profile.DataStorePendingStatsStore
 import com.linklabs.sorcerersandspirits.data.profile.FirebaseProfileRepository
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
@@ -31,11 +32,13 @@ import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCop
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.leaderboard.usecase.GetLeaderboardUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import com.linklabs.sorcerersandspirits.domain.profile.RandomNameProvider
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.FlushPendingStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
@@ -96,6 +99,7 @@ private fun Module.initializeRepositories() {
     singleOf(::RemoteConfigRandomNameProvider) { bind<RandomNameProvider>() }
     singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
+    singleOf(::DataStorePendingStatsStore) { bind<PendingStatsStore>() }
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
 }
@@ -109,6 +113,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::CreateProfileUseCase)
     factoryOf(::DeleteProfileUseCase)
     factoryOf(::ExitArenaUseCase)
+    factoryOf(::FlushPendingStatsUseCase)
     factoryOf(::GetCharacterClassCopyUseCase)
     factoryOf(::GetCharacterClassesUseCase)
     factoryOf(::GetLeaderboardUseCase)

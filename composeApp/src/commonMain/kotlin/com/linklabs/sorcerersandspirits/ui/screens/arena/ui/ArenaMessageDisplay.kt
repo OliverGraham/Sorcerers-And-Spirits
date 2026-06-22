@@ -57,6 +57,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_round
 import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency
+import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_no_splash
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_fizzle
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_golem
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton
@@ -338,13 +339,22 @@ internal fun ArenaMessageState.getDisplayString(): String =
             }
 
         is ArenaMessageState.SpellPotency ->
-            stringResource(
-                resource = Res.string.arena_message_spell_potency,
-                mageName,
-                mainTargetName,
-                mainDamage,
-                splashDamage,
-            )
+            if (splashDamage > 0) {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency,
+                    mageName,
+                    mainTargetName,
+                    mainDamage,
+                    splashDamage,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_no_splash,
+                    mageName,
+                    mainTargetName,
+                    mainDamage,
+                )
+            }
 
         is ArenaMessageState.HolyShield.Trigger ->
             stringResource(resource = Res.string.arena_message_holy_shield_trigger)

@@ -107,7 +107,7 @@
     <string name="arena_message_summon_minion_skeleton_heal">%1$s rolled a %2$s, raising a skeleton and healing to full</string>
     <string name="arena_message_summon_minion_golem">%1$s rolled a %2$s, raising a golem and healing to full</string>
 
-    <string name="arena_message_persuade_trigger">Persuade! A song begins…</string>
+    <string name="arena_message_persuade_trigger">Persuade! The Bard begins strumming a lute…</string>
     <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>
     <string name="arena_message_persuade_strum_lute_failed">Strummed the lute and rolled %1$s — the song falls flat</string>
     <string name="arena_message_persuade_charm_activation">The charm takes effect!</string>
@@ -131,6 +131,7 @@
     <string name="arena_message_mirror_image_tempt_fate_knockout">The Illusionist rerolls a die (%1$s), but %2$s lands a knockout blow!</string>
 
     <string name="arena_message_spell_potency">%1$s hit %2$s for %3$s damage and splashed others for %4$s</string>
+    <string name="arena_message_spell_potency_no_splash">%1$s hit %2$s for %3$s damage</string>
 
     <string name="arena_message_holy_shield_trigger">Holy Shield! A prayer is offered…</string>
     <string name="arena_message_holy_shield_prayer_survived">Rolled %1$s and %2$s — the prayer is answered!</string>

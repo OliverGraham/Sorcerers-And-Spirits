@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 
@@ -19,28 +20,39 @@ internal class SpellPotencyRoll(
     operator fun invoke() = combatMutator.resolveSpellPotency()
 
     private fun CombatMutator.resolveSpellPotency() {
-        val splashDamage = diceTotal / abilityConfig.spellPotencySplashDivisor
+        val splashTargets = splashTargets()
+        val splashDamage =
+            if (splashTargets.isEmpty()) {
+                0
+            } else {
+                diceTotal / abilityConfig.spellPotencySplashDivisor
+            }
+
         addSpellPotencyMessage(splashDamage = splashDamage)
         applyFullDamageToDefender()
-        applySplashDamage(splashDamage = splashDamage)
+        applySplashDamage(splashTargets = splashTargets, splashDamage = splashDamage)
 
         if (!triggerHolyShieldIfApplicable()) {
             resolveTurnEnd()
         }
     }
 
+    private fun CombatMutator.splashTargets() =
+        consciousPlayers.filter { it.userId != attackerUserId && it.userId != defenderUserId }
+
     private fun CombatMutator.applyFullDamageToDefender() {
         updateDefenderClass { defender -> defender.takeDamage(damage = diceTotal) }
     }
 
-    private fun CombatMutator.applySplashDamage(splashDamage: Int) {
-        consciousPlayers
-            .filter { it.userId != attackerUserId && it.userId != defenderUserId }
-            .forEach { player ->
-                updatePlayerClass(userId = player.userId) { playerClass ->
-                    playerClass.takeDamage(damage = splashDamage)
-                }
+    private fun CombatMutator.applySplashDamage(
+        splashTargets: List<ArenaPlayer.Selected>,
+        splashDamage: Int,
+    ) {
+        splashTargets.forEach { player ->
+            updatePlayerClass(userId = player.userId) { playerClass ->
+                playerClass.takeDamage(damage = splashDamage)
             }
+        }
     }
 
     private fun CombatMutator.addSpellPotencyMessage(splashDamage: Int) {

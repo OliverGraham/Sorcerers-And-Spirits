@@ -16,6 +16,7 @@ val exampleUserTraveler =
         displayName = "You",
         isThisTravelerTheUser = true,
         tavernStatus = TavernStatus.Available,
+        rating = 980,
     )
 
 val exampleOtherTravelers =
@@ -25,24 +26,28 @@ val exampleOtherTravelers =
             displayName = "Merlin",
             isThisTravelerTheUser = false,
             tavernStatus = TavernStatus.Available,
+            rating = 1_420,
         ),
         TravelerState(
             userId = "user_2",
             displayName = "Morgana",
             isThisTravelerTheUser = false,
             tavernStatus = TavernStatus.Available,
+            rating = 1_115,
         ),
         TravelerState(
             userId = "user_3",
             displayName = "Lancelot",
             isThisTravelerTheUser = false,
             tavernStatus = TavernStatus.Busy,
+            rating = 640,
         ),
         TravelerState(
             userId = "user_4",
             displayName = "Guinevere",
             isThisTravelerTheUser = false,
             tavernStatus = TavernStatus.Available,
+            rating = 0,
         ),
     )
 

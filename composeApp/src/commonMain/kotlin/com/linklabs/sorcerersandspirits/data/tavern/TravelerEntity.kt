@@ -9,7 +9,13 @@ data class TravelerEntity(
     val userId: String = "",
     val displayName: String = "",
     val tavernStatus: TavernStatus = TavernStatus.Available,
+    val rating: Long = 0,
 )
 
 fun TravelerEntity.toDomain(): Traveler =
-    Traveler(userId = userId, displayName = displayName, tavernStatus = tavernStatus)
+    Traveler(
+        userId = userId,
+        displayName = displayName,
+        tavernStatus = tavernStatus,
+        rating = rating,
+    )

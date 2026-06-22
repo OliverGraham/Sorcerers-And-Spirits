@@ -54,7 +54,11 @@ class FirebaseTavernRepository(
             .map { entities -> entities.map(transform = TravelerEntity::toDomain) }
             .distinctUntilChanged()
 
-    override suspend fun connectTravelerPresence(userId: String, displayName: String) {
+    override suspend fun connectTravelerPresence(
+        userId: String,
+        displayName: String,
+        rating: Long,
+    ) {
         travelerPresenceJob?.cancel()
 
         travelerPresenceJob =
@@ -64,7 +68,11 @@ class FirebaseTavernRepository(
                 .filter { isConnected -> isConnected }
                 .onEach {
                     dataSource.registerTravelerRemovalOnDisconnect(userId = userId)
-                    syncTravelerPresenceOnConnect(userId = userId, displayName = displayName)
+                    syncTravelerPresenceOnConnect(
+                        userId = userId,
+                        displayName = displayName,
+                        rating = rating,
+                    )
                 }
                 .launchIn(scope = coroutineScope)
     }
@@ -133,10 +141,19 @@ class FirebaseTavernRepository(
     }
 
     @OptIn(ExperimentalTime::class)
-    private suspend fun syncTravelerPresenceOnConnect(userId: String, displayName: String) {
+    private suspend fun syncTravelerPresenceOnConnect(
+        userId: String,
+        displayName: String,
+        rating: Long,
+    ) {
         val challengeId = dataSource.getMailboxChallengeId(userId = userId)
         if (challengeId.isNullOrBlank()) {
-            upsertPresence(userId = userId, displayName = displayName, hasActiveChallenge = false)
+            upsertPresence(
+                userId = userId,
+                displayName = displayName,
+                rating = rating,
+                hasActiveChallenge = false,
+            )
             return
         }
 
@@ -148,6 +165,7 @@ class FirebaseTavernRepository(
                 upsertPresence(
                     userId = userId,
                     displayName = displayName,
+                    rating = rating,
                     hasActiveChallenge = false,
                 )
             }
@@ -160,6 +178,7 @@ class FirebaseTavernRepository(
                 upsertPresence(
                     userId = userId,
                     displayName = displayName,
+                    rating = rating,
                     hasActiveChallenge = false,
                 )
             }
@@ -168,6 +187,7 @@ class FirebaseTavernRepository(
                 upsertPresence(
                     userId = userId,
                     displayName = displayName,
+                    rating = rating,
                     hasActiveChallenge = true,
                 )
         }
@@ -176,12 +196,14 @@ class FirebaseTavernRepository(
     private suspend fun upsertPresence(
         userId: String,
         displayName: String,
+        rating: Long,
         hasActiveChallenge: Boolean,
     ) {
         dataSource.upsertTravelerPresence(
             userId = userId,
             displayName = displayName,
             tavernStatus = if (hasActiveChallenge) TavernStatus.Busy else TavernStatus.Available,
+            rating = rating,
         )
     }
 

@@ -26,6 +26,7 @@ data class TravelerState(
     val displayName: String,
     val isThisTravelerTheUser: Boolean,
     val tavernStatus: TavernStatus,
+    val rating: Long,
 )
 
 @Immutable
@@ -87,6 +88,7 @@ private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean): TravelerSt
         displayName = displayName,
         isThisTravelerTheUser = isThisTravelerTheUser,
         tavernStatus = tavernStatus,
+        rating = rating,
     )
 
 internal fun TravelerState.toChallenger(isInstigator: Boolean, status: ChallengerStatus) =

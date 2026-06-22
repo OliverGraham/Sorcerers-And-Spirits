@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -46,6 +45,7 @@ import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_instruction
 import sorcerersandspirits.composeapp.generated.resources.tavern_search_no_matches
 import sorcerersandspirits.composeapp.generated.resources.tavern_search_travelers_hint
+import sorcerersandspirits.composeapp.generated.resources.tavern_traveler_rating
 import sorcerersandspirits.composeapp.generated.resources.tavern_travelers_to_challenge
 
 private const val TRAVELERS_IN_TAVERN_COUNT_LABEL = "TravelersInTavernCount"
@@ -237,10 +237,11 @@ private fun TravelerState.ToCard(
         label = TRAVELER_CARD_SELECTION_LABEL,
     ) { selected ->
         if (selected) {
-            SelectedTravelerCard(displayName = displayName, onClick = onClick)
+            SelectedTravelerCard(displayName = displayName, rating = rating, onClick = onClick)
         } else {
             UnselectedTravelerCard(
                 displayName = displayName,
+                rating = rating,
                 isBusy = tavernStatus == TavernStatus.Busy,
                 onClick = onClick,
             )
@@ -251,6 +252,7 @@ private fun TravelerState.ToCard(
 @Composable
 private fun SelectedTravelerCard(
     displayName: String,
+    rating: Long,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -266,13 +268,14 @@ private fun SelectedTravelerCard(
                 contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
             ),
     ) {
-        TravelerCardLabel(text = displayName, fontWeight = FontWeight.Bold)
+        TravelerCardLabel(name = displayName, rating = rating, fontWeight = FontWeight.Bold)
     }
 }
 
 @Composable
 private fun UnselectedTravelerCard(
     displayName: String,
+    rating: Long,
     isBusy: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -294,7 +297,8 @@ private fun UnselectedTravelerCard(
             ),
     ) {
         TravelerCardLabel(
-            text = if (isBusy) "$displayName (Busy)" else displayName,
+            name = if (isBusy) "$displayName (Busy)" else displayName,
+            rating = rating,
             fontWeight = FontWeight.Normal,
         )
     }
@@ -303,19 +307,38 @@ private fun UnselectedTravelerCard(
 /** The shared footprint of a traveler card, so selected/unselected animate as the same size. */
 private fun Modifier.travelerCardSize(): Modifier = fillMaxWidth().padding(horizontal = 20.dp)
 
-/** The shared centered name label used by both the selected and unselected traveler cards. */
+/**
+ * The shared centered label used by both the selected and unselected traveler cards: the name, with
+ * the player's rating beneath it when they have one (computer opponents and unrated players show
+ * just the name).
+ */
 @Composable
-private fun TravelerCardLabel(text: String, fontWeight: FontWeight, modifier: Modifier = Modifier) {
-    Box(
+private fun TravelerCardLabel(
+    name: String,
+    rating: Long,
+    fontWeight: FontWeight,
+    modifier: Modifier = Modifier,
+) {
+    Column(
         modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
-        contentAlignment = Alignment.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(space = 2.dp),
     ) {
         Text(
-            text = text,
+            text = name,
             style = MaterialTheme.typography.titleMedium,
             fontWeight = fontWeight,
             textAlign = TextAlign.Center,
         )
+
+        if (rating > 0) {
+            Text(
+                text = stringResource(resource = Res.string.tavern_traveler_rating, rating),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 

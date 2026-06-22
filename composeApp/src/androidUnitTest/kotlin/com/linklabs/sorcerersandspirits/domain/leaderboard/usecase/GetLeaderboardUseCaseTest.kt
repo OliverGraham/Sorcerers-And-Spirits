@@ -40,6 +40,8 @@ class GetLeaderboardUseCaseTest {
         assertEquals(expected = "Alice", actual = entries[0].displayName)
         assertEquals(expected = 5L, actual = entries[0].gauntletsWon)
         assertEquals(expected = 20L, actual = entries[0].matchesWon)
+        // rating derived from stats: 100*5 gauntlet wins + 25*20 match wins
+        assertEquals(expected = 1_000L, actual = entries[0].rating)
     }
 
     @Test

@@ -10,7 +10,13 @@ import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
  */
 data class ComputerOpponent(val userId: String, val displayName: String) {
     fun toTraveler(): Traveler =
-        Traveler(userId = userId, displayName = displayName, tavernStatus = TavernStatus.Available)
+        Traveler(
+            userId = userId,
+            displayName = displayName,
+            tavernStatus = TavernStatus.Available,
+            // Computer opponents have no profile and so no rating to show.
+            rating = 0,
+        )
 }
 
 /**

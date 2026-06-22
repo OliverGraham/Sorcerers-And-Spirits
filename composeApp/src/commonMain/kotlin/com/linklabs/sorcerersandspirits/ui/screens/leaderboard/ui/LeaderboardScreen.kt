@@ -37,6 +37,7 @@ import sorcerersandspirits.composeapp.generated.resources.leaderboard_empty
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_gauntlet_wins
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_match_wins
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_rank
+import sorcerersandspirits.composeapp.generated.resources.leaderboard_rating
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_subtitle
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_title
 import sorcerersandspirits.composeapp.generated.resources.leaderboard_you
@@ -144,6 +145,11 @@ private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modi
                     }
                 }
                 Text(
+                    text = stringResource(resource = Res.string.leaderboard_rating, entry.rating),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(
                     text =
                         stringResource(
                             resource = Res.string.leaderboard_match_wins,
@@ -192,6 +198,7 @@ private fun LeaderboardScreenPreview() {
                                     LeaderboardRowState(
                                         rank = 1,
                                         displayName = "Gandalf",
+                                        rating = 2_225,
                                         gauntletsWon = 12,
                                         matchesWon = 41,
                                         isCurrentUser = false,
@@ -199,6 +206,7 @@ private fun LeaderboardScreenPreview() {
                                     LeaderboardRowState(
                                         rank = 2,
                                         displayName = "Radagast",
+                                        rating = 1_725,
                                         gauntletsWon = 9,
                                         matchesWon = 33,
                                         isCurrentUser = true,
@@ -206,6 +214,7 @@ private fun LeaderboardScreenPreview() {
                                     LeaderboardRowState(
                                         rank = 3,
                                         displayName = "Saruman",
+                                        rating = 1_400,
                                         gauntletsWon = 7,
                                         matchesWon = 28,
                                         isCurrentUser = false,

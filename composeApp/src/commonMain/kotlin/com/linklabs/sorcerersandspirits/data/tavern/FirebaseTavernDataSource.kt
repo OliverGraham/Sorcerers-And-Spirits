@@ -103,6 +103,7 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         userId: String,
         displayName: String,
         tavernStatus: TavernStatus,
+        rating: Long,
     ) {
         tavernTravelersReference.child(path = userId).runTransaction(
             strategy = TravelerEntity.serializer().nullable
@@ -111,11 +112,13 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
                 userId = userId,
                 displayName = displayName,
                 tavernStatus = tavernStatus,
+                rating = rating,
             )
                 ?: TravelerEntity(
                     userId = userId,
                     displayName = displayName,
                     tavernStatus = tavernStatus,
+                    rating = rating,
                 )
         }
     }

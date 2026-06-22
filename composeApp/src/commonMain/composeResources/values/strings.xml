@@ -146,4 +146,13 @@
 
     <string name="arena_message_prepare_attack_success">%1$s studied %2$s, rolled %3$s and %4$s — the next attack is prepared!</string>
     <string name="arena_message_prepare_attack_failed">%1$s studied %2$s, rolled %3$s and %4$s — the preparation fails</string>
+
+    <string name="achievement_win_a_match_name">First Victory</string>
+    <string name="achievement_win_a_match_description">Win a match.</string>
+    <string name="achievement_win_a_gauntlet_name">Gauntlet Champion</string>
+    <string name="achievement_win_a_gauntlet_description">Win a Gauntlet.</string>
+    <string name="achievement_win_a_match_every_class_name">Jack of All Trades</string>
+    <string name="achievement_win_a_match_every_class_description">Win a match with every class.</string>
+    <string name="achievement_win_a_gauntlet_every_class_name">Master of All</string>
+    <string name="achievement_win_a_gauntlet_every_class_description">Win a Gauntlet with every class.</string>
 </resources>

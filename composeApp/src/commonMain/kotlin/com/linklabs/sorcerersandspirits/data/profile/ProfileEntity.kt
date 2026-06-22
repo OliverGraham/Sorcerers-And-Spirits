@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.profile
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
+import com.linklabs.sorcerersandspirits.domain.achievement.AchievementId
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
@@ -12,6 +13,7 @@ data class ProfileEntity(
     val userId: String = "",
     val displayName: String = "",
     val stats: ProfileStatsEntity = ProfileStatsEntity(),
+    val unlockedAchievements: Map<String, Long> = emptyMap(),
 )
 
 /**
@@ -43,10 +45,30 @@ data class GameStatsEntity(
 )
 
 internal fun ProfileEntity.toDomain() =
-    Profile(userId = userId, displayName = displayName, stats = stats.toDomain())
+    Profile(
+        userId = userId,
+        displayName = displayName,
+        stats = stats.toDomain(),
+        unlockedAchievements =
+            unlockedAchievements
+                .mapNotNull { (idName, unlockedAt) ->
+                    val achievementId =
+                        AchievementId.entries.find { it.name == idName } ?: return@mapNotNull null
+                    achievementId to unlockedAt
+                }
+                .toMap(),
+    )
 
 internal fun Profile.toEntity() =
-    ProfileEntity(userId = userId, displayName = displayName, stats = stats.toEntity())
+    ProfileEntity(
+        userId = userId,
+        displayName = displayName,
+        stats = stats.toEntity(),
+        unlockedAchievements =
+            unlockedAchievements.entries.associate { (achievementId, unlockedAt) ->
+                achievementId.name to unlockedAt
+            },
+    )
 
 internal fun ProfileStatsEntity.toDomain() =
     ProfileStats(

@@ -42,6 +42,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.FlushPendingStats
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.UnlockAchievementsUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStatsUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
@@ -64,6 +65,8 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.database.database
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.remoteconfig.remoteConfig
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -82,11 +85,13 @@ val commonModule = module {
     initializeViewModels()
 }
 
+@OptIn(ExperimentalTime::class)
 private fun Module.initializeExternalDependencies() {
     single { Firebase.database }
     single { Firebase.firestore }
     single { Firebase.remoteConfig }
     single { CoroutineScope(context = Dispatchers.IO) }
+    single<Clock> { Clock.System }
 }
 
 private fun Module.initializeRepositories() {
@@ -131,6 +136,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::SendChallengeUseCase)
     factoryOf(::SignInWithSocialUseCase)
     factoryOf(::StayForAnotherMatchUseCase)
+    factoryOf(::UnlockAchievementsUseCase)
     factoryOf(::UpdateChallengerStatusUseCase)
     factoryOf(::UpdateProfileDisplayNameUseCase)
     factoryOf(::UpdateProfileStatsUseCase)

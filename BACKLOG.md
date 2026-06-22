@@ -185,18 +185,87 @@ the generic infrastructure for persisting stats to a profile (SS-021), keeping i
 **then** decide which concrete stats to record (SS-072) and wire them into match outcomes (SS-071);
 and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
-### SS-074 — Achievements
+### SS-127 — Per-ability event achievements (thematic two-per-ability set)
 - [ ] Not completed
-- **Goal:** Award players achievements derived from their recorded stats and match events. Examples:
-  win a Match with every class; win a Gauntlet with every class; win a Match/Gauntlet as the
-  Illusionist after Impersonating every class. The set will keep growing, so the priority is an
-  architecture where a new achievement can be added in one place — not enumerating every one now.
-- **Notes:** Builds on the SS-072 stats schema. Most class-based achievements are derivable from the
-  per-class `GameStats` already persisted (e.g. `CharacterClassType.entries.all { perClass[it]?...}`),
-  so the likely shape is a list of achievement definitions (predicate over `ProfileStats` + any extra
-  event state) plus an `achievements` field on `Profile`/`ProfileEntity` recording unlock state.
-  Illusionist-impersonation achievements need extra per-impersonated-class tracking beyond today's
-  counters. Related: SS-072, SS-021, SS-065, SS-067.
+- **Goal:** Add the in-match, event-driven achievements that can't be derived from cumulative
+  counters alone — two thematic achievements per ability — building on the SS-074 engine.
+- **Approach:** These need in-match event detection and/or new per-ability `GameStats` counters
+  (e.g. `ripostesTriggered`, `encoresTriggered`, …) plus transient in-match event state (e.g.
+  KOs-in-a-row, triggers-this-turn/round, "won after self-KO earlier this match"). Follow the SS-074
+  pattern: new `AchievementId` + data object + string resources. To add a counter: field on
+  `GameStats` + mirror on `GameStatsEntity` + map in `toFieldIncrements`.
+- **Starter set (two per ability):**
+  - Rogue · Killing Momentum: **Chain Reaction** (3 KOs in a row) · **Table Sweeper** (5 in a row)
+  - Rogue · Dodge: **Untouchable** (gain Dodge armor) · **Slippery Target** (Dodge 3× in a round)
+  - Gambler · All-In: **High Roller** (attack twice via All-In) · **Against the Odds** (win after
+    self-KO'ing earlier in the match)
+  - Gambler · Lucky Coin: **Coin Flip Justice** (roll 6, damage attacker) · **Paid in Full** (KO
+    attacker with Lucky Coin damage)
+  - Duelist · Prepare Attack: **Opening Strike** (KO via Prepare Attack) · **No Duel Required** (win
+    on a Prepare Attack KO)
+  - Duelist · Riposte: **Reversal** (turn an attack around) · **Back At You** (KO attacker via
+    Riposte)
+  - Necromancer · Summon Minion: **Bring Out the Golem** (summon a Golem) · **Death's Entourage**
+    (win after summoning a Skeleton and a Golem)
+  - Bard · Encore: **Final Chorus** (KO with an Encore attack) · **Standing Ovation** (Encore twice
+    in one turn)
+  - Bard · Persuade: **Change of Plans** (redirect an attacker) · **Friendly Fire** (redirect into a
+    KO of another player)
+  - Illusionist · Impersonate: **Anything You Can Do** (KO with a copied ability) · **Identity
+    Theft** (win using a copied ability)
+  - Illusionist · Mirror Image: **Trick of the Light** (prevent damage) · **Impossible Target**
+    (survive 3 attacks in one game after using it)
+  - Mage · Spell Potency: **Chain Explosion** (KO with Spell Potency) · **Cataclysm** (KO multiple
+    in one trigger)
+  - Mage · Teleport: **Blink Away** (escape an attack) · **Gone Before Impact** (escape a would-be
+    KO)
+  - Paladin · Holy Shield: **Divine Intervention** (survive a KO) · **Martyr's Revenge** (KO
+    attacker with Holy Shield damage)
+- **Notes:** Depends on SS-074. Domain Arena-combat is the source of truth — event hooks must read
+  real combat resolution, not re-derive it. Related: SS-074, SS-072, SS-131.
+
+### SS-128 — Player Rating
+- [ ] Not completed
+- **Goal:** A single "rating" number summarizing a player's record, used across the app. Separate
+  from achievements (SS-074/SS-127).
+- **Formula (weights in Remote Config so they're tunable without a release):**
+  `rating = max(0, round( Wgw·gauntletsWon + Wmw·matchesWon + Wko·knockoutsDealt − Wgl·gauntletsLost
+  − Wml·matchesLost − Wf·forfeits ))`. Defaults to tune by hand: `Wgw=100, Wmw=25, Wko=2, Wgl=15,
+  Wml=5, Wf=20`.
+- **Steps:**
+  1. `rating_config` Remote Config key (weights) + entity + provider + bundled defaults, mirroring
+     the existing config pattern; add `RATING_CONFIG` to `RemoteConfigKeys`.
+  2. Compute rating from `ProfileStats.overall` in the domain (derived value owned by the type that
+     holds the stats; no per-Composable computation).
+  3. Expose it so SS-129/SS-130 can read it.
+- **Notes:** Additive weighted points (rewards skill and play volume); could be swapped for
+  Elo/Glicko later if true head-to-head skill rating is ever wanted. Related: SS-129, SS-130,
+  SS-065.
+
+### SS-129 — ProfileScreen stats display
+- [ ] Not completed
+- **Goal:** Surface the signed-in player's own stats on the ProfileScreen — the deferred half of
+  SS-064. Replace the `ProfileState`-is-just-`displayName` placeholder (`// TODO(SS-064)`).
+- **Steps:** Show overall + per-class `GameStats`, the player's Rating (SS-128), and achievement
+  collection progress (e.g. X of Y unlocked, linking to SS-131). Compute derived/display values in
+  the state model / ViewModel, not in Composables.
+- **Notes:** Depends on SS-128 (rating) and SS-074 (achievements progress). Related: SS-064,
+  SS-072, SS-128, SS-131.
+
+### SS-130 — Surface Rating across the app
+- [ ] Not completed
+- **Goal:** Show the player Rating wherever a player is presented. Specifically: Tavern/TheBar
+  traveler rows (next to the display name) and the LeaderboardScreen; optionally allow ranking the
+  leaderboard by rating instead of (or alongside) gauntlets won.
+- **Notes:** Depends on SS-128. Touches `GetLeaderboardUseCase`/`LeaderboardEntry` and the Tavern
+  traveler presentation. Related: SS-128, SS-065, SS-124.
+
+### SS-131 — Achievements collection screen
+- [ ] Not completed
+- **Goal:** A screen to browse achievements — unlocked and still-locked — with per-achievement
+  progress, driven by the SS-074 engine (`AchievementCatalog` + string-resource copy).
+- **Notes:** Depends on SS-074 (+ SS-127 for the bulk of the set). Accessible from the drawer
+  (SS-063) and/or ProfileScreen (SS-129). Related: SS-074, SS-127, SS-129.
 
 ---
 

@@ -12,6 +12,7 @@ object FireStoreKeys {
     const val STATS = "stats"
     const val OVERALL = "overall"
     const val PER_CLASS = "perClass"
+    const val UNLOCKED_ACHIEVEMENTS = "unlockedAchievements"
 
     const val MATCHES_PLAYED = "matchesPlayed"
     const val MATCHES_WON = "matchesWon"

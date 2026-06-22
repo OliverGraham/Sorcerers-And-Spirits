@@ -5,12 +5,14 @@ import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_P
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TAVERN_TRAVELERS_PATH
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
+import dev.gitlive.firebase.database.ChildEvent
 import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import dev.gitlive.firebase.database.ServerValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.scan
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
@@ -24,12 +26,33 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     private val mailboxChallengesReference = root.child(path = CHALLENGE_MAILBOXES_PATH)
     private val challengesReference = root.child(path = CHALLENGES_PATH)
 
+    /**
+     * Streams travelers as deltas rather than re-reading the whole node. RTDB
+     * [valueEvents][dev.gitlive.firebase.database.Query.valueEvents] re-emits the entire
+     * [TAVERN_TRAVELERS_PATH] snapshot whenever any single traveler changes, so every join, exit,
+     * or status flip pushes an N-element payload to every connected client. Folding child events
+     * into a locally-maintained map means each change carries only the one affected traveler, while
+     * the emitted [List] keeps the same contract for the layers above.
+     */
     override fun travelerEntitiesFlow(): Flow<List<TravelerEntity>> =
-        tavernTravelersReference.valueEvents.map { snapshot ->
-            snapshot.children.mapNotNull { child ->
-                child.value(strategy = TravelerEntity.serializer().nullable)
+        tavernTravelersReference
+            .childEvents(ChildEvent.Type.ADDED, ChildEvent.Type.CHANGED, ChildEvent.Type.REMOVED)
+            .scan(initial = emptyMap<String, TravelerEntity>()) { travelersByUserId, childEvent ->
+                val userId = childEvent.snapshot.key ?: return@scan travelersByUserId
+
+                if (childEvent.type == ChildEvent.Type.REMOVED) {
+                    travelersByUserId - userId
+                } else {
+                    val traveler =
+                        childEvent.snapshot.value(strategy = TravelerEntity.serializer().nullable)
+                    if (traveler != null) {
+                        travelersByUserId + (userId to traveler)
+                    } else {
+                        travelersByUserId
+                    }
+                }
             }
-        }
+            .map { travelersByUserId -> travelersByUserId.values.toList() }
 
     override fun mailboxChallengeIdFlow(userId: String): Flow<String?> =
         mailboxChallengesReference.child(path = userId).valueEvents.map { snapshot ->

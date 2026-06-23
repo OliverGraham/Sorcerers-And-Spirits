@@ -476,3 +476,68 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   when behind, Impersonate the strongest opponent); mixed human+computer matches in one arena
   (needs a deterministic "which client drives the bot" rule with failover); per-bot
   difficulty/personality; Tavern UI to configure multiple computer opponents.
+
+---
+
+## Audio
+
+### SS-134 — Music & sound-effect playback (KMP)
+- [ ] Not completed
+- **Goal:** Add an audio layer to the app covering two distinct kinds of playback:
+  1. **Long-running music tracks** — background music that plays on a screen and persists/loops while
+     the user is there. When navigation switches the active track, the outgoing track **fades out** and
+     the incoming one **fades in** (cross-fade) so transitions aren't abrupt.
+  2. **Short sound effects (SFX)** — quick, fire-and-forget, low-latency one-shots triggered by game
+     events (e.g. a player landing a hit in the Arena, armor breaking, a K.O., dice settling). Many can
+     fire in rapid succession and must overlap without cutting each other off.
+- **Two playback paths / two formats (decided):** the two kinds have different runtime needs, so they
+  use different formats and different players. The deciding constraint is what **both** Android and iOS
+  decode **natively** (no bundled third-party codec):
+  - **Music → AAC in an `.m4a` container.** Compressed, streamed/decoded-on-the-fly to keep memory and
+    app size down; native on both platforms (iOS's preferred format) with the best quality-per-byte,
+    and the `.m4a` container's encoder-delay/padding metadata gives **gapless loops** (important for
+    repeating background tracks). Encode **44.1 kHz, stereo, ~128–160 kbps VBR**. *Why not OGG Vorbis*
+    (the obvious small/Android-native pick): iOS has no native Vorbis decoder, so it'd need a bundled
+    decoder — not worth it. MP3 is an acceptable equal-footing fallback but loops less cleanly, so AAC
+    wins for looping music.
+  - **SFX → WAV (16-bit PCM).** Short, low-latency, decoded-into-memory so they trigger instantly and
+    overlap. Uncompressed means **zero decode latency and no codec priming silence** clipping the
+    attack of the sound (e.g. a hit landing), and one WAV asset plays natively on both platforms.
+    Encode **44.1 kHz, 16-bit, mono** (stereo only if the sound is genuinely spatial); trim tight.
+    Because the clips are sub-second, uncompressed is still tiny in absolute bytes — hitting the
+    *clear, high-quality, low-size* goal without compression artifacts. Audio-asset prep mirrors the
+    raster-asset discipline in [[downsample-figma-raster-assets]]: get format/size right before
+    committing so files stay small.
+- **Bundled vs. remote sources:**
+  - **SFX are always bundled** with the app — non-negotiable. They need to play instantly with no
+    network dependency, and must ship in the correct small/high-quality format.
+  - **Music is bundled by default**, but a long track *may* optionally be sourced from a **remote URL**
+    (e.g. hosted elsewhere and pointed at via RemoteConfig). Treat the remote URL as an **optional
+    override, not the default path** — keep an in-app bundled track as the source of truth and fallback
+    so the app always has music with no network, per [[remoteconfig-optional-override-not-required-map]].
+    Remote music must degrade gracefully (fall back to the bundled track) on fetch failure/offline,
+    consistent with [[connectivity-resilience-priority]].
+- **KMP architecture:** this is a Kotlin Multiplatform app (Android + iOS), so audio needs an
+  `expect`/`actual` (or interface-backed) abstraction in `commonMain` with platform implementations —
+  e.g. Android `ExoPlayer`/`MediaPlayer` for music + `SoundPool` for SFX; iOS `AVAudioPlayer`/
+  `AVPlayer` for music + a low-latency path (`AVAudioPlayer` pool / `AVAudioEngine` /
+  `AudioServices`) for SFX. Evaluate whether a KMP audio library covers both before hand-rolling.
+- **Design (to refine):**
+  - A common-layer audio API: e.g. a music controller (`play(track)`, `stop()`, cross-fade on track
+    change, loop, respect a global mute/volume) and an SFX player (`play(effect)`, allow overlap).
+  - Model tracks/effects as a closed set the app owns (sealed interface or plain enum + exhaustive
+    `when`, NOT constructor-arg enums per [[no-enums-with-properties]]) mapping each id to its bundled
+    asset (and, for music, an optional RemoteConfig URL override).
+  - Drive music changes off navigation so entering/leaving a screen triggers the cross-fade; drive SFX
+    off domain combat events surfaced to the UI (Arena messages already map ~1:1 to events — relate to
+    SS-068/SS-025). Keep audio triggering in the UI/state layer, not the Domain combat logic
+    ([[domain-is-source-of-truth]]).
+  - Respect system/lifecycle: pause/duck music on backgrounding, on phone audio focus loss
+    (Android `AudioFocus`), and on a user mute setting; clean up players on disposal.
+- **Steps:** Choose the KMP playback approach and the two formats (prototype if needed); build the
+  `commonMain` audio abstraction + platform `actual`s; define the bundled track/effect catalog; wire
+  music to navigation (with cross-fade) and SFX to Arena combat events; add a mute/volume control;
+  add the optional RemoteConfig music-URL override with bundled fallback. Source/author the audio
+  assets in the correct formats.
+- **Notes:** Likely spawns child tickets (asset authoring, per-screen track mapping, mute/settings UI,
+  audio-focus/ducking polish). Related: SS-068 (UI/animation overhaul), SS-025 (Arena message events).

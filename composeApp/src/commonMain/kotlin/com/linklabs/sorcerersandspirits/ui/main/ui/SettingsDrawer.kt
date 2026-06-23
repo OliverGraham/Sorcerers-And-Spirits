@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.linklabs.sorcerersandspirits.ui.main.navigation.Route
+import com.linklabs.sorcerersandspirits.ui.main.navigation.popToNearestHomeScreen
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -29,6 +30,7 @@ internal fun SettingsDrawer(
     modifier: Modifier = Modifier,
 ) {
     fun navigateTo(route: Route) {
+        backStack.popToNearestHomeScreen()
         backStack.add(route)
         scope.launch { drawerState.close() }
     }

@@ -51,6 +51,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-035** — Random names from RemoteConfig: Source random traveler names from RemoteConfig instead of hardcoding.
 - **SS-036** — Handle signed-in user with missing profile: Detect a signed-in account with no profile (when online) and route back to the name dialog to create one for the current account instead of hanging on the loading indicator. Also fixed `isSignedIn()` to await the first auth-state emission so a cold start no longer reports a returning user as signed-out.
 
+## Navigation
+
+- **SS-135** — Drawer navigation should pop back to a home screen: When opening a screen from the navigation drawer, trim trailing non-home entries off the back stack (home = Tavern, or Arena mid-match) before pushing the destination, so backing out returns to a home screen rather than whatever screen the drawer was opened from.
+
 ## Data layer
 
 - **SS-038** — Determine if IOSNullableStringSerializer is needed: Decide whether this serializer is required; keep with justification or delete.

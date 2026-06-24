@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,10 +11,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classArtwork
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import org.jetbrains.compose.resources.painterResource
 
 // TODO(SS-142): scaffold for the new two-half combat layout that replaces ArenaCombat. Already
 // wired
@@ -48,7 +53,7 @@ internal fun ColumnScope.NewArenaCombat(state: ArenaState.Combat, modifier: Modi
     //          Could be a property of the ArenaMessage - short text?
 
     TopHalfContent(state = state)
-    BottomHalfContent()
+    BottomHalfContent(state = state)
 }
 
 @Composable
@@ -99,15 +104,23 @@ private fun Messages(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomHalfContent(modifier: Modifier = Modifier) {
+private fun BottomHalfContent(state: ArenaState.Combat, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxSize()) {
         Row {
-            // On left is active player
-            ClassAvatarDisplay(displayDirection = DisplayDirection.Left)
+            // On left is the active player (the local user).
+            ClassAvatarDisplay(
+                player = state.userPlayer,
+                displayDirection = DisplayDirection.Left,
+                modifier = Modifier.weight(weight = 1f),
+            )
             DiceHome()
 
-            // On right is active player's current target
-            ClassAvatarDisplay(displayDirection = DisplayDirection.Right)
+            // On right is the active player's current target, absent until one is chosen.
+            ClassAvatarDisplay(
+                player = state.targetPlayer,
+                displayDirection = DisplayDirection.Right,
+                modifier = Modifier.weight(weight = 1f),
+            )
         }
 
         Buttons()
@@ -115,9 +128,17 @@ private fun BottomHalfContent(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun ClassAvatarDisplay(displayDirection: DisplayDirection, modifier: Modifier = Modifier) {
+private fun ClassAvatarDisplay(
+    player: PlayerState.Selected?,
+    displayDirection: DisplayDirection,
+    modifier: Modifier = Modifier,
+) {
+    // The target slot is empty until the user has a live target (SS-144 drives selection); the
+    // user's own slot always has a player.
+    if (player == null) return
+
     Box(modifier = modifier) {
-        ClassAvatar()
+        ClassAvatar(characterClass = player.characterClass)
 
         // TODO(SS-146): ClassAvatarStats will have expanding rows that open on top of ClassAvatar()
         ClassAvatarStats(displayDirection = displayDirection)
@@ -142,9 +163,15 @@ private fun ClassAvatarStats(displayDirection: DisplayDirection, modifier: Modif
 }
 
 @Composable
-private fun ClassAvatar(modifier: Modifier = Modifier) {
-    // TODO(SS-145): Display full-size class png. Later, in another ticket, we'll have animations
-    //       affect these pngs (there's a branch with some work already - maybe we'll merge it).
+private fun ClassAvatar(characterClass: CharacterClassState, modifier: Modifier = Modifier) {
+    // TODO(SS-068): hook for combat animations to drive this static art (Compottie work on a
+    // branch).
+    Image(
+        painter = painterResource(resource = classArtwork(type = characterClass.type)),
+        contentDescription = characterClass.className,
+        contentScale = ContentScale.Fit,
+        modifier = modifier,
+    )
 }
 
 @Composable

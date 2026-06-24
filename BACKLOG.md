@@ -56,20 +56,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   foundation), SS-140 (head→large-avatar transition), SS-141 (head→expanded transition). Parent:
   SS-068.
 
-### SS-137 — Centralized per-class color source (color groups)
-- [ ] Not completed
-- **Source:** Needed by the class head icon (SS-136). Per-class colors currently live as a **private**
-  `spokeColor()` `when` inside `CharacterClassWheel.kt:563`, so nothing else can reuse them.
-- **Goal:** A single shared source of per-class colors so the head icon, the wheel, and future Arena
-  UI all tint from the same place. Model the four class **color groups** the design uses:
-  Rogue/Duelist **red**, Gambler/Bard **yellow**, Necromancer/Paladin **green**, Illusionist/Mage
-  **blue**. Keep the existing exact per-class shades (e.g. Rogue `0xFF9D2920`, Duelist `0xFF852B1A`)
-  available, plus the gradient pair where a class needs one (the head-icon border is a red gradient).
-- **Steps:** Extract a class-color provider keyed by `CharacterClassType` (no constructor-arg enums —
-  prefer a `when`, per the team convention); expose both the per-class color and its color-group;
-  repoint `CharacterClassWheel.spokeColor()` at it so the wheel and head icon share one definition.
-- **Notes:** Related: SS-136, SS-079/SS-084 (wheel colors).
-
 ### SS-138 — Export head-icon stat icons as SVG (speed, armor, hitpoints)
 - [ ] Not completed — **blocked on Figma MCP rate limit** (Starter plan) at time of writing; retry
   the asset download once the limit resets.
@@ -404,7 +390,9 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
     `SPOKE_*` / `AVATAR_*` / `HUB_*` fractions instead of the current eyeballed values.
   - Final per-class spoke colors and the final avatar + stat icons (`ic_health`/`ic_armor`/`ic_speed`/
     `ic_spc`) once delivered from Figma (placeholders downsampled today — see
-    [[downsample-figma-raster-assets]]).
+    [[downsample-figma-raster-assets]]). Per-class colors are now centralized in `ClassColors.kt`
+    (SS-137) — update the provisional values there in one place; it feeds both the wheel and the
+    head icon.
   - Selected-spoke highlight treatment and hub styling; label typography/placement polish.
 - **Steps:** Pull updated Figma assets/colors when ready; replace placeholder drawables; tune the
   layout fraction constants; add the header/stat bands and background; revisit the selected-state

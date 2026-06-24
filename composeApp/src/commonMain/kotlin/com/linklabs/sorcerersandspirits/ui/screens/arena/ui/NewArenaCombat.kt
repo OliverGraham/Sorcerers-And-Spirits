@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -9,7 +10,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 // TODO(SS-142): scaffold for the new two-half combat layout that replaces ArenaCombat. Already
 // wired
@@ -43,32 +47,36 @@ internal fun ColumnScope.NewArenaCombat(state: ArenaState.Combat, modifier: Modi
     //          Brief, stylized animation (bounce, rotate, etc.). Full message would be in log.
     //          Could be a property of the ArenaMessage - short text?
 
-    TopHalfContent()
+    TopHalfContent(state = state)
     BottomHalfContent()
 }
 
 @Composable
-private fun TopHalfContent(modifier: Modifier = Modifier) {
+private fun TopHalfContent(state: ArenaState.Combat, modifier: Modifier = Modifier) {
     Box(modifier = modifier.fillMaxSize()) {
         // ClassIcons() need to be positioned BELOW Messages, but when Messages() expands, it covers
         // ClassIcons()
-        ClassIcons()
+        ClassIcons(headIconPlayers = state.headIconPlayers)
         Messages()
     }
 }
 
 @Composable
-private fun ClassIcons(modifier: Modifier = Modifier) {
-    FlowRow(modifier = modifier) {
-        // TODO(SS-143): render for every class that is NOT the user and is NOT the user's current
-        //  target
-        ClassIcon()
+private fun ClassIcons(headIconPlayers: List<PlayerState.Selected>, modifier: Modifier = Modifier) {
+    FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+    ) {
+        headIconPlayers.forEach { player -> ClassIcon(player = player) }
     }
 }
 
 @Composable
-private fun ClassIcon(modifier: Modifier = Modifier) {
-    // TODO(SS-143): This is the ClassHeadIcon() that was recently made
+private fun ClassIcon(player: PlayerState.Selected, modifier: Modifier = Modifier) {
+    // TODO(SS-144): tag this with a userId-keyed sharedBounds/sharedElement so a tap can transition
+    //  the head icon into the bottom-half targeted avatar (player.userId is the match key).
+    ClassHeadIcon(characterClass = player.characterClass, modifier = modifier)
 }
 
 @Composable

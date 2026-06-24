@@ -108,17 +108,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
   `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
 
-### SS-143 — Opponent head-icon row (ClassIcons)
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `ClassIcons()` / `ClassIcon()` (`// TODO(SS-143)`).
-- **Goal:** Fill the top-half `FlowRow` with one head icon per player who is **not** the user **and**
-  **not** the user's current target — those two are shown as full avatars in the bottom half instead.
-- **Steps:** Render `ClassHeadIcon(characterClass = …)` (already built, SS-136) for each such player;
-  derive the list from `playerMap` minus `userPlayerId` minus `targetedOpponentUserId`; key by
-  `userId` so SS-144's shared transition can match. Knocked-out players stay visible but
-  non-targetable (mirror SS-123).
-- **Depends on:** SS-136. Related: SS-144 (the icon a tap promotes to a target), SS-142.
-
 ### SS-144 — Target selection: head icon ↔ targeted avatar shared transition
 - [ ] Not completed
 - **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-144)`.
@@ -237,6 +226,25 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
   context-correct ability icon/state; placeholder icons until art arrives.
 - **Notes:** Replaces the old `AbilityControls` button column. Related: SS-029 (string resources),
   SS-142.
+
+### SS-152 — Knocked-out player returns to head-icon form with a disabled state
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `ClassIcons()` / `ClassIcon()` and the bottom-half
+  `ClassAvatarDisplay`; the disabled visual lives on `ClassHeadIcon` (SS-136).
+- **Goal:** When a player is knocked out, they always show in **head-icon form** (never as a
+  bottom-half full avatar), and that head icon renders in a **disabled** state.
+- **Behavior:**
+  - A KO'd player who was the current target (a bottom-half avatar) collapses **back into a
+    `ClassIcon`** in the top-half row — they can no longer be the targeted avatar. Pairs with the
+    SS-144 head-icon ↔ avatar transition (a reverse of it).
+  - The disabled `ClassIcon` is non-targetable (already true until SS-144 wires tapping) and
+    visually faded **gray** — placeholder styling only; a finalized design lands later.
+- **Steps:** Drive "is this player conscious" off `characterClass.isConscious` (already on
+  `CharacterClassState`); exclude KO'd players from ever being the target avatar so they fall into
+  the `ClassIcons` row (SS-143 already keeps them visible); add a `isEnabled`/disabled gray treatment
+  to `ClassHeadIcon` (or an overlay in `ClassIcon`) — eyeball the gray for now.
+- **Depends on:** SS-143 (head-icon row), SS-136 (`ClassHeadIcon`). Related: SS-144 (the
+  forward avatar transition), SS-123 (KO'd players non-targetable), SS-142.
 
 ---
 

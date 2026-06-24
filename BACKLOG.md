@@ -122,17 +122,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Depends on:** SS-139 (shared-transition foundation), SS-143, SS-142. Realizes the former SS-140
   (head → large targeted avatar) placeholder for the new layout.
 
-### SS-145 — Bottom full-size class avatars (ClassAvatar)
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `ClassAvatar()` (`// TODO(SS-145)`).
-- **Goal:** Render the full-size class art for the active player (left) and the current target (right)
-  in `ClassAvatarDisplay`.
-- **Steps:** Draw the existing full-size class PNGs (the `class_*` / `classArtwork` drawables) at the
-  bottom-half scale; leave a hook for SS-145-follow-on combat animations to drive these images.
-- **Notes:** A local branch already has Compottie-based combat-animation work (see
-  [[combat-animation-foundation]]); animating these avatars is deferred to that effort/SS-068 — this
-  ticket just shows the static art. Related: SS-144 (target avatar), SS-146 (stats overlay), SS-068.
-
 ### SS-146 — Expanding per-stat rows over the avatar (ClassAvatarStats)
 - [ ] Not completed
 - **Source:** `NewArenaCombat.kt` `ClassAvatarDisplay()` / `ClassAvatarStats()` (`// TODO(SS-146)`).

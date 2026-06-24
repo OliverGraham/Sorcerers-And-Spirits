@@ -84,6 +84,7 @@ sealed interface ArenaState {
         val combatControls = deriveCombatControls()
         val lockedTargetUserId = deriveLockedTargetUserId()
         val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()
+        val headIconPlayers = deriveHeadIconPlayers()
     }
 
     @Immutable
@@ -134,6 +135,20 @@ private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
     if (!isNormalAttackOnlyAction) return null
 
     return playerMap.keys.singleOrNull { it != userPlayerId }
+}
+
+/**
+ * The opponents shown as collapsed head icons in the new combat layout (SS-143): every player
+ * except the user and their current target, who are the two full bottom-half avatars instead. The
+ * target is the Domain-pinned defender or the lone auto-target; interactive target selection
+ * (SS-144) will refine this. Knocked-out players are kept in the row (mirror SS-123); SS-152 will
+ * collapse a KO'd target back here and gray it out.
+ */
+private fun ArenaState.Combat.deriveHeadIconPlayers(): List<PlayerState.Selected> {
+    val targetedOpponentUserId = lockedTargetUserId ?: autoTargetedOpponentUserId.orEmpty()
+    return playerMap.values.filter {
+        it.userId != userPlayerId && it.userId != targetedOpponentUserId
+    }
 }
 
 // TODO(SS-031): Need to refactor this badly

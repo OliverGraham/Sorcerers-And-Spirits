@@ -17,6 +17,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -43,6 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceCount
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceTray
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val TRANSITION_LABEL = "ArenaCombatTransition"
@@ -242,8 +244,7 @@ private fun ArenaState.Combat.CombatContent(
 
 @Composable
 private fun UserStatsRow(userPlayer: PlayerState.Selected, modifier: Modifier = Modifier) {
-    val characterClass = userPlayer.characterClass
-    androidx.compose.material3.Surface(
+    Surface(
         modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 4.dp,
@@ -253,6 +254,8 @@ private fun UserStatsRow(userPlayer: PlayerState.Selected, modifier: Modifier = 
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically,
         ) {
+            val characterClass = userPlayer.characterClass
+
             StatItem(label = "Class", value = characterClass.className)
             StatItem(label = "AC", value = characterClass.armorClass.toString())
             StatItem(label = "HP", value = characterClass.hitPointsDisplay)

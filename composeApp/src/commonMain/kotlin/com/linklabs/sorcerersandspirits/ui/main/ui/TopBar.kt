@@ -17,6 +17,7 @@ import sorcerersandspirits.composeapp.generated.resources.app_name
 import sorcerersandspirits.composeapp.generated.resources.ic_menu
 import sorcerersandspirits.composeapp.generated.resources.open_drawer
 
+// TODO: Remove this / figure out what should be at the top
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TopBar(onMenuClick: () -> Unit, modifier: Modifier = Modifier) {

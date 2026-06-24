@@ -31,6 +31,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalLatestRoll
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLogHandle
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"

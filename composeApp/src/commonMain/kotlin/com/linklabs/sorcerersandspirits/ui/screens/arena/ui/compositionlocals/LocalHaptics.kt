@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals
 
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
@@ -6,7 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.haptics.Haptics
 
 /**
  * Supplies device [Haptics] to the shake-to-roll gesture (SS-069). The default does nothing, so
- * previews and tests render without a Koin context; [ArenaScreen] provides the real injected
+ * previews and tests render without a Koin context;
+ * [com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen] provides the real injected
  * vibrator for the running app.
  */
 internal val LocalHaptics =

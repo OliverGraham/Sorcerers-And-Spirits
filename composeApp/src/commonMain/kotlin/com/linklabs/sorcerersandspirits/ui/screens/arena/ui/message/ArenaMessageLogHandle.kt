@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.RepeatMode

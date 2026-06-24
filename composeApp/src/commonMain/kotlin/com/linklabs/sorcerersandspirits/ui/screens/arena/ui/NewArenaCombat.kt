@@ -53,28 +53,14 @@ internal fun NewArenaCombat(state: ArenaState.Combat, modifier: Modifier = Modif
     //          Brief, stylized animation (bounce, rotate, etc.). Full message would be in log.
     //          Could be a property of the ArenaMessage - short text?
 
-    // The user's tapped target. Composable-local interaction state (not yet committed to the
-    // Domain), reset whenever the turn changes. resolveTargetUserId folds it together with the
-    // Domain-pinned defender and the lone auto-target into the one effective target.
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
 
     val targetedOpponentUserId =
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
 
-    // Targets can only be (re)picked on the user's own turn, before a committed roll pins a
-    // defender.
     val isTargetable = state.isItThisUsersTurn && state.lockedTargetUserId == null
 
-    // AnimatedContent re-keys on the effective target so that, when it changes, the previously
-    // targeted player (now a head icon) and the newly targeted player (now the bottom-half avatar)
-    // each carry a userId-keyed sharedBounds in both compositions and animate between the two spots
-    // — a head-icon ↔ avatar swap. The arrangement is derived from the AnimatedContent lambda's own
-    // target value so the outgoing and incoming compositions genuinely differ.
-    // Note: the dice (DiceHome) and Buttons sit inside this AnimatedContent and so would crossfade
-    // on a target change; harmless while they are empty placeholders, but SS-149/SS-151 should
-    // hoist
-    // them out once they render real content.
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         AnimatedContent(targetState = targetedOpponentUserId, label = TARGET_TRANSITION_LABEL) {
             currentTargetUserId ->
@@ -145,9 +131,6 @@ private fun ClassIcon(
     onSelectTarget: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // A knocked-out player shows disabled and faded-gray (SS-152) and cannot be targeted. The
-    // userId-keyed sharedBounds lets a tap morph this head icon into the bottom-half target avatar
-    // (SS-144).
     val isConscious = player.characterClass.isConscious
     val isClickable = isTargetable && isConscious
 
@@ -183,15 +166,12 @@ private fun BottomHalfContent(
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Row {
-            // On left is the active player (the local user).
             ClassAvatarDisplay(
                 player = userPlayer,
                 displayDirection = DisplayDirection.Left,
                 modifier = Modifier.weight(weight = 1f),
             )
             DiceHome()
-
-            // On right is the active player's current target, absent until one is chosen.
             ClassAvatarDisplay(
                 player = targetPlayer,
                 displayDirection = DisplayDirection.Right,
@@ -209,19 +189,14 @@ private fun ClassAvatarDisplay(
     displayDirection: DisplayDirection,
     modifier: Modifier = Modifier,
 ) {
-    // The slot keeps its weighted width even while empty (the target slot has no player until one
-    // is chosen, SS-144) so the dice stay centered between the two avatars.
     Box(modifier = modifier) {
         if (player != null) {
-            // The userId-keyed sharedBounds is the avatar end of the head-icon ↔ avatar transition
-            // (SS-144); it morphs from the tapped ClassIcon carrying the same key.
             ClassAvatar(
                 characterClass = player.characterClass,
                 modifier = Modifier.sharedBounds(key = player.userId),
             )
 
-            // TODO(SS-146): ClassAvatarStats will have expanding rows that open on top of
-            // ClassAvatar()
+            // TODO(SS-146): expanding stat rows over the avatar.
             ClassAvatarStats(displayDirection = displayDirection)
         }
     }
@@ -246,8 +221,7 @@ private fun ClassAvatarStats(displayDirection: DisplayDirection, modifier: Modif
 
 @Composable
 private fun ClassAvatar(characterClass: CharacterClassState, modifier: Modifier = Modifier) {
-    // TODO(SS-068): hook for combat animations to drive this static art (Compottie work on a
-    // branch).
+    // TODO(SS-068): combat animations will drive this static art.
     Image(
         painter = painterResource(resource = classArtwork(type = characterClass.type)),
         contentDescription = characterClass.className,

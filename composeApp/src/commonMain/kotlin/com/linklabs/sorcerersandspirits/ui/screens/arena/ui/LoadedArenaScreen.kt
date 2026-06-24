@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -31,6 +32,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalLatestRoll
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLogHandle
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
@@ -122,7 +126,7 @@ private fun ScreenContent(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun ArenaStateContent(
+private fun ColumnScope.ArenaStateContent(
     transitionState: Transition<ArenaState>,
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
@@ -139,7 +143,10 @@ private fun ArenaStateContent(
                 arenaState.ArenaChoosingClasses(characterClasses = characterClasses)
             }
 
-            is ArenaState.Combat -> arenaState.ArenaCombat()
+            // SS-142: the combat screen is being rebuilt as NewArenaCombat; it is now live here
+            // while logic is migrated over from the old ArenaCombat (kept until the move is
+            // verified complete).
+            is ArenaState.Combat -> NewArenaCombat(state = arenaState)
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

@@ -27,6 +27,95 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `ArenaCombatControl.kt:164` (`// TODO: Always StringResources`)
 - **Goal:** Replace hardcoded strings with string resources.
 
+### SS-136 — Class head icon (collapsed) composable
+- [ ] Not completed
+- **Source:** Figma `Arena` → node `75:159` ("Group 12")
+  (https://www.figma.com/design/hCcLwQRgRvNFMrzGdMiRlf/Arena?node-id=75-159). Child of SS-068.
+- **Goal:** A reusable circular "class head" icon shown for each player in the Arena **while they are
+  not the active roller** (not their turn). It is the *collapsed* at-a-glance view of a player: their
+  class avatar ringed by a class-colored border, with three combat stats. The *expanded* detail view
+  is a separate future ticket (SS-141, "the other UI" — not in Figma yet).
+- **Anatomy (from Figma, overall ~176×155):**
+  - **Outer class-color border** — a red, scalloped/"cloud" shape (`Group 8`) tinted with the
+    player's class color. Render the color in code from the class-color source (SS-137); for this
+    first pass just match the specific Figma red. Per-class color *groups*: Rogue/Duelist red,
+    Gambler/Bard yellow, Necromancer/Paladin green, Illusionist/Mage blue.
+  - **Center avatar** — the class character art (~99×99) inside a stone ring (reuse the existing
+    `class_*` drawables already used by `CharacterClassWheel`).
+  - **Three stat badges** (~48×48 icon + bold white 24sp value with a drop shadow): **Speed** top,
+    **Armor** left, **Hitpoints** right. **No SPC/ability icon** on the head icon. Values come from
+    `CharacterClassState` (`speed`, `armorClass`, `hitPoints`/`hitPointsDisplay`).
+- **Steps:** Build a `ClassHeadIcon` composable (likely in
+  `ui/common/characterclasses/` next to `CharacterClassWheel.kt`) taking a `CharacterClassState`;
+  draw the class-colored border behind a circular avatar; lay out the three stat badges around it
+  using the exported SVG icons (SS-138, falls back to the existing `ic_speed`/`ic_armor`/`ic_health`
+  PNGs until then); pull the border color from the class-color source (SS-137); add a `@Preview`.
+  Leave hooks so SS-139's `SharedTransitionScope`/`sharedBounds` can wrap the avatar + the whole icon
+  later. Then wire it into the Arena combat layout for every non-active player.
+- **Depends on / related:** SS-137 (class colors), SS-138 (SVG icons), SS-139 (shared-transition
+  foundation), SS-140 (head→large-avatar transition), SS-141 (head→expanded transition). Parent:
+  SS-068.
+
+### SS-137 — Centralized per-class color source (color groups)
+- [ ] Not completed
+- **Source:** Needed by the class head icon (SS-136). Per-class colors currently live as a **private**
+  `spokeColor()` `when` inside `CharacterClassWheel.kt:563`, so nothing else can reuse them.
+- **Goal:** A single shared source of per-class colors so the head icon, the wheel, and future Arena
+  UI all tint from the same place. Model the four class **color groups** the design uses:
+  Rogue/Duelist **red**, Gambler/Bard **yellow**, Necromancer/Paladin **green**, Illusionist/Mage
+  **blue**. Keep the existing exact per-class shades (e.g. Rogue `0xFF9D2920`, Duelist `0xFF852B1A`)
+  available, plus the gradient pair where a class needs one (the head-icon border is a red gradient).
+- **Steps:** Extract a class-color provider keyed by `CharacterClassType` (no constructor-arg enums —
+  prefer a `when`, per the team convention); expose both the per-class color and its color-group;
+  repoint `CharacterClassWheel.spokeColor()` at it so the wheel and head icon share one definition.
+- **Notes:** Related: SS-136, SS-079/SS-084 (wheel colors).
+
+### SS-138 — Export head-icon stat icons as SVG (speed, armor, hitpoints)
+- [ ] Not completed — **blocked on Figma MCP rate limit** (Starter plan) at time of writing; retry
+  the asset download once the limit resets.
+- **Source:** Figma `Arena` node `75:159`. The three stat icons in the head icon
+  (speed chevron, armor, hitpoints/heart) are currently raster PNGs in the repo
+  (`composeResources/drawable/ic_speed.png`, `ic_armor.png`, `ic_health.png`).
+- **Goal:** Export each stat icon **individually as SVG** from Figma and add them as vector drawables
+  so the head icon (SS-136) renders crisp at any size. (The class avatar itself stays raster art; the
+  class-color border is drawn in code, not exported.)
+- **Steps:** Use `download_assets` with `defaultFormat: svg` on the icon child nodes; add the vectors
+  under `commonMain/composeResources/drawable`; update SS-136 to reference the SVGs instead of the
+  PNGs; remove the superseded PNGs if nothing else depends on them.
+- **Notes:** Related: SS-136. Asset-prep discipline per [[downsample-figma-raster-assets]].
+
+### SS-139 — SharedTransitionLayout foundation for the Arena
+- [ ] Not completed
+- **Source:** Prerequisite for the head-icon transitions (SS-140, SS-141). There is **no**
+  `SharedTransition`/`sharedElement`/`sharedBounds` usage anywhere in the app today.
+- **Goal:** Stand up the shared-element transition foundation the Arena needs so a class head icon
+  (SS-136) can morph into other representations of the same player. Provide a
+  `SharedTransitionLayout` around the relevant Arena content and a way to thread
+  `SharedTransitionScope` + `AnimatedVisibilityScope` (and stable per-player shared-element keys) down
+  to the head icon and its transition targets.
+- **Steps:** Add a `SharedTransitionLayout` at the appropriate Arena scope; define a per-player
+  shared-element key scheme (e.g. keyed by `userId` + element role); expose the scopes the head icon
+  and targets need; prove it with one simple morph before SS-140/SS-141 build on it.
+- **Notes:** KMP/Compose Multiplatform — confirm the shared-transition APIs are available on both
+  Android and iOS targets. Related: SS-136, SS-140, SS-141.
+
+### SS-140 — Head → large targeted avatar (shared transition when targeted)
+- [ ] Not completed — **spec to come** (the large avatar will be detailed in its own ticket/Figma).
+- **Source:** One of the two transition targets called out for the head icon (SS-136).
+- **Goal:** When a player is **targeted for battle**, their collapsed class head icon (SS-136) shares
+  an element transition into a **large avatar** representation. Placeholder until the large-avatar
+  visual is provided.
+- **Depends on:** SS-136 (head icon), SS-139 (shared-transition foundation). Related: SS-068.
+
+### SS-141 — Head → expanded stat view ("the other UI")
+- [ ] Not completed — **not in Figma yet** (expanded view still to be designed).
+- **Source:** The second transition target for the head icon (SS-136). The head icon is the
+  *collapsed* view; this is the *expanded* view showing the player's stats/details in greater depth.
+- **Goal:** A shared-element transition from the collapsed class head icon into an expanded detail
+  panel for that player (all stats, abilities, etc., shown in full). Placeholder until the expanded
+  layout is designed.
+- **Depends on:** SS-136 (head icon), SS-139 (shared-transition foundation). Related: SS-068.
+
 ---
 
 ## Domain layer

@@ -292,7 +292,7 @@ private fun WheelSpokes(characterClasses: List<CharacterClassState>, hubColor: C
         characterClasses.forEachIndexed { index, characterClass ->
             rotate(degrees = index * DEGREES_PER_CLASS, pivot = center) {
                 drawRoundRect(
-                    color = spokeColor(type = characterClass.type),
+                    color = classColor(type = characterClass.type),
                     topLeft =
                         Offset(x = center.x - spokeThickness / 2f, y = center.y - spokeLength),
                     size = Size(width = spokeThickness, height = spokeLength),
@@ -558,19 +558,6 @@ internal fun classArtwork(type: CharacterClassType): DrawableResource =
         CharacterClassType.Mage -> Res.drawable.class_mage
         CharacterClassType.Paladin -> Res.drawable.class_paladin
         CharacterClassType.None -> Res.drawable.class_rogue
-    }
-
-private fun spokeColor(type: CharacterClassType): Color =
-    when (type) {
-        CharacterClassType.Rogue -> Color(color = 0xFF9D2920)
-        CharacterClassType.Gambler -> Color(color = 0xFFDAA73B)
-        CharacterClassType.Duelist -> Color(color = 0xFF852B1A)
-        CharacterClassType.Necromancer -> Color(color = 0xFF49533B)
-        CharacterClassType.Bard -> Color(color = 0xFFE8C53A)
-        CharacterClassType.Illusionist -> Color(color = 0xFF1F3A5D)
-        CharacterClassType.Mage -> Color(color = 0xFF243346)
-        CharacterClassType.Paladin -> Color(color = 0xFF3C7A3C)
-        CharacterClassType.None -> Color(color = 0xFF654E35)
     }
 
 @Preview

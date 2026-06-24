@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -11,13 +10,11 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -37,6 +34,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_armor_class
+import sorcerersandspirits.composeapp.generated.resources.ic_head_icon_wooden_frame
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 
@@ -59,22 +57,19 @@ private val HIT_POINTS_VALUE_CENTER = Offset(x = 0.837f, y = 0.772f)
 private const val HEAD_BACKING_RADIUS_FRACTION = 0.30f
 private const val ICON_BACKING_RADIUS_FRACTION = 0.155f
 private const val VALUE_BACKING_RADIUS_FRACTION = 0.11f
-private const val HEAD_AVATAR_DIAMETER_FRACTION = 0.54f
+private const val HEAD_FRAME_SIZE_FRACTION = 0.62f
+private const val HEAD_AVATAR_DIAMETER_FRACTION = 0.40f
 private const val STAT_ICON_DIAMETER_FRACTION = 0.27f
 private const val VALUE_TEXT_FRACTION = 0.13f
 private const val VALUE_SHADOW_FRACTION = 0.012f
-private const val MEDALLION_RING_FRACTION = 0.02f
-
-// TODO(SS-136): placeholder for the wooden medallion frame until the designer separates the head
-// from the medallion so the real frame asset can sit around the avatar.
-private val MEDALLION_RING_COLOR = Color(color = 0xFF5A4326)
 
 /**
  * The collapsed, at-a-glance "class head" shown for a player in the Arena while they are not the
- * active roller. A cluster of class-colored bordered circles — one behind the head and one behind
- * each stat icon and value — overlaps to form the cloud silhouette. Speed sits on top (value to its
- * right), Armor at the start (value below), Hitpoints at the end (value below). The expanded detail
- * view is a separate concern (SS-141).
+ * active roller. A cluster of class-colored gradient circles — one behind the head and one behind
+ * each stat icon and value — overlaps to form the cloud silhouette, with the class avatar mounted
+ * in a wooden frame at the centre. Speed sits on top (value to its right), Armor at the start
+ * (value below), Hitpoints at the end (value below). The expanded detail view is a separate concern
+ * (SS-141).
  */
 @Composable
 fun ClassHeadIcon(
@@ -83,7 +78,7 @@ fun ClassHeadIcon(
     width: Dp = DEFAULT_HEAD_ICON_WIDTH,
 ) {
     val height = width / ASPECT_RATIO
-    val circleColors = classCircleColors(type = characterClass.type)
+    val circleColors = classGradient(type = characterClass.type)
 
     Box(
         modifier = modifier.width(width = width).aspectRatio(ratio = ASPECT_RATIO),
@@ -91,22 +86,22 @@ fun ClassHeadIcon(
     ) {
         BackingCircles(colors = circleColors, modifier = Modifier.matchParentSize())
 
-        // TODO(SS-136): swap this circular crop of the class art for the combined head + wooden
-        // medallion asset once the designer separates those elements in Figma.
+        OverlayAt(center = HEAD_CENTER, width = width, height = height) {
+            Image(
+                painter = painterResource(resource = Res.drawable.ic_head_icon_wooden_frame),
+                contentDescription = null,
+                modifier = Modifier.size(size = width * HEAD_FRAME_SIZE_FRACTION),
+            )
+        }
+
+        // TODO(SS-136): the class avatar art doubles as the head bust; swap for dedicated head art
+        // if the designer provides it.
         OverlayAt(center = HEAD_CENTER, width = width, height = height) {
             Image(
                 painter = painterResource(resource = classArtwork(type = characterClass.type)),
                 contentDescription = characterClass.className,
-                contentScale = ContentScale.Crop,
-                alignment = Alignment.TopCenter,
-                modifier =
-                    Modifier.size(size = width * HEAD_AVATAR_DIAMETER_FRACTION)
-                        .clip(shape = CircleShape)
-                        .border(
-                            width = width * MEDALLION_RING_FRACTION,
-                            color = MEDALLION_RING_COLOR,
-                            shape = CircleShape,
-                        ),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(size = width * HEAD_AVATAR_DIAMETER_FRACTION),
             )
         }
 
@@ -151,19 +146,20 @@ fun ClassHeadIcon(
 }
 
 @Composable
-private fun BackingCircles(colors: ClassCircleColors, modifier: Modifier = Modifier) {
+private fun BackingCircles(colors: ClassGradient, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        // Drawn back-to-front: the stat circles sit furthest back and the head circle is drawn last
-        // so it overlaps them, tucking the stat circles behind the head to scallop the silhouette.
+        // Drawn back-to-front: the stat-value circles sit furthest back, then the head's centre
+        // circle, then the icon circles in front — so each stat's value circle tucks behind the
+        // circle holding its icon.
         val circles =
             listOf(
-                SPEED_ICON_CENTER to ICON_BACKING_RADIUS_FRACTION,
-                ARMOR_ICON_CENTER to ICON_BACKING_RADIUS_FRACTION,
-                HIT_POINTS_ICON_CENTER to ICON_BACKING_RADIUS_FRACTION,
                 SPEED_VALUE_CENTER to VALUE_BACKING_RADIUS_FRACTION,
                 ARMOR_VALUE_CENTER to VALUE_BACKING_RADIUS_FRACTION,
                 HIT_POINTS_VALUE_CENTER to VALUE_BACKING_RADIUS_FRACTION,
                 HEAD_CENTER to HEAD_BACKING_RADIUS_FRACTION,
+                SPEED_ICON_CENTER to ICON_BACKING_RADIUS_FRACTION,
+                ARMOR_ICON_CENTER to ICON_BACKING_RADIUS_FRACTION,
+                HIT_POINTS_ICON_CENTER to ICON_BACKING_RADIUS_FRACTION,
             )
 
         circles.forEach { (center, radiusFraction) ->
@@ -236,37 +232,6 @@ private fun BoxScope.OverlayAt(
         content()
     }
 }
-
-private class ClassCircleColors(val light: Color, val dark: Color)
-
-// TODO(SS-137): centralize per-class colors (currently mirrored from
-// CharacterClassWheel.spokeColor)
-// so the head icon, wheel, and future Arena UI all tint from one source.
-private fun classCircleColors(type: CharacterClassType): ClassCircleColors =
-    when (type) {
-        CharacterClassType.Rogue,
-        CharacterClassType.Duelist -> ClassCircleColors(light = RED_LIGHT, dark = RED_DARK)
-
-        CharacterClassType.Gambler,
-        CharacterClassType.Bard -> ClassCircleColors(light = YELLOW_LIGHT, dark = YELLOW_DARK)
-
-        CharacterClassType.Necromancer,
-        CharacterClassType.Paladin -> ClassCircleColors(light = GREEN_LIGHT, dark = GREEN_DARK)
-
-        CharacterClassType.Illusionist,
-        CharacterClassType.Mage -> ClassCircleColors(light = BLUE_LIGHT, dark = BLUE_DARK)
-
-        CharacterClassType.None -> ClassCircleColors(light = RED_LIGHT, dark = RED_DARK)
-    }
-
-private val RED_LIGHT = Color(color = 0xFF9D2920)
-private val RED_DARK = Color(color = 0xFF581310)
-private val YELLOW_LIGHT = Color(color = 0xFFDAA73B)
-private val YELLOW_DARK = Color(color = 0xFF7A5E14)
-private val GREEN_LIGHT = Color(color = 0xFF3C7A3C)
-private val GREEN_DARK = Color(color = 0xFF1E3D1E)
-private val BLUE_LIGHT = Color(color = 0xFF1F3A5D)
-private val BLUE_DARK = Color(color = 0xFF0E1C2E)
 
 @Preview
 @Composable

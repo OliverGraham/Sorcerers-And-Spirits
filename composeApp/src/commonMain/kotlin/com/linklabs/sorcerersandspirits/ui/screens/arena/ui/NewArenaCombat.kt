@@ -76,7 +76,12 @@ private fun ClassIcons(headIconPlayers: List<PlayerState.Selected>, modifier: Mo
 private fun ClassIcon(player: PlayerState.Selected, modifier: Modifier = Modifier) {
     // TODO(SS-144): tag this with a userId-keyed sharedBounds/sharedElement so a tap can transition
     //  the head icon into the bottom-half targeted avatar (player.userId is the match key).
-    ClassHeadIcon(characterClass = player.characterClass, modifier = modifier)
+    // A knocked-out player shows here in a disabled, faded-gray state (SS-152).
+    ClassHeadIcon(
+        characterClass = player.characterClass,
+        isEnabled = player.characterClass.isConscious,
+        modifier = modifier,
+    )
 }
 
 @Composable

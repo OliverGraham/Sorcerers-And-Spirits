@@ -15,6 +15,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -39,6 +40,12 @@ import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 
 private val DEFAULT_HEAD_ICON_WIDTH = 132.dp
+
+// A knocked-out player's icon is shown faded and drained of class color so it reads as out of the
+// fight (SS-152). Placeholder treatment — the finalized disabled design lands later.
+private const val DISABLED_ALPHA = 0.45f
+private val DISABLED_GRADIENT =
+    ClassGradient(light = Color(color = 0xFF8A8A8A), dark = Color(color = 0xFF4A4A4A))
 
 // The Figma frame is wider than it is tall; keep that footprint so the laid-out circles match.
 private const val ASPECT_RATIO = 176.627f / 154.811f
@@ -69,19 +76,24 @@ private const val VALUE_SHADOW_FRACTION = 0.012f
  * each stat icon and value — overlaps to form the cloud silhouette, with the class avatar mounted
  * in a wooden frame at the centre. Speed sits on top (value to its right), Armor at the start
  * (value below), Hitpoints at the end (value below). The expanded detail view is a separate concern
- * (SS-150).
+ * (SS-150). A knocked-out player is shown with [isEnabled] false: faded and gray rather than
+ * class-colored, so it reads as out of the fight (SS-152).
  */
 @Composable
 fun ClassHeadIcon(
     characterClass: CharacterClassState,
     modifier: Modifier = Modifier,
     width: Dp = DEFAULT_HEAD_ICON_WIDTH,
+    isEnabled: Boolean = true,
 ) {
     val height = width / ASPECT_RATIO
-    val circleColors = classGradient(type = characterClass.type)
+    val circleColors =
+        if (isEnabled) classGradient(type = characterClass.type) else DISABLED_GRADIENT
+    val disabledModifier = if (isEnabled) Modifier else Modifier.alpha(alpha = DISABLED_ALPHA)
 
     Box(
-        modifier = modifier.width(width = width).aspectRatio(ratio = ASPECT_RATIO),
+        modifier =
+            modifier.width(width = width).aspectRatio(ratio = ASPECT_RATIO).then(disabledModifier),
         contentAlignment = Alignment.Center,
     ) {
         BackingCircles(colors = circleColors, modifier = Modifier.matchParentSize())

@@ -69,7 +69,7 @@ private const val VALUE_SHADOW_FRACTION = 0.012f
  * each stat icon and value — overlaps to form the cloud silhouette, with the class avatar mounted
  * in a wooden frame at the centre. Speed sits on top (value to its right), Armor at the start
  * (value below), Hitpoints at the end (value below). The expanded detail view is a separate concern
- * (SS-141).
+ * (SS-150).
  */
 @Composable
 fun ClassHeadIcon(

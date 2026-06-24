@@ -142,7 +142,11 @@ private fun ArenaStateContent(
                 arenaState.ArenaChoosingClasses(characterClasses = characterClasses)
             }
 
-            is ArenaState.Combat -> arenaState.ArenaCombat()
+            // SS-142: the combat screen is being rebuilt as NewArenaCombat; it is now live here
+            // while logic is migrated over from the old ArenaCombat (kept until the move is
+            // verified            // complete).
+            is ArenaState.Combat ->
+                Column(modifier = Modifier.fillMaxSize()) { NewArenaCombat(state = arenaState) }
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

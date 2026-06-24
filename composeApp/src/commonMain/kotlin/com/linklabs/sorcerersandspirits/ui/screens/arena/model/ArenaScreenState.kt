@@ -84,8 +84,6 @@ sealed interface ArenaState {
         val combatControls = deriveCombatControls()
         val lockedTargetUserId = deriveLockedTargetUserId()
         val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()
-        val targetPlayer = deriveTargetPlayer()
-        val headIconPlayers = deriveHeadIconPlayers()
     }
 
     @Immutable
@@ -139,28 +137,40 @@ private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
 }
 
 /**
- * The opponent shown as the full bottom-half target avatar (SS-145), or null when the user has no
- * live target — at the start of a free-choice turn, when it is not the user's turn, or when the
- * pinned target has been knocked out (a KO'd player drops back to a head icon, SS-152). The target
- * is the Domain-pinned defender or the lone auto-target; interactive target selection (SS-144) will
- * refine this.
+ * The opponent the user is currently aimed at, combining the three target sources in priority order
+ * (mirrors the old ArenaCombat hoist): the Domain-pinned defender of an in-flight attack wins, then
+ * the user's own tapped [selectedOpponentUserId], then the lone auto-target (SS-101). Empty when
+ * the user has no target. The selection is Composable-local interaction state, so it is threaded in
+ * rather than derived at map time.
  */
-private fun ArenaState.Combat.deriveTargetPlayer(): PlayerState.Selected? {
-    val targetedOpponentUserId = lockedTargetUserId ?: autoTargetedOpponentUserId ?: return null
-    val target = playerMap[targetedOpponentUserId] ?: return null
+internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String =
+    lockedTargetUserId ?: selectedOpponentUserId.ifEmpty { autoTargetedOpponentUserId.orEmpty() }
+
+/**
+ * The opponent shown as the full bottom-half target avatar (SS-145) for a resolved [targetUserId],
+ * or null when there is none or it is knocked out — a KO'd player is never the target avatar and
+ * drops back to a head icon instead (SS-152).
+ */
+internal fun ArenaState.Combat.targetPlayerFor(targetUserId: String): PlayerState.Selected? {
+    val target = playerMap[targetUserId] ?: return null
     return if (target.characterClass.isConscious) target else null
 }
 
 /**
- * The opponents shown as collapsed head icons in the new combat layout (SS-143): every player
- * except the user and their current target ([targetPlayer]), who are the two full bottom-half
- * avatars instead. A knocked-out opponent is never the target avatar, so it always falls back into
- * the head-icon row, where it is rendered grayed-out and out of the fight (SS-152, mirror SS-123).
- * The animated avatar→head collapse that accompanies a mid-match knockout is future
- * combat-animation work (SS-068/SS-144).
+ * The opponents shown as collapsed head icons (SS-143) for a resolved [targetUserId]: every player
+ * except the user and the current target avatar ([targetPlayerFor]), who are the two full
+ * bottom-half avatars instead. A knocked-out opponent is never the target avatar, so it always
+ * falls back into the head-icon row, where it is rendered grayed-out and out of the fight (SS-152,
+ * mirror SS-123).
  */
-private fun ArenaState.Combat.deriveHeadIconPlayers(): List<PlayerState.Selected> =
-    playerMap.values.filter { it.userId != userPlayerId && it.userId != targetPlayer?.userId }
+internal fun ArenaState.Combat.headIconPlayersFor(
+    targetUserId: String
+): List<PlayerState.Selected> {
+    val targetPlayer = targetPlayerFor(targetUserId = targetUserId)
+    return playerMap.values.filter {
+        it.userId != userPlayerId && it.userId != targetPlayer?.userId
+    }
+}
 
 // TODO(SS-031): Need to refactor this badly
 

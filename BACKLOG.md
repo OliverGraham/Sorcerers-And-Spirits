@@ -87,10 +87,11 @@ composables (one per logical screen segment); keep new work in that shape rather
 function. Each ticket below owns one segment. Parent: SS-142 (which is itself a child of SS-068).
 
 ### SS-142 — NewArenaCombat scaffold & migration to replace ArenaCombat
-- [~] In progress — **swap is live:** `LoadedArenaScreen` now renders `NewArenaCombat` for
-  `ArenaState.Combat` (wrapped in a `Column` to satisfy its `ColumnScope` receiver). `ArenaCombat.kt`
-  is intentionally **kept** as the reference to migrate logic from; delete it only at the very end,
-  once every behavior has been confirmed carried over and nothing was missed.
+- [~] In progress — **swap is live:** `LoadedArenaScreen` renders `NewArenaCombat` for
+  `ArenaState.Combat`; `NewArenaCombat` now roots its own `SharedTransitionLayout` (SS-144), so it is
+  a plain composable rather than a `ColumnScope` extension. `ArenaCombat.kt` is intentionally **kept**
+  as the reference to migrate logic from; delete it only at the very end, once every behavior has been
+  confirmed carried over and nothing was missed.
 - **Source:** `NewArenaCombat.kt` top-level (file header + `NewArenaCombat` orchestration).
 - **Goal:** Stand up the new two-half combat layout, fill in its child segments by migrating the
   behavior from `ArenaCombat`, and only then delete the old `ArenaCombat.kt`.
@@ -107,20 +108,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
   avatar/stat segments as those land.
 - **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
   `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
-
-### SS-144 — Target selection: head icon ↔ targeted avatar shared transition
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-144)`.
-- **Goal:** Tapping an opponent head icon targets that player. With **no** current target, the tapped
-  `ClassIcon` shares-elements into the bottom-half opponent slot
-  (`ClassAvatarDisplay(displayDirection = Right)`). With an **existing** target, the current target
-  collapses back into a head icon in the row while the newly tapped icon morphs into the opponent
-  slot — a swap.
-- **Steps:** Wrap the relevant content in `SharedTransitionLayout` + `AnimatedContent` (see
-  `ArenaCombat`'s existing pattern) keyed so the head icon and the large avatar carry the **same
-  `userId`** `sharedBounds`/`sharedElement` key; drive it off the hoisted target state (SS-142).
-- **Depends on:** SS-139 (shared-transition foundation), SS-143, SS-142. Realizes the former SS-140
-  (head → large targeted avatar) placeholder for the new layout.
 
 ### SS-146 — Expanding per-stat rows over the avatar (ClassAvatarStats)
 - [ ] Not completed

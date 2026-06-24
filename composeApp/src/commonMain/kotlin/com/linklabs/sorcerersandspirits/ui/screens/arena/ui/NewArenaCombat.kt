@@ -1,41 +1,42 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classArtwork
+import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.headIconPlayersFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetPlayerFor
 import org.jetbrains.compose.resources.painterResource
 
-// TODO(SS-142): scaffold for the new two-half combat layout that replaces ArenaCombat. Already
-// wired
-//  into LoadedArenaScreen; thread the ArenaState.Combat target/roll contract through and migrate
-// the
-//  behavior from ArenaCombat into the segments below. Delete ArenaCombat.kt only once nothing is
-//  missed.
-@Composable
-internal fun ColumnScope.NewArenaCombat(state: ArenaState.Combat, modifier: Modifier = Modifier) {
-    // TODO(SS-144): When there's no target, tapping a ClassIcon will transition it to the opponent
-    //           area. ClassAvatarDisplay(displayDirection = DisplayDirection.Right) is opponent
-    // area.
-    //       If there already is a target, then the current target goes into ClassIcon form while
-    //       the newly targeted ClassIcon transitions into the opponent area as ClassAvatar
-    //       Think everything just needs to be wrapped in the SharedTransitionLayout +
-    //       AnimateContent. See ArenaCombat
+private const val TARGET_TRANSITION_LABEL = "NewArenaCombatTargetTransition"
 
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+internal fun NewArenaCombat(state: ArenaState.Combat, modifier: Modifier = Modifier) {
     // TODO(SS-149): How about the Dice rolling over everything? What changes will need to be made
     // to
     //  facilitate that? After rolling, they must smoothly slide over to DiceHome()
@@ -52,40 +53,111 @@ internal fun ColumnScope.NewArenaCombat(state: ArenaState.Combat, modifier: Modi
     //          Brief, stylized animation (bounce, rotate, etc.). Full message would be in log.
     //          Could be a property of the ArenaMessage - short text?
 
-    TopHalfContent(state = state)
-    BottomHalfContent(state = state)
+    // The user's tapped target. Composable-local interaction state (not yet committed to the
+    // Domain), reset whenever the turn changes. resolveTargetUserId folds it together with the
+    // Domain-pinned defender and the lone auto-target into the one effective target.
+    var selectedOpponentUserId by
+        remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
+
+    val targetedOpponentUserId =
+        state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
+
+    // Targets can only be (re)picked on the user's own turn, before a committed roll pins a
+    // defender.
+    val isTargetable = state.isItThisUsersTurn && state.lockedTargetUserId == null
+
+    // AnimatedContent re-keys on the effective target so that, when it changes, the previously
+    // targeted player (now a head icon) and the newly targeted player (now the bottom-half avatar)
+    // each carry a userId-keyed sharedBounds in both compositions and animate between the two spots
+    // — a head-icon ↔ avatar swap. The arrangement is derived from the AnimatedContent lambda's own
+    // target value so the outgoing and incoming compositions genuinely differ.
+    // Note: the dice (DiceHome) and Buttons sit inside this AnimatedContent and so would crossfade
+    // on a target change; harmless while they are empty placeholders, but SS-149/SS-151 should
+    // hoist
+    // them out once they render real content.
+    SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
+        AnimatedContent(targetState = targetedOpponentUserId, label = TARGET_TRANSITION_LABEL) {
+            currentTargetUserId ->
+            SharedTransitionProvider(
+                sharedTransitionScope = this@SharedTransitionLayout,
+                animatedVisibilityScope = this@AnimatedContent,
+            ) {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    TopHalfContent(
+                        headIconPlayers =
+                            state.headIconPlayersFor(targetUserId = currentTargetUserId),
+                        isTargetable = isTargetable,
+                        onSelectTarget = { selectedOpponentUserId = it },
+                        modifier = Modifier.weight(weight = 1f),
+                    )
+                    BottomHalfContent(
+                        userPlayer = state.userPlayer,
+                        targetPlayer = state.targetPlayerFor(targetUserId = currentTargetUserId),
+                        modifier = Modifier.weight(weight = 1f),
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
-private fun TopHalfContent(state: ArenaState.Combat, modifier: Modifier = Modifier) {
+private fun TopHalfContent(
+    headIconPlayers: List<PlayerState.Selected>,
+    isTargetable: Boolean,
+    onSelectTarget: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Box(modifier = modifier.fillMaxSize()) {
         // ClassIcons() need to be positioned BELOW Messages, but when Messages() expands, it covers
         // ClassIcons()
-        ClassIcons(headIconPlayers = state.headIconPlayers)
+        ClassIcons(
+            headIconPlayers = headIconPlayers,
+            isTargetable = isTargetable,
+            onSelectTarget = onSelectTarget,
+        )
         Messages()
     }
 }
 
 @Composable
-private fun ClassIcons(headIconPlayers: List<PlayerState.Selected>, modifier: Modifier = Modifier) {
+private fun ClassIcons(
+    headIconPlayers: List<PlayerState.Selected>,
+    isTargetable: Boolean,
+    onSelectTarget: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     FlowRow(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
-        headIconPlayers.forEach { player -> ClassIcon(player = player) }
+        headIconPlayers.forEach { player ->
+            ClassIcon(player = player, isTargetable = isTargetable, onSelectTarget = onSelectTarget)
+        }
     }
 }
 
 @Composable
-private fun ClassIcon(player: PlayerState.Selected, modifier: Modifier = Modifier) {
-    // TODO(SS-144): tag this with a userId-keyed sharedBounds/sharedElement so a tap can transition
-    //  the head icon into the bottom-half targeted avatar (player.userId is the match key).
-    // A knocked-out player shows here in a disabled, faded-gray state (SS-152).
+private fun ClassIcon(
+    player: PlayerState.Selected,
+    isTargetable: Boolean,
+    onSelectTarget: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    // A knocked-out player shows disabled and faded-gray (SS-152) and cannot be targeted. The
+    // userId-keyed sharedBounds lets a tap morph this head icon into the bottom-half target avatar
+    // (SS-144).
+    val isConscious = player.characterClass.isConscious
+    val isClickable = isTargetable && isConscious
+
     ClassHeadIcon(
         characterClass = player.characterClass,
-        isEnabled = player.characterClass.isConscious,
-        modifier = modifier,
+        isEnabled = isConscious,
+        modifier =
+            modifier.sharedBounds(key = player.userId).clickable(enabled = isClickable) {
+                onSelectTarget(player.userId)
+            },
     )
 }
 
@@ -104,12 +176,16 @@ private fun Messages(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomHalfContent(state: ArenaState.Combat, modifier: Modifier = Modifier) {
+private fun BottomHalfContent(
+    userPlayer: PlayerState.Selected,
+    targetPlayer: PlayerState.Selected?,
+    modifier: Modifier = Modifier,
+) {
     Column(modifier = modifier.fillMaxSize()) {
         Row {
             // On left is the active player (the local user).
             ClassAvatarDisplay(
-                player = state.userPlayer,
+                player = userPlayer,
                 displayDirection = DisplayDirection.Left,
                 modifier = Modifier.weight(weight = 1f),
             )
@@ -117,7 +193,7 @@ private fun BottomHalfContent(state: ArenaState.Combat, modifier: Modifier = Mod
 
             // On right is the active player's current target, absent until one is chosen.
             ClassAvatarDisplay(
-                player = state.targetPlayer,
+                player = targetPlayer,
                 displayDirection = DisplayDirection.Right,
                 modifier = Modifier.weight(weight = 1f),
             )
@@ -133,15 +209,21 @@ private fun ClassAvatarDisplay(
     displayDirection: DisplayDirection,
     modifier: Modifier = Modifier,
 ) {
-    // The target slot is empty until the user has a live target (SS-144 drives selection); the
-    // user's own slot always has a player.
-    if (player == null) return
-
+    // The slot keeps its weighted width even while empty (the target slot has no player until one
+    // is chosen, SS-144) so the dice stay centered between the two avatars.
     Box(modifier = modifier) {
-        ClassAvatar(characterClass = player.characterClass)
+        if (player != null) {
+            // The userId-keyed sharedBounds is the avatar end of the head-icon ↔ avatar transition
+            // (SS-144); it morphs from the tapped ClassIcon carrying the same key.
+            ClassAvatar(
+                characterClass = player.characterClass,
+                modifier = Modifier.sharedBounds(key = player.userId),
+            )
 
-        // TODO(SS-146): ClassAvatarStats will have expanding rows that open on top of ClassAvatar()
-        ClassAvatarStats(displayDirection = displayDirection)
+            // TODO(SS-146): ClassAvatarStats will have expanding rows that open on top of
+            // ClassAvatar()
+            ClassAvatarStats(displayDirection = displayDirection)
+        }
     }
 }
 

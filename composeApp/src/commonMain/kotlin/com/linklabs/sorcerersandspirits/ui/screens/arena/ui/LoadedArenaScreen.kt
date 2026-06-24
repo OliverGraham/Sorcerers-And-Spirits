@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -125,7 +126,7 @@ private fun ScreenContent(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun ArenaStateContent(
+private fun ColumnScope.ArenaStateContent(
     transitionState: Transition<ArenaState>,
     characterClasses: List<CharacterClassState>,
     gauntletProgress: GauntletProgress,
@@ -144,9 +145,8 @@ private fun ArenaStateContent(
 
             // SS-142: the combat screen is being rebuilt as NewArenaCombat; it is now live here
             // while logic is migrated over from the old ArenaCombat (kept until the move is
-            // verified            // complete).
-            is ArenaState.Combat ->
-                Column(modifier = Modifier.fillMaxSize()) { NewArenaCombat(state = arenaState) }
+            // verified complete).
+            is ArenaState.Combat -> NewArenaCombat(state = arenaState)
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

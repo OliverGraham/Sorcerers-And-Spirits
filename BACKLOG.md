@@ -227,25 +227,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** Replaces the old `AbilityControls` button column. Related: SS-029 (string resources),
   SS-142.
 
-### SS-152 — Knocked-out player returns to head-icon form with a disabled state
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `ClassIcons()` / `ClassIcon()` and the bottom-half
-  `ClassAvatarDisplay`; the disabled visual lives on `ClassHeadIcon` (SS-136).
-- **Goal:** When a player is knocked out, they always show in **head-icon form** (never as a
-  bottom-half full avatar), and that head icon renders in a **disabled** state.
-- **Behavior:**
-  - A KO'd player who was the current target (a bottom-half avatar) collapses **back into a
-    `ClassIcon`** in the top-half row — they can no longer be the targeted avatar. Pairs with the
-    SS-144 head-icon ↔ avatar transition (a reverse of it).
-  - The disabled `ClassIcon` is non-targetable (already true until SS-144 wires tapping) and
-    visually faded **gray** — placeholder styling only; a finalized design lands later.
-- **Steps:** Drive "is this player conscious" off `characterClass.isConscious` (already on
-  `CharacterClassState`); exclude KO'd players from ever being the target avatar so they fall into
-  the `ClassIcons` row (SS-143 already keeps them visible); add a `isEnabled`/disabled gray treatment
-  to `ClassHeadIcon` (or an overlay in `ClassIcon`) — eyeball the gray for now.
-- **Depends on:** SS-143 (head-icon row), SS-136 (`ClassHeadIcon`). Related: SS-144 (the
-  forward avatar transition), SS-123 (KO'd players non-targetable), SS-142.
-
 ---
 
 ## Domain layer

@@ -141,13 +141,20 @@ private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
  * The opponents shown as collapsed head icons in the new combat layout (SS-143): every player
  * except the user and their current target, who are the two full bottom-half avatars instead. The
  * target is the Domain-pinned defender or the lone auto-target; interactive target selection
- * (SS-144) will refine this. Knocked-out players are kept in the row (mirror SS-123); SS-152 will
- * collapse a KO'd target back here and gray it out.
+ * (SS-144) will refine this. Only a *conscious* opponent can be the target avatar, so a knocked-out
+ * player always falls back into the head-icon row, where it is rendered grayed-out and out of the
+ * fight (SS-152, mirror SS-123). The animated avatar→head collapse that accompanies a mid-match
+ * knockout is future combat-animation work (SS-068/SS-144).
  */
 private fun ArenaState.Combat.deriveHeadIconPlayers(): List<PlayerState.Selected> {
     val targetedOpponentUserId = lockedTargetUserId ?: autoTargetedOpponentUserId.orEmpty()
-    return playerMap.values.filter {
-        it.userId != userPlayerId && it.userId != targetedOpponentUserId
+
+    return playerMap.values.filter { player ->
+        val isUser = player.userId == userPlayerId
+        val isTargetAvatar =
+            player.userId == targetedOpponentUserId && player.characterClass.isConscious
+
+        !isUser && !isTargetAvatar
     }
 }
 

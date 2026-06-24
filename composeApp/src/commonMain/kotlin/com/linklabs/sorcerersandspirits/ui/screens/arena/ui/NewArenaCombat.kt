@@ -1,70 +1,169 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 
-// TODO: Before Clauding make sure everything here is clear and complete
-
 @Composable
 internal fun ColumnScope.NewArenaCombat(state: ArenaState.Combat, modifier: Modifier = Modifier) {
-    // TODO: When there's no target, tapping a head will transition it to the opponent area
-    //       If there already is a target, then the current target goes into Head form while
-    //       the newly targeted head transitions into the opponent area
+    // TODO: When there's no target, tapping a ClassIcon will transition it to the opponent area.
+    //           ClassAvatarDisplay(displayDirection = DisplayDirection.Right) is opponent area.
+    //       If there already is a target, then the current target goes into ClassIcon form while
+    //       the newly targeted ClassIcon transitions into the opponent area as ClassAvatar
     //       Think everything just needs to be wrapped in the SharedTransitionLayout +
-    // AnimateContent
-    //          See ArenaCombat
+    //       AnimateContent. See ArenaCombat
 
-    // TODO: How about the Dice rolling over everything?
+    // TODO: How about the Dice rolling over everything? What changes will need to be made to
+    //  facilitate that? After rolling, they must smoothly slide over to DiceHome()
 
-    // TopRow - Left is MessagesIcon
-    //   Row is golden like in Figma
-    //   onTap opens messages and expands downward, covering FlowRow of Heads and stopping at Row of
-    // FullSize Avatars
-    //   Number of new messages is in center of icon
-    //       Continuously loops through the 4 colors
+    // TODO: Tapping on ClassIcon of ClassIcons when it's not the user's turn or when they're locked
+    //  into a target and to just want to see more info about another class (maybe they're waiting
+    //  for their opponent to roll and they want to tap around see things). Two options:
+    //       1. Expand head to reveal full Avatar, covering all content nearby?
+    //       2. Have Drawer on right that opens with Full Avatar and stats?
 
-    // SharedTransition of Heads
-    //  Heads is FlowRow
-    //
-    // TODO: Tapping on FlowRowHead when not targeting to just get more info
-    //       Expand head to reveal full Avatar, covering all content nearby?
-    //       Have Drawer on right that opens with Full Avatar and stats?
-
-    //  Row of FullSize Avatars
-    //  On left is active player's stats Column then Active Player FullSizeAvatar
-    //  On right is their current target - with FullSizeAvatar then StatsColumn
-    //  In middle, at bottom, is Dice - if Dice is part of this structure, will be easier to keep
-    // correct size
-    // TODO: StatsColumn needs to be positioned correctly so each stat can be opened up and examined
-    //       with short explanation
-
-    // TODO: Need to add animations for Avatars - update existing branch and use?
-    //       Likely, short messages like "Hit!" or "Miss!" should be shown on front in center
-    //          Brief, stylized animation. Full message would be in log
+    // TODO: Need to add animations for full-screen messages.
+    //          short messages like "Hit!" or "Miss!" should be shown in center of entire screen.
+    //          Brief, stylized animation (bounce, rotate, etc.). Full message would be in log.
     //          Could be a property of the ArenaMessage - short text?
 
-    //  Dice is a Column
-    //     DiceTray (the landing point)
-    //        Dice can fly anywhere across the entire screen, when the roll is finished, they
-    // smoothly
-    //         animate back to the DiceTray
-    //     Row
-    //       AbilityButton  - can be Activated Ability or defensive ability
-    //          When rolling only a single die, one in the tray should look disabled and not move
-    // during rolling
-    //       AttackButton
-    //       ImpersonateButton
+    TopHalfContent()
+    BottomHalfContent()
 }
 
 @Composable
 private fun TopHalfContent(modifier: Modifier = Modifier) {
-    Box(modifier = modifier) {
-        // FlowRow, positioned BELOW Messages.
-        // Messages - so when it opens, it opens on top of FlowRow
+    Box(modifier = modifier.fillMaxSize()) {
+        // ClassIcons() need to be positioned BELOW Messages, but when Messages() expands, it covers
+        // ClassIcons()
+        ClassIcons()
+        Messages()
     }
 }
 
-@Composable private fun BottomHalfContent(modifier: Modifier = Modifier) {}
+@Composable
+private fun ClassIcons(modifier: Modifier = Modifier) {
+    FlowRow(modifier = modifier) {
+        // TODO: render for every class that is NOT the user and is NOT the user's current target
+        ClassIcon()
+    }
+}
+
+@Composable
+private fun ClassIcon(modifier: Modifier = Modifier) {
+    // TODO: This is the ClassHeadIcon() that was recently made
+}
+
+@Composable
+private fun Messages(modifier: Modifier = Modifier) {
+    // TODO: On very left is Messages icon (use placeholder for now).
+    //       onTap opens messages and expands downward, covering ClassIcons() and stopping at
+    //          BottomHalfContent().
+    //       Row is golden like in Figma and when expands the golden background covers things up
+    //          estimate golden color for now and I'll modify later.
+    //       Number of new messages is in center of icon.
+    //          Each part of the number is one of the 4 class colors - each class color is always
+    //          visible in the number. It animates the colors around so it looks like the colors
+    //          are moving through the number, like a pulsing fashionContinuously loops through the
+    //          4 colors.
+}
+
+@Composable
+private fun BottomHalfContent(modifier: Modifier = Modifier) {
+    Column(modifier = modifier.fillMaxSize()) {
+        Row {
+            // On left is active player
+            ClassAvatarDisplay(displayDirection = DisplayDirection.Left)
+            DiceHome()
+
+            // On right is active player's current target
+            ClassAvatarDisplay(displayDirection = DisplayDirection.Right)
+        }
+
+        Buttons()
+    }
+}
+
+@Composable
+private fun ClassAvatarDisplay(displayDirection: DisplayDirection, modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        ClassAvatar()
+
+        // TODO: ClassAvatarStats will have expanding rows that open on top of ClassAvatar()
+        ClassAvatarStats(displayDirection = displayDirection)
+    }
+}
+
+@Composable
+private fun ClassAvatarStats(displayDirection: DisplayDirection, modifier: Modifier = Modifier) {
+    when (displayDirection) {
+        DisplayDirection.Left -> {
+            // TODO: Row of Icon with stat, both with class color background.
+            //       onTap is expand to the right, revealing a short explanation of the stat.
+            //       For OffensiveAbility and DefensiveAbility, there's no stat, but the rest is the
+            //  same.
+        }
+
+        DisplayDirection.Right -> {
+            // TODO: Opposite directions of above. Row stat and then Icon, and expands to left.
+        }
+    }
+}
+
+@Composable
+private fun ClassAvatar(modifier: Modifier = Modifier) {
+    // TODO: Display full-size class png. Later, in another ticket, we'll have animations affect
+    //       these pngs (there's a branch with some work already - maybe we'll merge it).
+}
+
+@Composable
+private fun DiceHome(modifier: Modifier = Modifier) {
+    // TODO: This is where the Dice move to after rolling anywhere across the entire screen.
+    //       When someone rolls a single die, one of the dice should become disabled while the other
+    //       rolls and moves back here.
+}
+
+@Composable
+private fun Buttons(modifier: Modifier = Modifier) {
+    Row(modifier = modifier) {
+        AbilityButton()
+        AttackButton()
+        ImpersonateButton(shouldShowImpersonateButton = false)
+    }
+}
+
+@Composable
+private fun AbilityButton(modifier: Modifier = Modifier) {
+    // TODO: should be the user's ability, when it's their turn and they have an ActivatedAbility
+    //  (OffensiveAbility icon) or when they're being attacked and their defensive ability
+    //  (DefensiveAbility icon) requires a roll, or when they are participating in a TeleportRollOff
+    //  (separate icon). The specific icons will be supplied at a later time and now a placeholder
+    //  should be used.
+    ArenaButton()
+}
+
+@Composable private fun AttackButton(modifier: Modifier = Modifier) {}
+
+@Composable
+private fun ImpersonateButton(shouldShowImpersonateButton: Boolean, modifier: Modifier = Modifier) {
+    AnimatedVisibility(visible = shouldShowImpersonateButton, modifier = modifier) {}
+}
+
+@Composable
+private fun ArenaButton(modifier: Modifier = Modifier) {
+    // TODO: Should have a common style for each button, except that each button would have
+    //       icons and in the case of the ImpersonateButton(), a label below saying "Impersonate" or
+    //       "Impersonating: $className"
+}
+
+private enum class DisplayDirection {
+    Left,
+    Right,
+}

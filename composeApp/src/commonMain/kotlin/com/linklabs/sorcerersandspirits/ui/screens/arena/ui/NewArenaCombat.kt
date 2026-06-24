@@ -56,34 +56,45 @@ internal fun NewArenaCombat(state: ArenaState.Combat, modifier: Modifier = Modif
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
 
-    val targetedOpponentUserId =
-        state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
-
-    val isTargetable = state.isItThisUsersTurn && state.lockedTargetUserId == null
-
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(targetState = targetedOpponentUserId, label = TARGET_TRANSITION_LABEL) {
-            currentTargetUserId ->
+        AnimatedContent(
+            targetState =
+                state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId),
+            label = TARGET_TRANSITION_LABEL,
+        ) { currentTargetUserId ->
             SharedTransitionProvider(
                 sharedTransitionScope = this@SharedTransitionLayout,
                 animatedVisibilityScope = this@AnimatedContent,
             ) {
-                Column(modifier = Modifier.fillMaxSize()) {
-                    TopHalfContent(
-                        headIconPlayers =
-                            state.headIconPlayersFor(targetUserId = currentTargetUserId),
-                        isTargetable = isTargetable,
-                        onSelectTarget = { selectedOpponentUserId = it },
-                        modifier = Modifier.weight(weight = 1f),
-                    )
-                    BottomHalfContent(
-                        userPlayer = state.userPlayer,
-                        targetPlayer = state.targetPlayerFor(targetUserId = currentTargetUserId),
-                        modifier = Modifier.weight(weight = 1f),
-                    )
-                }
+                ScreenContent(
+                    state = state,
+                    currentTargetUserId = currentTargetUserId,
+                    onSelectTarget = { selectedOpponentUserId = it },
+                )
             }
         }
+    }
+}
+
+@Composable
+private fun ScreenContent(
+    state: ArenaState.Combat,
+    currentTargetUserId: String,
+    onSelectTarget: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        TopHalfContent(
+            headIconPlayers = state.headIconPlayersFor(targetUserId = currentTargetUserId),
+            isTargetable = state.isItThisUsersTurn && state.lockedTargetUserId == null,
+            onSelectTarget = onSelectTarget,
+            modifier = Modifier.weight(weight = 1f),
+        )
+        BottomHalfContent(
+            userPlayer = state.userPlayer,
+            targetPlayer = state.targetPlayerFor(targetUserId = currentTargetUserId),
+            modifier = Modifier.weight(weight = 1f),
+        )
     }
 }
 
@@ -166,12 +177,15 @@ private fun BottomHalfContent(
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Row {
+            // On left is active player
             ClassAvatarDisplay(
                 player = userPlayer,
                 displayDirection = DisplayDirection.Left,
                 modifier = Modifier.weight(weight = 1f),
             )
             DiceHome()
+
+            // On right is active player's current target
             ClassAvatarDisplay(
                 player = targetPlayer,
                 displayDirection = DisplayDirection.Right,

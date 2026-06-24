@@ -70,28 +70,19 @@ are archived in [COMPLETED.md](COMPLETED.md).
   PNGs; remove the superseded PNGs if nothing else depends on them.
 - **Notes:** Related: SS-136. Asset-prep discipline per [[downsample-figma-raster-assets]].
 
-### SS-139 — SharedTransitionLayout foundation for the Arena
-- [ ] Not completed
-- **Source:** Prerequisite for the head-icon transitions (SS-140, SS-141). There is **no**
-  `SharedTransition`/`sharedElement`/`sharedBounds` usage anywhere in the app today.
-- **Goal:** Stand up the shared-element transition foundation the Arena needs so a class head icon
-  (SS-136) can morph into other representations of the same player. Provide a
-  `SharedTransitionLayout` around the relevant Arena content and a way to thread
-  `SharedTransitionScope` + `AnimatedVisibilityScope` (and stable per-player shared-element keys) down
-  to the head icon and its transition targets.
-- **Steps:** Add a `SharedTransitionLayout` at the appropriate Arena scope; define a per-player
-  shared-element key scheme (e.g. keyed by `userId` + element role); expose the scopes the head icon
-  and targets need; prove it with one simple morph before SS-140/SS-141 build on it.
-- **Notes:** KMP/Compose Multiplatform — confirm the shared-transition APIs are available on both
-  Android and iOS targets. Related: SS-136, SS-140, SS-141.
-
 ### SS-140 — Head → large targeted avatar (shared transition when targeted)
 - [ ] Not completed — **spec to come** (the large avatar will be detailed in its own ticket/Figma).
 - **Source:** One of the two transition targets called out for the head icon (SS-136).
 - **Goal:** When a player is **targeted for battle**, their collapsed class head icon (SS-136) shares
   an element transition into a **large avatar** representation. Placeholder until the large-avatar
   visual is provided.
-- **Depends on:** SS-136 (head icon), SS-139 (shared-transition foundation). Related: SS-068.
+- **Foundation (SS-139, already in place):** reuse `ui/common/SharedTransitionProvider.kt`
+  (`SharedTransitionProvider` + `Modifier.sharedElement(key)` / `sharedBounds(key)`). `ArenaCombat`
+  already wraps combat in a `SharedTransitionLayout` + `AnimatedContent(targetState = activeUserIds)`
+  and opponents already use `sharedBounds(key = opponent.userId)` — give the head icon's avatar and
+  the large avatar the **same `userId` key** so they morph. Note the existing `AnimatedContent` is
+  keyed on whose **turn** it is; decide whether targeting should also drive the morph.
+- **Depends on:** SS-136 (head icon). Related: SS-068.
 
 ### SS-141 — Head → expanded stat view ("the other UI")
 - [ ] Not completed — **not in Figma yet** (expanded view still to be designed).
@@ -100,7 +91,9 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Goal:** A shared-element transition from the collapsed class head icon into an expanded detail
   panel for that player (all stats, abilities, etc., shown in full). Placeholder until the expanded
   layout is designed.
-- **Depends on:** SS-136 (head icon), SS-139 (shared-transition foundation). Related: SS-068.
+- **Foundation:** reuse `ui/common/SharedTransitionProvider.kt` (the SS-139 foundation, already in
+  place and wired into `ArenaCombat`).
+- **Depends on:** SS-136 (head icon). Related: SS-068.
 
 ---
 

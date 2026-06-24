@@ -34,7 +34,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Goal:** A reusable circular "class head" icon shown for each player in the Arena **while they are
   not the active roller** (not their turn). It is the *collapsed* at-a-glance view of a player: their
   class avatar ringed by a class-colored border, with three combat stats. The *expanded* detail view
-  is a separate future ticket (SS-141, "the other UI" — not in Figma yet).
+  is a separate future ticket (SS-150, "the other UI").
 - **Anatomy (from Figma, overall ~176×155):**
   - **Outer class-color border** — a red, scalloped/"cloud" shape (`Group 8`) tinted with the
     player's class color. Render the color in code from the class-color source (SS-137); for this
@@ -53,8 +53,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
   Leave hooks so SS-139's `SharedTransitionScope`/`sharedBounds` can wrap the avatar + the whole icon
   later. Then wire it into the Arena combat layout for every non-active player.
 - **Depends on / related:** SS-137 (class colors), SS-138 (SVG icons), SS-139 (shared-transition
-  foundation), SS-140 (head→large-avatar transition), SS-141 (head→expanded transition). Parent:
-  SS-068.
+  foundation), SS-144 (head→targeted-avatar transition), SS-150 (head→expanded inspect view).
+  Parent: SS-068.
 
 ### SS-138 — Export head-icon stat icons as SVG (speed, armor, hitpoints)
 - [ ] Not completed — **blocked on Figma MCP rate limit** (Starter plan) at time of writing; retry
@@ -70,30 +70,173 @@ are archived in [COMPLETED.md](COMPLETED.md).
   PNGs; remove the superseded PNGs if nothing else depends on them.
 - **Notes:** Related: SS-136. Asset-prep discipline per [[downsample-figma-raster-assets]].
 
-### SS-140 — Head → large targeted avatar (shared transition when targeted)
-- [ ] Not completed — **spec to come** (the large avatar will be detailed in its own ticket/Figma).
-- **Source:** One of the two transition targets called out for the head icon (SS-136).
-- **Goal:** When a player is **targeted for battle**, their collapsed class head icon (SS-136) shares
-  an element transition into a **large avatar** representation. Placeholder until the large-avatar
-  visual is provided.
-- **Foundation (SS-139, already in place):** reuse `ui/common/SharedTransitionProvider.kt`
-  (`SharedTransitionProvider` + `Modifier.sharedElement(key)` / `sharedBounds(key)`). `ArenaCombat`
-  already wraps combat in a `SharedTransitionLayout` + `AnimatedContent(targetState = activeUserIds)`
-  and opponents already use `sharedBounds(key = opponent.userId)` — give the head icon's avatar and
-  the large avatar the **same `userId` key** so they morph. Note the existing `AnimatedContent` is
-  keyed on whose **turn** it is; decide whether targeting should also drive the morph.
-- **Depends on:** SS-136 (head icon). Related: SS-068.
+> The two head-icon transition targets originally tracked here as SS-140 (head → large targeted
+> avatar) and SS-141 (head → expanded stat view) were placeholders; both are now realized concretely
+> by the NewArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
+> respectively — so the placeholder tickets were removed.
 
-### SS-141 — Head → expanded stat view ("the other UI")
-- [ ] Not completed — **not in Figma yet** (expanded view still to be designed).
-- **Source:** The second transition target for the head icon (SS-136). The head icon is the
-  *collapsed* view; this is the *expanded* view showing the player's stats/details in greater depth.
-- **Goal:** A shared-element transition from the collapsed class head icon into an expanded detail
-  panel for that player (all stats, abilities, etc., shown in full). Placeholder until the expanded
-  layout is designed.
-- **Foundation:** reuse `ui/common/SharedTransitionProvider.kt` (the SS-139 foundation, already in
-  place and wired into `ArenaCombat`).
-- **Depends on:** SS-136 (head icon). Related: SS-068.
+---
+
+## New Arena combat layout (NewArenaCombat)
+
+`NewArenaCombat.kt` is the in-progress rewrite that will replace the current `ArenaCombat.kt`. It
+re-shapes the combat screen into two halves: a **top half** of opponent head icons + a messages
+overlay, and a **bottom half** of the active player's and current target's full avatars flanking the
+dice, with a button bar below. The structure is deliberately split into many small, single-purpose
+composables (one per logical screen segment); keep new work in that shape rather than growing any one
+function. Each ticket below owns one segment. Parent: SS-142 (which is itself a child of SS-068).
+
+### SS-142 — NewArenaCombat scaffold & migration to replace ArenaCombat
+- [~] In progress — **swap is live:** `LoadedArenaScreen` now renders `NewArenaCombat` for
+  `ArenaState.Combat` (wrapped in a `Column` to satisfy its `ColumnScope` receiver). `ArenaCombat.kt`
+  is intentionally **kept** as the reference to migrate logic from; delete it only at the very end,
+  once every behavior has been confirmed carried over and nothing was missed.
+- **Source:** `NewArenaCombat.kt` top-level (file header + `NewArenaCombat` orchestration).
+- **Goal:** Stand up the new two-half combat layout, fill in its child segments by migrating the
+  behavior from `ArenaCombat`, and only then delete the old `ArenaCombat.kt`.
+- **Shape (already sketched):** `TopHalfContent` = `Box { ClassIcons(); Messages() }` (icons sit
+  below the messages overlay); `BottomHalfContent` = `Column { Row { ClassAvatarDisplay(Left);
+  DiceHome(); ClassAvatarDisplay(Right) }; Buttons() }`. Keep each segment its own small composable.
+- **Wiring to preserve:** the existing `ArenaState.Combat` contract `ArenaCombat` already honors —
+  target selection hoisted as one source of truth (`selectedOpponentUserId` / `lockedTargetUserId` /
+  `autoTargetedOpponentUserId`, optimistic target lock, SS-101 auto-target), `primaryRollControl` /
+  `secondaryControls` split, `onAttack` / `onUseAbility` from `ArenaActionsProvider`. Thread these
+  through the new composables rather than reinventing them.
+- **Wrap-up:** wrap the screen in `SharedTransitionLayout` + `AnimatedContent` so the per-segment
+  shared-element transitions (SS-144, SS-149) work; keep `UserStatsRow` or fold it into the new
+  avatar/stat segments as those land.
+- **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
+  `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
+
+### SS-143 — Opponent head-icon row (ClassIcons)
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `ClassIcons()` / `ClassIcon()` (`// TODO(SS-143)`).
+- **Goal:** Fill the top-half `FlowRow` with one head icon per player who is **not** the user **and**
+  **not** the user's current target — those two are shown as full avatars in the bottom half instead.
+- **Steps:** Render `ClassHeadIcon(characterClass = …)` (already built, SS-136) for each such player;
+  derive the list from `playerMap` minus `userPlayerId` minus `targetedOpponentUserId`; key by
+  `userId` so SS-144's shared transition can match. Knocked-out players stay visible but
+  non-targetable (mirror SS-123).
+- **Depends on:** SS-136. Related: SS-144 (the icon a tap promotes to a target), SS-142.
+
+### SS-144 — Target selection: head icon ↔ targeted avatar shared transition
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-144)`.
+- **Goal:** Tapping an opponent head icon targets that player. With **no** current target, the tapped
+  `ClassIcon` shares-elements into the bottom-half opponent slot
+  (`ClassAvatarDisplay(displayDirection = Right)`). With an **existing** target, the current target
+  collapses back into a head icon in the row while the newly tapped icon morphs into the opponent
+  slot — a swap.
+- **Steps:** Wrap the relevant content in `SharedTransitionLayout` + `AnimatedContent` (see
+  `ArenaCombat`'s existing pattern) keyed so the head icon and the large avatar carry the **same
+  `userId`** `sharedBounds`/`sharedElement` key; drive it off the hoisted target state (SS-142).
+- **Depends on:** SS-139 (shared-transition foundation), SS-143, SS-142. Realizes the former SS-140
+  (head → large targeted avatar) placeholder for the new layout.
+
+### SS-145 — Bottom full-size class avatars (ClassAvatar)
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `ClassAvatar()` (`// TODO(SS-145)`).
+- **Goal:** Render the full-size class art for the active player (left) and the current target (right)
+  in `ClassAvatarDisplay`.
+- **Steps:** Draw the existing full-size class PNGs (the `class_*` / `classArtwork` drawables) at the
+  bottom-half scale; leave a hook for SS-145-follow-on combat animations to drive these images.
+- **Notes:** A local branch already has Compottie-based combat-animation work (see
+  [[combat-animation-foundation]]); animating these avatars is deferred to that effort/SS-068 — this
+  ticket just shows the static art. Related: SS-144 (target avatar), SS-146 (stats overlay), SS-068.
+
+### SS-146 — Expanding per-stat rows over the avatar (ClassAvatarStats)
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `ClassAvatarDisplay()` / `ClassAvatarStats()` (`// TODO(SS-146)`).
+- **Goal:** Lay a column of per-stat rows on top of each `ClassAvatar`, anchored to the display
+  direction, that expand on tap to reveal a short explanation of the stat.
+- **Anatomy:**
+  - **Left** (active player): each row is `[Icon][stat value]` on a class-colored background; tapping
+    expands the row **rightward** to reveal the stat's explanation.
+  - **Right** (target): mirrored — `[stat value][Icon]`, expanding **leftward**.
+  - Offensive/Defensive **ability** rows have **no stat value** but otherwise look and expand the same
+    (icon + explanation).
+- **Steps:** Build a direction-aware expanding row; source stat values + ability copy from
+  `CharacterClassState` / `CharacterClassCopy`; use class colors from `ClassColors.kt` (SS-137); make
+  expansion animate. Keep each row a small composable.
+- **Depends on:** SS-145 (the avatar it overlays). Related: SS-137, SS-142.
+
+### SS-147 — Messages overlay: golden expandable panel + animated unread count
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `Messages()` (`// TODO(SS-147)`).
+- **Goal:** A messages affordance in the top-left of the top half that expands the message log
+  downward over the head icons, stopping at `BottomHalfContent`.
+- **Anatomy:**
+  - A messages **icon** on the far left (placeholder art for now); the unread-message **count** sits
+    in the center of the icon.
+  - On tap the row expands downward; its background is the Figma **gold** (eyeball the color for now,
+    to be tuned later) and covers the head icons while open.
+  - The count is rendered so the **four class colors** are always present across its digits and
+    continuously cycle/pulse through the number, looping forever (colors appear to flow through it).
+- **Steps:** Reuse the existing message-log source (`ArenaMessageLog` / `ArenaMessageLogHandle`,
+  `screenState.messages`); animate the expand/collapse; build the looping 4-color count animation
+  (extract labels to `const val` per [[animation-labels-as-const-vals]]). Placeholder icon + color.
+- **Notes:** Overlaps SS-025 (improve message-log animation). Related: SS-142.
+
+### SS-148 — Full-screen flash messages ("Hit!" / "Miss!")
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-148)`.
+- **Goal:** Show brief, stylized full-screen call-outs (e.g. "Hit!", "Miss!") in the center of the
+  whole screen with a quick animation (bounce, rotate, etc.); the full message still goes to the log.
+- **Steps:** Add a short-text field to the message model (e.g. a `shortText` on the `ArenaMessage` /
+  `ArenaMessageState`) that flash-worthy events populate; render+animate it as a center-screen overlay
+  that auto-dismisses; only events with short text flash.
+- **Notes:** Related: SS-025 (message-log animation), SS-147, SS-142.
+
+### SS-149 — DiceHome + dice fly-to-home animation
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `DiceHome()` + top-level dice `// TODO(SS-149)`.
+- **Goal:** Give the dice a resting "home" in the bottom-half center (`DiceHome`) and animate them
+  smoothly sliding back to it after a roll that can happen anywhere across the screen.
+- **Behavior:** Dice roll over the top of all other content; on settle they glide to `DiceHome`. For a
+  **single-die** roll, one die is disabled/dimmed while the other rolls and returns home.
+- **Steps:** Position `DiceHome` between the two `ClassAvatarDisplay`s; integrate with the existing
+  dice tech (`DiceTray` / `Die3d`, SS-112/SS-117) and the `expectedDiceCount` the roll commits; drive
+  the over-screen-then-home motion via the SharedTransitionLayout (SS-142). Reuse the 1↔2 dice
+  handling instead of re-deriving it.
+- **Notes:** Relates to SS-077/SS-078 (dice tech & placement) and the SS-078 1↔2 dice-count
+  transition follow-up. Related: SS-142.
+
+### SS-150 — Inspect a player when idle / target-locked
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-150)`.
+- **Goal:** Let a player tap a head icon to see more about that class even when it is **not** their
+  turn or they are **locked** into a target (e.g. while waiting for an opponent to roll) — without it
+  counting as targeting.
+- **Two options to weigh (decide here):**
+  1. Expand the tapped head into its full avatar, covering nearby content.
+  2. A right-side drawer that opens with the full avatar + stats.
+- **Steps:** Pick an option (record the choice + rationale); build the inspect interaction so it is
+  clearly distinct from the targeting tap (SS-144); reuse the SS-146 stat presentation where it fits.
+- **Notes:** Realizes the former SS-141 (head → expanded stat view, "the other UI") placeholder.
+  Related: SS-144, SS-146, SS-142.
+
+### SS-151 — Combat action button bar (Ability / Attack / Impersonate)
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` `Buttons()` / `AbilityButton()` / `AttackButton()` /
+  `ImpersonateButton()` / `ArenaButton()` (`// TODO(SS-151)`).
+- **Goal:** Build the bottom button bar with a shared `ArenaButton` style and the three buttons,
+  wired to the existing combat-control contract (`primaryRollControl` / `secondaryControls`,
+  `onAttack` / `onUseAbility`).
+- **Buttons:**
+  - **AbilityButton** — context-dependent icon: the user's **activated offensive** ability on their
+    turn (OffensiveAbility icon); their **defensive** ability when being attacked and it needs a roll
+    (DefensiveAbility icon); or a distinct icon when in a **Teleport roll-off**. Real icons supplied
+    later — use a placeholder.
+  - **AttackButton** — the normal attack control.
+  - **ImpersonateButton** — `AnimatedVisibility`-gated (`shouldShowImpersonateButton`); shows a label
+    below reading "Impersonate" or "Impersonating: $className" (reuse SS-101/`isImpersonateRedundant`
+    enable logic).
+  - **ArenaButton** — shared style for all of the above: icon-based, with the Impersonate label case.
+- **Steps:** Define `ArenaButton`; map the new buttons onto the `ArenaCombatControl` types
+  (`NormalAttack` / `ActivatedAbility` / `AbilityRoll`) `ArenaCombat` already routes through; pick the
+  context-correct ability icon/state; placeholder icons until art arrives.
+- **Notes:** Replaces the old `AbilityControls` button column. Related: SS-029 (string resources),
+  SS-142.
 
 ---
 

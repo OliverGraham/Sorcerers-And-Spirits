@@ -547,7 +547,7 @@ private fun nearestRotationForIndex(index: Int, fromDegrees: Float): Float {
     return base + turns * 360f
 }
 
-private fun classArtwork(type: CharacterClassType): DrawableResource =
+internal fun classArtwork(type: CharacterClassType): DrawableResource =
     when (type) {
         CharacterClassType.Rogue -> Res.drawable.class_rogue
         CharacterClassType.Gambler -> Res.drawable.class_gambler

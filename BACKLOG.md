@@ -95,9 +95,12 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Source:** `NewArenaCombat.kt` top-level (file header + `NewArenaCombat` orchestration).
 - **Goal:** Stand up the new two-half combat layout, fill in its child segments by migrating the
   behavior from `ArenaCombat`, and only then delete the old `ArenaCombat.kt`.
-- **Shape (already sketched):** `TopHalfContent` = `Box { ClassIcons(); Messages() }` (icons sit
-  below the messages overlay); `BottomHalfContent` = `Column { Row { ClassAvatarDisplay(Left);
-  DiceHome(); ClassAvatarDisplay(Right) }; Buttons() }`. Keep each segment its own small composable.
+- **Shape (rearranged 2026-06-26):** `TopHalfContent` = `Box { ClassIcons(); Messages() }` (icons sit
+  below the messages overlay); `BottomHalfContent` = `Column { Row { ClassAvatar(user);
+  ClassAvatar(target) }; DiceHome(); Row { statsColumn(Left); Buttons(); statsColumn(Right) } }` — the
+  two full avatars now sit side by side *above* `DiceHome`, and a bottom row flanks the `Buttons` with
+  a per-player stat column on each side (SS-146, moved off the avatars). Keep each segment its own
+  small composable.
 - **Wiring to preserve:** the existing `ArenaState.Combat` contract `ArenaCombat` already honors —
   target selection hoisted as one source of truth (`selectedOpponentUserId` / `lockedTargetUserId` /
   `autoTargetedOpponentUserId`, optimistic target lock, SS-101 auto-target), `primaryRollControl` /
@@ -109,21 +112,28 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
   `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
 
-### SS-146 — Expanding per-stat rows over the avatar (ClassAvatarStats)
+### SS-146 — Expanding per-stat columns flanking the buttons (ClassAvatarStats)
 - [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `ClassAvatarDisplay()` / `ClassAvatarStats()` (`// TODO(SS-146)`).
-- **Goal:** Lay a column of per-stat rows on top of each `ClassAvatar`, anchored to the display
-  direction, that expand on tap to reveal a short explanation of the stat.
-- **Anatomy:**
+- **Source:** `NewArenaCombat.kt` `BottomHalfContent()` bottom `Row` (the two stat `Column`s) +
+  `ClassAvatarStats()` (`// TODO(SS-146)`).
+- **Goal:** A column of per-stat rows on each side of the `Buttons` bar — active player on the left,
+  target opponent on the right — that expand on tap to reveal a short explanation of the stat, opening
+  on top of all other content in that row.
+- **Anatomy (rearranged 2026-06-26 — stats moved off the avatars into the bottom button row):**
+  - **Five rows per side:** Speed, ArmorClass, HitPoints, OffensiveAbility, DefensiveAbility
+    (icons now imported: `ic_speed`, `ic_armor_class`, `ic_hit_points`, `ic_offensive_ability`,
+    `ic_defensive_ability`).
   - **Left** (active player): each row is `[Icon][stat value]` on a class-colored background; tapping
     expands the row **rightward** to reveal the stat's explanation.
   - **Right** (target): mirrored — `[stat value][Icon]`, expanding **leftward**.
   - Offensive/Defensive **ability** rows have **no stat value** but otherwise look and expand the same
     (icon + explanation).
-- **Steps:** Build a direction-aware expanding row; source stat values + ability copy from
-  `CharacterClassState` / `CharacterClassCopy`; use class colors from `ClassColors.kt` (SS-137); make
-  expansion animate. Keep each row a small composable.
-- **Depends on:** SS-145 (the avatar it overlays). Related: SS-137, SS-142.
+- **Steps:** Build a direction-aware expanding row (`DisplayDirection.Left`/`Right` already stubbed in
+  `ClassAvatarStats`); source stat values + ability copy from `CharacterClassState` /
+  `CharacterClassCopy`; use class colors from `ClassColors.kt` (SS-137); animate the expansion over the
+  surrounding content. Keep each row a small composable.
+- **Depends on:** SS-145 (the avatars it sits beneath). Related: SS-137, SS-151 (shares the bottom
+  row), SS-142.
 
 ### SS-147 — Messages overlay: golden expandable panel + animated unread count
 - [ ] Not completed
@@ -131,15 +141,16 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Goal:** A messages affordance in the top-left of the top half that expands the message log
   downward over the head icons, stopping at `BottomHalfContent`.
 - **Anatomy:**
-  - A messages **icon** on the far left (placeholder art for now); the unread-message **count** sits
-    in the center of the icon.
+  - A messages **icon** on the far left (use the imported `ic_messages` drawable); the unread-message
+    **count** sits in the center of the icon.
   - On tap the row expands downward; its background is the Figma **gold** (eyeball the color for now,
     to be tuned later) and covers the head icons while open.
   - The count is rendered so the **four class colors** are always present across its digits and
     continuously cycle/pulse through the number, looping forever (colors appear to flow through it).
 - **Steps:** Reuse the existing message-log source (`ArenaMessageLog` / `ArenaMessageLogHandle`,
   `screenState.messages`); animate the expand/collapse; build the looping 4-color count animation
-  (extract labels to `const val` per [[animation-labels-as-const-vals]]). Placeholder icon + color.
+  (extract labels to `const val` per [[animation-labels-as-const-vals]]). Icon (`ic_messages`) now
+  imported; gold background color still eyeballed for now.
 - **Notes:** Overlaps SS-025 (improve message-log animation). Related: SS-142.
 
 ### SS-148 — Full-screen flash messages ("Hit!" / "Miss!")
@@ -187,19 +198,21 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Goal:** Build the bottom button bar with a shared `ArenaButton` style and the three buttons,
   wired to the existing combat-control contract (`primaryRollControl` / `secondaryControls`,
   `onAttack` / `onUseAbility`).
-- **Buttons:**
+- **Layout (rearranged 2026-06-26):** `Buttons` is a `Column` with `AttackButton` on top, then a
+  `Row` holding `AbilityButton` + `ImpersonateButton`. When `shouldShowImpersonateButton` is false,
+  **center** the `AbilityButton`; otherwise the two **share the row** side by side.
+- **Buttons (real icons now imported):**
   - **AbilityButton** — context-dependent icon: the user's **activated offensive** ability on their
-    turn (OffensiveAbility icon); their **defensive** ability when being attacked and it needs a roll
-    (DefensiveAbility icon); or a distinct icon when in a **Teleport roll-off**. Real icons supplied
-    later — use a placeholder.
-  - **AttackButton** — the normal attack control.
+    turn (`ic_offensive_ability`); their **defensive** ability when being attacked and it needs a roll
+    (`ic_defensive_ability`); or a distinct icon when in a **Teleport roll-off** (`ic_teleport_button`).
+  - **AttackButton** — the normal attack control (`ic_attack_button`).
   - **ImpersonateButton** — `AnimatedVisibility`-gated (`shouldShowImpersonateButton`); shows a label
     below reading "Impersonate" or "Impersonating: $className" (reuse SS-101/`isImpersonateRedundant`
     enable logic).
   - **ArenaButton** — shared style for all of the above: icon-based, with the Impersonate label case.
 - **Steps:** Define `ArenaButton`; map the new buttons onto the `ArenaCombatControl` types
   (`NormalAttack` / `ActivatedAbility` / `AbilityRoll`) `ArenaCombat` already routes through; pick the
-  context-correct ability icon/state; placeholder icons until art arrives.
+  context-correct ability icon/state from the imported drawables above.
 - **Notes:** Replaces the old `AbilityControls` button column. Related: SS-029 (string resources),
   SS-142.
 
@@ -489,11 +502,15 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   - Background image behind the wheel.
   - Spoke geometry/proportions — length, thickness, corner radius, gap from hub — tuned to the Figma
     `SPOKE_*` / `AVATAR_*` / `HUB_*` fractions instead of the current eyeballed values.
-  - Final per-class spoke colors and the final avatar + stat icons (`ic_health`/`ic_armor`/`ic_speed`/
-    `ic_spc`) once delivered from Figma (placeholders downsampled today — see
-    [[downsample-figma-raster-assets]]). Per-class colors are now centralized in `ClassColors.kt`
-    (SS-137) — update the provisional values there in one place; it feeds both the wheel and the
-    head icon.
+  - ~~Final per-class spoke colors~~ **DONE (2026-06-26, SS-153):** the exact Figma per-family
+    gradients (Rogue/Duelist `#9D2920→#581310`, Gambler/Bard `#DAA73B→#74591F`, Necromancer/Paladin
+    `#4B5F0D→#9BC51B`, Illusionist/Mage `#1D406D→#387CD3`) are applied in `ClassStyle.kt` (`toGradient`/
+    `toColor`), feeding both the wheel spokes and the head icon. **Still to do here:** the final avatar
+    + stat icon art polish — the new `*_avatar`/`*_bust` art and stat icons (`ic_armor_class`,
+    `ic_hit_points`, `ic_spc`, `ic_speed`) are imported but their sizing/placement on the wheel still
+    needs the fidelity pass. The wheel currently uses one flat `toColor()` per spoke (the gradient's top
+    stop) — decide whether spokes should render the full gradient. See
+    [[downsample-figma-raster-assets]] for the raster art.
   - Selected-spoke highlight treatment and hub styling; label typography/placement polish.
 - **Steps:** Pull updated Figma assets/colors when ready; replace placeholder drawables; tune the
   layout fraction constants; add the header/stat bands and background; revisit the selected-state

@@ -284,7 +284,7 @@ private fun WheelSpokes(characterClasses: List<CharacterClassState>, hubColor: C
         characterClasses.forEachIndexed { index, characterClass ->
             rotate(degrees = index * DEGREES_PER_CLASS, pivot = center) {
                 drawRoundRect(
-                    color = classColor(type = characterClass.type),
+                    color = characterClass.type.toColor(),
                     topLeft =
                         Offset(x = center.x - spokeThickness / 2f, y = center.y - spokeLength),
                     size = Size(width = spokeThickness, height = spokeLength),

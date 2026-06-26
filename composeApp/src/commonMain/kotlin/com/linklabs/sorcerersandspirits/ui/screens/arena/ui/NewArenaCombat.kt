@@ -194,10 +194,10 @@ private fun BottomHalfContent(
 
         DiceHome()
 
-        // TODO: Stats need to open on top of all content in this Row
+        // TODO(SS-146): Stats need to open on top of all content in this Row
         Row {
             Column {
-                // TODO: 5 stats - Active Player
+                // TODO(SS-146): 5 stats - Active Player
                 //       Speed
                 //       ArmorClass
                 //       HitPoints
@@ -208,7 +208,7 @@ private fun BottomHalfContent(
             Buttons()
 
             Column {
-                // TODO: 5 stats - Target Opponent
+                // TODO(SS-146): 5 stats - Target Opponent
                 //       Speed
                 //       ArmorClass
                 //       HitPoints
@@ -260,8 +260,8 @@ private fun Buttons(modifier: Modifier = Modifier) {
         AttackButton()
         Row {
             val shouldShowImpersonateButton = false
-            // TODO: If shouldShowImpersonateButton is false, then center AbilityButton, otherwise
-            //       Have AbilityButton and ImpersonateButton share the space
+            // TODO(SS-151): If shouldShowImpersonateButton is false, then center AbilityButton,
+            //       otherwise have AbilityButton and ImpersonateButton share the space
             AbilityButton()
             ImpersonateButton(shouldShowImpersonateButton = shouldShowImpersonateButton)
         }
@@ -280,7 +280,7 @@ private fun AbilityButton(modifier: Modifier = Modifier) {
 
 @Composable
 private fun AttackButton(modifier: Modifier = Modifier) {
-    // TODO: use ic_attack_button
+    // TODO(SS-151): use ic_attack_button
 }
 
 @Composable

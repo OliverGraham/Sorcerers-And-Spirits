@@ -45,7 +45,7 @@ private val DEFAULT_HEAD_ICON_WIDTH = 132.dp
 // fight (SS-152). Placeholder treatment — the finalized disabled design lands later.
 private const val DISABLED_ALPHA = 0.45f
 private val DISABLED_GRADIENT =
-    ClassGradient(light = Color(color = 0xFF8A8A8A), dark = Color(color = 0xFF4A4A4A))
+    ClassGradient(topStop = Color(color = 0xFF8A8A8A), bottomStop = Color(color = 0xFF4A4A4A))
 
 // The Figma frame is wider than it is tall; keep that footprint so the laid-out circles match.
 private const val ASPECT_RATIO = 176.627f / 154.811f
@@ -87,8 +87,7 @@ fun ClassHeadIcon(
     isEnabled: Boolean = true,
 ) {
     val height = width / ASPECT_RATIO
-    val circleColors =
-        if (isEnabled) classGradient(type = characterClass.type) else DISABLED_GRADIENT
+    val circleColors = if (isEnabled) characterClass.type.toGradient() else DISABLED_GRADIENT
     val disabledModifier = if (isEnabled) Modifier else Modifier.alpha(alpha = DISABLED_ALPHA)
 
     Box(
@@ -180,7 +179,7 @@ private fun BackingCircles(colors: ClassGradient, modifier: Modifier = Modifier)
             drawCircle(
                 brush =
                     Brush.linearGradient(
-                        colors = listOf(colors.light, colors.dark),
+                        colors = listOf(colors.topStop, colors.bottomStop),
                         start = Offset(x = pixelCenter.x, y = pixelCenter.y - radius),
                         end = Offset(x = pixelCenter.x, y = pixelCenter.y + radius),
                     ),

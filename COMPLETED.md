@@ -161,6 +161,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 - **SS-069** — Shake-to-roll dice UX: Investigate a dice-rolling interaction where the user taps and holds a pair of dice (or a single die, depending on what the current step requires), shakes the phone to simulate rolling, and on release the existing…
 - **SS-110** — Screen-transition (navigation) animations: Randomly-chosen forward transitions (portal / fade-through / slide+fade) plus a signature "burn to dust" disintegration on back, built cross-platform in commonMain via GraphicsLayer capture + Canvas particles.
+- **SS-153** — Extract `ClassStyle` for class artwork + color lookups: Renamed `ClassColors.kt` → `ClassStyle.kt` (the single source of per-class artwork *and* color) and converted every lookup to `.to…` `CharacterClassType` extensions — `toBustResource`/`toAvatarResource`, `toColorGroup`, `toGradient`, `toColor`. `ClassGradient`'s `light`/`dark` fields became positional `top`/`bottom`. Colors are now defined per family (two classes share each), so `toColor` returns `toGradient().top`. Repointed `ClassHeadIcon` + `CharacterClassWheel`. Applied the SS-084 Figma family gradients in the same pass. Related: SS-137, SS-084, SS-136.
 
 ## Release & versioning
 

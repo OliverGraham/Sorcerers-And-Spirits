@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classArtwork
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toAvatarResource
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -157,12 +157,14 @@ private fun ClassIcon(
 
 @Composable
 private fun Messages(modifier: Modifier = Modifier) {
-    // TODO(SS-147): On very left is Messages icon (use placeholder for now).
+    // TODO(SS-147): On very left is Messages icon (ic_messages).
     //       onTap opens messages and expands downward, covering ClassIcons() and stopping at
     //          BottomHalfContent().
-    //       Row is golden like in Figma and when expands the golden background covers things up
-    //          estimate golden color for now and I'll modify later.
-    //       Number of new messages is in center of icon.
+    //       Row is golden, about half the size in height as the icon (like in Figma) and when
+    //          expands the golden background covers things up estimate golden color for now and
+    //          I'll modify later.
+    //       Number of new messages is in center of icon (if 0, then don't show) - must be drawn in
+    //          Compose.
     //          Each part of the number is one of the 4 class colors - each class color is always
     //          visible in the number. It animates the colors around so it looks like the colors
     //          are moving through the number, like a pulsing fashionContinuously loops through the
@@ -176,42 +178,43 @@ private fun BottomHalfContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        Row {
-            // On left is active player
-            ClassAvatarDisplay(
-                player = userPlayer,
-                displayDirection = DisplayDirection.Left,
-                modifier = Modifier.weight(weight = 1f),
+        Row(modifier = Modifier.fillMaxSize()) {
+            ClassAvatar(
+                characterClass = userPlayer.characterClass,
+                modifier = Modifier.weight(weight = 1f).sharedBounds(key = userPlayer.userId),
             )
-            DiceHome()
 
-            // On right is active player's current target
-            ClassAvatarDisplay(
-                player = targetPlayer,
-                displayDirection = DisplayDirection.Right,
-                modifier = Modifier.weight(weight = 1f),
-            )
+            if (targetPlayer != null) {
+                ClassAvatar(
+                    characterClass = targetPlayer.characterClass,
+                    modifier = Modifier.weight(weight = 1f).sharedBounds(key = targetPlayer.userId),
+                )
+            }
         }
 
-        Buttons()
-    }
-}
+        DiceHome()
 
-@Composable
-private fun ClassAvatarDisplay(
-    player: PlayerState.Selected?,
-    displayDirection: DisplayDirection,
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier) {
-        if (player != null) {
-            ClassAvatar(
-                characterClass = player.characterClass,
-                modifier = Modifier.sharedBounds(key = player.userId),
-            )
+        // TODO: Stats need to open on top of all content in this Row
+        Row {
+            Column {
+                // TODO: 5 stats - Active Player
+                //       Speed
+                //       ArmorClass
+                //       HitPoints
+                //       OffensiveAbility
+                //       DefensiveAbility
+            }
 
-            // TODO(SS-146): expanding stat rows over the avatar.
-            ClassAvatarStats(displayDirection = displayDirection)
+            Buttons()
+
+            Column {
+                // TODO: 5 stats - Target Opponent
+                //       Speed
+                //       ArmorClass
+                //       HitPoints
+                //       OffensiveAbility
+                //       DefensiveAbility
+            }
         }
     }
 }
@@ -237,9 +240,9 @@ private fun ClassAvatarStats(displayDirection: DisplayDirection, modifier: Modif
 private fun ClassAvatar(characterClass: CharacterClassState, modifier: Modifier = Modifier) {
     // TODO(SS-068): combat animations will drive this static art.
     Image(
-        painter = painterResource(resource = classArtwork(type = characterClass.type)),
+        painter = painterResource(resource = characterClass.type.toAvatarResource()),
         contentDescription = characterClass.className,
-        contentScale = ContentScale.Fit,
+        contentScale = ContentScale.FillWidth,
         modifier = modifier,
     )
 }
@@ -253,10 +256,15 @@ private fun DiceHome(modifier: Modifier = Modifier) {
 
 @Composable
 private fun Buttons(modifier: Modifier = Modifier) {
-    Row(modifier = modifier) {
-        AbilityButton()
+    Column(modifier = modifier) {
         AttackButton()
-        ImpersonateButton(shouldShowImpersonateButton = false)
+        Row {
+            val shouldShowImpersonateButton = false
+            // TODO: If shouldShowImpersonateButton is false, then center AbilityButton, otherwise
+            //       Have AbilityButton and ImpersonateButton share the space
+            AbilityButton()
+            ImpersonateButton(shouldShowImpersonateButton = shouldShowImpersonateButton)
+        }
     }
 }
 
@@ -264,14 +272,16 @@ private fun Buttons(modifier: Modifier = Modifier) {
 private fun AbilityButton(modifier: Modifier = Modifier) {
     // TODO(SS-151): should be the user's ability, when it's their turn and they have an
     //  ActivatedAbility
-    //  (OffensiveAbility icon) or when they're being attacked and their defensive ability
-    //  (DefensiveAbility icon) requires a roll, or when they are participating in a TeleportRollOff
-    //  (separate icon). The specific icons will be supplied at a later time and now a placeholder
-    //  should be used.
+    //  (ic_offensive_ability) or when they're being attacked and their defensive ability
+    //  (ic_defensive_ability) requires a roll, or when they are participating in a TeleportRollOff
+    //  (ic_teleport_button).
     ArenaButton()
 }
 
-@Composable private fun AttackButton(modifier: Modifier = Modifier) {}
+@Composable
+private fun AttackButton(modifier: Modifier = Modifier) {
+    // TODO: use ic_attack_button
+}
 
 @Composable
 private fun ImpersonateButton(shouldShowImpersonateButton: Boolean, modifier: Modifier = Modifier) {

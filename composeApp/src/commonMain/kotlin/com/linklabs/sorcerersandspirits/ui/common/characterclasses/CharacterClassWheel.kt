@@ -67,18 +67,10 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.bard
-import sorcerersandspirits.composeapp.generated.resources.duelist
-import sorcerersandspirits.composeapp.generated.resources.gambler
 import sorcerersandspirits.composeapp.generated.resources.ic_armor
 import sorcerersandspirits.composeapp.generated.resources.ic_health
 import sorcerersandspirits.composeapp.generated.resources.ic_spc
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
-import sorcerersandspirits.composeapp.generated.resources.illusionist
-import sorcerersandspirits.composeapp.generated.resources.mage
-import sorcerersandspirits.composeapp.generated.resources.necromancer
-import sorcerersandspirits.composeapp.generated.resources.paladin
-import sorcerersandspirits.composeapp.generated.resources.rogue
 
 private const val DEGREES_PER_CLASS = 45f
 private const val QUARTER_TURN_DEGREES = 90f
@@ -323,7 +315,7 @@ private fun BoxScope.ClassAvatar(
     val cosAngle = cos(angleRadians).toFloat()
 
     Image(
-        painter = painterResource(resource = classArtwork(type = type)),
+        painter = painterResource(resource = type.toBustResource()),
         contentDescription = type.name,
         modifier =
             Modifier.size(size = wheelSize * AVATAR_SIZE_FRACTION)
@@ -546,19 +538,6 @@ private fun nearestRotationForIndex(index: Int, fromDegrees: Float): Float {
     val turns = ((fromDegrees - base) / 360f).roundToInt()
     return base + turns * 360f
 }
-
-internal fun classArtwork(type: CharacterClassType): DrawableResource =
-    when (type) {
-        CharacterClassType.Rogue -> Res.drawable.rogue
-        CharacterClassType.Gambler -> Res.drawable.gambler
-        CharacterClassType.Duelist -> Res.drawable.duelist
-        CharacterClassType.Necromancer -> Res.drawable.necromancer
-        CharacterClassType.Bard -> Res.drawable.bard
-        CharacterClassType.Illusionist -> Res.drawable.illusionist
-        CharacterClassType.Mage -> Res.drawable.mage
-        CharacterClassType.Paladin -> Res.drawable.paladin
-        CharacterClassType.None -> Res.drawable.rogue
-    }
 
 @Preview
 @Composable

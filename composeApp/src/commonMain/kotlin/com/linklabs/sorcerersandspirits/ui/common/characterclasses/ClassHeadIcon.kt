@@ -35,7 +35,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_armor_class
-import sorcerersandspirits.composeapp.generated.resources.ic_head_icon_wooden_frame
+import sorcerersandspirits.composeapp.generated.resources.ic_bust_background
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 
@@ -100,7 +100,7 @@ fun ClassHeadIcon(
 
         OverlayAt(center = HEAD_CENTER, width = width, height = height) {
             Image(
-                painter = painterResource(resource = Res.drawable.ic_head_icon_wooden_frame),
+                painter = painterResource(resource = Res.drawable.ic_bust_background),
                 contentDescription = null,
                 modifier = Modifier.size(size = width * HEAD_FRAME_SIZE_FRACTION),
             )
@@ -110,7 +110,7 @@ fun ClassHeadIcon(
         // if the designer provides it.
         OverlayAt(center = HEAD_CENTER, width = width, height = height) {
             Image(
-                painter = painterResource(resource = classArtwork(type = characterClass.type)),
+                painter = painterResource(resource = characterClass.type.toBustResource()),
                 contentDescription = characterClass.className,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(size = width * HEAD_AVATAR_DIAMETER_FRACTION),

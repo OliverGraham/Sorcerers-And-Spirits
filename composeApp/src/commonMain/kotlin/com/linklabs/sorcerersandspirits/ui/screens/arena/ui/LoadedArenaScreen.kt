@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
@@ -74,6 +75,8 @@ internal fun LoadedArenaScreen(
                     gauntletProgress = screenState.gauntletProgress,
                     hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
                     secondsRemaining = screenState.secondsRemaining,
+                    messages = screenState.filteredMessages,
+                    unreadMessageCount = screenState.unhandledMessagesCount,
                     paddingValues = paddingValues,
                 )
 
@@ -107,6 +110,8 @@ private fun ScreenContent(
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: Int,
+    messages: List<ArenaMessageState>,
+    unreadMessageCount: Int,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -120,6 +125,8 @@ private fun ScreenContent(
             gauntletProgress = gauntletProgress,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             secondsRemaining = secondsRemaining,
+            messages = messages,
+            unreadMessageCount = unreadMessageCount,
         )
     }
 }
@@ -132,6 +139,8 @@ private fun ColumnScope.ArenaStateContent(
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: Int,
+    messages: List<ArenaMessageState>,
+    unreadMessageCount: Int,
     modifier: Modifier = Modifier,
 ) {
     transitionState.Crossfade(
@@ -146,7 +155,12 @@ private fun ColumnScope.ArenaStateContent(
             // SS-142: the combat screen is being rebuilt as NewArenaCombat; it is now live here
             // while logic is migrated over from the old ArenaCombat (kept until the move is
             // verified complete).
-            is ArenaState.Combat -> NewArenaCombat(state = arenaState)
+            is ArenaState.Combat ->
+                NewArenaCombat(
+                    state = arenaState,
+                    messages = messages,
+                    unreadMessageCount = unreadMessageCount,
+                )
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

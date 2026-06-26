@@ -130,28 +130,10 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
     (icon + explanation).
 - **Steps:** Build a direction-aware expanding row (`DisplayDirection.Left`/`Right` already stubbed in
   `ClassAvatarStats`); source stat values + ability copy from `CharacterClassState` /
-  `CharacterClassCopy`; use class colors from `ClassColors.kt` (SS-137); animate the expansion over the
+  `CharacterClassCopy`; use class colors from `ClassStyle.kt` (SS-137); animate the expansion over the
   surrounding content. Keep each row a small composable.
 - **Depends on:** SS-145 (the avatars it sits beneath). Related: SS-137, SS-151 (shares the bottom
   row), SS-142.
-
-### SS-147 — Messages overlay: golden expandable panel + animated unread count
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `Messages()` (`// TODO(SS-147)`).
-- **Goal:** A messages affordance in the top-left of the top half that expands the message log
-  downward over the head icons, stopping at `BottomHalfContent`.
-- **Anatomy:**
-  - A messages **icon** on the far left (use the imported `ic_messages` drawable); the unread-message
-    **count** sits in the center of the icon.
-  - On tap the row expands downward; its background is the Figma **gold** (eyeball the color for now,
-    to be tuned later) and covers the head icons while open.
-  - The count is rendered so the **four class colors** are always present across its digits and
-    continuously cycle/pulse through the number, looping forever (colors appear to flow through it).
-- **Steps:** Reuse the existing message-log source (`ArenaMessageLog` / `ArenaMessageLogHandle`,
-  `screenState.messages`); animate the expand/collapse; build the looping 4-color count animation
-  (extract labels to `const val` per [[animation-labels-as-const-vals]]). Icon (`ic_messages`) now
-  imported; gold background color still eyeballed for now.
-- **Notes:** Overlaps SS-025 (improve message-log animation). Related: SS-142.
 
 ### SS-148 — Full-screen flash messages ("Hit!" / "Miss!")
 - [ ] Not completed

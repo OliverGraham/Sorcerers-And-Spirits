@@ -18,6 +18,7 @@ import sorcerersandspirits.composeapp.generated.resources.mage_bust
 import sorcerersandspirits.composeapp.generated.resources.necromancer_avatar
 import sorcerersandspirits.composeapp.generated.resources.necromancer_bust
 import sorcerersandspirits.composeapp.generated.resources.paladin_avatar
+import sorcerersandspirits.composeapp.generated.resources.paladin_bust
 import sorcerersandspirits.composeapp.generated.resources.rogue_avatar
 import sorcerersandspirits.composeapp.generated.resources.rogue_bust
 
@@ -34,7 +35,7 @@ internal fun CharacterClassType.toBustResource(): DrawableResource =
         CharacterClassType.Bard -> Res.drawable.bard_bust
         CharacterClassType.Illusionist -> Res.drawable.illusionist_bust
         CharacterClassType.Mage -> Res.drawable.mage_bust
-        CharacterClassType.Paladin -> Res.drawable.paladin_avatar
+        CharacterClassType.Paladin -> Res.drawable.paladin_bust
         CharacterClassType.None -> Res.drawable.rogue_bust
     }
 
@@ -93,6 +94,10 @@ fun CharacterClassType.toGradient(): ClassGradient =
  * The single representative shade for a class, used where one color is needed (e.g. wheel spokes).
  */
 fun CharacterClassType.toColor(): Color = toGradient().topStop
+
+/** The representative color of each of the four class families, in [ClassColorGroup] order. */
+fun classFamilyColors(): List<Color> =
+    listOf(RED.topStop, YELLOW.topStop, GREEN.topStop, BLUE.topStop)
 
 // Figma per-family gradients (two classes share each).
 private val RED =

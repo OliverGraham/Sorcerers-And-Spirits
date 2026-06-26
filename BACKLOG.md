@@ -156,8 +156,17 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
   dice tech (`DiceTray` / `Die3d`, SS-112/SS-117) and the `expectedDiceCount` the roll commits; drive
   the over-screen-then-home motion via the SharedTransitionLayout (SS-142). Reuse the 1↔2 dice
   handling instead of re-deriving it.
+- **Hold-to-roll seam (from SS-151):** the action buttons already commit on release via the shared
+  `holdToRollGesture` (`HoldToRollGesture.kt`); SS-149 should make holding a button visibly roll the
+  dice (the `onHoldStart` hook is currently empty) and bring back the dice machinery that lived in
+  `DiceTray` — shake-to-arm, the await-result tumble guard (so a held button can't double-commit a
+  roll already in flight), and haptics — now driven by the button hold rather than the tray.
+- **Hoist `DiceHome` + `Buttons` out of `AnimatedContent` (from SS-144/SS-151):** both currently sit
+  inside `NewArenaCombat`'s target-keyed `AnimatedContent`, so they crossfade on every target change.
+  Restructure so only the morphing avatars/head icons transition while `DiceHome` and the button bar
+  stay put (read the resolved target from the top-level `resolveTargetUserId`).
 - **Notes:** Relates to SS-077/SS-078 (dice tech & placement) and the SS-078 1↔2 dice-count
-  transition follow-up. Related: SS-142.
+  transition follow-up. Related: SS-144, SS-151, SS-142.
 
 ### SS-150 — Inspect a player when idle / target-locked
 - [ ] Not completed
@@ -172,31 +181,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
   clearly distinct from the targeting tap (SS-144); reuse the SS-146 stat presentation where it fits.
 - **Notes:** Realizes the former SS-141 (head → expanded stat view, "the other UI") placeholder.
   Related: SS-144, SS-146, SS-142.
-
-### SS-151 — Combat action button bar (Ability / Attack / Impersonate)
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `Buttons()` / `AbilityButton()` / `AttackButton()` /
-  `ImpersonateButton()` / `ArenaButton()` (`// TODO(SS-151)`).
-- **Goal:** Build the bottom button bar with a shared `ArenaButton` style and the three buttons,
-  wired to the existing combat-control contract (`primaryRollControl` / `secondaryControls`,
-  `onAttack` / `onUseAbility`).
-- **Layout (rearranged 2026-06-26):** `Buttons` is a `Column` with `AttackButton` on top, then a
-  `Row` holding `AbilityButton` + `ImpersonateButton`. When `shouldShowImpersonateButton` is false,
-  **center** the `AbilityButton`; otherwise the two **share the row** side by side.
-- **Buttons (real icons now imported):**
-  - **AbilityButton** — context-dependent icon: the user's **activated offensive** ability on their
-    turn (`ic_offensive_ability`); their **defensive** ability when being attacked and it needs a roll
-    (`ic_defensive_ability`); or a distinct icon when in a **Teleport roll-off** (`ic_teleport_button`).
-  - **AttackButton** — the normal attack control (`ic_attack_button`).
-  - **ImpersonateButton** — `AnimatedVisibility`-gated (`shouldShowImpersonateButton`); shows a label
-    below reading "Impersonate" or "Impersonating: $className" (reuse SS-101/`isImpersonateRedundant`
-    enable logic).
-  - **ArenaButton** — shared style for all of the above: icon-based, with the Impersonate label case.
-- **Steps:** Define `ArenaButton`; map the new buttons onto the `ArenaCombatControl` types
-  (`NormalAttack` / `ActivatedAbility` / `AbilityRoll`) `ArenaCombat` already routes through; pick the
-  context-correct ability icon/state from the imported drawables above.
-- **Notes:** Replaces the old `AbilityControls` button column. Related: SS-029 (string resources),
-  SS-142.
 
 ---
 

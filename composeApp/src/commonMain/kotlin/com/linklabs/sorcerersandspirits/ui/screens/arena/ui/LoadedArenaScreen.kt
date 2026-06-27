@@ -96,6 +96,9 @@ private fun ArenaStateContent(
                     state = arenaState,
                     messages = screenState.messages,
                     flashMessage = screenState.latestFlashMessage,
+                    secondsRemaining = screenState.secondsRemaining,
+                    isTimerVisible = screenState.isTimerVisible,
+                    isTimerUrgent = screenState.isTimerUrgent,
                 )
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()

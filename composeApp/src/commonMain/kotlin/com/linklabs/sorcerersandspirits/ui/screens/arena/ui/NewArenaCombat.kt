@@ -8,6 +8,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -66,6 +67,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -81,6 +83,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
+import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
@@ -131,10 +134,16 @@ import sorcerersandspirits.composeapp.generated.resources.ic_teleport_button
 
 private const val TARGET_TRANSITION_LABEL = "NewArenaCombatTargetTransition"
 
+private const val TIMER_PULSE_TRANSITION_LABEL = "TurnTimerPulseTransition"
+private const val TIMER_PULSE_SCALE_LABEL = "TurnTimerPulseScale"
+private const val TIMER_PULSE_DURATION_MILLIS = 500
+private const val TIMER_PULSE_MAX_SCALE = 1.3f
+private val TIMER_FONT_SIZE = 28.sp
+private val TIMER_CORNER_PADDING = 12.dp
+
 private val MESSAGES_ICON_SIZE = 56.dp
 private val UNREAD_COUNT_FONT_SIZE = 20.sp
 
-// Placeholder gold for the expanded message panel — eyeballed until the final Figma value lands.
 private val PLACEHOLDER_PANEL_GOLD = Color(color = 0xFFB8860B)
 
 private const val UNREAD_COUNT_COLOR_TRANSITION_LABEL = "MessagesUnreadCountColor"
@@ -145,10 +154,8 @@ private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
 private val ARENA_BUTTON_SIZE = 72.dp
 private const val DISABLED_BUTTON_ALPHA = 0.4f
 
-// The dice home always shows both dice so the footprint is steady; a single-die roll dims one.
 private const val DICE_HOME_DIE_COUNT = 2
 
-// The reserved height of the resting dice slot, and the gap between the two dice at rest.
 private val DICE_HOME_HEIGHT = 96.dp
 private val DICE_REST_SPACING = 76.dp
 
@@ -156,7 +163,6 @@ private val STAT_ROW_SHAPE = RoundedCornerShape(size = 8.dp)
 private val STAT_ICON_SIZE = 28.dp
 private val STAT_EXPLANATION_MAX_WIDTH = 150.dp
 
-// How long a full-screen flash call-out (SS-148) holds at full size before it pops back out.
 private const val FLASH_HOLD_MILLIS = 850L
 private val FLASH_FONT_SIZE = 72.sp
 
@@ -179,6 +185,9 @@ internal fun NewArenaCombat(
     state: ArenaState.Combat,
     messages: List<ArenaMessageState>,
     flashMessage: ArenaMessageState?,
+    secondsRemaining: Int,
+    isTimerVisible: Boolean,
+    isTimerUrgent: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val diceRoll = rememberDiceRoll()
@@ -186,14 +195,10 @@ internal fun NewArenaCombat(
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
 
-    // The class the user is inspecting via a non-targeting tap on a head icon (SS-150); reset each
-    // turn so a stale drawer doesn't linger when the situation changes.
     var inspectedUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf<String?>(value = null) }
     val inspectedPlayer = inspectedUserId?.let { state.playerMap[it] }
 
-    // The instant the user commits a roll, lock the target so a stray tap can't retarget before the
-    // Domain pins the defender (mirrors the old ArenaCombat optimistic lock).
     var isTargetLockedOptimistically by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
     val isTargetable =
@@ -201,20 +206,14 @@ internal fun NewArenaCombat(
     val lockTarget = { isTargetLockedOptimistically = true }
     val targetedOpponentUserId =
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
-    // The active turn owner always seats on the left, the targeted player on the right (SS-157).
     val avatarPairing =
         AvatarPairing(activeUserId = state.turnOwnerUserId, targetUserId = targetedOpponentUserId)
 
-    // Where the dice rest, measured from the empty DiceHome slot in the layout. The dice themselves
-    // live in a screen-spanning overlay so a roll tumbles over everything, then glides back here.
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Only the morphing head icons and avatars transition when the turn owner or target
-                // changes; the dice and buttons below stay put rather than crossfading (SS-149,
-                // hoisted out of SS-144).
                 AnimatedContent(
                     targetState = avatarPairing,
                     label = TARGET_TRANSITION_LABEL,
@@ -246,6 +245,13 @@ internal fun NewArenaCombat(
                 )
             }
 
+            TurnTimer(
+                secondsRemaining = secondsRemaining,
+                isVisible = isTimerVisible,
+                isUrgent = isTimerUrgent,
+                modifier = Modifier.align(alignment = Alignment.TopEnd),
+            )
+
             DiceOverlay(
                 diceRoll = diceRoll,
                 homeBounds = diceHomeBounds,
@@ -269,6 +275,60 @@ internal fun NewArenaCombat(
  * both slots morph when the turn passes or the target changes, not just the target.
  */
 @Immutable private data class AvatarPairing(val activeUserId: String, val targetUserId: String)
+
+/**
+ * The combat turn clock, pinned in the top-end corner. It shows only in the final stretch of a turn
+ * ([isVisible], the last ~15s) and pulses in the player's [error] color as it runs out ([isUrgent],
+ * the last ~10s). Presentation only — the 45s turn timer itself ticks in the ViewModel (SS-155).
+ */
+@Composable
+private fun TurnTimer(
+    secondsRemaining: Int,
+    isVisible: Boolean,
+    isUrgent: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    if (!isVisible) return
+
+    val pulseScale = if (isUrgent) timerPulseScale() else 1f
+    val color =
+        if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+
+    AnimatedSeconds(
+        seconds = secondsRemaining,
+        modifier = modifier.padding(all = TIMER_CORNER_PADDING),
+    ) { seconds ->
+        Text(
+            text = "$seconds",
+            color = color,
+            fontSize = TIMER_FONT_SIZE,
+            fontWeight = if (isUrgent) FontWeight.Bold else FontWeight.SemiBold,
+            modifier =
+                Modifier.graphicsLayer {
+                    scaleX = pulseScale
+                    scaleY = pulseScale
+                },
+        )
+    }
+}
+
+/** The looping 1f→[TIMER_PULSE_MAX_SCALE] heartbeat the timer rides while it is urgent. */
+@Composable
+private fun timerPulseScale(): Float {
+    val pulseTransition = rememberInfiniteTransition(label = TIMER_PULSE_TRANSITION_LABEL)
+    return pulseTransition
+        .animateFloat(
+            initialValue = 1f,
+            targetValue = TIMER_PULSE_MAX_SCALE,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = TIMER_PULSE_DURATION_MILLIS),
+                    repeatMode = RepeatMode.Reverse,
+                ),
+            label = TIMER_PULSE_SCALE_LABEL,
+        )
+        .value
+}
 
 @Composable
 private fun TransitioningContent(
@@ -356,8 +416,6 @@ private fun ClassIcon(
     modifier: Modifier = Modifier,
 ) {
     val isConscious = player.characterClass.isConscious
-    // A normal targeting tap only when this is a valid target; otherwise (not the user's turn,
-    // target-locked, or a knocked-out head) the tap inspects the class instead (SS-150).
     val isTargetingTap = isTargetable && isConscious
 
     ClassHeadIcon(
@@ -378,13 +436,6 @@ private fun ClassIcon(
 private fun Messages(messages: List<ArenaMessageState>, modifier: Modifier = Modifier) {
     var isExpanded by remember { mutableStateOf(value = false) }
 
-    // The unread badge is tracked here in the UI rather than fed from screen state (SS-154):
-    // messages
-    // arrived since the log was last seen are unread. While the log is open every message is
-    // visible,
-    // so the watermark tracks the full list; the log also resets to a fresh, smaller list when a
-    // new
-    // match begins, so the watermark drops with it rather than letting unread go negative.
     var lastSeenMessageCount by remember { mutableStateOf(value = messages.size) }
     LaunchedEffect(key1 = messages.size, key2 = isExpanded) {
         val hasLogShrunk = messages.size < lastSeenMessageCount
@@ -522,8 +573,6 @@ private fun BottomControls(
             diceRoll = diceRoll,
         )
 
-        // The left stat column tracks the left avatar — the active turn owner, not always the local
-        // user (SS-157).
         ClassAvatarStats(
             characterClass = state.turnOwnerPlayer.characterClass,
             displayDirection = DisplayDirection.Left,
@@ -602,7 +651,6 @@ private fun StatRow(
 
 @Composable
 private fun StatIconAndValue(stat: AvatarStat, isLeft: Boolean, modifier: Modifier = Modifier) {
-    // Mirror the two sides: icon then value on the left, value then icon on the right.
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
@@ -751,8 +799,6 @@ private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = M
 private fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect?, modifier: Modifier = Modifier) {
     if (homeBounds == null) return
 
-    // The slot's bounds are in root coordinates; subtract the overlay's own root position so the
-    // resting centre is expressed in the overlay's local space, where the dice are drawn.
     var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
 
     BoxWithConstraints(
@@ -914,7 +960,6 @@ private fun InspectDrawer(
     modifier: Modifier = Modifier,
 ) {
     val isOpen = player != null
-    // Hold the last inspected player so its content stays put while the drawer slides back out.
     var shownPlayer by remember { mutableStateOf<PlayerState.Selected?>(value = null) }
     if (player != null) shownPlayer = player
 
@@ -954,7 +999,6 @@ private fun InspectContent(player: PlayerState.Selected, modifier: Modifier = Mo
                 .fillMaxHeight()
                 .width(width = INSPECT_DRAWER_WIDTH)
                 .background(color = INSPECT_DRAWER_COLOR)
-                // Consume taps so the drawer itself doesn't fall through to the dismissing scrim.
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -1354,8 +1398,6 @@ private fun NewArenaCombatKnockedOutOpponentPreview() {
 @Preview(widthDp = 360, heightDp = 800, showBackground = true)
 @Composable
 private fun NewArenaCombatUserTurnPreview() {
-    // An Illusionist on their turn against a lone opponent: the opponent is auto-targeted, so the
-    // Attack and Impersonate buttons are enabled.
     PreviewArenaCombat(
         state =
             previewCombatState(
@@ -1431,10 +1473,18 @@ private fun PreviewArenaCombat(
     state: ArenaState.Combat,
     messages: List<ArenaMessageState> = previewMessages(),
     flashMessage: ArenaMessageState? = null,
+    secondsRemaining: Int = 8,
 ) {
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
-            NewArenaCombat(state = state, messages = messages, flashMessage = flashMessage)
+            NewArenaCombat(
+                state = state,
+                messages = messages,
+                flashMessage = flashMessage,
+                secondsRemaining = secondsRemaining,
+                isTimerVisible = secondsRemaining in 1..15,
+                isTimerUrgent = secondsRemaining in 1..10,
+            )
         }
     }
 }

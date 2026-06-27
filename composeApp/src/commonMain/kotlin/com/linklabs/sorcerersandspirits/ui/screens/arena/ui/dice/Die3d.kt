@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlin.math.cos
 import kotlin.math.exp
@@ -88,6 +89,10 @@ private const val MAX_SHAKE_IMPULSE_DP = 950f
 // Once the die stops bouncing it rights itself over this long so the rolled face reads up.
 private const val RIGHTING_MILLIS = 450
 
+// After a roll settles, the die glides from wherever it stopped back to its resting home over this
+// long (SS-149); only when a [restCenter] is given (the screen-spanning roll, not the tray).
+private const val GLIDE_HOME_MILLIS = 480
+
 private val DIE_BODY_ENABLED = Color(color = 0xFFF4ECDA)
 private val DIE_SHADOW_ENABLED = Color(color = 0xFF9C8F70)
 private val DIE_PIP_ENABLED = Color(color = 0xFF24201A)
@@ -115,17 +120,22 @@ internal fun Die3d(
     enabled: Boolean,
     shakeTick: Int,
     modifier: Modifier = Modifier,
+    trayWidth: Dp = TRAY_WIDTH_DP.dp,
+    trayHeight: Dp = TRAY_HEIGHT_DP.dp,
+    restCenter: Offset? = null,
 ) {
     val density = LocalDensity.current
-    val trayWidthPx = with(density) { TRAY_WIDTH_DP.dp.toPx() }
-    val trayHeightPx = with(density) { TRAY_HEIGHT_DP.dp.toPx() }
-    val trayCenter =
-        remember(trayWidthPx, trayHeightPx) { Offset(x = trayWidthPx / 2f, y = trayHeightPx / 2f) }
+    val trayWidthPx = with(density) { trayWidth.toPx() }
+    val trayHeightPx = with(density) { trayHeight.toPx() }
+    // Where the die sits at rest: a screen-spanning roll homes to the given [restCenter]; the small
+    // tray just centers it. Gliding back to home only happens for the former.
+    val homeCenter = restCenter ?: Offset(x = trayWidthPx / 2f, y = trayHeightPx / 2f)
+    val shouldGlideHome = restCenter != null
     val restAngles = remember(value) { faceAngles(value = value) }
     val angleX = remember { Animatable(initialValue = restAngles.first) }
     val angleY = remember { Animatable(initialValue = restAngles.second) }
     val center = remember {
-        Animatable(initialValue = trayCenter, typeConverter = Offset.VectorConverter)
+        Animatable(initialValue = homeCenter, typeConverter = Offset.VectorConverter)
     }
     // The die rests on its current face the first time it lays out, then tumbles for every change
     // after that: while held, and on any value change once a roll (by any player) lands (SS-112).
@@ -174,7 +184,7 @@ internal fun Die3d(
             previousValue = value
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
-            center.snapTo(targetValue = trayCenter)
+            center.snapTo(targetValue = homeCenter)
         } else {
             val hasValueChanged = value != previousValue
             previousValue = value
@@ -210,6 +220,18 @@ internal fun Die3d(
             }
 
             coroutineScope {
+                if (shouldGlideHome) {
+                    launch {
+                        center.animateTo(
+                            targetValue = homeCenter,
+                            animationSpec =
+                                tween(
+                                    durationMillis = GLIDE_HOME_MILLIS,
+                                    easing = LinearOutSlowInEasing,
+                                ),
+                        )
+                    }
+                }
                 launch {
                     angleX.animateTo(
                         targetValue =
@@ -227,7 +249,10 @@ internal fun Die3d(
         }
     }
 
-    Canvas(modifier = modifier.size(width = TRAY_WIDTH_DP.dp, height = TRAY_HEIGHT_DP.dp)) {
+    // Keep a resting die parked on its home as the home is (re)measured, without disturbing a roll.
+    LaunchedEffect(key1 = homeCenter) { if (!isRolling) center.snapTo(targetValue = homeCenter) }
+
+    Canvas(modifier = modifier.size(width = trayWidth, height = trayHeight)) {
         drawDie(
             angleX = angleX.value,
             angleY = angleY.value,

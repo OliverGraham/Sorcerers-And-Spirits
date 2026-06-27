@@ -145,29 +145,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
   that auto-dismisses; only events with short text flash.
 - **Notes:** Related: SS-025 (message-log animation), SS-147, SS-142.
 
-### SS-149 — DiceHome + dice fly-to-home animation
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `DiceHome()` + top-level dice `// TODO(SS-149)`.
-- **Goal:** Give the dice a resting "home" in the bottom-half center (`DiceHome`) and animate them
-  smoothly sliding back to it after a roll that can happen anywhere across the screen.
-- **Behavior:** Dice roll over the top of all other content; on settle they glide to `DiceHome`. For a
-  **single-die** roll, one die is disabled/dimmed while the other rolls and returns home.
-- **Steps:** Position `DiceHome` between the two `ClassAvatarDisplay`s; integrate with the existing
-  dice tech (`DiceTray` / `Die3d`, SS-112/SS-117) and the `expectedDiceCount` the roll commits; drive
-  the over-screen-then-home motion via the SharedTransitionLayout (SS-142). Reuse the 1↔2 dice
-  handling instead of re-deriving it.
-- **Hold-to-roll seam (from SS-151):** the action buttons already commit on release via the shared
-  `holdToRollGesture` (`HoldToRollGesture.kt`); SS-149 should make holding a button visibly roll the
-  dice (the `onHoldStart` hook is currently empty) and bring back the dice machinery that lived in
-  `DiceTray` — shake-to-arm, the await-result tumble guard (so a held button can't double-commit a
-  roll already in flight), and haptics — now driven by the button hold rather than the tray.
-- **Hoist `DiceHome` + `Buttons` out of `AnimatedContent` (from SS-144/SS-151):** both currently sit
-  inside `NewArenaCombat`'s target-keyed `AnimatedContent`, so they crossfade on every target change.
-  Restructure so only the morphing avatars/head icons transition while `DiceHome` and the button bar
-  stay put (read the resolved target from the top-level `resolveTargetUserId`).
-- **Notes:** Relates to SS-077/SS-078 (dice tech & placement) and the SS-078 1↔2 dice-count
-  transition follow-up. Related: SS-144, SS-151, SS-142.
-
 ### SS-150 — Inspect a player when idle / target-locked
 - [ ] Not completed
 - **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-150)`.

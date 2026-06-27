@@ -18,11 +18,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
@@ -37,10 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -67,10 +73,15 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceCount
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.headIconPlayersFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetPlayerFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DIE_RESTING_FACE
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRoll
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.DrawableResource
@@ -98,6 +109,13 @@ private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
 private val ARENA_BUTTON_SIZE = 72.dp
 private const val DISABLED_BUTTON_ALPHA = 0.4f
 
+// The dice home always shows both dice so the footprint is steady; a single-die roll dims one.
+private const val DICE_HOME_DIE_COUNT = 2
+
+// The reserved height of the resting dice slot, and the gap between the two dice at rest.
+private val DICE_HOME_HEIGHT = 96.dp
+private val DICE_REST_SPACING = 76.dp
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun NewArenaCombat(
@@ -106,10 +124,6 @@ internal fun NewArenaCombat(
     unreadMessageCount: Int,
     modifier: Modifier = Modifier,
 ) {
-    // TODO(SS-149): How about the Dice rolling over everything? What changes will need to be made
-    // to
-    //  facilitate that? After rolling, they must smoothly slide over to DiceHome()
-
     // TODO(SS-150): Tapping on ClassIcon of ClassIcons when it's not the user's turn or when
     // they're
     //  locked into a target and to just want to see more info about another class (maybe they're
@@ -122,6 +136,8 @@ internal fun NewArenaCombat(
     //          Brief, stylized animation (bounce, rotate, etc.). Full message would be in log.
     //          Could be a property of the ArenaMessage - short text?
 
+    val diceRoll = rememberDiceRoll()
+
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
 
@@ -132,38 +148,64 @@ internal fun NewArenaCombat(
     val isTargetable =
         state.isItThisUsersTurn && state.lockedTargetUserId == null && !isTargetLockedOptimistically
     val lockTarget = { isTargetLockedOptimistically = true }
+    val targetedOpponentUserId =
+        state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
+
+    // Where the dice rest, measured from the empty DiceHome slot in the layout. The dice themselves
+    // live in a screen-spanning overlay so a roll tumbles over everything, then glides back here.
+    var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
-        AnimatedContent(
-            targetState =
-                state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId),
-            label = TARGET_TRANSITION_LABEL,
-        ) { currentTargetUserId ->
-            SharedTransitionProvider(
-                sharedTransitionScope = this@SharedTransitionLayout,
-                animatedVisibilityScope = this@AnimatedContent,
-            ) {
-                ScreenContent(
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Only the morphing head icons and avatars transition on a target change; the dice
+                // and buttons below stay put rather than crossfading (SS-149, hoisted out of
+                // SS-144).
+                AnimatedContent(
+                    targetState = targetedOpponentUserId,
+                    label = TARGET_TRANSITION_LABEL,
+                    modifier = Modifier.weight(weight = 1f),
+                ) { currentTargetUserId ->
+                    SharedTransitionProvider(
+                        sharedTransitionScope = this@SharedTransitionLayout,
+                        animatedVisibilityScope = this@AnimatedContent,
+                    ) {
+                        TransitioningContent(
+                            state = state,
+                            currentTargetUserId = currentTargetUserId,
+                            onSelectTarget = { selectedOpponentUserId = it },
+                            isTargetable = isTargetable,
+                            messages = messages,
+                            unreadMessageCount = unreadMessageCount,
+                        )
+                    }
+                }
+
+                DiceHomeSlot(onBoundsChanged = { diceHomeBounds = it })
+
+                BottomControls(
                     state = state,
-                    currentTargetUserId = currentTargetUserId,
-                    onSelectTarget = { selectedOpponentUserId = it },
-                    isTargetable = isTargetable,
+                    targetedOpponentUserId = targetedOpponentUserId,
                     lockTarget = lockTarget,
-                    messages = messages,
-                    unreadMessageCount = unreadMessageCount,
+                    diceRoll = diceRoll,
                 )
             }
+
+            DiceOverlay(
+                diceRoll = diceRoll,
+                homeBounds = diceHomeBounds,
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
 
 @Composable
-private fun ScreenContent(
+private fun TransitioningContent(
     state: ArenaState.Combat,
     currentTargetUserId: String,
     onSelectTarget: (String) -> Unit,
     isTargetable: Boolean,
-    lockTarget: () -> Unit,
     messages: List<ArenaMessageState>,
     unreadMessageCount: Int,
     modifier: Modifier = Modifier,
@@ -177,11 +219,9 @@ private fun ScreenContent(
             unreadMessageCount = unreadMessageCount,
             modifier = Modifier.weight(weight = 1f),
         )
-        BottomHalfContent(
-            state = state,
+        AvatarsRow(
+            userPlayer = state.userPlayer,
             targetPlayer = state.targetPlayerFor(targetUserId = currentTargetUserId),
-            targetedOpponentUserId = currentTargetUserId,
-            lockTarget = lockTarget,
             modifier = Modifier.weight(weight = 1f),
         )
     }
@@ -344,57 +384,59 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun BottomHalfContent(
-    state: ArenaState.Combat,
+private fun AvatarsRow(
+    userPlayer: PlayerState.Selected,
     targetPlayer: PlayerState.Selected?,
-    targetedOpponentUserId: String,
-    lockTarget: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val userPlayer = state.userPlayer
+    Row(modifier = modifier.fillMaxWidth()) {
+        ClassAvatar(
+            characterClass = userPlayer.characterClass,
+            modifier = Modifier.weight(weight = 1f).sharedBounds(key = userPlayer.userId),
+        )
 
-    Column(modifier = modifier.fillMaxSize()) {
-        Row(modifier = Modifier.weight(weight = 1f).fillMaxWidth()) {
+        if (targetPlayer != null) {
             ClassAvatar(
-                characterClass = userPlayer.characterClass,
-                modifier = Modifier.weight(weight = 1f).sharedBounds(key = userPlayer.userId),
+                characterClass = targetPlayer.characterClass,
+                modifier = Modifier.weight(weight = 1f).sharedBounds(key = targetPlayer.userId),
             )
+        }
+    }
+}
 
-            if (targetPlayer != null) {
-                ClassAvatar(
-                    characterClass = targetPlayer.characterClass,
-                    modifier = Modifier.weight(weight = 1f).sharedBounds(key = targetPlayer.userId),
-                )
-            }
+@Composable
+private fun BottomControls(
+    state: ArenaState.Combat,
+    targetedOpponentUserId: String,
+    lockTarget: () -> Unit,
+    diceRoll: DiceRoll,
+    modifier: Modifier = Modifier,
+) {
+    // TODO(SS-146): Stats need to open on top of all content in this Row
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier.weight(weight = 1f)) {
+            // TODO(SS-146): 5 stats - Active Player
+            //       Speed
+            //       ArmorClass
+            //       HitPoints
+            //       OffensiveAbility
+            //       DefensiveAbility
         }
 
-        DiceHome()
+        Buttons(
+            state = state,
+            targetedOpponentUserId = targetedOpponentUserId,
+            lockTarget = lockTarget,
+            diceRoll = diceRoll,
+        )
 
-        // TODO(SS-146): Stats need to open on top of all content in this Row
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(modifier = Modifier.weight(weight = 1f)) {
-                // TODO(SS-146): 5 stats - Active Player
-                //       Speed
-                //       ArmorClass
-                //       HitPoints
-                //       OffensiveAbility
-                //       DefensiveAbility
-            }
-
-            Buttons(
-                state = state,
-                targetedOpponentUserId = targetedOpponentUserId,
-                lockTarget = lockTarget,
-            )
-
-            Column(modifier = Modifier.weight(weight = 1f)) {
-                // TODO(SS-146): 5 stats - Target Opponent
-                //       Speed
-                //       ArmorClass
-                //       HitPoints
-                //       OffensiveAbility
-                //       DefensiveAbility
-            }
+        Column(modifier = Modifier.weight(weight = 1f)) {
+            // TODO(SS-146): 5 stats - Target Opponent
+            //       Speed
+            //       ArmorClass
+            //       HitPoints
+            //       OffensiveAbility
+            //       DefensiveAbility
         }
     }
 }
@@ -427,11 +469,60 @@ private fun ClassAvatar(characterClass: CharacterClassState, modifier: Modifier 
     )
 }
 
+/**
+ * The empty resting slot below the avatars that reserves space for the dice and reports its bounds.
+ * The dice themselves are drawn in the screen-spanning [DiceOverlay] so they can roll over all the
+ * content; at rest they sit centered in this slot (SS-149).
+ */
 @Composable
-private fun DiceHome(modifier: Modifier = Modifier) {
-    // TODO(SS-149): This is where the Dice move to after rolling anywhere across the entire screen.
-    //       When someone rolls a single die, one of the dice should become disabled while the other
-    //       rolls and moves back here.
+private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier.fillMaxWidth().height(height = DICE_HOME_HEIGHT).onGloballyPositioned {
+                onBoundsChanged(it.boundsInRoot())
+            }
+    )
+}
+
+/**
+ * The dice, drawn in a screen-spanning overlay above all other content so a roll tumbles over
+ * everything (SS-149). Each die's tray is the whole overlay, so it bounces across the screen while
+ * rolling, then glides back to its resting spot in the [homeBounds] slot. Always shows both dice
+ * for a steady footprint; on a single-die roll the second die is dimmed and still. The overlay is
+ * non-interactive, so taps fall through to the content (the buttons) beneath it.
+ */
+@Composable
+private fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect?, modifier: Modifier = Modifier) {
+    if (homeBounds == null) return
+
+    // The slot's bounds are in root coordinates; subtract the overlay's own root position so the
+    // resting centre is expressed in the overlay's local space, where the dice are drawn.
+    var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
+
+    BoxWithConstraints(
+        modifier = modifier.onGloballyPositioned { overlayOrigin = it.localToRoot(Offset.Zero) }
+    ) {
+        val spacingPx = with(LocalDensity.current) { DICE_REST_SPACING.toPx() }
+        val homeCenter = homeBounds.center - overlayOrigin
+
+        repeat(times = DICE_HOME_DIE_COUNT) { index ->
+            val isActive = index < diceRoll.displayedDiceCount
+            val restCenter =
+                Offset(
+                    x = homeCenter.x + (index - (DICE_HOME_DIE_COUNT - 1) / 2f) * spacingPx,
+                    y = homeCenter.y,
+                )
+            Die3d(
+                value = diceRoll.dieFaces.getOrNull(index = index) ?: DIE_RESTING_FACE,
+                isRolling = isActive && diceRoll.isRolling,
+                enabled = isActive,
+                shakeTick = diceRoll.shakeTick,
+                trayWidth = maxWidth,
+                trayHeight = maxHeight,
+                restCenter = restCenter,
+            )
+        }
+    }
 }
 
 /**
@@ -445,6 +536,7 @@ private fun Buttons(
     state: ArenaState.Combat,
     targetedOpponentUserId: String,
     lockTarget: () -> Unit,
+    diceRoll: DiceRoll,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -463,6 +555,8 @@ private fun Buttons(
         if (attackControl != null) {
             AttackButton(
                 isEnabled = state.isControlEnabled(attackControl, targetedOpponentUserId),
+                diceRoll = diceRoll,
+                diceCount = attackControl.diceCount,
                 onRoll =
                     state.rollActionFor(
                         control = attackControl,
@@ -483,6 +577,7 @@ private fun Buttons(
                     AbilityButton(
                         control = control,
                         isEnabled = state.isControlEnabled(control, targetedOpponentUserId),
+                        diceRoll = diceRoll,
                         onRoll =
                             state.rollActionFor(
                                 control = control,
@@ -501,6 +596,8 @@ private fun Buttons(
                         impersonateControl != null &&
                             state.isControlEnabled(impersonateControl, targetedOpponentUserId),
                     label = state.impersonateLabel(),
+                    diceRoll = diceRoll,
+                    diceCount = impersonateControl?.diceCount,
                     onRoll =
                         impersonateControl?.let {
                             state.rollActionFor(
@@ -518,11 +615,19 @@ private fun Buttons(
 }
 
 @Composable
-private fun AttackButton(isEnabled: Boolean, onRoll: () -> Unit, modifier: Modifier = Modifier) {
+private fun AttackButton(
+    isEnabled: Boolean,
+    diceRoll: DiceRoll,
+    diceCount: Int?,
+    onRoll: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     ArenaButton(
         icon = Res.drawable.ic_attack_button,
         contentDescription = "Attack",
         isEnabled = isEnabled,
+        diceRoll = diceRoll,
+        diceCount = diceCount,
         onRoll = onRoll,
         modifier = modifier,
     )
@@ -532,6 +637,7 @@ private fun AttackButton(isEnabled: Boolean, onRoll: () -> Unit, modifier: Modif
 private fun AbilityButton(
     control: ArenaCombatControl,
     isEnabled: Boolean,
+    diceRoll: DiceRoll,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
@@ -540,6 +646,8 @@ private fun AbilityButton(
         icon = control.toButtonIcon(),
         contentDescription = control.label,
         isEnabled = isEnabled,
+        diceRoll = diceRoll,
+        diceCount = control.diceCount,
         onRoll = onRoll,
         label = label,
         modifier = modifier,
@@ -551,6 +659,8 @@ private fun ImpersonateButton(
     shouldShowImpersonateButton: Boolean,
     isEnabled: Boolean,
     label: String,
+    diceRoll: DiceRoll,
+    diceCount: Int?,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -559,22 +669,33 @@ private fun ImpersonateButton(
             icon = Res.drawable.ic_offensive_ability,
             contentDescription = "Impersonate",
             isEnabled = isEnabled,
+            diceRoll = diceRoll,
+            diceCount = diceCount,
             onRoll = onRoll,
             label = label,
         )
     }
 }
 
-/** The shared button style: an icon rolled by holding and released to fire [onRoll], + label. */
+/**
+ * The shared button style: an icon held to roll, released to fire [onRoll]. When the control rolls
+ * dice ([diceCount] non-null) the hold drives the shared [diceRoll] — shake or double-tap to
+ * commit, like the dice tray; a choice control (no dice, e.g. Impersonate) commits immediately on
+ * release.
+ */
 @Composable
 private fun ArenaButton(
     icon: DrawableResource,
     contentDescription: String,
     isEnabled: Boolean,
+    diceRoll: DiceRoll,
+    diceCount: Int?,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
 ) {
+    val rollsDice = diceCount != null
+
     Column(
         modifier = modifier,
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -588,8 +709,14 @@ private fun ArenaButton(
                     .alpha(alpha = if (isEnabled) 1f else DISABLED_BUTTON_ALPHA)
                     .holdToRollGesture(
                         enabled = isEnabled,
-                        onHoldStart = {},
-                        onRelease = { onRoll() },
+                        onHoldStart = { if (rollsDice) diceRoll.startHold(diceCount = diceCount) },
+                        onRelease = { isDoubleTap ->
+                            if (rollsDice) {
+                                diceRoll.release(isDoubleTap = isDoubleTap) { onRoll() }
+                            } else {
+                                onRoll()
+                            }
+                        },
                     ),
         )
 

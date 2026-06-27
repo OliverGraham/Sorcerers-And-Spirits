@@ -60,17 +60,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   Confirm the desired arrangement when the local user is the active player vs. the defender.
 - **Related:** SS-145 (target avatar), SS-156 (stat columns).
 
-### SS-158 — Single-die rolls must animate only one die
-- [ ] Not completed
-- **Symptom:** When an action rolls a single die, sometimes the disabled second die tumbles too.
-  Seen during a Bard's Persuade roll (1d6).
-- **Source:** `dice/DiceRoll.kt` `displayedDiceCount`/`dieFaces` (~128–143) and `dice/DiceTray.kt`.
-  The displayed die count falls back to the *latest* roll's size when not actively rolling
-  (`latestRoll.dice.isNotEmpty() -> latestRoll.dice.size`), so a 1-die action that follows a 2-die
-  roll can briefly render/animate two dice; the disabled die should never tumble.
-- **Goal:** A roll of N dice animates exactly N dice; any non-rollable/disabled die stays at rest.
-- **Related:** SS-117 (await-result tumble), SS-149 (shared roll state).
-
 ### SS-159 — Raise DiceHome and buttons toward the avatars; keep the stat column fixed
 - [ ] Not completed
 - **Symptom:** The `DiceHome` resting slot sits too low; it should be higher, closer to the avatars.

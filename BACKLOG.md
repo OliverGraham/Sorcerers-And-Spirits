@@ -112,29 +112,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
   `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
 
-### SS-146 — Expanding per-stat columns flanking the buttons (ClassAvatarStats)
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` `BottomHalfContent()` bottom `Row` (the two stat `Column`s) +
-  `ClassAvatarStats()` (`// TODO(SS-146)`).
-- **Goal:** A column of per-stat rows on each side of the `Buttons` bar — active player on the left,
-  target opponent on the right — that expand on tap to reveal a short explanation of the stat, opening
-  on top of all other content in that row.
-- **Anatomy (rearranged 2026-06-26 — stats moved off the avatars into the bottom button row):**
-  - **Five rows per side:** Speed, ArmorClass, HitPoints, OffensiveAbility, DefensiveAbility
-    (icons now imported: `ic_speed`, `ic_armor_class`, `ic_hit_points`, `ic_offensive_ability`,
-    `ic_defensive_ability`).
-  - **Left** (active player): each row is `[Icon][stat value]` on a class-colored background; tapping
-    expands the row **rightward** to reveal the stat's explanation.
-  - **Right** (target): mirrored — `[stat value][Icon]`, expanding **leftward**.
-  - Offensive/Defensive **ability** rows have **no stat value** but otherwise look and expand the same
-    (icon + explanation).
-- **Steps:** Build a direction-aware expanding row (`DisplayDirection.Left`/`Right` already stubbed in
-  `ClassAvatarStats`); source stat values + ability copy from `CharacterClassState` /
-  `CharacterClassCopy`; use class colors from `ClassStyle.kt` (SS-137); animate the expansion over the
-  surrounding content. Keep each row a small composable.
-- **Depends on:** SS-145 (the avatars it sits beneath). Related: SS-137, SS-151 (shares the bottom
-  row), SS-142.
-
 ### SS-148 — Full-screen flash messages ("Hit!" / "Miss!")
 - [ ] Not completed
 - **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-148)`.

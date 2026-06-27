@@ -17,24 +17,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
-### SS-155 — Combat turn-timer UI
-- [ ] Not completed
-- **Severity:** High — the combat turn clock currently runs with no on-screen indication.
-- **Context:** The combat turn timer (45s) still ticks in the ViewModel and a player's turn
-  auto-resolves on expiry, but nothing in `NewArenaCombat` renders it. The old display lived inside
-  `ArenaMessageLogHandle` (an `AnimatedSeconds` + pulsing `TimerText`), which was removed as orphaned
-  in SS-154, so there is no combat timer UI at all right now. (The Finished-screen "next match"
-  countdown in `MatchFinishedContent` is a separate, still-working timer — out of scope.)
-- **Goal:** Render the combat turn timer in `NewArenaCombat`, driven by the existing screen state:
-  `secondsRemaining`, with `isTimerVisible` (shows in the final ~15s) and `isTimerUrgent` (urgent
-  styling in the final ~10s) already derived on `ArenaScreenState`. Reuse `AnimatedSeconds` for the
-  rolling digit. No new state or logic needed — this is presentation only.
-- **Design:** Placement and styling TBD — **confer with designer** before building (the old
-  top-row-next-to-messages placement is gone with the new combat layout). Until then `isTimerVisible`
-  / `isTimerUrgent` sit on `ArenaScreenState` derived-but-unrendered.
-- **Related:** SS-154 (removed the old timer display along with `ArenaMessageLogHandle`), SS-068
-  (Arena UI overhaul).
-
 ### SS-156 — Stat column must not shift when a stat row expands
 - [ ] Not completed
 - **Symptom:** Opening (expanding) a stat row moves surrounding content; it shouldn't — the stat

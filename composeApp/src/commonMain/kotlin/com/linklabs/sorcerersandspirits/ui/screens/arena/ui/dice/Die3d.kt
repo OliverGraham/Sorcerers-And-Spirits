@@ -193,6 +193,12 @@ internal fun Die3d(
 
             val settleVelocity =
                 when {
+                    // A disabled die never tumbles: it only glides back to its home and rights
+                    // itself while the active die rolls (SS-158), even if it was mid-flight when
+                    // the
+                    // roll that follows turned it off.
+                    !enabled -> Offset.Zero
+
                     // Released after shaking: keep the momentum the shaking built up.
                     heldVelocity.getDistance() > restSpeed -> heldVelocity
 

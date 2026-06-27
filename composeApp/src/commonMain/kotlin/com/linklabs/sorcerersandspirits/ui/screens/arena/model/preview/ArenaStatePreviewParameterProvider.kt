@@ -39,7 +39,6 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     private fun getExampleScreenState(
         arenaState: ArenaState,
         messages: List<ArenaMessageState> = getExampleMessages(),
-        unhandledMessagesCount: Int = 0,
         secondsRemaining: Int = 20,
         showForfeitDialog: Boolean = false,
         isUserPlayerKnockedOut: Boolean = false,
@@ -47,7 +46,6 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     ) =
         ArenaScreenState(
             messages = messages,
-            unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = secondsRemaining,
             showForfeitDialog = showForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,

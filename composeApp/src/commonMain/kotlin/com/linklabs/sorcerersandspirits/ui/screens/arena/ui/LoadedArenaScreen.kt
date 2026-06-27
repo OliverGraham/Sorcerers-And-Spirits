@@ -95,7 +95,6 @@ private fun ArenaStateContent(
                 NewArenaCombat(
                     state = arenaState,
                     messages = screenState.messages,
-                    unreadMessageCount = screenState.unhandledMessagesCount,
                     flashMessage = screenState.latestFlashMessage,
                 )
 

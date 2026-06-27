@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
@@ -77,29 +76,7 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given leftover unhandled messages from the prior match exceed the fresh log, then the count is clamped so the log still shows`() {
-        val previousState = screenState(unhandledMessagesCount = 10)
-        val freshMatch = combatMatch(messageCount = 2, numberOfNewMessages = 2)
-
-        val nextState =
-            freshMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
-
-        assertEquals(expected = 2, actual = nextState.unhandledMessagesCount)
-        assertNotNull(actual = nextState.latestMessage)
-    }
-
-    @Test
-    fun `Given a combat result adds more new messages than the capped log holds, then the count is clamped to the log size`() {
-        val match = combatMatch(messageCount = 3, numberOfNewMessages = 50)
-
-        val nextState = match.toUpdatedState(previousState = null, userId = USER_ID).nextState
-
-        assertEquals(expected = 3, actual = nextState.unhandledMessagesCount)
-        assertNotNull(actual = nextState.latestMessage)
-    }
-
-    @Test
-    fun `Given a match finishes while closing messages remain, then the combat view is held and the finished state is pending`() {
+    fun `Given a match finishes from a combat turn, then the combat view is held and the finished state is pending`() {
         val previousState =
             screenState(
                 arenaState =
@@ -108,7 +85,9 @@ class ArenaScreenStateTest {
                             CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
                     )
             )
-        val finishedMatch = finishedMatch(messageCount = 3, numberOfNewMessages = 3)
+        // The hold is unconditional on Combat→Finished now (SS-154): it does not depend on any
+        // unhandled-message count, so an empty closing log still holds for the flash.
+        val finishedMatch = finishedMatch(messageCount = 0, numberOfNewMessages = 0)
 
         val nextState =
             finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
@@ -118,24 +97,7 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given a match finishes while closing messages remain, then the combat timer is stopped`() {
-        val previousState =
-            screenState(
-                arenaState =
-                    combatState(
-                        combatActionState =
-                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
-                    )
-            )
-        val finishedMatch = finishedMatch(messageCount = 3, numberOfNewMessages = 3)
-
-        val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
-
-        assertEquals(expected = TimerAction.Stop, actual = update.timerAction)
-    }
-
-    @Test
-    fun `Given a match finishes with no unhandled messages, then it advances straight to the finished screen`() {
+    fun `Given a match finishes from a combat turn, then the combat timer is stopped`() {
         val previousState =
             screenState(
                 arenaState =
@@ -146,8 +108,19 @@ class ArenaScreenStateTest {
             )
         val finishedMatch = finishedMatch(messageCount = 0, numberOfNewMessages = 0)
 
+        val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
+
+        assertEquals(expected = TimerAction.Stop, actual = update.timerAction)
+    }
+
+    @Test
+    fun `Given the screen opens directly onto a finished match, then it shows the finished screen without holding`() {
+        // No prior combat view to hold (e.g. reconnecting into an already-finished match), so there
+        // is nothing to hold for and the finished screen shows immediately.
+        val finishedMatch = finishedMatch(messageCount = 0, numberOfNewMessages = 0)
+
         val nextState =
-            finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
+            finishedMatch.toUpdatedState(previousState = null, userId = USER_ID).nextState
 
         assertTrue(actual = nextState.arenaState is ArenaState.Finished)
         assertNull(actual = nextState.pendingFinishedState)
@@ -271,23 +244,6 @@ class ArenaScreenStateTest {
             playerMap = combatPlayers(isUserReady = isUserReady),
         )
 
-    private fun combatMatch(messageCount: Int, numberOfNewMessages: Int) =
-        ArenaMatch.Combat(
-            messages =
-                (1..messageCount).map { index ->
-                    IncomingArenaMessage(
-                        id = "message-$index",
-                        message = ArenaMessage.NewRound(roundNumber = index),
-                    )
-                },
-            numberOfNewMessages = numberOfNewMessages,
-            playerMap = combatPlayers(),
-            nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(element = USER_ID)),
-            roundNumber = 1,
-            isNewRound = true,
-            doublesBonus = null,
-        )
-
     private fun combatPlayers(isUserReady: Boolean = false) =
         mapOf(
             USER_ID to
@@ -329,12 +285,10 @@ class ArenaScreenStateTest {
 
     private fun screenState(
         arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
-        unhandledMessagesCount: Int = 0,
         hasReadiedForNextMatch: Boolean = false,
     ) =
         ArenaScreenState(
             messages = emptyList(),
-            unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = 0,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,

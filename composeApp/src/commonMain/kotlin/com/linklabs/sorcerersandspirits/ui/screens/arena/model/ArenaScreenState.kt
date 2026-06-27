@@ -48,6 +48,13 @@ data class ArenaScreenState(
      * roll is told apart from the previous one even when it lands on the same faces (SS-117).
      */
     internal val latestRoll: LatestRoll = messages.latestRoll()
+
+    /**
+     * The most recent flash-worthy event (a normal-attack outcome), read from the raw [messages] so
+     * the full-screen "Hit!"/"Miss!"/"K.O.!" flash fires immediately rather than waiting for the
+     * throttled log (SS-148). Null until the first such event.
+     */
+    val latestFlashMessage: ArenaMessageState? = messages.lastOrNull { it.flashText != null }
 }
 
 @Immutable

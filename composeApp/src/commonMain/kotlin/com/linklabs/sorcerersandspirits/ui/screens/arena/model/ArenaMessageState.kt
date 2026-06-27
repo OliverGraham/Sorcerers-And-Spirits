@@ -452,6 +452,27 @@ fun ArenaMessage.toState(id: String, classNames: Map<String, String>): ArenaMess
             )
     }
 
+/**
+ * Short, punchy text for the events worth a full-screen flash (SS-148): the outcome of a normal
+ * attack. Null for everything else, which only goes to the message log.
+ * [NormalRollMessageType.ArmorClassHit] is the intermediate "armor passed" step, so its damage roll
+ * carries the flash instead.
+ */
+// TODO(SS-029): string resources for the flash text.
+val ArenaMessageState.flashText: String?
+    get() =
+        when (this) {
+            is ArenaMessageState.NormalRoll ->
+                when (type) {
+                    NormalRollMessageType.ArmorClassMiss -> "Miss!"
+                    NormalRollMessageType.Damage -> "Hit!"
+                    NormalRollMessageType.Knockout -> "K.O.!"
+                    NormalRollMessageType.ArmorClassHit -> null
+                }
+
+            else -> null
+        }
+
 private fun Map<String, String>.resolveClassName(userId: String): String = this[userId] ?: userId
 
 private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =

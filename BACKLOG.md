@@ -48,18 +48,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Related:** SS-146 (stat rows + explanations), SS-159 (button/DiceHome positioning — the stat
   column stays fixed).
 
-### SS-157 — Active player always occupies the left avatar slot
-- [ ] Not completed
-- **Symptom:** The active player (whoever's turn it is) should be on the left at all times, whether
-  or not it's the phone-holder. Currently the phone-holder is always on the left.
-- **Source:** `NewArenaCombat.kt` — `AvatarsRow` (~465) places `userPlayer` (the local user) in the
-  left `weight(1f)` slot and `targetPlayer` on the right, unconditionally. Same assumption flows
-  through `BottomControls`' `ClassAvatarStats` (user on `CenterStart`, target on `CenterEnd`).
-- **Goal:** The left slot shows the active player (the current roller/turn-owner); the other
-  combatant takes the right. Carry the same left/right convention through the flanking stat columns.
-  Confirm the desired arrangement when the local user is the active player vs. the defender.
-- **Related:** SS-145 (target avatar), SS-156 (stat columns).
-
 ### SS-159 — Raise DiceHome and buttons toward the avatars; keep the stat column fixed
 - [ ] Not completed
 - **Symptom:** The `DiceHome` resting slot sits too low; it should be higher, closer to the avatars.

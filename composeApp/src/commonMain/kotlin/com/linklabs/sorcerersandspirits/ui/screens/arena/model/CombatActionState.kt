@@ -35,6 +35,31 @@ sealed interface CombatActionState {
     ) : CombatActionState
 }
 
+/**
+ * The player whose turn it is — the turn owner. While a turn resolves this stays the original actor
+ * even when a defensive ability hands the dice to someone else (Riposte, Persuade), so the arena
+ * can always seat the turn owner in the left avatar slot (SS-157). On an idle turn it is the single
+ * player about to act.
+ */
+val CombatActionState.turnOwnerUserId: String
+    get() =
+        when (this) {
+            is CombatActionState.Idle -> activeUserIds.first()
+            is CombatActionState.NormalAttack -> originalTurnUserId
+            is CombatActionState.AbilityRoll -> originalTurnUserId
+        }
+
+/**
+ * The player being targeted by the in-flight action, or null on an idle turn with no target yet.
+ */
+val CombatActionState.targetedDefenderUserId: String?
+    get() =
+        when (this) {
+            is CombatActionState.Idle -> null
+            is CombatActionState.NormalAttack -> defenderUserId
+            is CombatActionState.AbilityRoll -> defenderUserId
+        }
+
 @Immutable
 sealed interface AbilityActionState {
 

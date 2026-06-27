@@ -50,6 +50,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -200,6 +201,9 @@ internal fun NewArenaCombat(
     val lockTarget = { isTargetLockedOptimistically = true }
     val targetedOpponentUserId =
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
+    // The active turn owner always seats on the left, the targeted player on the right (SS-157).
+    val avatarPairing =
+        AvatarPairing(activeUserId = state.turnOwnerUserId, targetUserId = targetedOpponentUserId)
 
     // Where the dice rest, measured from the empty DiceHome slot in the layout. The dice themselves
     // live in a screen-spanning overlay so a roll tumbles over everything, then glides back here.
@@ -208,21 +212,22 @@ internal fun NewArenaCombat(
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                // Only the morphing head icons and avatars transition on a target change; the dice
-                // and buttons below stay put rather than crossfading (SS-149, hoisted out of
-                // SS-144).
+                // Only the morphing head icons and avatars transition when the turn owner or target
+                // changes; the dice and buttons below stay put rather than crossfading (SS-149,
+                // hoisted out of SS-144).
                 AnimatedContent(
-                    targetState = targetedOpponentUserId,
+                    targetState = avatarPairing,
                     label = TARGET_TRANSITION_LABEL,
                     modifier = Modifier.weight(weight = 1f),
-                ) { currentTargetUserId ->
+                ) { currentPairing ->
                     SharedTransitionProvider(
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     ) {
                         TransitioningContent(
                             state = state,
-                            currentTargetUserId = currentTargetUserId,
+                            activeUserId = currentPairing.activeUserId,
+                            currentTargetUserId = currentPairing.targetUserId,
                             onSelectTarget = { selectedOpponentUserId = it },
                             onInspect = { inspectedUserId = it },
                             isTargetable = isTargetable,
@@ -258,9 +263,17 @@ internal fun NewArenaCombat(
     }
 }
 
+/**
+ * The two players seated in the bottom-half avatars: the active turn owner on the left and the
+ * targeted player on the right (SS-157). Keying the avatar [AnimatedContent] on this pairing lets
+ * both slots morph when the turn passes or the target changes, not just the target.
+ */
+@Immutable private data class AvatarPairing(val activeUserId: String, val targetUserId: String)
+
 @Composable
 private fun TransitioningContent(
     state: ArenaState.Combat,
+    activeUserId: String,
     currentTargetUserId: String,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
@@ -270,7 +283,11 @@ private fun TransitioningContent(
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         TopHalfContent(
-            headIconPlayers = state.headIconPlayersFor(targetUserId = currentTargetUserId),
+            headIconPlayers =
+                state.headIconPlayersFor(
+                    activeUserId = activeUserId,
+                    targetUserId = currentTargetUserId,
+                ),
             isTargetable = isTargetable,
             onSelectTarget = onSelectTarget,
             onInspect = onInspect,
@@ -278,7 +295,7 @@ private fun TransitioningContent(
             modifier = Modifier.weight(weight = 1f),
         )
         AvatarsRow(
-            userPlayer = state.userPlayer,
+            activePlayer = state.playerMap.getValue(key = activeUserId),
             targetPlayer = state.targetPlayerFor(targetUserId = currentTargetUserId),
             modifier = Modifier.weight(weight = 1f),
         )
@@ -463,14 +480,14 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun AvatarsRow(
-    userPlayer: PlayerState.Selected,
+    activePlayer: PlayerState.Selected,
     targetPlayer: PlayerState.Selected?,
     modifier: Modifier = Modifier,
 ) {
     Row(modifier = modifier.fillMaxWidth()) {
         ClassAvatar(
-            characterClass = userPlayer.characterClass,
-            modifier = Modifier.weight(weight = 1f).sharedBounds(key = userPlayer.userId),
+            characterClass = activePlayer.characterClass,
+            modifier = Modifier.weight(weight = 1f).sharedBounds(key = activePlayer.userId),
         )
 
         if (targetPlayer != null) {
@@ -505,8 +522,10 @@ private fun BottomControls(
             diceRoll = diceRoll,
         )
 
+        // The left stat column tracks the left avatar — the active turn owner, not always the local
+        // user (SS-157).
         ClassAvatarStats(
-            characterClass = state.userPlayer.characterClass,
+            characterClass = state.turnOwnerPlayer.characterClass,
             displayDirection = DisplayDirection.Left,
             modifier = Modifier.align(alignment = Alignment.CenterStart),
         )

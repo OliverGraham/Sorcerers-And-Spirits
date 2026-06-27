@@ -125,27 +125,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 
 ## Bugs
 
-### SS-091 — TEMPORARY combat dice debug overlay (remove before release)
-- [ ] Not completed — *overlay is implemented and live; this ticket stays open as the reminder to
-  delete it once combat is stable.*
-- **Goal:** While hunting combat bugs, surface every die as soon as it is rolled instead of waiting
-  for the throttled message log to reveal it. Show each roll's individual dice *and* their combined
-  total directly on the ArenaCombat screen.
-- **Why temporary:** This is a throwaway testing aid. It must be trivially removable — all of its
-  code lives behind the `SS-091` tag in a single self-contained file plus one call site, and the
-  whole thing gets deleted once combat is stable. Do NOT build it into the real UI.
-- **Source of truth:** `ArenaScreenState.messages` already holds the full, un-throttled list of
-  rolls (each `ArenaMessageState` carries `firstDie`/`secondDie`/`singleDie`/etc). The message log
-  only lags because it renders `filteredMessages`; the overlay reads the raw `messages` list.
-- **Steps:** Add a `TemporaryDiceDebugOverlay` composable that extracts dice from recent
-  dice-bearing messages and renders them (individual dice + sum); show it on the combat screen.
-  Remove the file and its call site when done.
-- **What was added:** `TemporaryDiceDebugOverlay.kt` (self-contained: dice extraction +
-  rendering) shown as a top-aligned overlay in `LoadedArenaScreen` only while
-  `arenaState is ArenaState.Combat`. It reads the raw `screenState.messages` list, so dice show the
-  instant they are emitted. **To remove:** delete `TemporaryDiceDebugOverlay.kt` and the single
-  `TODO(SS-091)` block in `LoadedArenaScreen.kt` (grep `SS-091`).
-
 ### SS-116 — All-In bugs (2-player game, observed playing Gambler + Illusionist)
 - [~] In progress — root cause found and fixed; one latent sub-bug split out below.
 - **Source:** Reported bug. Three symptoms seen in one 2-player session; all concern the Gambler's

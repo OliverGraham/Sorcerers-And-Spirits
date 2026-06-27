@@ -22,23 +22,30 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -160,6 +167,11 @@ private const val CONFETTI_MAX_DISTANCE = 220f
 private const val CONFETTI_MIN_RADIUS = 4f
 private const val CONFETTI_MAX_RADIUS = 9f
 
+private val INSPECT_DRAWER_WIDTH = 280.dp
+private val INSPECT_AVATAR_HEIGHT = 200.dp
+private val INSPECT_DRAWER_COLOR = Color(color = 0xF21A1A1A)
+private val INSPECT_SCRIM = Color(color = 0x99000000)
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun NewArenaCombat(
@@ -169,17 +181,16 @@ internal fun NewArenaCombat(
     flashMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
 ) {
-    // TODO(SS-150): Tapping on ClassIcon of ClassIcons when it's not the user's turn or when
-    // they're
-    //  locked into a target and to just want to see more info about another class (maybe they're
-    //  waiting for their opponent to roll and they want to tap around see things). Two options:
-    //       1. Expand head to reveal full Avatar, covering all content nearby?
-    //       2. Have Drawer on right that opens with Full Avatar and stats?
-
     val diceRoll = rememberDiceRoll()
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
+
+    // The class the user is inspecting via a non-targeting tap on a head icon (SS-150); reset each
+    // turn so a stale drawer doesn't linger when the situation changes.
+    var inspectedUserId by
+        remember(key1 = state.activeUserIds) { mutableStateOf<String?>(value = null) }
+    val inspectedPlayer = inspectedUserId?.let { state.playerMap[it] }
 
     // The instant the user commits a roll, lock the target so a stray tap can't retarget before the
     // Domain pins the defender (mirrors the old ArenaCombat optimistic lock).
@@ -214,6 +225,7 @@ internal fun NewArenaCombat(
                             state = state,
                             currentTargetUserId = currentTargetUserId,
                             onSelectTarget = { selectedOpponentUserId = it },
+                            onInspect = { inspectedUserId = it },
                             isTargetable = isTargetable,
                             messages = messages,
                             unreadMessageCount = unreadMessageCount,
@@ -238,6 +250,12 @@ internal fun NewArenaCombat(
             )
 
             FlashOverlay(flashMessage = flashMessage, modifier = Modifier.fillMaxSize())
+
+            InspectDrawer(
+                player = inspectedPlayer,
+                onClose = { inspectedUserId = null },
+                modifier = Modifier.fillMaxSize(),
+            )
         }
     }
 }
@@ -247,6 +265,7 @@ private fun TransitioningContent(
     state: ArenaState.Combat,
     currentTargetUserId: String,
     onSelectTarget: (String) -> Unit,
+    onInspect: (String) -> Unit,
     isTargetable: Boolean,
     messages: List<ArenaMessageState>,
     unreadMessageCount: Int,
@@ -257,6 +276,7 @@ private fun TransitioningContent(
             headIconPlayers = state.headIconPlayersFor(targetUserId = currentTargetUserId),
             isTargetable = isTargetable,
             onSelectTarget = onSelectTarget,
+            onInspect = onInspect,
             messages = messages,
             unreadMessageCount = unreadMessageCount,
             modifier = Modifier.weight(weight = 1f),
@@ -274,6 +294,7 @@ private fun TopHalfContent(
     headIconPlayers: List<PlayerState.Selected>,
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
+    onInspect: (String) -> Unit,
     messages: List<ArenaMessageState>,
     unreadMessageCount: Int,
     modifier: Modifier = Modifier,
@@ -283,6 +304,7 @@ private fun TopHalfContent(
             headIconPlayers = headIconPlayers,
             isTargetable = isTargetable,
             onSelectTarget = onSelectTarget,
+            onInspect = onInspect,
             modifier = Modifier.padding(top = MESSAGES_ICON_SIZE),
         )
         Messages(messages = messages, unreadMessageCount = unreadMessageCount)
@@ -294,6 +316,7 @@ private fun ClassIcons(
     headIconPlayers: List<PlayerState.Selected>,
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
+    onInspect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     FlowRow(
@@ -302,7 +325,12 @@ private fun ClassIcons(
         verticalArrangement = Arrangement.spacedBy(space = 8.dp),
     ) {
         headIconPlayers.forEach { player ->
-            ClassIcon(player = player, isTargetable = isTargetable, onSelectTarget = onSelectTarget)
+            ClassIcon(
+                player = player,
+                isTargetable = isTargetable,
+                onSelectTarget = onSelectTarget,
+                onInspect = onInspect,
+            )
         }
     }
 }
@@ -312,17 +340,20 @@ private fun ClassIcon(
     player: PlayerState.Selected,
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
+    onInspect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isConscious = player.characterClass.isConscious
-    val isClickable = isTargetable && isConscious
+    // A normal targeting tap only when this is a valid target; otherwise (not the user's turn,
+    // target-locked, or a knocked-out head) the tap inspects the class instead (SS-150).
+    val isTargetingTap = isTargetable && isConscious
 
     ClassHeadIcon(
         characterClass = player.characterClass,
         isEnabled = isConscious,
         modifier =
-            modifier.sharedBounds(key = player.userId).clickable(enabled = isClickable) {
-                onSelectTarget(player.userId)
+            modifier.sharedBounds(key = player.userId).clickable {
+                if (isTargetingTap) onSelectTarget(player.userId) else onInspect(player.userId)
             },
     )
 }
@@ -848,6 +879,110 @@ private fun confettiParticles(): List<ConfettiParticle> {
 }
 
 /**
+ * A right-side drawer that slides in to inspect a class (SS-150): the full avatar plus every stat
+ * with its explanation, opened by a non-targeting tap on a head icon. A scrim dims the combat
+ * behind it; tapping the scrim (or back into a normal targeting tap next turn) dismisses it.
+ */
+@Composable
+private fun InspectDrawer(
+    player: PlayerState.Selected?,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isOpen = player != null
+    // Hold the last inspected player so its content stays put while the drawer slides back out.
+    var shownPlayer by remember { mutableStateOf<PlayerState.Selected?>(value = null) }
+    if (player != null) shownPlayer = player
+
+    Box(modifier = modifier) {
+        AnimatedVisibility(visible = isOpen, enter = fadeIn(), exit = fadeOut()) {
+            Box(
+                modifier =
+                    Modifier.fillMaxSize().background(color = INSPECT_SCRIM).clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                    ) {
+                        onClose()
+                    }
+            )
+        }
+
+        AnimatedVisibility(
+            visible = isOpen,
+            enter = slideInHorizontally(initialOffsetX = { it }),
+            exit = slideOutHorizontally(targetOffsetX = { it }),
+            modifier = Modifier.align(alignment = Alignment.CenterEnd),
+        ) {
+            val current = shownPlayer
+            if (current != null) InspectContent(player = current)
+        }
+    }
+}
+
+@Composable
+private fun InspectContent(player: PlayerState.Selected, modifier: Modifier = Modifier) {
+    val classCopy = LocalCharacterClassCopy.current
+    val stats = remember(player, classCopy) { avatarStats(player.characterClass, classCopy) }
+
+    Column(
+        modifier =
+            modifier
+                .fillMaxHeight()
+                .width(width = INSPECT_DRAWER_WIDTH)
+                .background(color = INSPECT_DRAWER_COLOR)
+                // Consume taps so the drawer itself doesn't fall through to the dismissing scrim.
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {}
+                .verticalScroll(state = rememberScrollState())
+                .padding(all = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+    ) {
+        Text(
+            text = player.characterClass.className,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = Color.White,
+        )
+        ClassAvatar(
+            characterClass = player.characterClass,
+            modifier = Modifier.fillMaxWidth().height(height = INSPECT_AVATAR_HEIGHT),
+        )
+        stats.forEach { stat -> InspectStatRow(stat = stat) }
+    }
+}
+
+@Composable
+private fun InspectStatRow(stat: AvatarStat, modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Image(
+            painter = painterResource(resource = stat.icon),
+            contentDescription = stat.name,
+            modifier = Modifier.size(size = STAT_ICON_SIZE),
+        )
+        Column {
+            val title = if (stat.value != null) "${stat.name} · ${stat.value}" else stat.name
+            Text(
+                text = title,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+            Text(
+                text = stat.explanation,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+            )
+        }
+    }
+}
+
+/**
  * The action bar: the normal [AttackButton] on top, then a row holding the ability button(s) and
  * the Illusionist's [ImpersonateButton]. The controls available right now are derived from the
  * combat state (SS-101); a multi-choice ability (Mirror Image) yields several ability buttons in
@@ -1253,6 +1388,23 @@ private fun NewArenaCombatFlashPreview() {
                 type = NormalRollMessageType.Knockout,
             ),
     )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun InspectDrawerPreview() {
+    SorcerersAndSpiritsTheme {
+        CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
+            InspectContent(
+                player =
+                    PlayerState.Selected(
+                        userId = "player1",
+                        displayName = "Sorcerer Supreme",
+                        characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
+                    )
+            )
+        }
+    }
 }
 
 @Composable

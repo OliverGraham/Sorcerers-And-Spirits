@@ -112,20 +112,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
   `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
 
-### SS-150 — Inspect a player when idle / target-locked
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-150)`.
-- **Goal:** Let a player tap a head icon to see more about that class even when it is **not** their
-  turn or they are **locked** into a target (e.g. while waiting for an opponent to roll) — without it
-  counting as targeting.
-- **Two options to weigh (decide here):**
-  1. Expand the tapped head into its full avatar, covering nearby content.
-  2. A right-side drawer that opens with the full avatar + stats.
-- **Steps:** Pick an option (record the choice + rationale); build the inspect interaction so it is
-  clearly distinct from the targeting tap (SS-144); reuse the SS-146 stat presentation where it fits.
-- **Notes:** Realizes the former SS-141 (head → expanded stat view, "the other UI") placeholder.
-  Related: SS-144, SS-146, SS-142.
-
 ---
 
 ## Domain layer

@@ -9,9 +9,11 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +29,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,6 +42,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -54,16 +59,20 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.forAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toAvatarResource
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
@@ -87,10 +96,13 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_armor_class
 import sorcerersandspirits.composeapp.generated.resources.ic_attack_button
 import sorcerersandspirits.composeapp.generated.resources.ic_defensive_ability
+import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 import sorcerersandspirits.composeapp.generated.resources.ic_offensive_ability
+import sorcerersandspirits.composeapp.generated.resources.ic_speed
 import sorcerersandspirits.composeapp.generated.resources.ic_teleport_button
 
 private const val TARGET_TRANSITION_LABEL = "NewArenaCombatTargetTransition"
@@ -115,6 +127,10 @@ private const val DICE_HOME_DIE_COUNT = 2
 // The reserved height of the resting dice slot, and the gap between the two dice at rest.
 private val DICE_HOME_HEIGHT = 96.dp
 private val DICE_REST_SPACING = 76.dp
+
+private val STAT_ROW_SHAPE = RoundedCornerShape(size = 8.dp)
+private val STAT_ICON_SIZE = 28.dp
+private val STAT_EXPLANATION_MAX_WIDTH = 150.dp
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -404,6 +420,11 @@ private fun AvatarsRow(
     }
 }
 
+/**
+ * The button bar flanked by the two stat columns. The buttons sit centered underneath while the
+ * stat columns are pinned to the edges on top, so an expanded stat row opens over the buttons
+ * rather than pushing them (SS-146).
+ */
 @Composable
 private fun BottomControls(
     state: ArenaState.Combat,
@@ -412,17 +433,9 @@ private fun BottomControls(
     diceRoll: DiceRoll,
     modifier: Modifier = Modifier,
 ) {
-    // TODO(SS-146): Stats need to open on top of all content in this Row
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Column(modifier = Modifier.weight(weight = 1f)) {
-            // TODO(SS-146): 5 stats - Active Player
-            //       Speed
-            //       ArmorClass
-            //       HitPoints
-            //       OffensiveAbility
-            //       DefensiveAbility
-        }
+    val targetPlayer = state.targetPlayerFor(targetUserId = targetedOpponentUserId)
 
+    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Buttons(
             state = state,
             targetedOpponentUserId = targetedOpponentUserId,
@@ -430,32 +443,194 @@ private fun BottomControls(
             diceRoll = diceRoll,
         )
 
-        Column(modifier = Modifier.weight(weight = 1f)) {
-            // TODO(SS-146): 5 stats - Target Opponent
-            //       Speed
-            //       ArmorClass
-            //       HitPoints
-            //       OffensiveAbility
-            //       DefensiveAbility
+        ClassAvatarStats(
+            characterClass = state.userPlayer.characterClass,
+            displayDirection = DisplayDirection.Left,
+            modifier = Modifier.align(alignment = Alignment.CenterStart),
+        )
+
+        ClassAvatarStats(
+            characterClass = targetPlayer?.characterClass,
+            displayDirection = DisplayDirection.Right,
+            modifier = Modifier.align(alignment = Alignment.CenterEnd),
+        )
+    }
+}
+
+/**
+ * One player's five stat rows stacked beside the buttons: Speed, Armor, Hit Points, and the
+ * offensive/defensive ability markers. Each row shows an icon (plus a value for the numeric stats)
+ * on the class color; tapping expands it toward the centre — rightward on the
+ * [DisplayDirection.Left] side, leftward on the [DisplayDirection.Right] — to reveal a short
+ * explanation (SS-146). Null while there is no target.
+ */
+@Composable
+private fun ClassAvatarStats(
+    characterClass: CharacterClassState?,
+    displayDirection: DisplayDirection,
+    modifier: Modifier = Modifier,
+) {
+    if (characterClass == null) return
+
+    val classCopy = LocalCharacterClassCopy.current
+    val classColor = characterClass.type.toColor()
+    val stats = remember(characterClass, classCopy) { avatarStats(characterClass, classCopy) }
+    val rowAlignment =
+        if (displayDirection == DisplayDirection.Left) Alignment.Start else Alignment.End
+
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.spacedBy(space = 4.dp),
+        horizontalAlignment = rowAlignment,
+    ) {
+        stats.forEach { stat ->
+            StatRow(stat = stat, classColor = classColor, displayDirection = displayDirection)
         }
     }
 }
 
 @Composable
-private fun ClassAvatarStats(displayDirection: DisplayDirection, modifier: Modifier = Modifier) {
-    when (displayDirection) {
-        DisplayDirection.Left -> {
-            // TODO(SS-146): Row of Icon with stat, both with class color background.
-            //       onTap is expand to the right, revealing a short explanation of the stat.
-            //       For OffensiveAbility and DefensiveAbility, there's no stat, but the rest is the
-            //  same.
-        }
+private fun StatRow(
+    stat: AvatarStat,
+    classColor: Color,
+    displayDirection: DisplayDirection,
+    modifier: Modifier = Modifier,
+) {
+    var isExpanded by remember { mutableStateOf(value = false) }
+    val isLeft = displayDirection == DisplayDirection.Left
 
-        DisplayDirection.Right -> {
-            // TODO(SS-146): Opposite directions of above. Row stat and then Icon, and expands to
-            //  left.
+    Row(
+        modifier =
+            modifier
+                .clip(shape = STAT_ROW_SHAPE)
+                .background(color = classColor)
+                .clickable { isExpanded = !isExpanded }
+                .padding(horizontal = 6.dp, vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (isLeft) {
+            StatIconAndValue(stat = stat, isLeft = true)
+            StatExplanation(stat = stat, isVisible = isExpanded, isLeft = true)
+        } else {
+            StatExplanation(stat = stat, isVisible = isExpanded, isLeft = false)
+            StatIconAndValue(stat = stat, isLeft = false)
         }
     }
+}
+
+@Composable
+private fun StatIconAndValue(stat: AvatarStat, isLeft: Boolean, modifier: Modifier = Modifier) {
+    // Mirror the two sides: icon then value on the left, value then icon on the right.
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        val icon: @Composable () -> Unit = {
+            Image(
+                painter = painterResource(resource = stat.icon),
+                contentDescription = stat.name,
+                modifier = Modifier.size(size = STAT_ICON_SIZE),
+            )
+        }
+        val value: @Composable () -> Unit = {
+            if (stat.value != null) {
+                Text(
+                    text = stat.value,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                )
+            }
+        }
+
+        if (isLeft) {
+            icon()
+            value()
+        } else {
+            value()
+            icon()
+        }
+    }
+}
+
+@Composable
+private fun StatExplanation(stat: AvatarStat, isVisible: Boolean, isLeft: Boolean) {
+    val edge = if (isLeft) Alignment.Start else Alignment.End
+
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = expandHorizontally(expandFrom = edge) + fadeIn(),
+        exit = shrinkHorizontally(shrinkTowards = edge) + fadeOut(),
+    ) {
+        Column(
+            modifier = Modifier.widthIn(max = STAT_EXPLANATION_MAX_WIDTH).padding(horizontal = 4.dp)
+        ) {
+            Text(
+                text = stat.name,
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+            )
+            Text(
+                text = stat.explanation,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White,
+            )
+        }
+    }
+}
+
+private data class AvatarStat(
+    val icon: DrawableResource,
+    val value: String?,
+    val name: String,
+    val explanation: String,
+)
+
+private fun avatarStats(
+    characterClass: CharacterClassState,
+    classCopy: CharacterClassCopy,
+): List<AvatarStat> {
+    val speed = classCopy[ClassCopyKeys.SPEED]
+    val armor = classCopy[ClassCopyKeys.ARMOR]
+    val health = classCopy[ClassCopyKeys.HEALTH]
+    val offensive = classCopy.forAbility(ability = characterClass.offensiveAbility)
+    val defensive = classCopy.forAbility(ability = characterClass.defensiveAbility)
+
+    return listOf(
+        AvatarStat(
+            icon = Res.drawable.ic_speed,
+            value = characterClass.speed.toString(),
+            name = speed.name,
+            explanation = speed.short,
+        ),
+        AvatarStat(
+            icon = Res.drawable.ic_armor_class,
+            value = characterClass.armorClass.toString(),
+            name = armor.name,
+            explanation = armor.short,
+        ),
+        AvatarStat(
+            icon = Res.drawable.ic_hit_points,
+            value = characterClass.hitPointsDisplay,
+            name = health.name,
+            explanation = health.short,
+        ),
+        AvatarStat(
+            icon = Res.drawable.ic_offensive_ability,
+            value = null,
+            name = offensive.name,
+            explanation = offensive.short,
+        ),
+        AvatarStat(
+            icon = Res.drawable.ic_defensive_ability,
+            value = null,
+            name = defensive.name,
+            explanation = defensive.short,
+        ),
+    )
 }
 
 @Composable

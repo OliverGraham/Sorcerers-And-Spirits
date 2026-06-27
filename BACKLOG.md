@@ -35,6 +35,109 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Related:** SS-154 (removed the old timer display along with `ArenaMessageLogHandle`), SS-068
   (Arena UI overhaul).
 
+### SS-156 — Stat column must not shift when a stat row expands
+- [ ] Not completed
+- **Symptom:** Opening (expanding) a stat row moves surrounding content; it shouldn't — the stat
+  column should stay put and the explanation should open over neighboring content, not push it.
+- **Source:** `NewArenaCombat.kt` — `ClassAvatarStats` / `StatRow` (~530–580). `BottomControls`
+  (~491) layers the two stat columns over the centered `Buttons` via `Box` + `align`, with the
+  intent (per the SS-146 doc comment) that an expanded row "opens over the buttons rather than
+  pushing them." That holds for the buttons, but the expanding `StatRow` still reflows other content.
+- **Goal:** Expanding a stat row reveals its explanation without displacing the stat column or the
+  avatars/buttons around it (e.g. let the explanation overlay rather than participate in layout).
+- **Related:** SS-146 (stat rows + explanations), SS-159 (button/DiceHome positioning — the stat
+  column stays fixed).
+
+### SS-157 — Active player always occupies the left avatar slot
+- [ ] Not completed
+- **Symptom:** The active player (whoever's turn it is) should be on the left at all times, whether
+  or not it's the phone-holder. Currently the phone-holder is always on the left.
+- **Source:** `NewArenaCombat.kt` — `AvatarsRow` (~465) places `userPlayer` (the local user) in the
+  left `weight(1f)` slot and `targetPlayer` on the right, unconditionally. Same assumption flows
+  through `BottomControls`' `ClassAvatarStats` (user on `CenterStart`, target on `CenterEnd`).
+- **Goal:** The left slot shows the active player (the current roller/turn-owner); the other
+  combatant takes the right. Carry the same left/right convention through the flanking stat columns.
+  Confirm the desired arrangement when the local user is the active player vs. the defender.
+- **Related:** SS-145 (target avatar), SS-156 (stat columns).
+
+### SS-158 — Single-die rolls must animate only one die
+- [ ] Not completed
+- **Symptom:** When an action rolls a single die, sometimes the disabled second die tumbles too.
+  Seen during a Bard's Persuade roll (1d6).
+- **Source:** `dice/DiceRoll.kt` `displayedDiceCount`/`dieFaces` (~128–143) and `dice/DiceTray.kt`.
+  The displayed die count falls back to the *latest* roll's size when not actively rolling
+  (`latestRoll.dice.isNotEmpty() -> latestRoll.dice.size`), so a 1-die action that follows a 2-die
+  roll can briefly render/animate two dice; the disabled die should never tumble.
+- **Goal:** A roll of N dice animates exactly N dice; any non-rollable/disabled die stays at rest.
+- **Related:** SS-117 (await-result tumble), SS-149 (shared roll state).
+
+### SS-159 — Raise DiceHome and buttons toward the avatars; keep the stat column fixed
+- [ ] Not completed
+- **Symptom:** The `DiceHome` resting slot sits too low; it should be higher, closer to the avatars.
+  The combat buttons should also move up. The stat column should **not** move up — its current
+  vertical position is correct.
+- **Source:** `NewArenaCombat.kt` — the root `Column` (DiceHomeSlot ~234, `BottomControls` ~238/491)
+  and `DiceHomeSlot` (~715). Note the stat columns live inside `BottomControls`, so naive "move the
+  buttons up" must not drag the stat columns with them.
+- **Goal:** Reposition `DiceHome` and the buttons higher (closer to the avatars) while leaving the
+  stat columns where they are. Likely means decoupling the stat columns' vertical placement from the
+  button row.
+- **Related:** SS-156, SS-157, SS-068. **Confer with designer** on exact offsets.
+
+### SS-160 — Combat buttons: 3D pressed style; ability buttons get class-color border
+- [ ] Not completed
+- **Goal:** Combat buttons should read as physically pressed-down (3D) when held/pressed. Ability
+  buttons should carry the player's class-color border.
+- **Source:** `NewArenaCombat.kt` — shared `ArenaButton` (~1142) used by `AttackButton`,
+  `AbilityButton`, `ImpersonateButton` (~1080–1140). Class color available via
+  `CharacterClassType.toColor()` / `classFamilyColors` (already used by `ClassAvatarStats`/head
+  icons).
+- **Related:** SS-068 (Arena UI overhaul), SS-153 (class color source).
+
+### SS-161 — Messages affordance overhaul (icon, unread tally, scroll-unfurl, ordering)
+- [ ] Not completed
+- **Source:** `NewArenaCombat.kt` — `Messages` / `MessagesIcon` / `UnreadCount` (~366–460); the log
+  body is `message/ArenaMessageLog.kt`. Unread is tracked locally in `Messages` (SS-154).
+- **Goal (several sub-items — may split):**
+  - **Collapsed icon must not cover `ClassIcons` content** — when not expanded, the messages icon/
+    affordance cannot overlap the head-icon row.
+  - **Round messages icon** — the icon should be circular.
+  - **Unread tally animates up** — the unread number animates upward as messages arrive until the
+    user has read them; cap the display at **9+** for 10 or more unread.
+  - **Mark all read on open** — opening the log marks every message as read (resets the tally).
+  - **Expanded log must not be covered by the icon** — when expanded, the messages icon cannot
+    obscure the messages.
+  - **Unfurl like a scroll** — expanding should animate like an old-timey paper scroll unfurling,
+    not a fade-in (currently `expandVertically + fadeIn`).
+  - **Top-down reading order** — messages read top-to-bottom (standard/most-recent-last ordering);
+    verify/adjust `ArenaMessageLog` ordering.
+- **Related:** SS-154 (local unread tracking), SS-025 (message-log animation).
+
+### SS-162 — Combat stuck in a loop after the Mage wins a Teleport roll-off
+- [ ] Not completed
+- **Severity:** High — combat can fail to advance.
+- **Symptom:** After the Mage wins a Teleport roll-off, combat gets stuck; the player had to roll the
+  dice ~5 times before the turn advanced.
+- **Source (to investigate):** `domain/.../performcombataction/ability/passive/TeleportHandler.kt`
+  and `PerformCombatAction.kt` / `NextCombatAction` resolution; UI side
+  `CombatActionState`/`ArenaCombatControl` for how the owed roll is presented after a won roll-off.
+  Likely the post-roll-off `NextCombatAction` doesn't advance the turn (or the UI keeps re-owing the
+  same roll), so repeated rolls are needed before it clears.
+- **Goal:** After a Mage wins (or loses) a Teleport roll-off, combat advances on the first resolution
+  — no repeated rolls, no stuck loop. Add/verify a domain test for the Teleport roll-off → next-turn
+  path.
+- **Related:** Teleport rule (CLAUDE.md), SS-154 (general "match must progress").
+
+### SS-163 — Flash callout hold is too short
+- [ ] Not completed
+- **Symptom:** The short full-screen animation message (Hit!/Miss!/K.O.!) is a little too short.
+- **Source:** `NewArenaCombat.kt` `FLASH_HOLD_MILLIS = 850L` (~159), used by `FlashOverlay` (SS-148).
+  Note the Combat→Finished hold (`FINISH_HOLD_MILLIS`, SS-154) was sized against this; revisit it if
+  the flash duration changes materially.
+- **Goal:** Lengthen the flash hold so the callout is comfortably readable. **Confer with designer**
+  on the exact duration.
+- **Related:** SS-148 (flash callout), SS-154 (`FINISH_HOLD_MILLIS` sizing).
+
 ### SS-025 — Improve message-log animation
 - [ ] Not completed
 - **Source:** `ArenaMessageLog.kt` (was `ArenaMessageLogHandle.kt`, removed in SS-154 as orphaned).

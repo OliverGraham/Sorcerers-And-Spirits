@@ -79,6 +79,8 @@ sealed interface ArenaState {
         val activeUserIds = combatActionState.activeUserIds
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
+        val turnOwnerUserId = combatActionState.turnOwnerUserId
+        val turnOwnerPlayer = playerMap.getValue(key = turnOwnerUserId)
         val combatControls = deriveCombatControls()
         val lockedTargetUserId = deriveLockedTargetUserId()
         val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()
@@ -135,14 +137,44 @@ private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
 }
 
 /**
- * The opponent the user is currently aimed at, combining the three target sources in priority order
- * (mirrors the old ArenaCombat hoist): the Domain-pinned defender of an in-flight attack wins, then
- * the user's own tapped [selectedOpponentUserId], then the lone auto-target (SS-101). Empty when
- * the user has no target. The selection is Composable-local interaction state, so it is threaded in
- * rather than derived at map time.
+ * The player shown in the right-hand target avatar slot. On the user's own turn it is who the user
+ * is aimed at, combining the three target sources in priority order (mirrors the old ArenaCombat
+ * hoist): the Domain-pinned defender of an in-flight attack wins, then the user's own tapped
+ * [selectedOpponentUserId], then the lone auto-target (SS-101). On another player's turn the user
+ * makes no target choice, so it falls back to the in-flight action's defender — whoever the active
+ * player is attacking (SS-157). Empty when there is no target. The selection is Composable-local
+ * interaction state, so it is threaded in rather than derived at map time.
  */
-internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String =
-    lockedTargetUserId ?: selectedOpponentUserId.ifEmpty { autoTargetedOpponentUserId.orEmpty() }
+internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
+    val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
+    val userChosenTarget =
+        if (isUserTheTurnOwner) {
+            lockedTargetUserId
+                ?: selectedOpponentUserId.ifEmpty { autoTargetedOpponentUserId.orEmpty() }
+        } else {
+            ""
+        }
+    val chosenOrInFlight =
+        userChosenTarget.ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
+    if (isUserTheTurnOwner) return chosenOrInFlight
+
+    // The turn owner's own device pre-targets the lone opponent (autoTargetedOpponentUserId), but
+    // that selection is local and never crosses the wire. So before the turn owner commits a roll,
+    // mirror the same default on every other device — the lone opponent they will attack (SS-157).
+    return chosenOrInFlight.ifEmpty { turnOwnerLoneOpponentUserId.orEmpty() }
+}
+
+/**
+ * The single conscious opponent of the current turn owner, or null when they have none or more than
+ * one. With only one possible target there is no choice to make, so it is the default target every
+ * device can show before the turn owner picks — the cross-device mirror of the turn owner's own
+ * [deriveAutoTargetedOpponentUserId] (SS-157).
+ */
+private val ArenaState.Combat.turnOwnerLoneOpponentUserId: String?
+    get() =
+        playerMap.values
+            .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
+            ?.userId
 
 /**
  * The opponent shown as the full bottom-half target avatar (SS-145) for a resolved [targetUserId],
@@ -155,18 +187,19 @@ internal fun ArenaState.Combat.targetPlayerFor(targetUserId: String): PlayerStat
 }
 
 /**
- * The opponents shown as collapsed head icons (SS-143) for a resolved [targetUserId]: every player
- * except the user and the current target avatar ([targetPlayerFor]), who are the two full
- * bottom-half avatars instead. A knocked-out opponent is never the target avatar, so it always
- * falls back into the head-icon row, where it is rendered grayed-out and out of the fight (SS-152,
- * mirror SS-123).
+ * The opponents shown as collapsed head icons (SS-143) for an [activeUserId] turn owner and a
+ * resolved [targetUserId]: every player except those two — the turn owner (left) and the current
+ * target avatar (right, [targetPlayerFor]) — who are the two full bottom-half avatars instead
+ * (SS-157). A knocked-out opponent is never the target avatar, so it always falls back into the
+ * head-icon row, where it is rendered grayed-out and out of the fight (SS-152, mirror SS-123).
  */
 internal fun ArenaState.Combat.headIconPlayersFor(
-    targetUserId: String
+    activeUserId: String,
+    targetUserId: String,
 ): List<PlayerState.Selected> {
     val targetPlayer = targetPlayerFor(targetUserId = targetUserId)
     return playerMap.values.filter {
-        it.userId != userPlayerId && it.userId != targetPlayer?.userId
+        it.userId != activeUserId && it.userId != targetPlayer?.userId
     }
 }
 

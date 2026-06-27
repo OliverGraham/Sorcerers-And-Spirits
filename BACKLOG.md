@@ -112,16 +112,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
   `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
 
-### SS-148 — Full-screen flash messages ("Hit!" / "Miss!")
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-148)`.
-- **Goal:** Show brief, stylized full-screen call-outs (e.g. "Hit!", "Miss!") in the center of the
-  whole screen with a quick animation (bounce, rotate, etc.); the full message still goes to the log.
-- **Steps:** Add a short-text field to the message model (e.g. a `shortText` on the `ArenaMessage` /
-  `ArenaMessageState`) that flash-worthy events populate; render+animate it as a center-screen overlay
-  that auto-dismisses; only events with short text flash.
-- **Notes:** Related: SS-025 (message-log animation), SS-147, SS-142.
-
 ### SS-150 — Inspect a player when idle / target-locked
 - [ ] Not completed
 - **Source:** `NewArenaCombat.kt` top-level `// TODO(SS-150)`.

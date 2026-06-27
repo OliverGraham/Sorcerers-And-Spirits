@@ -77,6 +77,7 @@ internal fun LoadedArenaScreen(
                     secondsRemaining = screenState.secondsRemaining,
                     messages = screenState.filteredMessages,
                     unreadMessageCount = screenState.unhandledMessagesCount,
+                    flashMessage = screenState.latestFlashMessage,
                     paddingValues = paddingValues,
                 )
 
@@ -112,6 +113,7 @@ private fun ScreenContent(
     secondsRemaining: Int,
     messages: List<ArenaMessageState>,
     unreadMessageCount: Int,
+    flashMessage: ArenaMessageState?,
     paddingValues: PaddingValues,
     modifier: Modifier = Modifier,
 ) {
@@ -127,6 +129,7 @@ private fun ScreenContent(
             secondsRemaining = secondsRemaining,
             messages = messages,
             unreadMessageCount = unreadMessageCount,
+            flashMessage = flashMessage,
         )
     }
 }
@@ -141,6 +144,7 @@ private fun ColumnScope.ArenaStateContent(
     secondsRemaining: Int,
     messages: List<ArenaMessageState>,
     unreadMessageCount: Int,
+    flashMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
 ) {
     transitionState.Crossfade(
@@ -160,6 +164,7 @@ private fun ColumnScope.ArenaStateContent(
                     state = arenaState,
                     messages = messages,
                     unreadMessageCount = unreadMessageCount,
+                    flashMessage = flashMessage,
                 )
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()

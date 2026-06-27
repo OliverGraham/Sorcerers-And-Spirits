@@ -141,8 +141,9 @@ private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<A
     )
 
 /**
- * The user is already in [CombatActionState.activeUserIds] when this is checked. Teleport is the
- * only roll-off where both combatants are active, so check whose die is still unrolled.
+ * The user is already in [CombatActionState.activeUserIds] when this is checked. The Teleport
+ * roll-off is handed to one combatant at a time (the owner of the next unrolled die, SS-162), so
+ * confirm the active user still owes their die before showing the roll control.
  */
 private fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
     when (this) {

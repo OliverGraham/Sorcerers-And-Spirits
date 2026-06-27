@@ -21,7 +21,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 defenderRoll = TeleportDie(userId = defenderUserId),
             )
 
-        setNextAbilityRoll(purpose = purpose, activeUserIds = setOf(attackerUserId, defenderUserId))
+        setNextTeleportRoll(teleport = purpose)
     }
 
     private fun CombatMutator.handleTeleport(teleport: AbilityAction.Passive.Teleport) {
@@ -43,11 +43,25 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 handleTeleportFailure()
             }
         } else {
-            setNextAbilityRoll(
-                purpose = updatedTeleport,
-                activeUserIds = setOf(attackerUserId, defenderUserId),
-            )
+            setNextTeleportRoll(teleport = updatedTeleport)
         }
+    }
+
+    /**
+     * Hands the roll-off to the single combatant who still owes a die, in roll order (attacker
+     * first). Only that user is active, so the computer opponent can roll its own die and neither
+     * side ends up rolling the other's — both combatants being active at once stalled the roll-off
+     * because the computer never acts while the user is co-active (SS-162).
+     */
+    private fun CombatMutator.setNextTeleportRoll(teleport: AbilityAction.Passive.Teleport) {
+        val nextRollerId =
+            if (teleport.attackerRoll.roll == null) {
+                teleport.attackerRoll.userId
+            } else {
+                teleport.defenderRoll.userId
+            }
+
+        setNextAbilityRoll(purpose = teleport, activeUserIds = setOf(nextRollerId))
     }
 
     private fun CombatMutator.rollCurrentUserDieOrNull(teleport: AbilityAction.Passive.Teleport) =

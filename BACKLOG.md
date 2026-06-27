@@ -113,21 +113,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
     verify/adjust `ArenaMessageLog` ordering.
 - **Related:** SS-154 (local unread tracking), SS-025 (message-log animation).
 
-### SS-162 — Combat stuck in a loop after the Mage wins a Teleport roll-off
-- [ ] Not completed
-- **Severity:** High — combat can fail to advance.
-- **Symptom:** After the Mage wins a Teleport roll-off, combat gets stuck; the player had to roll the
-  dice ~5 times before the turn advanced.
-- **Source (to investigate):** `domain/.../performcombataction/ability/passive/TeleportHandler.kt`
-  and `PerformCombatAction.kt` / `NextCombatAction` resolution; UI side
-  `CombatActionState`/`ArenaCombatControl` for how the owed roll is presented after a won roll-off.
-  Likely the post-roll-off `NextCombatAction` doesn't advance the turn (or the UI keeps re-owing the
-  same roll), so repeated rolls are needed before it clears.
-- **Goal:** After a Mage wins (or loses) a Teleport roll-off, combat advances on the first resolution
-  — no repeated rolls, no stuck loop. Add/verify a domain test for the Teleport roll-off → next-turn
-  path.
-- **Related:** Teleport rule (CLAUDE.md), SS-154 (general "match must progress").
-
 ### SS-163 — Flash callout hold is too short
 - [ ] Not completed
 - **Symptom:** The short full-screen animation message (Hit!/Miss!/K.O.!) is a little too short.

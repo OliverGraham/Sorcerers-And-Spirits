@@ -19,7 +19,6 @@ private const val FINISHED_TIMER_DURATION_SECONDS = 60
 @Immutable
 data class ArenaScreenState(
     val messages: List<ArenaMessageState>,
-    val unhandledMessagesCount: Int,
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
@@ -34,14 +33,6 @@ data class ArenaScreenState(
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
 
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
-
-    val latestMessage: ArenaMessageState? =
-        messages.getOrNull(
-            index = messages.size - unhandledMessagesCount.coerceAtLeast(minimumValue = 1)
-        )
-
-    val filteredMessages: List<ArenaMessageState> =
-        messages.dropLast(n = unhandledMessagesCount.coerceAtLeast(minimumValue = 1))
 
     /**
      * The most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077) and a new
@@ -206,15 +197,6 @@ internal fun ArenaMatch.toUpdatedState(
                 classNames = participantClassNames,
             )
         }
-    // The log is capped (oldest entries scroll off) and resets to a fresh, small list when a new
-    // match begins, so the running unhandled count can outrun what the log actually holds — e.g. a
-    // big combat result, or leftover unhandled messages carried over from the prior match. If it
-    // exceeds the list size, latestMessage resolves to null and filteredMessages to empty, wiping
-    // the log with no way to recover, so it can never hold more than the messages that remain.
-    val unhandledMessagesCount =
-        ((previousState?.unhandledMessagesCount ?: 0) + numberOfNewMessages).coerceAtMost(
-            maximumValue = messages.size
-        )
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 
@@ -266,16 +248,14 @@ internal fun ArenaMatch.toUpdatedState(
         }
 
     val (displayedArenaState, pendingFinishedState) =
-        deferFinishUntilMessagesPlay(
+        holdCombatForClosingFlash(
             computedState = computedArenaState,
             previousState = previousState?.arenaState,
-            hasUnhandledMessages = unhandledMessagesCount > 0,
         )
 
     val nextScreenState =
         ArenaScreenState(
             messages = messages,
-            unhandledMessagesCount = unhandledMessagesCount,
             secondsRemaining = previousSeconds,
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
@@ -288,7 +268,7 @@ internal fun ArenaMatch.toUpdatedState(
             pendingFinishedState = pendingFinishedState,
         )
 
-    // While the Finished transition is deferred, the match is over, so the combat clock is stopped
+    // While the Finished transition is held, the match is over, so the combat clock is stopped
     // rather than left running against the held combat view.
     val timerAction =
         if (pendingFinishedState != null) {
@@ -311,20 +291,18 @@ internal fun ArenaMatch.toUpdatedState(
 }
 
 /**
- * Defers the [ArenaState.Finished] transition while the match's closing messages and animations are
- * still playing (SS-098). When the match has just finished but unhandled messages remain, the
- * combat view is held in place—updated to show the final knockout—and the finished state is
- * returned as pending, to be advanced to once the messages drain. Otherwise the computed state is
- * shown as is.
+ * Briefly holds the combat view on the Combat→Finished transition so the closing flash callout
+ * (SS-148) can play before the Finished screen replaces it (SS-154). When the match has just
+ * finished, the combat view is held in place—updated to show the final knockout—and the finished
+ * state is returned as pending, for the ViewModel to advance to after a fixed hold. Otherwise the
+ * computed state is shown as is.
  */
-private fun deferFinishUntilMessagesPlay(
+private fun holdCombatForClosingFlash(
     computedState: ArenaState,
     previousState: ArenaState?,
-    hasUnhandledMessages: Boolean,
 ): Pair<ArenaState, ArenaState.Finished?> {
     if (computedState !is ArenaState.Finished) return computedState to null
     if (previousState !is ArenaState.Combat) return computedState to null
-    if (!hasUnhandledMessages) return computedState to null
 
     val heldCombatState = previousState.withFinalPlayers(finishedPlayers = computedState.players)
     return heldCombatState to computedState
@@ -332,7 +310,7 @@ private fun deferFinishUntilMessagesPlay(
 
 /**
  * Returns this combat view with each player replaced by their final, match-end state, so the held
- * view reflects the closing knockout while the deferred Finished transition waits (SS-098).
+ * view reflects the closing knockout while the Finished transition is held (SS-154).
  */
 private fun ArenaState.Combat.withFinalPlayers(
     finishedPlayers: List<PlayerState.Selected>

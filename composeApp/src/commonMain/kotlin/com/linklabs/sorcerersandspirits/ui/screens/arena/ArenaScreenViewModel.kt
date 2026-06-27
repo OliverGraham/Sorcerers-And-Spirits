@@ -37,6 +37,7 @@ import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -44,6 +45,11 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
+
+// Long enough for the closing flash callout (SS-148) to play before the Finished screen replaces
+// the
+// combat view. Tunable; once character animations land this hold is superseded (SS-154).
+private const val FINISH_HOLD_MILLIS = 1500L
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -91,6 +97,8 @@ class ArenaScreenViewModel(
 
     private var screenStateFlowJob: Job? = null
 
+    private var finishHoldJob: Job? = null
+
     private var previousPlayerNames: Map<String, String> = emptyMap()
 
     init {
@@ -104,6 +112,7 @@ class ArenaScreenViewModel(
 
     private fun loadArenaMatch() {
         screenStateFlowJob?.cancel()
+        finishHoldJob?.cancel()
         screenStateFlowJob =
             viewModelScope.launch {
                 val userId = getUserIdUseCase()
@@ -170,37 +179,41 @@ class ArenaScreenViewModel(
         }
     }
 
-    fun onIncomingMessageHandled() {
-        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        if (loadedState.unhandledMessagesCount <= 0) return
+    /**
+     * Holds the combat view on the Combat→Finished transition for a fixed [FINISH_HOLD_MILLIS] so
+     * the closing flash callout (SS-148) can play, then advances to the Finished screen (SS-154).
+     * The hold is clocked entirely by the ViewModel, so the transition never depends on a combat
+     * composable being mounted to drive it. A single hold runs; the held state survives later match
+     * updates (e.g. another player readying), so a running hold is left to finish.
+     */
+    private fun startFinishHoldIfPending() {
+        val hasPendingFinish = _uiStateFlow.getLoadedStateOrNull()?.pendingFinishedState != null
+        if (!hasPendingFinish) return
+        if (finishHoldJob?.isActive == true) return
 
-        val remainingMessagesCount = loadedState.unhandledMessagesCount - 1
-        val pendingFinishedState = loadedState.pendingFinishedState
-        val hasDrainedClosingMessages = remainingMessagesCount == 0
-        // Once the closing messages/animations have all played, the deferred Finished transition
-        // (SS-098) advances to the Finished screen.
-        val isAdvancingToFinished = pendingFinishedState != null && hasDrainedClosingMessages
+        finishHoldJob =
+            viewModelScope.launch {
+                delay(timeMillis = FINISH_HOLD_MILLIS)
+                advanceToFinished()
+            }
+    }
+
+    private fun advanceToFinished() {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        val pendingFinishedState = loadedState.pendingFinishedState ?: return
 
         _uiStateFlow.updateLoaded { screenState ->
-            if (isAdvancingToFinished) {
-                screenState.copy(
-                    unhandledMessagesCount = remainingMessagesCount,
-                    arenaState = pendingFinishedState,
-                    pendingFinishedState = null,
-                )
-            } else {
-                screenState.copy(unhandledMessagesCount = remainingMessagesCount)
-            }
+            screenState.copy(arenaState = pendingFinishedState, pendingFinishedState = null)
         }
 
-        // The deferred advance bypasses the normal state-update timer logic, so the Finished
-        // countdown is (re)evaluated here. This matters when another player readied during this
-        // client's closing animation: the countdown must start as soon as the screen is reached.
-        if (isAdvancingToFinished && pendingFinishedState != null) {
-            val timerAction =
-                determineTimerAction(previous = loadedState.arenaState, next = pendingFinishedState)
-            handleTimerAction(timerAction = timerAction)
-        }
+        // The held advance bypasses the normal state-update timer logic, so the Finished countdown
+        // is
+        // (re)evaluated here. This matters when another player readied during this client's hold:
+        // the
+        // countdown must start as soon as the screen is reached.
+        val timerAction =
+            determineTimerAction(previous = loadedState.arenaState, next = pendingFinishedState)
+        handleTimerAction(timerAction = timerAction)
     }
 
     fun onAttack(attackArguments: AttackArguments) {
@@ -270,6 +283,7 @@ class ArenaScreenViewModel(
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
+        finishHoldJob?.cancel()
         computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
@@ -327,6 +341,7 @@ class ArenaScreenViewModel(
     private suspend fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
             screenStateFlowJob?.cancel()
+            finishHoldJob?.cancel()
 
             viewModelScope.launch {
                 setCurrentTravelerAvailableUseCase()
@@ -352,6 +367,8 @@ class ArenaScreenViewModel(
 
         val nextState = updatedArenaStateUpdate.nextState
         _uiStateFlow.value = UiState.Loaded(data = nextState)
+
+        startFinishHoldIfPending()
 
         computerOpponentHandler.onArenaState(
             arenaState = nextState.arenaState,
@@ -422,6 +439,7 @@ class ArenaScreenViewModel(
 
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
+        finishHoldJob?.cancel()
         computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)

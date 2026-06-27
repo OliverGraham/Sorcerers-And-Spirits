@@ -177,7 +177,6 @@ private val INSPECT_SCRIM = Color(color = 0x99000000)
 internal fun NewArenaCombat(
     state: ArenaState.Combat,
     messages: List<ArenaMessageState>,
-    unreadMessageCount: Int,
     flashMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
 ) {
@@ -228,7 +227,6 @@ internal fun NewArenaCombat(
                             onInspect = { inspectedUserId = it },
                             isTargetable = isTargetable,
                             messages = messages,
-                            unreadMessageCount = unreadMessageCount,
                         )
                     }
                 }
@@ -268,7 +266,6 @@ private fun TransitioningContent(
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
     messages: List<ArenaMessageState>,
-    unreadMessageCount: Int,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -278,7 +275,6 @@ private fun TransitioningContent(
             onSelectTarget = onSelectTarget,
             onInspect = onInspect,
             messages = messages,
-            unreadMessageCount = unreadMessageCount,
             modifier = Modifier.weight(weight = 1f),
         )
         AvatarsRow(
@@ -296,7 +292,6 @@ private fun TopHalfContent(
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     messages: List<ArenaMessageState>,
-    unreadMessageCount: Int,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -307,7 +302,7 @@ private fun TopHalfContent(
             onInspect = onInspect,
             modifier = Modifier.padding(top = MESSAGES_ICON_SIZE),
         )
-        Messages(messages = messages, unreadMessageCount = unreadMessageCount)
+        Messages(messages = messages)
     }
 }
 
@@ -363,12 +358,22 @@ private fun ClassIcon(
  * head icons (stopping at the bottom half), with the unread count drawn in the center of the icon.
  */
 @Composable
-private fun Messages(
-    messages: List<ArenaMessageState>,
-    unreadMessageCount: Int,
-    modifier: Modifier = Modifier,
-) {
+private fun Messages(messages: List<ArenaMessageState>, modifier: Modifier = Modifier) {
     var isExpanded by remember { mutableStateOf(value = false) }
+
+    // The unread badge is tracked here in the UI rather than fed from screen state (SS-154):
+    // messages
+    // arrived since the log was last seen are unread. While the log is open every message is
+    // visible,
+    // so the watermark tracks the full list; the log also resets to a fresh, smaller list when a
+    // new
+    // match begins, so the watermark drops with it rather than letting unread go negative.
+    var lastSeenMessageCount by remember { mutableStateOf(value = messages.size) }
+    LaunchedEffect(key1 = messages.size, key2 = isExpanded) {
+        val hasLogShrunk = messages.size < lastSeenMessageCount
+        if (isExpanded || hasLogShrunk) lastSeenMessageCount = messages.size
+    }
+    val unreadMessageCount = messages.size - lastSeenMessageCount
 
     Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(
@@ -1266,8 +1271,7 @@ private fun NewArenaCombatMultiplayerPreview() {
                             type = CharacterClassType.Paladin,
                         ),
                     )
-            ),
-        unreadMessageCount = 3,
+            )
     )
 }
 
@@ -1290,8 +1294,7 @@ private fun NewArenaCombatTwoPlayerPreview() {
                             type = CharacterClassType.Rogue,
                         ),
                     )
-            ),
-        unreadMessageCount = 0,
+            )
     )
 }
 
@@ -1325,8 +1328,7 @@ private fun NewArenaCombatKnockedOutOpponentPreview() {
                             type = CharacterClassType.Paladin,
                         ),
                     )
-            ),
-        unreadMessageCount = 1,
+            )
     )
 }
 
@@ -1352,8 +1354,7 @@ private fun NewArenaCombatUserTurnPreview() {
                         ),
                     ),
                 combatActionState = CombatActionState.Idle(activeUserIds = setOf("player1")),
-            ),
-        unreadMessageCount = 0,
+            )
     )
 }
 
@@ -1377,7 +1378,6 @@ private fun NewArenaCombatFlashPreview() {
                         ),
                     )
             ),
-        unreadMessageCount = 0,
         flashMessage =
             ArenaMessageState.NormalRoll(
                 id = "ko",
@@ -1410,18 +1410,12 @@ private fun InspectDrawerPreview() {
 @Composable
 private fun PreviewArenaCombat(
     state: ArenaState.Combat,
-    unreadMessageCount: Int,
     messages: List<ArenaMessageState> = previewMessages(),
     flashMessage: ArenaMessageState? = null,
 ) {
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
-            NewArenaCombat(
-                state = state,
-                messages = messages,
-                unreadMessageCount = unreadMessageCount,
-                flashMessage = flashMessage,
-            )
+            NewArenaCombat(state = state, messages = messages, flashMessage = flashMessage)
         }
     }
 }

@@ -43,7 +43,6 @@ internal fun ArenaScreen(
             ArenaActions(
                 onSelectCharacterClass = viewModel::onSelectCharacterClass,
                 onChooseCharacterClass = viewModel::onChooseCharacterClass,
-                onIncomingMessageHandled = viewModel::onIncomingMessageHandled,
                 onAttack = viewModel::onAttack,
                 onUseAbility = viewModel::onUseAbility,
                 onTryLeaveArena = viewModel::onTryLeaveArena,

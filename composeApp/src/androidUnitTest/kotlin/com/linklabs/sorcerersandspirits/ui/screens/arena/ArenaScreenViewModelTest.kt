@@ -3,10 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
@@ -546,10 +544,10 @@ class ArenaScreenViewModelTest {
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
         }
 
-    // ---------- Deferred Finished transition (SS-098) ----------
+    // ---------- Held Finished transition (SS-154) ----------
 
     @Test
-    fun `Given a match finishes with closing messages, then the Finished transition is deferred until the messages are handled`() =
+    fun `Given a match finishes from combat, then the Finished transition is held briefly then advances on the ViewModel's clock`() =
         runTest {
             val playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue())
             val viewModel =
@@ -557,24 +555,20 @@ class ArenaScreenViewModelTest {
 
             arenaMatchFlow.value =
                 ArenaMatch.Finished(
-                    messages =
-                        listOf(
-                            IncomingArenaMessage(
-                                id = "message-1",
-                                message = ArenaMessage.NewRound(roundNumber = 1),
-                            )
-                        ),
-                    numberOfNewMessages = 1,
+                    messages = emptyList(),
+                    numberOfNewMessages = 0,
                     playerMap = playerMap,
                 )
             runCurrent()
 
-            val deferredState = (viewModel.uiStateFlow.value as UiState.Loaded).data
-            assertIs<ArenaState.Combat>(deferredState.arenaState)
-            assertNotNull(deferredState.pendingFinishedState)
+            val heldState = (viewModel.uiStateFlow.value as UiState.Loaded).data
+            assertIs<ArenaState.Combat>(heldState.arenaState)
+            assertNotNull(heldState.pendingFinishedState)
 
-            viewModel.onIncomingMessageHandled()
-            runCurrent()
+            // The hold is clocked entirely by the ViewModel (SS-154), so advancing virtual time
+            // past
+            // the fixed hold advances to the Finished screen without any UI involvement.
+            advanceUntilIdle()
 
             val finishedState = (viewModel.uiStateFlow.value as UiState.Loaded).data
             assertIs<ArenaState.Finished>(finishedState.arenaState)

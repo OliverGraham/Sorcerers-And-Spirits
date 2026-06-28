@@ -89,6 +89,25 @@ val OffensiveAbility.effective: OffensiveAbility
     get() = if (this is OffensiveAbility.Impersonate) impersonatedAbility else this
 
 /**
+ * The ability stripped of any state it has accumulated this match, leaving only its behaviour. An
+ * Illusionist copies an opponent's ability, not the progress the opponent has made with it, so the
+ * Necromancer's already-summoned minions or the Gambler's spent All-In must not come across with
+ * the copy.
+ */
+val OffensiveAbility.defaultState: OffensiveAbility
+    get() =
+        when (this) {
+            is OffensiveAbility.AllIn -> OffensiveAbility.AllIn()
+            is OffensiveAbility.SummonMinion -> OffensiveAbility.SummonMinion()
+            is OffensiveAbility.Impersonate -> OffensiveAbility.Impersonate()
+            is OffensiveAbility.KillingMomentum -> this
+            is OffensiveAbility.PrepareAttack -> this
+            is OffensiveAbility.Encore -> this
+            is OffensiveAbility.SpellPotency -> this
+            is OffensiveAbility.None -> this
+        }
+
+/**
  * Writes back an [updated] effective ability, keeping an Impersonate wrapper intact. An Illusionist
  * keeps a copied ability until end of match or until another is chosen, so a copied ability that
  * carries state across a turn (All-In's [OffensiveAbility.AllIn.usedThisTurn]/

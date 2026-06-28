@@ -1274,6 +1274,32 @@ class PerformCombatActionUseCaseTest {
         )
     }
 
+    @Test
+    fun `When Illusionist impersonates a Necromancer that already has a skeleton, then only the behavior is copied and no minions come across`() {
+        // Arrange
+        val illusionist = TestCharacterClasses.illusionist()
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction =
+            getImpersonateAction(
+                abilityToImpersonate =
+                    OffensiveAbility.SummonMinion(skeletonCount = 1, golemCount = 0)
+            )
+        val illusionistUserId = currentAction.attackerUserId
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedIllusionist = outcome.getPlayerById(userId = illusionistUserId).characterClass
+        val updatedImpersonate =
+            assertIs<OffensiveAbility.Impersonate>(value = updatedIllusionist.offensiveAbility)
+        val copiedMinions =
+            assertIs<OffensiveAbility.SummonMinion>(value = updatedImpersonate.impersonatedAbility)
+        assertEquals(expected = 0, actual = copiedMinions.skeletonCount)
+        assertEquals(expected = 0, actual = copiedMinions.golemCount)
+    }
+
     private fun impersonateTest(
         startingAbility: OffensiveAbility = OffensiveAbility.Impersonate(),
         abilityToImpersonate: OffensiveAbility,

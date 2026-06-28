@@ -17,19 +17,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
-### SS-156 — Stat column must not shift when a stat row expands
-- [ ] Not completed
-- **Symptom:** Opening (expanding) a stat row moves surrounding content; it shouldn't — the stat
-  column should stay put and the explanation should open over neighboring content, not push it.
-- **Source:** `NewArenaCombat.kt` — `ClassAvatarStats` / `StatRow` (~530–580). `BottomControls`
-  (~491) layers the two stat columns over the centered `Buttons` via `Box` + `align`, with the
-  intent (per the SS-146 doc comment) that an expanded row "opens over the buttons rather than
-  pushing them." That holds for the buttons, but the expanding `StatRow` still reflows other content.
-- **Goal:** Expanding a stat row reveals its explanation without displacing the stat column or the
-  avatars/buttons around it (e.g. let the explanation overlay rather than participate in layout).
-- **Related:** SS-146 (stat rows + explanations), SS-159 (button/DiceHome positioning — the stat
-  column stays fixed).
-
 ### SS-159 — Raise DiceHome and buttons toward the avatars; keep the stat column fixed
 - [ ] Not completed
 - **Symptom:** The `DiceHome` resting slot sits too low; it should be higher, closer to the avatars.

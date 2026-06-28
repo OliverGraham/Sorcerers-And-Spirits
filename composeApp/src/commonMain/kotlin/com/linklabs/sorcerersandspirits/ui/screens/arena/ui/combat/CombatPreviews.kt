@@ -1,0 +1,262 @@
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.tooling.preview.Preview
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+
+@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun NewArenaCombatMultiplayerPreview() {
+    PreviewArenaCombat(
+        state =
+            previewCombatState(
+                players =
+                    listOf(
+                        previewCombatPlayer(
+                            userId = "player1",
+                            displayName = "Sorcerer Supreme",
+                            type = CharacterClassType.Mage,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player2",
+                            displayName = "Spirit Walker",
+                            type = CharacterClassType.Rogue,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player3",
+                            displayName = "Card Sharp",
+                            type = CharacterClassType.Gambler,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player4",
+                            displayName = "Holy Knight",
+                            type = CharacterClassType.Paladin,
+                        ),
+                    )
+            )
+    )
+}
+
+@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun NewArenaCombatTwoPlayerPreview() {
+    PreviewArenaCombat(
+        state =
+            previewCombatState(
+                players =
+                    listOf(
+                        previewCombatPlayer(
+                            userId = "player1",
+                            displayName = "Sorcerer Supreme",
+                            type = CharacterClassType.Mage,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player2",
+                            displayName = "Spirit Walker",
+                            type = CharacterClassType.Rogue,
+                        ),
+                    )
+            )
+    )
+}
+
+@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun NewArenaCombatKnockedOutOpponentPreview() {
+    PreviewArenaCombat(
+        state =
+            previewCombatState(
+                players =
+                    listOf(
+                        previewCombatPlayer(
+                            userId = "player1",
+                            displayName = "Sorcerer Supreme",
+                            type = CharacterClassType.Mage,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player2",
+                            displayName = "Spirit Walker",
+                            type = CharacterClassType.Rogue,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player3",
+                            displayName = "Card Sharp",
+                            type = CharacterClassType.Gambler,
+                            hitPoints = 0,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player4",
+                            displayName = "Holy Knight",
+                            type = CharacterClassType.Paladin,
+                        ),
+                    )
+            )
+    )
+}
+
+@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun NewArenaCombatUserTurnPreview() {
+    PreviewArenaCombat(
+        state =
+            previewCombatState(
+                players =
+                    listOf(
+                        previewCombatPlayer(
+                            userId = "player1",
+                            displayName = "Trickster",
+                            type = CharacterClassType.Illusionist,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player2",
+                            displayName = "Spirit Walker",
+                            type = CharacterClassType.Rogue,
+                        ),
+                    ),
+                combatActionState = CombatActionState.Idle(activeUserIds = setOf("player1")),
+            )
+    )
+}
+
+@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun NewArenaCombatFlashPreview() {
+    PreviewArenaCombat(
+        state =
+            previewCombatState(
+                players =
+                    listOf(
+                        previewCombatPlayer(
+                            userId = "player1",
+                            displayName = "Sorcerer Supreme",
+                            type = CharacterClassType.Mage,
+                        ),
+                        previewCombatPlayer(
+                            userId = "player2",
+                            displayName = "Spirit Walker",
+                            type = CharacterClassType.Rogue,
+                        ),
+                    )
+            ),
+        flashMessage =
+            ArenaMessageState.NormalRoll(
+                id = "ko",
+                attackerName = "Mage",
+                defenderName = "Rogue",
+                firstDie = 6,
+                secondDie = 6,
+                type = NormalRollMessageType.Knockout,
+            ),
+    )
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun InspectDrawerPreview() {
+    SorcerersAndSpiritsTheme {
+        CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
+            InspectContent(
+                player =
+                    PlayerState.Selected(
+                        userId = "player1",
+                        displayName = "Sorcerer Supreme",
+                        characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun PreviewArenaCombat(
+    state: ArenaState.Combat,
+    messages: List<ArenaMessageState> = previewMessages(),
+    flashMessage: ArenaMessageState? = null,
+    secondsRemaining: Int = 8,
+) {
+    val allMessages = if (flashMessage != null) messages + flashMessage else messages
+    val screenState =
+        ArenaScreenState(
+            messages = allMessages,
+            secondsRemaining = secondsRemaining,
+            showForfeitDialog = false,
+            isUserPlayerKnockedOut = false,
+            hasReadiedForNextMatch = false,
+            arenaState = state,
+            participantClassNames = emptyMap(),
+        )
+    SorcerersAndSpiritsTheme {
+        CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
+            NewArenaCombat(screenState = screenState, state = state)
+        }
+    }
+}
+
+private fun previewCombatPlayer(
+    userId: String,
+    displayName: String,
+    type: CharacterClassType,
+    hitPoints: Int? = null,
+): PlayerState.Selected {
+    val classState = previewCharacterClassState(type = type)
+    return PlayerState.Selected(
+        userId = userId,
+        displayName = displayName,
+        characterClass =
+            if (hitPoints == null) classState else classState.copy(hitPoints = hitPoints),
+    )
+}
+
+/**
+ * Builds a combat state for previews. Defaults to the user (first player) mid-attack against the
+ * second player, so the rest become head icons; pass [combatActionState] for other contexts (e.g.
+ * an idle turn that surfaces the ability buttons).
+ */
+private fun previewCombatState(
+    players: List<PlayerState.Selected>,
+    combatActionState: CombatActionState? = null,
+): ArenaState.Combat {
+    val userId = players.first().userId
+    return ArenaState.Combat(
+        playerMap = players.associateBy { it.userId },
+        userPlayerId = userId,
+        combatActionState =
+            combatActionState
+                ?: CombatActionState.NormalAttack(
+                    roll = NormalAttackType.ArmorClass,
+                    attackerUserId = userId,
+                    defenderUserId = players[1].userId,
+                    originalTurnUserId = userId,
+                    activeUserIds = setOf(userId),
+                ),
+        roundNumber = 1,
+        isNewRound = true,
+        doublesBonus = null,
+    )
+}
+
+private fun previewMessages(): List<ArenaMessageState> =
+    listOf(
+        ArenaMessageState.ConnectedToArena(id = "1", displayName = "The battle begins!"),
+        ArenaMessageState.NewRound(id = "2", roundNumber = "1"),
+        ArenaMessageState.NewTurn(
+            id = "3",
+            characterClassInfo =
+                CharacterClassMessageInfoState(className = "Mage", type = CharacterClassType.Mage),
+        ),
+    )

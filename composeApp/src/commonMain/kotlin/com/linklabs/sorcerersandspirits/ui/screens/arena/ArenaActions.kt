@@ -6,7 +6,6 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.linklabs.sorcerersandspirits.domain.utilities.EmptyTwoArgumentLambda
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 internal data class ArenaActions(
@@ -20,11 +19,7 @@ internal data class ArenaActions(
     val onStayForAnotherMatch: () -> Unit = {},
 )
 
-data class AttackArguments(
-    val combatActionState: CombatActionState,
-    val targetedOpponentUserId: String,
-    val userPlayerId: String,
-)
+data class AttackArguments(val targetedOpponentUserId: String, val userPlayerId: String)
 
 data class UseAbilityArguments(
     val abilityActionState: AbilityActionState,

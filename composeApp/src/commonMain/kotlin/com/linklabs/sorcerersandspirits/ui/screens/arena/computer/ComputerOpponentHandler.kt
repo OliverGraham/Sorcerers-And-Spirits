@@ -160,11 +160,10 @@ internal class ComputerOpponentHandler(
 
                 is CombatActionState.NormalAttack ->
                     AttackArguments(
-                            combatActionState = actionState,
                             targetedOpponentUserId = actionState.defenderUserId,
                             userPlayerId = computerId,
                         )
-                        .toDomain()
+                        .toDomain(combatActionState = actionState)
 
                 is CombatActionState.AbilityRoll ->
                     UseAbilityArguments(
@@ -202,12 +201,8 @@ internal class ComputerOpponentHandler(
             weakestLivingOpponent(arenaState = arenaState, excludingPlayerId = computerId)
                 ?: return null
 
-        return AttackArguments(
-                combatActionState = arenaState.combatActionState,
-                targetedOpponentUserId = target.userId,
-                userPlayerId = computerId,
-            )
-            .toDomain()
+        return AttackArguments(targetedOpponentUserId = target.userId, userPlayerId = computerId)
+            .toDomain(combatActionState = arenaState.combatActionState)
     }
 
     private suspend fun ArenaState.Combat.dispatchCombatAction(currentAction: CurrentCombatAction) {

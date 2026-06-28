@@ -29,7 +29,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
@@ -185,14 +184,12 @@ class ArenaScreenViewModelTest {
         )
 
     private fun ArenaScreenViewModel.attack(
-        combatActionState: CombatActionState,
         targetedOpponentUserId: String,
         userPlayerId: String = USER_ID,
     ) =
         onAttack(
             attackArguments =
                 AttackArguments(
-                    combatActionState = combatActionState,
                     targetedOpponentUserId = targetedOpponentUserId,
                     userPlayerId = userPlayerId,
                 )
@@ -417,11 +414,7 @@ class ArenaScreenViewModelTest {
 
             viewModel.onAttack(
                 attackArguments =
-                    AttackArguments(
-                        combatActionState = combatState.combatActionState,
-                        targetedOpponentUserId = OPPONENT_ID,
-                        userPlayerId = USER_ID,
-                    )
+                    AttackArguments(targetedOpponentUserId = OPPONENT_ID, userPlayerId = USER_ID)
             )
             runCurrent()
 
@@ -1349,10 +1342,7 @@ class ArenaScreenViewModelTest {
                 )
             val combatState = viewModel.requireCombatState()
 
-            viewModel.attack(
-                combatActionState = combatState.combatActionState,
-                targetedOpponentUserId = OPPONENT_ID,
-            )
+            viewModel.attack(targetedOpponentUserId = OPPONENT_ID)
             runCurrent()
 
             val normalAttack = capturedNormalAttack()
@@ -1478,10 +1468,7 @@ class ArenaScreenViewModelTest {
                 )
             val combatState = viewModel.requireCombatState()
 
-            viewModel.attack(
-                combatActionState = combatState.combatActionState,
-                targetedOpponentUserId = SECOND_OPPONENT_ID,
-            )
+            viewModel.attack(targetedOpponentUserId = SECOND_OPPONENT_ID)
             runCurrent()
 
             val normalAttack = capturedNormalAttack()

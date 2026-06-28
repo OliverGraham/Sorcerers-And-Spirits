@@ -20,7 +20,6 @@ internal fun ArenaState.Combat.rollActionFor(
                 lockTarget()
                 onAttack(
                     AttackArguments(
-                        combatActionState = combatActionState,
                         targetedOpponentUserId = targetedOpponentUserId,
                         userPlayerId = userPlayerId,
                     )

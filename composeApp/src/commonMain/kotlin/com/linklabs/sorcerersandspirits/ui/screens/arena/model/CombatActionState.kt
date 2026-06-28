@@ -133,11 +133,14 @@ sealed interface AbilityActionState {
 }
 
 /**
- * Maps the user's attack input to its domain counterpart. The combatant ids come from the current
- * [CombatActionState] when an attack is in progress, or from the user and their selected target
- * when starting a new attack from [CombatActionState.Idle].
+ * Maps the user's attack input to its domain counterpart against the live [combatActionState]
+ * (never a value captured when the control was built, so a held button always continues the current
+ * step rather than restarting the attack). The combatant ids come from the in-progress attack, or
+ * from the user and their target when starting a new attack from [CombatActionState.Idle].
  */
-internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
+internal fun AttackArguments.toDomain(
+    combatActionState: CombatActionState
+): CurrentCombatAction.NormalAttack? =
     when (combatActionState) {
         is CombatActionState.AbilityRoll -> null
 

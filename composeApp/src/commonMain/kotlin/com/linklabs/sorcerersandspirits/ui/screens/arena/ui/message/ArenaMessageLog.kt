@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.MESSAGES_ICON_SIZE
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -24,11 +25,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ArenaMessageLog(messages: List<ArenaMessageState>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(all = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
-        reverseLayout = true,
+        contentPadding = PaddingValues(start = MESSAGES_ICON_SIZE + 12.dp),
+        verticalArrangement = Arrangement.spacedBy(space = 4.dp),
     ) {
-        items(items = messages, key = { messageState -> messageState.id }) { messageState ->
+        items(items = messages.asReversed(), key = { it.id }) { messageState ->
             ArenaMessageItem(messageState = messageState, modifier = Modifier.animateItem())
         }
     }
@@ -120,14 +120,14 @@ private fun ArenaMessageLogPreview() {
         ArenaMessageLog(
             messages =
                 listOf(
-                    ArenaMessageState.NewTurn(id = "4", characterClassInfo = rogueInfo),
-                    ArenaMessageState.NewRound(id = "3", roundNumber = "1"),
+                    ArenaMessageState.ConnectedToArena(id = "1", displayName = displayName),
                     ArenaMessageState.ChoseCharacterClass(
                         id = "2",
                         displayName = displayName,
                         characterClassInfo = paladinInfo,
                     ),
-                    ArenaMessageState.ConnectedToArena(id = "1", displayName = displayName),
+                    ArenaMessageState.NewRound(id = "3", roundNumber = "1"),
+                    ArenaMessageState.NewTurn(id = "4", characterClassInfo = rogueInfo),
                 )
         )
     }

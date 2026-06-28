@@ -129,7 +129,7 @@ internal class ChooseCharacterClass(
             val newMessages = listOf(selectionMessage) + combatStartingMessages
             return Pair(
                 first = previousMessages.appendCapped(newMessages = newMessages),
-                second = newMessages.size,
+                second = combatStartingMessages.size,
             )
         }
 

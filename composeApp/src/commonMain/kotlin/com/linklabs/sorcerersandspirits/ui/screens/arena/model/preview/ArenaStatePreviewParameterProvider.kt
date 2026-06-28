@@ -53,6 +53,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             arenaState = arenaState,
             participantClassNames =
                 getExamplePlayers().mapValues { it.value.characterClass.className },
+            numberOfNewMessages = 2,
         )
 
     private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers

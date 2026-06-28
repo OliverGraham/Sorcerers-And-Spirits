@@ -199,6 +199,7 @@ private fun PreviewArenaCombat(
             hasReadiedForNextMatch = false,
             arenaState = state,
             participantClassNames = emptyMap(),
+            numberOfNewMessages = 2,
         )
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {

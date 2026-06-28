@@ -40,25 +40,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   icons).
 - **Related:** SS-068 (Arena UI overhaul), SS-153 (class color source).
 
-### SS-161 — Messages affordance overhaul (icon, unread tally, scroll-unfurl, ordering)
-- [ ] Not completed
-- **Source:** `NewArenaCombat.kt` — `Messages` / `MessagesIcon` / `UnreadCount` (~366–460); the log
-  body is `message/ArenaMessageLog.kt`. Unread is tracked locally in `Messages` (SS-154).
-- **Goal (several sub-items — may split):**
-  - **Collapsed icon must not cover `ClassIcons` content** — when not expanded, the messages icon/
-    affordance cannot overlap the head-icon row.
-  - **Round messages icon** — the icon should be circular.
-  - **Unread tally animates up** — the unread number animates upward as messages arrive until the
-    user has read them; cap the display at **9+** for 10 or more unread.
-  - **Mark all read on open** — opening the log marks every message as read (resets the tally).
-  - **Expanded log must not be covered by the icon** — when expanded, the messages icon cannot
-    obscure the messages.
-  - **Unfurl like a scroll** — expanding should animate like an old-timey paper scroll unfurling,
-    not a fade-in (currently `expandVertically + fadeIn`).
-  - **Top-down reading order** — messages read top-to-bottom (standard/most-recent-last ordering);
-    verify/adjust `ArenaMessageLog` ordering.
-- **Related:** SS-154 (local unread tracking), SS-025 (message-log animation).
-
 ### SS-163 — Flash callout hold is too short
 - [ ] Not completed
 - **Symptom:** The short full-screen animation message (Hit!/Miss!/K.O.!) is a little too short.

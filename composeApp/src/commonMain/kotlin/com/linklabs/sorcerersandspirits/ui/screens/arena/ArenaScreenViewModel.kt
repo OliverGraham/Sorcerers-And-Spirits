@@ -222,7 +222,7 @@ class ArenaScreenViewModel(
 
     private suspend fun AttackArguments.onAttack() {
         val arenaState = currentCombatState() ?: return
-        val normalAttack = toDomain() ?: return
+        val normalAttack = toDomain(combatActionState = arenaState.combatActionState) ?: return
 
         arenaState.performCombatAction(currentAction = normalAttack)
     }
@@ -465,7 +465,6 @@ class ArenaScreenViewModel(
                 onAttack(
                     attackArguments =
                         AttackArguments(
-                            combatActionState = actionState,
                             targetedOpponentUserId = actionState.defenderUserId,
                             userPlayerId = userPlayerId,
                         )
@@ -497,11 +496,7 @@ class ArenaScreenViewModel(
 
         onAttack(
             attackArguments =
-                AttackArguments(
-                    combatActionState = arenaState.combatActionState,
-                    targetedOpponentUserId = target.userId,
-                    userPlayerId = attackerId,
-                )
+                AttackArguments(targetedOpponentUserId = target.userId, userPlayerId = attackerId)
         )
     }
 

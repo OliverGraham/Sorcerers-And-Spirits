@@ -122,14 +122,11 @@ internal fun rememberDiceRoll(): DiceRoll {
 
     roll.latestRollId = latestRoll.messageId
 
-    // While the user's own roll travels to the Domain and back, show that roll's die count so the
-    // dice tumble the right number for the action being made; otherwise mirror the latest roll,
-    // whose own count already matches the result on show (SS-117).
     val displayedDiceCount =
         when {
             roll.isRolling && roll.rollDiceCount != null -> roll.rollDiceCount!!
             latestRoll.dice.isNotEmpty() -> latestRoll.dice.size
-            else -> roll.rollDiceCount ?: DEFAULT_DICE_COUNT
+            else -> DEFAULT_DICE_COUNT
         }
     roll.displayedDiceCount = displayedDiceCount
     roll.dieFaces =

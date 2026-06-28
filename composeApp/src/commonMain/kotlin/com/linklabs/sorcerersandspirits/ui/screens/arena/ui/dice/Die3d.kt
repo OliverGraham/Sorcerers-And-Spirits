@@ -148,7 +148,7 @@ internal fun Die3d(
     // Read inside the physics loop so each new shake is seen without restarting the loop.
     val currentShakeTick by rememberUpdatedState(newValue = shakeTick)
 
-    LaunchedEffect(key1 = isRolling, key2 = value) {
+    LaunchedEffect(key1 = isRolling, key2 = value, key3 = enabled) {
         val target = faceAngles(value = value)
         val restSpeed = REST_SPEED_DP * density.density
         if (isRolling) {
@@ -182,9 +182,12 @@ internal fun Die3d(
         } else if (isFirstLayout) {
             isFirstLayout = false
             previousValue = value
+            velocity.value = Offset.Zero
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
             center.snapTo(targetValue = homeCenter)
+        } else if (!enabled) {
+            velocity.value = Offset.Zero
         } else {
             val hasValueChanged = value != previousValue
             previousValue = value
@@ -193,20 +196,8 @@ internal fun Die3d(
 
             val settleVelocity =
                 when {
-                    // A disabled die never tumbles: it only glides back to its home and rights
-                    // itself while the active die rolls (SS-158), even if it was mid-flight when
-                    // the
-                    // roll that follows turned it off.
-                    !enabled -> Offset.Zero
-
-                    // Released after shaking: keep the momentum the shaking built up.
                     heldVelocity.getDistance() > restSpeed -> heldVelocity
-
-                    // A new value landed (this player's result or another player's roll): reveal it
-                    // with a fresh throw across the tray.
                     hasValueChanged -> randomThrowVelocity(density = density.density)
-
-                    // Released without rolling: nothing to throw, just right the face below.
                     else -> Offset.Zero
                 }
 

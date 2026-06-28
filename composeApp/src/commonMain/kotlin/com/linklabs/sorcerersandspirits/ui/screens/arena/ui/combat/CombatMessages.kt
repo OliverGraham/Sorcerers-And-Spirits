@@ -1,30 +1,27 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -43,8 +40,10 @@ import sorcerersandspirits.composeapp.generated.resources.ic_messages
 internal val MESSAGES_ICON_SIZE = 56.dp
 private val UNREAD_COUNT_FONT_SIZE = 20.sp
 private val PLACEHOLDER_PANEL_GOLD = Color(color = 0xFFB8860B)
+private const val UNREAD_DISPLAY_CAP = 9
 private const val UNREAD_COUNT_COLOR_TRANSITION_LABEL = "MessagesUnreadCountColor"
 private const val UNREAD_COUNT_COLOR_SHIFT_LABEL = "MessagesUnreadCountColorShift"
+private const val MESSAGES_EXPAND_LABEL = "MessagesExpand"
 private const val UNREAD_COUNT_COLOR_CYCLE_MILLIS = 2000
 private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
 
@@ -53,32 +52,30 @@ private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
  * head icons (stopping at the bottom half), with the unread count drawn in the center of the icon.
  */
 @Composable
-internal fun Messages(messages: List<ArenaMessageState>, modifier: Modifier = Modifier) {
-    var isExpanded by remember { mutableStateOf(value = false) }
-
-    var lastSeenMessageCount by remember { mutableStateOf(value = messages.size) }
-    LaunchedEffect(key1 = messages.size, key2 = isExpanded) {
-        val hasLogShrunk = messages.size < lastSeenMessageCount
-        if (isExpanded || hasLogShrunk) lastSeenMessageCount = messages.size
-    }
-    val unreadMessageCount = messages.size - lastSeenMessageCount
+internal fun Messages(
+    messages: List<ArenaMessageState>,
+    unreadMessageCount: Int,
+    isExpanded: Boolean,
+    onToggleExpanded: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val expandedFraction by
+        animateFloatAsState(targetValue = if (isExpanded) 1f else 0f, label = MESSAGES_EXPAND_LABEL)
 
     Box(modifier = modifier.fillMaxSize()) {
-        AnimatedVisibility(
-            visible = isExpanded,
-            enter = expandVertically(expandFrom = Alignment.Top) + fadeIn(),
-            exit = shrinkVertically(shrinkTowards = Alignment.Top) + fadeOut(),
-            modifier = Modifier.fillMaxSize(),
-        ) {
+        if (expandedFraction > 0f) {
             ArenaMessageLog(
                 messages = messages,
-                modifier = Modifier.fillMaxSize().background(color = PLACEHOLDER_PANEL_GOLD),
+                modifier =
+                    Modifier.fillMaxWidth()
+                        .fillMaxHeight(fraction = expandedFraction)
+                        .background(color = PLACEHOLDER_PANEL_GOLD),
             )
         }
 
         MessagesIcon(
             unreadMessageCount = unreadMessageCount,
-            onClick = { isExpanded = !isExpanded },
+            onClick = onToggleExpanded,
             modifier = Modifier.align(alignment = Alignment.TopStart),
         )
     }
@@ -91,7 +88,11 @@ private fun MessagesIcon(
     modifier: Modifier = Modifier,
 ) {
     Box(
-        modifier = modifier.size(size = MESSAGES_ICON_SIZE).clickable(onClick = onClick),
+        modifier =
+            modifier
+                .size(size = MESSAGES_ICON_SIZE)
+                .clip(shape = CircleShape)
+                .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Image(
@@ -108,7 +109,8 @@ private fun MessagesIcon(
 
 /**
  * The unread count, drawn so the four class colors continuously flow through its digits — a looping
- * horizontal gradient whose tiled colors are shifted across the text forever.
+ * horizontal gradient whose tiled colors are shifted across the text forever. The tally reads "9+"
+ * once ten or more messages go unread.
  */
 @Composable
 private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
@@ -137,8 +139,10 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
             tileMode = TileMode.Repeated,
         )
 
+    val tally = if (count > UNREAD_DISPLAY_CAP) "$UNREAD_DISPLAY_CAP+" else count.toString()
+
     Text(
-        text = count.toString(),
+        text = tally,
         style =
             TextStyle(
                 brush = flowingBrush,

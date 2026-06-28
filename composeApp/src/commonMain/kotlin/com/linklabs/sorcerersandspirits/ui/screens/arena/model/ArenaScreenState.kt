@@ -25,6 +25,7 @@ data class ArenaScreenState(
     val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState,
     val participantClassNames: Map<String, String>,
+    val numberOfNewMessages: Int,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
@@ -289,6 +290,7 @@ internal fun ArenaMatch.toUpdatedState(
             characterClasses = characterClasses,
             classCopy = classCopy,
             pendingFinishedState = pendingFinishedState,
+            numberOfNewMessages = numberOfNewMessages,
         )
 
     // While the Finished transition is held, the match is over, so the combat clock is stopped

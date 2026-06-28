@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +50,13 @@ internal fun NewArenaCombat(
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
 
+    var isMessagesExpanded by remember { mutableStateOf(value = false) }
+    var unreadMessageCount by remember { mutableStateOf(value = 0) }
+    LaunchedEffect(key1 = screenState.messages.size) {
+        unreadMessageCount =
+            if (isMessagesExpanded) 0 else unreadMessageCount + screenState.numberOfNewMessages
+    }
+
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -76,6 +84,12 @@ internal fun NewArenaCombat(
                                     state.lockedTargetUserId == null &&
                                     !isTargetLockedOptimistically,
                             messages = screenState.messages,
+                            unreadMessageCount = unreadMessageCount,
+                            isMessagesExpanded = isMessagesExpanded,
+                            onToggleMessages = {
+                                isMessagesExpanded = !isMessagesExpanded
+                                unreadMessageCount = 0
+                            },
                         )
                     }
                 }
@@ -133,6 +147,9 @@ private fun TransitioningContent(
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
     messages: List<ArenaMessageState>,
+    unreadMessageCount: Int,
+    isMessagesExpanded: Boolean,
+    onToggleMessages: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
@@ -146,6 +163,9 @@ private fun TransitioningContent(
             onSelectTarget = onSelectTarget,
             onInspect = onInspect,
             messages = messages,
+            unreadMessageCount = unreadMessageCount,
+            isMessagesExpanded = isMessagesExpanded,
+            onToggleMessages = onToggleMessages,
             modifier = Modifier.weight(weight = 1f),
         )
         AvatarsRow(
@@ -163,6 +183,9 @@ private fun TopHalfContent(
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     messages: List<ArenaMessageState>,
+    unreadMessageCount: Int,
+    isMessagesExpanded: Boolean,
+    onToggleMessages: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
@@ -173,6 +196,11 @@ private fun TopHalfContent(
             onInspect = onInspect,
             modifier = Modifier.padding(top = MESSAGES_ICON_SIZE),
         )
-        Messages(messages = messages)
+        Messages(
+            messages = messages,
+            unreadMessageCount = unreadMessageCount,
+            isExpanded = isMessagesExpanded,
+            onToggleExpanded = onToggleMessages,
+        )
     }
 }

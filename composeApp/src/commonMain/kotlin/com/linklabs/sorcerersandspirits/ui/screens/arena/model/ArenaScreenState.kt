@@ -137,38 +137,28 @@ private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
 }
 
 /**
- * The player shown in the right-hand target avatar slot. On the user's own turn it is who the user
- * is aimed at, combining the three target sources in priority order (mirrors the old ArenaCombat
- * hoist): the Domain-pinned defender of an in-flight attack wins, then the user's own tapped
- * [selectedOpponentUserId], then the lone auto-target (SS-101). On another player's turn the user
- * makes no target choice, so it falls back to the in-flight action's defender — whoever the active
- * player is attacking (SS-157). Empty when there is no target. The selection is Composable-local
- * interaction state, so it is threaded in rather than derived at map time.
+ * The player shown in the right-hand target avatar slot, in priority order. The Domain-pinned
+ * defender of an in-flight attack wins; then, on the user's own turn, the user's tapped
+ * [selectedOpponentUserId]; then the in-flight action's defender for a turn the user is only
+ * watching (SS-157); and finally the turn owner's lone conscious opponent. That last fallback is
+ * the implicit target when there is no choice to make — a two-player match, or any match down to
+ * one conscious opponent — so it shows on every device and for every class, with no targeting phase
+ * (SS-101). Empty only when the turn owner has several conscious opponents and has not picked one.
+ * The selection is Composable-local interaction state, threaded in rather than derived at map time.
  */
 internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
     val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
     val userChosenTarget =
-        if (isUserTheTurnOwner) {
-            lockedTargetUserId
-                ?: selectedOpponentUserId.ifEmpty { autoTargetedOpponentUserId.orEmpty() }
-        } else {
-            ""
-        }
-    val chosenOrInFlight =
-        userChosenTarget.ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
-    if (isUserTheTurnOwner) return chosenOrInFlight
-
-    // The turn owner's own device pre-targets the lone opponent (autoTargetedOpponentUserId), but
-    // that selection is local and never crosses the wire. So before the turn owner commits a roll,
-    // mirror the same default on every other device — the lone opponent they will attack (SS-157).
-    return chosenOrInFlight.ifEmpty { turnOwnerLoneOpponentUserId.orEmpty() }
+        if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""
+    return userChosenTarget
+        .ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
+        .ifEmpty { turnOwnerLoneOpponentUserId.orEmpty() }
 }
 
 /**
  * The single conscious opponent of the current turn owner, or null when they have none or more than
- * one. With only one possible target there is no choice to make, so it is the default target every
- * device can show before the turn owner picks — the cross-device mirror of the turn owner's own
- * [deriveAutoTargetedOpponentUserId] (SS-157).
+ * one. With only one possible target there is no choice to make, so it is the implicit target every
+ * device shows before the turn owner commits a roll.
  */
 private val ArenaState.Combat.turnOwnerLoneOpponentUserId: String?
     get() =

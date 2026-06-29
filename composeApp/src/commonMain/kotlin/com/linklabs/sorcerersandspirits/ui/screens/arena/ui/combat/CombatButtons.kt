@@ -93,7 +93,11 @@ internal fun BottomControls(
         abilityControls.forEach { control ->
             AbilityButton(
                 control = control,
-                isEnabled = state.isControlEnabled(control, targetedOpponentUserId),
+                isEnabled =
+                    state.isControlEnabled(
+                        control = control,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                    ),
                 classColor = classColor,
                 diceRoll = diceRoll,
                 onRoll =

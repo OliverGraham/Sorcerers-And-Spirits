@@ -27,10 +27,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetPlayerFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
 private const val TARGET_TRANSITION_LABEL = "NewArenaCombatTargetTransition"
-private const val AVATAR_COLUMN_WEIGHT = 0.7f
-private const val CLASS_ICON_COLUMN_WEIGHT = 0.3f
-private val AVATAR_COLUMN_START_PADDING = 16.dp
-private val STAGE_TOP_PADDING = MESSAGES_ICON_SIZE
 
 @Composable
 internal fun NewArenaCombat(
@@ -100,6 +96,7 @@ internal fun NewArenaCombat(
                 )
             }
 
+            // TODO Yourself: Make Messages and TurnTimer part of Screen Column
             Messages(
                 messages = screenState.messages,
                 unreadMessageCount = unreadMessageCount,
@@ -108,7 +105,6 @@ internal fun NewArenaCombat(
                     isMessagesExpanded = !isMessagesExpanded
                     unreadMessageCount = 0
                 },
-                modifier = Modifier.fillMaxSize(),
             )
 
             TurnTimer(
@@ -118,6 +114,8 @@ internal fun NewArenaCombat(
                 modifier = Modifier.align(alignment = Alignment.TopEnd),
             )
 
+            // TODO Yourself: These things truly go on top of the screen column, but perhaps
+            //                Should be elsewhere
             DiceOverlay(
                 diceRoll = diceRoll,
                 homeBounds = diceHomeBounds,
@@ -165,7 +163,7 @@ private fun CombatStage(
         state.headIconPlayersFor(activeUserId = activeUserId, targetUserId = targetUserId)
     val hasHeadIcons = headIconPlayers.isNotEmpty()
 
-    Row(modifier = modifier.fillMaxSize().padding(top = STAGE_TOP_PADDING)) {
+    Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
             activePlayer = state.playerMap.getValue(key = activeUserId),
             targetPlayer = state.targetPlayerFor(targetUserId = targetUserId),
@@ -174,8 +172,7 @@ private fun CombatStage(
             onInspect = onInspect,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
             modifier =
-                Modifier.weight(weight = if (hasHeadIcons) AVATAR_COLUMN_WEIGHT else 1f)
-                    .padding(start = AVATAR_COLUMN_START_PADDING),
+                Modifier.weight(weight = if (hasHeadIcons) 0.7f else 1f).padding(start = 16.dp),
         )
 
         if (hasHeadIcons) {
@@ -185,7 +182,7 @@ private fun CombatStage(
                 isTargetable = isTargetable,
                 onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
-                modifier = Modifier.weight(weight = CLASS_ICON_COLUMN_WEIGHT),
+                modifier = Modifier.weight(weight = 0.3f),
             )
         }
     }

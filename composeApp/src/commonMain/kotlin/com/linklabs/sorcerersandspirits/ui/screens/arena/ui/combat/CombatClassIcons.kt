@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -49,7 +48,6 @@ internal fun ClassIcons(
                 isTargetable = isTargetable,
                 onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
-                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -68,10 +66,12 @@ private fun ClassIcon(
     val isTargetingTap = isTargetable && isConscious
 
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        val headWidth = minOf(a = maxWidth, b = maxHeight)
+
         ClassHeadIcon(
             characterClass = player.characterClass,
             isEnabled = isConscious,
-            width = maxWidth,
+            width = headWidth,
             modifier =
                 Modifier.sharedBounds(key = player.userId).clickable {
                     if (isTargetingTap) onSelectTarget(player.userId) else onInspect(player.userId)

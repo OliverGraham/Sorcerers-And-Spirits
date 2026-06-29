@@ -96,7 +96,7 @@ private fun ArenaStateContent(
     // TODO: Make crossfade animation more dramatic
     transitionState.Crossfade(
         contentKey = { arenaState -> arenaState::class },
-        modifier = modifier,
+        modifier = modifier.fillMaxSize(),
     ) { arenaState ->
         when (arenaState) {
             is ArenaState.ChoosingClasses ->

@@ -76,6 +76,40 @@ class ArenaScreenStateTest {
     }
 
     @Test
+    fun `Given a successful Riposte reversed the attack, then the attacker and target avatars are different players`() {
+        // Rogue (turn owner) attacked the Duelist, who riposted successfully and now attacks the
+        // Rogue back. It stays the Rogue's turn, but the Duelist is the one pressing the attack, so
+        // the left avatar must seat the Duelist - not the turn owner - or both avatar slots
+        // collapse
+        // onto the Rogue and the Duelist drops to a head icon (SS-165).
+        val reversedAttack =
+            CombatActionState.NormalAttack(
+                roll = NormalAttackType.ArmorClass,
+                attackerUserId = OPPONENT_ID,
+                defenderUserId = USER_ID,
+                originalTurnUserId = USER_ID,
+                activeUserIds = setOf(element = OPPONENT_ID),
+            )
+        val state = combatState(combatActionState = reversedAttack)
+
+        val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
+
+        assertEquals(expected = USER_ID, actual = state.turnOwnerUserId)
+        assertEquals(expected = OPPONENT_ID, actual = state.attackingUserId)
+        assertEquals(expected = USER_ID, actual = targetUserId)
+        assertTrue(actual = state.attackingUserId != targetUserId)
+        assertTrue(
+            actual =
+                state
+                    .headIconPlayersFor(
+                        activeUserId = state.attackingUserId,
+                        targetUserId = targetUserId,
+                    )
+                    .isEmpty()
+        )
+    }
+
+    @Test
     fun `Given a match finishes from a combat turn, then the combat view is held and the finished state is pending`() {
         val previousState =
             screenState(

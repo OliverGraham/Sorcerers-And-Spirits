@@ -147,17 +147,15 @@ internal fun Die3d(
     val velocity = remember { mutableStateOf(value = Offset.Zero) }
     // Read inside the physics loop so each new shake is seen without restarting the loop.
     val currentShakeTick by rememberUpdatedState(newValue = shakeTick)
+    var isSettling by remember { mutableStateOf(value = false) }
 
     LaunchedEffect(key1 = isRolling, key2 = value, key3 = enabled) {
         val target = faceAngles(value = value)
         val restSpeed = REST_SPEED_DP * density.density
         if (isRolling) {
             isFirstLayout = false
+            isSettling = true
             var lastShakeTick = currentShakeTick
-            // While held the die bounces around the tray, and every shake of the phone kicks it
-            // with a fresh impulse; friction bleeds the motion away between shakes (SS-112). The
-            // loop never settles on its own — it ends when the hold releases and this effect is
-            // cancelled, leaving [velocity] for the release settle to continue from.
             runDiePhysics(
                 center = center,
                 angleX = angleX,
@@ -186,9 +184,8 @@ internal fun Die3d(
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
             center.snapTo(targetValue = homeCenter)
-        } else if (!enabled) {
-            velocity.value = Offset.Zero
         } else {
+            isSettling = true
             val hasValueChanged = value != previousValue
             previousValue = value
             val heldVelocity = velocity.value
@@ -196,6 +193,7 @@ internal fun Die3d(
 
             val settleVelocity =
                 when {
+                    !enabled -> Offset.Zero
                     heldVelocity.getDistance() > restSpeed -> heldVelocity
                     hasValueChanged -> randomThrowVelocity(density = density.density)
                     else -> Offset.Zero
@@ -215,20 +213,9 @@ internal fun Die3d(
                     isAtRest = { speed -> speed <= restSpeed },
                 )
             }
+            isSettling = false
 
             coroutineScope {
-                if (shouldGlideHome) {
-                    launch {
-                        center.animateTo(
-                            targetValue = homeCenter,
-                            animationSpec =
-                                tween(
-                                    durationMillis = GLIDE_HOME_MILLIS,
-                                    easing = LinearOutSlowInEasing,
-                                ),
-                        )
-                    }
-                }
                 launch {
                     angleX.animateTo(
                         targetValue =
@@ -246,8 +233,19 @@ internal fun Die3d(
         }
     }
 
-    // Keep a resting die parked on its home as the home is (re)measured, without disturbing a roll.
-    LaunchedEffect(key1 = homeCenter) { if (!isRolling) center.snapTo(targetValue = homeCenter) }
+    LaunchedEffect(key1 = isSettling, key2 = isRolling, key3 = homeCenter) {
+        val isAtRest = !isSettling && !isRolling
+        if (!isAtRest || center.value == homeCenter) return@LaunchedEffect
+        if (shouldGlideHome) {
+            center.animateTo(
+                targetValue = homeCenter,
+                animationSpec =
+                    tween(durationMillis = GLIDE_HOME_MILLIS, easing = LinearOutSlowInEasing),
+            )
+        } else {
+            center.snapTo(targetValue = homeCenter)
+        }
+    }
 
     Canvas(modifier = modifier.size(width = trayWidth, height = trayHeight)) {
         drawDie(

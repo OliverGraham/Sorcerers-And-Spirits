@@ -243,25 +243,65 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
   grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
 
-### SS-166 — Dice faces don't match the rolled number shown in the message
+### SS-166 — Dice: faces, disabled die, and Mirror Image reroll
+
+- [~] Dice-rendering rework done (awaiting device verify); two follow-ups remain (drift, Necro
+  button).
+- **Model (the simple mental model the dice now follow):** two real dice on a table. Each die is a
+  persistent slot that keeps its last face. A roll only updates the slots it touches; an untouched
+  die keeps its face and simply dims (grey), it never resets to a 1. Everything is message-driven so
+  every client shows the same two dice (`ArenaMessageRollDice.kt` `RollResult` →
+  `DiceRoll.commitRoll`).
+- **Done:**
+    1. Disabled/idle die greys but keeps its face (no longer snaps to 1) and never moves during a
+       single-die roll. When displaced (multi-die roll picked up then declined) it now **glides**
+       home instead of snapping (`DiceRoll.slotFaces`/`activeSlots`, `Die3d` settle path with
+       `settleVelocity = 0` for `!enabled`).
+    2. Mirror Image reroll throws the exact die the player chose ("Reroll the 6" rolls the 6 die)
+       and dims the other; the rerolled value lands on that die. Roller uses the chosen slot;
+       spectators match the replaced face (`RollResult.Reroll`, `diceSlots`), so all clients agree.
+    3. Dice faces follow the authoritative roll value (slot-keyed, message-driven).
+    4. DiceHome glide-to-wrong-spot jank fixed at the root: the home slot sits between two weighted
+       avatars (`CombatAvatarColumn`) and genuinely moves when the target avatar appears/disappears
+       or the active roller changes. The settle glide used to capture `homeCenter` once (effect
+       keyed on isRolling/value/enabled, not homeCenter) and animate to that stale spot, then a snap
+       corrected it. Now homing lives in its own `LaunchedEffect(isSettling, isRolling, homeCenter)`
+       that animates to the **live** `homeCenter` and re-targets smoothly when the slot moves — no
+       stale target, no snap.
+- **Remaining (needs a concrete device repro before touching code — off the dice-render path):**
+    - **Necromancer Summon Minion button disappears, possibly after the turn timer auto-acts.**
+      Controls show Summon Minion whenever the Necro is `Idle` on their turn
+      (`deriveCombatControls`); the timer auto-resolves with a normal attack. Suspect the
+      post-summon granted-extra-attack state. Capture: exact sequence (did they summon first? did
+      the timer fire? whose turn when the button vanished?).
+- **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
+  overlay), SS-119 (Impersonate/MirrorImage state).
+
+### SS-167 — Summon Minion skeletons/golems don't grant the extra attack
 
 - [ ] Not completed
-- **Symptom:** The value reported in a combat message did not match the faces shown on the dice.
-  The message number is the authoritative roll; the dice rendered different pips. Recurring — has
-  been observed more than once. A regression of the single disabled die rolling when it shouldn't
-  has also happened. This has been "fixed" many times - let's please stop fixing and breaking.
-- **Suspected culprit:** the dice rendering, not the message/domain. Likely the dice faces shown
-  are not driven by (or drift from) the same roll values the resolution/message uses — a display
-  bug rather than a wrong roll. Confirm whether the message value is correct and only the dice
-  faces are wrong (vs. the reverse).
-- **Source (to investigate):** the dice roll pipeline — `DiceRoll`/`rememberDiceRoll`,
-  `CombatDiceOverlay.kt` (`DiceOverlay`/`Die3d` `dieFaces`/`displayedDiceCount`), and how rolled
-  values flow from the domain resolution into both the message and the dice faces. Check for a
-  race between the animated roll and the committed result, or stale/mismatched face state.
-- **Repro notes:** capture the message text + the dice faces shown + class/ability when it next
-  happens; note whether it was a normal attack or an ability roll, and single- vs two-die.
-- **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
-  overlay).
+- **Symptom:** A player holding a Summon Minion skeleton (or golem) does not get their granted
+  extra attack — after they attack and miss, the turn ends instead of letting them attack again.
+  Observed with the Illusionist (impersonated Summon Minion) holding a skeleton: he missed his
+  attack and his turn ended, when the skeleton should have given him another attack.
+- **Rules (concrete, in Domain):** Skeleton gives +1 Health shield AND an extra attack on next
+  turn. Golem gives +2 Health shield AND an extra attack on your turn. The shield half is already
+  modelled (SS-102); the **extra-attack half is the gap**.
+- **Likely cause:** the granted extra attack is never consumed at turn-end. All-In's identical
+  "attack again" was fixed in SS-104 by intercepting `CombatMutator.resolveTurnEnd`: when the
+  turn-player's ability has a pending extra attack, clear the flag and keep control (stay `Idle` on
+  them) for one more attack instead of advancing. Summon Minion needs the same: a per-turn
+  "minion attack(s) remaining" derived from skeletonCount/golemCount, consumed in `resolveTurnEnd`
+  after any first-attack outcome (hit/miss/KO/defensive redirect), guarded by the same one-player /
+  conscious / match-end checks. Confirm whether the granted attacks must also survive the Impersonate
+  wrapper (read `.effective`, write back wrapped — see SS-119) and respect skeleton "next turn" vs
+  golem "this turn" timing.
+- **Source (to investigate):** `SummonMinionActivated`, `CombatMutator.resolveTurnEnd` /
+  `resetForNewTurn`, `OffensiveAbility.SummonMinion` (skeletonCount/golemCount), and the All-In
+  precedent `grantAllInSecondAttackIfApplicable`. Add domain tests mirroring SS-104's (skeleton →
+  granted attack after a miss; golem timing; impersonated Summon Minion).
+- **Related:** SS-104 (All-In second attack — the pattern to copy), SS-102 (minion shields),
+  SS-119 (impersonated Summon Minion wrapper), SS-093 (Summon Minion outcome messages).
 
 ## Profile & Auth
 

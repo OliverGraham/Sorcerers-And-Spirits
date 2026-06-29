@@ -34,7 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceCount
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceSlots
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
@@ -117,7 +117,7 @@ internal fun BottomControls(
                 isEnabled = state.isControlEnabled(attackControl, targetedOpponentUserId),
                 classColor = classColor,
                 diceRoll = diceRoll,
-                diceCount = attackControl.diceCount,
+                diceSlots = attackControl.diceSlots,
                 onRoll =
                     state.rollActionFor(
                         control = attackControl,
@@ -136,7 +136,7 @@ internal fun BottomControls(
                 classColor = classColor,
                 label = state.impersonateLabel(),
                 diceRoll = diceRoll,
-                diceCount = impersonateControl.diceCount,
+                diceSlots = impersonateControl.diceSlots,
                 onRoll =
                     state.rollActionFor(
                         control = impersonateControl,
@@ -155,7 +155,7 @@ private fun AttackButton(
     isEnabled: Boolean,
     classColor: Color,
     diceRoll: DiceRoll,
-    diceCount: Int?,
+    diceSlots: Set<Int>?,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -166,7 +166,7 @@ private fun AttackButton(
         classColor = classColor,
         showClassBorder = false,
         diceRoll = diceRoll,
-        diceCount = diceCount,
+        diceSlots = diceSlots,
         onRoll = onRoll,
         modifier = modifier,
     )
@@ -189,7 +189,7 @@ private fun AbilityButton(
         classColor = classColor,
         showClassBorder = true,
         diceRoll = diceRoll,
-        diceCount = control.diceCount,
+        diceSlots = control.diceSlots,
         onRoll = onRoll,
         label = label,
         modifier = modifier,
@@ -202,7 +202,7 @@ private fun ImpersonateButton(
     classColor: Color,
     label: String,
     diceRoll: DiceRoll,
-    diceCount: Int?,
+    diceSlots: Set<Int>?,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -213,7 +213,7 @@ private fun ImpersonateButton(
         classColor = classColor,
         showClassBorder = true,
         diceRoll = diceRoll,
-        diceCount = diceCount,
+        diceSlots = diceSlots,
         onRoll = onRoll,
         label = label,
         modifier = modifier,
@@ -237,12 +237,12 @@ private fun ArenaButton(
     classColor: Color,
     showClassBorder: Boolean,
     diceRoll: DiceRoll,
-    diceCount: Int?,
+    diceSlots: Set<Int>?,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
 ) {
-    val rollsDice = diceCount != null
+    val rollsDice = diceSlots != null
     var isPressed by remember { mutableStateOf(value = false) }
     val pressDrop by
         animateDpAsState(
@@ -290,7 +290,7 @@ private fun ArenaButton(
                             enabled = isEnabled,
                             onHoldStart = {
                                 isPressed = true
-                                if (rollsDice) diceRoll.startHold(diceCount = diceCount)
+                                if (rollsDice) diceRoll.startHold(slots = diceSlots)
                             },
                             onRelease = { isDoubleTap ->
                                 isPressed = false

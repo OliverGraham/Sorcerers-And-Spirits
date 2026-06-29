@@ -48,8 +48,11 @@ sealed interface OffensiveAbilityState : AbilityState {
     @Immutable data object PrepareAttack : OffensiveAbilityState, ActivatedAbilityState
 
     @Immutable
-    data class SummonMinion(override val skeletonCount: Int = 0, override val golemCount: Int = 0) :
-        OffensiveAbilityState, ActivatedAbilityState, SummonMinionAbility
+    data class SummonMinion(
+        override val skeletonCount: Int = 0,
+        override val golemCount: Int = 0,
+        override val attacksTakenThisTurn: Int = 0,
+    ) : OffensiveAbilityState, ActivatedAbilityState, SummonMinionAbility
 
     @Immutable data object Encore : OffensiveAbilityState
 
@@ -70,6 +73,18 @@ sealed interface OffensiveAbilityState : AbilityState {
  */
 internal val OffensiveAbilityState.effective: OffensiveAbilityState
     get() = if (this is OffensiveAbilityState.Impersonate) impersonatedAbility else this
+
+/**
+ * Whether a summoner has begun their minion follow-up attacks this turn. Summon Minion is a
+ * first-action choice; once the summoner has taken an attack, every remaining minion attack must be
+ * a normal attack, so no activated ability is offered until their next turn. The minions can sit
+ * inside an Illusionist's Impersonate wrapper, so the effective ability is read.
+ */
+internal val OffensiveAbilityState.isMinionAttackInProgress: Boolean
+    get() {
+        val minions = effective as? OffensiveAbilityState.SummonMinion ?: return false
+        return minions.attacksTakenThisTurn > 0
+    }
 
 internal fun DefensiveAbility.toState(): DefensiveAbilityState =
     when (this) {
@@ -108,6 +123,7 @@ internal fun OffensiveAbility.toState(): OffensiveAbilityState =
             OffensiveAbilityState.SummonMinion(
                 skeletonCount = skeletonCount,
                 golemCount = golemCount,
+                attacksTakenThisTurn = attacksTakenThisTurn,
             )
 
         is OffensiveAbility.Encore -> OffensiveAbilityState.Encore
@@ -151,7 +167,11 @@ internal fun OffensiveAbilityState.toDomain(): OffensiveAbility =
         is OffensiveAbilityState.PrepareAttack -> OffensiveAbility.PrepareAttack
 
         is OffensiveAbilityState.SummonMinion ->
-            OffensiveAbility.SummonMinion(skeletonCount = skeletonCount, golemCount = golemCount)
+            OffensiveAbility.SummonMinion(
+                skeletonCount = skeletonCount,
+                golemCount = golemCount,
+                attacksTakenThisTurn = attacksTakenThisTurn,
+            )
 
         is OffensiveAbilityState.Encore -> OffensiveAbility.Encore
 

@@ -52,8 +52,11 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
     @Serializable data object PrepareAttack : OffensiveAbilityEntity, ActivatedAbilityEntity
 
     @Serializable
-    data class SummonMinion(override val skeletonCount: Int = 0, override val golemCount: Int = 0) :
-        OffensiveAbilityEntity, ActivatedAbilityEntity, SummonMinionAbility
+    data class SummonMinion(
+        override val skeletonCount: Int = 0,
+        override val golemCount: Int = 0,
+        override val attacksTakenThisTurn: Int = 0,
+    ) : OffensiveAbilityEntity, ActivatedAbilityEntity, SummonMinionAbility
 
     @Serializable data object Encore : OffensiveAbilityEntity
 
@@ -150,6 +153,7 @@ internal fun OffensiveAbility.toEntity(): OffensiveAbilityEntity =
             OffensiveAbilityEntity.SummonMinion(
                 skeletonCount = skeletonCount,
                 golemCount = golemCount,
+                attacksTakenThisTurn = attacksTakenThisTurn,
             )
 
         is OffensiveAbility.Encore -> OffensiveAbilityEntity.Encore
@@ -193,7 +197,11 @@ internal fun OffensiveAbilityEntity.toDomain(): OffensiveAbility =
         is OffensiveAbilityEntity.PrepareAttack -> OffensiveAbility.PrepareAttack
 
         is OffensiveAbilityEntity.SummonMinion ->
-            OffensiveAbility.SummonMinion(skeletonCount = skeletonCount, golemCount = golemCount)
+            OffensiveAbility.SummonMinion(
+                skeletonCount = skeletonCount,
+                golemCount = golemCount,
+                attacksTakenThisTurn = attacksTakenThisTurn,
+            )
 
         is OffensiveAbilityEntity.Encore -> OffensiveAbility.Encore
 

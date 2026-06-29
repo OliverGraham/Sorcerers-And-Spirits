@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttackInProgress
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
@@ -224,8 +225,10 @@ internal class ComputerOpponentHandler(
      * real downside beyond a fizzle. The riskier gambits (All-In's self-knockout, Prepare Attack
      * forgoing a hit, Impersonate) are intentionally left to a normal attack.
      */
-    private fun CharacterClassState.favorableOffensiveAbility(): AbilityActionState.Activated? =
-        when (val ability = offensiveAbility) {
+    private fun CharacterClassState.favorableOffensiveAbility(): AbilityActionState.Activated? {
+        if (offensiveAbility.isMinionAttackInProgress) return null
+
+        return when (val ability = offensiveAbility) {
             is OffensiveAbilityState.SummonMinion -> {
                 val hasNoMinions = ability.skeletonCount == 0 && ability.golemCount == 0
                 val isBelowMaxHp = hitPoints < maxHitPoints
@@ -245,6 +248,7 @@ internal class ComputerOpponentHandler(
 
             else -> null
         }
+    }
 
     /**
      * The lowest-HP living opponent, ties broken at random so the computer is not fully

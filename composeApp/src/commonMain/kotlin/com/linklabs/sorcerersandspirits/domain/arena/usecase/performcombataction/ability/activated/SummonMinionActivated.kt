@@ -43,6 +43,7 @@ internal class SummonMinionActivated(
                 summonMinionAbility.copy(
                     skeletonCount = newSkeletonCount,
                     golemCount = newGolemCount,
+                    attacksTakenThisTurn = newSkeletonCount + newGolemCount,
                 )
             attacker.copy(
                 hitPoints = newHp,

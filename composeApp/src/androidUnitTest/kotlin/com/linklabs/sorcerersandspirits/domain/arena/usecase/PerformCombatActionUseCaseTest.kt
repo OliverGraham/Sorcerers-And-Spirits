@@ -1027,6 +1027,158 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `When a Necromancer holding a skeleton finishes their first attack, they attack again`() {
+        // Arrange
+        val necromancer =
+            TestCharacterClasses.necromancer()
+                .copy(offensiveAbility = OffensiveAbility.SummonMinion(skeletonCount = 1))
+        val arguments = createTwoPlayerArguments(attackerClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val necromancerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = necromancerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedNecro = outcome.getPlayerById(userId = necromancerUserId).characterClass
+        val updatedSummon =
+            assertIs<OffensiveAbility.SummonMinion>(value = updatedNecro.offensiveAbility)
+        assertEquals(expected = 1, actual = updatedSummon.attacksTakenThisTurn)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = necromancerUserId))
+    }
+
+    @Test
+    fun `When a Necromancer holding a golem finishes their first attack, they attack again`() {
+        // Arrange
+        val necromancer =
+            TestCharacterClasses.necromancer()
+                .copy(offensiveAbility = OffensiveAbility.SummonMinion(golemCount = 1))
+        val arguments = createTwoPlayerArguments(attackerClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val necromancerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = necromancerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedNecro = outcome.getPlayerById(userId = necromancerUserId).characterClass
+        val updatedSummon =
+            assertIs<OffensiveAbility.SummonMinion>(value = updatedNecro.offensiveAbility)
+        assertEquals(expected = 1, actual = updatedSummon.attacksTakenThisTurn)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = necromancerUserId))
+    }
+
+    @Test
+    fun `When a Necromancer exhausts their minion attacks, the turn passes to the next player`() {
+        // Arrange
+        val necromancer =
+            TestCharacterClasses.necromancer()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.SummonMinion(skeletonCount = 1, attacksTakenThisTurn = 1)
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val necromancerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = necromancerUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = currentAction.defenderUserId)
+        )
+    }
+
+    @Test
+    fun `When a turn passes to a Necromancer holding minions, their minion attacks reset`() {
+        // Arrange
+        val necromancer =
+            TestCharacterClasses.necromancer()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.SummonMinion(skeletonCount = 2, attacksTakenThisTurn = 2)
+                )
+        val arguments = createTwoPlayerArguments(defenderClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+        val necromancerUserId = currentAction.defenderUserId
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedNecro = outcome.getPlayerById(userId = necromancerUserId).characterClass
+        val updatedSummon =
+            assertIs<OffensiveAbility.SummonMinion>(value = updatedNecro.offensiveAbility)
+        assertEquals(expected = 0, actual = updatedSummon.attacksTakenThisTurn)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = necromancerUserId))
+    }
+
+    @Test
+    fun `When a Necromancer summons a minion, they forgo their minion attacks this turn`() {
+        // Arrange
+        val necromancer =
+            TestCharacterClasses.necromancer()
+                .copy(offensiveAbility = OffensiveAbility.SummonMinion(skeletonCount = 1))
+        val arguments = createTwoPlayerArguments(attackerClass = necromancer)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getSummonMinionAction(necromancer = necromancer)
+        val necromancerUserId = currentAction.attackerUserId
+
+        setupOneDiceRoll(userId = necromancerUserId, die = 1)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual = outcome.nextCombatAction.isThisUserNext(userId = currentAction.defenderUserId)
+        )
+    }
+
+    @Test
+    fun `When an Illusionist impersonating Summon Minion holds a skeleton, they get a follow-up attack`() {
+        // Arrange
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility = OffensiveAbility.SummonMinion(skeletonCount = 1)
+                        )
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val illusionistUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = illusionistUserId, firstDie = 1, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updated = outcome.getPlayerById(userId = illusionistUserId).characterClass
+        val impersonate = assertIs<OffensiveAbility.Impersonate>(value = updated.offensiveAbility)
+        val copiedMinions =
+            assertIs<OffensiveAbility.SummonMinion>(value = impersonate.impersonatedAbility)
+        assertEquals(expected = 1, actual = copiedMinions.attacksTakenThisTurn)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = illusionistUserId))
+    }
+
+    @Test
     fun `When Bard deals damage, then Encore triggers`() {
         // Arrange
         val bard = TestCharacterClasses.bard()

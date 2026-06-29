@@ -42,11 +42,11 @@ data class ArenaScreenState(
     internal val latestRoll: LatestRoll = messages.latestRoll()
 
     /**
-     * The most recent flash-worthy event (a normal-attack outcome), read from the raw [messages] so
-     * the full-screen "Hit!"/"Miss!"/"K.O.!" flash fires immediately rather than waiting for the
-     * throttled log (SS-148). Null until the first such event.
+     * The flash-worthy events in order, read from the raw [messages] so the full-screen call-outs
+     * fire immediately rather than waiting for the throttled log (SS-148/SS-164). The overlay plays
+     * newly-arrived ones in sequence (e.g. "Hit!" then "X Damage!" then "Knocked Out!").
      */
-    val latestFlashMessage: ArenaMessageState? = messages.lastOrNull { it.flashText != null }
+    val flashMessages: List<ArenaMessageState> = messages.filter { it.flashText != null }
 }
 
 @Immutable

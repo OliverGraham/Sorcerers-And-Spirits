@@ -56,6 +56,7 @@ class ArenaMessageEntityTest {
                     defenderUserId = "defender",
                     firstDie = 4,
                     secondDie = 5,
+                    bonus = 1,
                     type = NormalRollMessageType.Knockout,
                 ),
                 ArenaMessage.KillingMomentum,

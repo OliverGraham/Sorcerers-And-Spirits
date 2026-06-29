@@ -331,6 +331,27 @@ class ArenaScreenViewModelTest {
         }
 
     @Test
+    fun `Given the user's Necromancer is mid minion follow-up, then only a normal attack is offered`() =
+        runTest {
+            val necromancer =
+                TestCharacterClasses.necromancer()
+                    .copy(
+                        offensiveAbility =
+                            OffensiveAbility.SummonMinion(
+                                skeletonCount = 2,
+                                attacksTakenThisTurn = 1,
+                            )
+                    )
+            val (_, combatState) =
+                createViewModelWithCombatState(
+                    nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(USER_ID)),
+                    userClass = necromancer,
+                )
+
+            combatState.assertOnlyAttackOffered()
+        }
+
+    @Test
     fun `Given an idle turn for an opponent, then the user has no combat controls`() = runTest {
         val (_, combatState) =
             createViewModelWithCombatState(

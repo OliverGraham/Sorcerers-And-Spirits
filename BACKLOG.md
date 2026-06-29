@@ -277,32 +277,6 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
   overlay), SS-119 (Impersonate/MirrorImage state).
 
-### SS-167 — Summon Minion skeletons/golems don't grant the extra attack
-
-- [ ] Not completed
-- **Symptom:** A player holding a Summon Minion skeleton (or golem) does not get their granted
-  extra attack — after they attack and miss, the turn ends instead of letting them attack again.
-  Observed with the Illusionist (impersonated Summon Minion) holding a skeleton: he missed his
-  attack and his turn ended, when the skeleton should have given him another attack.
-- **Rules (concrete, in Domain):** Skeleton gives +1 Health shield AND an extra attack on next
-  turn. Golem gives +2 Health shield AND an extra attack on your turn. The shield half is already
-  modelled (SS-102); the **extra-attack half is the gap**.
-- **Likely cause:** the granted extra attack is never consumed at turn-end. All-In's identical
-  "attack again" was fixed in SS-104 by intercepting `CombatMutator.resolveTurnEnd`: when the
-  turn-player's ability has a pending extra attack, clear the flag and keep control (stay `Idle` on
-  them) for one more attack instead of advancing. Summon Minion needs the same: a per-turn
-  "minion attack(s) remaining" derived from skeletonCount/golemCount, consumed in `resolveTurnEnd`
-  after any first-attack outcome (hit/miss/KO/defensive redirect), guarded by the same one-player /
-  conscious / match-end checks. Confirm whether the granted attacks must also survive the Impersonate
-  wrapper (read `.effective`, write back wrapped — see SS-119) and respect skeleton "next turn" vs
-  golem "this turn" timing.
-- **Source (to investigate):** `SummonMinionActivated`, `CombatMutator.resolveTurnEnd` /
-  `resetForNewTurn`, `OffensiveAbility.SummonMinion` (skeletonCount/golemCount), and the All-In
-  precedent `grantAllInSecondAttackIfApplicable`. Add domain tests mirroring SS-104's (skeleton →
-  granted attack after a miss; golem timing; impersonated Summon Minion).
-- **Related:** SS-104 (All-In second attack — the pattern to copy), SS-102 (minion shields),
-  SS-119 (impersonated Summon Minion wrapper), SS-093 (Summon Minion outcome messages).
-
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

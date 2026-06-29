@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.RerollSelection as MirrorImageReroll
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttackInProgress
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 
 /**
@@ -48,11 +49,12 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
     when (val actionState = combatActionState) {
         is CombatActionState.Idle ->
             if (isItThisUsersTurn) {
+                val offensiveAbility = userPlayer.characterClass.offensiveAbility
                 buildList {
                     add(element = ArenaCombatControl.NormalAttack(requiresTarget = true))
-                    addAll(
-                        elements = userPlayer.characterClass.offensiveAbility.toActivatedControls()
-                    )
+                    if (!offensiveAbility.isMinionAttackInProgress) {
+                        addAll(elements = offensiveAbility.toActivatedControls())
+                    }
                 }
             } else {
                 emptyList()

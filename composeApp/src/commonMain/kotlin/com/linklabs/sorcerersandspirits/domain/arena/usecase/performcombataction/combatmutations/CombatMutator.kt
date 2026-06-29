@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
@@ -14,6 +15,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
+import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
@@ -132,10 +134,14 @@ internal class CombatMutator(
         val wasSecondAttackGranted = grantAllInSecondAttackIfApplicable()
         if (wasSecondAttackGranted) return
 
+        val wasMinionAttackGranted = grantMinionAttackIfApplicable()
+        if (wasMinionAttackGranted) return
+
         updatePlayerClass(userId = originalTurnUserId) { it.copy(hasActedThisRound = true) }
 
         val nextPlayer = calculateNextPlayerInRound()
         if (nextPlayer != null) {
+            resetMinionAttacks(userId = nextPlayer.userId)
             nextPlayer.characterClass.addNewTurnMessage()
             setNextCombatAction(
                 nextAction = NextCombatAction.Idle(activeUserIds = setOf(nextPlayer.userId))
@@ -169,6 +175,54 @@ internal class CombatMutator(
         return true
     }
 
+    /**
+     * A summoner attacks once per minion they hold, on top of their normal attack. The follow-up
+     * attacks are granted here, one at a time after each attack resolves: control stays with the
+     * summoner and the taken-count is raised, until it reaches the live minion count and the turn
+     * ends. The count is read live so a minion consumed as a shield this turn no longer grants its
+     * attack. [SummonMinionActivated] marks the count spent when the turn is used to summon, so a
+     * minion first grants its attack on a later turn. Minions can live inside an Illusionist's
+     * Impersonate wrapper, so the effective ability is read and written back wrapped.
+     */
+    private fun grantMinionAttackIfApplicable(): Boolean {
+        val turnPlayer = updatedPlayerMap.getValue(key = originalTurnUserId).characterClass
+        val minions =
+            turnPlayer.offensiveAbility.effective as? OffensiveAbility.SummonMinion ?: return false
+        if (minions.attacksTakenThisTurn >= minions.minionAttacks) return false
+        if (!turnPlayer.isConscious()) return false
+
+        updatePlayerClass(userId = originalTurnUserId) { characterClass ->
+            val updatedMinions =
+                minions.copy(attacksTakenThisTurn = minions.attacksTakenThisTurn + 1)
+            characterClass.copy(
+                offensiveAbility =
+                    characterClass.offensiveAbility.withEffective(updated = updatedMinions)
+            )
+        }
+        setNextCombatAction(
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId))
+        )
+
+        return true
+    }
+
+    /**
+     * Clears a summoner's minion-attack count as their turn begins, so they may attack once per
+     * minion again. A minion summoned later in the same turn is not counted until the next turn,
+     * because summoning spends the count for the summon turn.
+     */
+    private fun resetMinionAttacks(userId: UserId) {
+        val player = updatedPlayerMap.getValue(key = userId).characterClass
+        val minions = player.offensiveAbility.effective as? OffensiveAbility.SummonMinion ?: return
+
+        updatePlayerClass(userId = userId) { characterClass ->
+            val resetMinions = minions.copy(attacksTakenThisTurn = 0)
+            characterClass.copy(
+                offensiveAbility = characterClass.offensiveAbility.withEffective(resetMinions)
+            )
+        }
+    }
+
     private fun goToNextRound() {
         val newRoundNumber = roundNumber + 1
         updatedRoundNumber = newRoundNumber
@@ -177,6 +231,7 @@ internal class CombatMutator(
         messages.add(element = ArenaMessage.NewRound(roundNumber = newRoundNumber))
 
         val fastestPlayerNextRound = consciousPlayers.maxBy { it.characterClass.speed }
+        resetMinionAttacks(userId = fastestPlayerNextRound.userId)
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
 
         setNextCombatAction(

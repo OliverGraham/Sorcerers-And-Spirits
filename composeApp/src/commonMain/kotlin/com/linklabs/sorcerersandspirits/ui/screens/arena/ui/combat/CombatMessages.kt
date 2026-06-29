@@ -62,7 +62,7 @@ internal fun Messages(
     val expandedFraction by
         animateFloatAsState(targetValue = if (isExpanded) 1f else 0f, label = MESSAGES_EXPAND_LABEL)
 
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(modifier = modifier.fillMaxWidth().fillMaxHeight(fraction = 0.5f)) {
         if (expandedFraction > 0f) {
             ArenaMessageLog(
                 messages = messages,

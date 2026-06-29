@@ -59,7 +59,7 @@ internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect?, modifier: Modifi
         val homeCenter = homeBounds.center - overlayOrigin
 
         repeat(times = DICE_HOME_DIE_COUNT) { index ->
-            val isActive = index < diceRoll.displayedDiceCount
+            val isActive = index in diceRoll.activeSlots
             val restCenter =
                 Offset(
                     x = homeCenter.x + (index - (DICE_HOME_DIE_COUNT - 1) / 2f) * spacingPx,

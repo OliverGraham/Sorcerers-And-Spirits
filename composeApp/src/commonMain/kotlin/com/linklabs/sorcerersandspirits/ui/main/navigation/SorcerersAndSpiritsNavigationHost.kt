@@ -26,13 +26,11 @@ import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
-import com.linklabs.sorcerersandspirits.ui.main.ui.TopBar
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.ChallengeDialog
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
-import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -158,10 +156,7 @@ private fun SorcerersAndSpirits(
             },
             gesturesEnabled = true,
         ) {
-            Scaffold(
-                modifier = modifier,
-                topBar = { TopBar(onMenuClick = { scope.launch { drawerState.open() } }) },
-            ) { innerPadding ->
+            Scaffold(modifier = modifier) { innerPadding ->
                 Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
                     OfflineBanner(isOffline = appState.isOffline)
 

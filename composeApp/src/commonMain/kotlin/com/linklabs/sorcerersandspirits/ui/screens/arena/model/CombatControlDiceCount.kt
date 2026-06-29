@@ -18,6 +18,41 @@ internal val ArenaCombatControl.diceCount: Int?
 private const val ONE_DIE = 1
 private const val TWO_DICE = 2
 
+private val FIRST_SLOT = setOf(0)
+private val SECOND_SLOT = setOf(1)
+private val BOTH_SLOTS = setOf(0, 1)
+
+/**
+ * Which physical dice the current step rolls. Most rolls throw the first die (or both), but Mirror
+ * Image rerolls exactly the die the Illusionist chose, leaving the other untouched (SS-166). `null`
+ * marks a control that resolves a choice rather than a roll.
+ */
+internal val ArenaCombatControl.diceSlots: Set<Int>?
+    get() =
+        when (this) {
+            is ArenaCombatControl.NormalAttack -> BOTH_SLOTS
+            is ArenaCombatControl.ActivatedAbility -> action.diceSlots
+            is ArenaCombatControl.AbilityRoll -> action.diceSlots
+        }
+
+private val AbilityActionState.diceSlots: Set<Int>?
+    get() =
+        when (this) {
+            is AbilityActionState.Passive.MirrorImage ->
+                when (rerollSelection) {
+                    AbilityAction.Passive.MirrorImage.RerollSelection.First -> FIRST_SLOT
+                    AbilityAction.Passive.MirrorImage.RerollSelection.Second -> SECOND_SLOT
+                    AbilityAction.Passive.MirrorImage.RerollSelection.None -> null
+                }
+
+            else ->
+                when (diceCount) {
+                    ONE_DIE -> FIRST_SLOT
+                    TWO_DICE -> BOTH_SLOTS
+                    else -> null
+                }
+        }
+
 private val AbilityActionState.diceCount: Int?
     get() =
         when (this) {

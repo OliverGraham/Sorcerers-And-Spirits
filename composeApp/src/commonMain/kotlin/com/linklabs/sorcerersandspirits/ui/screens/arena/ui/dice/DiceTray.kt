@@ -44,7 +44,11 @@ internal fun DiceTray(
                 .fillMaxWidth()
                 .holdToRollGesture(
                     enabled = isRollable,
-                    onHoldStart = { roll.startHold(diceCount = expectedDiceCount) },
+                    onHoldStart = {
+                        roll.startHold(
+                            slots = expectedDiceCount?.let { count -> (0 until count).toSet() }
+                        )
+                    },
                     onRelease = { isDoubleTap ->
                         roll.release(isDoubleTap = isDoubleTap) { onRoll?.invoke() }
                     },

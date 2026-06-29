@@ -1,5 +1,11 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,12 +23,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -44,8 +53,11 @@ private val HALO_HEIGHT = 30.dp
 private val HALO_SHAPE = RoundedCornerShape(percent = 50)
 private val HALO_INNER_COLOR = Color(color = 0xFFCB9C6A)
 private val HALO_OUTER_COLOR = Color(color = 0xFF654E35)
-private const val HALO_INNER_STOP = 0.4231f
-private const val HALO_OUTER_STOP = 0.9423f
+private val HALO_SWEEP_COLORS = listOf(HALO_OUTER_COLOR, HALO_INNER_COLOR, HALO_OUTER_COLOR)
+private const val HALO_SWEEP_WIDTH_PX = 220f
+private const val HALO_SWEEP_DURATION_MILLIS = 3000
+private const val HALO_SWEEP_LABEL = "haloSweep"
+private const val HALO_SWEEP_TRANSLATE_LABEL = "haloSweepTranslate"
 
 private val STAT_PILL_SHAPE = RoundedCornerShape(size = 8.dp)
 private val STAT_PILL_ICON_SIZE = 24.dp
@@ -216,6 +228,20 @@ private fun StatPill(
  */
 @Composable
 private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
+    val sweep = rememberInfiniteTransition(label = HALO_SWEEP_LABEL)
+    val translate by
+        sweep.animateFloat(
+            initialValue = 0f,
+            targetValue = HALO_SWEEP_WIDTH_PX,
+            animationSpec =
+                infiniteRepeatable(
+                    animation =
+                        tween(durationMillis = HALO_SWEEP_DURATION_MILLIS, easing = LinearEasing),
+                    repeatMode = RepeatMode.Restart,
+                ),
+            label = HALO_SWEEP_TRANSLATE_LABEL,
+        )
+
     Box(
         modifier =
             modifier
@@ -223,12 +249,11 @@ private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
                 .clip(shape = HALO_SHAPE)
                 .background(
                     brush =
-                        Brush.radialGradient(
-                            colorStops =
-                                arrayOf(
-                                    HALO_INNER_STOP to HALO_INNER_COLOR,
-                                    HALO_OUTER_STOP to HALO_OUTER_COLOR,
-                                )
+                        Brush.linearGradient(
+                            colors = HALO_SWEEP_COLORS,
+                            start = Offset(x = translate, y = 0f),
+                            end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
+                            tileMode = TileMode.Repeated,
                         )
                 )
     )

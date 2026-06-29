@@ -24,7 +24,7 @@ import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_background
 
-@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NewArenaCombatMultiplayerPreview() {
     PreviewArenaCombat(
@@ -57,7 +57,7 @@ private fun NewArenaCombatMultiplayerPreview() {
     )
 }
 
-@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NewArenaCombatTwoPlayerPreview() {
     PreviewArenaCombat(
@@ -80,7 +80,7 @@ private fun NewArenaCombatTwoPlayerPreview() {
     )
 }
 
-@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NewArenaCombatKnockedOutOpponentPreview() {
     PreviewArenaCombat(
@@ -114,7 +114,7 @@ private fun NewArenaCombatKnockedOutOpponentPreview() {
     )
 }
 
-@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NewArenaCombatUserTurnPreview() {
     PreviewArenaCombat(
@@ -138,7 +138,7 @@ private fun NewArenaCombatUserTurnPreview() {
     )
 }
 
-@Preview(widthDp = 360, heightDp = 800, showBackground = true)
+@Preview(widthDp = 360, heightDp = 800)
 @Composable
 private fun NewArenaCombatFlashPreview() {
     PreviewArenaCombat(

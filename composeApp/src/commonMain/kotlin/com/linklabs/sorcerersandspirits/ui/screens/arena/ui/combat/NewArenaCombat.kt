@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -59,6 +60,44 @@ internal fun NewArenaCombat(
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                Row(modifier = Modifier.fillMaxSize()) {
+                    // TODO: This Avatar column should take up 2/3 of the width of the screen. There
+                    //       Should be a good amount of space on the left, though. We'll figure it out
+                    Column {
+                        // TODO Large Avatar
+                        // TODO DiceHome
+                        // TODO Large Avatar
+
+                        // TODO: The vertical ordering of the Avatars doesn't matter - it can be random
+                        //       The user will have the ic_user_icon in the bottom left of the contianer that contains their Avatar -
+                        //       the icon will not touch the Avatar.
+                        //       Whoever's turn it is will have a halo icon underneath their feet,
+                        //       a selected type of icon to indicate that it's their turn to roll.
+                        //       This can be when they're the attacker or if they're using a
+                        //       DefensiveAbility, etc.
+                        //       The activePlayerHaloIcon will be this color gradient drawn 3d-like as an oval
+                        //         background: radial-gradient(50% 50% at 50% 50%, #CB9C6A 42.31%, #654E35 94.23%);
+                    }
+
+                    // TODO: The ClassIcons will now be a Column that occupies the right 1/3 or 1/4 of the screen.
+                    //       Whomever the user will have the ic_user_icon (smaller) at the bottom part of their ClassIcon circle
+                    Column {
+
+                    }
+                }
+
+                // TODO: This Row will be the Row of Buttons. Let me know if I need to describe how
+                //       the buttons should be laid out, but all buttons should be in this row
+                Row {
+
+                }
+
+                // TODO: The existing StatColumns on both sides of the screen are done way with.
+                //       We'll use the Drawer in order to tell the user about stats, so even large Avatars
+                //       must be clickable to bring up the drawer.
+            }
+
             Column(modifier = Modifier.fillMaxSize()) {
                 AnimatedContent(
                     targetState =

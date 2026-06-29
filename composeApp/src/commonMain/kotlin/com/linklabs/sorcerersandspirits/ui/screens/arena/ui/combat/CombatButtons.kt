@@ -83,7 +83,7 @@ internal fun BottomControls(
         )
 
         ClassAvatarStats(
-            characterClass = state.turnOwnerPlayer.characterClass,
+            characterClass = state.attackingPlayer.characterClass,
             displayDirection = DisplayDirection.Left,
             modifier = Modifier.align(alignment = Alignment.CenterStart),
         )

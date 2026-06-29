@@ -81,7 +81,8 @@ sealed interface ArenaState {
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
         val turnOwnerUserId = combatActionState.turnOwnerUserId
-        val turnOwnerPlayer = playerMap.getValue(key = turnOwnerUserId)
+        val attackingUserId = combatActionState.attackingUserId
+        val attackingPlayer = playerMap.getValue(key = attackingUserId)
         val combatControls = deriveCombatControls()
         val lockedTargetUserId = deriveLockedTargetUserId()
         val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()

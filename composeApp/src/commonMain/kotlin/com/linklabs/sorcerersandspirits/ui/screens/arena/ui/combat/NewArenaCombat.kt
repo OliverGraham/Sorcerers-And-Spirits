@@ -63,7 +63,7 @@ internal fun NewArenaCombat(
                 AnimatedContent(
                     targetState =
                         AvatarPairing(
-                            activeUserId = state.turnOwnerUserId,
+                            activeUserId = state.attackingUserId,
                             targetUserId = targetedOpponentUserId,
                         ),
                     label = TARGET_TRANSITION_LABEL,

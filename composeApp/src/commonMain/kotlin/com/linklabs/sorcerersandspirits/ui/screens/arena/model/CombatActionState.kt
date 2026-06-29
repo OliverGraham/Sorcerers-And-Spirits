@@ -37,9 +37,10 @@ sealed interface CombatActionState {
 
 /**
  * The player whose turn it is — the turn owner. While a turn resolves this stays the original actor
- * even when a defensive ability hands the dice to someone else (Riposte, Persuade), so the arena
- * can always seat the turn owner in the left avatar slot (SS-157). On an idle turn it is the single
- * player about to act.
+ * even when a defensive ability hands the dice to someone else (Riposte, Persuade). It drives
+ * whose-turn decisions (target resolution, auto-targeting) but not the left avatar, which follows
+ * the combatant currently attacking ([attackingUserId]) so a Riposte reversal does not seat the
+ * same player in both slots (SS-157, SS-165). On an idle turn it is the single player about to act.
  */
 val CombatActionState.turnOwnerUserId: String
     get() =
@@ -47,6 +48,20 @@ val CombatActionState.turnOwnerUserId: String
             is CombatActionState.Idle -> activeUserIds.first()
             is CombatActionState.NormalAttack -> originalTurnUserId
             is CombatActionState.AbilityRoll -> originalTurnUserId
+        }
+
+/**
+ * The combatant seated in the left avatar slot — the one currently pressing the attack. This is the
+ * in-flight action's attacker, which is normally the turn owner but diverges after a successful
+ * Riposte reverses the attack: the Duelist (defender) becomes the attacker while it stays the
+ * original attacker's turn (SS-165). On an idle turn it is the player about to act.
+ */
+val CombatActionState.attackingUserId: String
+    get() =
+        when (this) {
+            is CombatActionState.Idle -> activeUserIds.first()
+            is CombatActionState.NormalAttack -> attackerUserId
+            is CombatActionState.AbilityRoll -> attackerUserId
         }
 
 /**

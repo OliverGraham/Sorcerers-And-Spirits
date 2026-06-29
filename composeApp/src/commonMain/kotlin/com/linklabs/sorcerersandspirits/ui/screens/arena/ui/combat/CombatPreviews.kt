@@ -1,7 +1,11 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
@@ -16,6 +20,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMes
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_background
 
 @Preview(widthDp = 360, heightDp = 800, showBackground = true)
 @Composable
@@ -202,7 +209,16 @@ private fun PreviewArenaCombat(
         )
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
-            NewArenaCombat(screenState = screenState, state = state)
+            NewArenaCombat(
+                screenState = screenState,
+                state = state,
+                modifier =
+                    Modifier.fillMaxSize()
+                        .paint(
+                            painter = painterResource(resource = Res.drawable.arena_background),
+                            contentScale = ContentScale.Crop,
+                        ),
+            )
         }
     }
 }

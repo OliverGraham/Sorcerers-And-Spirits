@@ -213,6 +213,24 @@ function. Each ticket below owns one segment. Parent: SS-142 (which is itself a 
 - **Notes:** UI fix in `ArenaScreenState.kt`. Related: SS-101 (auto-target), SS-104 (second-attack
   grant), SS-114 (`usedThisTurn` reset), SS-119 (Impersonate-wrapper corruption).
 
+### SS-166 — Dice faces don't match the rolled number shown in the message
+- [ ] Not completed
+- **Symptom:** The value reported in a combat message did not match the faces shown on the dice.
+  The message number is the authoritative roll; the dice rendered different pips. Recurring — has
+  been observed more than once.
+- **Suspected culprit:** the dice rendering, not the message/domain. Likely the dice faces shown
+  are not driven by (or drift from) the same roll values the resolution/message uses — a display
+  bug rather than a wrong roll. Confirm whether the message value is correct and only the dice
+  faces are wrong (vs. the reverse).
+- **Source (to investigate):** the dice roll pipeline — `DiceRoll`/`rememberDiceRoll`,
+  `CombatDiceOverlay.kt` (`DiceOverlay`/`Die3d` `dieFaces`/`displayedDiceCount`), and how rolled
+  values flow from the domain resolution into both the message and the dice faces. Check for a
+  race between the animated roll and the committed result, or stale/mismatched face state.
+- **Repro notes:** capture the message text + the dice faces shown + class/ability when it next
+  happens; note whether it was a normal attack or an ability roll, and single- vs two-die.
+- **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
+  overlay).
+
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

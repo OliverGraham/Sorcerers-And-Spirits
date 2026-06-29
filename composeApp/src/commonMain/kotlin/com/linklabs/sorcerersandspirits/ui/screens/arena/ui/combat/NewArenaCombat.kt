@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
@@ -16,17 +17,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.headIconPlayersFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetPlayerFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
 private const val TARGET_TRANSITION_LABEL = "NewArenaCombatTargetTransition"
+private const val AVATAR_COLUMN_WEIGHT = 0.7f
+private const val CLASS_ICON_COLUMN_WEIGHT = 0.3f
+private val AVATAR_COLUMN_START_PADDING = 16.dp
+private val STAGE_TOP_PADDING = MESSAGES_ICON_SIZE
 
 @Composable
 internal fun NewArenaCombat(
@@ -73,28 +77,20 @@ internal fun NewArenaCombat(
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     ) {
-                        TransitioningContent(
+                        CombatStage(
                             state = state,
                             activeUserId = currentPairing.activeUserId,
-                            currentTargetUserId = currentPairing.targetUserId,
+                            targetUserId = currentPairing.targetUserId,
                             onSelectTarget = { selectedOpponentUserId = it },
                             onInspect = { inspectedUserId = it },
                             isTargetable =
                                 state.isItThisUsersTurn &&
                                     state.lockedTargetUserId == null &&
                                     !isTargetLockedOptimistically,
-                            messages = screenState.messages,
-                            unreadMessageCount = unreadMessageCount,
-                            isMessagesExpanded = isMessagesExpanded,
-                            onToggleMessages = {
-                                isMessagesExpanded = !isMessagesExpanded
-                                unreadMessageCount = 0
-                            },
+                            onDiceHomeBoundsChanged = { diceHomeBounds = it },
                         )
                     }
                 }
-
-                DiceHomeSlot(onBoundsChanged = { diceHomeBounds = it })
 
                 BottomControls(
                     state = state,
@@ -103,6 +99,17 @@ internal fun NewArenaCombat(
                     diceRoll = diceRoll,
                 )
             }
+
+            Messages(
+                messages = screenState.messages,
+                unreadMessageCount = unreadMessageCount,
+                isExpanded = isMessagesExpanded,
+                onToggleExpanded = {
+                    isMessagesExpanded = !isMessagesExpanded
+                    unreadMessageCount = 0
+                },
+                modifier = Modifier.fillMaxSize(),
+            )
 
             TurnTimer(
                 secondsRemaining = screenState.secondsRemaining,
@@ -132,75 +139,54 @@ internal fun NewArenaCombat(
 }
 
 /**
- * The two players seated in the bottom-half avatars: the active turn owner on the left and the
- * targeted player on the right (SS-157). Keying the avatar [AnimatedContent] on this pairing lets
- * both slots morph when the turn passes or the target changes, not just the target.
+ * The two players seated as full avatars: the attacker on top and the targeted player on the bottom
+ * (SS-157). Keying the avatar [AnimatedContent] on this pairing lets both slots morph when the turn
+ * passes or the target changes, not just the target.
  */
 @Immutable private data class AvatarPairing(val activeUserId: String, val targetUserId: String)
 
+/**
+ * The main combat area: the attacker/target avatar column on the left two-thirds and the remaining
+ * players as a column of class heads on the right third. The dice rest between the two avatars; the
+ * buttons and overlays live outside this stage so they do not take part in the avatar morph.
+ */
 @Composable
-private fun TransitioningContent(
+private fun CombatStage(
     state: ArenaState.Combat,
     activeUserId: String,
-    currentTargetUserId: String,
+    targetUserId: String,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
-    messages: List<ArenaMessageState>,
-    unreadMessageCount: Int,
-    isMessagesExpanded: Boolean,
-    onToggleMessages: () -> Unit,
+    onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        TopHalfContent(
-            headIconPlayers =
-                state.headIconPlayersFor(
-                    activeUserId = activeUserId,
-                    targetUserId = currentTargetUserId,
-                ),
-            isTargetable = isTargetable,
-            onSelectTarget = onSelectTarget,
-            onInspect = onInspect,
-            messages = messages,
-            unreadMessageCount = unreadMessageCount,
-            isMessagesExpanded = isMessagesExpanded,
-            onToggleMessages = onToggleMessages,
-            modifier = Modifier.weight(weight = 1f),
-        )
-        AvatarsRow(
-            activePlayer = state.playerMap.getValue(key = activeUserId),
-            targetPlayer = state.targetPlayerFor(targetUserId = currentTargetUserId),
-            modifier = Modifier.weight(weight = 1f),
-        )
-    }
-}
+    val headIconPlayers =
+        state.headIconPlayersFor(activeUserId = activeUserId, targetUserId = targetUserId)
+    val hasHeadIcons = headIconPlayers.isNotEmpty()
 
-@Composable
-private fun TopHalfContent(
-    headIconPlayers: List<PlayerState.Selected>,
-    isTargetable: Boolean,
-    onSelectTarget: (String) -> Unit,
-    onInspect: (String) -> Unit,
-    messages: List<ArenaMessageState>,
-    unreadMessageCount: Int,
-    isMessagesExpanded: Boolean,
-    onToggleMessages: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier.fillMaxSize()) {
-        ClassIcons(
-            headIconPlayers = headIconPlayers,
-            isTargetable = isTargetable,
-            onSelectTarget = onSelectTarget,
+    Row(modifier = modifier.fillMaxSize().padding(top = STAGE_TOP_PADDING)) {
+        CombatAvatarColumn(
+            activePlayer = state.playerMap.getValue(key = activeUserId),
+            targetPlayer = state.targetPlayerFor(targetUserId = targetUserId),
+            userPlayerId = state.userPlayerId,
+            activeUserIds = state.activeUserIds,
             onInspect = onInspect,
-            modifier = Modifier.padding(top = MESSAGES_ICON_SIZE),
+            onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
+            modifier =
+                Modifier.weight(weight = if (hasHeadIcons) AVATAR_COLUMN_WEIGHT else 1f)
+                    .padding(start = AVATAR_COLUMN_START_PADDING),
         )
-        Messages(
-            messages = messages,
-            unreadMessageCount = unreadMessageCount,
-            isExpanded = isMessagesExpanded,
-            onToggleExpanded = onToggleMessages,
-        )
+
+        if (hasHeadIcons) {
+            ClassIcons(
+                headIconPlayers = headIconPlayers,
+                userPlayerId = state.userPlayerId,
+                isTargetable = isTargetable,
+                onSelectTarget = onSelectTarget,
+                onInspect = onInspect,
+                modifier = Modifier.weight(weight = CLASS_ICON_COLUMN_WEIGHT),
+            )
+        }
     }
 }

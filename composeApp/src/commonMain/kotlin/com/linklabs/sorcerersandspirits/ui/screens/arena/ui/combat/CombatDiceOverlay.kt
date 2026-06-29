@@ -21,7 +21,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
 
 private const val DICE_HOME_DIE_COUNT = 2
-private val DICE_HOME_HEIGHT = 96.dp
+private val DICE_HOME_HEIGHT = 56.dp
 private val DICE_REST_SPACING = 76.dp
 
 /**

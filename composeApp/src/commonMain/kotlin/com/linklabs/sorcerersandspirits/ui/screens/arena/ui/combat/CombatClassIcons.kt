@@ -1,36 +1,55 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_user_player
 
+private val USER_MARKER_ICON_SIZE = 24.dp
+private val USER_MARKER_ICON_INSET = 4.dp
+
+/**
+ * The right column of collapsed class heads — every player not seated as a full avatar (SS-143).
+ * Tapping a head targets it on the user's own turn, otherwise it opens the inspect drawer. The
+ * local player's head carries the identity marker at the foot of its circle.
+ */
 @Composable
 internal fun ClassIcons(
     headIconPlayers: List<PlayerState.Selected>,
+    userPlayerId: String,
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    FlowRow(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+    Column(
+        modifier = modifier.fillMaxHeight(),
+        verticalArrangement = Arrangement.SpaceEvenly,
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         headIconPlayers.forEach { player ->
             ClassIcon(
                 player = player,
+                isUserPlayer = player.userId == userPlayerId,
                 isTargetable = isTargetable,
                 onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -39,6 +58,7 @@ internal fun ClassIcons(
 @Composable
 private fun ClassIcon(
     player: PlayerState.Selected,
+    isUserPlayer: Boolean,
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
@@ -47,12 +67,26 @@ private fun ClassIcon(
     val isConscious = player.characterClass.isConscious
     val isTargetingTap = isTargetable && isConscious
 
-    ClassHeadIcon(
-        characterClass = player.characterClass,
-        isEnabled = isConscious,
-        modifier =
-            modifier.sharedBounds(key = player.userId).clickable {
-                if (isTargetingTap) onSelectTarget(player.userId) else onInspect(player.userId)
-            },
-    )
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        ClassHeadIcon(
+            characterClass = player.characterClass,
+            isEnabled = isConscious,
+            width = maxWidth,
+            modifier =
+                Modifier.sharedBounds(key = player.userId).clickable {
+                    if (isTargetingTap) onSelectTarget(player.userId) else onInspect(player.userId)
+                },
+        )
+
+        if (isUserPlayer) {
+            Image(
+                painter = painterResource(resource = Res.drawable.ic_user_player),
+                contentDescription = null,
+                modifier =
+                    Modifier.align(alignment = Alignment.BottomCenter)
+                        .padding(bottom = USER_MARKER_ICON_INSET)
+                        .size(size = USER_MARKER_ICON_SIZE),
+            )
+        }
+    }
 }

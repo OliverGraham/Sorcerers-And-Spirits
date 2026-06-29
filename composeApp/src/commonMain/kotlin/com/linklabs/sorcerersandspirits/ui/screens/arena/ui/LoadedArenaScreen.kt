@@ -16,6 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.paint
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -26,6 +29,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.NewArenaCombat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalLatestRoll
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_background
 
 private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
 
@@ -41,7 +47,14 @@ internal fun LoadedArenaScreen(
         LocalCharacterClassCopy provides screenState.classCopy,
     ) {
         Scaffold(
-            modifier = modifier.fillMaxSize(),
+            modifier =
+                modifier
+                    .fillMaxSize()
+                    .paint(
+                        painter = painterResource(resource = Res.drawable.arena_background),
+                        contentScale = ContentScale.Crop,
+                    ),
+            containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { paddingValues ->
             ScreenContent(screenState = screenState, paddingValues = paddingValues)

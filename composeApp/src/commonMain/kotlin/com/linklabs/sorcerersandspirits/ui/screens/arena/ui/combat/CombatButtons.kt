@@ -1,6 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -36,7 +36,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatContro
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.diceCount
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetPlayerFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.rollActionFor
@@ -58,52 +57,18 @@ private val ARENA_BUTTON_NEUTRAL_BORDER = Color(color = 0xFF555555)
 private const val ARENA_BUTTON_BASE_DARKEN = 0.5f
 private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
 private const val DISABLED_BUTTON_ALPHA = 0.4f
+private val ATTACK_BUTTON_BOTTOM_PADDING = 24.dp
 
 /**
- * The button bar flanked by the two stat columns. The buttons sit centered underneath while the
- * stat columns are pinned to the edges on top, so an expanded stat row opens over the buttons
- * rather than pushing them (SS-146).
+ * The single action row across the bottom of the screen: every control the user can take right now,
+ * evenly spaced with the normal attack between the ability buttons (left) and the Illusionist's
+ * Impersonate button (right). The lighter flank is padded with invisible button-sized slots so the
+ * flanks stay symmetric and [Arrangement.SpaceEvenly] keeps the attack dead-centered, however many
+ * abilities there are. Stats moved out of this row into the inspect drawer, so the buttons span the
+ * full width on their own (SS-157).
  */
 @Composable
 internal fun BottomControls(
-    state: ArenaState.Combat,
-    targetedOpponentUserId: String,
-    lockTarget: () -> Unit,
-    diceRoll: DiceRoll,
-    modifier: Modifier = Modifier,
-) {
-    val targetPlayer = state.targetPlayerFor(targetUserId = targetedOpponentUserId)
-
-    Box(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-        Buttons(
-            state = state,
-            targetedOpponentUserId = targetedOpponentUserId,
-            lockTarget = lockTarget,
-            diceRoll = diceRoll,
-        )
-
-        ClassAvatarStats(
-            characterClass = state.attackingPlayer.characterClass,
-            displayDirection = DisplayDirection.Left,
-            modifier = Modifier.align(alignment = Alignment.CenterStart),
-        )
-
-        ClassAvatarStats(
-            characterClass = targetPlayer?.characterClass,
-            displayDirection = DisplayDirection.Right,
-            modifier = Modifier.align(alignment = Alignment.CenterEnd),
-        )
-    }
-}
-
-/**
- * The action bar: the normal [AttackButton] on top, then a row holding the ability button(s) and
- * the Illusionist's [ImpersonateButton]. The controls available right now are derived from the
- * combat state (SS-101); a multi-choice ability (Mirror Image) yields several ability buttons in
- * the row. Each button rolls on hold and fires its action on release.
- */
-@Composable
-private fun Buttons(
     state: ArenaState.Combat,
     targetedOpponentUserId: String,
     lockTarget: () -> Unit,
@@ -118,12 +83,31 @@ private fun Buttons(
     val attackControl = controls.firstOrNull { it is ArenaCombatControl.NormalAttack }
     val impersonateControl = controls.firstOrNull { it.isImpersonate() }
     val abilityControls = controls.filter { it != attackControl && it != impersonateControl }
-    val shouldShowImpersonateButton = impersonateControl != null
-
-    val buttonCount = abilityControls.size + if (shouldShowImpersonateButton) 1 else 0
     val shouldLabelAbilities = abilityControls.size > 1
 
-    Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+        verticalAlignment = Alignment.Top,
+    ) {
+        abilityControls.forEach { control ->
+            AbilityButton(
+                control = control,
+                isEnabled = state.isControlEnabled(control, targetedOpponentUserId),
+                classColor = classColor,
+                diceRoll = diceRoll,
+                onRoll =
+                    state.rollActionFor(
+                        control = control,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        onAttack = onAttack,
+                        onUseAbility = onUseAbility,
+                        lockTarget = lockTarget,
+                    ),
+                label = control.label.takeIf { shouldLabelAbilities },
+            )
+        }
+
         if (attackControl != null) {
             AttackButton(
                 isEnabled = state.isControlEnabled(attackControl, targetedOpponentUserId),
@@ -138,53 +122,26 @@ private fun Buttons(
                         onUseAbility = onUseAbility,
                         lockTarget = lockTarget,
                     ),
+                modifier = Modifier.padding(bottom = ATTACK_BUTTON_BOTTOM_PADDING),
             )
         }
 
-        if (buttonCount > 0) {
-            Row(
-                horizontalArrangement =
-                    Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally)
-            ) {
-                abilityControls.forEach { control ->
-                    AbilityButton(
-                        control = control,
-                        isEnabled = state.isControlEnabled(control, targetedOpponentUserId),
-                        classColor = classColor,
-                        diceRoll = diceRoll,
-                        onRoll =
-                            state.rollActionFor(
-                                control = control,
-                                targetedOpponentUserId = targetedOpponentUserId,
-                                onAttack = onAttack,
-                                onUseAbility = onUseAbility,
-                                lockTarget = lockTarget,
-                            ),
-                        label = control.label.takeIf { shouldLabelAbilities },
-                    )
-                }
-
-                ImpersonateButton(
-                    shouldShowImpersonateButton = shouldShowImpersonateButton,
-                    isEnabled =
-                        impersonateControl != null &&
-                            state.isControlEnabled(impersonateControl, targetedOpponentUserId),
-                    classColor = classColor,
-                    label = state.impersonateLabel(),
-                    diceRoll = diceRoll,
-                    diceCount = impersonateControl?.diceCount,
-                    onRoll =
-                        impersonateControl?.let {
-                            state.rollActionFor(
-                                control = it,
-                                targetedOpponentUserId = targetedOpponentUserId,
-                                onAttack = onAttack,
-                                onUseAbility = onUseAbility,
-                                lockTarget = lockTarget,
-                            )
-                        } ?: {},
-                )
-            }
+        if (impersonateControl != null) {
+            ImpersonateButton(
+                isEnabled = state.isControlEnabled(impersonateControl, targetedOpponentUserId),
+                classColor = classColor,
+                label = state.impersonateLabel(),
+                diceRoll = diceRoll,
+                diceCount = impersonateControl.diceCount,
+                onRoll =
+                    state.rollActionFor(
+                        control = impersonateControl,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        onAttack = onAttack,
+                        onUseAbility = onUseAbility,
+                        lockTarget = lockTarget,
+                    ),
+            )
         }
     }
 }
@@ -237,7 +194,6 @@ private fun AbilityButton(
 
 @Composable
 private fun ImpersonateButton(
-    shouldShowImpersonateButton: Boolean,
     isEnabled: Boolean,
     classColor: Color,
     label: String,
@@ -246,19 +202,18 @@ private fun ImpersonateButton(
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedVisibility(visible = shouldShowImpersonateButton, modifier = modifier) {
-        ArenaButton(
-            icon = Res.drawable.ic_offensive_ability,
-            contentDescription = "Impersonate",
-            isEnabled = isEnabled,
-            classColor = classColor,
-            showClassBorder = true,
-            diceRoll = diceRoll,
-            diceCount = diceCount,
-            onRoll = onRoll,
-            label = label,
-        )
-    }
+    ArenaButton(
+        icon = Res.drawable.ic_offensive_ability,
+        contentDescription = "Impersonate",
+        isEnabled = isEnabled,
+        classColor = classColor,
+        showClassBorder = true,
+        diceRoll = diceRoll,
+        diceCount = diceCount,
+        onRoll = onRoll,
+        label = label,
+        modifier = modifier,
+    )
 }
 
 /**

@@ -50,6 +50,29 @@ are archived in [COMPLETED.md](COMPLETED.md).
   on the exact duration.
 - **Related:** SS-148 (flash callout), SS-154 (`FINISH_HOLD_MILLIS` sizing).
 
+### SS-164 — Flash messages: full event coverage + per-ability call-outs
+- [ ] Not completed
+- **Goal:** The full-screen flash (SS-148) should narrate combat in a quick, fun way while the
+  message log stays the full passive record. Every flash-worthy event flashes, and multiple flashes
+  from a single resolution play **in sequence** (e.g. `Hit!` → `3 Damage!` → `Knocked Out!`).
+- **Normal-attack wording (this pass):**
+  - Armor broken (`ArmorClassHit`) → **"Hit!"** (previously no flash).
+  - Armor not broken (`ArmorClassMiss`) → **"Miss!"**.
+  - Damage dealt (`Damage`) → **"X Damage!"** where X is the true damage. `NormalRoll` now carries
+    the consecutive-doubles `bonus` through every layer (domain → entity → state) so the call-out
+    shows `firstDie + secondDie + bonus`, not just the visible dice.
+  - Knockout (`Knockout`) → **"Knocked Out!"** (renamed from "K.O.!").
+- **Abilities (this pass = first-pass wording, owner to refine each):** when an ability is used it
+  also flashes one of these call-outs. `ArenaMessageState.flashText` is the single extension point —
+  each ability's primary outcome message returns punchy text; intermediate Trigger/Roll steps stay
+  null. **Owner will refine the exact wording for every ability.**
+- **Infrastructure:** `flashText` (in `ArenaMessageState.kt`) is the per-message wording source;
+  `ArenaScreenState.flashMessages` exposes the ordered flash-worthy messages; `FlashOverlay`
+  (`CombatFlashOverlay.kt`) queues newly-arrived flashes and plays them one at a time, skipping the
+  history present on first composition.
+- **Related:** SS-148 (flash callout), SS-163 (flash hold duration), SS-029 (string resources),
+  SS-025 (message-log animation).
+
 ### SS-025 — Improve message-log animation
 - [ ] Not completed
 - **Source:** `ArenaMessageLog.kt` (was `ArenaMessageLogHandle.kt`, removed in SS-154 as orphaned).

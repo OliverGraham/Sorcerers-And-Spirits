@@ -37,8 +37,14 @@ sealed interface ArenaMessageState {
         val defenderName: String,
         val firstDie: Int,
         val secondDie: Int,
+        val bonus: Int,
         val type: NormalRollMessageType,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        /**
+         * The true damage dealt: the two die faces plus any consecutive-doubles bonus that applied.
+         */
+        val damage: Int = firstDie + secondDie + bonus
+    }
 
     @Immutable data class KillingMomentum(override val id: String) : ArenaMessageState
 
@@ -372,6 +378,7 @@ fun ArenaMessage.toState(id: String, classNames: Map<String, String>): ArenaMess
                 defenderName = classNames.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
+                bonus = bonus,
                 type = type,
             )
 
@@ -453,22 +460,73 @@ fun ArenaMessage.toState(id: String, classNames: Map<String, String>): ArenaMess
     }
 
 /**
- * Short, punchy text for the events worth a full-screen flash (SS-148): the outcome of a normal
- * attack. Null for everything else, which only goes to the message log.
- * [NormalRollMessageType.ArmorClassHit] is the intermediate "armor passed" step, so its damage roll
- * carries the flash instead.
+ * Short, punchy text for the events worth a full-screen flash (SS-148/SS-164): normal-attack
+ * outcomes and the primary outcome of each ability. Intermediate steps (Trigger/Roll) and purely
+ * informational messages return null and live only in the message log. Several flashes from one
+ * resolution play in sequence (e.g. "Hit!" then "X Damage!" then "Knocked Out!").
+ *
+ * The per-ability wording here is a first pass owned by SS-164; refine each as needed.
  */
 // TODO(SS-029): string resources for the flash text.
+// TODO(SS-164): refine the per-ability flash wording.
 val ArenaMessageState.flashText: String?
     get() =
         when (this) {
             is ArenaMessageState.NormalRoll ->
                 when (type) {
+                    NormalRollMessageType.ArmorClassHit -> "Hit!"
                     NormalRollMessageType.ArmorClassMiss -> "Miss!"
-                    NormalRollMessageType.Damage -> "Hit!"
-                    NormalRollMessageType.Knockout -> "K.O.!"
-                    NormalRollMessageType.ArmorClassHit -> null
+                    NormalRollMessageType.Damage -> "$damage Damage!"
+                    NormalRollMessageType.Knockout -> "Knocked Out!"
                 }
+
+            is ArenaMessageState.KillingMomentum -> "Killing Momentum!"
+
+            is ArenaMessageState.Dodge -> "Dodge!"
+
+            is ArenaMessageState.Teleport.Result -> if (didDefenderEscape) "Teleport!" else null
+
+            is ArenaMessageState.LuckyCoin.Flip -> "Lucky Coin!"
+
+            is ArenaMessageState.LuckyCoin.HighRollerDamage ->
+                if (isKnockout) "Knocked Out!" else "Lucky Coin!"
+
+            is ArenaMessageState.Riposte.EnGarde -> if (isSuccessful) "Riposte!" else null
+
+            is ArenaMessageState.SummonMinion ->
+                when (outcome) {
+                    SummonMinionOutcome.Fizzle -> "Fizzle!"
+                    SummonMinionOutcome.Skeleton -> "Skeleton!"
+                    SummonMinionOutcome.SkeletonAndHeal -> "Skeleton!"
+                    SummonMinionOutcome.Golem -> "Golem!"
+                }
+
+            is ArenaMessageState.Persuade.Lull -> "Persuade!"
+
+            is ArenaMessageState.Persuade.Charm -> "Charmed!"
+
+            is ArenaMessageState.Encore.Roll -> if (isSuccessful) "Encore!" else null
+
+            is ArenaMessageState.Impersonate -> "Impersonate!"
+
+            is ArenaMessageState.MirrorImage.TemptFate -> "Mirror Image!"
+
+            is ArenaMessageState.SpellPotency -> "Spell Potency!"
+
+            is ArenaMessageState.HolyShield.Prayer -> if (didSurvive) "Holy Shield!" else null
+
+            is ArenaMessageState.HolyShield.Wrath -> "Holy Wrath!"
+
+            is ArenaMessageState.AllIn ->
+                when (outcome) {
+                    AllInOutcome.SelfKnockout -> "Knocked Out!"
+                    AllInOutcome.DoubleAttack -> "All-In!"
+                    AllInOutcome.NoEffect -> "All-In!"
+                }
+
+            is ArenaMessageState.PrepareAttack -> if (isSuccessful) "Prepared Strike!" else null
+
+            is ArenaMessageState.Doubles -> "Doubles!"
 
             else -> null
         }

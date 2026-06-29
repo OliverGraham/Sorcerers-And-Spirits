@@ -21,7 +21,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -42,6 +44,7 @@ import kotlin.random.Random
 import kotlinx.coroutines.delay
 
 private const val FLASH_HOLD_MILLIS = 850L
+private const val FLASH_EXIT_MILLIS = 320L
 private val FLASH_FONT_SIZE = 72.sp
 private const val PI_FLOAT = 3.1415927f
 private const val CONFETTI_COUNT = 24
@@ -52,28 +55,42 @@ private const val CONFETTI_MIN_RADIUS = 4f
 private const val CONFETTI_MAX_RADIUS = 9f
 
 /**
- * The full-screen call-out for a flash-worthy event (SS-148): a big "Hit!"/"Miss!"/"K.O.!" that
- * springs in with a bounce, holds, then pops out, over a one-shot confetti burst in the four class
- * colors. Driven by the latest [flashMessage] with [flashText]; re-fires whenever a newer one
- * lands.
+ * The full-screen call-out for flash-worthy events (SS-148/SS-164): a big "Hit!"/"X Damage!"/
+ * "Knocked Out!"/ability text that springs in with a bounce, holds, then pops out, over a one-shot
+ * confetti burst in the four class colors. Driven by [flashMessages] with [flashText]:
+ * newly-arrived messages are played one at a time, so a single resolution narrates as a sequence.
+ * The history present on first composition is skipped so reconnecting never replays old call-outs.
  */
 @Composable
-internal fun FlashOverlay(flashMessage: ArenaMessageState?, modifier: Modifier = Modifier) {
-    var flash by remember { mutableStateOf<FlashState?>(value = null) }
+internal fun FlashOverlay(flashMessages: List<ArenaMessageState>, modifier: Modifier = Modifier) {
+    var current by remember { mutableStateOf<FlashState?>(value = null) }
     val visibleState = remember { MutableTransitionState(initialState = false) }
+    val latestMessages by rememberUpdatedState(newValue = flashMessages)
 
-    LaunchedEffect(key1 = flashMessage?.id) {
-        val text = flashMessage?.flashText ?: return@LaunchedEffect
-        flash = FlashState(key = flashMessage.id, text = text)
-        visibleState.targetState = true
-        delay(timeMillis = FLASH_HOLD_MILLIS)
-        visibleState.targetState = false
+    LaunchedEffect(key1 = Unit) {
+        var lastPlayedId = latestMessages.lastOrNull()?.id
+        var lastSize = latestMessages.size
+        snapshotFlow { latestMessages }
+            .collect { messages ->
+                val wasReset = messages.size < lastSize
+                if (wasReset) lastPlayedId = null
+
+                val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
+                for (message in fresh) {
+                    val text = message.flashText ?: continue
+                    current = FlashState(key = message.id, text = text)
+                    visibleState.targetState = true
+                    delay(timeMillis = FLASH_HOLD_MILLIS)
+                    visibleState.targetState = false
+                    delay(timeMillis = FLASH_EXIT_MILLIS)
+                }
+                lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
+                lastSize = messages.size
+            }
     }
 
-    val current = flash
-
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        if (current == null) return@Box
+        val current = current ?: return@Box
 
         if (visibleState.targetState || visibleState.currentState) {
             ConfettiBurst(triggerKey = current.key, modifier = Modifier.fillMaxSize())
@@ -145,6 +162,20 @@ private fun ConfettiBurst(triggerKey: Any, modifier: Modifier = Modifier) {
             )
         }
     }
+}
+
+/**
+ * The flash messages that arrived after [lastPlayedId], i.e. the ones not yet played. A null
+ * [lastPlayedId] means nothing has played, so every message is fresh; an unknown id (e.g. dropped
+ * by the log cap) skips the batch rather than replaying the whole history.
+ */
+private fun List<ArenaMessageState>.freshAfter(lastPlayedId: String?): List<ArenaMessageState> {
+    if (lastPlayedId == null) return this
+
+    val lastPlayedIndex = indexOfLast { it.id == lastPlayedId }
+    if (lastPlayedIndex == -1) return emptyList()
+
+    return subList(lastPlayedIndex + 1, size)
 }
 
 private class FlashState(val key: String, val text: String)

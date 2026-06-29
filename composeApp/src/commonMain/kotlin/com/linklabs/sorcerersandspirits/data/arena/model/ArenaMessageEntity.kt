@@ -48,6 +48,7 @@ sealed interface ArenaMessageEntity {
         val defenderUserId: String,
         val firstDie: Int,
         val secondDie: Int,
+        val bonus: Int = 0,
         val messageType: NormalRollMessageType,
     ) : ArenaMessageEntity
 
@@ -329,6 +330,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     defenderUserId = defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
+                    bonus = bonus,
                     type = messageType,
                 )
 
@@ -482,6 +484,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 defenderUserId = defenderUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
+                bonus = bonus,
                 messageType = type,
             )
 

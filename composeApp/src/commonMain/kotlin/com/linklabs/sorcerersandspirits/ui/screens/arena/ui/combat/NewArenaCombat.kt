@@ -118,7 +118,7 @@ internal fun NewArenaCombat(
             )
 
             FlashOverlay(
-                flashMessage = screenState.latestFlashMessage,
+                flashMessages = screenState.flashMessages,
                 modifier = Modifier.fillMaxSize(),
             )
 

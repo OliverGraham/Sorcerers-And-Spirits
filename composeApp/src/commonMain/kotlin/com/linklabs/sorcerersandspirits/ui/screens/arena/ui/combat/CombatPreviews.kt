@@ -160,6 +160,7 @@ private fun NewArenaCombatFlashPreview() {
                 defenderName = "Rogue",
                 firstDie = 6,
                 secondDie = 6,
+                bonus = 0,
                 type = NormalRollMessageType.Knockout,
             ),
     )

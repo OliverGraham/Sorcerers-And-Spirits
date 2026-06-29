@@ -295,6 +295,7 @@ class ArenaScreenStateTest {
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
             participantClassNames = emptyMap(),
+            numberOfNewMessages = 0,
         )
 
     private fun players() =

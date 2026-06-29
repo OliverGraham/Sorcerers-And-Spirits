@@ -22,6 +22,7 @@ sealed interface ArenaMessage {
         val defenderUserId: String,
         val firstDie: Int,
         val secondDie: Int,
+        val bonus: Int,
         val type: NormalRollMessageType,
     ) : ArenaMessage
 

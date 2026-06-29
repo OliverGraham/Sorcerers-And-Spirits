@@ -22,7 +22,7 @@ import com.linklabs.sorcerersandspirits.domain.game.effective
 internal class NormalAttackRollHandler(
     private val firstDie: Int,
     private val secondDie: Int,
-    bonus: Int,
+    private val bonus: Int,
 ) {
     private val diceTotal = firstDie + secondDie + bonus
 
@@ -184,6 +184,7 @@ internal class NormalAttackRollHandler(
                     defenderUserId = defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
+                    bonus = bonus,
                     type = type,
                 )
         )

@@ -26,10 +26,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedAvatarUserI
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedTargetPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
-private const val AVATAR_SEATING_TRANSITION_LABEL = "NewArenaCombatAvatarSeatingTransition"
+private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
 
 @Composable
-internal fun NewArenaCombat(
+internal fun ArenaCombat(
     screenState: ArenaScreenState,
     state: ArenaState.Combat,
     modifier: Modifier = Modifier,

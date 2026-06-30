@@ -23,9 +23,9 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Symptom:** The `DiceHome` resting slot sits too low; it should be higher, closer to the avatars.
   The combat buttons should also move up. The stat column should **not** move up — its current
   vertical position is correct.
-- **Source:** `NewArenaCombat.kt` — the root `Column` (DiceHomeSlot ~234, `BottomControls` ~238/491)
-  and `DiceHomeSlot` (~715). Note the stat columns live inside `BottomControls`, so naive "move the
-  buttons up" must not drag the stat columns with them.
+- **Source:** the root `Column` in `combat/ArenaCombat.kt`; `BottomControls` in
+  `combat/CombatButtons.kt`; `DiceHomeSlot` in `combat/CombatAvatars.kt`. Note the stat columns live
+  inside `BottomControls`, so naive "move the buttons up" must not drag the stat columns with them.
 - **Goal:** Reposition `DiceHome` and the buttons higher (closer to the avatars) while leaving the
   stat columns where they are. Likely means decoupling the stat columns' vertical placement from the
   button row.
@@ -36,8 +36,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - [ ] Not completed
 - **Goal:** Combat buttons should read as physically pressed-down (3D) when held/pressed. Ability
   buttons should carry the player's class-color border.
-- **Source:** `NewArenaCombat.kt` — shared `ArenaButton` (~1142) used by `AttackButton`,
-  `AbilityButton`, `ImpersonateButton` (~1080–1140). Class color available via
+- **Source:** `combat/CombatButtons.kt` — shared `ArenaButton` used by `AttackButton`,
+  `AbilityButton`, `ImpersonateButton`. Class color available via
   `CharacterClassType.toColor()` / `classFamilyColors` (already used by `ClassAvatarStats`/head
   icons).
 - **Related:** SS-068 (Arena UI overhaul), SS-153 (class color source).
@@ -46,7 +46,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 - [ ] Not completed
 - **Symptom:** The short full-screen animation message (Hit!/Miss!/K.O.!) is a little too short.
-- **Source:** `NewArenaCombat.kt` `FLASH_HOLD_MILLIS = 850L` (~159), used by `FlashOverlay` (
+- **Source:** `combat/CombatFlashOverlay.kt` `FLASH_HOLD_MILLIS = 850L`, used by `FlashOverlay` (
   SS-148).
   Note the Combat→Finished hold (`FINISH_HOLD_MILLIS`, SS-154) was sized against this; revisit it if
   the flash duration changes materially.
@@ -144,53 +144,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 > The two head-icon transition targets originally tracked here as SS-140 (head → large targeted
 > avatar) and SS-141 (head → expanded stat view) were placeholders; both are now realized concretely
-> by the NewArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
+> by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
 > respectively — so the placeholder tickets were removed.
-
----
-
-## New Arena combat layout (NewArenaCombat)
-
-`NewArenaCombat.kt` is the in-progress rewrite that will replace the current `ArenaCombat.kt`. It
-re-shapes the combat screen into two halves: a **top half** of opponent head icons + a messages
-overlay, and a **bottom half** of the active player's and current target's full avatars flanking the
-dice, with a button bar below. The structure is deliberately split into many small, single-purpose
-composables (one per logical screen segment); keep new work in that shape rather than growing any
-one
-function. Each ticket below owns one segment. Parent: SS-142 (which is itself a child of SS-068).
-
-### SS-142 — NewArenaCombat scaffold & migration to replace ArenaCombat
-
-- [~] In progress — **swap is live:** `LoadedArenaScreen` renders `NewArenaCombat` for
-  `ArenaState.Combat`; `NewArenaCombat` now roots its own `SharedTransitionLayout` (SS-144), so it
-  is
-  a plain composable rather than a `ColumnScope` extension. `ArenaCombat.kt` is intentionally **kept
-  **
-  as the reference to migrate logic from; delete it only at the very end, once every behavior has
-  been
-  confirmed carried over and nothing was missed.
-- **Source:** `NewArenaCombat.kt` top-level (file header + `NewArenaCombat` orchestration).
-- **Goal:** Stand up the new two-half combat layout, fill in its child segments by migrating the
-  behavior from `ArenaCombat`, and only then delete the old `ArenaCombat.kt`.
-- **Shape (rearranged 2026-06-26):** `TopHalfContent` = `Box { ClassIcons(); Messages() }` (icons
-  sit
-  below the messages overlay); `BottomHalfContent` = `Column { Row { ClassAvatar(user);
-  ClassAvatar(target) }; DiceHome(); Row { statsColumn(Left); Buttons(); statsColumn(Right) } }` —
-  the
-  two full avatars now sit side by side *above* `DiceHome`, and a bottom row flanks the `Buttons`
-  with
-  a per-player stat column on each side (SS-146, moved off the avatars). Keep each segment its own
-  small composable.
-- **Wiring to preserve:** the existing `ArenaState.Combat` contract `ArenaCombat` already honors —
-  target selection hoisted as one source of truth (`selectedOpponentUserId` / `lockedTargetUserId` /
-  `autoTargetedOpponentUserId`, optimistic target lock, SS-101 auto-target), `primaryRollControl` /
-  `secondaryControls` split, `onAttack` / `onUseAbility` from `ArenaActionsProvider`. Thread these
-  through the new composables rather than reinventing them.
-- **Wrap-up:** wrap the screen in `SharedTransitionLayout` + `AnimatedContent` so the per-segment
-  shared-element transitions (SS-144, SS-149) work; keep `UserStatsRow` or fold it into the new
-  avatar/stat segments as those land.
-- **Notes:** Tracking/parent ticket for SS-143…SS-151. Child of SS-068. Until the migration lands,
-  `NewArenaCombat` is unreferenced scaffolding and the live screen stays on `ArenaCombat`.
 
 ---
 

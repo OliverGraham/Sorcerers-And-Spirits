@@ -1,26 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.theme
 
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.ui.graphics.Color
-
-internal val LightColors =
-    lightColorScheme(
-        primary = Color(0xFF283593), // Richer Indigo
-        onPrimary = Color.White,
-        primaryContainer = Color(0xFFE8EAF6),
-        onPrimaryContainer = Color(0xFF1A237E),
-        secondary = Color(0xFFE65100), // Richer Orange/Amber
-        onSecondary = Color.White,
-        background = Color(0xFFFFFBE6), // Warm Parchment
-        onBackground = Color(0xFF1A1A1A),
-        surface = Color(0xFFFFFFFF),
-        onSurface = Color(0xFF1A1A1A),
-        surfaceVariant = Color(0xFFF3E5AB), // Vanilla/Light Gold for contrast
-        onSurfaceVariant = Color(0xFF4E342E),
-        outline = Color(0xFF795548),
-        outlineVariant = Color(0xFFD7CCC8),
-    )
 
 internal val DarkColors =
     darkColorScheme(

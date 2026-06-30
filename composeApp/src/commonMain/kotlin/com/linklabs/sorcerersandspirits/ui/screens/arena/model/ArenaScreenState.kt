@@ -179,21 +179,32 @@ internal fun ArenaState.Combat.targetPlayerFor(targetUserId: String): PlayerStat
 }
 
 /**
- * The opponents shown as collapsed head icons (SS-143) for an [activeUserId] turn owner and a
- * resolved [targetUserId]: every player except those two — the turn owner (left) and the current
- * target avatar (right, [targetPlayerFor]) — who are the two full bottom-half avatars instead
- * (SS-157). A knocked-out opponent is never the target avatar, so it always falls back into the
- * head-icon row, where it is rendered grayed-out and out of the fight (SS-152, mirror SS-123).
+ * The second seated avatar: the conscious target, or null when it is the attacker itself. A
+ * self-targeted ability (e.g. Summon Minion) names the actor as its own defender, and the actor is
+ * already seated, so it must not take both slots.
+ */
+internal fun ArenaState.Combat.seatedTargetPlayer(targetUserId: String): PlayerState.Selected? {
+    val target = targetPlayerFor(targetUserId = targetUserId) ?: return null
+    return if (target.userId == attackingUserId) null else target
+}
+
+/**
+ * The combatants drawn as full-size avatars (vs. collapsed head icons): the attacker, plus a
+ * distinct conscious target when there is one. A set, not an ordered pair, so the avatar transition
+ * re-fires only when this membership changes — not when the turn passes between the same two seated
+ * players, which would otherwise swap their slots for no reason.
+ */
+internal fun ArenaState.Combat.seatedAvatarUserIds(targetUserId: String): Set<UserId> =
+    setOfNotNull(attackingUserId, seatedTargetPlayer(targetUserId = targetUserId)?.userId)
+
+/**
+ * The opponents shown as collapsed head icons (SS-143): every player not seated as a full avatar. A
+ * knocked-out opponent is never seated, so it appears here grayed-out and out of the fight
+ * (SS-152).
  */
 internal fun ArenaState.Combat.headIconPlayersFor(
-    activeUserId: String,
-    targetUserId: String,
-): List<PlayerState.Selected> {
-    val targetPlayer = targetPlayerFor(targetUserId = targetUserId)
-    return playerMap.values.filter {
-        it.userId != activeUserId && it.userId != targetPlayer?.userId
-    }
-}
+    seatedUserIds: Set<UserId>
+): List<PlayerState.Selected> = playerMap.values.filter { it.userId !in seatedUserIds }
 
 // TODO(SS-031): Need to refactor this badly
 

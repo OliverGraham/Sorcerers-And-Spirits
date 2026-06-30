@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,10 +22,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.headIconPlayersFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetPlayerFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedAvatarUserIds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedTargetPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
-private const val TARGET_TRANSITION_LABEL = "NewArenaCombatTargetTransition"
+private const val AVATAR_SEATING_TRANSITION_LABEL = "NewArenaCombatAvatarSeatingTransition"
 
 @Composable
 internal fun NewArenaCombat(
@@ -61,22 +61,18 @@ internal fun NewArenaCombat(
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 AnimatedContent(
-                    targetState =
-                        AvatarPairing(
-                            activeUserId = state.attackingUserId,
-                            targetUserId = targetedOpponentUserId,
-                        ),
-                    label = TARGET_TRANSITION_LABEL,
+                    targetState = state.seatedAvatarUserIds(targetUserId = targetedOpponentUserId),
+                    label = AVATAR_SEATING_TRANSITION_LABEL,
                     modifier = Modifier.weight(weight = 1f),
-                ) { currentPairing ->
+                ) { seatedUserIds ->
                     SharedTransitionProvider(
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     ) {
                         CombatStage(
                             state = state,
-                            activeUserId = currentPairing.activeUserId,
-                            targetUserId = currentPairing.targetUserId,
+                            seatedUserIds = seatedUserIds,
+                            targetedOpponentUserId = targetedOpponentUserId,
                             onSelectTarget = { selectedOpponentUserId = it },
                             onInspect = { inspectedUserId = it },
                             isTargetable =
@@ -137,36 +133,28 @@ internal fun NewArenaCombat(
 }
 
 /**
- * The two players seated as full avatars: the attacker on top and the targeted player on the bottom
- * (SS-157). Keying the avatar [AnimatedContent] on this pairing lets both slots morph when the turn
- * passes or the target changes, not just the target.
- */
-@Immutable private data class AvatarPairing(val activeUserId: String, val targetUserId: String)
-
-/**
- * The main combat area: the attacker/target avatar column on the left two-thirds and the remaining
+ * The main combat area: the two seated combatant avatars on the left two-thirds and the remaining
  * players as a column of class heads on the right third. The dice rest between the two avatars; the
  * buttons and overlays live outside this stage so they do not take part in the avatar morph.
  */
 @Composable
 private fun CombatStage(
     state: ArenaState.Combat,
-    activeUserId: String,
-    targetUserId: String,
+    seatedUserIds: Set<String>,
+    targetedOpponentUserId: String,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val headIconPlayers =
-        state.headIconPlayersFor(activeUserId = activeUserId, targetUserId = targetUserId)
+    val headIconPlayers = state.headIconPlayersFor(seatedUserIds = seatedUserIds)
     val hasHeadIcons = headIconPlayers.isNotEmpty()
 
     Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
-            activePlayer = state.playerMap.getValue(key = activeUserId),
-            targetPlayer = state.targetPlayerFor(targetUserId = targetUserId),
+            topPlayer = state.attackingPlayer,
+            bottomPlayer = state.seatedTargetPlayer(targetUserId = targetedOpponentUserId),
             userPlayerId = state.userPlayerId,
             activeUserIds = state.activeUserIds,
             onInspect = onInspect,

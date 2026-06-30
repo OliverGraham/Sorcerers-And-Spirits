@@ -71,12 +71,152 @@ are archived in [COMPLETED.md](COMPLETED.md).
   also flashes one of these call-outs. `ArenaMessageState.flashText` is the single extension point —
   each ability's primary outcome message returns punchy text; intermediate Trigger/Roll steps stay
   null. **Owner will refine the exact wording for every ability.**
+- **Per-step defensive-ability sequence (owner ask, folded in):** a defensive ability must flash
+  every step and its outcome, not just a single call-out. After a normal-attack `Hit!`, when
+  resolution passes to a defender's defensive ability, flash that ability name, then flash the
+  *outcome of its roll*. Examples:
+    - Lucky Coin: `Hit!` → `Lucky Coin!` → the roll result, e.g.
+      `"1 - $attackerClassName's attack continues!"` or `"… attack is stopped"`.
+    - Summon Minion: `Skeleton!` when a skeleton only; `Skeleton! Necromancer heals to full!` when
+      it also heals; same shape for Golem.
+      This should be derivable **entirely from how the domain already adds messages** (each
+      Trigger/Roll/Result step is already its own `ArenaMessage`); no new domain structures needed —
+      give the currently-null intermediate steps real `flashText`. **Open question for owner:**
+      confirm
+      exact wording per step (placeholder copy is fine to start).
+- **`Hit!` / outcome wording + color (owner ask, folded in):** the `Hit!` flash should include the
+  roll total like Damage already does — `"7 - Hit!"` (same `"$total - …"` format as `"X Damage!"`).
+  Color: `Hit!`, `X Damage!`, and `Knocked Out!` render in the **acting class's color**; `Miss!`
+  renders in a **neutral color (white for now)**. Class-name coloring across all messaging is its
+  own ticket (SS-179) — coordinate so the flash uses the same class-color source.
 - **Infrastructure:** `flashText` (in `ArenaMessageState.kt`) is the per-message wording source;
   `ArenaScreenState.flashMessages` exposes the ordered flash-worthy messages; `FlashOverlay`
   (`CombatFlashOverlay.kt`) queues newly-arrived flashes and plays them one at a time, skipping the
-  history present on first composition.
+  history present on first composition. `FlashText` currently hardcodes `Color.White`; it will need
+  the acting class's color threaded in for the per-outcome coloring above.
 - **Related:** SS-148 (flash callout), SS-163 (flash hold duration), SS-029 (string resources),
-  SS-025 (message-log animation).
+  SS-025 (message-log animation), SS-179 (message text styling/backgrounds), SS-177 (doubles flash
+  suppression).
+
+### SS-171 — Hold the Combat→Finished transition until end-of-match animations finish (+2s)
+
+- [ ] Not completed
+- **Symptom:** The last animation(s) before the Finished screen get cut off; combat transitions to
+  Finished far too quickly.
+- **Goal:** When the final resolution plays, let **all** flash animations (SS-164) play out fully,
+  then sit on the combat view for an additional **2 seconds** before advancing to Finished.
+- **Source:** SS-154 replaced the message-drain defer with a fixed `FINISH_HOLD_MILLIS` hold
+  (`finishHoldJob` in the VM). That fixed hold is too short and isn't tied to the flash queue.
+  `FlashOverlay` (`CombatFlashOverlay.kt`) plays `flashMessages` one at a time; the hold should
+  outlast the whole queue (queue length × `FLASH_HOLD_MILLIS`+`FLASH_EXIT_MILLIS`) plus a 2s tail,
+  or be driven by a "flash queue drained" signal rather than a constant.
+- **Related:** SS-154 (`FINISH_HOLD_MILLIS`), SS-098 (deferred-finish history), SS-164 (flash
+  sequence), SS-163 (flash hold), SS-148.
+
+### SS-172 — Finished-state timer differs for Match vs Gauntlet
+
+- [ ] Not completed
+- **Goal:** Split the Finished-state countdown behavior by what just finished:
+    - **Match finished (not the final match):** immediately start a **30-second** timer on entering
+      Finished; on completion, **auto-ready the player** for the next match (auto-fire
+      `onStayForAnotherMatch`).
+    - **Gauntlet finished (final match):** keep today's behavior — a **1-minute** timer that does
+      **not** start until a player declares ready for the next Gauntlet.
+- **Source:** `MatchFinishedContent.kt` (`MatchDecisionControls`, `isFinalMatch`,
+  `secondsRemaining`,
+  `hasReadiedForNextMatch`) renders the countdown; the timer itself is owned by the VM. The
+  Match-vs-Gauntlet distinction already exists (`GauntletProgress.isFinalMatch`). The auto-ready
+  path
+  reuses `StayForAnotherMatchUseCase`/`onStayForAnotherMatch`.
+- **Notes:** Coordinate with SS-170 (don't auto-advance/ready into an impossible single-player next
+  match). Related: SS-108 (Next Match/Go Again on Finished), SS-073 (Gauntlet), SS-170.
+
+### SS-173 — Messages: full-width golden bar that unfurls down to DiceHome
+
+- [ ] Not completed — **reopens the Messages overhaul; SS-147/SS-161 are partially superseded.**
+- **Goal (owner is bringing back an earlier design):** Replace the collapsed messages *icon*
+  affordance with a **golden bar the full width of the screen**, pinned at the top with all screen
+  content below it. The bar always shows the **most recent message**. When the messages area is
+  opened it **unfurls downward from the bar** and drops down to `DiceHome` — i.e. it covers the
+  topmost large avatar but stops at the dice home slot; it does not cover `DiceHome`/the buttons.
+- **Source:** `CombatMessages.kt` (`Messages`, `MessagesIcon` — SS-147/SS-161) and
+  `ArenaMessageLog.kt`. Today the affordance is a circular icon with an unread tally over a gold
+  panel that expands top→bottom (SS-161 reading order: newest at top). The latest message comes from
+  the message list; reuse it for the always-visible bar content.
+- **Notes:** This changes the affordance the owner says was never actually finished despite SS-147
+  being marked complete. Keep the existing log/unread plumbing where it still applies; the bar
+  becomes the new collapsed state. Related: SS-147, SS-161, SS-025, SS-068, SS-179.
+
+### SS-174 — Tapping the inspect drawer dismisses it
+
+- [ ] Not completed
+- **Symptom:** The right-side avatar-stats inspect drawer only dismisses via the scrim; tapping on
+  the opened drawer itself does nothing.
+- **Goal:** Tapping anywhere on the opened drawer dismisses it (in addition to the existing scrim
+  dismiss).
+- **Source:** `CombatInspectDrawer.kt` (`InspectDrawer`/`InspectContent`, SS-150). Add a click on
+  the
+  drawer surface that clears `inspectedUserId`.
+- **Related:** SS-150 (inspect drawer).
+
+### SS-175 — 2-player: stat icons in a vertical column left of the avatar (not a bar above)
+
+- [ ] Not completed
+- **Goal:** In a 2-player game, the 4 visible stat icons/values should live in a **column down the
+  left-hand side of the large avatar**, instead of as a horizontal bar above the large avatar.
+- **Source:** `CombatStats.kt` (`avatarStats` — the Speed/Armor/Hit Points + ability rows) and the
+  combat layout in `ArenaCombat.kt`/`CombatButtons.kt`/`CombatAvatars.kt` that positions the stat
+  columns (SS-146/SS-156 made them flanking overlay columns; SS-157/SS-168 seat the avatars).
+  Revisit
+  the placement specifically for the 2-player case.
+- **Notes:** Interacts with the avatar seating work — confirm it still reads correctly with the
+  attacker/target seating. Related: SS-146, SS-156, SS-157, SS-168.
+
+### SS-176 — Choose Your Class: animated class-color aura on the selected head; default-select Rogue
+
+- [ ] Not completed
+- **Goal:** On the Choose Your Class screen, the **selected** class head icon gets a glowing,
+  animated, see-through background — an *aura* in that class's color behind the head. On first
+  entering the screen, **Rogue is selected by default** (so the confirm button is enabled
+  immediately).
+- **Source:** `CharacterClassWheel.kt` (takes a nullable `selectedClass`; `initialIndex` coerces to
+  0 when none) and its call sites `ArenaChoosingClasses.kt` / TavernScreen which own the selection
+  state and the enabled-state of the confirm button. Class colors via `ClassStyle.toColor()` /
+  `classFamilyColors` (SS-153). Default selection must respect the no-duplicate rule
+  (`unavailableClasses`) — if Rogue is taken, fall back to the first available.
+- **Related:** SS-079 (wheel), SS-084 (visual fidelity), SS-153 (class colors), SS-122 (availability
+  by type).
+
+### SS-178 — AppButton icon should fill the button face
+
+- [ ] Not completed
+- **Symptom:** The icon inside `AppButton` is too small; it should be large and fill the entire
+  button face (minus the offset reserved for the 3D press effect).
+- **Source:** `AppButton.kt` — the face `Row` pads `horizontal = 24.dp, vertical = 12.dp` and sizes
+  to content; icon callers pass a small image. Make the icon scale to fill the face within the
+  `APP_BUTTON_LIFT` offset.
+- **Open question for owner:** whether new, edge-to-edge icon art is needed (the current icons may
+  have built-in padding). Flag back if so.
+- **Related:** SS-160 (3D button style), and the shared-AppButton work (PR #181).
+
+### SS-179 — Message text styling: backgrounds, neutral text color, class-color class names everywhere
+
+- [ ] Not completed
+- **Goal:** A consistent text-styling pass across **all** messaging — Finished-state floating text,
+  the message log, and the flash overlay:
+    - Floating text in the Finished state needs a **background** (black at ~50% opacity or less) so
+      it's readable without hiding the background art.
+    - Text bodies use a **theme-neutral color**; any **class name** within a message renders in
+      **that class's color**. This applies everywhere a class name appears (message log, flash,
+      Finished, etc.).
+- **Source:** `MatchFinishedContent.kt` (the floating `Text`s — headline, winner banner, recap),
+  `ArenaMessageLog.kt`/`ArenaMessageDisplay`, and `CombatFlashOverlay.kt` (`FlashText`). Class
+  names already resolve via the className map (SS-097); class colors via `ClassStyle`/
+  `classFamilyColors`. Likely an `AnnotatedString` builder that colors class-name spans from one
+  shared place.
+- **Related:** SS-097 (class names in messages), SS-153 (class colors), SS-164 (flash
+  wording/color),
+  SS-029 (string resources).
 
 ### SS-025 — Improve message-log animation
 
@@ -231,6 +371,134 @@ are archived in [COMPLETED.md](COMPLETED.md).
       the timer fire? whose turn when the button vanished?).
 - **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
   overlay), SS-119 (Impersonate/MirrorImage state).
+
+### SS-169 — Teleport roll-off: both human combatants get the roll button at the same time
+
+- [ ] Not completed
+- **Symptom:** In a Mage Teleport roll-off (Mage vs attacker, 1d6 each), the roll button shows for
+  only one player at a time. In a human-vs-human match both players should hold the button **at the
+  same time** and roll simultaneously.
+- **Source:** SS-162 deliberately made the roll-off **sequential** — `TeleportHandler.kt`'s
+  `setNextTeleportRoll` sets `activeUserIds` to a single roller (attacker then defender) — to fix a
+  human-vs-**computer** stall where `ComputerOpponentHandler` never acted while the user was
+  co-active and the user was forced to roll the bot's die out of order. So the fix is conditional:
+  when both combatants are **human**, both should be active at once; only when one side is a
+  computer
+  should it stay sequential.
+- **Goal:** Restore simultaneous roll buttons for two human players while preserving the SS-162
+  computer-opponent path. Likely branch on whether either roller is a computer
+  (`ComputerOpponents.isComputer`).
+- **Related:** SS-162 (sequential roll-off fix), SS-092 (computer opponent).
+
+### SS-170 — Finished screen must not offer "Next Match" when only one player remains
+
+- [ ] Not completed
+- **Symptom:** If an opponent leaves the arena (e.g. forfeit) and the Finished state comes up,
+  the **Next Match** button still shows — but a next match with a single player in the arena is an
+  impossible state.
+- **Source:** `MatchFinishedContent.kt` `MatchDecisionControls` always renders the Leave +
+  Next Match/Go Again row. It needs to suppress Next Match/Go Again (and any auto-ready, SS-172)
+  when
+  fewer than two players remain in the arena, leaving only Leave. The remaining-player count is
+  already known (an opponent leaving fires `ArenaEvent.OpponentLeft`, SS-045; the arena removes the
+  match when the last player leaves, SS-022).
+- **Related:** SS-108 (Next Match/Go Again on Finished), SS-045 (opponent left), SS-022 (remove
+  match
+  on last leave), SS-172 (Finished timer).
+
+### SS-177 — Doubles message/flash only when the +1 bonus can actually apply
+
+- [ ] Not completed
+- **Symptom:** A Doubles message/flash fires even when the doubles can't benefit anyone (e.g.
+  doubles
+  rolled on the ArmorClass roll that then *fails* to break armor, so there is no consecutive roll to
+  carry the +1). Per CLAUDE.md the doubles +1 only matters when the next roll is consecutive and the
+  same player keeps the dice.
+- **Goal:** Only add the `ArenaMessage.Doubles` (SS-107) — and therefore the flash (SS-164) — when
+  the doubles will actually contribute to a next consecutive roll. This is fully determinable from
+  existing domain structure; **no new structures needed**.
+- **Process (owner ask — do this first):** Before writing any code, **list every place doubles
+  should NOT be added** as a message; the owner will confirm / add / subtract. Candidate cases to
+  enumerate from CLAUDE.md and `NormalAttackRollHandler.addNormalRollMessage` (the emission site):
+    - Doubles on the ArmorClass roll that fails to break armor (no consecutive damage roll).
+    - Doubles on the Health/damage roll (turn-ending — nothing consecutive follows).
+    - Doubles whose dice are then handed to another player by a defensive ability (Riposte, Persuade
+      redirect, etc.), breaking the consecutive chain.
+    - Doubles on a roll that ends the turn / match.
+      Confirm this list with the owner, then suppress emission accordingly.
+- **Source:** `NormalAttackRollHandler.kt` (`addNormalRollMessage`, emits `Doubles` after a doubles
+  normal roll); `ArenaMessageState.flashText` (`Doubles → "Doubles!"`); doubles bonus tracked via
+  SS-019. SpellPotency already short-circuits before the doubles message.
+- **Related:** SS-107 (Doubles message), SS-019 (doublesBonus), SS-164 (flash).
+
+### SS-180 — Random character choice almost always picks Necromancer
+
+- [ ] Not completed
+- **Symptom:** The random "choose a character" path has landed on Necromancer 5+ times in a row,
+  i.e. it isn't actually random (or is biased to one class).
+- **Source:** The random class picks use `availableClasses.randomOrNull()` —
+  `ArenaScreenViewModel.kt:511` (user timeout auto-pick) and `ComputerOpponentHandler.kt`. Suspect a
+  non-uniform/iteration-order source (a `Set` iterated deterministically, a stale RNG, or selecting
+  off a fixed-order collection). Confirm which affordance the owner means (manual "random" control
+  vs. timeout auto-pick) and verify the selection is drawn uniformly from the live available
+  classes.
+- **Notes:** Necromancer is index 3 in `getAllClasses()` order — check for an off-by-index or
+  first/last-of-collection bug masquerading as random.
+- **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
+
+### SS-181 — Illusionist Mirror Image ("Keep Your Roll") corrupts large-avatar seating (full rework)
+
+- [ ] Not completed — **prior fixes did not resolve this; treat as a rework.**
+- **Symptom:** When a player simply attacks the Illusionist and the Illusionist taps the Mirror
+  Image / "Keep Your Roll" button, the avatar layout breaks badly. Previously two Illusionists
+  showed
+  and the other player collapsed to a small head icon; the last fix changed it to one Illusionist
+  but
+  now the **other large avatar disappears and collapses to a small head (`ClassIcon`)**.
+- **Goal:** During an Illusionist Mirror Image reroll/keep, both combatants must remain correctly
+  seated as large avatars (attacker and the Illusionist defender); neither should duplicate nor drop
+  to a head icon.
+- **Source:** The avatar seating pipeline — `CombatActionState` (`attackingUserId`,
+  `targetedDefenderUserId`, `turnOwnerUserId`), `ArenaState.Combat` (`attackingPlayer`,
+  `seatedTargetPlayer`, `seatedAvatarUserIds`), `resolveTargetUserId`, and `ArenaCombat`'s avatar
+  `AnimatedContent` (SS-157/SS-165/SS-168). Mirror Image keeps the dice on the defender (SS-118) — a
+  self-referential reroll likely makes attacker and target resolve to the same id (the SS-168
+  double-seat class of bug) or mis-resolves who attacks. Reproduce the exact state during the keep
+  step and trace which of attacker/target/turnOwner each avatar slot reads.
+- **Related:** SS-168 (double-seat fix), SS-157 (active=left seating), SS-165 (Riposte seating),
+  SS-152 (KO head icon), SS-118/SS-119 (Mirror Image state).
+
+### SS-183 — Rogue Dodge bonus must show in the ArmorClass stat (base +1 / +2)
+
+- [ ] Not completed
+- **Symptom:** When a Rogue earns a Dodge bonus (+1 Armor up to +2 for the match), the ArmorClass
+  stat still shows the base value, not base + Dodge bonus.
+- **Goal:** The displayed ArmorClass reflects base + active Dodge bonus, the same way Summon Minion
+  shields surface in the hit-points display (SS-102's `hitPointsDisplay`).
+- **Source:** `CombatStats.kt` reads `characterClass.armorClass` for the Armor `AvatarStat`;
+  `CharacterClassState` (`ui/common/characterclasses/`) is the UI mapping. Confirm the Dodge bonus
+  is
+  carried Domain → entity → `CharacterClassState` and that `armorClass` (or a derived display)
+  includes it — mirror the SS-102 shield/`hitPointsDisplay` pattern; this is most likely a mapping
+  gap, not a domain bug ([[domain-is-source-of-truth]], [[no-default-args-hide-mapping-gaps]]).
+- **Related:** SS-102 (minion shield display), SS-050 (Killing Momentum/Dodge), SS-019.
+
+### SS-184 — Don't collapse the final knocked-out player to a head icon
+
+- [ ] Not completed
+- **Symptom:** When the final player is knocked out (2-player match, or the last KO of a multiplayer
+  match), the large avatar still morphs to the small head icon (`ClassIcon`). On a match-ending KO
+  there should be **no** collapse-to-head transition.
+- **Goal:** Suppress the large-avatar → head-icon morph for the knockout that ends the match; the
+  downed player stays a large avatar through the transition to Finished.
+- **Source:** `CombatClassIcons.kt`/`CombatAvatars.kt` seating + `deriveHeadIconPlayers` (SS-152
+  collapses a KO'd opponent to a disabled head icon). SS-152 assumed "the final knockout ends the
+  match (→ Finished), so there is no collapse to render then" — this symptom says a collapse *is*
+  rendering on the final KO. Gate the collapse off when the KO is match-ending (held during the
+  SS-171 finish hold).
+- **Notes:** The owner notes large-avatar animations are coming and this will tie into them.
+  Related:
+  SS-152 (KO head icon), SS-168 (seating), SS-123, SS-171 (finish hold).
 
 ## Profile & Auth
 
@@ -552,6 +820,19 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   the expanded card scroll or size to content within a constrained viewport); verify on Small +
   Medium previews/emulators. Short copy (SS-081) will also reduce overflow.
 - **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081.
+
+### SS-182 — ArenaScreen top padding should sit just below the system UI
+
+- [ ] Not completed
+- **Symptom:** The ArenaScreen's topmost padding is too large; it should sit only a hair or two
+  below
+  the system UI (status bar / display cutout).
+- **Goal:** Tighten the top inset so combat content starts just below the system bars. May require
+  platform-specific insets (`expect`/`actual`) to get right on both Android and iOS.
+- **Source:** `ArenaScreen.kt` / `LoadedArenaScreen.kt` root layout (no explicit `WindowInsets`/
+  status-bar padding found today — confirm where the top spacing comes from). Use the safe-content /
+  status-bar insets rather than a fixed padding.
+- **Related:** SS-080 (responsive), SS-159 (raise DiceHome/buttons).
 
 ### SS-082 — Decide on landscape support
 

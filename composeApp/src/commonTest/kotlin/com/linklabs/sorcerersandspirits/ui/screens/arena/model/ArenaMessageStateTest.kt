@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -20,7 +21,17 @@ class ArenaMessageStateTest {
             )
 
         val state =
-            message.toState(id = MESSAGE_ID, classNames = mapOf(ATTACKER_ID to ATTACKER_CLASS_NAME))
+            message.toState(
+                id = MESSAGE_ID,
+                participants =
+                    mapOf(
+                        ATTACKER_ID to
+                            ParticipantClass(
+                                className = ATTACKER_CLASS_NAME,
+                                type = CharacterClassType.Mage,
+                            )
+                    ),
+            )
 
         val temptFate = assertIs<ArenaMessageState.MirrorImage.TemptFate>(value = state)
         assertEquals(expected = 4, actual = temptFate.rawReroll)
@@ -39,7 +50,17 @@ class ArenaMessageStateTest {
             )
 
         val state =
-            message.toState(id = MESSAGE_ID, classNames = mapOf(ATTACKER_ID to ATTACKER_CLASS_NAME))
+            message.toState(
+                id = MESSAGE_ID,
+                participants =
+                    mapOf(
+                        ATTACKER_ID to
+                            ParticipantClass(
+                                className = ATTACKER_CLASS_NAME,
+                                type = CharacterClassType.Mage,
+                            )
+                    ),
+            )
 
         val temptFate = assertIs<ArenaMessageState.MirrorImage.TemptFate>(value = state)
         assertEquals(expected = 1, actual = temptFate.rawReroll)

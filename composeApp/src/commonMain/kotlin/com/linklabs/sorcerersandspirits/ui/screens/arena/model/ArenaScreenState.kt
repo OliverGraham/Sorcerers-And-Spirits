@@ -24,7 +24,7 @@ data class ArenaScreenState(
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState,
-    val participantClassNames: Map<String, String>,
+    val participants: Map<String, ParticipantClass>,
     val numberOfNewMessages: Int,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
@@ -46,7 +46,7 @@ data class ArenaScreenState(
      * fire immediately rather than waiting for the throttled log (SS-148/SS-164). The overlay plays
      * newly-arrived ones in sequence (e.g. "Hit!" then "X Damage!" then "Knocked Out!").
      */
-    val flashMessages: List<ArenaMessageState> = messages.filter { it.flashText != null }
+    val flashMessages: List<ArenaMessageState> = messages.filter { it.flashCallout != null }
 }
 
 @Immutable
@@ -219,19 +219,19 @@ internal fun ArenaMatch.toUpdatedState(
     // ArenaMessages refer to players by class name (SS-097), so the resolution map is keyed on the
     // class each player selected. Players who have left the arena are retained so their earlier
     // messages still resolve.
-    val currentClassNames =
+    val currentParticipants =
         playerMap.values.filterIsInstance<ArenaPlayer.Selected>().associate {
-            it.userId to it.characterClass.className
+            it.userId to
+                ParticipantClass(
+                    className = it.characterClass.className,
+                    type = it.characterClass.type,
+                )
         }
-    val participantClassNames =
-        (previousState?.participantClassNames ?: emptyMap()) + currentClassNames
+    val participants = (previousState?.participants ?: emptyMap()) + currentParticipants
 
     val messages =
         messages.map { incomingMessage ->
-            incomingMessage.message.toState(
-                id = incomingMessage.id,
-                classNames = participantClassNames,
-            )
+            incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
         }
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
@@ -297,7 +297,7 @@ internal fun ArenaMatch.toUpdatedState(
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = displayedArenaState,
-            participantClassNames = participantClassNames,
+            participants = participants,
             gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
             characterClasses = characterClasses,
             classCopy = classCopy,

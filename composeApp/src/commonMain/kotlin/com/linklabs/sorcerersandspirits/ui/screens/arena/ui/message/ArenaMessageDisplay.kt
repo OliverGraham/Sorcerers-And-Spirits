@@ -112,7 +112,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_damage,
                         attackerName,
                         defenderName,
-                        damage,
+                        total,
                     )
 
                 NormalRollMessageType.Knockout ->

@@ -349,7 +349,7 @@ class ArenaScreenStateTest {
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
-            participantClassNames = emptyMap(),
+            participants = emptyMap(),
             numberOfNewMessages = 0,
         )
 

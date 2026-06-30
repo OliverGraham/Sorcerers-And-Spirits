@@ -54,49 +54,51 @@ are archived in [COMPLETED.md](COMPLETED.md).
   on the exact duration.
 - **Related:** SS-148 (flash callout), SS-154 (`FINISH_HOLD_MILLIS` sizing).
 
-### SS-164 — Flash messages: full event coverage + per-ability call-outs
+### SS-164 — One message → flash call-out + log line (two string resources)
 
 - [ ] Not completed
-- **Goal:** The full-screen flash (SS-148) should narrate combat in a quick, fun way while the
-  message log stays the full passive record. Every flash-worthy event flashes, and multiple flashes
-  from a single resolution play **in sequence** (e.g. `Hit!` → `3 Damage!` → `Knocked Out!`).
-- **Normal-attack wording (this pass):**
-    - Armor broken (`ArmorClassHit`) → **"Hit!"** (previously no flash).
-    - Armor not broken (`ArmorClassMiss`) → **"Miss!"**.
-    - Damage dealt (`Damage`) → **"X Damage!"** where X is the true damage. `NormalRoll` now carries
-      the consecutive-doubles `bonus` through every layer (domain → entity → state) so the call-out
-      shows `firstDie + secondDie + bonus`, not just the visible dice.
-    - Knockout (`Knockout`) → **"Knocked Out!"** (renamed from "K.O.!").
-- **Abilities (this pass = first-pass wording, owner to refine each):** when an ability is used it
-  also flashes one of these call-outs. `ArenaMessageState.flashText` is the single extension point —
-  each ability's primary outcome message returns punchy text; intermediate Trigger/Roll steps stay
-  null. **Owner will refine the exact wording for every ability.**
-- **Per-step defensive-ability sequence (owner ask, folded in):** a defensive ability must flash
-  every step and its outcome, not just a single call-out. After a normal-attack `Hit!`, when
-  resolution passes to a defender's defensive ability, flash that ability name, then flash the
-  *outcome of its roll*. Examples:
-    - Lucky Coin: `Hit!` → `Lucky Coin!` → the roll result, e.g.
-      `"1 - $attackerClassName's attack continues!"` or `"… attack is stopped"`.
-    - Summon Minion: `Skeleton!` when a skeleton only; `Skeleton! Necromancer heals to full!` when
-      it also heals; same shape for Golem.
-      This should be derivable **entirely from how the domain already adds messages** (each
-      Trigger/Roll/Result step is already its own `ArenaMessage`); no new domain structures needed —
-      give the currently-null intermediate steps real `flashText`. **Open question for owner:**
-      confirm
-      exact wording per step (placeholder copy is fine to start).
-- **`Hit!` / outcome wording + color (owner ask, folded in):** the `Hit!` flash should include the
-  roll total like Damage already does — `"7 - Hit!"` (same `"$total - …"` format as `"X Damage!"`).
-  Color: `Hit!`, `X Damage!`, and `Knocked Out!` render in the **acting class's color**; `Miss!`
-  renders in a **neutral color (white for now)**. Class-name coloring across all messaging is its
-  own ticket (SS-179) — coordinate so the flash uses the same class-color source.
-- **Infrastructure:** `flashText` (in `ArenaMessageState.kt`) is the per-message wording source;
-  `ArenaScreenState.flashMessages` exposes the ordered flash-worthy messages; `FlashOverlay`
-  (`CombatFlashOverlay.kt`) queues newly-arrived flashes and plays them one at a time, skipping the
-  history present on first composition. `FlashText` currently hardcodes `Color.White`; it will need
-  the acting class's color threaded in for the per-outcome coloring above.
-- **Related:** SS-148 (flash callout), SS-163 (flash hold duration), SS-029 (string resources),
-  SS-025 (message-log animation), SS-179 (message text styling/backgrounds), SS-177 (doubles flash
-  suppression).
+- **Core model:** Every combat message flows Data → Domain → UI as **one** `ArenaMessageState` and
+  is rendered **two ways from that same message**: (1) a short, punchy full-screen **flash**
+  animation, and (2) a fuller line in the passive **message log**. Multiple flashes from one
+  resolution play **in sequence** (e.g. `Hit!` → `3 Damage!` → `Knocked Out!`).
+- **Two string resources per message:**
+    - **Flash:** `arena_flash_*` — short, animated. Hit/Damage/Knockout render in the **acting
+      class's color**, everything else neutral white. Built from the sealed `FlashCallout` (each
+      variant carries the color + the data its resource needs) via `CombatFlashText.text()`.
+    - **Log:** `arena_message_*` — the more complete, passive record, built in `ArenaMessageDisplay`.
+      Final wording **TBD** (owner-refined).
+- **No wrapper type:** one `ArenaMessageState` maps to both resources at the two display sites; there
+  is no `FlashMessage`/pair object. `flashCallout`'s `when` is **exhaustive over every message**, so
+  a new message type is a compile error until its flash is chosen.
+- **Coverage (this pass):** **every** message currently flashes — round/turn/connection/info and
+  every intermediate roll step included. Paring some back to log-only is **SS-185**; the nullable
+  `flashCallout` + `ArenaScreenState.flashMessages` filter hold the seam for it.
+- **Normal-attack flash wording (first pass):** `ArmorClassHit` → `"{total} · Hit!"`;
+  `ArmorClassMiss` → `"Miss!"`; `Damage` → `"{total} Damage!"`; `Knockout` → `"Knocked Out!"`.
+  `NormalRoll` carries the consecutive-doubles `bonus` through every layer so `total` is
+  `firstDie + secondDie + bonus`, not just the visible dice.
+- **Ability flash wording (first pass, owner refines each):** each defensive ability flashes every
+  step — its name then the roll's outcome (e.g. Lucky Coin → `Lucky Coin!` → `Attack stopped!` /
+  `"{die} · Attack continues!"`; Summon Minion → `Skeleton! Necromancer heals to full!`). Derived
+  **only** from messages the domain already adds; no new domain structures.
+- **Wording status:** both the flash and the log wording are owner-refined. All flash strings are
+  `arena_flash_*` (in place); log strings are `arena_message_*` (in place, final wording TBD).
+- **Related:** SS-185 (pare back flash coverage), SS-148 (flash callout), SS-163 (flash hold
+  duration), SS-029 (string resources), SS-025 (message-log animation), SS-179 (message text
+  styling/backgrounds), SS-177 (doubles flash suppression).
+
+### SS-185 — Pare back which messages flash
+
+- [ ] Not completed
+- **Goal:** SS-164 makes **every** message flash (round/turn/connection/info and every intermediate
+  roll step). Decide which messages should be **log-only** and stop them flashing, so the flash
+  channel stays punchy and reads as combat narration rather than echoing the whole log.
+- **Mechanism:** `ArenaMessageState.flashCallout` (in `FlashCallout.kt`) already returns
+  `FlashCallout?` and `ArenaScreenState.flashMessages` already filters nulls — return `null` from the
+  branches that should be log-only. No structural change needed.
+- **Open for owner:** the exact keep/cut list (likely cut: `NewRound`, `NewTurn`, `ConnectedToArena`,
+  `ChoseCharacterClass`, and intermediate roll steps like `Teleport.Roll`, `LuckyCoin.HighRollerTrigger`).
+- **Related:** SS-164 (one message → two resources).
 
 ### SS-171 — Hold the Combat→Finished transition until end-of-match animations finish (+2s)
 

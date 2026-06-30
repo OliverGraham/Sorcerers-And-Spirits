@@ -728,7 +728,7 @@ class ArenaScreenViewModelTest {
     }
 
     @Test
-    fun `participantClassNames maintains class names even after players leave`() = runTest {
+    fun `participants maintains class names even after players leave`() = runTest {
         val viewModel = createViewModel()
 
         viewModel.uiStateFlow.test {
@@ -750,8 +750,8 @@ class ArenaScreenViewModelTest {
                 )
 
             val state1 = (awaitItem() as UiState.Loaded).data
-            assertEquals(CharacterClassType.Rogue.name, state1.participantClassNames[USER_ID])
-            assertEquals(CharacterClassType.Mage.name, state1.participantClassNames[OPPONENT_ID])
+            assertEquals(CharacterClassType.Rogue.name, state1.participants[USER_ID]?.className)
+            assertEquals(CharacterClassType.Mage.name, state1.participants[OPPONENT_ID]?.className)
 
             // 2. Opponent leaves
             arenaMatchFlow.value =
@@ -766,9 +766,9 @@ class ArenaScreenViewModelTest {
                 )
 
             val state2 = (awaitItem() as UiState.Loaded).data
-            assertEquals(CharacterClassType.Rogue.name, state2.participantClassNames[USER_ID])
+            assertEquals(CharacterClassType.Rogue.name, state2.participants[USER_ID]?.className)
             // Bob's class should still be here so their earlier messages still resolve!
-            assertEquals(CharacterClassType.Mage.name, state2.participantClassNames[OPPONENT_ID])
+            assertEquals(CharacterClassType.Mage.name, state2.participants[OPPONENT_ID]?.className)
         }
     }
 

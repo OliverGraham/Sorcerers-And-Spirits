@@ -36,8 +36,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashText
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashCallout
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
@@ -57,7 +59,7 @@ private const val CONFETTI_MAX_RADIUS = 9f
 /**
  * The full-screen call-out for flash-worthy events (SS-148/SS-164): a big "Hit!"/"X Damage!"/
  * "Knocked Out!"/ability text that springs in with a bounce, holds, then pops out, over a one-shot
- * confetti burst in the four class colors. Driven by [flashMessages] with [flashText]:
+ * confetti burst in the four class colors. Driven by [flashMessages] with [flashCallout]:
  * newly-arrived messages are played one at a time, so a single resolution narrates as a sequence.
  * The history present on first composition is skipped so reconnecting never replays old call-outs.
  */
@@ -77,8 +79,8 @@ internal fun FlashOverlay(flashMessages: List<ArenaMessageState>, modifier: Modi
 
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
                 for (message in fresh) {
-                    val text = message.flashText ?: continue
-                    current = FlashState(key = message.id, text = text)
+                    val callout = message.flashCallout ?: continue
+                    current = FlashState(key = message.id, callout = callout)
                     visibleState.targetState = true
                     delay(timeMillis = FLASH_HOLD_MILLIS)
                     visibleState.targetState = false
@@ -109,20 +111,21 @@ internal fun FlashOverlay(flashMessages: List<ArenaMessageState>, modifier: Modi
                 ) + fadeIn(),
             exit = scaleOut(targetScale = 1.5f) + fadeOut(),
         ) {
-            FlashText(text = current.text)
+            FlashText(callout = current.callout)
         }
     }
 }
 
 @Composable
-private fun FlashText(text: String, modifier: Modifier = Modifier) {
+private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
+    val color = callout.actingClassType?.toColor() ?: Color.White
     Text(
-        text = text,
+        text = callout.text(),
         style =
             TextStyle(
                 fontSize = FLASH_FONT_SIZE,
                 fontWeight = FontWeight.Black,
-                color = Color.White,
+                color = color,
                 textAlign = TextAlign.Center,
                 shadow =
                     Shadow(color = Color.Black, offset = Offset(x = 0f, y = 4f), blurRadius = 8f),
@@ -178,7 +181,7 @@ private fun List<ArenaMessageState>.freshAfter(lastPlayedId: String?): List<Aren
     return subList(lastPlayedIndex + 1, size)
 }
 
-private class FlashState(val key: String, val text: String)
+private class FlashState(val key: String, val callout: FlashCallout)
 
 private class ConfettiParticle(
     val angle: Float,

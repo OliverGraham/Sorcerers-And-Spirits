@@ -162,6 +162,7 @@ private fun ArenaCombatFlashPreview() {
             ArenaMessageState.NormalRoll(
                 id = "ko",
                 attackerName = "Mage",
+                attackerClassType = CharacterClassType.Mage,
                 defenderName = "Rogue",
                 firstDie = 6,
                 secondDie = 6,
@@ -204,7 +205,7 @@ private fun PreviewArenaCombat(
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = false,
             arenaState = state,
-            participantClassNames = emptyMap(),
+            participants = emptyMap(),
             numberOfNewMessages = 2,
         )
     SorcerersAndSpiritsTheme {

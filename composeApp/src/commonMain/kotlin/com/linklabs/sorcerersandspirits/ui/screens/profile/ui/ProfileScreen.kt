@@ -11,17 +11,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +35,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.GameStats
+import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
@@ -206,12 +203,10 @@ private fun ProfileContent(
         }
 
         item {
-            OutlinedButton(
+            AppButton(
                 onClick = { isDeleteConfirmationShown = true },
-                colors =
-                    ButtonDefaults.outlinedButtonColors(
-                        contentColor = MaterialTheme.colorScheme.error
-                    ),
+                borderColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.error,
             ) {
                 Text(text = stringResource(resource = Res.string.profile_delete))
             }
@@ -257,16 +252,20 @@ private fun DisplayNameEditor(
         )
 
         Row {
-            Button(
+            AppButton(
                 onClick = { onUpdateDisplayName(pendingDisplayName) },
-                enabled = isDisplayNameChanged,
+                isEnabled = isDisplayNameChanged,
             ) {
                 Text(text = stringResource(resource = Res.string.profile_save))
             }
 
             Spacer(modifier = Modifier.width(width = 8.dp))
 
-            Button(onClick = { pendingDisplayName = displayName }, enabled = isDisplayNameChanged) {
+            AppButton(
+                onClick = { pendingDisplayName = displayName },
+                isEnabled = isDisplayNameChanged,
+                borderColor = MaterialTheme.colorScheme.outline,
+            ) {
                 Text(text = stringResource(resource = Res.string.profile_cancel))
             }
         }
@@ -463,16 +462,16 @@ private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: ()
             Text(text = stringResource(resource = Res.string.profile_delete_confirm_message))
         },
         confirmButton = {
-            TextButton(
+            AppButton(
                 onClick = onConfirm,
-                colors =
-                    ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                borderColor = MaterialTheme.colorScheme.error,
+                contentColor = MaterialTheme.colorScheme.error,
             ) {
                 Text(text = stringResource(resource = Res.string.profile_delete_confirm_button))
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
+            AppButton(onClick = onDismiss, borderColor = MaterialTheme.colorScheme.outline) {
                 Text(text = stringResource(resource = Res.string.profile_cancel))
             }
         },

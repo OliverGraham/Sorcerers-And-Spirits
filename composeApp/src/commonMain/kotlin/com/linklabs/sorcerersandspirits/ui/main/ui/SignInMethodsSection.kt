@@ -3,9 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.main.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -56,23 +55,26 @@ fun SignInMethodsSection(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        OutlinedButton(
+        AppButton(
             onClick = { onSocialMethodClick(SignInMethod.GOOGLE) },
             modifier = Modifier.fillMaxWidth(),
+            borderColor = MaterialTheme.colorScheme.outline,
         ) {
             Text(text = stringResource(resource = Res.string.link_account_google))
         }
 
-        OutlinedButton(
+        AppButton(
             onClick = { onSocialMethodClick(SignInMethod.APPLE) },
             modifier = Modifier.fillMaxWidth(),
+            borderColor = MaterialTheme.colorScheme.outline,
         ) {
             Text(text = stringResource(resource = Res.string.link_account_apple))
         }
 
-        OutlinedButton(
+        AppButton(
             onClick = { isEmailFormExpanded = !isEmailFormExpanded },
             modifier = Modifier.fillMaxWidth(),
+            borderColor = MaterialTheme.colorScheme.outline,
         ) {
             Text(text = stringResource(resource = Res.string.link_account_email))
         }
@@ -100,9 +102,9 @@ fun SignInMethodsSection(
             )
 
             val isEmailSubmittable = email.isNotBlank() && password.isNotBlank()
-            Button(
+            AppButton(
                 onClick = { onEmailLink(email, password) },
-                enabled = isEmailSubmittable,
+                isEnabled = isEmailSubmittable,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(text = stringResource(resource = Res.string.link_account_email_submit))

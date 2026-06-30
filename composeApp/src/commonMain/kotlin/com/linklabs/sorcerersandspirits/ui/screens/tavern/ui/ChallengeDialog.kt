@@ -10,17 +10,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
@@ -156,12 +155,15 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val onDeclineChallenge = ChallengeActionsProvider.current.onDeclineChallenge
-        TextButton(onClick = { onDeclineChallenge(challengeId) }) {
+        AppButton(
+            onClick = { onDeclineChallenge(challengeId) },
+            borderColor = MaterialTheme.colorScheme.outline,
+        ) {
             Text(text = stringResource(resource = Res.string.challenge_dialog_button_decline))
         }
 
         val onAcceptChallenge = ChallengeActionsProvider.current.onAcceptChallenge
-        Button(onClick = { onAcceptChallenge(challengeId) }) {
+        AppButton(onClick = { onAcceptChallenge(challengeId) }) {
             Text(text = stringResource(resource = Res.string.challenge_dialog_button_accept))
         }
     }

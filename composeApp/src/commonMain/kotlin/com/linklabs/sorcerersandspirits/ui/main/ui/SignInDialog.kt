@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -93,16 +92,17 @@ fun SignInNameDialog(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
                 ) {
-                    OutlinedButton(
+                    AppButton(
                         onClick = onRandomNameClick,
                         modifier = Modifier.weight(weight = 1f),
+                        borderColor = MaterialTheme.colorScheme.outline,
                     ) {
                         Text(text = stringResource(resource = Res.string.sign_in_button_random))
                     }
 
-                    Button(
+                    AppButton(
                         onClick = { onAcceptClick(currentDisplayName) },
-                        enabled = currentDisplayName.isNotBlank(),
+                        isEnabled = currentDisplayName.isNotBlank(),
                         modifier = Modifier.weight(weight = 1f),
                     ) {
                         Text(text = stringResource(resource = Res.string.sign_in_button_accept))

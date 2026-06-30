@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassWheel
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
@@ -103,13 +103,13 @@ private fun ArenaState.ChoosingClasses.ConfirmSelectionButton() {
 
     Spacer(modifier = Modifier.height(height = 24.dp))
 
-    Button(
+    AppButton(
         onClick = {
             if (selectedClass != null) {
                 onClassConfirmed(playerMap.getValue(key = userPlayerId), selectedClass)
             }
         },
-        enabled = selectedClass != null,
+        isEnabled = selectedClass != null,
         modifier = Modifier.padding(bottom = 16.dp),
     ) {
         Text(text = stringResource(resource = Res.string.arena_choosing_classes_confirm))

@@ -94,18 +94,39 @@ class ArenaScreenStateTest {
 
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
 
+        val seatedUserIds = state.seatedAvatarUserIds(targetUserId = targetUserId)
+
         assertEquals(expected = USER_ID, actual = state.turnOwnerUserId)
         assertEquals(expected = OPPONENT_ID, actual = state.attackingUserId)
         assertEquals(expected = USER_ID, actual = targetUserId)
         assertTrue(actual = state.attackingUserId != targetUserId)
-        assertTrue(
-            actual =
-                state
-                    .headIconPlayersFor(
-                        activeUserId = state.attackingUserId,
-                        targetUserId = targetUserId,
-                    )
-                    .isEmpty()
+        assertEquals(expected = setOf(OPPONENT_ID, USER_ID), actual = seatedUserIds)
+        assertTrue(actual = state.headIconPlayersFor(seatedUserIds = seatedUserIds).isEmpty())
+    }
+
+    @Test
+    fun `Given a self-targeted ability names the actor as its own defender, then the actor is not seated in both avatar slots`() {
+        // A self-targeted ability (e.g. Summon Minion) sets the defender to the actor, so the
+        // attacker and target resolve to the same player. Only the actor is seated; the opponent
+        // stays a head icon rather than the actor taking both slots (SS-168).
+        val selfTargeted =
+            CombatActionState.AbilityRoll(
+                action = AbilityActionState.Activated.PrepareAttack,
+                attackerUserId = OPPONENT_ID,
+                defenderUserId = OPPONENT_ID,
+                originalTurnUserId = OPPONENT_ID,
+                activeUserIds = setOf(element = OPPONENT_ID),
+            )
+        val state = combatState(combatActionState = selfTargeted)
+
+        val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
+        val seatedUserIds = state.seatedAvatarUserIds(targetUserId = targetUserId)
+
+        assertNull(actual = state.seatedTargetPlayer(targetUserId = targetUserId))
+        assertEquals(expected = setOf(OPPONENT_ID), actual = seatedUserIds)
+        assertEquals(
+            expected = listOf(USER_ID),
+            actual = state.headIconPlayersFor(seatedUserIds = seatedUserIds).map { it.userId },
         )
     }
 

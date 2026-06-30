@@ -66,15 +66,15 @@ private val USER_MARKER_SIZE = 44.dp
 private val USER_MARKER_GAP = 6.dp
 
 /**
- * The left two-thirds of the combat screen: the attacker and the target shown as full-size avatars
- * stacked vertically with the resting [DiceHomeSlot] between them (SS-157). The attacker takes the
- * top slot and the target the bottom; when there is no live target the lower slot is empty so the
- * dice stay centered.
+ * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
+ * between them (SS-157). The lower slot is empty when there is no second combatant so the dice stay
+ * centered. The [ActivePlayerHalo] marks whoever is rolling, so the slots themselves carry no
+ * meaning.
  */
 @Composable
 internal fun CombatAvatarColumn(
-    activePlayer: PlayerState.Selected,
-    targetPlayer: PlayerState.Selected?,
+    topPlayer: PlayerState.Selected,
+    bottomPlayer: PlayerState.Selected?,
     userPlayerId: String,
     activeUserIds: Set<String>,
     onInspect: (String) -> Unit,
@@ -83,20 +83,20 @@ internal fun CombatAvatarColumn(
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         LargeAvatar(
-            player = activePlayer,
-            isUserPlayer = activePlayer.userId == userPlayerId,
-            isActiveRoller = activePlayer.userId in activeUserIds,
+            player = topPlayer,
+            isUserPlayer = topPlayer.userId == userPlayerId,
+            isActiveRoller = topPlayer.userId in activeUserIds,
             onInspect = onInspect,
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
         )
 
         DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
 
-        if (targetPlayer != null) {
+        if (bottomPlayer != null) {
             LargeAvatar(
-                player = targetPlayer,
-                isUserPlayer = targetPlayer.userId == userPlayerId,
-                isActiveRoller = targetPlayer.userId in activeUserIds,
+                player = bottomPlayer,
+                isUserPlayer = bottomPlayer.userId == userPlayerId,
+                isActiveRoller = bottomPlayer.userId in activeUserIds,
                 onInspect = onInspect,
                 modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
             )

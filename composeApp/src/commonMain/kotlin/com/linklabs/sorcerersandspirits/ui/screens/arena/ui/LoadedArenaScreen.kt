@@ -26,7 +26,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacte
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.NewArenaCombat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.ArenaCombat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalLatestRoll
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.painterResource
@@ -102,10 +102,7 @@ private fun ArenaStateContent(
             is ArenaState.ChoosingClasses ->
                 arenaState.ArenaChoosingClasses(characterClasses = screenState.characterClasses)
 
-            // SS-142: the combat screen is being rebuilt as NewArenaCombat; it is now live here
-            // while logic is migrated over from the old ArenaCombat (kept until the move is
-            // verified complete).
-            is ArenaState.Combat -> NewArenaCombat(screenState = screenState, state = arenaState)
+            is ArenaState.Combat -> ArenaCombat(screenState = screenState, state = arenaState)
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

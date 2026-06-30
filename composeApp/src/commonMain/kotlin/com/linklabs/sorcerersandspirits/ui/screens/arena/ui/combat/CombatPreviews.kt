@@ -26,7 +26,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_background
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
-private fun NewArenaCombatMultiplayerPreview() {
+private fun ArenaCombatMultiplayerPreview() {
     PreviewArenaCombat(
         state =
             previewCombatState(
@@ -59,7 +59,7 @@ private fun NewArenaCombatMultiplayerPreview() {
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
-private fun NewArenaCombatTwoPlayerPreview() {
+private fun ArenaCombatTwoPlayerPreview() {
     PreviewArenaCombat(
         state =
             previewCombatState(
@@ -82,7 +82,7 @@ private fun NewArenaCombatTwoPlayerPreview() {
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
-private fun NewArenaCombatKnockedOutOpponentPreview() {
+private fun ArenaCombatKnockedOutOpponentPreview() {
     PreviewArenaCombat(
         state =
             previewCombatState(
@@ -116,7 +116,7 @@ private fun NewArenaCombatKnockedOutOpponentPreview() {
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
-private fun NewArenaCombatUserTurnPreview() {
+private fun ArenaCombatUserTurnPreview() {
     PreviewArenaCombat(
         state =
             previewCombatState(
@@ -140,7 +140,7 @@ private fun NewArenaCombatUserTurnPreview() {
 
 @Preview(widthDp = 360, heightDp = 800)
 @Composable
-private fun NewArenaCombatFlashPreview() {
+private fun ArenaCombatFlashPreview() {
     PreviewArenaCombat(
         state =
             previewCombatState(
@@ -209,7 +209,7 @@ private fun PreviewArenaCombat(
         )
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
-            NewArenaCombat(
+            ArenaCombat(
                 screenState = screenState,
                 state = state,
                 modifier =

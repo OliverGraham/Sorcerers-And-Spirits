@@ -84,12 +84,14 @@ internal fun ArenaCombat(
                     }
                 }
 
-                BottomControls(
-                    state = state,
-                    targetedOpponentUserId = targetedOpponentUserId,
-                    lockTarget = { isTargetLockedOptimistically = true },
-                    diceRoll = diceRoll,
-                )
+                if (!screenState.isFinishPending) {
+                    BottomControls(
+                        state = state,
+                        targetedOpponentUserId = targetedOpponentUserId,
+                        lockTarget = { isTargetLockedOptimistically = true },
+                        diceRoll = diceRoll,
+                    )
+                }
             }
 
             // TODO Yourself: Make Messages and TurnTimer part of Screen Column

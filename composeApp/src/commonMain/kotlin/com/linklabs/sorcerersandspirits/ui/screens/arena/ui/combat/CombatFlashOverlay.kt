@@ -47,6 +47,9 @@ import kotlinx.coroutines.delay
 
 private const val FLASH_HOLD_MILLIS = 850L
 private const val FLASH_EXIT_MILLIS = 320L
+
+/** Wall-clock time one queued flash callout occupies the overlay: its hold plus its pop-out. */
+internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
 private val FLASH_FONT_SIZE = 72.sp
 private const val PI_FLOAT = 3.1415927f
 private const val CONFETTI_COUNT = 24

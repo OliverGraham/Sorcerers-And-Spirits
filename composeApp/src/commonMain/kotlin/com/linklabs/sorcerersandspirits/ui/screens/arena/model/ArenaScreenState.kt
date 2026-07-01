@@ -36,6 +36,13 @@ data class ArenaScreenState(
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
 
     /**
+     * Whether the combat view is being held over a finished match while the closing flash queue
+     * drains (SS-171). The combat controls are withheld during this hold so the match cannot be
+     * acted on after it is already over.
+     */
+    val isFinishPending: Boolean = pendingFinishedState != null
+
+    /**
      * The most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077) and a new
      * roll is told apart from the previous one even when it lands on the same faces (SS-117).
      */

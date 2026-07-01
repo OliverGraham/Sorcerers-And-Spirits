@@ -3,13 +3,20 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -17,16 +24,19 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -43,9 +53,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -80,6 +92,18 @@ private const val CLASS_NAME_ANIM_LABEL = "stat_class_name"
 private const val STAT_VALUE_ANIM_LABEL = "stat_value"
 private const val ABILITY_NAME_ANIM_LABEL = "stat_ability_name"
 
+private const val AURA_TRANSITION_LABEL = "class_aura"
+private const val AURA_SCALE_LABEL = "class_aura_scale"
+private const val AURA_ALPHA_LABEL = "class_aura_alpha"
+private const val AURA_SIZE_FRACTION = 2f
+private const val AURA_GLOW_LIGHTEN = 0.5f
+private const val AURA_SOLID_STOP = 0.55f
+private const val AURA_MIN_SCALE = 0.82f
+private const val AURA_MAX_SCALE = 1.18f
+private const val AURA_MIN_ALPHA = 0.45f
+private const val AURA_MAX_ALPHA = 0.95f
+private const val AURA_PULSE_DURATION_MILLIS = 1200
+
 private const val SPOKE_LENGTH_FRACTION = 0.34f
 private const val SPOKE_THICKNESS_FRACTION = 0.06f
 private const val HUB_RADIUS_FRACTION = 0.10f
@@ -94,6 +118,7 @@ fun CharacterClassWheel(
     selectedClass: CharacterClassState? = null,
     unavailableClasses: Set<CharacterClassType> = emptySet(),
     classSelections: Map<CharacterClassType, String> = emptyMap(),
+    isSelectionAuraVisible: Boolean = false,
     onClassSelected: (CharacterClassState) -> Unit = {},
 ) {
     val count = characterClasses.size
@@ -215,6 +240,7 @@ fun CharacterClassWheel(
                     characterClasses = characterClasses,
                     rotationDegrees = { rotationDegrees },
                     unavailableClasses = unavailableClasses,
+                    selectedIndex = if (isSelectionAuraVisible) centeredIndex else -1,
                     wheelSize = wheelSize,
                     onClassClick = { index -> select(index = index) },
                 )
@@ -240,6 +266,7 @@ private fun RotatingWheel(
     characterClasses: List<CharacterClassState>,
     rotationDegrees: () -> Float,
     unavailableClasses: Set<CharacterClassType>,
+    selectedIndex: Int,
     wheelSize: Dp,
     onClassClick: (Int) -> Unit,
 ) {
@@ -267,6 +294,7 @@ private fun RotatingWheel(
                 wheelRotationDegrees = rotationDegrees,
                 wheelSize = wheelSize,
                 isAvailable = isAvailable,
+                isSelected = index == selectedIndex,
                 onClick = { onClassClick(index) },
             )
         }
@@ -308,17 +336,17 @@ private fun BoxScope.ClassAvatar(
     wheelRotationDegrees: () -> Float,
     wheelSize: Dp,
     isAvailable: Boolean,
+    isSelected: Boolean,
     onClick: () -> Unit,
 ) {
     val angleRadians = baseAngle.toDouble() * PI / 180.0
     val sinAngle = sin(angleRadians).toFloat()
     val cosAngle = cos(angleRadians).toFloat()
+    val avatarSize = wheelSize * AVATAR_SIZE_FRACTION
 
-    Image(
-        painter = painterResource(resource = type.toBustResource()),
-        contentDescription = type.name,
+    Box(
         modifier =
-            Modifier.size(size = wheelSize * AVATAR_SIZE_FRACTION)
+            Modifier.size(size = avatarSize)
                 .align(Alignment.Center)
                 .offset {
                     val radius = (wheelSize * AVATAR_RADIUS_FRACTION).toPx()
@@ -328,8 +356,80 @@ private fun BoxScope.ClassAvatar(
                     )
                 }
                 .graphicsLayer { rotationZ = -wheelRotationDegrees() }
-                .clickable(onClickLabel = type.name) { onClick() }
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication =
+                        ripple(bounded = false, radius = avatarSize * AURA_SIZE_FRACTION / 2f),
+                    onClickLabel = type.name,
+                ) {
+                    onClick()
+                }
                 .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (isSelected) {
+            ClassAura(color = type.toColor(), diameter = avatarSize * AURA_SIZE_FRACTION)
+        }
+        Image(
+            painter = painterResource(resource = type.toBustResource()),
+            contentDescription = type.name,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+/**
+ * The glowing, see-through class-color halo behind the selected class head (SS-176). A brightened
+ * class-color radial gradient stays vivid out past the head's silhouette before fading to
+ * transparent, and continuously breathes — pulsing in both size and brightness — so the selection
+ * reads as a living aura rather than a static ring.
+ */
+@Composable
+private fun ClassAura(color: Color, diameter: Dp, modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = AURA_TRANSITION_LABEL)
+    val breathSpec =
+        infiniteRepeatable<Float>(
+            animation = tween(durationMillis = AURA_PULSE_DURATION_MILLIS),
+            repeatMode = RepeatMode.Reverse,
+        )
+    val scale by
+        transition.animateFloat(
+            initialValue = AURA_MIN_SCALE,
+            targetValue = AURA_MAX_SCALE,
+            animationSpec = breathSpec,
+            label = AURA_SCALE_LABEL,
+        )
+    val glowAlpha by
+        transition.animateFloat(
+            initialValue = AURA_MIN_ALPHA,
+            targetValue = AURA_MAX_ALPHA,
+            animationSpec = breathSpec,
+            label = AURA_ALPHA_LABEL,
+        )
+
+    val glowColor = lerp(start = color, stop = Color.White, fraction = AURA_GLOW_LIGHTEN)
+
+    Box(
+        modifier =
+            modifier
+                .size(size = diameter)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                    alpha = glowAlpha
+                }
+                .background(
+                    brush =
+                        Brush.radialGradient(
+                            colorStops =
+                                arrayOf(
+                                    0f to glowColor,
+                                    AURA_SOLID_STOP to glowColor,
+                                    1f to Color.Transparent,
+                                )
+                        ),
+                    shape = CircleShape,
+                )
     )
 }
 

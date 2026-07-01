@@ -13,7 +13,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
@@ -60,6 +59,18 @@ internal fun ArenaCombat(
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
+                // TODO: Make MessagesBar and TurnTimer part of Screen Column
+                MessagesBar(
+                    secondsRemaining = screenState.secondsRemaining,
+                    isTimerVisible = screenState.isTimerVisible,
+                    isTimerUrgent = screenState.isTimerUrgent,
+                    unreadMessageCount = unreadMessageCount,
+                    onToggleExpanded = {
+                        isMessagesExpanded = !isMessagesExpanded
+                        unreadMessageCount = 0
+                    },
+                )
+
                 AnimatedContent(
                     targetState = state.seatedAvatarUserIds(targetUserId = targetedOpponentUserId),
                     label = AVATAR_SEATING_TRANSITION_LABEL,
@@ -84,51 +95,26 @@ internal fun ArenaCombat(
                     }
                 }
 
-                if (!screenState.isFinishPending) {
-                    BottomControls(
-                        state = state,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        lockTarget = { isTargetLockedOptimistically = true },
-                        diceRoll = diceRoll,
-                    )
-                }
+                BottomControls(
+                    state = state,
+                    targetedOpponentUserId = targetedOpponentUserId,
+                    lockTarget = { isTargetLockedOptimistically = true },
+                    diceRoll = diceRoll,
+                    areControlsVisible = !screenState.isFinishPending,
+                )
             }
 
-            // TODO Yourself: Make Messages and TurnTimer part of Screen Column
-            Messages(
-                messages = screenState.messages,
-                unreadMessageCount = unreadMessageCount,
-                isExpanded = isMessagesExpanded,
-                onToggleExpanded = {
-                    isMessagesExpanded = !isMessagesExpanded
-                    unreadMessageCount = 0
-                },
-            )
-
-            TurnTimer(
-                secondsRemaining = screenState.secondsRemaining,
-                isVisible = screenState.isTimerVisible,
-                isUrgent = screenState.isTimerUrgent,
-                modifier = Modifier.align(alignment = Alignment.TopEnd),
-            )
+            MessageLogOverlay(messages = screenState.messages, isExpanded = isMessagesExpanded)
 
             // TODO Yourself: These things truly go on top of the screen column, but perhaps
             //                Should be elsewhere
-            DiceOverlay(
-                diceRoll = diceRoll,
-                homeBounds = diceHomeBounds,
-                modifier = Modifier.fillMaxSize(),
-            )
+            DiceOverlay(diceRoll = diceRoll, homeBounds = diceHomeBounds)
 
-            FlashOverlay(
-                flashMessages = screenState.flashMessages,
-                modifier = Modifier.fillMaxSize(),
-            )
+            FlashOverlay(flashMessages = screenState.flashMessages)
 
             InspectDrawer(
                 player = inspectedUserId?.let { state.playerMap[it] },
                 onClose = { inspectedUserId = null },
-                modifier = Modifier.fillMaxSize(),
             )
         }
     }
@@ -161,8 +147,7 @@ private fun CombatStage(
             activeUserIds = state.activeUserIds,
             onInspect = onInspect,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
-            modifier =
-                Modifier.weight(weight = if (hasHeadIcons) 0.7f else 1f).padding(start = 16.dp),
+            modifier = Modifier.weight(weight = if (hasHeadIcons) 0.7f else 1f),
         )
 
         if (hasHeadIcons) {

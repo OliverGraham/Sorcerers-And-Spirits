@@ -9,10 +9,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
@@ -37,46 +41,75 @@ import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
-internal val MESSAGES_ICON_SIZE = 56.dp
-private val UNREAD_COUNT_FONT_SIZE = 20.sp
-private val PLACEHOLDER_PANEL_GOLD = Color(color = 0xFFB8860B)
+internal val messagesIconSize = 56.dp
+private val unreadCountFontSize = 20.sp
+private val placeholderPanelGold = Color(color = 0xFFB8860B)
 private const val UNREAD_DISPLAY_CAP = 9
 private const val UNREAD_COUNT_COLOR_TRANSITION_LABEL = "MessagesUnreadCountColor"
 private const val UNREAD_COUNT_COLOR_SHIFT_LABEL = "MessagesUnreadCountColorShift"
 private const val MESSAGES_EXPAND_LABEL = "MessagesExpand"
 private const val UNREAD_COUNT_COLOR_CYCLE_MILLIS = 2000
 private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
+private val messageBarHeight = 64.dp
 
 /**
- * The top-left messages affordance: a tapping target that expands the message log downward over the
- * head icons (stopping at the bottom half), with the unread count drawn in the center of the icon.
+ * The pinned top bar of the combat screen: the messages affordance on the left and the [TurnTimer]
+ * on the right. Tapping the icon toggles the message log via [onToggleExpanded]; the unread count
+ * is drawn in the center of the icon. The log itself is drawn separately by [MessageLogOverlay] so
+ * it can paint over the combat content rather than pushing it down.
  */
 @Composable
-internal fun Messages(
-    messages: List<ArenaMessageState>,
+internal fun MessagesBar(
+    secondsRemaining: Int,
+    isTimerVisible: Boolean,
+    isTimerUrgent: Boolean,
     unreadMessageCount: Int,
-    isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier =
+            modifier
+                .fillMaxWidth()
+                .height(height = messageBarHeight)
+                .background(color = placeholderPanelGold),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        MessagesIcon(unreadMessageCount = unreadMessageCount, onClick = onToggleExpanded)
+
+        TurnTimer(
+            secondsRemaining = secondsRemaining,
+            isVisible = isTimerVisible,
+            isUrgent = isTimerUrgent,
+        )
+    }
+}
+
+/**
+ * The message log, unfurled as an overlay over the combat content (SS-179). It sits just below the
+ * [MessagesBar] and paints over the avatars below rather than reserving layout space, so nothing
+ * shifts as it opens. The hoisted [isExpanded] drives the unfurl height; it renders nothing while
+ * collapsed. Drawn in the screen-spanning overlay layer so it covers the avatars beneath it.
+ */
+@Composable
+internal fun MessageLogOverlay(
+    messages: List<ArenaMessageState>,
+    isExpanded: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val expandedFraction by
         animateFloatAsState(targetValue = if (isExpanded) 1f else 0f, label = MESSAGES_EXPAND_LABEL)
+    if (expandedFraction <= 0f) return
 
-    Box(modifier = modifier.fillMaxWidth().fillMaxHeight(fraction = 0.5f)) {
-        if (expandedFraction > 0f) {
-            ArenaMessageLog(
-                messages = messages,
-                modifier =
-                    Modifier.fillMaxWidth()
-                        .fillMaxHeight(fraction = expandedFraction)
-                        .background(color = PLACEHOLDER_PANEL_GOLD),
-            )
-        }
-
-        MessagesIcon(
-            unreadMessageCount = unreadMessageCount,
-            onClick = onToggleExpanded,
-            modifier = Modifier.align(alignment = Alignment.TopStart),
+    Box(modifier = modifier.fillMaxSize()) {
+        ArenaMessageLog(
+            messages = messages,
+            modifier =
+                Modifier.fillMaxWidth()
+                    .padding(top = messageBarHeight)
+                    .fillMaxHeight(fraction = expandedFraction * 0.5f)
+                    .background(color = placeholderPanelGold),
         )
     }
 }
@@ -90,7 +123,7 @@ private fun MessagesIcon(
     Box(
         modifier =
             modifier
-                .size(size = MESSAGES_ICON_SIZE)
+                .size(size = messagesIconSize)
                 .clip(shape = CircleShape)
                 .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -146,7 +179,7 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
         style =
             TextStyle(
                 brush = flowingBrush,
-                fontSize = UNREAD_COUNT_FONT_SIZE,
+                fontSize = unreadCountFontSize,
                 fontWeight = FontWeight.Bold,
             ),
         modifier = modifier,

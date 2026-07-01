@@ -38,10 +38,8 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacte
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.painterResource
 
-private val INSPECT_DRAWER_WIDTH = 280.dp
-private val INSPECT_AVATAR_HEIGHT = 200.dp
-private val INSPECT_DRAWER_COLOR = Color(color = 0xF21A1A1A)
-private val INSPECT_SCRIM = Color(color = 0x99000000)
+private val inspectDrawerColor = Color(color = 0xF21A1A1A)
+private val inspectScrimColor = Color(color = 0x99000000)
 
 /**
  * A right-side drawer that slides in to inspect a class (SS-150): the full avatar plus every stat
@@ -58,11 +56,11 @@ internal fun InspectDrawer(
     var shownPlayer by remember { mutableStateOf<PlayerState.Selected?>(value = null) }
     if (player != null) shownPlayer = player
 
-    Box(modifier = modifier) {
+    Box(modifier = modifier.fillMaxSize()) {
         AnimatedVisibility(visible = isOpen, enter = fadeIn(), exit = fadeOut()) {
             Box(
                 modifier =
-                    Modifier.fillMaxSize().background(color = INSPECT_SCRIM).clickable(
+                    Modifier.fillMaxSize().background(color = inspectScrimColor).clickable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = null,
                     ) {
@@ -92,8 +90,8 @@ internal fun InspectContent(player: PlayerState.Selected, modifier: Modifier = M
         modifier =
             modifier
                 .fillMaxHeight()
-                .width(width = INSPECT_DRAWER_WIDTH)
-                .background(color = INSPECT_DRAWER_COLOR)
+                .width(width = 280.dp)
+                .background(color = inspectDrawerColor)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -110,7 +108,7 @@ internal fun InspectContent(player: PlayerState.Selected, modifier: Modifier = M
         )
         ClassAvatar(
             characterClass = player.characterClass,
-            modifier = Modifier.fillMaxWidth().height(height = INSPECT_AVATAR_HEIGHT),
+            modifier = Modifier.fillMaxWidth().height(height = 200.dp),
         )
         stats.forEach { stat -> InspectStatRow(stat = stat) }
     }

@@ -48,7 +48,6 @@ internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifi
             dustSnapshot = screenLayer.toImageBitmap()
             backStack.removeLastOrNull()
         }
-        Unit
     }
 
     Box(modifier = modifier) {

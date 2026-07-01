@@ -159,16 +159,27 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Interacts with the avatar seating work — confirm it still reads correctly with the
   attacker/target seating. Related: SS-146, SS-156, SS-157, SS-168.
 
-### SS-178 — AppButton icon should fill the button face
+### SS-178 — One reusable button for the whole app (text + icon, incl. combat)
 
 - [ ] Not completed
-- **Symptom:** The icon inside `AppButton` is too small; it should be large and fill the entire
-  button face (minus the offset reserved for the 3D press effect).
-- **Source:** `AppButton.kt` — the face `Row` pads `horizontal = 24.dp, vertical = 12.dp` and sizes
-  to content; icon callers pass a small image. Make the icon scale to fill the face within the
-  `APP_BUTTON_LIFT` offset.
-- **Open question for owner:** whether new, edge-to-edge icon art is needed (the current icons may
-  have built-in padding). Flag back if so.
+- **Goal:** A single reusable button component every screen uses — no per-screen re-implementations.
+  It must cover both **text** buttons and **icon** buttons (icon fills the face minus a small inner
+  border), and it must cover the **combat** buttons, which are the reason a shared button was wanted
+  in the first place.
+- **Context / why this exists:** `AppButton` (`ui/common/AppButton.kt`) was meant to be that one
+  button, but it shipped as a text-only rounded-rect and never actually covered the combat buttons.
+  Those still live separately in `ArenaButton` (`ui/screens/arena/ui/combat/CombatButtons.kt`) and
+  differ in ways the current `AppButton` can't express: a **circular** shape (vs. 14.dp rounded
+  rect), a **hold-to-roll gesture** (vs. a plain click) that drives the shared dice tray with
+  per-die `diceSlots`, an optional **label** under the face, and class-colored base darkening. So
+  "one button everywhere" needs `AppButton` to grow a configurable shape + a press/gesture model,
+  then `CombatButtons.kt` converted onto it and its private button deleted.
+- **Done so far (SS-178, partial):** combat icons now fill their face — `ARENA_BUTTON_ICON_SIZE`
+  was replaced with `Modifier.fillMaxSize().padding(all = 8.dp)` in `ArenaButton`. This fixes the
+  small-icon symptom but does NOT consolidate the components.
+- **Remaining:** make `AppButton` shape- and interaction-configurable enough to host the combat
+  buttons, migrate `CombatButtons.kt` onto it, and delete the duplicate button. Confirm the
+  hold-to-roll/dice behavior is preserved (combat-regression risk).
 - **Related:** SS-160 (3D button style), and the shared-AppButton work (PR #181).
 
 ### SS-179 — Message text styling: backgrounds, neutral text color, class-color class names everywhere
@@ -272,6 +283,28 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ---
 
 ## Bugs
+
+### SS-187 — Duplicate class selection: stale local selection survives a class being taken
+
+- [~] In progress — root cause found and fixed; needs device verification + regression test.
+- **Symptom:** In `ChoosingClasses`, two players entered Combat as Rogue. This breaks the core rule
+  **"No duplicate classes."** (see CLAUDE.md core combat rules). Observed live on two devices.
+- **Root cause (UI state, not the transaction):** every player defaults to Rogue selected on entry
+  (SS-176). Selection is turn-based, but the local `selectedClass` is **sticky**:
+  `ArenaScreenState.kt` derived it as `previousSelection ?: defaultSelectedClass(...)`. The `?:`
+  never re-checks `previousSelection` against the freshly-derived `unavailableClasses`, so after
+  another player confirms Rogue, the local user's `selectedClass` is *still* Rogue. The confirm
+  button (`ArenaChoosingClasses.ConfirmSelectionButton`, `isEnabled = selectedClass != null`) stays
+  enabled, so on their turn they confirm the already-taken class → duplicate. The Firebase
+  transaction was never the problem.
+- **Fix (applied):** drop a now-unavailable previous selection before falling back to the default —
+  `previousSelection?.takeIf { it.type !in unavailable } ?: defaultSelectedClass(...)` in
+  `ArenaScreenState.kt`. The selection can no longer be a taken class, so the confirm button and the
+  `CharacterClassWheel` highlight both reflect an available class.
+- **Remaining:** add a regression test (previous selection becomes unavailable → `selectedClass`
+  re-defaults to an available class, never the taken one); verify on device that a player whose
+  defaulted/held class is confirmed by someone else cannot confirm it and is moved to another class.
+- **Related:** SS-176 (default-select Rogue / selection aura), SS-122 (class identity by type).
 
 ### SS-116 — All-In bugs (2-player game, observed playing Gambler + Illusionist)
 

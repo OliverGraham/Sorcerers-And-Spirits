@@ -50,7 +50,7 @@ private const val FLASH_EXIT_MILLIS = 320L
 
 /** Wall-clock time one queued flash callout occupies the overlay: its hold plus its pop-out. */
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
-private val FLASH_FONT_SIZE = 72.sp
+private val flashFontSize = 72.sp
 private const val PI_FLOAT = 3.1415927f
 private const val CONFETTI_COUNT = 24
 private const val CONFETTI_MILLIS = 900
@@ -94,7 +94,7 @@ internal fun FlashOverlay(flashMessages: List<ArenaMessageState>, modifier: Modi
             }
     }
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         val current = current ?: return@Box
 
         if (visibleState.targetState || visibleState.currentState) {
@@ -126,7 +126,7 @@ private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
         text = callout.text(),
         style =
             TextStyle(
-                fontSize = FLASH_FONT_SIZE,
+                fontSize = flashFontSize,
                 fontWeight = FontWeight.Black,
                 color = color,
                 textAlign = TextAlign.Center,

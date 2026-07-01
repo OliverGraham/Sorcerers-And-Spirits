@@ -1,6 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,9 +11,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -47,25 +51,24 @@ import sorcerersandspirits.composeapp.generated.resources.ic_defensive_ability
 import sorcerersandspirits.composeapp.generated.resources.ic_offensive_ability
 import sorcerersandspirits.composeapp.generated.resources.ic_teleport_button
 
-private val ARENA_BUTTON_SIZE = 72.dp
-private val ARENA_BUTTON_ICON_SIZE = 44.dp
-private val ARENA_BUTTON_LIFT = 6.dp
-private val ARENA_BUTTON_BORDER_WIDTH = 2.dp
-private val ARENA_BUTTON_SHAPE = CircleShape
-private val ARENA_BUTTON_FACE_COLOR = Color(color = 0xFF323232)
-private val ARENA_BUTTON_NEUTRAL_BORDER = Color(color = 0xFF555555)
-private const val ARENA_BUTTON_BASE_DARKEN = 0.5f
+private val arenaButtonSize = 72.dp
+private val arenaButtonLift = 6.dp
+private val arenaButtonShape = CircleShape
+private val arenaButtonFaceColor = Color(color = 0xFF323232)
+private val arenaButtonNeutralBorder = Color(color = 0xFF555555)
 private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
-private const val DISABLED_BUTTON_ALPHA = 0.4f
-private val ATTACK_BUTTON_BOTTOM_PADDING = 24.dp
 
 /**
  * The single action row across the bottom of the screen: every control the user can take right now,
  * evenly spaced with the normal attack between the ability buttons (left) and the Illusionist's
- * Impersonate button (right). The lighter flank is padded with invisible button-sized slots so the
- * flanks stay symmetric and [Arrangement.SpaceEvenly] keeps the attack dead-centered, however many
- * abilities there are. Stats moved out of this row into the inspect drawer, so the buttons span the
- * full width on their own (SS-157).
+ * Impersonate button (right). [Arrangement.SpaceEvenly] keeps the attack dead-centered, however
+ * many abilities there are. Stats moved out of this row into the inspect drawer, so the buttons
+ * span the full width on their own (SS-157).
+ *
+ * The row always reserves its full height and fades the buttons in and out with
+ * [AnimatedVisibility] rather than appearing and disappearing, so the avatars above do not reflow
+ * as turns pass (there are no controls on an opponent's turn) or while a finish is pending
+ * ([areControlsVisible]).
  */
 @Composable
 internal fun BottomControls(
@@ -73,6 +76,7 @@ internal fun BottomControls(
     targetedOpponentUserId: String,
     lockTarget: () -> Unit,
     diceRoll: DiceRoll,
+    areControlsVisible: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -84,68 +88,76 @@ internal fun BottomControls(
     val impersonateControl = controls.firstOrNull { it.isImpersonate() }
     val abilityControls = controls.filter { it != attackControl && it != impersonateControl }
     val shouldLabelAbilities = abilityControls.size > 1
+    val areButtonsShown = areControlsVisible && controls.isNotEmpty()
 
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.Top,
+    Box(
+        modifier =
+            modifier.fillMaxWidth().height(height = arenaButtonSize + arenaButtonLift + 24.dp)
     ) {
-        abilityControls.forEach { control ->
-            AbilityButton(
-                control = control,
-                isEnabled =
-                    state.isControlEnabled(
+        AnimatedVisibility(visible = areButtonsShown, enter = fadeIn(), exit = fadeOut()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.Top,
+            ) {
+                abilityControls.forEach { control ->
+                    AbilityButton(
                         control = control,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                    ),
-                classColor = classColor,
-                diceRoll = diceRoll,
-                onRoll =
-                    state.rollActionFor(
-                        control = control,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        onAttack = onAttack,
-                        onUseAbility = onUseAbility,
-                        lockTarget = lockTarget,
-                    ),
-                label = control.label.takeIf { shouldLabelAbilities },
-            )
-        }
+                        isEnabled =
+                            state.isControlEnabled(
+                                control = control,
+                                targetedOpponentUserId = targetedOpponentUserId,
+                            ),
+                        classColor = classColor,
+                        diceRoll = diceRoll,
+                        onRoll =
+                            state.rollActionFor(
+                                control = control,
+                                targetedOpponentUserId = targetedOpponentUserId,
+                                onAttack = onAttack,
+                                onUseAbility = onUseAbility,
+                                lockTarget = lockTarget,
+                            ),
+                        label = control.label.takeIf { shouldLabelAbilities },
+                    )
+                }
 
-        if (attackControl != null) {
-            AttackButton(
-                isEnabled = state.isControlEnabled(attackControl, targetedOpponentUserId),
-                classColor = classColor,
-                diceRoll = diceRoll,
-                diceSlots = attackControl.diceSlots,
-                onRoll =
-                    state.rollActionFor(
-                        control = attackControl,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        onAttack = onAttack,
-                        onUseAbility = onUseAbility,
-                        lockTarget = lockTarget,
-                    ),
-                modifier = Modifier.padding(bottom = ATTACK_BUTTON_BOTTOM_PADDING),
-            )
-        }
+                if (attackControl != null) {
+                    AttackButton(
+                        isEnabled = state.isControlEnabled(attackControl, targetedOpponentUserId),
+                        classColor = classColor,
+                        diceRoll = diceRoll,
+                        diceSlots = attackControl.diceSlots,
+                        onRoll =
+                            state.rollActionFor(
+                                control = attackControl,
+                                targetedOpponentUserId = targetedOpponentUserId,
+                                onAttack = onAttack,
+                                onUseAbility = onUseAbility,
+                                lockTarget = lockTarget,
+                            ),
+                    )
+                }
 
-        if (impersonateControl != null) {
-            ImpersonateButton(
-                isEnabled = state.isControlEnabled(impersonateControl, targetedOpponentUserId),
-                classColor = classColor,
-                label = state.impersonateLabel(),
-                diceRoll = diceRoll,
-                diceSlots = impersonateControl.diceSlots,
-                onRoll =
-                    state.rollActionFor(
-                        control = impersonateControl,
-                        targetedOpponentUserId = targetedOpponentUserId,
-                        onAttack = onAttack,
-                        onUseAbility = onUseAbility,
-                        lockTarget = lockTarget,
-                    ),
-            )
+                if (impersonateControl != null) {
+                    ImpersonateButton(
+                        isEnabled =
+                            state.isControlEnabled(impersonateControl, targetedOpponentUserId),
+                        classColor = classColor,
+                        label = state.impersonateLabel(),
+                        diceRoll = diceRoll,
+                        diceSlots = impersonateControl.diceSlots,
+                        onRoll =
+                            state.rollActionFor(
+                                control = impersonateControl,
+                                targetedOpponentUserId = targetedOpponentUserId,
+                                onAttack = onAttack,
+                                onUseAbility = onUseAbility,
+                                lockTarget = lockTarget,
+                            ),
+                    )
+                }
+            }
         }
     }
 }
@@ -246,12 +258,11 @@ private fun ArenaButton(
     var isPressed by remember { mutableStateOf(value = false) }
     val pressDrop by
         animateDpAsState(
-            targetValue = if (isPressed) ARENA_BUTTON_LIFT else 0.dp,
+            targetValue = if (isPressed) arenaButtonLift else 0.dp,
             label = ARENA_BUTTON_PRESS_LABEL,
         )
-    val baseColor =
-        lerp(start = classColor, stop = Color.Black, fraction = ARENA_BUTTON_BASE_DARKEN)
-    val borderColor = if (showClassBorder) classColor else ARENA_BUTTON_NEUTRAL_BORDER
+    val baseColor = lerp(start = classColor, stop = Color.Black, fraction = 0.5f)
+    val borderColor = if (showClassBorder) classColor else arenaButtonNeutralBorder
 
     Column(
         modifier = modifier,
@@ -260,17 +271,14 @@ private fun ArenaButton(
     ) {
         Box(
             modifier =
-                Modifier.size(
-                        width = ARENA_BUTTON_SIZE,
-                        height = ARENA_BUTTON_SIZE + ARENA_BUTTON_LIFT,
-                    )
-                    .alpha(alpha = if (isEnabled) 1f else DISABLED_BUTTON_ALPHA)
+                Modifier.size(width = arenaButtonSize, height = arenaButtonSize + arenaButtonLift)
+                    .alpha(alpha = if (isEnabled) 1f else 0.4f)
         ) {
             Box(
                 modifier =
                     Modifier.align(alignment = Alignment.BottomCenter)
-                        .size(size = ARENA_BUTTON_SIZE)
-                        .clip(shape = ARENA_BUTTON_SHAPE)
+                        .size(size = arenaButtonSize)
+                        .clip(shape = arenaButtonShape)
                         .background(color = baseColor)
             )
 
@@ -278,14 +286,10 @@ private fun ArenaButton(
                 modifier =
                     Modifier.align(alignment = Alignment.TopCenter)
                         .offset(y = pressDrop)
-                        .size(size = ARENA_BUTTON_SIZE)
-                        .clip(shape = ARENA_BUTTON_SHAPE)
-                        .background(color = ARENA_BUTTON_FACE_COLOR)
-                        .border(
-                            width = ARENA_BUTTON_BORDER_WIDTH,
-                            color = borderColor,
-                            shape = ARENA_BUTTON_SHAPE,
-                        )
+                        .size(size = arenaButtonSize)
+                        .clip(shape = arenaButtonShape)
+                        .background(color = arenaButtonFaceColor)
+                        .border(width = 2.dp, color = borderColor, shape = arenaButtonShape)
                         .holdToRollGesture(
                             enabled = isEnabled,
                             onHoldStart = {
@@ -306,7 +310,7 @@ private fun ArenaButton(
                 Image(
                     painter = painterResource(resource = icon),
                     contentDescription = contentDescription,
-                    modifier = Modifier.size(size = ARENA_BUTTON_ICON_SIZE),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         }

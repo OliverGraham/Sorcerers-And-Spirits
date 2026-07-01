@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
@@ -21,8 +22,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
 
 private const val DICE_HOME_DIE_COUNT = 2
-private val DICE_HOME_HEIGHT = 56.dp
-private val DICE_REST_SPACING = 76.dp
+private val diceHomeHeight = 56.dp
+private val diceRestSpacing = 76.dp
 
 /**
  * The empty resting slot below the avatars that reserves space for the dice and reports its bounds.
@@ -33,7 +34,7 @@ private val DICE_REST_SPACING = 76.dp
 internal fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier =
-            modifier.fillMaxWidth().height(height = DICE_HOME_HEIGHT).onGloballyPositioned {
+            modifier.fillMaxWidth().height(height = diceHomeHeight).onGloballyPositioned {
                 onBoundsChanged(it.boundsInRoot())
             }
     )
@@ -53,9 +54,12 @@ internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect?, modifier: Modifi
     var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
 
     BoxWithConstraints(
-        modifier = modifier.onGloballyPositioned { overlayOrigin = it.localToRoot(Offset.Zero) }
+        modifier =
+            modifier.fillMaxSize().onGloballyPositioned {
+                overlayOrigin = it.localToRoot(relativeToLocal = Offset.Zero)
+            }
     ) {
-        val spacingPx = with(LocalDensity.current) { DICE_REST_SPACING.toPx() }
+        val spacingPx = with(receiver = LocalDensity.current) { diceRestSpacing.toPx() }
         val homeCenter = homeBounds.center - overlayOrigin
 
         repeat(times = DICE_HOME_DIE_COUNT) { index ->

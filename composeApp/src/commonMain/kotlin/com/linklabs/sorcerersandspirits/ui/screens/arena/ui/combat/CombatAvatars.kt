@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,22 +47,19 @@ import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 import sorcerersandspirits.composeapp.generated.resources.ic_user_player
 
-private val HALO_WIDTH = 132.dp
-private val HALO_HEIGHT = 30.dp
-private val HALO_SHAPE = RoundedCornerShape(percent = 50)
-private val HALO_INNER_COLOR = Color(color = 0xFFCB9C6A)
-private val HALO_OUTER_COLOR = Color(color = 0xFF654E35)
-private val HALO_SWEEP_COLORS = listOf(HALO_OUTER_COLOR, HALO_INNER_COLOR, HALO_OUTER_COLOR)
+private val haloWidth = 132.dp
+private val haloHeight = 30.dp
+private val haloShape = RoundedCornerShape(percent = 50)
+private val haloInnerColor = Color(color = 0xFFCB9C6A)
+private val haloOuterColor = Color(color = 0xFF654E35)
+private val haloSweepColors = listOf(haloOuterColor, haloInnerColor, haloOuterColor)
 private const val HALO_SWEEP_WIDTH_PX = 220f
 private const val HALO_SWEEP_DURATION_MILLIS = 3000
 private const val HALO_SWEEP_LABEL = "haloSweep"
 private const val HALO_SWEEP_TRANSLATE_LABEL = "haloSweepTranslate"
 
-private val STAT_PILL_SHAPE = RoundedCornerShape(size = 8.dp)
-private val STAT_PILL_ICON_SIZE = 24.dp
-private val STAT_BAR_SPACING = 6.dp
-private val USER_MARKER_SIZE = 44.dp
-private val USER_MARKER_GAP = 6.dp
+private val statPillShape = RoundedCornerShape(size = 8.dp)
+private val statPillIconSize = 24.dp
 
 /**
  * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
@@ -116,9 +112,9 @@ private fun LargeAvatar(
 ) {
     val classColor = player.characterClass.type.toColor()
 
-    Column(
+    Row(
         modifier = modifier.clickable { onInspect(player.userId) },
-        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         AvatarStatsBar(
             characterClass = player.characterClass,
@@ -136,7 +132,6 @@ private fun LargeAvatar(
 
             ClassAvatar(
                 characterClass = player.characterClass,
-                alignment = Alignment.BottomCenter,
                 modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
             )
         }
@@ -144,9 +139,9 @@ private fun LargeAvatar(
 }
 
 /**
- * The Speed / Armor / Hit-points pills shown above an avatar, mirroring the inspect drawer's stat
- * markers (SS-157). The local player's identity marker is overlaid to the left of Speed rather than
- * placed in the row, so its size never shifts the three pills.
+ * The Speed / Armor / Hit-points pills shown beside an avatar, mirroring the inspect drawer's stat
+ * markers (SS-157). The local player's identity marker sits atop the pills so the column reads as
+ * "you", with each pill stacked vertically down the side of the avatar.
  */
 @Composable
 private fun AvatarStatsBar(
@@ -155,38 +150,30 @@ private fun AvatarStatsBar(
     classColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(space = STAT_BAR_SPACING),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            StatPill(
-                icon = Res.drawable.ic_speed,
-                value = characterClass.speed.toString(),
-                classColor = classColor,
-            )
-            StatPill(
-                icon = Res.drawable.ic_armor_class,
-                value = characterClass.armorClass.toString(),
-                classColor = classColor,
-            )
-            StatPill(
-                icon = Res.drawable.ic_hit_points,
-                value = characterClass.hitPointsDisplay,
-                classColor = classColor,
-            )
-        }
-
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(space = 6.dp)) {
         if (isUserPlayer) {
             Image(
                 painter = painterResource(resource = Res.drawable.ic_user_player),
                 contentDescription = null,
-                modifier =
-                    Modifier.align(alignment = Alignment.CenterStart)
-                        .offset(x = -(USER_MARKER_SIZE + USER_MARKER_GAP))
-                        .size(size = USER_MARKER_SIZE),
+                modifier = Modifier.size(size = 44.dp),
             )
         }
+
+        StatPill(
+            icon = Res.drawable.ic_speed,
+            value = characterClass.speed.toString(),
+            classColor = classColor,
+        )
+        StatPill(
+            icon = Res.drawable.ic_armor_class,
+            value = characterClass.armorClass.toString(),
+            classColor = classColor,
+        )
+        StatPill(
+            icon = Res.drawable.ic_hit_points,
+            value = characterClass.hitPointsDisplay,
+            classColor = classColor,
+        )
     }
 }
 
@@ -200,7 +187,7 @@ private fun StatPill(
     Row(
         modifier =
             modifier
-                .clip(shape = STAT_PILL_SHAPE)
+                .clip(shape = statPillShape)
                 .background(color = classColor)
                 .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
@@ -209,7 +196,7 @@ private fun StatPill(
         Image(
             painter = painterResource(resource = icon),
             contentDescription = null,
-            modifier = Modifier.size(size = STAT_PILL_ICON_SIZE),
+            modifier = Modifier.size(size = statPillIconSize),
         )
         Text(
             text = value,
@@ -245,12 +232,12 @@ private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
     Box(
         modifier =
             modifier
-                .size(width = HALO_WIDTH, height = HALO_HEIGHT)
-                .clip(shape = HALO_SHAPE)
+                .size(width = haloWidth, height = haloHeight)
+                .clip(shape = haloShape)
                 .background(
                     brush =
                         Brush.linearGradient(
-                            colors = HALO_SWEEP_COLORS,
+                            colors = haloSweepColors,
                             start = Offset(x = translate, y = 0f),
                             end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
                             tileMode = TileMode.Repeated,

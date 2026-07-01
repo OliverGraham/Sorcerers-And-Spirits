@@ -5,7 +5,6 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -56,8 +55,8 @@ internal fun LoadedArenaScreen(
                     ),
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
-        ) { paddingValues ->
-            ScreenContent(screenState = screenState, paddingValues = paddingValues)
+        ) { _ ->
+            ScreenContent(screenState = screenState)
         }
 
         if (screenState.showForfeitDialog) {
@@ -67,15 +66,9 @@ internal fun LoadedArenaScreen(
 }
 
 @Composable
-private fun ScreenContent(
-    screenState: ArenaScreenState,
-    paddingValues: PaddingValues,
-    modifier: Modifier = Modifier,
-) {
+private fun ScreenContent(screenState: ArenaScreenState, modifier: Modifier = Modifier) {
     // TODO: Remove this column and have each ArenaState composable invoke its own container
-    Column(
-        modifier = modifier.fillMaxSize().padding(paddingValues = paddingValues).padding(all = 4.dp)
-    ) {
+    Column(modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)) {
         val transition =
             updateTransition(
                 targetState = screenState.arenaState,

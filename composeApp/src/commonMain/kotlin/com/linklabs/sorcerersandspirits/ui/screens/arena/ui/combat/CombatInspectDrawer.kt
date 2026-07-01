@@ -44,7 +44,8 @@ private val inspectScrimColor = Color(color = 0x99000000)
 /**
  * A right-side drawer that slides in to inspect a class (SS-150): the full avatar plus every stat
  * with its explanation, opened by a non-targeting tap on a head icon. A scrim dims the combat
- * behind it; tapping the scrim (or back into a normal targeting tap next turn) dismisses it.
+ * behind it; tapping the scrim, tapping the drawer itself, or a normal targeting tap next turn
+ * dismisses it.
  */
 @Composable
 internal fun InspectDrawer(
@@ -76,13 +77,17 @@ internal fun InspectDrawer(
             modifier = Modifier.align(alignment = Alignment.CenterEnd),
         ) {
             val current = shownPlayer
-            if (current != null) InspectContent(player = current)
+            if (current != null) InspectContent(player = current, onClose = onClose)
         }
     }
 }
 
 @Composable
-internal fun InspectContent(player: PlayerState.Selected, modifier: Modifier = Modifier) {
+internal fun InspectContent(
+    player: PlayerState.Selected,
+    onClose: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val classCopy = LocalCharacterClassCopy.current
     val stats = remember(player, classCopy) { avatarStats(player.characterClass, classCopy) }
 
@@ -95,7 +100,8 @@ internal fun InspectContent(player: PlayerState.Selected, modifier: Modifier = M
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
-                ) {}
+                    onClick = onClose,
+                )
                 .verticalScroll(state = rememberScrollState())
                 .padding(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),

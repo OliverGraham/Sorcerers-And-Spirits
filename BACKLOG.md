@@ -118,18 +118,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Coordinate with SS-170 (don't auto-advance/ready into an impossible single-player next
   match). Related: SS-108 (Next Match/Go Again on Finished), SS-073 (Gauntlet), SS-170.
 
-### SS-174 — Tapping the inspect drawer dismisses it
-
-- [ ] Not completed
-- **Symptom:** The right-side avatar-stats inspect drawer only dismisses via the scrim; tapping on
-  the opened drawer itself does nothing.
-- **Goal:** Tapping anywhere on the opened drawer dismisses it (in addition to the existing scrim
-  dismiss).
-- **Source:** `CombatInspectDrawer.kt` (`InspectDrawer`/`InspectContent`, SS-150). Add a click on
-  the
-  drawer surface that clears `inspectedUserId`.
-- **Related:** SS-150 (inspect drawer).
-
 ### SS-178 — One reusable button for the whole app (text + icon, incl. combat)
 
 - [ ] Not completed

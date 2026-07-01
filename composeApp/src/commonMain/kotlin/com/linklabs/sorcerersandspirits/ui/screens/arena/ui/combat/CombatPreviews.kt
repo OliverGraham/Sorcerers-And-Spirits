@@ -183,7 +183,8 @@ private fun InspectDrawerPreview() {
                         userId = "player1",
                         displayName = "Sorcerer Supreme",
                         characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
-                    )
+                    ),
+                onClose = {},
             )
         }
     }

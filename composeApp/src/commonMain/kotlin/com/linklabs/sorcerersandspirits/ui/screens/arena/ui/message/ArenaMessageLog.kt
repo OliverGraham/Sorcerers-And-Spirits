@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagesIconSize
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -25,7 +24,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ArenaMessageLog(messages: List<ArenaMessageState>, modifier: Modifier = Modifier) {
     LazyColumn(
         modifier = modifier,
-        contentPadding = PaddingValues(start = messagesIconSize + 12.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 4.dp),
     ) {
         items(items = messages.asReversed(), key = { it.id }) { messageState ->

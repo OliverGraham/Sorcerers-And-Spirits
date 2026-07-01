@@ -118,22 +118,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Coordinate with SS-170 (don't auto-advance/ready into an impossible single-player next
   match). Related: SS-108 (Next Match/Go Again on Finished), SS-073 (Gauntlet), SS-170.
 
-### SS-173 — Messages: full-width golden bar that unfurls down to DiceHome
-
-- [ ] Not completed — **reopens the Messages overhaul; SS-147/SS-161 are partially superseded.**
-- **Goal (owner is bringing back an earlier design):** Replace the collapsed messages *icon*
-  affordance with a **golden bar the full width of the screen**, pinned at the top with all screen
-  content below it. The bar always shows the **most recent message**. When the messages area is
-  opened it **unfurls downward from the bar** and drops down to `DiceHome` — i.e. it covers the
-  topmost large avatar but stops at the dice home slot; it does not cover `DiceHome`/the buttons.
-- **Source:** `CombatMessages.kt` (`Messages`, `MessagesIcon` — SS-147/SS-161) and
-  `ArenaMessageLog.kt`. Today the affordance is a circular icon with an unread tally over a gold
-  panel that expands top→bottom (SS-161 reading order: newest at top). The latest message comes from
-  the message list; reuse it for the always-visible bar content.
-- **Notes:** This changes the affordance the owner says was never actually finished despite SS-147
-  being marked complete. Keep the existing log/unread plumbing where it still applies; the bar
-  becomes the new collapsed state. Related: SS-147, SS-161, SS-025, SS-068, SS-179.
-
 ### SS-174 — Tapping the inspect drawer dismisses it
 
 - [ ] Not completed
@@ -145,19 +129,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   the
   drawer surface that clears `inspectedUserId`.
 - **Related:** SS-150 (inspect drawer).
-
-### SS-175 — 2-player: stat icons in a vertical column left of the avatar (not a bar above)
-
-- [ ] Not completed
-- **Goal:** In a 2-player game, the 4 visible stat icons/values should live in a **column down the
-  left-hand side of the large avatar**, instead of as a horizontal bar above the large avatar.
-- **Source:** `CombatStats.kt` (`avatarStats` — the Speed/Armor/Hit Points + ability rows) and the
-  combat layout in `ArenaCombat.kt`/`CombatButtons.kt`/`CombatAvatars.kt` that positions the stat
-  columns (SS-146/SS-156 made them flanking overlay columns; SS-157/SS-168 seat the avatars).
-  Revisit
-  the placement specifically for the 2-player case.
-- **Notes:** Interacts with the avatar seating work — confirm it still reads correctly with the
-  attacker/target seating. Related: SS-146, SS-156, SS-157, SS-168.
 
 ### SS-178 — One reusable button for the whole app (text + icon, incl. combat)
 

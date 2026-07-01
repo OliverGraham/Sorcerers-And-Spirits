@@ -61,6 +61,7 @@ internal fun ArenaCombat(
             Column(modifier = Modifier.fillMaxSize()) {
                 // TODO: Make MessagesBar and TurnTimer part of Screen Column
                 MessagesBar(
+                    latestMessage = screenState.messages.lastOrNull(),
                     secondsRemaining = screenState.secondsRemaining,
                     isTimerVisible = screenState.isTimerVisible,
                     isTimerUrgent = screenState.isTimerUrgent,
@@ -104,7 +105,11 @@ internal fun ArenaCombat(
                 )
             }
 
-            MessageLogOverlay(messages = screenState.messages, isExpanded = isMessagesExpanded)
+            MessageLogOverlay(
+                messages = screenState.messages,
+                isExpanded = isMessagesExpanded,
+                diceHomeBounds = diceHomeBounds,
+            )
 
             // TODO Yourself: These things truly go on top of the screen column, but perhaps
             //                Should be elsewhere

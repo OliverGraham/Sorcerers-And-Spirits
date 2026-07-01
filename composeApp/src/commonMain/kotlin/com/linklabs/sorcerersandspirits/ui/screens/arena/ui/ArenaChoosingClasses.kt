@@ -92,6 +92,7 @@ private fun ArenaState.ChoosingClasses.ChoosingClassesCards(
         selectedClass = selectedClass,
         unavailableClasses = unavailableClasses,
         classSelections = classSelections,
+        isSelectionAuraVisible = isItThisUsersTurn,
         onClassSelected = { if (isItThisUsersTurn) onClassSelected(it) },
         modifier = modifier,
     )

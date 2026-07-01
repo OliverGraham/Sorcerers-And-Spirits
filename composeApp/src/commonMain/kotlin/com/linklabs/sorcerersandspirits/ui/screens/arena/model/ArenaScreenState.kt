@@ -257,6 +257,8 @@ internal fun ArenaMatch.toUpdatedState(
 
             is ArenaMatch.ChoosingClasses -> {
                 val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
+                val previousSelection =
+                    (previousState?.arenaState as? ArenaState.ChoosingClasses)?.selectedClass
 
                 ArenaState.ChoosingClasses(
                     playerMap = playerMap.mapValues { it.value.toState() },
@@ -265,7 +267,10 @@ internal fun ArenaMatch.toUpdatedState(
                     unavailableClasses = unavailable,
                     classSelections = selections,
                     selectedClass =
-                        (previousState?.arenaState as? ArenaState.ChoosingClasses)?.selectedClass,
+                        previousSelection
+                            ?: characterClasses.defaultSelectedClass(
+                                unavailableClasses = unavailable
+                            ),
                 )
             }
 
@@ -363,6 +368,19 @@ private fun ArenaState.Combat.withFinalPlayers(
     val updatedPlayerMap =
         playerMap.mapValues { (userId, player) -> finalPlayersById[userId] ?: player }
     return copy(playerMap = updatedPlayerMap)
+}
+
+/**
+ * The class to pre-select when the Choosing Classes screen is first entered, so the confirm button
+ * is enabled immediately (SS-176). Rogue is the default; if it is already taken by another player,
+ * the first still-available class is used instead.
+ */
+private fun List<CharacterClassState>.defaultSelectedClass(
+    unavailableClasses: Set<CharacterClassType>
+): CharacterClassState? {
+    val rogue = firstOrNull { it.type == CharacterClassType.Rogue }
+    val isRogueAvailable = rogue != null && rogue.type !in unavailableClasses
+    return if (isRogueAvailable) rogue else firstOrNull { it.type !in unavailableClasses }
 }
 
 private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(

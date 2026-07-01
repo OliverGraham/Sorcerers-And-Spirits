@@ -159,21 +159,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Notes:** Interacts with the avatar seating work — confirm it still reads correctly with the
   attacker/target seating. Related: SS-146, SS-156, SS-157, SS-168.
 
-### SS-176 — Choose Your Class: animated class-color aura on the selected head; default-select Rogue
-
-- [ ] Not completed
-- **Goal:** On the Choose Your Class screen, the **selected** class head icon gets a glowing,
-  animated, see-through background — an *aura* in that class's color behind the head. On first
-  entering the screen, **Rogue is selected by default** (so the confirm button is enabled
-  immediately).
-- **Source:** `CharacterClassWheel.kt` (takes a nullable `selectedClass`; `initialIndex` coerces to
-  0 when none) and its call sites `ArenaChoosingClasses.kt` / TavernScreen which own the selection
-  state and the enabled-state of the confirm button. Class colors via `ClassStyle.toColor()` /
-  `classFamilyColors` (SS-153). Default selection must respect the no-duplicate rule
-  (`unavailableClasses`) — if Rogue is taken, fall back to the first available.
-- **Related:** SS-079 (wheel), SS-084 (visual fidelity), SS-153 (class colors), SS-122 (availability
-  by type).
-
 ### SS-178 — AppButton icon should fill the button face
 
 - [ ] Not completed

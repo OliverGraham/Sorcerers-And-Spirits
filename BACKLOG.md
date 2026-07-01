@@ -100,21 +100,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   `ChoseCharacterClass`, and intermediate roll steps like `Teleport.Roll`, `LuckyCoin.HighRollerTrigger`).
 - **Related:** SS-164 (one message → two resources).
 
-### SS-171 — Hold the Combat→Finished transition until end-of-match animations finish (+2s)
-
-- [ ] Not completed
-- **Symptom:** The last animation(s) before the Finished screen get cut off; combat transitions to
-  Finished far too quickly.
-- **Goal:** When the final resolution plays, let **all** flash animations (SS-164) play out fully,
-  then sit on the combat view for an additional **2 seconds** before advancing to Finished.
-- **Source:** SS-154 replaced the message-drain defer with a fixed `FINISH_HOLD_MILLIS` hold
-  (`finishHoldJob` in the VM). That fixed hold is too short and isn't tied to the flash queue.
-  `FlashOverlay` (`CombatFlashOverlay.kt`) plays `flashMessages` one at a time; the hold should
-  outlast the whole queue (queue length × `FLASH_HOLD_MILLIS`+`FLASH_EXIT_MILLIS`) plus a 2s tail,
-  or be driven by a "flash queue drained" signal rather than a constant.
-- **Related:** SS-154 (`FINISH_HOLD_MILLIS`), SS-098 (deferred-finish history), SS-164 (flash
-  sequence), SS-163 (flash hold), SS-148.
-
 ### SS-172 — Finished-state timer differs for Match vs Gauntlet
 
 - [ ] Not completed

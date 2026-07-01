@@ -32,6 +32,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.determineTimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.FLASH_MESSAGE_DURATION_MILLIS
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -46,10 +47,9 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
-// Long enough for the closing flash callout (SS-148) to play before the Finished screen replaces
-// the
-// combat view. Tunable; once character animations land this hold is superseded (SS-154).
-private const val FINISH_HOLD_MILLIS = 1500L
+// The combat view sits on this tail after the closing flash queue has fully drained, so the final
+// resolution is never cut off before the Finished screen replaces it (SS-171).
+private const val FINISH_HOLD_TAIL_MILLIS = 2000L
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -180,22 +180,38 @@ class ArenaScreenViewModel(
     }
 
     /**
-     * Holds the combat view on the Combat→Finished transition for a fixed [FINISH_HOLD_MILLIS] so
-     * the closing flash callout (SS-148) can play, then advances to the Finished screen (SS-154).
-     * The hold is clocked entirely by the ViewModel, so the transition never depends on a combat
-     * composable being mounted to drive it. A single hold runs; the held state survives later match
-     * updates (e.g. another player readying), so a running hold is left to finish.
+     * Holds the combat view on the Combat→Finished transition until the closing flash queue
+     * (SS-164) has fully drained, plus a [FINISH_HOLD_TAIL_MILLIS] tail, then advances to the
+     * Finished screen (SS-171). The hold is clocked entirely by the ViewModel, so the transition
+     * never depends on a combat composable being mounted to drive it. A single hold runs; the held
+     * state survives later match updates (e.g. another player readying), so a running hold is left
+     * to finish.
      */
-    private fun startFinishHoldIfPending() {
-        val hasPendingFinish = _uiStateFlow.getLoadedStateOrNull()?.pendingFinishedState != null
-        if (!hasPendingFinish) return
+    private fun startFinishHoldIfPending(previousState: ArenaScreenState?) {
+        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
+        if (loadedState.pendingFinishedState == null) return
         if (finishHoldJob?.isActive == true) return
 
+        val holdMillis = finishHoldMillis(previousState = previousState, nextState = loadedState)
         finishHoldJob =
             viewModelScope.launch {
-                delay(timeMillis = FINISH_HOLD_MILLIS)
+                delay(timeMillis = holdMillis)
                 advanceToFinished()
             }
+    }
+
+    /**
+     * The hold outlasts the flash callouts that arrived with this closing resolution—each plays for
+     * [FLASH_MESSAGE_DURATION_MILLIS] one at a time—then adds the [FINISH_HOLD_TAIL_MILLIS] tail.
+     */
+    private fun finishHoldMillis(
+        previousState: ArenaScreenState?,
+        nextState: ArenaScreenState,
+    ): Long {
+        val previousFlashIds =
+            previousState?.flashMessages?.mapTo(mutableSetOf()) { it.id } ?: emptySet()
+        val newFlashCount = nextState.flashMessages.count { it.id !in previousFlashIds }
+        return newFlashCount * FLASH_MESSAGE_DURATION_MILLIS + FINISH_HOLD_TAIL_MILLIS
     }
 
     private fun advanceToFinished() {
@@ -355,9 +371,11 @@ class ArenaScreenViewModel(
         if (recordedStat) persistPendingStats()
         notifyDepartedOpponents(userId = userId)
 
+        val previousState = _uiStateFlow.getLoadedStateOrNull()
+
         val updatedArenaStateUpdate =
             toUpdatedState(
-                previousState = _uiStateFlow.getLoadedStateOrNull(),
+                previousState = previousState,
                 userId = userId,
                 characterClasses = characterClasses,
                 classCopy = classCopy,
@@ -368,7 +386,7 @@ class ArenaScreenViewModel(
         val nextState = updatedArenaStateUpdate.nextState
         _uiStateFlow.value = UiState.Loaded(data = nextState)
 
-        startFinishHoldIfPending()
+        startFinishHoldIfPending(previousState = previousState)
 
         computerOpponentHandler.onArenaState(
             arenaState = nextState.arenaState,

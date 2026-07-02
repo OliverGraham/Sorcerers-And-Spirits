@@ -336,24 +336,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
   overlay), SS-119 (Impersonate/MirrorImage state).
 
-### SS-169 — Teleport roll-off: both human combatants get the roll button at the same time
-
-- [ ] Not completed
-- **Symptom:** In a Mage Teleport roll-off (Mage vs attacker, 1d6 each), the roll button shows for
-  only one player at a time. In a human-vs-human match both players should hold the button **at the
-  same time** and roll simultaneously.
-- **Source:** SS-162 deliberately made the roll-off **sequential** — `TeleportHandler.kt`'s
-  `setNextTeleportRoll` sets `activeUserIds` to a single roller (attacker then defender) — to fix a
-  human-vs-**computer** stall where `ComputerOpponentHandler` never acted while the user was
-  co-active and the user was forced to roll the bot's die out of order. So the fix is conditional:
-  when both combatants are **human**, both should be active at once; only when one side is a
-  computer
-  should it stay sequential.
-- **Goal:** Restore simultaneous roll buttons for two human players while preserving the SS-162
-  computer-opponent path. Likely branch on whether either roller is a computer
-  (`ComputerOpponents.isComputer`).
-- **Related:** SS-162 (sequential roll-off fix), SS-092 (computer opponent).
-
 ### SS-170 — Finished screen must not offer "Next Match" when only one player remains
 
 - [ ] Not completed

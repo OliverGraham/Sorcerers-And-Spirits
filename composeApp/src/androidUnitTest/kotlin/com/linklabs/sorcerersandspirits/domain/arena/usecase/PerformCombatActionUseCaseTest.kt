@@ -1711,13 +1711,13 @@ class PerformCombatActionUseCaseTest {
         val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
-        // The roll-off is handed to one combatant at a time, attacker first (SS-162): the attacker
-        // owes the first die, so only the attacker is active — not the Mage yet.
+        // Both combatants roll simultaneously (SS-169): each holds their own roll button at once,
+        // so both the attacker and the Mage are active.
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Teleport)
         assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
-        assertFalse(actual = nextAction.isThisUserNext(userId = currentAction.defenderUserId))
+        assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.defenderUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -1744,13 +1744,12 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
+        // The acting attacker rolled only their own die (SS-169); the Mage's die is still unrolled.
         assertEquals(expected = attackerRoll, actual = teleport.attackerRoll.roll)
         assertEquals(expected = null, actual = teleport.defenderRoll.roll)
-        // With the attacker's die rolled, the roll-off now hands off to the Mage alone (SS-162) so
-        // a
-        // computer defender can roll its own die instead of the match stalling on a co-active user.
+        // Both combatants stay active until each has rolled their own die.
         assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.defenderUserId))
-        assertFalse(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
+        assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -1783,8 +1782,8 @@ class PerformCombatActionUseCaseTest {
                 attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID, roll = attackerRoll),
                 defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
             )
-        val currentAction = getAbilityRollAction(purpose = purpose)
-        val mageUserId = currentAction.defenderUserId
+        val mageUserId = DEFAULT_DEFENDER_ID
+        val currentAction = getAbilityRollAction(purpose = purpose, rollingUserId = mageUserId)
 
         setupOneDiceRoll(userId = mageUserId, die = mageRoll)
 
@@ -2497,12 +2496,14 @@ class PerformCombatActionUseCaseTest {
             attackerUserId: String = DEFAULT_ATTACKER_ID,
             defenderUserId: String = DEFAULT_DEFENDER_ID,
             originalTurnUserId: String = attackerUserId,
+            rollingUserId: String = attackerUserId,
         ) =
             CurrentCombatAction.AbilityRoll(
                 purpose = purpose,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 originalTurnUserId = originalTurnUserId,
+                rollingUserId = rollingUserId,
             )
 
         private fun getAllInAction(gambler: CharacterClass) =

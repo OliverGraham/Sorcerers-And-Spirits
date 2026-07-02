@@ -276,18 +276,17 @@ internal class ComputerOpponentHandler(
             .orEmpty()
 
     /**
-     * The computer opponent that owes the current action, or null if none does (or it is the user).
+     * The computer opponent that owes the current action, or null if none does. A computer owes its
+     * own die even while the user is co-active — the Mage Teleport roll-off has both combatants
+     * rolling at once, and each rolls only their own die (SS-169), so the computer must still act
+     * on its thinking delay rather than stalling the roll-off.
      */
     private fun ArenaState.pendingComputerActorId(): String? =
         when (this) {
             is ArenaState.ChoosingClasses -> activePlayerUserId.takeIf { it in computerOpponentIds }
 
             is ArenaState.Combat ->
-                if (userPlayerId in combatActionState.activeUserIds) {
-                    null
-                } else {
-                    combatActionState.activeUserIds.firstOrNull { it in computerOpponentIds }
-                }
+                combatActionState.activeUserIds.firstOrNull { it in computerOpponentIds }
 
             is ArenaState.WaitingForAllPlayers,
             is ArenaState.Finished -> null

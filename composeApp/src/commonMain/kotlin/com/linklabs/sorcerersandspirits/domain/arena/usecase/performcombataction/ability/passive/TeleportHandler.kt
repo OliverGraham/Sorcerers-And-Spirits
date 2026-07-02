@@ -21,11 +21,11 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 defenderRoll = TeleportDie(userId = defenderUserId),
             )
 
-        setNextTeleportRoll(teleport = purpose)
+        setBothCombatantsRolling(teleport = purpose)
     }
 
     private fun CombatMutator.handleTeleport(teleport: AbilityAction.Passive.Teleport) {
-        val updatedTeleport = rollCurrentUserDieOrNull(teleport = teleport) ?: return
+        val updatedTeleport = rollActingUserDieOrNull(teleport = teleport) ?: return
 
         handleUpdatedTeleport(updatedTeleport = updatedTeleport)
     }
@@ -43,41 +43,37 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 handleTeleportFailure()
             }
         } else {
-            setNextTeleportRoll(teleport = updatedTeleport)
+            setBothCombatantsRolling(teleport = updatedTeleport)
         }
     }
 
     /**
-     * Hands the roll-off to the single combatant who still owes a die, in roll order (attacker
-     * first). Only that user is active, so the computer opponent can roll its own die and neither
-     * side ends up rolling the other's — both combatants being active at once stalled the roll-off
-     * because the computer never acts while the user is co-active (SS-162).
+     * Both combatants hold the roll button at once and roll simultaneously; each dispatch rolls
+     * only the acting player's own die (see [rollActingUserDieOrNull]), so neither side can roll
+     * the other's. A computer combatant acts on its own thinking delay, exactly as a human would.
      */
-    private fun CombatMutator.setNextTeleportRoll(teleport: AbilityAction.Passive.Teleport) {
-        val nextRollerId =
-            if (teleport.attackerRoll.roll == null) {
-                teleport.attackerRoll.userId
-            } else {
-                teleport.defenderRoll.userId
-            }
-
-        setNextAbilityRoll(purpose = teleport, activeUserIds = setOf(nextRollerId))
+    private fun CombatMutator.setBothCombatantsRolling(teleport: AbilityAction.Passive.Teleport) {
+        setNextAbilityRoll(
+            purpose = teleport,
+            activeUserIds = setOf(attackerUserId, defenderUserId),
+        )
     }
 
-    private fun CombatMutator.rollCurrentUserDieOrNull(teleport: AbilityAction.Passive.Teleport) =
-        when {
-            teleport.attackerRoll.roll == null ->
-                teleport.copy(
-                    attackerRoll = rollAndMessage(unrolledTeleportDie = teleport.attackerRoll)
-                )
+    private fun CombatMutator.rollActingUserDieOrNull(
+        teleport: AbilityAction.Passive.Teleport
+    ): AbilityAction.Passive.Teleport? {
+        val isAttackerRolling = teleport.attackerRoll.userId == rollingUserId
+        val rollingDie = if (isAttackerRolling) teleport.attackerRoll else teleport.defenderRoll
 
-            teleport.defenderRoll.roll == null ->
-                teleport.copy(
-                    defenderRoll = rollAndMessage(unrolledTeleportDie = teleport.defenderRoll)
-                )
+        if (rollingDie.userId != rollingUserId || rollingDie.roll != null) return null
 
-            else -> null
+        val rolledDie = rollAndMessage(unrolledTeleportDie = rollingDie)
+        return if (isAttackerRolling) {
+            teleport.copy(attackerRoll = rolledDie)
+        } else {
+            teleport.copy(defenderRoll = rolledDie)
         }
+    }
 
     private fun CombatMutator.rollAndMessage(unrolledTeleportDie: TeleportDie): TeleportDie {
         val userId = unrolledTeleportDie.userId

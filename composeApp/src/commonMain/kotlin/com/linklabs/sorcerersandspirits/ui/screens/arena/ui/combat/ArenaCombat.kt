@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.headIconPlayersFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedAvatarUserIds
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedTargetPlayer
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
@@ -43,6 +43,11 @@ internal fun ArenaCombat(
 
     var isTargetLockedOptimistically by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
+
+    var isActionInFlight by
+        remember(key1 = state.combatActionState, key2 = screenState.messages.lastOrNull()?.id) {
+            mutableStateOf(value = false)
+        }
 
     val targetedOpponentUserId =
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
@@ -73,18 +78,17 @@ internal fun ArenaCombat(
                 )
 
                 AnimatedContent(
-                    targetState = state.seatedAvatarUserIds(targetUserId = targetedOpponentUserId),
+                    targetState = state.seatingFor(targetUserId = targetedOpponentUserId),
                     label = AVATAR_SEATING_TRANSITION_LABEL,
                     modifier = Modifier.weight(weight = 1f),
-                ) { seatedUserIds ->
+                ) { seating ->
                     SharedTransitionProvider(
                         sharedTransitionScope = this@SharedTransitionLayout,
                         animatedVisibilityScope = this@AnimatedContent,
                     ) {
                         CombatStage(
                             state = state,
-                            seatedUserIds = seatedUserIds,
-                            targetedOpponentUserId = targetedOpponentUserId,
+                            seating = seating,
                             onSelectTarget = { selectedOpponentUserId = it },
                             onInspect = { inspectedUserId = it },
                             isTargetable =
@@ -102,6 +106,8 @@ internal fun ArenaCombat(
                     lockTarget = { isTargetLockedOptimistically = true },
                     diceRoll = diceRoll,
                     areControlsVisible = !screenState.isFinishPending,
+                    isActionInFlight = isActionInFlight,
+                    onActionDispatched = { isActionInFlight = true },
                 )
             }
 
@@ -129,25 +135,30 @@ internal fun ArenaCombat(
  * The main combat area: the two seated combatant avatars on the left two-thirds and the remaining
  * players as a column of class heads on the right third. The dice rest between the two avatars; the
  * buttons and overlays live outside this stage so they do not take part in the avatar morph.
+ *
+ * Everything here is placed by the [seating] snapshot this pane was keyed on, never re-derived from
+ * the live state: while the seating transition runs, the outgoing pane keeps showing the
+ * arrangement it was built for, so a player leaving a seat morphs to their head icon instead of
+ * vanishing or appearing twice (SS-181). Only the mutable player data (hit points, halo) reads
+ * live.
  */
 @Composable
 private fun CombatStage(
     state: ArenaState.Combat,
-    seatedUserIds: Set<String>,
-    targetedOpponentUserId: String,
+    seating: CombatSeating,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val headIconPlayers = state.headIconPlayersFor(seatedUserIds = seatedUserIds)
+    val headIconPlayers = seating.headIconUserIds.mapNotNull { state.playerMap[it] }
     val hasHeadIcons = headIconPlayers.isNotEmpty()
 
     Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
-            topPlayer = state.attackingPlayer,
-            bottomPlayer = state.seatedTargetPlayer(targetUserId = targetedOpponentUserId),
+            topPlayer = state.seatedPlayer(seatUserId = seating.topSeatUserId),
+            bottomPlayer = state.seatedPlayer(seatUserId = seating.bottomSeatUserId),
             userPlayerId = state.userPlayerId,
             activeUserIds = state.activeUserIds,
             onInspect = onInspect,

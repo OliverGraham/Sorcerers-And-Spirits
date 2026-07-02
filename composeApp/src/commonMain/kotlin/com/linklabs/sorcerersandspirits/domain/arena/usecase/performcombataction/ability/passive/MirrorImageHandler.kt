@@ -39,7 +39,9 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         attackType: NormalAttackType,
         mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
     ) {
-        addMessage(message = ArenaMessage.MirrorImage.Trigger)
+        addMessage(
+            message = ArenaMessage.MirrorImage.Trigger(firstDie = firstDie, secondDie = secondDie)
+        )
 
         val purpose =
             AbilityAction.Passive.MirrorImage(
@@ -108,6 +110,8 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
      * supplied message with the resulting [NormalRollMessageType] before applying the outcome's
      * side effects.
      */
+    // TODO(SS-188): carry the attacker's doubles bonus into the re-check; the original roll's total
+    //  included it, so a keep can currently flip a decisive-bonus hit back into a miss.
     private fun CombatMutator.resolveModifiedRoll(
         mirrorImage: AbilityAction.Passive.MirrorImage,
         message: (NormalRollMessageType) -> ArenaMessage,

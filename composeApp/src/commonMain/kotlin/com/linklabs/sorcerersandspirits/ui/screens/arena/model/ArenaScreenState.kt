@@ -89,7 +89,6 @@ sealed interface ArenaState {
         val isItThisUsersTurn = userPlayerId in activeUserIds
         val turnOwnerUserId = combatActionState.turnOwnerUserId
         val attackingUserId = combatActionState.attackingUserId
-        val attackingPlayer = playerMap.getValue(key = attackingUserId)
         val combatControls = deriveCombatControls()
         val lockedTargetUserId = deriveLockedTargetUserId()
         val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()
@@ -174,44 +173,6 @@ private val ArenaState.Combat.turnOwnerLoneOpponentUserId: String?
         playerMap.values
             .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
             ?.userId
-
-/**
- * The opponent shown as the full bottom-half target avatar (SS-145) for a resolved [targetUserId],
- * or null when there is none or it is knocked out — a KO'd player is never the target avatar and
- * drops back to a head icon instead (SS-152).
- */
-internal fun ArenaState.Combat.targetPlayerFor(targetUserId: String): PlayerState.Selected? {
-    val target = playerMap[targetUserId] ?: return null
-    return if (target.characterClass.isConscious) target else null
-}
-
-/**
- * The second seated avatar: the conscious target, or null when it is the attacker itself. A
- * self-targeted ability (e.g. Summon Minion) names the actor as its own defender, and the actor is
- * already seated, so it must not take both slots.
- */
-internal fun ArenaState.Combat.seatedTargetPlayer(targetUserId: String): PlayerState.Selected? {
-    val target = targetPlayerFor(targetUserId = targetUserId) ?: return null
-    return if (target.userId == attackingUserId) null else target
-}
-
-/**
- * The combatants drawn as full-size avatars (vs. collapsed head icons): the attacker, plus a
- * distinct conscious target when there is one. A set, not an ordered pair, so the avatar transition
- * re-fires only when this membership changes — not when the turn passes between the same two seated
- * players, which would otherwise swap their slots for no reason.
- */
-internal fun ArenaState.Combat.seatedAvatarUserIds(targetUserId: String): Set<UserId> =
-    setOfNotNull(attackingUserId, seatedTargetPlayer(targetUserId = targetUserId)?.userId)
-
-/**
- * The opponents shown as collapsed head icons (SS-143): every player not seated as a full avatar. A
- * knocked-out opponent is never seated, so it appears here grayed-out and out of the fight
- * (SS-152).
- */
-internal fun ArenaState.Combat.headIconPlayersFor(
-    seatedUserIds: Set<UserId>
-): List<PlayerState.Selected> = playerMap.values.filter { it.userId !in seatedUserIds }
 
 // TODO(SS-031): Need to refactor this badly
 

@@ -392,27 +392,20 @@ are archived in [COMPLETED.md](COMPLETED.md).
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-181 — Illusionist Mirror Image ("Keep Your Roll") corrupts large-avatar seating (full rework)
+### SS-188 — Mirror Image re-check drops the attacker's doubles bonus
 
-- [ ] Not completed — **prior fixes did not resolve this; treat as a rework.**
-- **Symptom:** When a player simply attacks the Illusionist and the Illusionist taps the Mirror
-  Image / "Keep Your Roll" button, the avatar layout breaks badly. Previously two Illusionists
-  showed
-  and the other player collapsed to a small head icon; the last fix changed it to one Illusionist
-  but
-  now the **other large avatar disappears and collapses to a small head (`ClassIcon`)**.
-- **Goal:** During an Illusionist Mirror Image reroll/keep, both combatants must remain correctly
-  seated as large avatars (attacker and the Illusionist defender); neither should duplicate nor drop
-  to a head icon.
-- **Source:** The avatar seating pipeline — `CombatActionState` (`attackingUserId`,
-  `targetedDefenderUserId`, `turnOwnerUserId`), `ArenaState.Combat` (`attackingPlayer`,
-  `seatedTargetPlayer`, `seatedAvatarUserIds`), `resolveTargetUserId`, and `ArenaCombat`'s avatar
-  `AnimatedContent` (SS-157/SS-165/SS-168). Mirror Image keeps the dice on the defender (SS-118) — a
-  self-referential reroll likely makes attacker and target resolve to the same id (the SS-168
-  double-seat class of bug) or mis-resolves who attacks. Reproduce the exact state during the keep
-  step and trace which of attacker/target/turnOwner each avatar slot reads.
-- **Related:** SS-168 (double-seat fix), SS-157 (active=left seating), SS-165 (Riposte seating),
-  SS-152 (KO head icon), SS-118/SS-119 (Mirror Image state).
+- [ ] Not completed
+- **Symptom (latent, found during SS-181):** The original armor/damage roll total includes the
+  attacker's doubles +1 (`NormalAttackRollHandler.diceTotal = firstDie + secondDie + bonus`), but
+  the Mirror Image keep/reroll re-check recomputes the total from the two dice alone
+  (`MirrorImageHandler.resolveModifiedRoll` sums `finalValue`s, no bonus). When the +1 was decisive,
+  a "Hit!" armor roll silently re-resolves as a miss on Keep, and a reroll's threshold is off by
+  one.
+- **Goal:** Carry the bonus into `AbilityAction.Passive.MirrorImage` (domain + entity + state
+  mappings) and include it in `resolveModifiedRoll`'s total.
+- **Source:** `NormalAttackRollHandler.triggerMirrorImageIfApplicable` has the bonus in scope but
+  drops it when building the purpose; `// TODO(SS-188)` marks the re-check.
+- **Related:** SS-181 (found during), SS-019 (doubles bonus), SS-118 (Mirror Image display).
 
 ### SS-183 — Rogue Dodge bonus must show in the ArmorClass stat (base +1 / +2)
 

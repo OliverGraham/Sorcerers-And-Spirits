@@ -146,7 +146,9 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface MirrorImage : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : MirrorImage
+        @Immutable
+        data class Trigger(override val id: String, val firstDie: Int?, val secondDie: Int?) :
+            MirrorImage
 
         @Immutable
         data class Pass(
@@ -371,7 +373,12 @@ fun ArenaMessage.toState(
                 outcome = outcome,
             )
 
-        is ArenaMessage.MirrorImage.Trigger -> ArenaMessageState.MirrorImage.Trigger(id = id)
+        is ArenaMessage.MirrorImage.Trigger ->
+            ArenaMessageState.MirrorImage.Trigger(
+                id = id,
+                firstDie = firstDie,
+                secondDie = secondDie,
+            )
 
         is ArenaMessage.MirrorImage.TemptFate ->
             ArenaMessageState.MirrorImage.TemptFate(

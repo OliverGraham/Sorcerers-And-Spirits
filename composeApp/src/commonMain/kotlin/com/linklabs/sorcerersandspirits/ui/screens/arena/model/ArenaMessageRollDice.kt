@@ -47,6 +47,13 @@ internal fun ArenaMessageState.rolledDice(): RollResult? =
         is ArenaMessageState.MirrorImage.TemptFate ->
             RollResult.Reroll(originalFace = originalRoll, newFace = rawReroll)
 
+        is ArenaMessageState.MirrorImage.Trigger ->
+            if (firstDie != null && secondDie != null) {
+                twoDice(first = firstDie, second = secondDie)
+            } else {
+                null
+            }
+
         else -> null
     }
 

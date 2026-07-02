@@ -251,7 +251,7 @@ class ArenaScreenViewModel(
         val arenaState = currentCombatState() ?: return
         val resolvedArguments = withImpersonatedTarget(arenaState = arenaState)
         val currentAction =
-            resolvedArguments.toDomain(combatActionState = arenaState.combatActionState)
+            resolvedArguments.toDomain(combatActionState = arenaState.combatActionState) ?: return
 
         arenaState.performCombatAction(currentAction = currentAction)
     }

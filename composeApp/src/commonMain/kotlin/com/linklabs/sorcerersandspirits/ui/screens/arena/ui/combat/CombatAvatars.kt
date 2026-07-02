@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -63,13 +64,13 @@ private val statPillIconSize = 24.dp
 
 /**
  * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
- * between them (SS-157). The lower slot is empty when there is no second combatant so the dice stay
- * centered. The [ActivePlayerHalo] marks whoever is rolling, so the slots themselves carry no
- * meaning.
+ * between them (SS-157). Either seat is empty when it has no combatant so the dice stay centered.
+ * The seats are assigned by identity — the user's player always sits at the bottom (SS-181) — and
+ * the [ActivePlayerHalo] marks whoever is rolling, so the seats themselves carry no meaning.
  */
 @Composable
 internal fun CombatAvatarColumn(
-    topPlayer: PlayerState.Selected,
+    topPlayer: PlayerState.Selected?,
     bottomPlayer: PlayerState.Selected?,
     userPlayerId: String,
     activeUserIds: Set<String>,
@@ -78,27 +79,41 @@ internal fun CombatAvatarColumn(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        LargeAvatar(
+        SeatedAvatar(
             player = topPlayer,
-            isUserPlayer = topPlayer.userId == userPlayerId,
-            isActiveRoller = topPlayer.userId in activeUserIds,
+            userPlayerId = userPlayerId,
+            activeUserIds = activeUserIds,
             onInspect = onInspect,
-            modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
         )
 
         DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
 
-        if (bottomPlayer != null) {
-            LargeAvatar(
-                player = bottomPlayer,
-                isUserPlayer = bottomPlayer.userId == userPlayerId,
-                isActiveRoller = bottomPlayer.userId in activeUserIds,
-                onInspect = onInspect,
-                modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
-            )
-        } else {
-            Spacer(modifier = Modifier.weight(weight = 1f))
-        }
+        SeatedAvatar(
+            player = bottomPlayer,
+            userPlayerId = userPlayerId,
+            activeUserIds = activeUserIds,
+            onInspect = onInspect,
+        )
+    }
+}
+
+@Composable
+private fun ColumnScope.SeatedAvatar(
+    player: PlayerState.Selected?,
+    userPlayerId: String,
+    activeUserIds: Set<String>,
+    onInspect: (String) -> Unit,
+) {
+    if (player != null) {
+        LargeAvatar(
+            player = player,
+            isUserPlayer = player.userId == userPlayerId,
+            isActiveRoller = player.userId in activeUserIds,
+            onInspect = onInspect,
+            modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
+        )
+    } else {
+        Spacer(modifier = Modifier.weight(weight = 1f))
     }
 }
 

@@ -87,7 +87,7 @@ class ArenaMessageEntityTest {
                     impersonateAbility =
                         OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.AllIn()),
                 ),
-                ArenaMessage.MirrorImage.Trigger,
+                ArenaMessage.MirrorImage.Trigger(firstDie = 3, secondDie = 4),
                 ArenaMessage.MirrorImage.Pass(
                     attackerUserId = "attacker",
                     outcome = NormalRollMessageType.ArmorClassMiss,

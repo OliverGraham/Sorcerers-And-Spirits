@@ -123,6 +123,7 @@ sealed interface AbilityActionState {
         data class Teleport(
             val attackerRoll: TeleportDieState,
             val defenderRoll: TeleportDieState,
+            val attackerDoublesBonus: Int,
         ) : Passive
 
         @Immutable data class TeleportDieState(val userId: String, val roll: Int? = null)
@@ -319,6 +320,7 @@ internal fun AbilityActionState.toDomain(): AbilityAction =
                                 userId = defenderRoll.userId,
                                 roll = defenderRoll.roll,
                             ),
+                        attackerDoublesBonus = attackerDoublesBonus,
                     )
 
                 is AbilityActionState.Passive.MirrorImage ->
@@ -437,6 +439,7 @@ internal fun AbilityAction.toState(): AbilityActionState =
                                 userId = defenderRoll.userId,
                                 roll = defenderRoll.roll,
                             ),
+                        attackerDoublesBonus = attackerDoublesBonus,
                     )
 
                 is AbilityAction.Passive.MirrorImage ->

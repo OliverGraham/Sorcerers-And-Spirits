@@ -181,7 +181,7 @@ private fun AvatarStatsBar(
         )
         StatPill(
             icon = Res.drawable.ic_armor_class,
-            value = characterClass.armorClass.toString(),
+            value = characterClass.armorClassDisplay,
             classColor = classColor,
         )
         StatPill(

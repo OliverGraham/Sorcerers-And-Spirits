@@ -41,7 +41,7 @@ internal fun avatarStats(
         ),
         AvatarStat(
             icon = Res.drawable.ic_armor_class,
-            value = characterClass.armorClass.toString(),
+            value = characterClass.armorClassDisplay,
             name = armor.name,
             explanation = armor.short,
         ),

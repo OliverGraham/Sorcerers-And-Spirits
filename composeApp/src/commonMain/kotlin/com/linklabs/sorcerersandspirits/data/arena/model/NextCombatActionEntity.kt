@@ -96,6 +96,7 @@ sealed interface AbilityActionEntity {
             val firstDie: MirrorImageDieEntity,
             val secondDie: MirrorImageDieEntity,
             val attackType: NormalAttackType,
+            val attackerDoublesBonus: Int = 0,
             val mirrorImageDefensiveAbility: DefensiveAbilityEntity.MirrorImage,
             val rerollSelection: AbilityAction.Passive.MirrorImage.RerollSelection =
                 AbilityAction.Passive.MirrorImage.RerollSelection.None,
@@ -252,6 +253,7 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                                 reroll = secondDie.reroll,
                             ),
                         attackType = attackType,
+                        attackerDoublesBonus = attackerDoublesBonus,
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toEntity()
                                 as DefensiveAbilityEntity.MirrorImage,
@@ -353,6 +355,7 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                                 reroll = secondDie.reroll,
                             ),
                         attackType = attackType,
+                        attackerDoublesBonus = attackerDoublesBonus,
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toDomain() as DefensiveAbility.MirrorImage,
                         rerollSelection = rerollSelection,

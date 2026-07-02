@@ -19,12 +19,14 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         firstDie: Int,
         secondDie: Int,
         attackType: NormalAttackType,
+        attackerDoublesBonus: Int,
         mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
     ) =
         combatMutator.triggerMirrorImage(
             firstDie = firstDie,
             secondDie = secondDie,
             attackType = attackType,
+            attackerDoublesBonus = attackerDoublesBonus,
             mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
         )
 
@@ -40,6 +42,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         firstDie: Int,
         secondDie: Int,
         attackType: NormalAttackType,
+        attackerDoublesBonus: Int,
         mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
     ) {
         addMessage(
@@ -51,6 +54,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 firstDie = MirrorImageDie(originalRoll = firstDie),
                 secondDie = MirrorImageDie(originalRoll = secondDie),
                 attackType = attackType,
+                attackerDoublesBonus = attackerDoublesBonus,
                 mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
             )
 
@@ -122,14 +126,15 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
      * supplied message with the resulting [NormalRollMessageType] before applying the outcome's
      * side effects.
      */
-    // TODO(SS-188): carry the attacker's doubles bonus into the re-check; the original roll's total
-    //  included it, so a keep can currently flip a decisive-bonus hit back into a miss.
     private fun CombatMutator.resolveModifiedRoll(
         mirrorImage: AbilityAction.Passive.MirrorImage,
         isKeptRollDoubles: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
-        val totalRoll = mirrorImage.firstDie.finalValue + mirrorImage.secondDie.finalValue
+        val totalRoll =
+            mirrorImage.firstDie.finalValue +
+                mirrorImage.secondDie.finalValue +
+                mirrorImage.attackerDoublesBonus
 
         when (mirrorImage.attackType) {
             NormalAttackType.ArmorClass ->

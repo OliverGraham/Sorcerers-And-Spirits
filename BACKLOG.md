@@ -367,21 +367,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-188 — Mirror Image re-check drops the attacker's doubles bonus
-
-- [ ] Not completed
-- **Symptom (latent, found during SS-181):** The original armor/damage roll total includes the
-  attacker's doubles +1 (`NormalAttackRollHandler.diceTotal = firstDie + secondDie + bonus`), but
-  the Mirror Image keep/reroll re-check recomputes the total from the two dice alone
-  (`MirrorImageHandler.resolveModifiedRoll` sums `finalValue`s, no bonus). When the +1 was decisive,
-  a "Hit!" armor roll silently re-resolves as a miss on Keep, and a reroll's threshold is off by
-  one.
-- **Goal:** Carry the bonus into `AbilityAction.Passive.MirrorImage` (domain + entity + state
-  mappings) and include it in `resolveModifiedRoll`'s total.
-- **Source:** `NormalAttackRollHandler.triggerMirrorImageIfApplicable` has the bonus in scope but
-  drops it when building the purpose; `// TODO(SS-188)` marks the re-check.
-- **Related:** SS-181 (found during), SS-019 (doubles bonus), SS-118 (Mirror Image display).
-
 ### SS-189 — Teleport roll-off dispatch order can nullify the attacker's doubles bonus
 
 - [ ] Not completed

@@ -317,6 +317,7 @@ class CombatSeatingTest {
                     firstDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 3),
                     secondDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 4),
                     attackType = NormalAttackType.ArmorClass,
+                    attackerDoublesBonus = 0,
                     mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 ),
             attackerUserId = attackerUserId,

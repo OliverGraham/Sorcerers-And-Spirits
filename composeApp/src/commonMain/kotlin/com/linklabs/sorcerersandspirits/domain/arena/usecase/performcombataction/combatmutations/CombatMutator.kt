@@ -22,6 +22,7 @@ import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 internal class CombatMutator(
     val attackerUserId: UserId,
     val defenderUserId: UserId,
+    val rollingUserId: UserId,
     val updatedPlayerMap: MutableMap<UserId, ArenaPlayer.Selected>,
     val originalTurnUserId: String,
     val diceRoller: DiceRoller,

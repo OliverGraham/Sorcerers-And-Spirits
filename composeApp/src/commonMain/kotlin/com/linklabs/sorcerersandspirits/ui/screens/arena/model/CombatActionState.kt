@@ -193,6 +193,7 @@ internal fun UseAbilityArguments.toDomain(
                 attackerUserId = combatActionState.attackerUserId,
                 defenderUserId = combatActionState.defenderUserId,
                 originalTurnUserId = combatActionState.originalTurnUserId,
+                rollingUserId = userPlayerId,
             )
 
         else ->
@@ -201,6 +202,7 @@ internal fun UseAbilityArguments.toDomain(
                 attackerUserId = userPlayerId,
                 defenderUserId = targetedOpponentUserId.ifEmpty { userPlayerId },
                 originalTurnUserId = userPlayerId,
+                rollingUserId = userPlayerId,
             )
     }
 }

@@ -31,6 +31,7 @@ internal class PerformCombatAction(
                 updatedPlayerMap = arguments.playerMap.toMutableMap(),
                 attackerUserId = currentAction.attackerUserId,
                 defenderUserId = currentAction.defenderUserId,
+                rollingUserId = currentAction.rollingUserId(),
                 roundNumber = arguments.roundNumber,
                 originalTurnUserId = currentAction.originalTurnUserId,
                 diceRoller = diceRoller,
@@ -40,6 +41,16 @@ internal class PerformCombatAction(
         resolveAction(action = currentAction)
         return combatMutator.getOutcome()
     }
+
+    /**
+     * The combatant rolling this action's dice. A normal attack always has the attacker rolling; an
+     * ability roll carries its own roller so a simultaneous Teleport roll-off fills the right die.
+     */
+    private fun CurrentCombatAction.rollingUserId(): String =
+        when (this) {
+            is CurrentCombatAction.NormalAttack -> attackerUserId
+            is CurrentCombatAction.AbilityRoll -> rollingUserId
+        }
 
     private fun resolveAction(action: CurrentCombatAction) =
         when (action) {

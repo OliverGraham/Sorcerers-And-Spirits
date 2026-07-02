@@ -77,6 +77,8 @@ internal fun BottomControls(
     lockTarget: () -> Unit,
     diceRoll: DiceRoll,
     areControlsVisible: Boolean,
+    isActionInFlight: Boolean,
+    onActionDispatched: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -89,6 +91,23 @@ internal fun BottomControls(
     val abilityControls = controls.filter { it != attackControl && it != impersonateControl }
     val shouldLabelAbilities = abilityControls.size > 1
     val areButtonsShown = areControlsVisible && controls.isNotEmpty()
+
+    fun isEnabled(control: ArenaCombatControl): Boolean =
+        !isActionInFlight &&
+            state.isControlEnabled(
+                control = control,
+                targetedOpponentUserId = targetedOpponentUserId,
+            )
+
+    fun rollAction(control: ArenaCombatControl): () -> Unit =
+        state.rollActionFor(
+            control = control,
+            targetedOpponentUserId = targetedOpponentUserId,
+            onAttack = onAttack,
+            onUseAbility = onUseAbility,
+            lockTarget = lockTarget,
+            onActionDispatched = onActionDispatched,
+        )
 
     Box(
         modifier =
@@ -103,58 +122,32 @@ internal fun BottomControls(
                 abilityControls.forEach { control ->
                     AbilityButton(
                         control = control,
-                        isEnabled =
-                            state.isControlEnabled(
-                                control = control,
-                                targetedOpponentUserId = targetedOpponentUserId,
-                            ),
+                        isEnabled = isEnabled(control = control),
                         classColor = classColor,
                         diceRoll = diceRoll,
-                        onRoll =
-                            state.rollActionFor(
-                                control = control,
-                                targetedOpponentUserId = targetedOpponentUserId,
-                                onAttack = onAttack,
-                                onUseAbility = onUseAbility,
-                                lockTarget = lockTarget,
-                            ),
+                        onRoll = rollAction(control = control),
                         label = control.label.takeIf { shouldLabelAbilities },
                     )
                 }
 
                 if (attackControl != null) {
                     AttackButton(
-                        isEnabled = state.isControlEnabled(attackControl, targetedOpponentUserId),
+                        isEnabled = isEnabled(control = attackControl),
                         classColor = classColor,
                         diceRoll = diceRoll,
                         diceSlots = attackControl.diceSlots,
-                        onRoll =
-                            state.rollActionFor(
-                                control = attackControl,
-                                targetedOpponentUserId = targetedOpponentUserId,
-                                onAttack = onAttack,
-                                onUseAbility = onUseAbility,
-                                lockTarget = lockTarget,
-                            ),
+                        onRoll = rollAction(control = attackControl),
                     )
                 }
 
                 if (impersonateControl != null) {
                     ImpersonateButton(
-                        isEnabled =
-                            state.isControlEnabled(impersonateControl, targetedOpponentUserId),
+                        isEnabled = isEnabled(control = impersonateControl),
                         classColor = classColor,
                         label = state.impersonateLabel(),
                         diceRoll = diceRoll,
                         diceSlots = impersonateControl.diceSlots,
-                        onRoll =
-                            state.rollActionFor(
-                                control = impersonateControl,
-                                targetedOpponentUserId = targetedOpponentUserId,
-                                onAttack = onAttack,
-                                onUseAbility = onUseAbility,
-                                lockTarget = lockTarget,
-                            ),
+                        onRoll = rollAction(control = impersonateControl),
                     )
                 }
             }

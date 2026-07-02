@@ -83,7 +83,14 @@ sealed interface ArenaMessage {
     ) : ArenaMessage
 
     sealed interface MirrorImage : ArenaMessage {
-        data object Trigger : MirrorImage
+        /**
+         * Mirror Image interrupted the attacker's roll of [firstDie] and [secondDie] to offer the
+         * Illusionist the reroll choice. The dice are carried so every device's resting dice show
+         * the roll the reroll labels refer to — the Health roll emits no NormalRoll message before
+         * this trigger, so this is the only record of what was rolled (SS-181). Null only on
+         * messages persisted before the dice were carried.
+         */
+        data class Trigger(val firstDie: Int?, val secondDie: Int?) : MirrorImage
 
         /** The Illusionist let the attacker's roll stand; [outcome] is how that roll resolved. */
         data class Pass(val attackerUserId: String, val outcome: NormalRollMessageType) :

@@ -181,7 +181,11 @@ sealed interface ArenaMessageEntity {
     sealed interface MirrorImage : ArenaMessageEntity {
         @Serializable
         @SerialName(value = MIRROR_IMAGE_TRIGGER)
-        data class Trigger(override val id: String) : MirrorImage
+        data class Trigger(
+            override val id: String,
+            val firstDie: Int? = null,
+            val secondDie: Int? = null,
+        ) : MirrorImage
 
         @Serializable
         @SerialName(value = MIRROR_IMAGE_PASS)
@@ -399,7 +403,8 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                         impersonateAbility.toDomain() as OffensiveAbility.Impersonate,
                 )
 
-            is ArenaMessageEntity.MirrorImage.Trigger -> ArenaMessage.MirrorImage.Trigger
+            is ArenaMessageEntity.MirrorImage.Trigger ->
+                ArenaMessage.MirrorImage.Trigger(firstDie = firstDie, secondDie = secondDie)
 
             is ArenaMessageEntity.MirrorImage.Pass ->
                 ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
@@ -575,7 +580,12 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                     impersonateAbility.toEntity() as OffensiveAbilityEntity.Impersonate,
             )
 
-        is ArenaMessage.MirrorImage.Trigger -> ArenaMessageEntity.MirrorImage.Trigger(id = id)
+        is ArenaMessage.MirrorImage.Trigger ->
+            ArenaMessageEntity.MirrorImage.Trigger(
+                id = id,
+                firstDie = firstDie,
+                secondDie = secondDie,
+            )
 
         is ArenaMessage.MirrorImage.Pass ->
             ArenaMessageEntity.MirrorImage.Pass(

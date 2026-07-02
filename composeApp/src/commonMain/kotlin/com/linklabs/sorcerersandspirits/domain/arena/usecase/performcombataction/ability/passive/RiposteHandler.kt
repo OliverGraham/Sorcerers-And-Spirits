@@ -23,6 +23,11 @@ internal class RiposteHandler(
         )
     }
 
+    /**
+     * A doubles Riposte only earns its +1 when the reversal follows: the Duelist keeps the dice and
+     * rolls the reversal attack next. A failed Riposte hands the dice back to the attacker's Health
+     * roll, so the bonus is not consecutive and is left unannounced.
+     */
     private fun CombatMutator.rollRiposte() {
         val result = diceRoller.roll2D6(userId = defenderUserId)
         val isSuccessful = result.total in abilityConfig.riposteSuccessRange
@@ -37,6 +42,9 @@ internal class RiposteHandler(
         )
 
         if (isSuccessful) {
+            if (result.isDoubles) {
+                addMessage(message = ArenaMessage.Doubles(userId = defenderUserId))
+            }
             handleSuccess()
         } else {
             continueAttackWithHealthRoll()

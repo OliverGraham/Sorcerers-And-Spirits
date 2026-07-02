@@ -38,6 +38,11 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         )
     }
 
+    /**
+     * A doubles prayer only earns its +1 when the Paladin survives: they keep the dice and roll
+     * Wrath next. A failed prayer knocks the Paladin out and the attacker's follow-up rolls next,
+     * so the bonus is not consecutive and is left unannounced.
+     */
     private fun CombatMutator.attemptPrayer() {
         val result = diceRoller.roll2D6(userId = defenderUserId)
         val didSurvive = result.total in abilityConfig.holyShieldSuccessRange
@@ -52,6 +57,9 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         )
 
         if (didSurvive) {
+            if (result.isDoubles) {
+                addMessage(message = ArenaMessage.Doubles(userId = defenderUserId))
+            }
             prayerSuccess()
         } else {
             prayerFailure()

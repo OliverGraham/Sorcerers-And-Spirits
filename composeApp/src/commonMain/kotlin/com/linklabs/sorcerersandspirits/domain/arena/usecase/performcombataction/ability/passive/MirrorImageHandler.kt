@@ -6,6 +6,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterArmorClassMiss
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterDamage
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterKnockout
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
@@ -70,7 +73,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 rolledMirrorImage.secondDie
             }
 
-        resolveModifiedRoll(mirrorImage = rolledMirrorImage) { outcome ->
+        resolveModifiedRoll(mirrorImage = rolledMirrorImage, isKeptRollDoubles = false) { outcome ->
             ArenaMessage.MirrorImage.TemptFate(
                 rerolledMirrorImageDie = rerolledDie,
                 attackerUserId = attackerUserId,
@@ -99,8 +102,17 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
+    /**
+     * A kept doubles roll stays consecutive: the Illusionist never touched the dice, so the
+     * attacker's +1 bonus survives and the Doubles message deferred by the roll handler is added
+     * here instead.
+     */
     private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {
-        resolveModifiedRoll(mirrorImage = mirrorImage) { outcome ->
+        val isKeptRollDoubles =
+            mirrorImage.firstDie.originalRoll == mirrorImage.secondDie.originalRoll
+
+        resolveModifiedRoll(mirrorImage = mirrorImage, isKeptRollDoubles = isKeptRollDoubles) {
+            outcome ->
             ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
         }
     }
@@ -114,35 +126,55 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
     //  included it, so a keep can currently flip a decisive-bonus hit back into a miss.
     private fun CombatMutator.resolveModifiedRoll(
         mirrorImage: AbilityAction.Passive.MirrorImage,
+        isKeptRollDoubles: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
         val totalRoll = mirrorImage.firstDie.finalValue + mirrorImage.secondDie.finalValue
 
         when (mirrorImage.attackType) {
             NormalAttackType.ArmorClass ->
-                resolveArmorClass(totalRoll = totalRoll, message = message)
+                resolveArmorClass(
+                    totalRoll = totalRoll,
+                    isKeptRollDoubles = isKeptRollDoubles,
+                    message = message,
+                )
 
-            NormalAttackType.Health -> resolveHealth(totalRoll = totalRoll, message = message)
+            NormalAttackType.Health ->
+                resolveHealth(
+                    totalRoll = totalRoll,
+                    isKeptRollDoubles = isKeptRollDoubles,
+                    message = message,
+                )
         }
     }
 
     private fun CombatMutator.resolveArmorClass(
         totalRoll: Int,
+        isKeptRollDoubles: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
         val brokeArmor = totalRoll >= defender.armorClass
 
         if (brokeArmor) {
             addMessage(message = message(NormalRollMessageType.ArmorClassHit))
+            if (isKeptRollDoubles) {
+                addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+            }
             continueAttackWithHealthRoll()
         } else {
             addMessage(message = message(NormalRollMessageType.ArmorClassMiss))
+            val shouldMessageDoubles =
+                isKeptRollDoubles && shouldMessageDoublesAfterArmorClassMiss()
+            if (shouldMessageDoubles) {
+                addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+            }
             resolveTurnEnd()
         }
     }
 
     private fun CombatMutator.resolveHealth(
         totalRoll: Int,
+        isKeptRollDoubles: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
         updateDefenderClass { defender.copy(hitPoints = defender.hitPoints - totalRoll) }
@@ -155,7 +187,25 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 )
         )
 
-        if (isKnockout && attacker.offensiveAbility.effective == OffensiveAbility.KillingMomentum) {
+        val isDoublesBonusStillLive =
+            if (isKnockout) {
+                shouldMessageDoublesAfterKnockout()
+            } else {
+                shouldMessageDoublesAfterDamage()
+            }
+        val shouldMessageDoubles = isKeptRollDoubles && isDoublesBonusStillLive
+        if (shouldMessageDoubles) {
+            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+        }
+
+        if (consciousPlayers.size <= 1) {
+            resolveTurnEnd()
+            return
+        }
+
+        val isKillingMomentumEarned =
+            isKnockout && attacker.offensiveAbility.effective == OffensiveAbility.KillingMomentum
+        if (isKillingMomentumEarned) {
             TriggerKillingMomentum(combatMutator = this).invoke()
             return
         }

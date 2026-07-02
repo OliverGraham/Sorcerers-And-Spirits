@@ -110,6 +110,244 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `Given a normal attack, when doubles miss the defender's armor, then no Doubles message is emitted`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 2, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given a Gambler with a pending All-In second attack, when doubles miss the defender's armor, then a Doubles message is emitted`() {
+        // Arrange
+        val gambler =
+            TestCharacterClasses.gambler()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = gambler)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+        val attackerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 2, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual =
+                outcome.messages.contains(element = ArenaMessage.Doubles(userId = attackerUserId))
+        )
+    }
+
+    @Test
+    fun `Given a Duelist defender, when doubles break the armor, then no Doubles message is emitted because Riposte takes the dice`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.duelist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given a Mage defender, when doubles break the armor, then a Doubles message is emitted because the attacker's Teleport roll-off die keeps the bonus`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.mage())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+        val attackerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 3, secondDie = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual =
+                outcome.messages.contains(element = ArenaMessage.Doubles(userId = attackerUserId))
+        )
+    }
+
+    @Test
+    fun `Given a Health roll, when doubles deal damage and the turn ends, then no Doubles message is emitted`() {
+        // Arrange
+        val defenderClass = createCharacterClass(hitPoints = 10)
+        val arguments = createTwoPlayerArguments(defenderClass = defenderClass)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 2, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given a Bard attacker, when doubles deal damage, then a Doubles message is emitted because the Encore die keeps the bonus`() {
+        // Arrange
+        val defenderClass = createCharacterClass(hitPoints = 10)
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass = TestCharacterClasses.bard(),
+                defenderClass = defenderClass,
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val attackerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 2, secondDie = 2)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual =
+                outcome.messages.contains(element = ArenaMessage.Doubles(userId = attackerUserId))
+        )
+    }
+
+    @Test
+    fun `Given a Health roll, when doubles knock out the last opponent, then no Doubles message is emitted`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments()
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.isMatchFinished)
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given a Rogue attacker in a 3-player game, when doubles knock out the defender, then a Doubles message is emitted because Killing Momentum keeps the dice`() {
+        // Arrange
+        val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+        val attackerUserId = currentAction.attackerUserId
+
+        setupTwoDiceRoll(userId = attackerUserId, firstDie = 3, secondDie = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual =
+                outcome.messages.contains(element = ArenaMessage.Doubles(userId = attackerUserId))
+        )
+    }
+
+    @Test
+    fun `Given a Paladin defender with Holy Shield, when doubles knock the Paladin down, then no Doubles message is emitted`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.paladin())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getHealthAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 4, secondDie = 4)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given an Illusionist defender with Mirror Image available, when doubles break the armor, then the Doubles message is deferred`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given an Illusionist keeping a doubles armor roll, when the armor stays broken, then the Doubles message is emitted`() {
+        // Arrange
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                attackType = NormalAttackType.ArmorClass,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            )
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
+        val attackerUserId = currentAction.attackerUserId
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(
+            actual =
+                outcome.messages.contains(element = ArenaMessage.Doubles(userId = attackerUserId))
+        )
+    }
+
+    @Test
+    fun `Given an Illusionist rerolling a doubles armor roll, when the armor stays broken, then no Doubles message is emitted`() {
+        // Arrange
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                attackType = NormalAttackType.ArmorClass,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+            )
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
+
+        setupOneDiceRoll(userId = currentAction.defenderUserId, die = 6)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
     fun `Given a 2-player game, when an attacker rolls equal to a defender's armor, the next combat action is a roll against the defender's health`() {
         // Arrange
         val defenderClass = createCharacterClass(armorClass = 8)

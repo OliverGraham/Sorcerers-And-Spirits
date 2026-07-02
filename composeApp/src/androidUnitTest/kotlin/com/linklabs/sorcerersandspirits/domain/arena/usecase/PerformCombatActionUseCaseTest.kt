@@ -2012,6 +2012,7 @@ class PerformCombatActionUseCaseTest {
             AbilityAction.Passive.Teleport(
                 attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID),
                 defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
+                attackerDoublesBonus = 0,
             )
         val currentAction = getAbilityRollAction(purpose = purpose)
 
@@ -2062,6 +2063,7 @@ class PerformCombatActionUseCaseTest {
             AbilityAction.Passive.Teleport(
                 attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID, roll = attackerRoll),
                 defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
+                attackerDoublesBonus = 0,
             )
         val mageUserId = DEFAULT_DEFENDER_ID
         val currentAction = getAbilityRollAction(purpose = purpose, rollingUserId = mageUserId)
@@ -2094,20 +2096,20 @@ class PerformCombatActionUseCaseTest {
                 attackerUserId = attackerUserId,
                 defenderUserId = mageUserId,
                 defenderClass = TestCharacterClasses.mage(),
-                doublesBonus = DoublesBonus(userId = attackerUserId),
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
+        val bonus = 1
         val purpose =
             AbilityAction.Passive.Teleport(
                 attackerRoll = TeleportDie(userId = attackerUserId),
                 defenderRoll = TeleportDie(userId = mageUserId),
+                attackerDoublesBonus = bonus,
             )
         val currentAction = getAbilityRollAction(purpose = purpose)
 
         val attackerDie = 3
-        val bonus = 1
-        setupOneDiceRoll(userId = currentAction.attackerUserId, die = attackerDie, bonus = bonus)
+        setupOneDiceRoll(userId = currentAction.attackerUserId, die = attackerDie)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2119,6 +2121,65 @@ class PerformCombatActionUseCaseTest {
         val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
         assertEquals(expected = attackerDie + bonus, actual = teleport.attackerRoll.roll)
         assertTrue(actual = !outcome.isMatchFinished)
+    }
+
+    @Test
+    fun `Given the Mage's Teleport die is dispatched first, when the attacker later rolls, then the attacker still gets the doubles bonus`() {
+        // Arrange
+        val attackerUserId = DEFAULT_ATTACKER_ID
+        val mageUserId = DEFAULT_DEFENDER_ID
+        val arguments =
+            createTwoPlayerArguments(
+                attackerUserId = attackerUserId,
+                defenderUserId = mageUserId,
+                defenderClass = TestCharacterClasses.mage(),
+            )
+
+        val bonus = 1
+        val mageDie = 5
+        val purpose =
+            AbilityAction.Passive.Teleport(
+                attackerRoll = TeleportDie(userId = attackerUserId),
+                defenderRoll = TeleportDie(userId = mageUserId),
+                attackerDoublesBonus = bonus,
+            )
+        val mageRollAction = getAbilityRollAction(purpose = purpose, rollingUserId = mageUserId)
+        setupOneDiceRoll(userId = mageUserId, die = mageDie)
+
+        // Act - the Mage's die is dispatched before the attacker's, clearing the roller's bonus
+        val mageOutcome =
+            getPerformCombatAction(arguments = arguments).invoke(currentAction = mageRollAction)
+
+        val afterMageRoll = mageOutcome.nextCombatAction
+        assertTrue(actual = afterMageRoll is NextCombatAction.AbilityRoll)
+        val afterMageTeleport =
+            assertIs<AbilityAction.Passive.Teleport>(value = afterMageRoll.purpose)
+
+        val attackerDie = 3
+        val attackerArguments =
+            createTwoPlayerArguments(
+                attackerUserId = attackerUserId,
+                defenderUserId = mageUserId,
+                defenderClass = TestCharacterClasses.mage(),
+                doublesBonus = mageOutcome.doublesBonus,
+            )
+        val attackerRollAction =
+            getAbilityRollAction(purpose = afterMageTeleport, rollingUserId = attackerUserId)
+        setupOneDiceRoll(userId = attackerUserId, die = attackerDie)
+
+        val attackerOutcome =
+            getPerformCombatAction(arguments = attackerArguments)
+                .invoke(currentAction = attackerRollAction)
+
+        // Assert - the attacker's die still carries the +1 despite rolling second
+        val attackerRollMessage =
+            assertIs<ArenaMessage.Teleport.Roll>(
+                value =
+                    attackerOutcome.messages.single {
+                        it is ArenaMessage.Teleport.Roll && it.userId == attackerUserId
+                    }
+            )
+        assertEquals(expected = attackerDie + bonus, actual = attackerRollMessage.singleDie)
     }
 
     @Test

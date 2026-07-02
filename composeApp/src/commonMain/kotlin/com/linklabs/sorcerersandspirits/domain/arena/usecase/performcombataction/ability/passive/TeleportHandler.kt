@@ -19,9 +19,15 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
             AbilityAction.Passive.Teleport(
                 attackerRoll = TeleportDie(userId = attackerUserId),
                 defenderRoll = TeleportDie(userId = defenderUserId),
+                attackerDoublesBonus = attackerDoublesBonus(),
             )
 
         setBothCombatantsRolling(teleport = purpose)
+    }
+
+    private fun CombatMutator.attackerDoublesBonus(): Int {
+        val hasAttackerBonus = diceRoller.getDoublesBonus()?.userId == attackerUserId
+        return if (hasAttackerBonus) 1 else 0
     }
 
     private fun CombatMutator.handleTeleport(teleport: AbilityAction.Passive.Teleport) {
@@ -67,7 +73,8 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
         if (rollingDie.userId != rollingUserId || rollingDie.roll != null) return null
 
-        val rolledDie = rollAndMessage(unrolledTeleportDie = rollingDie)
+        val bonus = if (isAttackerRolling) teleport.attackerDoublesBonus else 0
+        val rolledDie = rollAndMessage(unrolledTeleportDie = rollingDie, bonus = bonus)
         return if (isAttackerRolling) {
             teleport.copy(attackerRoll = rolledDie)
         } else {
@@ -75,9 +82,12 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    private fun CombatMutator.rollAndMessage(unrolledTeleportDie: TeleportDie): TeleportDie {
+    private fun CombatMutator.rollAndMessage(
+        unrolledTeleportDie: TeleportDie,
+        bonus: Int,
+    ): TeleportDie {
         val userId = unrolledTeleportDie.userId
-        val result = diceRoller.roll1D6(userId = userId).total
+        val result = diceRoller.roll1D6(userId = userId).die + bonus
 
         addMessage(message = ArenaMessage.Teleport.Roll(userId = userId, singleDie = result))
 

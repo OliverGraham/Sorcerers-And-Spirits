@@ -367,22 +367,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-189 — Teleport roll-off dispatch order can nullify the attacker's doubles bonus
-
-- [ ] Not completed
-- **Symptom (latent, found during SS-177):** Per CLAUDE.md, an attacker who breaks the Mage's armor
-  with doubles gets the +1 on their Teleport roll-off die, and SS-177 now shows the Doubles
-  message for that case. But the roll-off is simultaneous: each dispatch rolls only the acting
-  player's own die (`TeleportHandler.rollActingUserDieOrNull`), and
-  `RealDiceRoller.consumeBonus` clears the stored bonus on the very next roll by **anyone**. If the
-  Mage's die happens to be dispatched first, the attacker's +1 is silently consumed — the message
-  promises a bonus that dispatch order can steal.
-- **Goal:** The attacker's roll-off die gets the +1 regardless of which combatant's die is
-  dispatched first.
-- **Source:** `RealDiceRoller.consumeBonus` (`DiceRoller.kt`) nullifies on any roll;
-  `TeleportHandler.rollAndMessage` rolls each die under its owner's userId.
-- **Related:** SS-019 (doubles bonus), SS-177 (found during).
-
 ### SS-183 — Rogue Dodge bonus must show in the ArmorClass stat (base +1 / +2)
 
 - [ ] Not completed

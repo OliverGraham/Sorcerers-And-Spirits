@@ -1672,6 +1672,7 @@ class ArenaScreenViewModelTest {
                                 userId = USER_ID,
                                 roll = defenderRoll,
                             ),
+                        attackerDoublesBonus = 0,
                     ),
                 attackerUserId = OPPONENT_ID,
                 defenderUserId = USER_ID,

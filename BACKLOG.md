@@ -383,22 +383,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   `TeleportHandler.rollAndMessage` rolls each die under its owner's userId.
 - **Related:** SS-019 (doubles bonus), SS-177 (found during).
 
-### SS-190 — Doubles on defensive-ability 2d6 rolls silently set a bonus with no message
-
-- [ ] Not completed
-- **Symptom (latent, found during SS-177):** `RealDiceRoller.roll2D6` sets the doubles bonus for
-  **every** 2d6 roll, not just normal attacks. A Duelist whose Riposte 2d6 comes up doubles and
-  succeeds attacks next — their reversal ArmorClass roll silently gets +1. A Paladin whose Holy
-  Shield prayer comes up doubles and succeeds gets +1 on the Wrath die. Neither emits
-  `ArenaMessage.Doubles`, so the bonus applies invisibly. (Prepare Attack also sets it, but the
-  turn ends so the next roller nullifies it.)
-- **Goal:** Owner decides whether ability 2d6 rolls earn the doubles bonus at all. If yes, message
-  them when the roller's next roll is consecutive (mirror `DoublesMessageRules.kt`); if no, stop
-  setting the bonus for ability rolls.
-- **Source:** `RealDiceRoller.roll2D6` (`DiceRoller.kt`); `RiposteHandler.rollRiposte`;
-  `HolyShieldHandler.attemptPrayer`; message rules in `DoublesMessageRules.kt`.
-- **Related:** SS-019 (doubles bonus), SS-177 (message rules), SS-107 (Doubles message).
-
 ### SS-183 — Rogue Dodge bonus must show in the ArmorClass stat (base +1 / +2)
 
 - [ ] Not completed

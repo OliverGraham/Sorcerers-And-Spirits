@@ -24,10 +24,26 @@ data class CharacterClassState(
      */
     val hitPointsDisplay: String = buildHitPointsDisplay()
 
+    /**
+     * The armor class shown to the player: base alone, or base plus the active Rogue Dodge bonus
+     * (e.g. "13 + 1") so the earned bonus stays visibly distinct, mirroring [hitPointsDisplay]. The
+     * domain folds the bonus into [armorClass], so the base is recovered by removing the bonus.
+     */
+    val armorClassDisplay: String = buildArmorClassDisplay()
+
     private fun buildHitPointsDisplay(): String {
         val shieldPoints =
             (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.shieldPoints ?: 0
         return if (shieldPoints > 0) "$hitPoints + $shieldPoints" else hitPoints.toString()
+    }
+
+    private fun buildArmorClassDisplay(): String {
+        val dodgeBonus = (defensiveAbility as? DefensiveAbilityState.Dodge)?.armorBonus ?: 0
+        return if (dodgeBonus > 0) {
+            "${armorClass - dodgeBonus} + $dodgeBonus"
+        } else {
+            armorClass.toString()
+        }
     }
 }
 

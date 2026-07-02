@@ -367,21 +367,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-183 — Rogue Dodge bonus must show in the ArmorClass stat (base +1 / +2)
-
-- [ ] Not completed
-- **Symptom:** When a Rogue earns a Dodge bonus (+1 Armor up to +2 for the match), the ArmorClass
-  stat still shows the base value, not base + Dodge bonus.
-- **Goal:** The displayed ArmorClass reflects base + active Dodge bonus, the same way Summon Minion
-  shields surface in the hit-points display (SS-102's `hitPointsDisplay`).
-- **Source:** `CombatStats.kt` reads `characterClass.armorClass` for the Armor `AvatarStat`;
-  `CharacterClassState` (`ui/common/characterclasses/`) is the UI mapping. Confirm the Dodge bonus
-  is
-  carried Domain → entity → `CharacterClassState` and that `armorClass` (or a derived display)
-  includes it — mirror the SS-102 shield/`hitPointsDisplay` pattern; this is most likely a mapping
-  gap, not a domain bug ([[domain-is-source-of-truth]], [[no-default-args-hide-mapping-gaps]]).
-- **Related:** SS-102 (minion shield display), SS-050 (Killing Momentum/Dodge), SS-019.
-
 ### SS-184 — Don't collapse the final knocked-out player to a head icon
 
 - [ ] Not completed

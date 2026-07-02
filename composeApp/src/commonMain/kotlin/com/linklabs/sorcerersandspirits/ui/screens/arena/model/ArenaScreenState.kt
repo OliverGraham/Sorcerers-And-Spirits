@@ -15,6 +15,7 @@ private const val WAITING_TIMER_DURATION_SECONDS = 30
 private const val CHOOSING_CLASSES_TIMER_DURATION_SECONDS = 30
 private const val COMBAT_TIMER_DURATION_SECONDS = 45
 private const val FINISHED_TIMER_DURATION_SECONDS = 60
+private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
 @Immutable
 data class ArenaScreenState(
@@ -101,6 +102,14 @@ sealed interface ArenaState {
     ) : ArenaState {
         val survivors = players.filter { it.characterClass.isConscious }
         val winner = survivors.singleOrNull()
+
+        /**
+         * Whether another match can start from this arena. A player only leaves the shared player
+         * map by exiting the arena, so a single remaining player means everyone else has left and a
+         * next match would be an impossible single-player state (SS-170). The Finished screen then
+         * offers only Leave.
+         */
+        val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
     }
 }
 

@@ -336,22 +336,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Related:** SS-077 (dice tech), SS-078 (dice UI), SS-158 (single-die freeze), SS-149 (dice
   overlay), SS-119 (Impersonate/MirrorImage state).
 
-### SS-170 — Finished screen must not offer "Next Match" when only one player remains
-
-- [ ] Not completed
-- **Symptom:** If an opponent leaves the arena (e.g. forfeit) and the Finished state comes up,
-  the **Next Match** button still shows — but a next match with a single player in the arena is an
-  impossible state.
-- **Source:** `MatchFinishedContent.kt` `MatchDecisionControls` always renders the Leave +
-  Next Match/Go Again row. It needs to suppress Next Match/Go Again (and any auto-ready, SS-172)
-  when
-  fewer than two players remain in the arena, leaving only Leave. The remaining-player count is
-  already known (an opponent leaving fires `ArenaEvent.OpponentLeft`, SS-045; the arena removes the
-  match when the last player leaves, SS-022).
-- **Related:** SS-108 (Next Match/Go Again on Finished), SS-045 (opponent left), SS-022 (remove
-  match
-  on last leave), SS-172 (Finished timer).
-
 ### SS-180 — Random character choice almost always picks Necromancer
 
 - [ ] Not completed

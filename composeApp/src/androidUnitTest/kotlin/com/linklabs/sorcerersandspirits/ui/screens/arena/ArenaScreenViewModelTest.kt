@@ -1191,6 +1191,7 @@ class ArenaScreenViewModelTest {
                                                 originalRoll = 4
                                             ),
                                         attackType = NormalAttackType.ArmorClass,
+                                        attackerDoublesBonus = 0,
                                         mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                                     ),
                                 attackerUserId = OPPONENT_ID,

@@ -113,6 +113,8 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-188** — Mirror Image re-check drops the attacker's doubles bonus: The original armor/damage roll total baked in the attacker's carried doubles +1 (`NormalAttackRollHandler.diceTotal = firstDie + secondDie + bonus`), but the Mirror Image keep/reroll re-check recomputed the total from the two `finalValue`s alone, so a decisive +1 could silently flip a "Hit!" back into a miss on Keep (and shift a reroll's threshold by one). `AbilityAction.Passive.MirrorImage` now carries `attackerDoublesBonus` (domain, entity round trip default-0 for in-flight actions persisted before the field, and UI state); `triggerMirrorImageIfApplicable` passes the in-scope bonus into the purpose, and `resolveModifiedRoll` adds it to `firstDie.finalValue + secondDie.finalValue`. Domain tests cover a decisive bonus on both the keep and reroll ArmorClass paths. Related: SS-181 (found during), SS-019, SS-118.
+
 - **SS-060** — Holy Shield: suppress KnockedOut dialog during the survival roll: When a Paladin is knocked out but is about to roll (or is rolling) for Holy Shield, the KnockedOut/match-decision dialog must NOT show. The dialog should only appear once Holy Shield has resolved and the Paladin is…
 - **SS-090** — First-launch "Continue with Google" must recover an existing account, not error
 - **SS-095** — Lock target selection once an attack roll is committed: After a player has rolled against a target for a normal attack (i.e. committed the Armor-class roll), they must not be able to change targets or switch to an activated ability mid-action. The UI must also not highlight…

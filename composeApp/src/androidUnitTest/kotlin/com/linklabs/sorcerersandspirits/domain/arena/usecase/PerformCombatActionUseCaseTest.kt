@@ -306,6 +306,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
@@ -331,6 +332,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
             )
@@ -1749,6 +1751,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
             )
@@ -1769,6 +1772,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
 
@@ -1786,6 +1790,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
             )
@@ -1794,6 +1799,44 @@ class PerformCombatActionUseCaseTest {
         mirrorImageTest(
             mirrorImagePurpose = mirrorImagePurpose,
             rerollDie = 6,
+            expectedUsedThisAttack = true,
+            expectedIsNextActionNormalAttack = true,
+        )
+    }
+
+    @Test
+    fun `When an Illusionist keeps a Mirror Image ArmorClass roll, the attacker's carried doubles bonus still breaks armor`() {
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 1),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 1,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            )
+
+        mirrorImageTest(
+            mirrorImagePurpose = mirrorImagePurpose,
+            expectedUsedThisAttack = false,
+            expectedIsNextActionNormalAttack = true,
+        )
+    }
+
+    @Test
+    fun `When an Illusionist rerolls a Mirror Image ArmorClass roll, the attacker's carried doubles bonus still breaks armor`() {
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
+                attackType = NormalAttackType.ArmorClass,
+                attackerDoublesBonus = 1,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.Second,
+            )
+
+        mirrorImageTest(
+            mirrorImagePurpose = mirrorImagePurpose,
+            rerollDie = 3,
             expectedUsedThisAttack = true,
             expectedIsNextActionNormalAttack = true,
         )

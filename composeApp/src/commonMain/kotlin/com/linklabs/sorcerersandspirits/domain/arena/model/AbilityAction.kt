@@ -49,6 +49,7 @@ sealed interface AbilityAction {
             val firstDie: MirrorImageDie,
             val secondDie: MirrorImageDie,
             val attackType: NormalAttackType,
+            val attackerDoublesBonus: Int,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
             val rerollSelection: RerollSelection = RerollSelection.None,
         ) : Passive {

@@ -223,6 +223,7 @@ internal class NormalAttackRollHandler(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 attackType = attackType,
+                attackerDoublesBonus = bonus,
                 mirrorImageDefensiveAbility = mirrorImage,
             )
 

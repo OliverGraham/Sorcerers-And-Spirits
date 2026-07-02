@@ -352,31 +352,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   match
   on last leave), SS-172 (Finished timer).
 
-### SS-177 — Doubles message/flash only when the +1 bonus can actually apply
-
-- [ ] Not completed
-- **Symptom:** A Doubles message/flash fires even when the doubles can't benefit anyone (e.g.
-  doubles
-  rolled on the ArmorClass roll that then *fails* to break armor, so there is no consecutive roll to
-  carry the +1). Per CLAUDE.md the doubles +1 only matters when the next roll is consecutive and the
-  same player keeps the dice.
-- **Goal:** Only add the `ArenaMessage.Doubles` (SS-107) — and therefore the flash (SS-164) — when
-  the doubles will actually contribute to a next consecutive roll. This is fully determinable from
-  existing domain structure; **no new structures needed**.
-- **Process (owner ask — do this first):** Before writing any code, **list every place doubles
-  should NOT be added** as a message; the owner will confirm / add / subtract. Candidate cases to
-  enumerate from CLAUDE.md and `NormalAttackRollHandler.addNormalRollMessage` (the emission site):
-    - Doubles on the ArmorClass roll that fails to break armor (no consecutive damage roll).
-    - Doubles on the Health/damage roll (turn-ending — nothing consecutive follows).
-    - Doubles whose dice are then handed to another player by a defensive ability (Riposte, Persuade
-      redirect, etc.), breaking the consecutive chain.
-    - Doubles on a roll that ends the turn / match.
-      Confirm this list with the owner, then suppress emission accordingly.
-- **Source:** `NormalAttackRollHandler.kt` (`addNormalRollMessage`, emits `Doubles` after a doubles
-  normal roll); `ArenaMessageState.flashText` (`Doubles → "Doubles!"`); doubles bonus tracked via
-  SS-019. SpellPotency already short-circuits before the doubles message.
-- **Related:** SS-107 (Doubles message), SS-019 (doublesBonus), SS-164 (flash).
-
 ### SS-180 — Random character choice almost always picks Necromancer
 
 - [ ] Not completed
@@ -406,6 +381,38 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `NormalAttackRollHandler.triggerMirrorImageIfApplicable` has the bonus in scope but
   drops it when building the purpose; `// TODO(SS-188)` marks the re-check.
 - **Related:** SS-181 (found during), SS-019 (doubles bonus), SS-118 (Mirror Image display).
+
+### SS-189 — Teleport roll-off dispatch order can nullify the attacker's doubles bonus
+
+- [ ] Not completed
+- **Symptom (latent, found during SS-177):** Per CLAUDE.md, an attacker who breaks the Mage's armor
+  with doubles gets the +1 on their Teleport roll-off die, and SS-177 now shows the Doubles
+  message for that case. But the roll-off is simultaneous: each dispatch rolls only the acting
+  player's own die (`TeleportHandler.rollActingUserDieOrNull`), and
+  `RealDiceRoller.consumeBonus` clears the stored bonus on the very next roll by **anyone**. If the
+  Mage's die happens to be dispatched first, the attacker's +1 is silently consumed — the message
+  promises a bonus that dispatch order can steal.
+- **Goal:** The attacker's roll-off die gets the +1 regardless of which combatant's die is
+  dispatched first.
+- **Source:** `RealDiceRoller.consumeBonus` (`DiceRoller.kt`) nullifies on any roll;
+  `TeleportHandler.rollAndMessage` rolls each die under its owner's userId.
+- **Related:** SS-019 (doubles bonus), SS-177 (found during).
+
+### SS-190 — Doubles on defensive-ability 2d6 rolls silently set a bonus with no message
+
+- [ ] Not completed
+- **Symptom (latent, found during SS-177):** `RealDiceRoller.roll2D6` sets the doubles bonus for
+  **every** 2d6 roll, not just normal attacks. A Duelist whose Riposte 2d6 comes up doubles and
+  succeeds attacks next — their reversal ArmorClass roll silently gets +1. A Paladin whose Holy
+  Shield prayer comes up doubles and succeeds gets +1 on the Wrath die. Neither emits
+  `ArenaMessage.Doubles`, so the bonus applies invisibly. (Prepare Attack also sets it, but the
+  turn ends so the next roller nullifies it.)
+- **Goal:** Owner decides whether ability 2d6 rolls earn the doubles bonus at all. If yes, message
+  them when the roller's next roll is consecutive (mirror `DoublesMessageRules.kt`); if no, stop
+  setting the bonus for ability rolls.
+- **Source:** `RealDiceRoller.roll2D6` (`DiceRoller.kt`); `RiposteHandler.rollRiposte`;
+  `HolyShieldHandler.attemptPrayer`; message rules in `DoublesMessageRules.kt`.
+- **Related:** SS-019 (doubles bonus), SS-177 (message rules), SS-107 (Doubles message).
 
 ### SS-183 — Rogue Dodge bonus must show in the ArmorClass stat (base +1 / +2)
 

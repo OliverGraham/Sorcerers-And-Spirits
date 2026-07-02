@@ -54,10 +54,16 @@ internal class NormalAttackRollHandler(
 
     private fun CombatMutator.handleArmorClassRoll() =
         if (diceTotal >= defender.armorClass) {
-            addNormalRollMessage(type = NormalRollMessageType.ArmorClassHit)
+            addNormalRollMessage(
+                type = NormalRollMessageType.ArmorClassHit,
+                shouldMessageDoubles = shouldMessageDoublesAfterArmorClassHit(),
+            )
             resolveArmorClassHit()
         } else {
-            addNormalRollMessage(type = NormalRollMessageType.ArmorClassMiss)
+            addNormalRollMessage(
+                type = NormalRollMessageType.ArmorClassMiss,
+                shouldMessageDoubles = shouldMessageDoublesAfterArmorClassMiss(),
+            )
             resolveArmorClassMiss()
         }
 
@@ -69,10 +75,16 @@ internal class NormalAttackRollHandler(
         updateDefenderClass { defenderClass -> defenderClass.takeDamage(damage = diceTotal) }
 
         return if (!defender.isConscious()) {
-            addNormalRollMessage(type = knockoutMessageType())
+            addNormalRollMessage(
+                type = knockoutMessageType(),
+                shouldMessageDoubles = shouldMessageDoublesAfterKnockout(),
+            )
             resolveKnockout()
         } else {
-            addNormalRollMessage(type = NormalRollMessageType.Damage)
+            addNormalRollMessage(
+                type = NormalRollMessageType.Damage,
+                shouldMessageDoubles = shouldMessageDoublesAfterDamage(),
+            )
             resolveDamage()
         }
     }
@@ -176,7 +188,10 @@ internal class NormalAttackRollHandler(
         resolveTurnEnd()
     }
 
-    private fun CombatMutator.addNormalRollMessage(type: NormalRollMessageType) {
+    private fun CombatMutator.addNormalRollMessage(
+        type: NormalRollMessageType,
+        shouldMessageDoubles: Boolean,
+    ) {
         addMessage(
             message =
                 ArenaMessage.NormalRoll(
@@ -190,7 +205,8 @@ internal class NormalAttackRollHandler(
         )
 
         val isDoubles = firstDie == secondDie
-        if (isDoubles) {
+        val isDoublesBonusEarned = isDoubles && shouldMessageDoubles
+        if (isDoublesBonusEarned) {
             addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
         }
     }

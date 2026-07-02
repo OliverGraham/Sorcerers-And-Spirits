@@ -227,6 +227,20 @@ class ArenaScreenStateTest {
         )
     }
 
+    @Test
+    fun `Given two players remain in a finished match, then the next match can start`() {
+        val finished = ArenaState.Finished(players = players().values.toList())
+
+        assertTrue(actual = finished.canStartNextMatch)
+    }
+
+    @Test
+    fun `Given only one player remains in a finished match, then the next match cannot start`() {
+        val finished = ArenaState.Finished(players = players().values.take(1))
+
+        assertFalse(actual = finished.canStartNextMatch)
+    }
+
     private fun finishedMatch(
         messageCount: Int,
         numberOfNewMessages: Int,

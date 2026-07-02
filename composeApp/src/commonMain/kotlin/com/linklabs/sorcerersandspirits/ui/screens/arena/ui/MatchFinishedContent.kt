@@ -71,6 +71,7 @@ internal fun MatchFinishedContent(
         Spacer(modifier = Modifier.padding(12.dp))
 
         MatchDecisionControls(
+            canStartNextMatch = finishedState.canStartNextMatch,
             isFinalMatch = gauntletProgress.isFinalMatch,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             secondsRemaining = secondsRemaining,
@@ -80,11 +81,36 @@ internal fun MatchFinishedContent(
 
 @Composable
 private fun MatchDecisionControls(
+    canStartNextMatch: Boolean,
     isFinalMatch: Boolean,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: Int,
     modifier: Modifier = Modifier,
 ) {
+    val actions = ArenaActionsProvider.current
+
+    if (!canStartNextMatch) {
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Everyone else has left the arena.",
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+            AppButton(
+                onClick = actions.onConfirmLeaveArena,
+                borderColor = MaterialTheme.colorScheme.outline,
+            ) {
+                Text(text = "Leave")
+            }
+        }
+        return
+    }
+
     val isCountdownRunning = secondsRemaining > 0
     val nextStepName = if (isFinalMatch) "new gauntlet" else "next match"
 
@@ -112,7 +138,6 @@ private fun MatchDecisionControls(
 
     val continueText = if (isFinalMatch) "Go Again" else "Next Match"
 
-    val actions = ArenaActionsProvider.current
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -300,6 +325,20 @@ private fun MatchFinishedContentWaitingPreview() {
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = true,
             secondsRemaining = 45,
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun MatchFinishedContentLoneSurvivorPreview() {
+    SorcerersAndSpiritsTheme {
+        MatchFinishedContent(
+            finishedState =
+                exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
+            gauntletProgress = GauntletProgress(currentMatch = 2),
+            hasReadiedForNextMatch = false,
+            secondsRemaining = 0,
         )
     }
 }

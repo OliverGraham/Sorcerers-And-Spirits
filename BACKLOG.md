@@ -63,24 +63,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   `ChoseCharacterClass`, and intermediate roll steps like `Teleport.Roll`, `LuckyCoin.HighRollerTrigger`).
 - **Related:** SS-164 (one message → two resources).
 
-### SS-172 — Finished-state timer differs for Match vs Gauntlet
-
-- [ ] Not completed
-- **Goal:** Split the Finished-state countdown behavior by what just finished:
-    - **Match finished (not the final match):** immediately start a **30-second** timer on entering
-      Finished; on completion, **auto-ready the player** for the next match (auto-fire
-      `onStayForAnotherMatch`).
-    - **Gauntlet finished (final match):** keep today's behavior — a **1-minute** timer that does
-      **not** start until a player declares ready for the next Gauntlet.
-- **Source:** `MatchFinishedContent.kt` (`MatchDecisionControls`, `isFinalMatch`,
-  `secondsRemaining`,
-  `hasReadiedForNextMatch`) renders the countdown; the timer itself is owned by the VM. The
-  Match-vs-Gauntlet distinction already exists (`GauntletProgress.isFinalMatch`). The auto-ready
-  path
-  reuses `StayForAnotherMatchUseCase`/`onStayForAnotherMatch`.
-- **Notes:** Coordinate with SS-170 (don't auto-advance/ready into an impossible single-player next
-  match). Related: SS-108 (Next Match/Go Again on Finished), SS-073 (Gauntlet), SS-170.
-
 ### SS-178 — One reusable button for the whole app (text + icon, incl. combat)
 
 - [ ] Not completed

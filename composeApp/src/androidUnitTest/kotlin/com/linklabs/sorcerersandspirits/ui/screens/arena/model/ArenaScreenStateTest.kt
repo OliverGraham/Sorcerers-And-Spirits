@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
@@ -150,7 +151,7 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given the match finishes with nobody readied, then the finished screen has no countdown`() {
+    fun `Given the gauntlet finishes with nobody readied, then the finished screen has no countdown`() {
         val previousState =
             screenState(
                 arenaState =
@@ -160,7 +161,12 @@ class ArenaScreenStateTest {
                     )
             )
         val finishedMatch =
-            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = false)
+            finishedMatch(
+                messageCount = 0,
+                numberOfNewMessages = 0,
+                isUserReady = false,
+                matchNumberInGauntlet = FINAL_MATCH_NUMBER,
+            )
 
         val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
 
@@ -168,10 +174,15 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given the first player readies on the finished screen, then a one-minute countdown starts`() {
+    fun `Given the first player readies on the gauntlet finished screen, then a one-minute countdown starts`() {
         val previousState = screenState(arenaState = ArenaState.Finished(players = emptyList()))
         val finishedMatch =
-            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = true)
+            finishedMatch(
+                messageCount = 0,
+                numberOfNewMessages = 0,
+                isUserReady = true,
+                matchNumberInGauntlet = FINAL_MATCH_NUMBER,
+            )
 
         val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
 
@@ -179,17 +190,66 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given the countdown is already running, then another player readying does not restart it`() {
+    fun `Given the gauntlet countdown is already running, then another player readying does not restart it`() {
         val previousState =
             screenState(
                 arenaState = ArenaState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
             )
         val finishedMatch =
-            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = true)
+            finishedMatch(
+                messageCount = 0,
+                numberOfNewMessages = 0,
+                isUserReady = true,
+                matchNumberInGauntlet = FINAL_MATCH_NUMBER,
+            )
 
         val update = finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID)
 
         assertEquals(expected = TimerAction.None, actual = update.timerAction)
+    }
+
+    @Test
+    fun `Given a non-final match finishes, then a thirty-second countdown starts immediately without anyone readying`() {
+        val timerAction =
+            determineTimerAction(
+                previous =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    ),
+                next = ArenaState.Finished(players = players().values.toList()),
+                isFinalMatch = false,
+            )
+
+        assertEquals(expected = TimerAction.Start(timerDuration = 30), actual = timerAction)
+    }
+
+    @Test
+    fun `Given a non-final match countdown is already running, then a later update does not restart it`() {
+        val timerAction =
+            determineTimerAction(
+                previous = ArenaState.Finished(players = players().values.toList()),
+                next = ArenaState.Finished(players = players().values.toList()),
+                isFinalMatch = false,
+            )
+
+        assertEquals(expected = TimerAction.None, actual = timerAction)
+    }
+
+    @Test
+    fun `Given a non-final match finishes with a lone survivor, then no countdown starts`() {
+        val timerAction =
+            determineTimerAction(
+                previous =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    ),
+                next = ArenaState.Finished(players = players().values.take(n = 1)),
+                isFinalMatch = false,
+            )
+
+        assertEquals(expected = TimerAction.Stop, actual = timerAction)
     }
 
     @Test
@@ -245,6 +305,7 @@ class ArenaScreenStateTest {
         messageCount: Int,
         numberOfNewMessages: Int,
         isUserReady: Boolean = false,
+        matchNumberInGauntlet: Int = 1,
     ) =
         ArenaMatch.Finished(
             messages =
@@ -255,6 +316,7 @@ class ArenaScreenStateTest {
                     )
                 },
             numberOfNewMessages = numberOfNewMessages,
+            matchNumberInGauntlet = matchNumberInGauntlet,
             playerMap = combatPlayers(isUserReady = isUserReady),
         )
 
@@ -331,5 +393,6 @@ class ArenaScreenStateTest {
     private companion object {
         const val USER_ID = "player1"
         const val OPPONENT_ID = "player2"
+        const val FINAL_MATCH_NUMBER = Gauntlet.MATCHES_PER_GAUNTLET
     }
 }

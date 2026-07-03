@@ -228,7 +228,11 @@ class ArenaScreenViewModel(
         // the
         // countdown must start as soon as the screen is reached.
         val timerAction =
-            determineTimerAction(previous = loadedState.arenaState, next = pendingFinishedState)
+            determineTimerAction(
+                previous = loadedState.arenaState,
+                next = pendingFinishedState,
+                isFinalMatch = loadedState.gauntletProgress.isFinalMatch,
+            )
         handleTimerAction(timerAction = timerAction)
     }
 
@@ -447,9 +451,9 @@ class ArenaScreenViewModel(
 
             is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
 
-            // The Finished countdown runs only once another player has readied, so when it expires
-            // the user is auto-readied into the next match (or new Gauntlet) rather than being left
-            // behind. A user who already readied has nothing left to do.
+            // When the Finished countdown expires the user is auto-readied into the next match (or
+            // new Gauntlet) rather than being left behind. A user who already readied has nothing
+            // left to do.
             is ArenaState.Finished ->
                 if (!loadedState.hasReadiedForNextMatch) onStayForAnotherMatch()
         }

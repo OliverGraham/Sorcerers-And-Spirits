@@ -14,7 +14,8 @@ private const val TIMER_URGENT_THRESHOLD_SECONDS = 10
 private const val WAITING_TIMER_DURATION_SECONDS = 30
 private const val CHOOSING_CLASSES_TIMER_DURATION_SECONDS = 30
 private const val COMBAT_TIMER_DURATION_SECONDS = 45
-private const val FINISHED_TIMER_DURATION_SECONDS = 60
+private const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
+private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
 @Immutable
@@ -271,6 +272,8 @@ internal fun ArenaMatch.toUpdatedState(
             previousState = previousState?.arenaState,
         )
 
+    val gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet)
+
     val nextScreenState =
         ArenaScreenState(
             messages = messages,
@@ -280,7 +283,7 @@ internal fun ArenaMatch.toUpdatedState(
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = displayedArenaState,
             participants = participants,
-            gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+            gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
             pendingFinishedState = pendingFinishedState,
@@ -293,7 +296,11 @@ internal fun ArenaMatch.toUpdatedState(
         if (pendingFinishedState != null) {
             TimerAction.Stop
         } else {
-            determineTimerAction(previous = previousState?.arenaState, next = displayedArenaState)
+            determineTimerAction(
+                previous = previousState?.arenaState,
+                next = displayedArenaState,
+                isFinalMatch = gauntletProgress.isFinalMatch,
+            )
         }
 
     val finalState =
@@ -388,7 +395,11 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
-internal fun determineTimerAction(previous: ArenaState?, next: ArenaState): TimerAction =
+internal fun determineTimerAction(
+    previous: ArenaState?,
+    next: ArenaState,
+    isFinalMatch: Boolean,
+): TimerAction =
     when (next) {
         is ArenaState.WaitingForAllPlayers ->
             if (previous == null) {
@@ -420,21 +431,47 @@ internal fun determineTimerAction(previous: ArenaState?, next: ArenaState): Time
                 TimerAction.None
             }
 
-        // The Finished screen waits indefinitely until someone readies for the next match; the
-        // first
-        // ready starts a single countdown (shared across clients, since readiness is shared), after
-        // which a timeout auto-readies each remaining player. Later readies neither restart nor
-        // stop
-        // it. This is identical whether the next step is another match or a brand-new Gauntlet.
-        is ArenaState.Finished -> {
-            val wasAlreadyCountingDown =
-                previous is ArenaState.Finished && previous.hasAnyPlayerReadied
-            when {
-                !next.hasAnyPlayerReadied -> TimerAction.Stop
-                wasAlreadyCountingDown -> TimerAction.None
-                else -> TimerAction.Start(timerDuration = FINISHED_TIMER_DURATION_SECONDS)
+        is ArenaState.Finished ->
+            if (isFinalMatch) {
+                determineGauntletFinishedTimerAction(previous = previous, next = next)
+            } else {
+                determineMatchFinishedTimerAction(previous = previous, next = next)
             }
-        }
     }
+
+/**
+ * A non-final match starts its countdown the instant the Finished screen is entered — no one needs
+ * to ready first — after which a timeout auto-readies each remaining player into the next match
+ * (SS-172). Once started the countdown keeps running across later updates. A lone survivor cannot
+ * start a next match, so no countdown runs and no auto-ready fires into an impossible single-player
+ * match (SS-170).
+ */
+private fun determineMatchFinishedTimerAction(
+    previous: ArenaState?,
+    next: ArenaState.Finished,
+): TimerAction =
+    when {
+        !next.canStartNextMatch -> TimerAction.Stop
+        previous is ArenaState.Finished -> TimerAction.None
+        else -> TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
+    }
+
+/**
+ * The final match ends the Gauntlet, whose Finished screen waits indefinitely until someone readies
+ * for a new Gauntlet; the first ready starts a single, longer countdown (shared across clients,
+ * since readiness is shared), after which a timeout auto-readies each remaining player. Later
+ * readies neither restart nor stop it (SS-172).
+ */
+private fun determineGauntletFinishedTimerAction(
+    previous: ArenaState?,
+    next: ArenaState.Finished,
+): TimerAction {
+    val wasAlreadyCountingDown = previous is ArenaState.Finished && previous.hasAnyPlayerReadied
+    return when {
+        !next.hasAnyPlayerReadied -> TimerAction.Stop
+        wasAlreadyCountingDown -> TimerAction.None
+        else -> TimerAction.Start(timerDuration = GAUNTLET_FINISHED_TIMER_DURATION_SECONDS)
+    }
+}
 
 data class ArenaStateUpdate(val nextState: ArenaScreenState, val timerAction: TimerAction)

@@ -164,23 +164,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-184 — Don't collapse the final knocked-out player to a head icon
-
-- [ ] Not completed
-- **Symptom:** When the final player is knocked out (2-player match, or the last KO of a multiplayer
-  match), the large avatar still morphs to the small head icon (`ClassIcon`). On a match-ending KO
-  there should be **no** collapse-to-head transition.
-- **Goal:** Suppress the large-avatar → head-icon morph for the knockout that ends the match; the
-  downed player stays a large avatar through the transition to Finished.
-- **Source:** `CombatClassIcons.kt`/`CombatAvatars.kt` seating + `deriveHeadIconPlayers` (SS-152
-  collapses a KO'd opponent to a disabled head icon). SS-152 assumed "the final knockout ends the
-  match (→ Finished), so there is no collapse to render then" — this symptom says a collapse *is*
-  rendering on the final KO. Gate the collapse off when the KO is match-ending (held during the
-  SS-171 finish hold).
-- **Notes:** The owner notes large-avatar animations are coming and this will tie into them.
-  Related:
-  SS-152 (KO head icon), SS-168 (seating), SS-123, SS-171 (finish hold).
-
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

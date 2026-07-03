@@ -78,7 +78,11 @@ internal fun ArenaCombat(
                 )
 
                 AnimatedContent(
-                    targetState = state.seatingFor(targetUserId = targetedOpponentUserId),
+                    targetState =
+                        state.seatingFor(
+                            targetUserId = targetedOpponentUserId,
+                            isMatchEnding = screenState.isFinishPending,
+                        ),
                     label = AVATAR_SEATING_TRANSITION_LABEL,
                     modifier = Modifier.weight(weight = 1f),
                 ) { seating ->

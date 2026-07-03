@@ -278,9 +278,37 @@ class CombatSeatingTest {
         )
     }
 
-    private fun seatingOf(state: ArenaState.Combat): CombatSeating {
+    @Test
+    fun `Given the match-ending knockout is being held, then the downed target keeps its large-avatar seat`() {
+        val state =
+            combatState(
+                combatActionState =
+                    normalAttack(
+                        roll = NormalAttackType.Health,
+                        attackerUserId = USER_ID,
+                        defenderUserId = OPPONENT_ID,
+                    ),
+                playerMap =
+                    twoPlayers(
+                        userClass = TestCharacterClasses.paladin(),
+                        opponentClass = TestCharacterClasses.rogue().copy(hitPoints = 0),
+                    ),
+            )
+
+        assertEquals(
+            expected =
+                CombatSeating(
+                    topSeatUserId = OPPONENT_ID,
+                    bottomSeatUserId = USER_ID,
+                    headIconUserIds = emptyList(),
+                ),
+            actual = seatingOf(state = state, isMatchEnding = true),
+        )
+    }
+
+    private fun seatingOf(state: ArenaState.Combat, isMatchEnding: Boolean = false): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
-        return state.seatingFor(targetUserId = targetUserId)
+        return state.seatingFor(targetUserId = targetUserId, isMatchEnding = isMatchEnding)
     }
 
     private fun combatState(

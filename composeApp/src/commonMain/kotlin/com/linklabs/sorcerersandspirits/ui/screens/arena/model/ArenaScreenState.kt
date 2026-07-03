@@ -207,10 +207,7 @@ internal fun ArenaMatch.toUpdatedState(
         }
     val participants = (previousState?.participants ?: emptyMap()) + currentParticipants
 
-    val messages =
-        messages.map { incomingMessage ->
-            incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
-        }
+    val messages = messages.toStates(participants = participants)
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 

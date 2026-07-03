@@ -152,19 +152,6 @@ normal-attack set and its ability animations, worked one class at a time. The se
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
 
-### SS-192 — Rogue ability animations
-
-- [ ] Not completed
-- **Goal:** On the SS-191 system, animate **Killing Momentum** (KO'd target collapses, Rogue re-arms
-  toward the follow-up target — reads as one continuous assault) and **Dodge** (attacker's miss
-  triggers a Rogue sidestep-and-ready flourish; armor-gain gets a brief hardening/shield accent when
-  `didArmorIncrease`).
-- **Also:** the Rogue's unique normal-attack attacker set (hit / miss / knockout strikes),
-  replacing the generic SS-191 lunges when the Rogue attacks.
-- **Cue sources:** `ArenaMessageState.KillingMomentum`, `ArenaMessageState.Dodge`,
-  `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191.
-
 ### SS-193 — Gambler ability animations
 
 - [ ] Not completed

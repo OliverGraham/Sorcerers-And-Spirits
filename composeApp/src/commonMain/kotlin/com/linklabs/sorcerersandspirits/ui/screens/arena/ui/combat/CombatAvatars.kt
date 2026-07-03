@@ -24,6 +24,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -34,6 +38,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -69,6 +75,9 @@ private val statPillIconSize = 24.dp
  * between them (SS-157). Either seat is empty when it has no combatant so the dice stay centered.
  * The seats are assigned by identity — the user's player always sits at the bottom (SS-181) — and
  * the [ActivePlayerHalo] marks whoever is rolling, so the seats themselves carry no meaning.
+ *
+ * The [WeaponStrikeOverlay] spans both seats so a class weapon can fly from one avatar to the other
+ * (SS-192); each seat reports its measured bounds so the strike lands on the defender art.
  */
 @Composable
 internal fun CombatAvatarColumn(
@@ -81,25 +90,43 @@ internal fun CombatAvatarColumn(
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        SeatedAvatar(
-            player = topPlayer,
-            animationCue = animationCue,
-            isTopSeat = true,
-            userPlayerId = userPlayerId,
-            activeUserIds = activeUserIds,
-            onInspect = onInspect,
-        )
+    val avatarBoundsByUserId = remember { mutableStateMapOf<String, Rect>() }
+    var stageBounds by remember { mutableStateOf(value = Rect.Zero) }
 
-        DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
+    Box(
+        modifier = modifier.fillMaxSize().onGloballyPositioned { stageBounds = it.boundsInRoot() }
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            SeatedAvatar(
+                player = topPlayer,
+                animationCue = animationCue,
+                isTopSeat = true,
+                userPlayerId = userPlayerId,
+                activeUserIds = activeUserIds,
+                onInspect = onInspect,
+                onAvatarBoundsChanged = { userId, bounds -> avatarBoundsByUserId[userId] = bounds },
+            )
 
-        SeatedAvatar(
-            player = bottomPlayer,
+            DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
+
+            SeatedAvatar(
+                player = bottomPlayer,
+                animationCue = animationCue,
+                isTopSeat = false,
+                userPlayerId = userPlayerId,
+                activeUserIds = activeUserIds,
+                onInspect = onInspect,
+                onAvatarBoundsChanged = { userId, bounds -> avatarBoundsByUserId[userId] = bounds },
+            )
+        }
+
+        WeaponStrikeOverlay(
             animationCue = animationCue,
-            isTopSeat = false,
-            userPlayerId = userPlayerId,
-            activeUserIds = activeUserIds,
-            onInspect = onInspect,
+            avatarBoundsFor = { userId ->
+                val bounds = avatarBoundsByUserId[userId]
+                if (bounds != null) bounds.translate(offset = -stageBounds.topLeft) else null
+            },
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
@@ -112,6 +139,7 @@ private fun ColumnScope.SeatedAvatar(
     userPlayerId: String,
     activeUserIds: Set<String>,
     onInspect: (String) -> Unit,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
 ) {
     if (player != null) {
         LargeAvatar(
@@ -121,6 +149,7 @@ private fun ColumnScope.SeatedAvatar(
             isUserPlayer = player.userId == userPlayerId,
             isActiveRoller = player.userId in activeUserIds,
             onInspect = onInspect,
+            onAvatarBoundsChanged = onAvatarBoundsChanged,
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
         )
     } else {
@@ -136,6 +165,7 @@ private fun LargeAvatar(
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
     onInspect: (String) -> Unit,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val classColor = player.characterClass.type.toColor()
@@ -157,7 +187,10 @@ private fun LargeAvatar(
         )
 
         Box(
-            modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
+            modifier =
+                Modifier.weight(weight = 1f).fillMaxWidth().onGloballyPositioned {
+                    onAvatarBoundsChanged(player.userId, it.boundsInRoot())
+                },
             contentAlignment = Alignment.BottomCenter,
         ) {
             if (isActiveRoller) {

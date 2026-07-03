@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlin.test.Test
@@ -20,18 +21,7 @@ class ArenaMessageStateTest {
                 outcome = NormalRollMessageType.ArmorClassMiss,
             )
 
-        val state =
-            message.toState(
-                id = MESSAGE_ID,
-                participants =
-                    mapOf(
-                        ATTACKER_ID to
-                            ParticipantClass(
-                                className = ATTACKER_CLASS_NAME,
-                                type = CharacterClassType.Mage,
-                            )
-                    ),
-            )
+        val state = message.toSingleState()
 
         val temptFate = assertIs<ArenaMessageState.MirrorImage.TemptFate>(value = state)
         assertEquals(expected = 4, actual = temptFate.rawReroll)
@@ -49,18 +39,7 @@ class ArenaMessageStateTest {
                 outcome = NormalRollMessageType.ArmorClassMiss,
             )
 
-        val state =
-            message.toState(
-                id = MESSAGE_ID,
-                participants =
-                    mapOf(
-                        ATTACKER_ID to
-                            ParticipantClass(
-                                className = ATTACKER_CLASS_NAME,
-                                type = CharacterClassType.Mage,
-                            )
-                    ),
-            )
+        val state = message.toSingleState()
 
         val temptFate = assertIs<ArenaMessageState.MirrorImage.TemptFate>(value = state)
         assertEquals(expected = 1, actual = temptFate.rawReroll)
@@ -68,9 +47,85 @@ class ArenaMessageStateTest {
         assertEquals(expected = "1 - 1", actual = temptFate.rerollDisplay)
     }
 
+    @Test
+    fun `Given a Killing Momentum trigger, then it carries the attacker of the knockout roll`() {
+        val states =
+            listOf(
+                    incomingNormalRoll(id = "roll", type = NormalRollMessageType.Knockout),
+                    IncomingArenaMessage(id = "trigger", message = ArenaMessage.KillingMomentum),
+                )
+                .toStates(participants = participants)
+
+        assertEquals(
+            expected =
+                ArenaMessageState.KillingMomentum(id = "trigger", attackerUserId = ATTACKER_ID),
+            actual = states.last(),
+        )
+    }
+
+    @Test
+    fun `Given a Dodge trigger, then it carries the defender of the missed roll`() {
+        val states =
+            listOf(
+                    incomingNormalRoll(id = "roll", type = NormalRollMessageType.ArmorClassMiss),
+                    IncomingArenaMessage(
+                        id = "trigger",
+                        message = ArenaMessage.Dodge(didArmorIncrease = true),
+                    ),
+                )
+                .toStates(participants = participants)
+
+        assertEquals(
+            expected =
+                ArenaMessageState.Dodge(
+                    id = "trigger",
+                    didArmorIncrease = true,
+                    dodgerUserId = DEFENDER_ID,
+                ),
+            actual = states.last(),
+        )
+    }
+
+    @Test
+    fun `Given a trigger with no roll before it, then it carries no actor`() {
+        val states =
+            listOf(IncomingArenaMessage(id = "trigger", message = ArenaMessage.KillingMomentum))
+                .toStates(participants = participants)
+
+        assertEquals(
+            expected = ArenaMessageState.KillingMomentum(id = "trigger", attackerUserId = null),
+            actual = states.last(),
+        )
+    }
+
+    private fun ArenaMessage.toSingleState(): ArenaMessageState =
+        listOf(IncomingArenaMessage(id = MESSAGE_ID, message = this))
+            .toStates(participants = participants)
+            .single()
+
+    private fun incomingNormalRoll(id: String, type: NormalRollMessageType) =
+        IncomingArenaMessage(
+            id = id,
+            message =
+                ArenaMessage.NormalRoll(
+                    attackerUserId = ATTACKER_ID,
+                    defenderUserId = DEFENDER_ID,
+                    firstDie = 2,
+                    secondDie = 3,
+                    bonus = 0,
+                    type = type,
+                ),
+        )
+
+    private val participants =
+        mapOf(
+            ATTACKER_ID to ParticipantClass(className = "Mage", type = CharacterClassType.Mage),
+            DEFENDER_ID to ParticipantClass(className = "Rogue", type = CharacterClassType.Rogue),
+        )
+
     private companion object {
         private const val MESSAGE_ID = "message-1"
         private const val ATTACKER_ID = "attacker"
-        private const val ATTACKER_CLASS_NAME = "Mage"
+        private const val DEFENDER_ID = "defender"
     }
 }

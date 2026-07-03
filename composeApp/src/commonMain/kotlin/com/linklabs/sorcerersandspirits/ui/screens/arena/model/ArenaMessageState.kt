@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
@@ -50,10 +51,24 @@ sealed interface ArenaMessageState {
         val total: Int = firstDie + secondDie + bonus
     }
 
-    @Immutable data class KillingMomentum(override val id: String) : ArenaMessageState
-
+    /**
+     * The domain trigger names no one, so [attackerUserId] is carried over from the knockout roll
+     * that earned the momentum; null when that roll is no longer in the log.
+     */
     @Immutable
-    data class Dodge(override val id: String, val didArmorIncrease: Boolean) : ArenaMessageState
+    data class KillingMomentum(override val id: String, val attackerUserId: String?) :
+        ArenaMessageState
+
+    /**
+     * The domain trigger names no one, so [dodgerUserId] is carried over from the missed roll the
+     * Rogue dodged; null when that roll is no longer in the log.
+     */
+    @Immutable
+    data class Dodge(
+        override val id: String,
+        val didArmorIncrease: Boolean,
+        val dodgerUserId: String?,
+    ) : ArenaMessageState
 
     @Immutable
     sealed interface Teleport : ArenaMessageState {
@@ -277,9 +292,35 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
  */
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
-fun ArenaMessage.toState(
+/**
+ * Maps the incoming messages in order while remembering the most recent [ArenaMessage.NormalRoll],
+ * because the KillingMomentum and Dodge triggers name no players of their own: the domain emits
+ * each one immediately after the roll that triggered it, so the actor their avatar animation needs
+ * (SS-192) is read from that roll.
+ */
+fun List<IncomingArenaMessage>.toStates(
+    participants: Map<String, ParticipantClass>
+): List<ArenaMessageState> {
+    var lastNormalRoll: ArenaMessage.NormalRoll? = null
+    return map { incomingMessage ->
+        val message = incomingMessage.message
+        val state =
+            message.toState(
+                id = incomingMessage.id,
+                participants = participants,
+                lastNormalRoll = lastNormalRoll,
+            )
+        if (message is ArenaMessage.NormalRoll) {
+            lastNormalRoll = message
+        }
+        state
+    }
+}
+
+private fun ArenaMessage.toState(
     id: String,
     participants: Map<String, ParticipantClass>,
+    lastNormalRoll: ArenaMessage.NormalRoll?,
 ): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
@@ -307,7 +348,11 @@ fun ArenaMessage.toState(
             )
 
         is ArenaMessage.Dodge ->
-            ArenaMessageState.Dodge(id = id, didArmorIncrease = didArmorIncrease)
+            ArenaMessageState.Dodge(
+                id = id,
+                didArmorIncrease = didArmorIncrease,
+                dodgerUserId = lastNormalRoll?.defenderUserId,
+            )
 
         is ArenaMessage.Encore.Trigger -> ArenaMessageState.Encore.Trigger(id = id)
 
@@ -344,7 +389,11 @@ fun ArenaMessage.toState(
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )
 
-        is ArenaMessage.KillingMomentum -> ArenaMessageState.KillingMomentum(id = id)
+        is ArenaMessage.KillingMomentum ->
+            ArenaMessageState.KillingMomentum(
+                id = id,
+                attackerUserId = lastNormalRoll?.attackerUserId,
+            )
 
         is ArenaMessage.LuckyCoin.Flip ->
             ArenaMessageState.LuckyCoin.Flip(

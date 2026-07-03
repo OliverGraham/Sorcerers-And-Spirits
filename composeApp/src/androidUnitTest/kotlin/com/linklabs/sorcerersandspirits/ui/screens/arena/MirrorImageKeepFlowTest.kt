@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
@@ -27,7 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toStates
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
@@ -207,7 +208,8 @@ class MirrorImageKeepFlowTest {
 
         val latestRoll =
             outcome.messages
-                .map { it.toState(id = it.hashCode().toString(), participants = emptyMap()) }
+                .map { IncomingArenaMessage(id = it.hashCode().toString(), message = it) }
+                .toStates(participants = emptyMap())
                 .latestRoll()
         assertEquals(
             expected = RollResultState.Faces(slotFaces = mapOf(0 to 2, 1 to 5)),

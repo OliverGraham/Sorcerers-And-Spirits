@@ -24,9 +24,15 @@ data class CombatSeating(
  * the dice changing hands (Mirror Image, Riposte, a turn passing between the same two players)
  * never rearranges the stage; only the active-roller halo moves (SS-168, SS-181).
  */
-internal fun ArenaState.Combat.seatingFor(targetUserId: String): CombatSeating {
+internal fun ArenaState.Combat.seatingFor(
+    targetUserId: String,
+    isMatchEnding: Boolean,
+): CombatSeating {
     val seatedUserIds =
-        setOfNotNull(attackingUserId, seatedTargetUserId(targetUserId = targetUserId))
+        setOfNotNull(
+            attackingUserId,
+            seatedTargetUserId(targetUserId = targetUserId, isMatchEnding = isMatchEnding),
+        )
     val (topSeatUserId, bottomSeatUserId) = assignSeats(seatedUserIds = seatedUserIds)
 
     return CombatSeating(
@@ -47,10 +53,18 @@ internal fun ArenaState.Combat.seatedPlayer(seatUserId: String?): PlayerState.Se
  * — a KO'd player drops back to a head icon instead (SS-152) — or it is the attacker itself. A
  * self-targeted ability (e.g. Summon Minion) names the actor as its own defender, and the actor is
  * already seated, so it must not take both seats (SS-168).
+ *
+ * The match-ending knockout is the exception: while the finish hold shows the closing KO
+ * ([isMatchEnding]), the downed target keeps its seat as a large avatar rather than collapsing to a
+ * head icon, since there is no further combat to promote another opponent into the seat (SS-184).
  */
-private fun ArenaState.Combat.seatedTargetUserId(targetUserId: String): String? {
+private fun ArenaState.Combat.seatedTargetUserId(
+    targetUserId: String,
+    isMatchEnding: Boolean,
+): String? {
     val target = playerMap[targetUserId] ?: return null
-    if (!target.characterClass.isConscious) return null
+    val isKnockedOutMidMatch = !target.characterClass.isConscious && !isMatchEnding
+    if (isKnockedOutMidMatch) return null
     return if (target.userId == attackingUserId) null else target.userId
 }
 

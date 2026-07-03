@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
@@ -590,28 +591,44 @@ class ArenaScreenViewModelTest {
         }
 
     @Test
-    fun `Given the finished countdown expires and the user has not readied, then the user is auto-readied`() =
+    fun `Given a non-final match finishes, then the countdown auto-readies the user without anyone readying first`() =
         runTest {
             val playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue())
             val viewModel =
                 combatViewModel(nextCombatAction = idleTurn(OPPONENT_ID), playerMap = playerMap)
 
-            // The opponent readying starts the shared countdown while the user has not readied.
-            val countdownPlayerMap =
-                playerMap +
-                    (OPPONENT_ID to
-                        playerMap.getValue(OPPONENT_ID).copy(isReadyForNextMatch = true))
             arenaMatchFlow.value =
                 ArenaMatch.Finished(
                     messages = emptyList(),
                     numberOfNewMessages = 0,
-                    playerMap = countdownPlayerMap,
+                    playerMap = playerMap,
                 )
             runCurrent()
 
             advanceUntilIdle()
 
             coVerify { stayForAnotherMatchUseCase(arenaId = arguments.arenaId) }
+        }
+
+    @Test
+    fun `Given the gauntlet finishes and nobody readies, then the user is not auto-readied`() =
+        runTest {
+            val playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue())
+            val viewModel =
+                combatViewModel(nextCombatAction = idleTurn(OPPONENT_ID), playerMap = playerMap)
+
+            arenaMatchFlow.value =
+                ArenaMatch.Finished(
+                    messages = emptyList(),
+                    numberOfNewMessages = 0,
+                    matchNumberInGauntlet = Gauntlet.MATCHES_PER_GAUNTLET,
+                    playerMap = playerMap,
+                )
+            runCurrent()
+
+            advanceUntilIdle()
+
+            coVerify(exactly = 0) { stayForAnotherMatchUseCase(arenaId = arguments.arenaId) }
         }
 
     // ---------- Forfeit dialog ----------

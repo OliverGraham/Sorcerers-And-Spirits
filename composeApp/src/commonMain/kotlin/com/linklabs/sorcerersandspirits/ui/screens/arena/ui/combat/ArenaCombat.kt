@@ -171,6 +171,7 @@ private fun CombatStage(
             animationCue = animationCue,
             userPlayerId = state.userPlayerId,
             activeUserIds = state.activeUserIds,
+            turnOwnerUserId = state.turnOwnerUserId,
             onInspect = onInspect,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
             modifier = Modifier.weight(weight = if (hasHeadIcons) 0.7f else 1f),

@@ -14,6 +14,7 @@ data class CharacterClassState(
     val speed: Int,
     val offensiveAbility: OffensiveAbilityState,
     val defensiveAbility: DefensiveAbilityState,
+    val attacksRemaining: Int,
 ) {
     val className: String = type.name
     val isConscious: Boolean = hitPoints > 0
@@ -56,6 +57,7 @@ internal fun CharacterClass.toState() =
         speed = speed,
         offensiveAbility = offensiveAbility.toState(),
         defensiveAbility = defensiveAbility.toState(),
+        attacksRemaining = attacksRemaining,
     )
 
 internal fun CharacterClassState.toDomain() =
@@ -67,4 +69,5 @@ internal fun CharacterClassState.toDomain() =
         speed = speed,
         offensiveAbility = offensiveAbility.toDomain(),
         defensiveAbility = defensiveAbility.toDomain(),
+        attacksRemaining = attacksRemaining,
     )

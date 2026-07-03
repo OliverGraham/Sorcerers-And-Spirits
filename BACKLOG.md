@@ -130,6 +130,27 @@ are archived in [COMPLETED.md](COMPLETED.md).
   PNGs; remove the superseded PNGs if nothing else depends on them.
 - **Notes:** Related: SS-136. Asset-prep discipline per [[downsample-figma-raster-assets]].
 
+### SS-200 — Attacks-remaining stat in AvatarStatsBar (turn owner only)
+
+- [ ] Not completed
+- **Goal:** Add an attacks-remaining stat + icon to `AvatarStatsBar` so the current turn owner sees
+  how many attacks they still have this turn, decrementing as they spend them and bumping up when an
+  ability grants a bonus attack.
+- **Count is domain-owned:** `CharacterClass.attacksRemaining` (persisted via `CharacterClassEntity`
+  so every client agrees). Encore/Killing Momentum keep no persistent flag, so a UI derivation
+  can't see their bonus — the domain must track it. Maintained in `CombatMutator`:
+    - **Reset** at each turn start (beside `resetMinionAttacks`) to `1 + minionAttacks`.
+    - **Decrement** optimistically the instant dice are rolled — the turn owner's opening
+      Armor-class roll (`NormalAttackRollHandler`) — floored at 0.
+    - **Increment** on each bonus-attack grant: All-In attack-twice, Encore success, Killing
+      Momentum trigger. (Minion follow-ups are already in the reset total; All-In does not decrement
+      since it doesn't use up an attack.)
+- **Visibility:** shown only for the avatar whose player is the current `turnOwnerUserId`; hidden
+  otherwise. `turnOwnerUserId` threaded from `ArenaState.Combat` through `CombatAvatarColumn`.
+- **Animation:** the pill enters/exits with `AnimatedVisibility` when the turn owner changes; the
+  number swaps with `AnimatedContent` when `attacksRemaining` updates.
+- **Icon:** reuses the existing `ic_attack_button` drawable (rename the resource later).
+
 > The two head-icon transition targets originally tracked here as SS-140 (head → large targeted
 > avatar) and SS-141 (head → expanded stat view) were placeholders; both are now realized concretely
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),

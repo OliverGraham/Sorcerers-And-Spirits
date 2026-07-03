@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
@@ -34,6 +35,8 @@ internal fun ArenaCombat(
     modifier: Modifier = Modifier,
 ) {
     val diceRoll = rememberDiceRoll()
+
+    val flashPlayback = rememberFlashPlayback(flashMessages = screenState.flashMessages)
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
@@ -93,6 +96,7 @@ internal fun ArenaCombat(
                         CombatStage(
                             state = state,
                             seating = seating,
+                            animationCue = flashPlayback.combatAnimationCue,
                             onSelectTarget = { selectedOpponentUserId = it },
                             onInspect = { inspectedUserId = it },
                             isTargetable =
@@ -125,7 +129,7 @@ internal fun ArenaCombat(
             //                Should be elsewhere
             DiceOverlay(diceRoll = diceRoll, homeBounds = diceHomeBounds)
 
-            FlashOverlay(flashMessages = screenState.flashMessages)
+            FlashOverlay(playback = flashPlayback)
 
             InspectDrawer(
                 player = inspectedUserId?.let { state.playerMap[it] },
@@ -150,6 +154,7 @@ internal fun ArenaCombat(
 private fun CombatStage(
     state: ArenaState.Combat,
     seating: CombatSeating,
+    animationCue: CombatAnimationCue?,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
@@ -163,6 +168,7 @@ private fun CombatStage(
         CombatAvatarColumn(
             topPlayer = state.seatedPlayer(seatUserId = seating.topSeatUserId),
             bottomPlayer = state.seatedPlayer(seatUserId = seating.bottomSeatUserId),
+            animationCue = animationCue,
             userPlayerId = state.userPlayerId,
             activeUserIds = state.activeUserIds,
             onInspect = onInspect,

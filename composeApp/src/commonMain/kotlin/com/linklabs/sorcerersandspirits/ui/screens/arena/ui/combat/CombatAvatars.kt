@@ -31,6 +31,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toAvatarResource
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -72,6 +74,7 @@ private val statPillIconSize = 24.dp
 internal fun CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
     bottomPlayer: PlayerState.Selected?,
+    animationCue: CombatAnimationCue?,
     userPlayerId: String,
     activeUserIds: Set<String>,
     onInspect: (String) -> Unit,
@@ -81,6 +84,8 @@ internal fun CombatAvatarColumn(
     Column(modifier = modifier.fillMaxSize()) {
         SeatedAvatar(
             player = topPlayer,
+            animationCue = animationCue,
+            isTopSeat = true,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
             onInspect = onInspect,
@@ -90,6 +95,8 @@ internal fun CombatAvatarColumn(
 
         SeatedAvatar(
             player = bottomPlayer,
+            animationCue = animationCue,
+            isTopSeat = false,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
             onInspect = onInspect,
@@ -100,6 +107,8 @@ internal fun CombatAvatarColumn(
 @Composable
 private fun ColumnScope.SeatedAvatar(
     player: PlayerState.Selected?,
+    animationCue: CombatAnimationCue?,
+    isTopSeat: Boolean,
     userPlayerId: String,
     activeUserIds: Set<String>,
     onInspect: (String) -> Unit,
@@ -107,6 +116,8 @@ private fun ColumnScope.SeatedAvatar(
     if (player != null) {
         LargeAvatar(
             player = player,
+            animationCue = animationCue,
+            isTopSeat = isTopSeat,
             isUserPlayer = player.userId == userPlayerId,
             isActiveRoller = player.userId in activeUserIds,
             onInspect = onInspect,
@@ -120,12 +131,20 @@ private fun ColumnScope.SeatedAvatar(
 @Composable
 private fun LargeAvatar(
     player: PlayerState.Selected,
+    animationCue: CombatAnimationCue?,
+    isTopSeat: Boolean,
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
     onInspect: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val classColor = player.characterClass.type.toColor()
+    val gestureState =
+        rememberAvatarGesture(
+            animationCue = animationCue,
+            userId = player.userId,
+            isTopSeat = isTopSeat,
+        )
 
     Row(
         modifier = modifier.clickable { onInspect(player.userId) },
@@ -145,8 +164,9 @@ private fun LargeAvatar(
                 ActivePlayerHalo()
             }
 
-            ClassAvatar(
+            GestureClassAvatar(
                 characterClass = player.characterClass,
+                gestureState = gestureState,
                 modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
             )
         }
@@ -266,13 +286,14 @@ internal fun ClassAvatar(
     characterClass: CharacterClassState,
     modifier: Modifier = Modifier,
     alignment: Alignment = Alignment.Center,
+    colorFilter: ColorFilter? = null,
 ) {
-    // TODO(SS-068): combat animations will drive this static art.
     Image(
         painter = painterResource(resource = characterClass.type.toAvatarResource()),
         contentDescription = characterClass.className,
         contentScale = ContentScale.Fit,
         alignment = alignment,
+        colorFilter = colorFilter,
         modifier = modifier,
     )
 }

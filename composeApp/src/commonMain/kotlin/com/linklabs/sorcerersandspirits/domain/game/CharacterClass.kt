@@ -11,6 +11,7 @@ data class CharacterClass(
     val offensiveAbility: OffensiveAbility,
     val defensiveAbility: DefensiveAbility,
     val hasActedThisRound: Boolean = false,
+    val attacksRemaining: Int = 1,
 ) {
     val className = type.name
 

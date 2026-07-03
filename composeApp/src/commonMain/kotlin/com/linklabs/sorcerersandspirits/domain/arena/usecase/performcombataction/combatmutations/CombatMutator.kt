@@ -122,6 +122,32 @@ internal class CombatMutator(
         updateDefenderClass { defender -> defender.copy(hitPoints = hitPoints) }
     }
 
+    /**
+     * Spends one of the turn owner's attacks the moment they commit to it — an opening Armor-class
+     * roll — so the attacks-remaining marker (SS-200) drops optimistically as the dice leave the
+     * hand. Only the turn owner's own attacks count; a Riposte reversal is the Duelist's swing, not
+     * the turn owner's.
+     */
+    fun spendTurnOwnerAttack() {
+        updatePlayerClass(userId = originalTurnUserId) { characterClass ->
+            characterClass.copy(
+                attacksRemaining =
+                    (characterClass.attacksRemaining - 1).coerceAtLeast(minimumValue = 0)
+            )
+        }
+    }
+
+    /**
+     * Grants the turn owner an extra attack for the attacks-remaining marker (SS-200): the
+     * Gambler's successful All-In, a Bard's Encore, or a Rogue's Killing Momentum. Minion
+     * follow-ups are already counted at turn start, so they do not grant here.
+     */
+    fun grantBonusAttack() {
+        updatePlayerClass(userId = originalTurnUserId) { characterClass ->
+            characterClass.copy(attacksRemaining = characterClass.attacksRemaining + 1)
+        }
+    }
+
     fun addMessage(message: ArenaMessage) {
         messages.add(element = message)
     }
@@ -143,6 +169,7 @@ internal class CombatMutator(
         val nextPlayer = calculateNextPlayerInRound()
         if (nextPlayer != null) {
             resetMinionAttacks(userId = nextPlayer.userId)
+            resetAttacksRemaining(userId = nextPlayer.userId)
             nextPlayer.characterClass.addNewTurnMessage()
             setNextCombatAction(
                 nextAction = NextCombatAction.Idle(activeUserIds = setOf(nextPlayer.userId))
@@ -224,6 +251,22 @@ internal class CombatMutator(
         }
     }
 
+    /**
+     * Sets a player's attacks-remaining marker (SS-200) as their turn begins: one normal attack
+     * plus a summoner's minion follow-ups. Read after [resetMinionAttacks] so the full minion count
+     * is counted before any are spent this turn.
+     */
+    private fun resetAttacksRemaining(userId: UserId) {
+        val offensiveAbility =
+            updatedPlayerMap.getValue(key = userId).characterClass.offensiveAbility
+        val minions = offensiveAbility.effective as? OffensiveAbility.SummonMinion
+        val minionFollowUps = minions?.minionAttacks ?: 0
+
+        updatePlayerClass(userId = userId) { characterClass ->
+            characterClass.copy(attacksRemaining = 1 + minionFollowUps)
+        }
+    }
+
     private fun goToNextRound() {
         val newRoundNumber = roundNumber + 1
         updatedRoundNumber = newRoundNumber
@@ -233,6 +276,7 @@ internal class CombatMutator(
 
         val fastestPlayerNextRound = consciousPlayers.maxBy { it.characterClass.speed }
         resetMinionAttacks(userId = fastestPlayerNextRound.userId)
+        resetAttacksRemaining(userId = fastestPlayerNextRound.userId)
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
 
         setNextCombatAction(

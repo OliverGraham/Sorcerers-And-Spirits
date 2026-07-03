@@ -1,5 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -52,6 +54,7 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_armor_class
+import sorcerersandspirits.composeapp.generated.resources.ic_attack_button
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 import sorcerersandspirits.composeapp.generated.resources.ic_user_player
@@ -69,6 +72,7 @@ private const val HALO_SWEEP_TRANSLATE_LABEL = "haloSweepTranslate"
 
 private val statPillShape = RoundedCornerShape(size = 8.dp)
 private val statPillIconSize = 24.dp
+private const val ATTACKS_COUNT_LABEL = "attacksCount"
 
 /**
  * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
@@ -86,6 +90,7 @@ internal fun CombatAvatarColumn(
     animationCue: CombatAnimationCue?,
     userPlayerId: String,
     activeUserIds: Set<String>,
+    turnOwnerUserId: String,
     onInspect: (String) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
@@ -103,6 +108,7 @@ internal fun CombatAvatarColumn(
                 isTopSeat = true,
                 userPlayerId = userPlayerId,
                 activeUserIds = activeUserIds,
+                turnOwnerUserId = turnOwnerUserId,
                 onInspect = onInspect,
                 onAvatarBoundsChanged = { userId, bounds -> avatarBoundsByUserId[userId] = bounds },
             )
@@ -115,6 +121,7 @@ internal fun CombatAvatarColumn(
                 isTopSeat = false,
                 userPlayerId = userPlayerId,
                 activeUserIds = activeUserIds,
+                turnOwnerUserId = turnOwnerUserId,
                 onInspect = onInspect,
                 onAvatarBoundsChanged = { userId, bounds -> avatarBoundsByUserId[userId] = bounds },
             )
@@ -124,7 +131,7 @@ internal fun CombatAvatarColumn(
             animationCue = animationCue,
             avatarBoundsFor = { userId ->
                 val bounds = avatarBoundsByUserId[userId]
-                if (bounds != null) bounds.translate(offset = -stageBounds.topLeft) else null
+                bounds?.translate(offset = -stageBounds.topLeft)
             },
             modifier = Modifier.fillMaxSize(),
         )
@@ -138,6 +145,7 @@ private fun ColumnScope.SeatedAvatar(
     isTopSeat: Boolean,
     userPlayerId: String,
     activeUserIds: Set<String>,
+    turnOwnerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
 ) {
@@ -148,6 +156,7 @@ private fun ColumnScope.SeatedAvatar(
             isTopSeat = isTopSeat,
             isUserPlayer = player.userId == userPlayerId,
             isActiveRoller = player.userId in activeUserIds,
+            isTurnOwner = player.userId == turnOwnerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
@@ -164,6 +173,7 @@ private fun LargeAvatar(
     isTopSeat: Boolean,
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
+    isTurnOwner: Boolean,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
@@ -183,6 +193,7 @@ private fun LargeAvatar(
         AvatarStatsBar(
             characterClass = player.characterClass,
             isUserPlayer = isUserPlayer,
+            isTurnOwner = isTurnOwner,
             classColor = classColor,
         )
 
@@ -209,12 +220,14 @@ private fun LargeAvatar(
 /**
  * The Speed / Armor / Hit-points pills shown beside an avatar, mirroring the inspect drawer's stat
  * markers (SS-157). The local player's identity marker sits atop the pills so the column reads as
- * "you", with each pill stacked vertically down the side of the avatar.
+ * "you", with each pill stacked vertically down the side of the avatar. An attacks-remaining pill
+ * joins them only while this avatar's player owns the turn (SS-200).
  */
 @Composable
 private fun AvatarStatsBar(
     characterClass: CharacterClassState,
     isUserPlayer: Boolean,
+    isTurnOwner: Boolean,
     classColor: Color,
     modifier: Modifier = Modifier,
 ) {
@@ -242,6 +255,10 @@ private fun AvatarStatsBar(
             value = characterClass.hitPointsDisplay,
             classColor = classColor,
         )
+
+        AnimatedVisibility(visible = isTurnOwner) {
+            AttacksStatPill(count = characterClass.attacksRemaining, classColor = classColor)
+        }
     }
 }
 
@@ -251,6 +268,36 @@ private fun StatPill(
     value: String,
     classColor: Color,
     modifier: Modifier = Modifier,
+) {
+    StatPillFrame(icon = icon, classColor = classColor, modifier = modifier) {
+        StatPillValue(value = value)
+    }
+}
+
+/**
+ * The turn owner's attacks-remaining pill, shown only while it is their turn. The number swaps with
+ * an [AnimatedContent] so a Necromancer's follow-ups tick down (or a fresh count fades in) rather
+ * than snapping.
+ */
+@Composable
+private fun AttacksStatPill(count: Int, classColor: Color, modifier: Modifier = Modifier) {
+    StatPillFrame(
+        icon = Res.drawable.ic_attack_button,
+        classColor = classColor,
+        modifier = modifier,
+    ) {
+        AnimatedContent(targetState = count, label = ATTACKS_COUNT_LABEL) { attacks ->
+            StatPillValue(value = attacks.toString())
+        }
+    }
+}
+
+@Composable
+private fun StatPillFrame(
+    icon: DrawableResource,
+    classColor: Color,
+    modifier: Modifier = Modifier,
+    value: @Composable () -> Unit,
 ) {
     Row(
         modifier =
@@ -266,13 +313,18 @@ private fun StatPill(
             contentDescription = null,
             modifier = Modifier.size(size = statPillIconSize),
         )
-        Text(
-            text = value,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-        )
+        value()
     }
+}
+
+@Composable
+private fun StatPillValue(value: String) {
+    Text(
+        text = value,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = Color.White,
+    )
 }
 
 /**

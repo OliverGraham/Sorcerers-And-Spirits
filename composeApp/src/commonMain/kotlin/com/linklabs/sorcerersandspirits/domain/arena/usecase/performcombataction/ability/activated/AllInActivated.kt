@@ -30,6 +30,7 @@ internal class AllInActivated(
                         offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn)
                     )
                 }
+                grantBonusAttack()
 
                 setNextCombatAction(
                     nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))

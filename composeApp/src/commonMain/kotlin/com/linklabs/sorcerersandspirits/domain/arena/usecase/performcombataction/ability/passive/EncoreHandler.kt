@@ -30,6 +30,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         )
 
         if (isSuccessful) {
+            grantBonusAttack()
             setNextCombatAction(
                 nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
             )

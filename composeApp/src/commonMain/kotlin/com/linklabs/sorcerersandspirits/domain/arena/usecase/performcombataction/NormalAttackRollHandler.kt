@@ -31,6 +31,11 @@ internal class NormalAttackRollHandler(
     }
 
     private fun CombatMutator.handleRoll(currentAction: CurrentCombatAction.NormalAttack) {
+        val isTurnOwnersOpeningRoll =
+            currentAction.roll == NormalAttackType.ArmorClass &&
+                attackerUserId == originalTurnUserId
+        if (isTurnOwnersOpeningRoll) spendTurnOwnerAttack()
+
         val isSpellPotencyRoll = handleSpellPotencyIfApplicable()
         if (isSpellPotencyRoll) return
 

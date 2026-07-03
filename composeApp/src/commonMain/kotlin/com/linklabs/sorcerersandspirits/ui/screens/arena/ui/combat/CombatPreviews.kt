@@ -161,8 +161,10 @@ private fun ArenaCombatFlashPreview() {
         flashMessage =
             ArenaMessageState.NormalRoll(
                 id = "ko",
+                attackerUserId = "player1",
                 attackerName = "Mage",
                 attackerClassType = CharacterClassType.Mage,
+                defenderUserId = "player2",
                 defenderName = "Rogue",
                 firstDie = 6,
                 secondDie = 6,

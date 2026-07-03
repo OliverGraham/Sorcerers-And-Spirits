@@ -137,6 +137,128 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ---
 
+## Combat animations
+
+Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system
+(SS-191) is the extensibility seam; each class ticket (SS-192…SS-199) fills in its animations on
+top of it. No Lottie/Compottie — plain Compose `Animatable`/`graphicsLayer` transforms plus
+`ColorMatrix` color effects on the existing avatar art (SS-068 dropped Lottie).
+
+Owner direction (2026-07-02): every class gets a **unique attacker-side animation set for normal
+attacks** (its hit / miss / knockout strikes); the **defender-side reactions stay shared** (Flinch /
+Sidestep / Collapse — may be revisited later). Each class ticket therefore covers both its unique
+normal-attack set and its ability animations, worked one class at a time. The seam is ready:
+`ArenaMessageState.NormalRoll` already carries `attackerClassType`, so a class ticket threads it
+into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
+SS-191's generic lunges remain the fallback for classes not yet done.
+
+### SS-192 — Rogue ability animations
+
+- [ ] Not completed
+- **Goal:** On the SS-191 system, animate **Killing Momentum** (KO'd target collapses, Rogue re-arms
+  toward the follow-up target — reads as one continuous assault) and **Dodge** (attacker's miss
+  triggers a Rogue sidestep-and-ready flourish; armor-gain gets a brief hardening/shield accent when
+  `didArmorIncrease`).
+- **Also:** the Rogue's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Rogue attacks.
+- **Cue sources:** `ArenaMessageState.KillingMomentum`, `ArenaMessageState.Dodge`,
+  `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191.
+
+### SS-193 — Gambler ability animations
+
+- [ ] Not completed
+- **Goal:** Animate **All-In** per outcome (`AllInOutcome`): SelfKnockout — Gambler collapses (reuse
+  the KO collapse on themselves); DoubleAttack — a wind-up/pumped double-strike tell; NoEffect — a
+  shrug/fizzle. And **Lucky Coin**: a coin-flip tell on the trigger; on a stopping flip the attack
+  visibly deflects; on High Roller the Gambler counter-strikes (attacker takes the damage/KO
+  gesture).
+- **Also:** the Gambler's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Gambler attacks.
+- **Cue sources:** `ArenaMessageState.AllIn`, `ArenaMessageState.LuckyCoin.*`,
+  `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191.
+
+### SS-194 — Duelist ability animations
+
+- [ ] Not completed
+- **Goal:** Animate **Prepare Attack** (a wind-up stance on activation; on 10–12 a decisive
+  KO strike into the target's collapse, otherwise a whiff) and **Riposte** (an en-garde tell; on
+  6–8 the attack visibly reverses — Duelist becomes the striker mid-sequence, matching the seating
+  swap from SS-165).
+- **Also:** the Duelist's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Duelist attacks.
+- **Cue sources:** `ArenaMessageState.PrepareAttack`, `ArenaMessageState.Riposte.*`,
+  `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191.
+
+### SS-195 — Necromancer ability animations
+
+- [ ] Not completed
+- **Goal:** Animate **Summon Minion** per `SummonMinionOutcome`: Fizzle — a dud cast (droop);
+  Skeleton — a raise-from-the-ground summon accent; SkeletonAndHeal — summon + a heal glow
+  (saturation/brightness lift); Golem — a heavier summon with a ground-shake on the Necromancer's
+  seat. Extra minion attacks reuse the normal-attack gestures.
+- **Also:** the Necromancer's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Necromancer attacks.
+- **Cue sources:** `ArenaMessageState.SummonMinion`, `ArenaMessageState.NormalRoll` (attacker
+  side).
+- **Parent:** SS-191.
+
+### SS-196 — Bard ability animations
+
+- [ ] Not completed
+- **Goal:** Animate **Encore** (a flourish on the trigger; success replays the strike lunge, failure
+  a bow-out) and **Persuade** (a lute-strum sway on StrumLute; on a stop the attacker recoils
+  mid-lunge; on Charm the attacker visibly turns toward the redirected target).
+- **Also:** the Bard's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Bard attacks.
+- **Cue sources:** `ArenaMessageState.Encore.*`, `ArenaMessageState.Persuade.*`,
+  `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191.
+
+### SS-197 — Illusionist ability animations
+
+- [ ] Not completed
+- **Goal:** Animate **Impersonate** (a shimmer/morph tell on the Illusionist when the copy is
+  chosen) and **Mirror Image** (a mirror-shimmer on the trigger; TemptFate rerolls get a
+  glitch/afterimage accent; MirrorHolds a clean deflect).
+- **Also:** the Illusionist's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Illusionist attacks.
+- **Cue sources:** `ArenaMessageState.Impersonate`, `ArenaMessageState.MirrorImage.*`,
+  `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191.
+
+### SS-198 — Mage ability animations (Spell Potency per-doubles-combo + Teleport)
+
+- [ ] Not completed
+- **Goal:** Animate **Teleport** (a blink-out/blink-in on the roll-off: Escaped — Mage vanishes and
+  reappears offset, attacker whiffs; Caught — the blink fails and the strike lands) and **Spell
+  Potency** with a **distinct animation per doubles combination** (1&1 through 6&6 — six variants
+  scaling in intensity, e.g. spark → blast; splash damage ripples a lesser hit across the other
+  seats/head icons).
+- **Also:** the Mage's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Mage attacks.
+- **Cue sources:** `ArenaMessageState.Teleport.*`, `ArenaMessageState.SpellPotency` (needs the
+  rolled doubles value threaded into the state leaf — currently only damage totals are carried),
+  `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191.
+
+### SS-199 — Paladin ability animations
+
+- [ ] Not completed
+- **Goal:** Animate **Holy Shield**: a prayer glow on the trigger; Saved — the collapse arrests at
+  1 HP with a golden flare and the Paladin rights themselves; StruckDown — the normal KO collapse
+  completes; Wrath — an unblockable radiant counter-strike on the attacker (attacker takes the
+  damage gesture with a golden tint instead of red).
+- **Also:** the Paladin's unique normal-attack attacker set (hit / miss / knockout strikes),
+  replacing the generic SS-191 lunges when the Paladin attacks.
+- **Cue sources:** `ArenaMessageState.HolyShield.*`, `ArenaMessageState.NormalRoll` (attacker
+  side).
+- **Parent:** SS-191.
+
+---
+
 ## Domain layer
 
 ### SS-048 — Die-value enum

@@ -33,8 +33,10 @@ sealed interface ArenaMessageState {
     @Immutable
     data class NormalRoll(
         override val id: String,
+        val attackerUserId: String,
         val attackerName: String,
         val attackerClassType: CharacterClassType,
+        val defenderUserId: String,
         val defenderName: String,
         val firstDie: Int,
         val secondDie: Int,
@@ -393,8 +395,10 @@ fun ArenaMessage.toState(
         is ArenaMessage.NormalRoll ->
             ArenaMessageState.NormalRoll(
                 id = id,
+                attackerUserId = attackerUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 attackerClassType = participants.resolveClassType(userId = attackerUserId),
+                defenderUserId = defenderUserId,
                 defenderName = participants.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,

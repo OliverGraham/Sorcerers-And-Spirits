@@ -161,14 +161,14 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ## Combat animations
 
 Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system
-(SS-191) is the extensibility seam; each class ticket (SS-192…SS-199) fills in its animations on
-top of it. No Lottie/Compottie — plain Compose `Animatable`/`graphicsLayer` transforms plus
+(SS-191) is the extensibility seam; the per-class tickets (SS-192…SS-199 normal attacks, SS-203…SS-212
+abilities) fill in their animations on top of it. No Lottie/Compottie — plain Compose `Animatable`/`graphicsLayer` transforms plus
 `ColorMatrix` color effects on the existing avatar art (SS-068 dropped Lottie).
 
 Owner direction (2026-07-02): every class gets a **unique attacker-side animation set for normal
 attacks** (its hit / miss / knockout strikes); the **defender-side reactions stay shared** (Flinch /
-Sidestep / Collapse — may be revisited later). Each class ticket therefore covers both its unique
-normal-attack set and its ability animations, worked one class at a time. The seam is ready:
+Sidestep / Collapse — may be revisited later). Each class now has a dedicated normal-attack ticket
+plus one ticket per ability, worked one at a time. The seam is ready:
 `ArenaMessageState.NormalRoll` already carries `attackerClassType`, so a class ticket threads it
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
@@ -206,62 +206,137 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191.
 
-### SS-194 — Duelist ability animations
+### SS-194 — Duelist normal-attack animation
 
 - [ ] Not completed
-- **Normal attack (done):** the Duelist wields twin swords (`CombatWeapon.TwinSwords`). The two
-  blades slash the defender one after the other — the lead from the left, the follow from the right
-  roughly half a second later — in smooth, fluid arcs, each flaring a class-color burst on contact
-  (armor holds → the cuts sweep past while the defender sidesteps). Both blades are on screen the
-  whole time: they rise into an erect ready pose, hold, then slash one after the other and fade out
-  together. Attacker body plays a two-beat fence (`Slash` / `SlashFinish` / `SlashWhiff`).
+- **Normal attack (needs tweak):** the Duelist wields twin swords (`CombatWeapon.TwinSwords`). The
+  two blades slash the defender one after the other — the lead from the left, the follow from the
+  right roughly half a second later — in smooth, fluid arcs, each flaring a class-color burst on
+  contact (armor holds → the cuts sweep past while the defender sidesteps). Both blades are on screen
+  the whole time: they rise into an erect ready pose, hold, then slash one after the other and fade
+  out together. Attacker body plays a two-beat fence (`Slash` / `SlashFinish` / `SlashWhiff`). Owner
+  wants a tweak to this pass before it's final.
 - **Sequencer fix (done):** because the twin-sword combo runs longer than the fixed flash window, it
   used to be cut off and the blades froze on screen. The message sequencer now waits out each cue's
   `playbackDurationMillis()` (see SS-201) so the animation completes and clears itself.
-- **Abilities (TBD):** Prepare Attack and Riposte animations still to be described.
-- **Cue sources:** `ArenaMessageState.PrepareAttack`, `ArenaMessageState.Riposte.*`,
-  `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Abilities split into SS-203 (Prepare Attack) and SS-204 (Riposte).
 
-### SS-195 — Necromancer ability animations
+### SS-203 — Duelist Prepare Attack animation
 
 - [ ] Not completed
-- **Goal:** TBD — animations to be described.
-- **Cue sources:** `ArenaMessageState.SummonMinion`, `ArenaMessageState.NormalRoll` (attacker
-  side).
-- **Parent:** SS-191.
+- **Goal:** TBD — animation to be described. Offensive activated ability: roll 2d6, a 10/11/12 K.O.s
+  the target.
+- **Cue sources:** `ArenaMessageState.PrepareAttack`.
+- **Parent:** SS-191. Split out of SS-194.
 
-### SS-196 — Bard ability animations
-
-- [ ] Not completed
-- **Goal:** TBD — animations to be described.
-- **Cue sources:** `ArenaMessageState.Encore.*`, `ArenaMessageState.Persuade.*`,
-  `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191.
-
-### SS-197 — Illusionist ability animations
+### SS-204 — Duelist Riposte animation
 
 - [ ] Not completed
-- **Goal:** TBD — animations to be described.
-- **Cue sources:** `ArenaMessageState.Impersonate`, `ArenaMessageState.MirrorImage.*`,
-  `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191.
+- **Goal:** TBD — animation to be described. Defensive ability: when armor is passed, roll 2d6; on
+  6/7/8 the Duelist turns the attack around on the opponent.
+- **Cue sources:** `ArenaMessageState.Riposte.*`.
+- **Parent:** SS-191. Split out of SS-194.
 
-### SS-198 — Mage ability animations
-
-- [ ] Not completed
-- **Goal:** TBD — animations to be described.
-- **Cue sources:** `ArenaMessageState.Teleport.*`, `ArenaMessageState.SpellPotency`,
-  `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191.
-
-### SS-199 — Paladin ability animations
+### SS-195 — Necromancer normal-attack animation
 
 - [ ] Not completed
-- **Goal:** TBD — animations to be described.
-- **Cue sources:** `ArenaMessageState.HolyShield.*`, `ArenaMessageState.NormalRoll` (attacker
-  side).
-- **Parent:** SS-191.
+- **Goal:** TBD — attacker-side normal-attack animation set to be described.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Ability split into SS-205 (Summon Minion).
+
+### SS-205 — Necromancer Summon Minion animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Offensive ability: roll 1d6 to fizzle / gain a skeleton
+  (with optional heal) / gain a golem.
+- **Cue sources:** `ArenaMessageState.SummonMinion`.
+- **Parent:** SS-191. Split out of SS-195.
+
+### SS-196 — Bard normal-attack animation
+
+- [ ] Not completed
+- **Goal:** TBD — attacker-side normal-attack animation set to be described.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Abilities split into SS-206 (Encore) and SS-207 (Persuade).
+
+### SS-206 — Bard Encore animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Offensive ability: after dealing damage, roll 1d6; on
+  5/6 the Bard attacks again.
+- **Cue sources:** `ArenaMessageState.Encore.*`.
+- **Parent:** SS-191. Split out of SS-196.
+
+### SS-207 — Bard Persuade animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Defensive ability: when armor is passed, roll 1d6; on 5
+  the attack stops, on 6 the attack stops and the attacker is forced onto another target.
+- **Cue sources:** `ArenaMessageState.Persuade.*`.
+- **Parent:** SS-191. Split out of SS-196.
+
+### SS-197 — Illusionist normal-attack animation
+
+- [ ] Not completed
+- **Goal:** TBD — attacker-side normal-attack animation set to be described.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Abilities split into SS-208 (Impersonate) and SS-209 (Mirror Image).
+
+### SS-208 — Illusionist Impersonate animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Offensive ability: copy a living opponent's offensive
+  ability until end of match or another is chosen.
+- **Cue sources:** `ArenaMessageState.Impersonate`.
+- **Parent:** SS-191. Split out of SS-197.
+
+### SS-209 — Illusionist Mirror Image animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Defensive ability: once per attack phase, reroll 1d6 and
+  give the result -1 (during ArmorClass or Damage rolls against the defender).
+- **Cue sources:** `ArenaMessageState.MirrorImage.*`.
+- **Parent:** SS-191. Split out of SS-197.
+
+### SS-198 — Mage normal-attack animation
+
+- [ ] Not completed
+- **Goal:** TBD — attacker-side normal-attack animation set to be described.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Abilities split into SS-210 (Spell Potency) and SS-211 (Teleport).
+
+### SS-210 — Mage Spell Potency animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Offensive ability: roll doubles to pass armor or deal
+  damage → dice-total damage to target and half to all other opponents, then end turn.
+- **Cue sources:** `ArenaMessageState.SpellPotency`.
+- **Parent:** SS-191. Split out of SS-198.
+
+### SS-211 — Mage Teleport animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Defensive ability: when armor is passed, roll off 1d6
+  with the attacker; if the Mage rolls higher, escape the attack.
+- **Cue sources:** `ArenaMessageState.Teleport.*`.
+- **Parent:** SS-191. Split out of SS-198.
+
+### SS-199 — Paladin normal-attack animation
+
+- [ ] Not completed
+- **Goal:** TBD — attacker-side normal-attack animation set to be described.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Ability split into SS-212 (Holy Shield).
+
+### SS-212 — Paladin Holy Shield animation
+
+- [ ] Not completed
+- **Goal:** TBD — animation to be described. Defensive ability: once per match, when K.O.'d, roll
+  2d6; on 10/11/12 the Paladin survives with 1 Health and deals unblockable 1d6 to the attacker (a 12
+  also stops Duelist's Prepare Attack).
+- **Cue sources:** `ArenaMessageState.HolyShield.*`.
+- **Parent:** SS-191. Split out of SS-199.
 
 ---
 

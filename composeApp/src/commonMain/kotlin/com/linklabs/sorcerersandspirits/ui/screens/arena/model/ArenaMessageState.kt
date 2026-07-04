@@ -87,15 +87,25 @@ sealed interface ArenaMessageState {
         @Immutable data class Trigger(override val id: String) : LuckyCoin
 
         @Immutable
-        data class Flip(override val id: String, val singleDie: Int, val didStopAttack: Boolean) :
-            LuckyCoin
+        data class Flip(
+            override val id: String,
+            val gamblerUserId: String?,
+            val singleDie: Int,
+            val didStopAttack: Boolean,
+        ) : LuckyCoin
 
         @Immutable
-        data class HighRollerTrigger(override val id: String, val targetName: String) : LuckyCoin
+        data class HighRollerTrigger(
+            override val id: String,
+            val gamblerUserId: String?,
+            val targetName: String,
+        ) : LuckyCoin
 
         @Immutable
         data class HighRollerDamage(
             override val id: String,
+            val gamblerUserId: String?,
+            val attackerUserId: String?,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin
@@ -400,6 +410,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.LuckyCoin.Flip ->
             ArenaMessageState.LuckyCoin.Flip(
                 id = id,
+                gamblerUserId = lastNormalRoll?.defenderUserId,
                 singleDie = singleDie,
                 didStopAttack = didStopAttack,
             )
@@ -407,6 +418,8 @@ private fun ArenaMessage.toState(
         is ArenaMessage.LuckyCoin.HighRollerDamage ->
             ArenaMessageState.LuckyCoin.HighRollerDamage(
                 id = id,
+                gamblerUserId = lastNormalRoll?.defenderUserId,
+                attackerUserId = lastNormalRoll?.attackerUserId,
                 singleDie = singleDie,
                 isKnockout = isKnockout,
             )
@@ -414,6 +427,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.LuckyCoin.HighRollerTrigger ->
             ArenaMessageState.LuckyCoin.HighRollerTrigger(
                 id = id,
+                gamblerUserId = lastNormalRoll?.defenderUserId,
                 targetName = participants.resolveClassName(userId = targetUserId),
             )
 

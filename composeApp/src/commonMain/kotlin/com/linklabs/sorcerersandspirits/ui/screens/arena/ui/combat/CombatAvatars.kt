@@ -143,6 +143,12 @@ internal fun CombatAvatarColumn(
             avatarBoundsFor = avatarBoundsInStage,
             modifier = Modifier.fillMaxSize(),
         )
+
+        LuckyCoinOverlay(
+            animationCue = animationCue,
+            avatarBoundsFor = avatarBoundsInStage,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 

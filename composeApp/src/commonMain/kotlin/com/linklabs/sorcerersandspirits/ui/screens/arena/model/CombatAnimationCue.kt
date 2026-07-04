@@ -5,6 +5,14 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 /**
+ * The Lucky Coin roll that triggers High Roller. A defensive flip only ever surfaces 1–5, since a 6
+ * routes to High Roller instead, so a [ArenaMessageState.LuckyCoin.Flip] showing this value is the
+ * armor-bonus resolution that follows the High Roller throw — the coin has already been thrown, so
+ * that flip plays no fresh coin animation.
+ */
+private const val HIGH_ROLLER_ROLL = 6
+
+/**
  * A combat event the seated avatars act out (SS-191): one cue per flash-worthy message, played in
  * step with that message's flash callout. Each cue carries the userIds of the players it involves,
  * so a seat resolves its own role — striking, reacting, or holding still — via [gestureFor]. New
@@ -39,6 +47,27 @@ sealed interface CombatAnimationCue {
         override val id: String,
         val gamblerUserId: String,
         val outcome: AllInOutcome,
+    ) : CombatAnimationCue
+
+    @Immutable
+    data class LuckyCoinFlip(
+        override val id: String,
+        val gamblerUserId: String,
+        val faceValue: Int,
+        val didStopAttack: Boolean,
+    ) : CombatAnimationCue
+
+    @Immutable
+    data class LuckyCoinHighRoller(override val id: String, val gamblerUserId: String) :
+        CombatAnimationCue
+
+    @Immutable
+    data class LuckyCoinHighRollerThrow(
+        override val id: String,
+        val gamblerUserId: String,
+        val attackerUserId: String,
+        val damage: Int,
+        val isKnockout: Boolean,
     ) : CombatAnimationCue
 }
 
@@ -106,8 +135,45 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.AllIn ->
                 CombatAnimationCue.AllIn(id = id, gamblerUserId = gamblerUserId, outcome = outcome)
 
-            // TODO(SS-193): Gambler LuckyCoin animation.
-            is ArenaMessageState.LuckyCoin -> null
+            is ArenaMessageState.LuckyCoin.Trigger -> null
+
+            is ArenaMessageState.LuckyCoin.Flip -> {
+                val isHighRollerArmorResolution = singleDie == HIGH_ROLLER_ROLL
+                if (gamblerUserId == null) {
+                    null
+                } else if (isHighRollerArmorResolution) {
+                    null
+                } else {
+                    CombatAnimationCue.LuckyCoinFlip(
+                        id = id,
+                        gamblerUserId = gamblerUserId,
+                        faceValue = singleDie,
+                        didStopAttack = didStopAttack,
+                    )
+                }
+            }
+
+            is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
+                if (gamblerUserId != null) {
+                    CombatAnimationCue.LuckyCoinHighRoller(id = id, gamblerUserId = gamblerUserId)
+                } else {
+                    null
+                }
+
+            is ArenaMessageState.LuckyCoin.HighRollerDamage ->
+                if (gamblerUserId == null) {
+                    null
+                } else if (attackerUserId == null) {
+                    null
+                } else {
+                    CombatAnimationCue.LuckyCoinHighRollerThrow(
+                        id = id,
+                        gamblerUserId = gamblerUserId,
+                        attackerUserId = attackerUserId,
+                        damage = singleDie,
+                        isKnockout = isKnockout,
+                    )
+                }
 
             // TODO(SS-194): Duelist ability animations.
             is ArenaMessageState.PrepareAttack,
@@ -152,6 +218,26 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.Dodge -> dodgeGestureFor(userId = userId)
 
         is CombatAnimationCue.AllIn -> allInGestureFor(userId = userId)
+
+        is CombatAnimationCue.LuckyCoinFlip -> null
+
+        is CombatAnimationCue.LuckyCoinHighRoller -> null
+
+        is CombatAnimationCue.LuckyCoinHighRollerThrow -> luckyCoinThrowGestureFor(userId = userId)
+    }
+
+/**
+ * The High Roller payback (SS-193): the Gambler flings the lucky coin at the attacker — the coin
+ * itself is drawn by the effect overlay, so the Gambler only throws and the struck attacker reacts,
+ * folding into a collapse when the coin knocks them out.
+ */
+private fun CombatAnimationCue.LuckyCoinHighRollerThrow.luckyCoinThrowGestureFor(
+    userId: String
+): AvatarGesture? =
+    when (userId) {
+        gamblerUserId -> AvatarGesture.Throw
+        attackerUserId -> if (isKnockout) AvatarGesture.Collapse else AvatarGesture.FlinchHeavy
+        else -> null
     }
 
 /**

@@ -791,24 +791,29 @@ private fun slashTrailPath(
     }
 
 /**
- * A broad dueling blade in local coordinates: tip at the origin leading the cut, the tapering blade
- * trailing behind it in bright steel with a specular glint down its length and a white flash at the
- * tip, and the guard, grip, and pommel carrying the class-color accent.
+ * A slender rapier in local coordinates: tip at the origin leading the cut, a thin fencing blade
+ * holding its width then tapering to a sharp point, in bright steel with a specular glint down its
+ * length and a white flash at the tip. The hilt carries the class-color accent — curved quillons, a
+ * swept knuckle bow curling around the hand, the grip, and the pommel.
  */
 private fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
-    val bladeLength = 82.dp.toPx()
-    val bladeHalfWidth = 6.dp.toPx()
-    val guardHalfWidth = 16.dp.toPx()
-    val guardHeight = 5.dp.toPx()
-    val gripHalfWidth = 3.5.dp.toPx()
-    val gripLength = 16.dp.toPx()
+    val bladeLength = 88.dp.toPx()
+    val bladeHalfWidth = 2.6.dp.toPx()
+    val taperStart = -bladeLength * 0.8f
+    val guardY = -bladeLength
+    val quillonHalfWidth = 15.dp.toPx()
+    val gripHalfWidth = 3.dp.toPx()
+    val gripLength = 17.dp.toPx()
+    val gripTopY = guardY - gripLength
+    val pommelY = gripTopY - 3.dp.toPx()
 
     val blade =
         Path().apply {
             moveTo(x = 0f, y = 0f)
-            lineTo(x = -bladeHalfWidth, y = -bladeLength * 0.88f)
-            lineTo(x = 0f, y = -bladeLength)
-            lineTo(x = bladeHalfWidth, y = -bladeLength * 0.88f)
+            lineTo(x = -bladeHalfWidth, y = taperStart)
+            lineTo(x = -bladeHalfWidth, y = guardY)
+            lineTo(x = bladeHalfWidth, y = guardY)
+            lineTo(x = bladeHalfWidth, y = taperStart)
             close()
         }
     drawPath(
@@ -817,38 +822,68 @@ private fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
             Brush.linearGradient(
                 colors = listOf(Color.White, steelBright, steelShade),
                 start = Offset(x = 0f, y = 0f),
-                end = Offset(x = 0f, y = -bladeLength),
+                end = Offset(x = 0f, y = guardY),
             ),
         alpha = alpha,
     )
 
     drawLine(
         color = Color.White,
-        start = Offset(x = -bladeHalfWidth * 0.3f, y = -bladeLength * 0.82f),
-        end = Offset(x = -bladeHalfWidth * 0.12f, y = -bladeLength * 0.12f),
-        strokeWidth = 1.5.dp.toPx(),
+        start = Offset(x = 0f, y = taperStart),
+        end = Offset(x = 0f, y = guardY * 0.12f),
+        strokeWidth = 1.dp.toPx(),
         cap = StrokeCap.Round,
         alpha = alpha * 0.85f,
     )
 
     drawCircle(
         color = Color.White,
-        radius = 3.dp.toPx(),
+        radius = 2.dp.toPx(),
         center = Offset(x = 0f, y = 0f),
         alpha = alpha * 0.9f,
     )
 
-    drawRoundRect(
+    val quillons =
+        Path().apply {
+            moveTo(x = -quillonHalfWidth, y = guardY - 5.dp.toPx())
+            cubicTo(
+                x1 = -quillonHalfWidth * 0.3f,
+                y1 = guardY + 5.dp.toPx(),
+                x2 = quillonHalfWidth * 0.3f,
+                y2 = guardY + 5.dp.toPx(),
+                x3 = quillonHalfWidth,
+                y3 = guardY - 5.dp.toPx(),
+            )
+        }
+    drawPath(
+        path = quillons,
         color = accentColor,
-        topLeft = Offset(x = -guardHalfWidth, y = -bladeLength - guardHeight),
-        size = Size(width = guardHalfWidth * 2, height = guardHeight),
-        cornerRadius = CornerRadius(x = guardHeight / 2),
+        style = Stroke(width = 3.dp.toPx(), cap = StrokeCap.Round),
+        alpha = alpha,
+    )
+
+    val knuckleBow =
+        Path().apply {
+            moveTo(x = quillonHalfWidth, y = guardY - 5.dp.toPx())
+            cubicTo(
+                x1 = quillonHalfWidth + 7.dp.toPx(),
+                y1 = guardY - gripLength * 0.4f,
+                x2 = gripHalfWidth + 5.dp.toPx(),
+                y2 = pommelY + 3.dp.toPx(),
+                x3 = 0f,
+                y3 = pommelY,
+            )
+        }
+    drawPath(
+        path = knuckleBow,
+        color = accentColor,
+        style = Stroke(width = 2.5.dp.toPx(), cap = StrokeCap.Round),
         alpha = alpha,
     )
 
     drawRoundRect(
         color = accentColor,
-        topLeft = Offset(x = -gripHalfWidth, y = -bladeLength - guardHeight - gripLength),
+        topLeft = Offset(x = -gripHalfWidth, y = gripTopY),
         size = Size(width = gripHalfWidth * 2, height = gripLength),
         cornerRadius = CornerRadius(x = gripHalfWidth),
         alpha = alpha,
@@ -856,8 +891,8 @@ private fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
 
     drawCircle(
         color = accentColor,
-        radius = 4.5.dp.toPx(),
-        center = Offset(x = 0f, y = -bladeLength - guardHeight - gripLength - 2.5.dp.toPx()),
+        radius = 4.dp.toPx(),
+        center = Offset(x = 0f, y = pommelY),
         alpha = alpha,
     )
 }

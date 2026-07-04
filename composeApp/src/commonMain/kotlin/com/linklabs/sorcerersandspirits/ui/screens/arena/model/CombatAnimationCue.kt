@@ -69,6 +69,14 @@ sealed interface CombatAnimationCue {
         val damage: Int,
         val isKnockout: Boolean,
     ) : CombatAnimationCue
+
+    @Immutable
+    data class PrepareAttack(
+        override val id: String,
+        val duelistUserId: String,
+        val targetUserId: String,
+        val isSuccessful: Boolean,
+    ) : CombatAnimationCue
 }
 
 /**
@@ -85,6 +93,8 @@ enum class AvatarGesture {
     Slash,
     SlashFinish,
     SlashWhiff,
+    PreparedThrust,
+    PreparedThrustWhiff,
     Throw,
     ThrowStrong,
     ThrowOvershoot,
@@ -178,8 +188,15 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     )
                 }
 
-            // TODO(SS-194): Duelist ability animations.
-            is ArenaMessageState.PrepareAttack,
+            is ArenaMessageState.PrepareAttack ->
+                CombatAnimationCue.PrepareAttack(
+                    id = id,
+                    duelistUserId = duelistUserId,
+                    targetUserId = targetUserId,
+                    isSuccessful = isSuccessful,
+                )
+
+            // TODO(SS-204): Duelist Riposte animation.
             is ArenaMessageState.Riposte -> null
 
             // TODO(SS-195): Necromancer ability animations.
@@ -227,6 +244,25 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.LuckyCoinHighRoller -> null
 
         is CombatAnimationCue.LuckyCoinHighRollerThrow -> luckyCoinThrowGestureFor(userId = userId)
+
+        is CombatAnimationCue.PrepareAttack -> prepareAttackGestureFor(userId = userId)
+    }
+
+/**
+ * The Duelist's Prepare Attack (SS-203): the paired rapiers of the effect overlay carry the show —
+ * wind up, gleam, and thrust — so the Duelist only coils and springs behind them, while the target
+ * collapses under a landed strike or sidesteps a whiffed one.
+ */
+private fun CombatAnimationCue.PrepareAttack.prepareAttackGestureFor(
+    userId: String
+): AvatarGesture? =
+    when (userId) {
+        duelistUserId ->
+            if (isSuccessful) AvatarGesture.PreparedThrust else AvatarGesture.PreparedThrustWhiff
+
+        targetUserId -> if (isSuccessful) AvatarGesture.Collapse else AvatarGesture.Sidestep
+
+        else -> null
     }
 
 /**

@@ -67,6 +67,8 @@ private const val SLASH_TRAIL_SAMPLES = 12
 private const val SLASH_ENGAGE_FRACTION = 0.22f
 private const val SWORD_ERECT_DEGREES = 180f
 
+internal val rapierBladeLength = 88.dp
+
 /** When the follow blade lands, so the shared defender reaction (SS-191) meets its cut. */
 internal const val TWIN_SWORD_REACTION_DELAY_MILLIS =
     TWIN_SLASH_RAISE_MILLIS +
@@ -796,8 +798,8 @@ private fun slashTrailPath(
  * length and a white flash at the tip. The hilt carries the class-color accent — curved quillons, a
  * swept knuckle bow curling around the hand, the grip, and the pommel.
  */
-private fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
-    val bladeLength = 88.dp.toPx()
+internal fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
+    val bladeLength = rapierBladeLength.toPx()
     val bladeHalfWidth = 2.6.dp.toPx()
     val taperStart = -bladeLength * 0.8f
     val guardY = -bladeLength

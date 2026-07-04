@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
@@ -149,19 +150,30 @@ internal fun rememberAvatarGesture(
 /**
  * How long a defender holds still before reacting, so the shared reactions land in step with the
  * attacker's strike: a melee weapon (SS-192) spends its dash closing in before the blade lands, a
- * thrown weapon (SS-193) spends its flight time spinning across the gap, and the generic lunges hit
- * almost immediately.
+ * thrown weapon (SS-193) spends its flight time spinning across the gap, a Prepare Attack (SS-203)
+ * spends its whole windup cocking the rapiers, and the generic lunges hit almost immediately.
  */
-private fun CombatAnimationCue.defenderReactionDelayMillis(): Long {
-    val weapon =
-        if (this is CombatAnimationCue.NormalAttack) attackerClassType.combatWeapon else null
-    return when (weapon) {
+private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
+    when (this) {
+        is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
+        is CombatAnimationCue.PrepareAttack -> prepareAttackReactionDelayMillis()
+        else -> REACTION_DELAY_MILLIS
+    }
+
+private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): Long =
+    when (attackerClassType.combatWeapon) {
         CombatWeapon.Dagger -> MELEE_REACTION_DELAY_MILLIS
         CombatWeapon.PlayingCard -> THROW_REACTION_DELAY_MILLIS
         CombatWeapon.TwinSwords -> TWIN_SWORD_REACTION_DELAY_MILLIS
         null -> REACTION_DELAY_MILLIS
     }
-}
+
+/**
+ * A landed Prepare Attack collapses the target only as the blades arrive at the end of the long
+ * windup; a whiffed one has the target sidestep as the thrust launches, clearing before it passes.
+ */
+private fun CombatAnimationCue.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
+    if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
 private suspend fun AvatarGestureState.play(
     gesture: AvatarGesture,
@@ -196,6 +208,11 @@ private suspend fun AvatarGestureState.play(
                 slashCombo(reachPx = 30.dp.toPx() * strikeDirection, isFinisher = true)
 
             AvatarGesture.SlashWhiff -> slashWhiff(reachPx = 30.dp.toPx() * strikeDirection)
+
+            AvatarGesture.PreparedThrust -> preparedThrust(reachPx = 36.dp.toPx() * strikeDirection)
+
+            AvatarGesture.PreparedThrustWhiff ->
+                preparedThrustWhiff(reachPx = 36.dp.toPx() * strikeDirection)
 
             AvatarGesture.Throw ->
                 throwFlick(flickPx = 26.dp.toPx() * strikeDirection, peakScale = 1.05f)
@@ -423,6 +440,73 @@ private suspend fun AvatarGestureState.slashOvershoot(reachPx: Float) {
             rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 200))
         }
     }
+}
+
+/**
+ * The Duelist's Prepare Attack (SS-203): the body coils back while the paired rapiers of the effect
+ * overlay twirl and gleam, then springs forward in step with their thrust and settles once the
+ * strike lands.
+ */
+private suspend fun AvatarGestureState.preparedThrust(reachPx: Float) {
+    prepareCoil(reachPx = reachPx)
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = reachPx,
+                animationSpec =
+                    tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+            )
+        }
+        launch {
+            stretchTo(targetX = 0.96f, targetY = 1.06f, durationMillis = PREPARE_THRUST_MILLIS)
+        }
+    }
+    settleBack()
+}
+
+/**
+ * The whiffed Prepare Attack: the same coil and spring, but the thrust overcommits past the
+ * sidestepping target and tips the body off balance before it recovers to its seat.
+ */
+private suspend fun AvatarGestureState.preparedThrustWhiff(reachPx: Float) {
+    prepareCoil(reachPx = reachPx)
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = reachPx * 1.3f,
+                animationSpec =
+                    tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+            )
+            offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
+        }
+        launch {
+            rotation.animateTo(
+                targetValue = 10f,
+                animationSpec = tween(durationMillis = PREPARE_THRUST_MILLIS),
+            )
+            rotation.animateTo(targetValue = -4f, animationSpec = tween(durationMillis = 160))
+            rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 200))
+        }
+        launch { stretchTo(targetX = 1f, targetY = 1f, durationMillis = 300) }
+    }
+}
+
+/**
+ * The Prepare Attack windup: the body sinks into a coiled crouch away from the target while the
+ * blades appear, twirl their full revolution, and pull back, then holds while the gleam runs.
+ */
+private suspend fun AvatarGestureState.prepareCoil(reachPx: Float) {
+    val coilMillis = PREPARE_APPEAR_MILLIS + PREPARE_TWIRL_MILLIS + PREPARE_PULL_BACK_MILLIS
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = -0.4f * reachPx,
+                animationSpec = tween(durationMillis = coilMillis, easing = FastOutSlowInEasing),
+            )
+        }
+        launch { stretchTo(targetX = 1.05f, targetY = 0.94f, durationMillis = coilMillis) }
+    }
+    delay(timeMillis = PREPARE_GLEAM_MILLIS.toLong())
 }
 
 /**

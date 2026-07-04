@@ -105,6 +105,8 @@ internal fun CombatAnimationCue.playbackDurationMillis(): Long =
         is CombatAnimationCue.LuckyCoinHighRoller -> 0L
 
         is CombatAnimationCue.LuckyCoinHighRollerThrow -> 0L
+
+        is CombatAnimationCue.PrepareAttack -> PREPARE_ATTACK_TOTAL_MILLIS
     }
 
 /**

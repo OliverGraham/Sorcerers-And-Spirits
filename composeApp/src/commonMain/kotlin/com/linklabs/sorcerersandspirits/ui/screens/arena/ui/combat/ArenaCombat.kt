@@ -56,6 +56,7 @@ internal fun ArenaCombat(
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
+    val avatarBounds = remember { CombatAvatarBounds() }
 
     var isMessagesExpanded by remember { mutableStateOf(value = false) }
     var unreadMessageCount by remember { mutableStateOf(value = 0) }
@@ -103,6 +104,7 @@ internal fun ArenaCombat(
                                 state.isItThisUsersTurn &&
                                     state.lockedTargetUserId == null &&
                                     !isTargetLockedOptimistically,
+                            onAvatarBoundsChanged = avatarBounds::reportAvatarBounds,
                             onDiceHomeBoundsChanged = { diceHomeBounds = it },
                         )
                     }
@@ -118,6 +120,12 @@ internal fun ArenaCombat(
                     onActionDispatched = { isActionInFlight = true },
                 )
             }
+
+            CombatEffectsOverlay(
+                animationCue = flashPlayback.combatAnimationCue,
+                avatarBounds = avatarBounds,
+                modifier = Modifier.fillMaxSize(),
+            )
 
             MessageLogOverlay(
                 messages = screenState.messages,
@@ -158,6 +166,7 @@ private fun CombatStage(
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -173,6 +182,7 @@ private fun CombatStage(
             activeUserIds = state.activeUserIds,
             turnOwnerUserId = state.turnOwnerUserId,
             onInspect = onInspect,
+            onAvatarBoundsChanged = onAvatarBoundsChanged,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
             modifier = Modifier.weight(weight = if (hasHeadIcons) 0.7f else 1f),
         )

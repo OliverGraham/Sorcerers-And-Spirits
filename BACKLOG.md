@@ -198,6 +198,27 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   window).
 - **Parent:** SS-191.
 
+### SS-213 — Combat animations must survive re-seating and finish transitions
+
+- [ ] Not completed
+- **Symptom (found during SS-203):** a knockout re-seats the stage (`CombatSeating` drops the downed
+  target) in the same frame its animation cue goes live. The stage lives inside a seating-keyed
+  `AnimatedContent`, so the fresh pane initializes its skip-history guard against the already-live
+  cue and silently skips the whole animation. This affects every K.O. cue, not just Prepare Attack.
+- **Partly fixed (SS-203):** the weapon/ability effect overlays and the avatar-bounds registry were
+  hoisted out of the seating transition (`CombatEffectsOverlay`), so the cross-seat effects now
+  survive any pane swap. **Remaining:** the seated-avatar body gestures (`rememberAvatarGesture`)
+  still live inside the panes and are skipped when a K.O. re-seats the stage — the attacker's body
+  motion and the target's Collapse are lost exactly when they matter most.
+- **Also:** `finishHoldMillis` counts only the fixed flash window per closing message and ignores
+  `playbackDurationMillis()`, so a closing animation longer than the flash window can be cut off by
+  the Finished transition.
+- **Direction:** hold the seating snapshot (and the finish transition) until the playing cue's
+  window ends — e.g. clear `FlashPlaybackState.currentMessage` when a message's playback window
+  closes, freeze seating while a message is live, and give every long cue its real duration (the
+  `AllIn` / `LuckyCoin*` opt-ins already tracked in SS-201).
+- **Parent:** SS-191. Related: SS-184 (finish hold), SS-201 (sequencing).
+
 ### SS-193 — Gambler ability animations
 
 - [ ] Not completed
@@ -221,14 +242,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `playbackDurationMillis()` (see SS-201) so the animation completes and clears itself.
 - **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191. Abilities split into SS-203 (Prepare Attack) and SS-204 (Riposte).
-
-### SS-203 — Duelist Prepare Attack animation
-
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Offensive activated ability: roll 2d6, a 10/11/12 K.O.s
-  the target.
-- **Cue sources:** `ArenaMessageState.PrepareAttack`.
-- **Parent:** SS-191. Split out of SS-194.
 
 ### SS-204 — Duelist Riposte animation
 

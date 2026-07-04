@@ -26,10 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,8 +76,9 @@ private const val ATTACKS_COUNT_LABEL = "attacksCount"
  * The seats are assigned by identity — the user's player always sits at the bottom (SS-181) — and
  * the [ActivePlayerHalo] marks whoever is rolling, so the seats themselves carry no meaning.
  *
- * The [WeaponStrikeOverlay] spans both seats so a class weapon can fly from one avatar to the other
- * (SS-192); each seat reports its measured bounds so the strike lands on the defender art.
+ * Each seat reports its measured bounds up through [onAvatarBoundsChanged], feeding the
+ * [CombatEffectsOverlay] that hosts the weapon and ability effects above the seating transition
+ * (SS-192, SS-203).
  */
 @Composable
 internal fun CombatAvatarColumn(
@@ -92,62 +89,33 @@ internal fun CombatAvatarColumn(
     activeUserIds: Set<String>,
     turnOwnerUserId: String,
     onInspect: (String) -> Unit,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val avatarBoundsByUserId = remember { mutableStateMapOf<String, Rect>() }
-    var stageBounds by remember { mutableStateOf(value = Rect.Zero) }
-
-    Box(
-        modifier = modifier.fillMaxSize().onGloballyPositioned { stageBounds = it.boundsInRoot() }
-    ) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            SeatedAvatar(
-                player = topPlayer,
-                animationCue = animationCue,
-                isTopSeat = true,
-                userPlayerId = userPlayerId,
-                activeUserIds = activeUserIds,
-                turnOwnerUserId = turnOwnerUserId,
-                onInspect = onInspect,
-                onAvatarBoundsChanged = { userId, bounds -> avatarBoundsByUserId[userId] = bounds },
-            )
-
-            DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
-
-            SeatedAvatar(
-                player = bottomPlayer,
-                animationCue = animationCue,
-                isTopSeat = false,
-                userPlayerId = userPlayerId,
-                activeUserIds = activeUserIds,
-                turnOwnerUserId = turnOwnerUserId,
-                onInspect = onInspect,
-                onAvatarBoundsChanged = { userId, bounds -> avatarBoundsByUserId[userId] = bounds },
-            )
-        }
-
-        val avatarBoundsInStage: (String) -> Rect? = { userId ->
-            val bounds = avatarBoundsByUserId[userId]
-            bounds?.translate(offset = -stageBounds.topLeft)
-        }
-
-        WeaponStrikeOverlay(
+    Column(modifier = modifier.fillMaxSize()) {
+        SeatedAvatar(
+            player = topPlayer,
             animationCue = animationCue,
-            avatarBoundsFor = avatarBoundsInStage,
-            modifier = Modifier.fillMaxSize(),
+            isTopSeat = true,
+            userPlayerId = userPlayerId,
+            activeUserIds = activeUserIds,
+            turnOwnerUserId = turnOwnerUserId,
+            onInspect = onInspect,
+            onAvatarBoundsChanged = onAvatarBoundsChanged,
         )
 
-        AllInOverlay(
-            animationCue = animationCue,
-            avatarBoundsFor = avatarBoundsInStage,
-            modifier = Modifier.fillMaxSize(),
-        )
+        DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
 
-        LuckyCoinOverlay(
+        SeatedAvatar(
+            player = bottomPlayer,
             animationCue = animationCue,
-            avatarBoundsFor = avatarBoundsInStage,
-            modifier = Modifier.fillMaxSize(),
+            isTopSeat = false,
+            userPlayerId = userPlayerId,
+            activeUserIds = activeUserIds,
+            turnOwnerUserId = turnOwnerUserId,
+            onInspect = onInspect,
+            onAvatarBoundsChanged = onAvatarBoundsChanged,
         )
     }
 }

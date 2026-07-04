@@ -173,6 +173,24 @@ normal-attack set and its ability animations, worked one class at a time. The se
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
 
+### SS-201 — Combat animation should complete before its flash call-out plays
+
+- [ ] Not completed
+- **Symptom:** A message's seated-avatar / effect animation (`combatAnimationCue`) and its
+  full-screen flash call-out currently start **at the same time** — both read from
+  `FlashPlaybackState.currentMessage`, so `rememberFlashPlayback` shows the flash the same instant
+  the animation cue goes live (`CombatFlashPlayback.kt`). For longer effects (e.g. the Gambler's
+  All-In toss, SS-193) the flash pops and dismisses long before the animation finishes.
+- **Goal:** Sequence per message as **animation first, then flash**: fire the animation cue, wait for
+  it to finish, *then* show the flash call-out (hold + exit as today). Applies to every class
+  animation, not just All-In.
+- **Approach sketch:** Decouple the live animation cue from the flash message in `FlashPlaybackState`
+  (a separate `animationCue` the overlays read, set independently of `currentMessage`), and give the
+  sequencer a per-cue duration to await — a `CombatAnimationCue.playbackDurationMillis()` kept in
+  step with the choreography constants (`THROW_*`, `ALL_IN_*`, melee `MELEE_*`, …). Messages with no
+  cue keep today's timing.
+- **Parent:** SS-191.
+
 ### SS-193 — Gambler ability animations
 
 - [ ] Not completed

@@ -127,12 +127,20 @@ internal fun CombatAvatarColumn(
             )
         }
 
+        val avatarBoundsInStage: (String) -> Rect? = { userId ->
+            val bounds = avatarBoundsByUserId[userId]
+            bounds?.translate(offset = -stageBounds.topLeft)
+        }
+
         WeaponStrikeOverlay(
             animationCue = animationCue,
-            avatarBoundsFor = { userId ->
-                val bounds = avatarBoundsByUserId[userId]
-                bounds?.translate(offset = -stageBounds.topLeft)
-            },
+            avatarBoundsFor = avatarBoundsInStage,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        AllInOverlay(
+            animationCue = animationCue,
+            avatarBoundsFor = avatarBoundsInStage,
             modifier = Modifier.fillMaxSize(),
         )
     }

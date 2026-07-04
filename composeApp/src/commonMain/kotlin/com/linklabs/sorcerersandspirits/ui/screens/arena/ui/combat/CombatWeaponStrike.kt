@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
@@ -45,10 +47,16 @@ internal const val MELEE_THRUST_MILLIS = 100
 internal const val MELEE_EMBED_MILLIS = 160L
 internal const val MELEE_REACTION_DELAY_MILLIS = 280L
 
+internal const val THROW_FLIGHT_MILLIS = 440
+internal const val THROW_REACTION_DELAY_MILLIS = 400L
+private const val CARD_SPIN_ROTATIONS = 4f
+
 private const val WITHDRAW_MILLIS = 220
 
 private val steelBright = Color(color = 0xFFF2F6FA)
 private val steelShade = Color(color = 0xFFAEB9C4)
+private val cardFace = Color(color = 0xFFFBF6EC)
+private val cardEdge = Color(color = 0xFFD8CFBC)
 
 /**
  * The flight of one weapon strike. The choreography drives these Animatables and the draw layer
@@ -57,7 +65,8 @@ private val steelShade = Color(color = 0xFFAEB9C4)
 @Stable
 internal class WeaponStrikeState {
     val travel = Animatable(initialValue = 0f)
-    val bladeAlpha = Animatable(initialValue = 0f)
+    val weaponAlpha = Animatable(initialValue = 0f)
+    val spin = Animatable(initialValue = 0f)
     val impactAlpha = Animatable(initialValue = 0f)
     val impactScale = Animatable(initialValue = 0f)
 
@@ -175,11 +184,27 @@ private suspend fun WeaponStrikeState.play(
     outcome: NormalRollMessageType,
 ) {
     travel.snapTo(targetValue = 0f)
-    bladeAlpha.snapTo(targetValue = 0f)
+    weaponAlpha.snapTo(targetValue = 0f)
+    spin.snapTo(targetValue = 0f)
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
     this.scene = scene
 
+    when (scene.weapon) {
+        CombatWeapon.Dagger -> playMeleeStrike(scene = scene, outcome = outcome)
+        CombatWeapon.PlayingCard -> playThrownStrike(outcome = outcome)
+    }
+
+    this.scene = null
+}
+
+/**
+ * The melee weapon strike (SS-192): dash into range, pierce, and withdraw as the avatar settles.
+ */
+private suspend fun WeaponStrikeState.playMeleeStrike(
+    scene: WeaponStrikeScene,
+    outcome: NormalRollMessageType,
+) {
     when (outcome) {
         NormalRollMessageType.ArmorClassHit ->
             pierce(dashFraction = scene.dashFraction, burstScale = 0.8f)
@@ -190,15 +215,75 @@ private suspend fun WeaponStrikeState.play(
 
         NormalRollMessageType.Knockout -> pierceDeep(dashFraction = scene.dashFraction)
     }
+}
 
-    this.scene = null
+/**
+ * The thrown weapon strike (SS-193): the card spins the full span to the defender and flares a
+ * burst on landing, or spins past into empty air on a miss. Nothing withdraws — a thrown card lands
+ * and is gone, so the weapon fades into the burst rather than being pulled back.
+ */
+private suspend fun WeaponStrikeState.playThrownStrike(outcome: NormalRollMessageType) {
+    when (outcome) {
+        NormalRollMessageType.ArmorClassHit -> throwAcross(burstScale = 0.8f)
+        NormalRollMessageType.ArmorClassMiss -> throwPast()
+        NormalRollMessageType.Damage -> throwAcross(burstScale = 1f)
+        NormalRollMessageType.Knockout -> throwAcross(burstScale = 1.3f)
+    }
+}
+
+/** The card's flight to its target: it appears at the hand and spins across the gap. */
+private suspend fun WeaponStrikeState.flyAcross(durationMillis: Int) {
+    weaponAlpha.snapTo(targetValue = 1f)
+    coroutineScope {
+        launch {
+            travel.animateTo(
+                targetValue = 1f,
+                animationSpec =
+                    tween(durationMillis = durationMillis, easing = FastOutLinearInEasing),
+            )
+        }
+        launch {
+            spin.animateTo(
+                targetValue = CARD_SPIN_ROTATIONS * 360f,
+                animationSpec = tween(durationMillis = durationMillis, easing = LinearEasing),
+            )
+        }
+    }
+}
+
+/** A landed throw: the card spins to the defender, then vanishes into a class-color burst. */
+private suspend fun WeaponStrikeState.throwAcross(burstScale: Float) {
+    flyAcross(durationMillis = THROW_FLIGHT_MILLIS)
+    coroutineScope {
+        launch { impactBurst(peakScale = burstScale) }
+        launch {
+            weaponAlpha.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 110))
+        }
+    }
+}
+
+/** The missed throw: the card spins past the sidestepping defender and fades into empty air. */
+private suspend fun WeaponStrikeState.throwPast() {
+    flyAcross(durationMillis = THROW_FLIGHT_MILLIS)
+    coroutineScope {
+        launch { travel.animateTo(targetValue = 1.3f, animationSpec = tween(durationMillis = 180)) }
+        launch {
+            spin.animateTo(
+                targetValue = (CARD_SPIN_ROTATIONS + 0.5f) * 360f,
+                animationSpec = tween(durationMillis = 180),
+            )
+        }
+        launch {
+            weaponAlpha.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 180))
+        }
+    }
 }
 
 /** The blade fades in at the attacker's hands and rides the avatar's dash into melee range. */
 private suspend fun WeaponStrikeState.closeIn(dashFraction: Float) {
     coroutineScope {
         launch {
-            bladeAlpha.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 120))
+            weaponAlpha.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = 120))
         }
         launch {
             travel.animateTo(
@@ -278,7 +363,7 @@ private suspend fun WeaponStrikeState.withdraw(dashFraction: Float) {
             )
         }
         launch {
-            bladeAlpha.animateTo(
+            weaponAlpha.animateTo(
                 targetValue = 0f,
                 animationSpec = tween(durationMillis = WITHDRAW_MILLIS),
             )
@@ -306,9 +391,26 @@ private suspend fun WeaponStrikeState.impactBurst(peakScale: Float) {
 private fun DrawScope.drawWeaponStrike(state: WeaponStrikeState) {
     val scene = state.scene ?: return
 
-    val bladeAlpha = state.bladeAlpha.value
-    if (bladeAlpha > 0f) {
-        drawBladeThrust(scene = scene, travel = state.travel.value, alpha = bladeAlpha)
+    val weaponAlpha = state.weaponAlpha.value
+    if (weaponAlpha > 0f) {
+        val position = lerp(start = scene.start, stop = scene.target, fraction = state.travel.value)
+        when (scene.weapon) {
+            CombatWeapon.Dagger ->
+                drawBladeThrust(
+                    scene = scene,
+                    travel = state.travel.value,
+                    position = position,
+                    alpha = weaponAlpha,
+                )
+
+            CombatWeapon.PlayingCard ->
+                drawCardThrow(
+                    scene = scene,
+                    position = position,
+                    spinDegrees = state.spin.value,
+                    alpha = weaponAlpha,
+                )
+        }
     }
 
     val impactAlpha = state.impactAlpha.value
@@ -319,8 +421,12 @@ private fun DrawScope.drawWeaponStrike(state: WeaponStrikeState) {
 }
 
 /** The flash of steel: a class-color streak trailing the blade, brightening to white at its tip. */
-private fun DrawScope.drawBladeThrust(scene: WeaponStrikeScene, travel: Float, alpha: Float) {
-    val position = lerp(start = scene.start, stop = scene.target, fraction = travel)
+private fun DrawScope.drawBladeThrust(
+    scene: WeaponStrikeScene,
+    travel: Float,
+    position: Offset,
+    alpha: Float,
+) {
     val trailStart =
         lerp(
             start = scene.start,
@@ -343,8 +449,38 @@ private fun DrawScope.drawBladeThrust(scene: WeaponStrikeScene, travel: Float, a
         alpha = alpha * 0.7f,
     )
 
-    when (scene.weapon) {
-        CombatWeapon.Dagger -> drawDagger(scene = scene, position = position, alpha = alpha)
+    drawDagger(scene = scene, position = position, alpha = alpha)
+}
+
+/**
+ * The thrown playing card (SS-193): a soft class-color trail marks its arc, and the card itself
+ * spins in-plane about its center as it flies — a spade pip in the class color on a poker-card
+ * face.
+ */
+private fun DrawScope.drawCardThrow(
+    scene: WeaponStrikeScene,
+    position: Offset,
+    spinDegrees: Float,
+    alpha: Float,
+) {
+    drawLine(
+        brush =
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, scene.accentColor.copy(alpha = 0.35f)),
+                start = scene.start,
+                end = position,
+            ),
+        start = scene.start,
+        end = position,
+        strokeWidth = 5.dp.toPx(),
+        cap = StrokeCap.Round,
+        alpha = alpha * 0.5f,
+    )
+
+    rotate(degrees = spinDegrees, pivot = position) {
+        translate(left = position.x, top = position.y) {
+            drawPlayingCard(accentColor = scene.accentColor, alpha = alpha)
+        }
     }
 }
 
@@ -415,6 +551,86 @@ private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
         alpha = alpha,
     )
 }
+
+/**
+ * The playing card in local coordinates, centered on the origin so it spins about its own middle: a
+ * pale poker-card face rimmed in the class color, with a single spade pip in the class color at its
+ * heart.
+ */
+private fun DrawScope.drawPlayingCard(accentColor: Color, alpha: Float) {
+    val halfWidth = 15.dp.toPx()
+    val halfHeight = 21.dp.toPx()
+    val corner = CornerRadius(x = 3.5.dp.toPx())
+    val topLeft = Offset(x = -halfWidth, y = -halfHeight)
+    val cardSize = Size(width = halfWidth * 2, height = halfHeight * 2)
+
+    drawRoundRect(
+        color = cardFace,
+        topLeft = topLeft,
+        size = cardSize,
+        cornerRadius = corner,
+        alpha = alpha,
+    )
+    drawRoundRect(
+        color = cardEdge,
+        topLeft = topLeft,
+        size = cardSize,
+        cornerRadius = corner,
+        style = Stroke(width = 1.5.dp.toPx()),
+        alpha = alpha,
+    )
+
+    drawPath(
+        path = spadePath(halfWidth = 7.dp.toPx(), halfHeight = 9.dp.toPx()),
+        color = accentColor,
+        alpha = alpha,
+    )
+}
+
+/**
+ * A spade centered on the origin, point up over a short stem: two lobes swept out with mirrored
+ * cubics that curl into the base, then a trapezoidal stem closing it off.
+ */
+private fun spadePath(halfWidth: Float, halfHeight: Float): Path =
+    Path().apply {
+        moveTo(x = 0f, y = -halfHeight)
+        cubicTo(
+            x1 = halfWidth * 0.35f,
+            y1 = -halfHeight * 0.5f,
+            x2 = halfWidth,
+            y2 = -halfHeight * 0.05f,
+            x3 = halfWidth,
+            y3 = halfHeight * 0.35f,
+        )
+        cubicTo(
+            x1 = halfWidth,
+            y1 = halfHeight * 0.8f,
+            x2 = halfWidth * 0.4f,
+            y2 = halfHeight * 0.72f,
+            x3 = halfWidth * 0.14f,
+            y3 = halfHeight * 0.42f,
+        )
+        lineTo(x = halfWidth * 0.32f, y = halfHeight)
+        lineTo(x = -halfWidth * 0.32f, y = halfHeight)
+        lineTo(x = -halfWidth * 0.14f, y = halfHeight * 0.42f)
+        cubicTo(
+            x1 = -halfWidth * 0.4f,
+            y1 = halfHeight * 0.72f,
+            x2 = -halfWidth,
+            y2 = halfHeight * 0.8f,
+            x3 = -halfWidth,
+            y3 = halfHeight * 0.35f,
+        )
+        cubicTo(
+            x1 = -halfWidth,
+            y1 = -halfHeight * 0.05f,
+            x2 = -halfWidth * 0.35f,
+            y2 = -halfHeight * 0.5f,
+            x3 = 0f,
+            y3 = -halfHeight,
+        )
+        close()
+    }
 
 /** The pierce flare: a white-cored burst rimmed in the class color at the point of impact. */
 private fun DrawScope.drawImpactBurst(scene: WeaponStrikeScene, scale: Float, alpha: Float) {

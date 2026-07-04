@@ -82,6 +82,9 @@ enum class AvatarGesture {
     Stab,
     StabFlurry,
     StabOvershoot,
+    Slash,
+    SlashFinish,
+    SlashWhiff,
     Throw,
     ThrowStrong,
     ThrowOvershoot,
@@ -273,6 +276,7 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
     when (attackerClassType) {
         CharacterClassType.Rogue -> rogueStrike()
         CharacterClassType.Gambler -> gamblerStrike()
+        CharacterClassType.Duelist -> duelistStrike()
         else -> genericStrike()
     }
 
@@ -298,6 +302,19 @@ private fun CombatAnimationCue.NormalAttack.gamblerStrike(): AvatarGesture =
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.ThrowOvershoot
         NormalRollMessageType.Damage -> AvatarGesture.Throw
         NormalRollMessageType.Knockout -> AvatarGesture.ThrowStrong
+    }
+
+/**
+ * The Duelist's paired blades (SS-194): the twin swords of the weapon overlay slash the defender
+ * one after the other, and these gestures are the two-beat fencing footwork behind the cuts — a
+ * lighter commit than a lunge, since the blades carry the attack.
+ */
+private fun CombatAnimationCue.NormalAttack.duelistStrike(): AvatarGesture =
+    when (outcome) {
+        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
+        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
+        NormalRollMessageType.Damage -> AvatarGesture.Slash
+        NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
     }
 
 private fun CombatAnimationCue.NormalAttack.genericStrike(): AvatarGesture =

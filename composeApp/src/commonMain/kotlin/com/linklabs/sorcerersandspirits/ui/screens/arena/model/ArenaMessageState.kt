@@ -244,7 +244,9 @@ sealed interface ArenaMessageState {
     @Immutable
     data class PrepareAttack(
         override val id: String,
+        val duelistUserId: String,
         val duelistName: String,
+        val targetUserId: String,
         val targetName: String,
         val firstDie: Int,
         val secondDie: Int,
@@ -495,7 +497,9 @@ private fun ArenaMessage.toState(
         is ArenaMessage.PrepareAttack ->
             ArenaMessageState.PrepareAttack(
                 id = id,
+                duelistUserId = duelistUserId,
                 duelistName = participants.resolveClassName(userId = duelistUserId),
+                targetUserId = targetUserId,
                 targetName = participants.resolveClassName(userId = targetUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,

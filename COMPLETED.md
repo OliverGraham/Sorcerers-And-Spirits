@@ -1049,3 +1049,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   outdated — folded into the shared-button direction (SS-178) and the current combat-button styling.
 - **SS-163** — Flash callout hold is too short: Dropped as outdated — flash timing is now handled by
   the SS-171 dynamic finish-hold together with the SS-164/SS-185 flash work.
+- **SS-203** — Duelist Prepare Attack animation: paired rapiers appear at the Duelist's sides,
+  twirl a full revolution around the hands, gleam, and thrust into the target — K.O. burst on
+  success, sail-past on a whiff; effect overlays hoisted out of the seating transition so K.O. cues
+  survive re-seating (follow-up: SS-213).

@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,6 +31,8 @@ import kotlinx.coroutines.launch
 
 private const val REACTION_DELAY_MILLIS = 170L
 private const val SHAKE_SEGMENT_MILLIS = 55
+private const val SLASH_LEAN_MILLIS = 130
+private const val SLASH_RECOVER_MILLIS = 240
 
 /** Total wall-clock time of [allInToss]'s three phases; kept in step with their tween durations. */
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
@@ -155,6 +158,7 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long {
     return when (weapon) {
         CombatWeapon.Dagger -> MELEE_REACTION_DELAY_MILLIS
         CombatWeapon.PlayingCard -> THROW_REACTION_DELAY_MILLIS
+        CombatWeapon.TwinSwords -> TWIN_SWORD_REACTION_DELAY_MILLIS
         null -> REACTION_DELAY_MILLIS
     }
 }
@@ -184,6 +188,14 @@ private suspend fun AvatarGestureState.play(
 
             AvatarGesture.StabOvershoot ->
                 stabOvershoot(dashPx = meleeDashDistance.toPx() * strikeDirection)
+
+            AvatarGesture.Slash ->
+                slashCombo(reachPx = 30.dp.toPx() * strikeDirection, isFinisher = false)
+
+            AvatarGesture.SlashFinish ->
+                slashCombo(reachPx = 30.dp.toPx() * strikeDirection, isFinisher = true)
+
+            AvatarGesture.SlashWhiff -> slashWhiff(reachPx = 30.dp.toPx() * strikeDirection)
 
             AvatarGesture.Throw ->
                 throwFlick(flickPx = 26.dp.toPx() * strikeDirection, peakScale = 1.05f)
@@ -325,6 +337,91 @@ private suspend fun AvatarGestureState.settleBack() {
         launch { offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 280)) }
         launch { stretchTo(targetX = 1f, targetY = 1f, durationMillis = 280) }
         launch { rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 280)) }
+    }
+}
+
+/**
+ * The Duelist's two-beat fence (SS-194): the body commits into the lead cut, then roughly half a
+ * second later crosses the other way into the follow cut — the footwork behind the twin blades of
+ * the weapon overlay. A finisher drives the second cut deeper. The beats are launched together so
+ * the stagger matches the blades' one-two.
+ */
+private suspend fun AvatarGestureState.slashCombo(reachPx: Float, isFinisher: Boolean) {
+    delay(timeMillis = twinSlashPreambleMillis())
+    coroutineScope {
+        launch { slashBeat(reachPx = reachPx, tiltDegrees = 7f) }
+        launch {
+            delay(timeMillis = TWIN_SLASH_STAGGER_MILLIS.toLong())
+            val followReach = if (isFinisher) reachPx * 1.25f else reachPx
+            slashBeat(reachPx = followReach, tiltDegrees = -7f)
+        }
+    }
+}
+
+/** The time both blades spend rising into their erect ready pose before the lead cut begins. */
+private fun twinSlashPreambleMillis(): Long =
+    (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS).toLong()
+
+/** One fencing beat: a smooth commit toward the defender with a finesse tilt, then a recover. */
+private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Float) {
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = reachPx,
+                animationSpec =
+                    tween(durationMillis = SLASH_LEAN_MILLIS, easing = FastOutSlowInEasing),
+            )
+            offsetY.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SLASH_RECOVER_MILLIS),
+            )
+        }
+        launch {
+            rotation.animateTo(
+                targetValue = tiltDegrees,
+                animationSpec = tween(durationMillis = SLASH_LEAN_MILLIS),
+            )
+            rotation.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SLASH_RECOVER_MILLIS),
+            )
+        }
+        launch {
+            stretchTo(targetX = 1.04f, targetY = 0.98f, durationMillis = SLASH_LEAN_MILLIS)
+            stretchTo(targetX = 1f, targetY = 1f, durationMillis = SLASH_RECOVER_MILLIS)
+        }
+    }
+}
+
+/**
+ * The parried combo: the lead cut lands as usual, but the follow cut overcommits past the
+ * sidestepping defender and tips the body off balance before it recovers to its seat.
+ */
+private suspend fun AvatarGestureState.slashWhiff(reachPx: Float) {
+    delay(timeMillis = twinSlashPreambleMillis())
+    coroutineScope {
+        launch { slashBeat(reachPx = reachPx, tiltDegrees = 7f) }
+        launch {
+            delay(timeMillis = TWIN_SLASH_STAGGER_MILLIS.toLong())
+            slashOvershoot(reachPx = reachPx)
+        }
+    }
+}
+
+private suspend fun AvatarGestureState.slashOvershoot(reachPx: Float) {
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = reachPx * 1.3f,
+                animationSpec = tween(durationMillis = 150),
+            )
+            offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
+        }
+        launch {
+            rotation.animateTo(targetValue = 12f, animationSpec = tween(durationMillis = 150))
+            rotation.animateTo(targetValue = -5f, animationSpec = tween(durationMillis = 160))
+            rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 200))
+        }
     }
 }
 

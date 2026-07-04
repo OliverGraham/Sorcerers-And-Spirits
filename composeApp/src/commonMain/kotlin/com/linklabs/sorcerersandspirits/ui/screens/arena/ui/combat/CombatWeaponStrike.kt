@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -37,6 +38,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatWeapon
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatWeapon
 import kotlin.math.PI
 import kotlin.math.atan2
+import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -50,6 +52,27 @@ internal const val MELEE_REACTION_DELAY_MILLIS = 280L
 internal const val THROW_FLIGHT_MILLIS = 440
 internal const val THROW_REACTION_DELAY_MILLIS = 400L
 private const val CARD_SPIN_ROTATIONS = 4f
+
+internal const val SLASH_SWEEP_MILLIS = 300
+internal const val TWIN_SLASH_STAGGER_MILLIS = 500
+internal const val TWIN_SLASH_RAISE_MILLIS = 180
+internal const val TWIN_SLASH_READY_HOLD_MILLIS = 220
+private const val SLASH_CONNECT_MILLIS = 240L
+private const val SLASH_FADE_MILLIS = 200
+private const val SLASH_END_HOLD_MILLIS = 120L
+
+/** The tail an [impactBurst] adds after it fires: its 60ms lead plus its 240ms fade-out. */
+private const val IMPACT_BURST_TAIL_MILLIS = 300L
+private const val SLASH_TRAIL_SAMPLES = 12
+private const val SLASH_ENGAGE_FRACTION = 0.22f
+private const val SWORD_ERECT_DEGREES = 180f
+
+/** When the follow blade lands, so the shared defender reaction (SS-191) meets its cut. */
+internal const val TWIN_SWORD_REACTION_DELAY_MILLIS =
+    TWIN_SLASH_RAISE_MILLIS +
+        TWIN_SLASH_READY_HOLD_MILLIS +
+        TWIN_SLASH_STAGGER_MILLIS +
+        SLASH_CONNECT_MILLIS
 
 private const val WITHDRAW_MILLIS = 220
 
@@ -69,8 +92,20 @@ internal class WeaponStrikeState {
     val spin = Animatable(initialValue = 0f)
     val impactAlpha = Animatable(initialValue = 0f)
     val impactScale = Animatable(initialValue = 0f)
+    val leadSlash = BladeSlashState()
+    val followSlash = BladeSlashState()
 
     var scene by mutableStateOf<WeaponStrikeScene?>(value = null)
+}
+
+/**
+ * One blade of the Duelist's twin-sword slash (SS-194): [sweep] runs 0-to-1 along the blade's arc
+ * across the defender, and [alpha] fades the blade in as the cut begins and out once it lands.
+ */
+@Stable
+internal class BladeSlashState {
+    val sweep = Animatable(initialValue = 0f)
+    val alpha = Animatable(initialValue = 0f)
 }
 
 /**
@@ -106,12 +141,16 @@ internal fun WeaponStrikeOverlay(
     var lastPlayedCueId by remember { mutableStateOf(value = animationCue?.id) }
 
     LaunchedEffect(key1 = animationCue) {
-        val cue = animationCue ?: return@LaunchedEffect
+        val cue = animationCue
+        val weapon = (cue as? CombatAnimationCue.NormalAttack)?.attackerClassType?.combatWeapon
+        if (cue == null || weapon == null) {
+            state.scene = null
+            lastPlayedCueId = cue?.id
+            return@LaunchedEffect
+        }
         if (cue.id == lastPlayedCueId) return@LaunchedEffect
         lastPlayedCueId = cue.id
 
-        if (cue !is CombatAnimationCue.NormalAttack) return@LaunchedEffect
-        val weapon = cue.attackerClassType.combatWeapon ?: return@LaunchedEffect
         val attackerBounds = avatarBoundsFor(cue.attackerUserId) ?: return@LaunchedEffect
         val defenderBounds = avatarBoundsFor(cue.defenderUserId) ?: return@LaunchedEffect
 
@@ -130,6 +169,34 @@ internal fun WeaponStrikeOverlay(
     Canvas(modifier = modifier) { drawWeaponStrike(state = state) }
 }
 
+/**
+ * How long a class's attacker-side normal-attack animation runs, so the message sequencer can hold
+ * the event until its strike finishes instead of cutting it off (SS-194 / SS-201). Kept in step
+ * with the play* choreography above. Strikes shorter than the flash window don't change pacing —
+ * the sequencer already holds a message at least that long — so only the longer twin-sword combo
+ * actually extends its message's dwell.
+ */
+internal fun CombatWeapon?.strikeDurationMillis(outcome: NormalRollMessageType): Long =
+    when (this) {
+        CombatWeapon.TwinSwords -> {
+            val followSweepMillis =
+                maxOf(SLASH_SWEEP_MILLIS.toLong(), SLASH_CONNECT_MILLIS + IMPACT_BURST_TAIL_MILLIS)
+            (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS + TWIN_SLASH_STAGGER_MILLIS)
+                .toLong() + followSweepMillis + SLASH_END_HOLD_MILLIS + SLASH_FADE_MILLIS
+        }
+
+        CombatWeapon.Dagger ->
+            MELEE_DASH_MILLIS +
+                MELEE_THRUST_MILLIS +
+                MELEE_EMBED_MILLIS +
+                WITHDRAW_MILLIS +
+                if (outcome == NormalRollMessageType.Knockout) 120L else 0L
+
+        CombatWeapon.PlayingCard -> THROW_FLIGHT_MILLIS + 200L
+
+        null -> 600L
+    }
+
 private fun strikeScene(
     weapon: CombatWeapon,
     outcome: NormalRollMessageType,
@@ -138,9 +205,10 @@ private fun strikeScene(
     accentColor: Color,
     density: Density,
 ): WeaponStrikeScene {
-    val isMiss = outcome == NormalRollMessageType.ArmorClassMiss
+    val isThrustMiss =
+        outcome == NormalRollMessageType.ArmorClassMiss && weapon != CombatWeapon.TwinSwords
     val target =
-        if (isMiss) {
+        if (isThrustMiss) {
             missThrustTarget(defenderBounds = defenderBounds, origin = attackerBounds.center)
         } else {
             defenderBounds.center
@@ -188,11 +256,16 @@ private suspend fun WeaponStrikeState.play(
     spin.snapTo(targetValue = 0f)
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
+    leadSlash.sweep.snapTo(targetValue = 0f)
+    leadSlash.alpha.snapTo(targetValue = 0f)
+    followSlash.sweep.snapTo(targetValue = 0f)
+    followSlash.alpha.snapTo(targetValue = 0f)
     this.scene = scene
 
     when (scene.weapon) {
         CombatWeapon.Dagger -> playMeleeStrike(scene = scene, outcome = outcome)
         CombatWeapon.PlayingCard -> playThrownStrike(outcome = outcome)
+        CombatWeapon.TwinSwords -> playTwinSwordSlash(outcome = outcome)
     }
 
     this.scene = null
@@ -228,6 +301,89 @@ private suspend fun WeaponStrikeState.playThrownStrike(outcome: NormalRollMessag
         NormalRollMessageType.ArmorClassMiss -> throwPast()
         NormalRollMessageType.Damage -> throwAcross(burstScale = 1f)
         NormalRollMessageType.Knockout -> throwAcross(burstScale = 1.3f)
+    }
+}
+
+/**
+ * The Duelist's twin-sword slash (SS-194): both blades rise into an erect ready pose at the
+ * Duelist's sides and hold, then the lead blade slashes across to the defender and roughly half a
+ * second later the follow blade cuts from the other side — one-two, both on screen the whole time.
+ * A landed cut flares a burst as each blade reaches the defender; a parried one (armor holds)
+ * sweeps in cleanly with no flare while the defender sidesteps. Both blades fade out together once
+ * the combo lands.
+ */
+private suspend fun WeaponStrikeState.playTwinSwordSlash(outcome: NormalRollMessageType) {
+    val connects = outcome != NormalRollMessageType.ArmorClassMiss
+    val followBurst =
+        when (outcome) {
+            NormalRollMessageType.Knockout -> 1.3f
+            NormalRollMessageType.Damage -> 1f
+            NormalRollMessageType.ArmorClassHit -> 0.8f
+            NormalRollMessageType.ArmorClassMiss -> 0f
+        }
+
+    coroutineScope {
+        launch { leadSlash.raise() }
+        launch { followSlash.raise() }
+    }
+    delay(timeMillis = TWIN_SLASH_READY_HOLD_MILLIS.toLong())
+
+    coroutineScope {
+        launch {
+            sweepBlade(blade = leadSlash, connects = connects, burstScale = followBurst * 0.7f)
+        }
+        launch {
+            delay(timeMillis = TWIN_SLASH_STAGGER_MILLIS.toLong())
+            sweepBlade(blade = followSlash, connects = connects, burstScale = followBurst)
+        }
+    }
+
+    delay(timeMillis = SLASH_END_HOLD_MILLIS)
+    coroutineScope {
+        launch {
+            leadSlash.alpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SLASH_FADE_MILLIS),
+            )
+        }
+        launch {
+            followSlash.alpha.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SLASH_FADE_MILLIS),
+            )
+        }
+    }
+}
+
+/** The blade fades into its erect ready pose, held upright at the Duelist's side before the cut. */
+private suspend fun BladeSlashState.raise() {
+    sweep.snapTo(targetValue = 0f)
+    alpha.animateTo(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = TWIN_SLASH_RAISE_MILLIS),
+    )
+}
+
+/** One blade's cut: sweep the arc from the ready pose to the defender, flaring on contact. */
+private suspend fun WeaponStrikeState.sweepBlade(
+    blade: BladeSlashState,
+    connects: Boolean,
+    burstScale: Float,
+) {
+    coroutineScope {
+        launch {
+            blade.sweep.animateTo(
+                targetValue = 1f,
+                animationSpec =
+                    tween(durationMillis = SLASH_SWEEP_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        launch {
+            if (connects) {
+                delay(timeMillis = SLASH_CONNECT_MILLIS)
+                impactBurst(peakScale = burstScale)
+            }
+        }
     }
 }
 
@@ -391,26 +547,11 @@ private suspend fun WeaponStrikeState.impactBurst(peakScale: Float) {
 private fun DrawScope.drawWeaponStrike(state: WeaponStrikeState) {
     val scene = state.scene ?: return
 
-    val weaponAlpha = state.weaponAlpha.value
-    if (weaponAlpha > 0f) {
-        val position = lerp(start = scene.start, stop = scene.target, fraction = state.travel.value)
-        when (scene.weapon) {
-            CombatWeapon.Dagger ->
-                drawBladeThrust(
-                    scene = scene,
-                    travel = state.travel.value,
-                    position = position,
-                    alpha = weaponAlpha,
-                )
+    when (scene.weapon) {
+        CombatWeapon.Dagger,
+        CombatWeapon.PlayingCard -> drawProjectileWeapon(scene = scene, state = state)
 
-            CombatWeapon.PlayingCard ->
-                drawCardThrow(
-                    scene = scene,
-                    position = position,
-                    spinDegrees = state.spin.value,
-                    alpha = weaponAlpha,
-                )
-        }
+        CombatWeapon.TwinSwords -> drawTwinSwordSlash(scene = scene, state = state)
     }
 
     val impactAlpha = state.impactAlpha.value
@@ -418,6 +559,41 @@ private fun DrawScope.drawWeaponStrike(state: WeaponStrikeState) {
     if (isBursting) {
         drawImpactBurst(scene = scene, scale = state.impactScale.value, alpha = impactAlpha)
     }
+}
+
+private fun DrawScope.drawProjectileWeapon(scene: WeaponStrikeScene, state: WeaponStrikeState) {
+    val weaponAlpha = state.weaponAlpha.value
+    if (weaponAlpha <= 0f) return
+
+    val position = lerp(start = scene.start, stop = scene.target, fraction = state.travel.value)
+    when (scene.weapon) {
+        CombatWeapon.Dagger ->
+            drawBladeThrust(
+                scene = scene,
+                travel = state.travel.value,
+                position = position,
+                alpha = weaponAlpha,
+            )
+
+        CombatWeapon.PlayingCard ->
+            drawCardThrow(
+                scene = scene,
+                position = position,
+                spinDegrees = state.spin.value,
+                alpha = weaponAlpha,
+            )
+
+        CombatWeapon.TwinSwords -> Unit
+    }
+}
+
+/**
+ * The Duelist's twin blades (SS-194): the lead blade slashes in from the defender's left, the
+ * follow blade from the right, so the two cuts cross over the defender.
+ */
+private fun DrawScope.drawTwinSwordSlash(scene: WeaponStrikeScene, state: WeaponStrikeState) {
+    drawBladeSlash(scene = scene, blade = state.leadSlash, fromSide = -1f)
+    drawBladeSlash(scene = scene, blade = state.followSlash, fromSide = 1f)
 }
 
 /** The flash of steel: a class-color streak trailing the blade, brightening to white at its tip. */
@@ -482,6 +658,208 @@ private fun DrawScope.drawCardThrow(
             drawPlayingCard(accentColor = scene.accentColor, alpha = alpha)
         }
     }
+}
+
+/**
+ * One slashing blade (SS-194): it launches from the attacker's hand — offset to their left or right
+ * so the two swords come from either side — and sweeps a bowed arc across to the defender, crossing
+ * the attack line so the paired cuts form an X. A class-color trail brightens to steel at the
+ * leading edge, with the sword riding the tip of the cut, oriented along the sweep.
+ */
+private fun DrawScope.drawBladeSlash(
+    scene: WeaponStrikeScene,
+    blade: BladeSlashState,
+    fromSide: Float,
+) {
+    val alpha = blade.alpha.value
+    if (alpha <= 0f) return
+
+    val axisVector = scene.target - scene.start
+    val axisLength = axisVector.getDistance()
+    if (axisLength == 0f) return
+    val axis = axisVector / axisLength
+    val perpAxis = Offset(x = -axis.y, y = axis.x)
+
+    val start = scene.start + perpAxis * (fromSide * 26.dp.toPx())
+    val end = scene.target - perpAxis * (fromSide * 22.dp.toPx())
+    val bowNormal = perpAxis * fromSide
+    val bow = 26.dp.toPx()
+
+    val sweep = blade.sweep.value
+    val engage = smoothstep(edge0 = 0f, edge1 = SLASH_ENGAGE_FRACTION, value = sweep)
+    val erectTip = start + Offset(x = 0f, y = -64.dp.toPx())
+    val arcPoint =
+        slashPoint(start = start, end = end, perp = bowNormal, bow = bow, fraction = sweep)
+    val position = lerp(start = erectTip, stop = arcPoint, fraction = engage)
+
+    if (engage > 0f) {
+        drawPath(
+            path =
+                slashTrailPath(
+                    start = start,
+                    end = end,
+                    perp = bowNormal,
+                    bow = bow,
+                    progress = sweep,
+                ),
+            brush =
+                Brush.linearGradient(
+                    colors =
+                        listOf(
+                            Color.Transparent,
+                            scene.accentColor.copy(alpha = 0.55f),
+                            steelBright,
+                        ),
+                    start = start,
+                    end = arcPoint,
+                ),
+            style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round),
+            alpha = alpha * 0.8f * engage,
+        )
+    }
+
+    val tangent =
+        slashTangent(start = start, end = end, perp = bowNormal, bow = bow, fraction = sweep)
+    val slashDegrees = atan2(y = tangent.y, x = tangent.x) * 180f / PI.toFloat() - 90f
+    val degrees =
+        lerpAngle(fromDegrees = SWORD_ERECT_DEGREES, toDegrees = slashDegrees, fraction = engage)
+    rotate(degrees = degrees, pivot = position) {
+        translate(left = position.x, top = position.y) {
+            drawSwordShape(accentColor = scene.accentColor, alpha = alpha)
+        }
+    }
+}
+
+/** Smooth 0-to-1 ramp between [edge0] and [edge1], easing the blade out of its erect pose. */
+private fun smoothstep(edge0: Float, edge1: Float, value: Float): Float {
+    val t = ((value - edge0) / (edge1 - edge0)).coerceIn(minimumValue = 0f, maximumValue = 1f)
+    return t * t * (3f - 2f * t)
+}
+
+/**
+ * Interpolate an angle along the shorter arc, so the erect blade rolls the near way into the cut.
+ */
+private fun lerpAngle(fromDegrees: Float, toDegrees: Float, fraction: Float): Float {
+    val delta = ((toDegrees - fromDegrees + 540f) % 360f) - 180f
+    return fromDegrees + delta * fraction
+}
+
+/** A point along the bowed slash arc: the straight span pushed out by a sine-peaked bow. */
+private fun slashPoint(
+    start: Offset,
+    end: Offset,
+    perp: Offset,
+    bow: Float,
+    fraction: Float,
+): Offset {
+    val base = lerp(start = start, stop = end, fraction = fraction)
+    val bowAmount = sin(x = fraction.toDouble() * PI).toFloat() * bow
+    return base + perp * bowAmount
+}
+
+/** The arc's local direction at [fraction], sampled either side so the blade rides tip-first. */
+private fun slashTangent(
+    start: Offset,
+    end: Offset,
+    perp: Offset,
+    bow: Float,
+    fraction: Float,
+): Offset {
+    val ahead =
+        slashPoint(start, end, perp, bow, (fraction + 0.02f).coerceAtMost(maximumValue = 1f))
+    val behind =
+        slashPoint(start, end, perp, bow, (fraction - 0.02f).coerceAtLeast(minimumValue = 0f))
+    return ahead - behind
+}
+
+private fun slashTrailPath(
+    start: Offset,
+    end: Offset,
+    perp: Offset,
+    bow: Float,
+    progress: Float,
+): Path =
+    Path().apply {
+        val origin = slashPoint(start = start, end = end, perp = perp, bow = bow, fraction = 0f)
+        moveTo(x = origin.x, y = origin.y)
+        for (sample in 1..SLASH_TRAIL_SAMPLES) {
+            val fraction = progress * sample / SLASH_TRAIL_SAMPLES
+            val point =
+                slashPoint(start = start, end = end, perp = perp, bow = bow, fraction = fraction)
+            lineTo(x = point.x, y = point.y)
+        }
+    }
+
+/**
+ * A broad dueling blade in local coordinates: tip at the origin leading the cut, the tapering blade
+ * trailing behind it in bright steel with a specular glint down its length and a white flash at the
+ * tip, and the guard, grip, and pommel carrying the class-color accent.
+ */
+private fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
+    val bladeLength = 82.dp.toPx()
+    val bladeHalfWidth = 6.dp.toPx()
+    val guardHalfWidth = 16.dp.toPx()
+    val guardHeight = 5.dp.toPx()
+    val gripHalfWidth = 3.5.dp.toPx()
+    val gripLength = 16.dp.toPx()
+
+    val blade =
+        Path().apply {
+            moveTo(x = 0f, y = 0f)
+            lineTo(x = -bladeHalfWidth, y = -bladeLength * 0.88f)
+            lineTo(x = 0f, y = -bladeLength)
+            lineTo(x = bladeHalfWidth, y = -bladeLength * 0.88f)
+            close()
+        }
+    drawPath(
+        path = blade,
+        brush =
+            Brush.linearGradient(
+                colors = listOf(Color.White, steelBright, steelShade),
+                start = Offset(x = 0f, y = 0f),
+                end = Offset(x = 0f, y = -bladeLength),
+            ),
+        alpha = alpha,
+    )
+
+    drawLine(
+        color = Color.White,
+        start = Offset(x = -bladeHalfWidth * 0.3f, y = -bladeLength * 0.82f),
+        end = Offset(x = -bladeHalfWidth * 0.12f, y = -bladeLength * 0.12f),
+        strokeWidth = 1.5.dp.toPx(),
+        cap = StrokeCap.Round,
+        alpha = alpha * 0.85f,
+    )
+
+    drawCircle(
+        color = Color.White,
+        radius = 3.dp.toPx(),
+        center = Offset(x = 0f, y = 0f),
+        alpha = alpha * 0.9f,
+    )
+
+    drawRoundRect(
+        color = accentColor,
+        topLeft = Offset(x = -guardHalfWidth, y = -bladeLength - guardHeight),
+        size = Size(width = guardHalfWidth * 2, height = guardHeight),
+        cornerRadius = CornerRadius(x = guardHeight / 2),
+        alpha = alpha,
+    )
+
+    drawRoundRect(
+        color = accentColor,
+        topLeft = Offset(x = -gripHalfWidth, y = -bladeLength - guardHeight - gripLength),
+        size = Size(width = gripHalfWidth * 2, height = gripLength),
+        cornerRadius = CornerRadius(x = gripHalfWidth),
+        alpha = alpha,
+    )
+
+    drawCircle(
+        color = accentColor,
+        radius = 4.5.dp.toPx(),
+        center = Offset(x = 0f, y = -bladeLength - guardHeight - gripLength - 2.5.dp.toPx()),
+        alpha = alpha,
+    )
 }
 
 private fun DrawScope.drawDagger(scene: WeaponStrikeScene, position: Offset, alpha: Float) {

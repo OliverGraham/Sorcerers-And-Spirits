@@ -115,8 +115,51 @@ class CombatAnimationCueTest {
     }
 
     @Test
+    fun `Given a Duelist armor hit, then the Duelist slashes and the defender flinches`() {
+        val cue = duelistAttackCue(outcome = NormalRollMessageType.ArmorClassHit)
+
+        assertEquals(expected = AvatarGesture.Slash, actual = cue.gestureFor(userId = ATTACKER_ID))
+        assertEquals(expected = AvatarGesture.Flinch, actual = cue.gestureFor(userId = DEFENDER_ID))
+    }
+
+    @Test
+    fun `Given a Duelist armor miss, then the slash whiffs`() {
+        val cue = duelistAttackCue(outcome = NormalRollMessageType.ArmorClassMiss)
+
+        assertEquals(
+            expected = AvatarGesture.SlashWhiff,
+            actual = cue.gestureFor(userId = ATTACKER_ID),
+        )
+    }
+
+    @Test
+    fun `Given a Duelist damaging health roll, then the Duelist slashes`() {
+        val cue = duelistAttackCue(outcome = NormalRollMessageType.Damage)
+
+        assertEquals(expected = AvatarGesture.Slash, actual = cue.gestureFor(userId = ATTACKER_ID))
+    }
+
+    @Test
+    fun `Given a Duelist knockout, then the Duelist finishes with a slash`() {
+        val cue = duelistAttackCue(outcome = NormalRollMessageType.Knockout)
+
+        assertEquals(
+            expected = AvatarGesture.SlashFinish,
+            actual = cue.gestureFor(userId = ATTACKER_ID),
+        )
+    }
+
+    @Test
     fun `Given a Rogue, then their strike weapon is the dagger`() {
         assertEquals(expected = CombatWeapon.Dagger, actual = CharacterClassType.Rogue.combatWeapon)
+    }
+
+    @Test
+    fun `Given a Duelist, then their strike weapon is the twin swords`() {
+        assertEquals(
+            expected = CombatWeapon.TwinSwords,
+            actual = CharacterClassType.Duelist.combatWeapon,
+        )
     }
 
     @Test
@@ -211,6 +254,15 @@ class CombatAnimationCueTest {
             id = MESSAGE_ID,
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.Rogue,
+            defenderUserId = DEFENDER_ID,
+            outcome = outcome,
+        )
+
+    private fun duelistAttackCue(outcome: NormalRollMessageType) =
+        CombatAnimationCue.NormalAttack(
+            id = MESSAGE_ID,
+            attackerUserId = ATTACKER_ID,
+            attackerClassType = CharacterClassType.Duelist,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
         )

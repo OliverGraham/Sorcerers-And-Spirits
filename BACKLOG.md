@@ -189,6 +189,13 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   sequencer a per-cue duration to await — a `CombatAnimationCue.playbackDurationMillis()` kept in
   step with the choreography constants (`THROW_*`, `ALL_IN_*`, melee `MELEE_*`, …). Messages with no
   cue keep today's timing.
+- **Partly landed (SS-194):** the per-cue duration half of the approach is in — the sequencer now
+  holds each message for `max(flash window, cue.playbackDurationMillis())` so a strike longer than
+  the flash window (the twin-sword combo) runs to completion instead of being cut off/frozen, and
+  the weapon overlay clears itself on a no-cue message. Cues that fit the flash window return 0 and
+  keep today's pacing. **Remaining:** the *reorder* to animation-first-then-flash, and opting the
+  long effect cues (`AllIn`, `LuckyCoin*`) into their real durations (they still use the flash
+  window).
 - **Parent:** SS-191.
 
 ### SS-193 — Gambler ability animations
@@ -202,7 +209,16 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 ### SS-194 — Duelist ability animations
 
 - [ ] Not completed
-- **Goal:** TBD — animations to be described.
+- **Normal attack (done):** the Duelist wields twin swords (`CombatWeapon.TwinSwords`). The two
+  blades slash the defender one after the other — the lead from the left, the follow from the right
+  roughly half a second later — in smooth, fluid arcs, each flaring a class-color burst on contact
+  (armor holds → the cuts sweep past while the defender sidesteps). Both blades are on screen the
+  whole time: they rise into an erect ready pose, hold, then slash one after the other and fade out
+  together. Attacker body plays a two-beat fence (`Slash` / `SlashFinish` / `SlashWhiff`).
+- **Sequencer fix (done):** because the twin-sword combo runs longer than the fixed flash window, it
+  used to be cut off and the blades froze on screen. The message sequencer now waits out each cue's
+  `playbackDurationMillis()` (see SS-201) so the animation completes and clears itself.
+- **Abilities (TBD):** Prepare Attack and Riposte animations still to be described.
 - **Cue sources:** `ArenaMessageState.PrepareAttack`, `ArenaMessageState.Riposte.*`,
   `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191.

@@ -13,6 +13,7 @@ import androidx.compose.runtime.snapshotFlow
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatWeapon
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import kotlinx.coroutines.delay
 
@@ -66,9 +67,12 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
                 for (message in fresh) {
                     if (message.flashCallout == null) continue
                     playback.show(message = message)
+                    val animationMillis = message.combatAnimationCue?.playbackDurationMillis() ?: 0L
                     delay(timeMillis = FLASH_HOLD_MILLIS)
                     playback.dismiss()
                     delay(timeMillis = FLASH_EXIT_MILLIS)
+                    val remainingAnimationMillis = animationMillis - FLASH_MESSAGE_DURATION_MILLIS
+                    if (remainingAnimationMillis > 0L) delay(timeMillis = remainingAnimationMillis)
                 }
                 lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
                 lastSize = messages.size
@@ -77,6 +81,31 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
 
     return playback
 }
+
+/**
+ * How long a cue's seated-avatar animation runs, so the sequencer holds its message until the
+ * animation finishes rather than advancing on the fixed flash window and cutting a long strike off
+ * (SS-194 / SS-201). A cue whose animation fits inside [FLASH_MESSAGE_DURATION_MILLIS] returns 0
+ * and keeps today's flash-window pacing; only longer cues extend their dwell. New long cues opt in
+ * here.
+ */
+internal fun CombatAnimationCue.playbackDurationMillis(): Long =
+    when (this) {
+        is CombatAnimationCue.NormalAttack ->
+            attackerClassType.combatWeapon.strikeDurationMillis(outcome = outcome)
+
+        is CombatAnimationCue.KillingMomentum -> 0L
+
+        is CombatAnimationCue.Dodge -> 0L
+
+        is CombatAnimationCue.AllIn -> 0L
+
+        is CombatAnimationCue.LuckyCoinFlip -> 0L
+
+        is CombatAnimationCue.LuckyCoinHighRoller -> 0L
+
+        is CombatAnimationCue.LuckyCoinHighRollerThrow -> 0L
+    }
 
 /**
  * The flash messages that arrived after [lastPlayedId], i.e. the ones not yet played. A null

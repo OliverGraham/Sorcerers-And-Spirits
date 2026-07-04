@@ -225,6 +225,7 @@ sealed interface ArenaMessageState {
     @Immutable
     data class AllIn(
         override val id: String,
+        val gamblerUserId: String,
         val gamblerName: String,
         val singleDie: Int,
         val outcome: AllInOutcome,
@@ -342,6 +343,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.AllIn ->
             ArenaMessageState.AllIn(
                 id = id,
+                gamblerUserId = gamblerUserId,
                 gamblerName = participants.resolveClassName(userId = gamblerUserId),
                 singleDie = singleDie,
                 outcome = allInOutcomeFor(singleDie = singleDie),

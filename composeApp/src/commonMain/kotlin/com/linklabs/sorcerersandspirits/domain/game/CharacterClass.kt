@@ -10,7 +10,7 @@ data class CharacterClass(
     val speed: Int,
     val offensiveAbility: OffensiveAbility,
     val defensiveAbility: DefensiveAbility,
-    val hasActedThisRound: Boolean = false,
+    val hasActedThisRound: Boolean,
     val attacksRemaining: Int = 1,
 ) {
     val className = type.name
@@ -69,6 +69,7 @@ data class CharacterClass(
                 speed = speed,
                 offensiveAbility = offensiveAbilityFor(type = type),
                 defensiveAbility = defensiveAbilityFor(type = type),
+                hasActedThisRound = false,
             )
 
         private fun offensiveAbilityFor(type: CharacterClassType): OffensiveAbility =

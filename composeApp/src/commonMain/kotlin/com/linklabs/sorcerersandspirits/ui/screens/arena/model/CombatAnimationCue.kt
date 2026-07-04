@@ -33,6 +33,13 @@ sealed interface CombatAnimationCue {
         val dodgerUserId: String,
         val didArmorIncrease: Boolean,
     ) : CombatAnimationCue
+
+    @Immutable
+    data class AllIn(
+        override val id: String,
+        val gamblerUserId: String,
+        val outcome: AllInOutcome,
+    ) : CombatAnimationCue
 }
 
 /**
@@ -46,6 +53,11 @@ enum class AvatarGesture {
     Stab,
     StabFlurry,
     StabOvershoot,
+    Throw,
+    ThrowStrong,
+    ThrowOvershoot,
+    AllInToss,
+    AllInBust,
     ReArm,
     Flinch,
     FlinchHeavy,
@@ -91,8 +103,10 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     null
                 }
 
-            // TODO(SS-193): Gambler ability animations.
-            is ArenaMessageState.AllIn,
+            is ArenaMessageState.AllIn ->
+                CombatAnimationCue.AllIn(id = id, gamblerUserId = gamblerUserId, outcome = outcome)
+
+            // TODO(SS-193): Gambler LuckyCoin animation.
             is ArenaMessageState.LuckyCoin -> null
 
             // TODO(SS-194): Duelist ability animations.
@@ -136,7 +150,24 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
             if (userId == attackerUserId) AvatarGesture.ReArm else null
 
         is CombatAnimationCue.Dodge -> dodgeGestureFor(userId = userId)
+
+        is CombatAnimationCue.AllIn -> allInGestureFor(userId = userId)
     }
+
+/**
+ * The Gambler's own body during All-In (SS-193): the coins are the show — drawn by the effect
+ * overlay — so the avatar only tosses its winnings up, then rides out the result. A self-knockout
+ * folds the toss into a collapse; the other outcomes just settle back.
+ */
+private fun CombatAnimationCue.AllIn.allInGestureFor(userId: String): AvatarGesture? {
+    if (userId != gamblerUserId) return null
+    return when (outcome) {
+        AllInOutcome.SelfKnockout -> AvatarGesture.AllInBust
+
+        AllInOutcome.NoEffect,
+        AllInOutcome.DoubleAttack -> AvatarGesture.AllInToss
+    }
+}
 
 private fun CombatAnimationCue.NormalAttack.normalAttackGestureFor(userId: String): AvatarGesture? {
     val isAttacker = userId == attackerUserId
@@ -155,6 +186,7 @@ private fun CombatAnimationCue.NormalAttack.normalAttackGestureFor(userId: Strin
 private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
     when (attackerClassType) {
         CharacterClassType.Rogue -> rogueStrike()
+        CharacterClassType.Gambler -> gamblerStrike()
         else -> genericStrike()
     }
 
@@ -168,6 +200,18 @@ private fun CombatAnimationCue.NormalAttack.rogueStrike(): AvatarGesture =
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.StabOvershoot
         NormalRollMessageType.Damage -> AvatarGesture.Stab
         NormalRollMessageType.Knockout -> AvatarGesture.StabFlurry
+    }
+
+/**
+ * The Gambler's card throw (SS-193): the spinning playing card of the weapon overlay carries the
+ * attack across the gap, and these gestures are the planted throwing flick behind each toss.
+ */
+private fun CombatAnimationCue.NormalAttack.gamblerStrike(): AvatarGesture =
+    when (outcome) {
+        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Throw
+        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.ThrowOvershoot
+        NormalRollMessageType.Damage -> AvatarGesture.Throw
+        NormalRollMessageType.Knockout -> AvatarGesture.ThrowStrong
     }
 
 private fun CombatAnimationCue.NormalAttack.genericStrike(): AvatarGesture =

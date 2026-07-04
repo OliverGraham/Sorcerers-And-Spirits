@@ -23,15 +23,15 @@ internal class SummonMinionActivated(
             var newGolemCount = summonMinionAbility.golemCount
             var newHp = attacker.hitPoints
 
-            when {
-                result in abilityConfig.summonSkeletonRange -> newSkeletonCount++
+            when (result) {
+                in abilityConfig.summonSkeletonRange -> newSkeletonCount++
 
-                result in abilityConfig.summonSkeletonAndHealRange -> {
+                in abilityConfig.summonSkeletonAndHealRange -> {
                     newSkeletonCount++
                     newHp = attacker.maxHitPoints
                 }
 
-                result == abilityConfig.summonGolemRoll -> {
+                abilityConfig.summonGolemRoll -> {
                     newGolemCount++
                     newHp = attacker.maxHitPoints
                 }

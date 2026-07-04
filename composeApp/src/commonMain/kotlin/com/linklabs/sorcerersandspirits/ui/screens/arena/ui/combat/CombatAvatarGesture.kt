@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatWeapon
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatWeapon
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
 import kotlinx.coroutines.coroutineScope
@@ -29,6 +30,9 @@ import kotlinx.coroutines.launch
 
 private const val REACTION_DELAY_MILLIS = 170L
 private const val SHAKE_SEGMENT_MILLIS = 55
+
+/** Total wall-clock time of [allInToss]'s three phases; kept in step with their tween durations. */
+private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 private const val COLLAPSE_ROTATION_DEGREES = 80f
 private const val COLLAPSE_FEET_SLIDE_FRACTION = 0.4f
 private const val HURT_TINT_MAX_RED_OFFSET = 130f
@@ -141,13 +145,18 @@ internal fun rememberAvatarGesture(
 
 /**
  * How long a defender holds still before reacting, so the shared reactions land in step with the
- * attacker's strike: a weapon melee strike (SS-192) spends its dash closing in before the blade
- * lands, while the generic lunges hit almost immediately.
+ * attacker's strike: a melee weapon (SS-192) spends its dash closing in before the blade lands, a
+ * thrown weapon (SS-193) spends its flight time spinning across the gap, and the generic lunges hit
+ * almost immediately.
  */
 private fun CombatAnimationCue.defenderReactionDelayMillis(): Long {
-    val isWeaponMeleeStrike =
-        this is CombatAnimationCue.NormalAttack && attackerClassType.combatWeapon != null
-    return if (isWeaponMeleeStrike) MELEE_REACTION_DELAY_MILLIS else REACTION_DELAY_MILLIS
+    val weapon =
+        if (this is CombatAnimationCue.NormalAttack) attackerClassType.combatWeapon else null
+    return when (weapon) {
+        CombatWeapon.Dagger -> MELEE_REACTION_DELAY_MILLIS
+        CombatWeapon.PlayingCard -> THROW_REACTION_DELAY_MILLIS
+        null -> REACTION_DELAY_MILLIS
+    }
 }
 
 private suspend fun AvatarGestureState.play(
@@ -175,6 +184,18 @@ private suspend fun AvatarGestureState.play(
 
             AvatarGesture.StabOvershoot ->
                 stabOvershoot(dashPx = meleeDashDistance.toPx() * strikeDirection)
+
+            AvatarGesture.Throw ->
+                throwFlick(flickPx = 26.dp.toPx() * strikeDirection, peakScale = 1.05f)
+
+            AvatarGesture.ThrowStrong ->
+                throwFlick(flickPx = 34.dp.toPx() * strikeDirection, peakScale = 1.1f)
+
+            AvatarGesture.ThrowOvershoot -> throwOvershoot(flickPx = 32.dp.toPx() * strikeDirection)
+
+            AvatarGesture.AllInToss -> allInToss(liftPx = 16.dp.toPx())
+
+            AvatarGesture.AllInBust -> allInBust(liftPx = 16.dp.toPx())
 
             AvatarGesture.ReArm -> reArm(retreatPx = 30.dp.toPx() * -strikeDirection)
 
@@ -305,6 +326,141 @@ private suspend fun AvatarGestureState.settleBack() {
         launch { stretchTo(targetX = 1f, targetY = 1f, durationMillis = 280) }
         launch { rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 280)) }
     }
+}
+
+/**
+ * The Gambler's card throw (SS-193): a planted flick — the body leans back into a wind-up, then
+ * snaps forward as the card is loosed, and settles. Smaller and quicker than a lunge, since the
+ * thrown card of the weapon overlay does the travelling, not the body.
+ */
+private suspend fun AvatarGestureState.throwFlick(flickPx: Float, peakScale: Float) {
+    val leanDirection = if (flickPx >= 0f) 1f else -1f
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = -0.4f * flickPx,
+                animationSpec = tween(durationMillis = 110),
+            )
+        }
+        launch {
+            rotation.animateTo(
+                targetValue = -5f * leanDirection,
+                animationSpec = tween(durationMillis = 110),
+            )
+        }
+    }
+    coroutineScope {
+        launch {
+            offsetY.animateTo(targetValue = flickPx, animationSpec = tween(durationMillis = 90))
+            offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 260))
+        }
+        launch {
+            rotation.animateTo(
+                targetValue = 4f * leanDirection,
+                animationSpec = tween(durationMillis = 90),
+            )
+            rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 260))
+        }
+        launch {
+            stretchTo(targetX = peakScale, targetY = peakScale, durationMillis = 90)
+            stretchTo(targetX = 1f, targetY = 1f, durationMillis = 260)
+        }
+    }
+}
+
+/**
+ * The whiffed throw: the flick overcommits past the sidestepping target, tipping the body off
+ * balance before it recovers back to its seat.
+ */
+private suspend fun AvatarGestureState.throwOvershoot(flickPx: Float) {
+    val leanDirection = if (flickPx >= 0f) 1f else -1f
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = -0.4f * flickPx,
+                animationSpec = tween(durationMillis = 110),
+            )
+        }
+        launch {
+            rotation.animateTo(
+                targetValue = -6f * leanDirection,
+                animationSpec = tween(durationMillis = 110),
+            )
+        }
+    }
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = flickPx * 1.2f,
+                animationSpec = tween(durationMillis = 100),
+            )
+            offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 320))
+        }
+        launch {
+            rotation.animateTo(
+                targetValue = 10f * leanDirection,
+                animationSpec = tween(durationMillis = 100),
+            )
+            rotation.animateTo(
+                targetValue = -4f * leanDirection,
+                animationSpec = tween(durationMillis = 160),
+            )
+            rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 200))
+        }
+    }
+}
+
+/**
+ * The All-In toss (SS-193): the Gambler dips to gather their winnings, then flings them skyward —
+ * the coins the effect overlay throws — and settles back to watch how they land.
+ */
+private suspend fun AvatarGestureState.allInToss(liftPx: Float) {
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = liftPx * 0.5f,
+                animationSpec = tween(durationMillis = 150),
+            )
+        }
+        launch { stretchTo(targetX = 1.04f, targetY = 0.95f, durationMillis = 150) }
+    }
+    coroutineScope {
+        launch {
+            offsetY.animateTo(targetValue = -liftPx, animationSpec = tween(durationMillis = 170))
+            offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
+        }
+        launch {
+            stretchTo(targetX = 0.96f, targetY = 1.06f, durationMillis = 170)
+            stretchTo(targetX = 1f, targetY = 1f, durationMillis = 300)
+        }
+    }
+}
+
+/**
+ * The All-In bust (SS-193): the toss, a beat while the pile gathers, then the blast jolts the
+ * Gambler off balance before they fold into the same collapse a knockout leaves behind. The wait
+ * lines the jolt up with the overlay's detonation — the pile finishes landing and settling first.
+ */
+private suspend fun AvatarGestureState.allInBust(liftPx: Float) {
+    allInToss(liftPx = liftPx)
+    delay(
+        timeMillis =
+            (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS - ALL_IN_TOSS_GESTURE_MILLIS).toLong()
+    )
+    coroutineScope {
+        launch {
+            offsetY.animateTo(
+                targetValue = liftPx * 0.4f,
+                animationSpec = tween(durationMillis = 70),
+            )
+            offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 90))
+        }
+        launch {
+            stretchTo(targetX = 1.08f, targetY = 0.9f, durationMillis = 70)
+            stretchTo(targetX = 1f, targetY = 1f, durationMillis = 90)
+        }
+    }
+    collapse(reactionDelayMillis = 0L)
 }
 
 /**

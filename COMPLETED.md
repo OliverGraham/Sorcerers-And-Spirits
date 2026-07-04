@@ -488,6 +488,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-202** — All-In button stuck disabled because `hasActedThisRound` was dropped in the UI
+  round-trip: `CharacterClassState` omitted `hasActedThisRound`, so `CharacterClassState.toDomain()`
+  (used to build every dispatched action's `playerMap`) reset it to false via the domain default —
+  rounds never completed, so a Gambler's `usedThisTurn` never reset. Fix: carry the field in the UI
+  state and map it both ways, and remove the `= false` default on `CharacterClass.hasActedThisRound`
+  so every mapping is compile-enforced (recurrence of the SS-120 class of bug).
+
 - **SS-170** — Finished screen must not offer "Next Match" when only one player remains: A player
   only leaves the shared player map by exiting the arena, so `ArenaState.Finished` now derives
   `canStartNextMatch = players.size >= 2`. When only one player remains, `MatchDecisionControls` (

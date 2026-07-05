@@ -44,6 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.ALL_IN_TOSS_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.THROW_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_DASH_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_EMBED_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_REACTION_DELAY_MILLIS
@@ -202,6 +203,7 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
         CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
         CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
         CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
+        CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
         else -> REACTION_DELAY_MILLIS
     }
 
@@ -307,6 +309,8 @@ private suspend fun AvatarGestureState.play(
 
             AvatarGesture.SlashWhiff -> slashWhiff(reachPx = 30.dp.toPx() * strikeDirection)
 
+            AvatarGesture.Cast -> cast(reachPx = 14.dp.toPx() * strikeDirection)
+
             AvatarGesture.PreparedThrust -> preparedThrust(reachPx = 36.dp.toPx() * strikeDirection)
 
             AvatarGesture.PreparedThrustWhiff ->
@@ -346,6 +350,15 @@ private suspend fun AvatarGestureState.play(
             AvatarGesture.Collapse -> collapse(reactionDelayMillis = reactionDelayMillis)
         }
     }
+}
+
+/**
+ * The Necromancer's cast (SS-195): the summoned scythe does all the reaping, so the caster only
+ * leans a little toward the defender and settles — no lunge, since the body never carries the blow.
+ */
+private suspend fun AvatarGestureState.cast(reachPx: Float) {
+    offsetY.animateTo(targetValue = reachPx, animationSpec = tween(durationMillis = 180))
+    offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
 }
 
 private suspend fun AvatarGestureState.lunge(distancePx: Float, peakScale: Float) {

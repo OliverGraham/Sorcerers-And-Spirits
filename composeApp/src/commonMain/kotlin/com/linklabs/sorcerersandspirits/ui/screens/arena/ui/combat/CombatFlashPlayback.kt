@@ -27,6 +27,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinHighRollerDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinThrowDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
 import kotlinx.coroutines.delay
 
@@ -177,6 +178,7 @@ private fun normalAttackOverlayDurationMillis(
         CharacterClassType.Rogue -> rogueNormalAttackDurationMillis(outcome = outcome)
         CharacterClassType.Gambler -> gamblerNormalAttackDurationMillis()
         CharacterClassType.Duelist -> duelistNormalAttackDurationMillis()
+        CharacterClassType.Necromancer -> necromancerNormalAttackDurationMillis()
         else -> 0L
     }
 

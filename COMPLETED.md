@@ -1073,3 +1073,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   from under the cue, released once the sequencer finishes the collapse (3+ players morph to a head
   icon after the animation) or held through the finish hold when the match ends. Finish transition
   also now sums each closing cue's real playbackDurationMillis so long closers play in full.
+- **SS-195** — Necromancer normal-attack animation: a scythe summoned by magic — a long, slim,
+  subtly jagged green energy crescent on an S-curved snath, wrapped in a green aura radiating off
+  the blade. It manifests and glows at the caster, rises to the defender holding its upright pose
+  (handle down, blade up), then winds back and reaps a menacing arc, the concave inner edge leading
+  so the cut pulls inward; a glowing slash trail rides the swept arc, a class-color burst flares on
+  a landed cut (held back on a miss, which still carries across), and the whole construct fades out.
+  New small Cast body gesture (a gentle lean, no lunge, since the scythe carries the attack); bowed
+  slash-arc math extracted from DuelistNormalAttack into shared CombatSlashArc; wired into the
+  overlay host, playback-duration, and defender-reaction-delay registries; ships interactive Compose
+  previews per outcome.

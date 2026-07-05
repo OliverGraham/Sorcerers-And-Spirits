@@ -335,7 +335,7 @@ private fun smoothstep(edge0: Float, edge1: Float, value: Float): Float {
 /**
  * Interpolate an angle along the shorter arc, so the erect blade rolls the near way into the cut.
  */
-private fun lerpAngle(fromDegrees: Float, toDegrees: Float, fraction: Float): Float {
+internal fun lerpAngle(fromDegrees: Float, toDegrees: Float, fraction: Float): Float {
     val delta = ((toDegrees - fromDegrees + 540f) % 360f) - 180f
     return fromDegrees + delta * fraction
 }

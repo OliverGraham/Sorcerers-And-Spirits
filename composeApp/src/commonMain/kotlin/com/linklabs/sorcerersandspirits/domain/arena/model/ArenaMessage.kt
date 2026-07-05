@@ -50,10 +50,15 @@ sealed interface ArenaMessage {
     }
 
     sealed interface Riposte : ArenaMessage {
-        data object Trigger : Riposte
+        data class Trigger(val duelistUserId: String, val attackerUserId: String) : Riposte
 
-        data class EnGarde(val firstDie: Int, val secondDie: Int, val isSuccessful: Boolean) :
-            Riposte
+        data class EnGarde(
+            val duelistUserId: String,
+            val attackerUserId: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val isSuccessful: Boolean,
+        ) : Riposte
     }
 
     data class SummonMinion(val necroUserId: String, val singleDie: Int) : ArenaMessage

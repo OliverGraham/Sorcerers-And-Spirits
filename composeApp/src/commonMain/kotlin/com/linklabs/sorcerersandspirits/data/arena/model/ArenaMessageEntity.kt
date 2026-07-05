@@ -106,12 +106,18 @@ sealed interface ArenaMessageEntity {
     sealed interface Riposte : ArenaMessageEntity {
         @Serializable
         @SerialName(value = RIPOSTE_TRIGGER)
-        data class Trigger(override val id: String) : Riposte
+        data class Trigger(
+            override val id: String,
+            val duelistUserId: String,
+            val attackerUserId: String,
+        ) : Riposte
 
         @Serializable
         @SerialName(value = RIPOSTE_EN_GARDE)
         data class EnGarde(
             override val id: String,
+            val duelistUserId: String,
+            val attackerUserId: String,
             val firstDie: Int,
             val secondDie: Int,
             val isSuccessful: Boolean,
@@ -364,10 +370,16 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     isKnockout = isKnockout,
                 )
 
-            is ArenaMessageEntity.Riposte.Trigger -> ArenaMessage.Riposte.Trigger
+            is ArenaMessageEntity.Riposte.Trigger ->
+                ArenaMessage.Riposte.Trigger(
+                    duelistUserId = duelistUserId,
+                    attackerUserId = attackerUserId,
+                )
 
             is ArenaMessageEntity.Riposte.EnGarde ->
                 ArenaMessage.Riposte.EnGarde(
+                    duelistUserId = duelistUserId,
+                    attackerUserId = attackerUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     isSuccessful = isSuccessful,
@@ -525,11 +537,18 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 isKnockout = isKnockout,
             )
 
-        is ArenaMessage.Riposte.Trigger -> ArenaMessageEntity.Riposte.Trigger(id = id)
+        is ArenaMessage.Riposte.Trigger ->
+            ArenaMessageEntity.Riposte.Trigger(
+                id = id,
+                duelistUserId = duelistUserId,
+                attackerUserId = attackerUserId,
+            )
 
         is ArenaMessage.Riposte.EnGarde ->
             ArenaMessageEntity.Riposte.EnGarde(
                 id = id,
+                duelistUserId = duelistUserId,
+                attackerUserId = attackerUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
                 isSuccessful = isSuccessful,

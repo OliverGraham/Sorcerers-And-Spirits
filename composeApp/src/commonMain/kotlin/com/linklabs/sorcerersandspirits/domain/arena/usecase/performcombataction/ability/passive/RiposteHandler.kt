@@ -15,7 +15,13 @@ internal class RiposteHandler(
     fun rollRiposte() = combatMutator.rollRiposte()
 
     private fun CombatMutator.triggerRiposte() {
-        addMessage(message = ArenaMessage.Riposte.Trigger)
+        addMessage(
+            message =
+                ArenaMessage.Riposte.Trigger(
+                    duelistUserId = defenderUserId,
+                    attackerUserId = attackerUserId,
+                )
+        )
 
         setNextAbilityRoll(
             purpose = AbilityAction.Passive.Riposte(attackerRollTotal = attackerRollTotal),
@@ -35,6 +41,8 @@ internal class RiposteHandler(
         addMessage(
             message =
                 ArenaMessage.Riposte.EnGarde(
+                    duelistUserId = defenderUserId,
+                    attackerUserId = attackerUserId,
                     firstDie = result.firstDie,
                     secondDie = result.secondDie,
                     isSuccessful = isSuccessful,

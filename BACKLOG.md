@@ -197,14 +197,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191. Abilities split into SS-203 (Prepare Attack) and SS-204 (Riposte).
 
-### SS-204 — Duelist Riposte animation
-
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Defensive ability: when armor is passed, roll 2d6; on
-  6/7/8 the Duelist turns the attack around on the opponent.
-- **Cue sources:** `ArenaMessageState.Riposte.*`.
-- **Parent:** SS-191. Split out of SS-194.
-
 ### SS-195 — Necromancer normal-attack animation
 
 - [ ] Not completed

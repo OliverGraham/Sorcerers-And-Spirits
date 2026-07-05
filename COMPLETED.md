@@ -1053,6 +1053,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   twirl a full revolution around the hands, gleam, and thrust into the target — K.O. burst on
   success, sail-past on a whiff; effect overlays hoisted out of the seating transition so K.O. cues
   survive re-seating (follow-up: SS-213).
+- **SS-204** — Duelist Riposte animation: paired blades rise upright and side-by-side into a waiting
+  parry stance the moment the Duelist's armor is passed (on the Riposte.Trigger message) and hold
+  through the roll-off; once the roll resolves the forward blade flicks a quick deflecting beat, then
+  the rear blade swings down into a counter-thrust — landing on the attacker with a class-color burst
+  on a successful reversal, or sailing past on a failure. Split across Trigger/EnGarde with the cue
+  held live between them; Trigger/EnGarde plumbed with duelist + attacker userIds through all layers.
 - **SS-201** — Combat animation completes before its flash call-out plays: the sequencer now runs a
   message's seated-avatar cue to completion, then shows the flash callout, so an effect is never
   flashed over. Every cue reports its true full length via playbackDurationMillis (the max of its

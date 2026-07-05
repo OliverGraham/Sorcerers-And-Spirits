@@ -14,10 +14,13 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_TOTAL_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.RIPOSTE_READY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.RIPOSTE_TOTAL_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.duelistNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerAllInDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinFlipDurationMillis
@@ -151,6 +154,14 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
         is CombatAnimationCue.LuckyCoinHighRollerThrow -> gamblerLuckyCoinThrowDurationMillis()
 
         is CombatAnimationCue.PrepareAttack -> PREPARE_ATTACK_TOTAL_MILLIS
+
+        is CombatAnimationCue.Riposte ->
+            when (phase) {
+                RipostePhase.Ready -> RIPOSTE_READY_MILLIS
+
+                RipostePhase.Landed,
+                RipostePhase.Missed -> RIPOSTE_TOTAL_MILLIS
+            }
     }
 
 /**

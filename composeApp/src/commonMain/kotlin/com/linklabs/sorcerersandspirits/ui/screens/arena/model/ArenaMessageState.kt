@@ -113,11 +113,18 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Riposte : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : Riposte
+        @Immutable
+        data class Trigger(
+            override val id: String,
+            val duelistUserId: String,
+            val attackerUserId: String,
+        ) : Riposte
 
         @Immutable
         data class EnGarde(
             override val id: String,
+            val duelistUserId: String,
+            val attackerUserId: String,
             val firstDie: Int,
             val secondDie: Int,
             val isSuccessful: Boolean,
@@ -509,12 +516,19 @@ private fun ArenaMessage.toState(
         is ArenaMessage.Riposte.EnGarde ->
             ArenaMessageState.Riposte.EnGarde(
                 id = id,
+                duelistUserId = duelistUserId,
+                attackerUserId = attackerUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
                 isSuccessful = isSuccessful,
             )
 
-        is ArenaMessage.Riposte.Trigger -> ArenaMessageState.Riposte.Trigger(id = id)
+        is ArenaMessage.Riposte.Trigger ->
+            ArenaMessageState.Riposte.Trigger(
+                id = id,
+                duelistUserId = duelistUserId,
+                attackerUserId = attackerUserId,
+            )
 
         is ArenaMessage.SpellPotency ->
             ArenaMessageState.SpellPotency(

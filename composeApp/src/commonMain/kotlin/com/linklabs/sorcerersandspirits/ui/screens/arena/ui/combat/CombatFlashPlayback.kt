@@ -14,6 +14,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_TOTAL_MILLIS
@@ -48,6 +49,14 @@ internal class FlashPlaybackState {
     var combatAnimationCue by mutableStateOf<CombatAnimationCue?>(value = null)
         private set
 
+    /**
+     * The id of the most recent collapse message whose playback window has fully closed, so the
+     * seating can release the downed player from their seat once their Collapse has played and let
+     * them morph to a head icon in a match that continues (SS-213).
+     */
+    var finishedCollapseMessageId by mutableStateOf<String?>(value = null)
+        private set
+
     val visibleState = MutableTransitionState(initialState = false)
 
     /**
@@ -55,6 +64,11 @@ internal class FlashPlaybackState {
      */
     fun playAnimation(cue: CombatAnimationCue?) {
         combatAnimationCue = cue
+    }
+
+    /** Marks a collapse message's playback window closed, releasing its downed player's seat. */
+    fun markCollapseFinished(messageId: String) {
+        finishedCollapseMessageId = messageId
     }
 
     fun show(message: ArenaMessageState) {
@@ -91,6 +105,9 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
                     delay(timeMillis = FLASH_HOLD_MILLIS)
                     playback.dismiss()
                     delay(timeMillis = FLASH_EXIT_MILLIS)
+                    if (cue?.collapsingUserId != null) {
+                        playback.markCollapseFinished(messageId = message.id)
+                    }
                 }
                 lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
                 lastSize = messages.size

@@ -23,16 +23,22 @@ data class CombatSeating(
  * user's own player always takes the bottom seat, and two seated opponents keep a fixed order — so
  * the dice changing hands (Mirror Image, Riposte, a turn passing between the same two players)
  * never rearranges the stage; only the active-roller halo moves (SS-168, SS-181).
+ *
+ * A [collapsingTargetUserId] holds the just-downed player in the second seat while their collapse
+ * plays out, even though they are no longer conscious and the live target resolution has moved on,
+ * so the Collapse animates in place instead of the pane swapping out from under it (SS-213).
  */
 internal fun ArenaState.Combat.seatingFor(
     targetUserId: String,
     isMatchEnding: Boolean,
+    collapsingTargetUserId: String?,
 ): CombatSeating {
-    val seatedUserIds =
-        setOfNotNull(
-            attackingUserId,
-            seatedTargetUserId(targetUserId = targetUserId, isMatchEnding = isMatchEnding),
-        )
+    val forcedSecondSeatUserId =
+        collapsingTargetUserId?.takeIf { it in playerMap.keys && it != attackingUserId }
+    val secondSeatUserId =
+        forcedSecondSeatUserId
+            ?: seatedTargetUserId(targetUserId = targetUserId, isMatchEnding = isMatchEnding)
+    val seatedUserIds = setOfNotNull(attackingUserId, secondSeatUserId)
     val (topSeatUserId, bottomSeatUserId) = assignSeats(seatedUserIds = seatedUserIds)
 
     return CombatSeating(

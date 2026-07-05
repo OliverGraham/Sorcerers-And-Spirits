@@ -77,6 +77,26 @@ sealed interface CombatAnimationCue {
         val targetUserId: String,
         val isSuccessful: Boolean,
     ) : CombatAnimationCue
+
+    @Immutable
+    data class Riposte(
+        override val id: String,
+        val duelistUserId: String,
+        val attackerUserId: String,
+        val phase: RipostePhase,
+    ) : CombatAnimationCue
+}
+
+/**
+ * The stage a Riposte is in (SS-204): [Ready] is the paired blades rising into a parry stance the
+ * moment the Duelist's armor is passed, held while the roll-off is made; [Landed] and [Missed] are
+ * the resolved roll — the parry beat followed by the counter-stab either reaching the attacker or
+ * sailing past.
+ */
+enum class RipostePhase {
+    Ready,
+    Landed,
+    Missed,
 }
 
 /**
@@ -196,8 +216,21 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     isSuccessful = isSuccessful,
                 )
 
-            // TODO(SS-204): Duelist Riposte animation.
-            is ArenaMessageState.Riposte -> null
+            is ArenaMessageState.Riposte.Trigger ->
+                CombatAnimationCue.Riposte(
+                    id = id,
+                    duelistUserId = duelistUserId,
+                    attackerUserId = attackerUserId,
+                    phase = RipostePhase.Ready,
+                )
+
+            is ArenaMessageState.Riposte.EnGarde ->
+                CombatAnimationCue.Riposte(
+                    id = id,
+                    duelistUserId = duelistUserId,
+                    attackerUserId = attackerUserId,
+                    phase = if (isSuccessful) RipostePhase.Landed else RipostePhase.Missed,
+                )
 
             // TODO(SS-195): Necromancer ability animations.
             is ArenaMessageState.SummonMinion -> null
@@ -238,6 +271,8 @@ val CombatAnimationCue.collapsingUserId: String?
 
             is CombatAnimationCue.PrepareAttack -> if (isSuccessful) targetUserId else null
 
+            is CombatAnimationCue.Riposte -> null
+
             is CombatAnimationCue.LuckyCoinHighRollerThrow ->
                 if (isKnockout) attackerUserId else null
 
@@ -275,6 +310,21 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.LuckyCoinHighRollerThrow -> luckyCoinThrowGestureFor(userId = userId)
 
         is CombatAnimationCue.PrepareAttack -> prepareAttackGestureFor(userId = userId)
+
+        is CombatAnimationCue.Riposte -> riposteGestureFor(userId = userId)
+    }
+
+/**
+ * The Duelist's Riposte (SS-204): the paired blades of the effect overlay carry the whole reversal
+ * — the forward blade's disarming swirl and the rear blade's counter-stab — so the Duelist holds
+ * their ground behind them, and only the countered attacker reacts, flinching as a landed reversal
+ * turns their own attack around. A failed counter leaves the attacker untouched here; their
+ * original attack simply resumes into its own health roll.
+ */
+private fun CombatAnimationCue.Riposte.riposteGestureFor(userId: String): AvatarGesture? =
+    when {
+        userId == attackerUserId && phase == RipostePhase.Landed -> AvatarGesture.Flinch
+        else -> null
     }
 
 /**

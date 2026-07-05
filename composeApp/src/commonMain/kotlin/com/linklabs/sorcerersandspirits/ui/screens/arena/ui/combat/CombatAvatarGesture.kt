@@ -26,6 +26,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_APPEAR_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_STRIKE_MILLIS
@@ -34,6 +35,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.due
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_PULL_BACK_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_THRUST_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_TWIRL_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.RIPOSTE_STRIKE_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.TWIN_SLASH_RAISE_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.TWIN_SLASH_READY_HOLD_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.TWIN_SLASH_STAGGER_MILLIS
@@ -191,6 +193,7 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
         is CombatAnimationCue.PrepareAttack -> prepareAttackReactionDelayMillis()
+        is CombatAnimationCue.Riposte -> RIPOSTE_STRIKE_MILLIS
         else -> REACTION_DELAY_MILLIS
     }
 
@@ -238,6 +241,9 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         is CombatAnimationCue.PrepareAttack ->
             prepareAttackReactionDelayMillis() +
                 if (isSuccessful) COLLAPSE_BODY_MILLIS else SIDESTEP_BODY_MILLIS
+
+        is CombatAnimationCue.Riposte ->
+            if (phase == RipostePhase.Landed) RIPOSTE_STRIKE_MILLIS + FLINCH_BODY_MILLIS else 0L
     }
 
 /**

@@ -362,7 +362,7 @@ private fun DrawScope.drawKnockoutBurst(scene: PrepareAttackScene, scale: Float,
     )
 }
 
-private fun Offset.rotatedBy(degrees: Float): Offset {
+internal fun Offset.rotatedBy(degrees: Float): Offset {
     val radians = degrees * PI.toFloat() / 180f
     return Offset(
         x = x * cos(x = radians) - y * sin(x = radians),

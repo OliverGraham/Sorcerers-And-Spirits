@@ -24,6 +24,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
@@ -57,6 +59,11 @@ internal fun ArenaCombat(
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
     val avatarBounds = remember { CombatAvatarBounds() }
+
+    val presentClasses =
+        remember(key1 = state.playerMap.keys) {
+            state.playerMap.values.map { it.characterClass.type }.toSet()
+        }
 
     var isMessagesExpanded by remember { mutableStateOf(value = false) }
     var unreadMessageCount by remember { mutableStateOf(value = 0) }
@@ -121,9 +128,10 @@ internal fun ArenaCombat(
                 )
             }
 
-            CombatEffectsOverlay(
+            CombatAnimationOverlays(
                 animationCue = flashPlayback.combatAnimationCue,
                 avatarBounds = avatarBounds,
+                presentClasses = presentClasses,
                 modifier = Modifier.fillMaxSize(),
             )
 

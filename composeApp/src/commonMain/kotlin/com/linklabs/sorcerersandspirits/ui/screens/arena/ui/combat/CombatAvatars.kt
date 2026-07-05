@@ -77,7 +77,7 @@ private const val ATTACKS_COUNT_LABEL = "attacksCount"
  * the [ActivePlayerHalo] marks whoever is rolling, so the seats themselves carry no meaning.
  *
  * Each seat reports its measured bounds up through [onAvatarBoundsChanged], feeding the
- * [CombatEffectsOverlay] that hosts the weapon and ability effects above the seating transition
+ * CombatAnimationOverlays that host the weapon and ability effects above the seating transition
  * (SS-192, SS-203).
  */
 @Composable

@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing

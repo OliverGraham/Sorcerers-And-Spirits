@@ -1,13 +1,11 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -39,6 +37,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -180,27 +179,26 @@ internal fun AllInOverlay(
                 style = TextStyle(fontSize = DOLLAR_MEASURE_SP.sp, fontWeight = FontWeight.Black),
             )
         }
-    var lastPlayedCueId by remember { mutableStateOf(value = animationCue?.id) }
-
-    LaunchedEffect(key1 = animationCue) {
-        val cue = animationCue ?: return@LaunchedEffect
-        if (cue.id == lastPlayedCueId) return@LaunchedEffect
-        lastPlayedCueId = cue.id
-
-        if (cue !is CombatAnimationCue.AllIn) return@LaunchedEffect
-        val bounds = avatarBoundsFor(cue.gamblerUserId) ?: return@LaunchedEffect
-
-        val scene =
-            allInScene(
-                bounds = bounds,
-                accentColor = CharacterClassType.Gambler.toColor(),
-                density = density,
-                seed = cue.id.hashCode(),
-            )
-        state.play(scene = scene, outcome = cue.outcome)
-    }
-
-    Canvas(modifier = modifier) { drawAllIn(state = state, dollarLayout = dollarLayout) }
+    CueEffectOverlay(
+        animationCue = animationCue,
+        select = { it as? CombatAnimationCue.AllIn },
+        onCancel = {},
+        play = playLabel@{ cue ->
+                val bounds = avatarBoundsFor(cue.gamblerUserId) ?: return@playLabel
+                state.play(
+                    scene =
+                        allInScene(
+                            bounds = bounds,
+                            accentColor = CharacterClassType.Gambler.toColor(),
+                            density = density,
+                            seed = cue.id.hashCode(),
+                        ),
+                    outcome = cue.outcome,
+                )
+            },
+        modifier = modifier,
+        draw = { drawAllIn(state = state, dollarLayout = dollarLayout) },
+    )
 }
 
 private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed: Int): AllInScene {

@@ -185,9 +185,9 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   survive any pane swap. **Remaining:** the seated-avatar body gestures (`rememberAvatarGesture`)
   still live inside the panes and are skipped when a K.O. re-seats the stage — the attacker's body
   motion and the target's Collapse are lost exactly when they matter most.
-- **Also:** `finishHoldMillis` counts only the fixed flash window per closing message and ignores
-  `playbackDurationMillis()`, so a closing animation longer than the flash window can be cut off by
-  the Finished transition.
+- **Fixed (finish transition):** `finishHoldMillis` now sums each new closing message's
+  `playbackDurationMillis()` on top of its flash window, mirroring the sequencer's real wall-clock,
+  so a closing animation longer than the flash window plays in full before the Finished transition.
 - **Direction:** hold the seating snapshot (and the finish transition) until the playing cue's
   window ends — e.g. clear `FlashPlaybackState.currentMessage` when a message's playback window
   closes, freeze seating while a message is live, and give every long cue its real duration (the

@@ -29,10 +29,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.determineTimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.FLASH_MESSAGE_DURATION_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.playbackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -201,8 +203,10 @@ class ArenaScreenViewModel(
     }
 
     /**
-     * The hold outlasts the flash callouts that arrived with this closing resolution—each plays for
-     * [FLASH_MESSAGE_DURATION_MILLIS] one at a time—then adds the [FINISH_HOLD_TAIL_MILLIS] tail.
+     * The hold outlasts the flash callouts that arrived with this closing resolution—each plays its
+     * combat animation to completion and then holds for [FLASH_MESSAGE_DURATION_MILLIS], one at a
+     * time—then adds the [FINISH_HOLD_TAIL_MILLIS] tail. A closing animation longer than the flash
+     * window is played in full instead of being cut off by the Finished transition (SS-213).
      */
     private fun finishHoldMillis(
         previousState: ArenaScreenState?,
@@ -210,8 +214,13 @@ class ArenaScreenViewModel(
     ): Long {
         val previousFlashIds =
             previousState?.flashMessages?.mapTo(mutableSetOf()) { it.id } ?: emptySet()
-        val newFlashCount = nextState.flashMessages.count { it.id !in previousFlashIds }
-        return newFlashCount * FLASH_MESSAGE_DURATION_MILLIS + FINISH_HOLD_TAIL_MILLIS
+        val newFlashMessages = nextState.flashMessages.filter { it.id !in previousFlashIds }
+        val playbackMillis =
+            newFlashMessages.sumOf { message ->
+                val animationMillis = message.combatAnimationCue?.playbackDurationMillis() ?: 0L
+                animationMillis + FLASH_MESSAGE_DURATION_MILLIS
+            }
+        return playbackMillis + FINISH_HOLD_TAIL_MILLIS
     }
 
     private fun advanceToFinished() {

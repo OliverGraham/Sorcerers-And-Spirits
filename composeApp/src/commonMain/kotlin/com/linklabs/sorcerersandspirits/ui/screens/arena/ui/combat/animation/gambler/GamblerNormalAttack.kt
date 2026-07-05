@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -25,15 +26,23 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -317,3 +326,49 @@ private fun spadePath(halfWidth: Float, halfHeight: Float): Path =
         )
         close()
     }
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerNormalAttackKnockoutPreview() {
+    GamblerNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerNormalAttackDamagePreview() {
+    GamblerNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerNormalAttackArmorClassHitPreview() {
+    GamblerNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerNormalAttackArmorClassMissPreview() {
+    GamblerNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+}
+
+@Composable
+private fun GamblerNormalAttackPreview(outcome: NormalRollMessageType) {
+    val seats = rememberDuoSeats()
+    val cue =
+        rememberReplayingCue(replayKey = outcome) { iteration ->
+            CombatAnimationCue.NormalAttack(
+                id = "gambler-attack-$iteration",
+                attackerUserId = PREVIEW_ACTOR_ID,
+                attackerClassType = CharacterClassType.Gambler,
+                defenderUserId = PREVIEW_TARGET_ID,
+                outcome = outcome,
+            )
+        }
+    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        GamblerNormalAttackOverlay(
+            animationCue = cue,
+            avatarBoundsFor = seats.boundsFor,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -37,7 +39,13 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -702,3 +710,41 @@ private fun valuableRadiusDp(kind: ValuableKind): Float =
         ValuableKind.Painting -> 12f
         ValuableKind.Barrel -> 12f
     }
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerAllInDoubleAttackPreview() {
+    GamblerAllInPreview(outcome = AllInOutcome.DoubleAttack)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerAllInSelfKnockoutPreview() {
+    GamblerAllInPreview(outcome = AllInOutcome.SelfKnockout)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun GamblerAllInNoEffectPreview() {
+    GamblerAllInPreview(outcome = AllInOutcome.NoEffect)
+}
+
+@Composable
+private fun GamblerAllInPreview(outcome: AllInOutcome) {
+    val seats = rememberSoloSeat()
+    val cue =
+        rememberReplayingCue(replayKey = outcome) { iteration ->
+            CombatAnimationCue.AllIn(
+                id = "all-in-$iteration",
+                gamblerUserId = PREVIEW_ACTOR_ID,
+                outcome = outcome,
+            )
+        }
+    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        AllInOverlay(
+            animationCue = cue,
+            avatarBoundsFor = seats.boundsFor,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}

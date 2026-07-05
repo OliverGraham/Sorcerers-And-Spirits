@@ -47,6 +47,9 @@ kotlin {
             implementation(dependencyNotation = libs.mockk)
             implementation(dependencyNotation = libs.turbine)
         }
+        androidInstrumentedTest.dependencies {
+            implementation(dependencyNotation = project.dependencies.platform(libs.firebase.bom))
+        }
         commonMain.dependencies {
             implementation(dependencyNotation = compose.runtime)
             implementation(dependencyNotation = compose.foundation)

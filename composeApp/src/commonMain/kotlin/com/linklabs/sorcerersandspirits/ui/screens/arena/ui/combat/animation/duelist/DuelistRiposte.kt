@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -20,15 +21,23 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -336,5 +345,46 @@ private fun DrawScope.drawBlade(
         translate(left = tip.x, top = tip.y) {
             drawSwordShape(accentColor = scene.accentColor, alpha = alpha)
         }
+    }
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun DuelistRiposteLandedPreview() {
+    DuelistRipostePreview(resolution = RipostePhase.Landed)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun DuelistRiposteMissedPreview() {
+    DuelistRipostePreview(resolution = RipostePhase.Missed)
+}
+
+@Composable
+private fun DuelistRipostePreview(resolution: RipostePhase) {
+    val seats = rememberDuoSeats()
+    val cue =
+        rememberReplayingCues(replayKey = resolution) { iteration ->
+            listOf(
+                CombatAnimationCue.Riposte(
+                    id = "riposte-ready-$iteration",
+                    duelistUserId = PREVIEW_ACTOR_ID,
+                    attackerUserId = PREVIEW_TARGET_ID,
+                    phase = RipostePhase.Ready,
+                ),
+                CombatAnimationCue.Riposte(
+                    id = "riposte-resolve-$iteration",
+                    duelistUserId = PREVIEW_ACTOR_ID,
+                    attackerUserId = PREVIEW_TARGET_ID,
+                    phase = resolution,
+                ),
+            )
+        }
+    AbilityAnimationStage(accentClass = CharacterClassType.Duelist, seats = seats) {
+        RiposteOverlay(
+            animationCue = cue,
+            avatarBoundsFor = seats.boundsFor,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }

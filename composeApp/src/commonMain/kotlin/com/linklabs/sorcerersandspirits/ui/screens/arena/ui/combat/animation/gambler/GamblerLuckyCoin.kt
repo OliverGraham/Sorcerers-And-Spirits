@@ -6,6 +6,7 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,11 +29,21 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp as colorLerp
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -762,4 +773,68 @@ private fun DrawScope.drawImpactBurst(
         center = center,
         alpha = alpha,
     )
+}
+
+private const val PREVIEW_FLIP_FACE = 4
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun LuckyCoinFlipArmorHeldPreview() {
+    LuckyCoinFlipPreview(didStopAttack = true)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun LuckyCoinFlipArmorBrokenPreview() {
+    LuckyCoinFlipPreview(didStopAttack = false)
+}
+
+@Composable
+private fun LuckyCoinFlipPreview(didStopAttack: Boolean) {
+    val seats = rememberSoloSeat()
+    val cue =
+        rememberReplayingCue(replayKey = didStopAttack) { iteration ->
+            CombatAnimationCue.LuckyCoinFlip(
+                id = "lucky-coin-flip-$iteration",
+                gamblerUserId = PREVIEW_ACTOR_ID,
+                faceValue = PREVIEW_FLIP_FACE,
+                didStopAttack = didStopAttack,
+            )
+        }
+    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        LuckyCoinOverlay(
+            animationCue = cue,
+            avatarBoundsFor = seats.boundsFor,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun LuckyCoinHighRollerPaybackPreview() {
+    val seats = rememberDuoSeats()
+    val cue =
+        rememberReplayingCues(replayKey = "high-roller") { iteration ->
+            listOf(
+                CombatAnimationCue.LuckyCoinHighRoller(
+                    id = "high-roller-$iteration",
+                    gamblerUserId = PREVIEW_ACTOR_ID,
+                ),
+                CombatAnimationCue.LuckyCoinHighRollerThrow(
+                    id = "high-roller-throw-$iteration",
+                    gamblerUserId = PREVIEW_ACTOR_ID,
+                    attackerUserId = PREVIEW_TARGET_ID,
+                    damage = LUCKY_FACE,
+                    isKnockout = true,
+                ),
+            )
+        }
+    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        LuckyCoinOverlay(
+            animationCue = cue,
+            avatarBoundsFor = seats.boundsFor,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }

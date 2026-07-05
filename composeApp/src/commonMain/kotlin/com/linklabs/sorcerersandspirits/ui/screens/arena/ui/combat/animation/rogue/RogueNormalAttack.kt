@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ro
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -23,15 +24,23 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
 import kotlin.math.PI
@@ -361,4 +370,50 @@ private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
         center = Offset(x = 0f, y = -bladeLength - guardHeight - hiltLength - 3.dp.toPx()),
         alpha = alpha,
     )
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun RogueNormalAttackKnockoutPreview() {
+    RogueNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun RogueNormalAttackDamagePreview() {
+    RogueNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun RogueNormalAttackArmorClassHitPreview() {
+    RogueNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun RogueNormalAttackArmorClassMissPreview() {
+    RogueNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+}
+
+@Composable
+private fun RogueNormalAttackPreview(outcome: NormalRollMessageType) {
+    val seats = rememberDuoSeats()
+    val cue =
+        rememberReplayingCue(replayKey = outcome) { iteration ->
+            CombatAnimationCue.NormalAttack(
+                id = "rogue-attack-$iteration",
+                attackerUserId = PREVIEW_ACTOR_ID,
+                attackerClassType = CharacterClassType.Rogue,
+                defenderUserId = PREVIEW_TARGET_ID,
+                outcome = outcome,
+            )
+        }
+    AbilityAnimationStage(accentClass = CharacterClassType.Rogue, seats = seats) {
+        RogueNormalAttackOverlay(
+            animationCue = cue,
+            avatarBoundsFor = seats.boundsFor,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }

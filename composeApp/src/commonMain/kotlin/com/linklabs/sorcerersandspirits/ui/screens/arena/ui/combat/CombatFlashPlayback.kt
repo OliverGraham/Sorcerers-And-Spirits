@@ -18,6 +18,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCu
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_TOTAL_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.duelistNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerAllInDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinFlipDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinHighRollerDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinThrowDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
 import kotlinx.coroutines.delay
@@ -30,20 +34,28 @@ internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXI
 
 /**
  * The single sequencer for flash-worthy messages: newly-arrived ones play one at a time, so a
- * single resolution narrates as a sequence. Both displays of a playing message read from here — the
- * flash overlay shows its callout while the seated avatars act out its [combatAnimationCue] — so
- * the two can never drift apart (SS-191). The history present on first composition is skipped so
- * reconnecting never replays old events.
+ * single resolution narrates as a sequence. A message's seated-avatar [combatAnimationCue] plays to
+ * completion first, then its flash callout appears to spell out what the roll and animation meant
+ * (SS-201), so an effect is never flashed over before it finishes. The cue is held separately from
+ * [currentMessage] so it can go live ahead of the callout. The history present on first composition
+ * is skipped so reconnecting never replays old events.
  */
 @Stable
 internal class FlashPlaybackState {
     var currentMessage by mutableStateOf<ArenaMessageState?>(value = null)
         private set
 
+    var combatAnimationCue by mutableStateOf<CombatAnimationCue?>(value = null)
+        private set
+
     val visibleState = MutableTransitionState(initialState = false)
 
-    val combatAnimationCue: CombatAnimationCue?
-        get() = currentMessage?.combatAnimationCue
+    /**
+     * Send a message's seated-avatar cue live; its flash callout follows once the cue plays out.
+     */
+    fun playAnimation(cue: CombatAnimationCue?) {
+        combatAnimationCue = cue
+    }
 
     fun show(message: ArenaMessageState) {
         currentMessage = message
@@ -71,13 +83,14 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
                 for (message in fresh) {
                     if (message.flashCallout == null) continue
+                    val cue = message.combatAnimationCue
+                    playback.playAnimation(cue = cue)
+                    val animationMillis = cue?.playbackDurationMillis() ?: 0L
+                    if (animationMillis > 0L) delay(timeMillis = animationMillis)
                     playback.show(message = message)
-                    val animationMillis = message.combatAnimationCue?.playbackDurationMillis() ?: 0L
                     delay(timeMillis = FLASH_HOLD_MILLIS)
                     playback.dismiss()
                     delay(timeMillis = FLASH_EXIT_MILLIS)
-                    val remainingAnimationMillis = animationMillis - FLASH_MESSAGE_DURATION_MILLIS
-                    if (remainingAnimationMillis > 0L) delay(timeMillis = remainingAnimationMillis)
                 }
                 lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
                 lastSize = messages.size
@@ -88,16 +101,21 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
 }
 
 /**
- * How long a cue's seated-avatar animation runs, so the sequencer holds its message until the
- * animation finishes rather than advancing on the fixed flash window and cutting a long strike off
- * (SS-194 / SS-201). A cue whose animation fits inside [FLASH_MESSAGE_DURATION_MILLIS] returns 0
- * and keeps today's flash-window pacing; only longer cues extend their dwell. New long cues opt in
- * here.
+ * How long a cue's whole animation runs — its weapon and effect overlays and its seated-avatar
+ * gestures, whichever ends last — so the sequencer can play the animation to completion before the
+ * flash callout lands (SS-201). Every cue reports its real length; a cue with no animation returns
+ * 0 and the callout shows at once. New cues report their length here.
  */
 internal fun CombatAnimationCue.playbackDurationMillis(): Long =
+    maxOf(effectOverlayDurationMillis(), seatedAvatarDurationMillis())
+
+/**
+ * The length of a cue's weapon and effect overlays, apart from the seated avatars' own gestures.
+ */
+private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
-            normalAttackPlaybackDurationMillis(
+            normalAttackOverlayDurationMillis(
                 attackerClassType = attackerClassType,
                 outcome = outcome,
             )
@@ -106,23 +124,24 @@ internal fun CombatAnimationCue.playbackDurationMillis(): Long =
 
         is CombatAnimationCue.Dodge -> 0L
 
-        is CombatAnimationCue.AllIn -> 0L
+        is CombatAnimationCue.AllIn -> gamblerAllInDurationMillis(outcome = outcome)
 
-        is CombatAnimationCue.LuckyCoinFlip -> 0L
+        is CombatAnimationCue.LuckyCoinFlip ->
+            gamblerLuckyCoinFlipDurationMillis(didStopAttack = didStopAttack)
 
-        is CombatAnimationCue.LuckyCoinHighRoller -> 0L
+        is CombatAnimationCue.LuckyCoinHighRoller -> gamblerLuckyCoinHighRollerDurationMillis()
 
-        is CombatAnimationCue.LuckyCoinHighRollerThrow -> 0L
+        is CombatAnimationCue.LuckyCoinHighRollerThrow -> gamblerLuckyCoinThrowDurationMillis()
 
         is CombatAnimationCue.PrepareAttack -> PREPARE_ATTACK_TOTAL_MILLIS
     }
 
 /**
- * The attacker-side normal-attack animation length per class: each class that has landed its strike
- * (SS-192…SS-194) reports how long it runs, and any class still on the generic body lunge fits
- * inside the flash window and needs no extension.
+ * The attacker-side normal-attack overlay length per class: each class that has landed its weapon
+ * (SS-192…SS-194) reports how long its strike runs, while a class still on the generic body lunge
+ * has no weapon overlay, so its length comes from the seated avatars alone.
  */
-private fun normalAttackPlaybackDurationMillis(
+private fun normalAttackOverlayDurationMillis(
     attackerClassType: CharacterClassType,
     outcome: NormalRollMessageType,
 ): Long =

@@ -173,31 +173,6 @@ plus one ticket per ability, worked one at a time. The seam is ready:
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
 
-### SS-201 — Combat animation should complete before its flash call-out plays
-
-- [ ] Not completed
-- **Symptom:** A message's seated-avatar / effect animation (`combatAnimationCue`) and its
-  full-screen flash call-out currently start **at the same time** — both read from
-  `FlashPlaybackState.currentMessage`, so `rememberFlashPlayback` shows the flash the same instant
-  the animation cue goes live (`CombatFlashPlayback.kt`). For longer effects (e.g. the Gambler's
-  All-In toss, SS-193) the flash pops and dismisses long before the animation finishes.
-- **Goal:** Sequence per message as **animation first, then flash**: fire the animation cue, wait for
-  it to finish, *then* show the flash call-out (hold + exit as today). Applies to every class
-  animation, not just All-In.
-- **Approach sketch:** Decouple the live animation cue from the flash message in `FlashPlaybackState`
-  (a separate `animationCue` the overlays read, set independently of `currentMessage`), and give the
-  sequencer a per-cue duration to await — a `CombatAnimationCue.playbackDurationMillis()` kept in
-  step with the choreography constants (`THROW_*`, `ALL_IN_*`, melee `MELEE_*`, …). Messages with no
-  cue keep today's timing.
-- **Partly landed (SS-194):** the per-cue duration half of the approach is in — the sequencer now
-  holds each message for `max(flash window, cue.playbackDurationMillis())` so a strike longer than
-  the flash window (the twin-sword combo) runs to completion instead of being cut off/frozen, and
-  the weapon overlay clears itself on a no-cue message. Cues that fit the flash window return 0 and
-  keep today's pacing. **Remaining:** the *reorder* to animation-first-then-flash, and opting the
-  long effect cues (`AllIn`, `LuckyCoin*`) into their real durations (they still use the flash
-  window).
-- **Parent:** SS-191.
-
 ### SS-213 — Combat animations must survive re-seating and finish transitions
 
 - [ ] Not completed

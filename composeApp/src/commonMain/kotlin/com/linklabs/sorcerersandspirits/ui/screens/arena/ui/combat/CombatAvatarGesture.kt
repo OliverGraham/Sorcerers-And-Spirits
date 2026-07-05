@@ -20,8 +20,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
@@ -61,6 +63,20 @@ private const val HURT_TINT_MAX_RED_OFFSET = 130f
 private const val HURT_TINT_CHANNEL_DAMP = 0.45f
 private const val ARMOR_TINT_MAX_BLUE_OFFSET = 110f
 private const val ARMOR_TINT_CHANNEL_DAMP = 0.3f
+
+/**
+ * Wall-clock length of each seated-avatar gesture's own body — the animation after any injected
+ * reaction delay — so the sequencer can hold a message until the bodies come to rest (SS-201). Kept
+ * in step with the choreography in [play], the same way the weapon overlays report their own runs.
+ */
+private const val FLINCH_BODY_MILLIS = 380L
+private const val FLINCH_HEAVY_BODY_MILLIS = 470L
+private const val SIDESTEP_BODY_MILLIS = 520L
+private const val COLLAPSE_BODY_MILLIS = 650L
+private const val DODGE_FLOURISH_BODY_MILLIS = 450L
+private const val DODGE_BRACE_BODY_MILLIS = 860L
+private const val REARM_BODY_MILLIS = 650L
+private const val ALL_IN_BUST_JOLT_MILLIS = 160L
 
 private val feetPivot = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1f)
 
@@ -192,6 +208,64 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
  */
 private fun CombatAnimationCue.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
+
+/**
+ * The longest a seated avatar animates for this cue — the striker's own gesture or a reactor's
+ * delayed reaction, whichever comes to rest last — so the sequencer holds the flash callout until
+ * the bodies stop moving (SS-201). Maxed with the weapon and effect overlays' own runs; a cue with
+ * no seated motion beyond those overlays reports 0.
+ */
+internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
+    when (this) {
+        is CombatAnimationCue.NormalAttack ->
+            normalAttackReactionDelayMillis() + defenderReactionBodyMillis(outcome = outcome)
+
+        is CombatAnimationCue.KillingMomentum -> REARM_BODY_MILLIS
+
+        is CombatAnimationCue.Dodge ->
+            if (didArmorIncrease) DODGE_BRACE_BODY_MILLIS else DODGE_FLOURISH_BODY_MILLIS
+
+        is CombatAnimationCue.AllIn -> allInBodyMillis(outcome = outcome)
+
+        is CombatAnimationCue.LuckyCoinFlip -> 0L
+
+        is CombatAnimationCue.LuckyCoinHighRoller -> 0L
+
+        is CombatAnimationCue.LuckyCoinHighRollerThrow ->
+            REACTION_DELAY_MILLIS +
+                if (isKnockout) COLLAPSE_BODY_MILLIS else FLINCH_HEAVY_BODY_MILLIS
+
+        is CombatAnimationCue.PrepareAttack ->
+            prepareAttackReactionDelayMillis() +
+                if (isSuccessful) COLLAPSE_BODY_MILLIS else SIDESTEP_BODY_MILLIS
+    }
+
+/**
+ * The shared defender reaction's body length per outcome, matching its flinch/sidestep/collapse.
+ */
+private fun defenderReactionBodyMillis(outcome: NormalRollMessageType): Long =
+    when (outcome) {
+        NormalRollMessageType.ArmorClassHit -> FLINCH_BODY_MILLIS
+        NormalRollMessageType.ArmorClassMiss -> SIDESTEP_BODY_MILLIS
+        NormalRollMessageType.Damage -> FLINCH_HEAVY_BODY_MILLIS
+        NormalRollMessageType.Knockout -> COLLAPSE_BODY_MILLIS
+    }
+
+/**
+ * The Gambler's own body during All-In: a self-knockout folds the toss into a collapse and runs the
+ * longest, while the other outcomes settle back after the toss and the coin effect carries the
+ * rest.
+ */
+private fun allInBodyMillis(outcome: AllInOutcome): Long =
+    when (outcome) {
+        AllInOutcome.SelfKnockout ->
+            (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS).toLong() +
+                ALL_IN_BUST_JOLT_MILLIS +
+                COLLAPSE_BODY_MILLIS
+
+        AllInOutcome.NoEffect,
+        AllInOutcome.DoubleAttack -> ALL_IN_TOSS_GESTURE_MILLIS.toLong()
+    }
 
 private suspend fun AvatarGestureState.play(
     gesture: AvatarGesture,

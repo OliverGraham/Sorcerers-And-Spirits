@@ -53,6 +53,21 @@ private const val ALL_IN_HOLD_MILLIS = 480L
 private const val ALL_IN_CASH_MILLIS = 1300
 private const val ALL_IN_FADE_MILLIS = 360
 
+/**
+ * How long the All-In toss runs to its outcome, so the message sequencer holds the event until the
+ * winnings finish landing, busting, or cashing out instead of flashing over the toss (SS-201).
+ */
+internal fun gamblerAllInDurationMillis(outcome: AllInOutcome): Long {
+    val tossMillis = (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS).toLong()
+    val outcomeMillis =
+        when (outcome) {
+            AllInOutcome.SelfKnockout -> ALL_IN_EXPLODE_MILLIS.toLong()
+            AllInOutcome.NoEffect -> ALL_IN_GRAY_MILLIS + ALL_IN_HOLD_MILLIS + ALL_IN_FADE_MILLIS
+            AllInOutcome.DoubleAttack -> (ALL_IN_CASH_MILLIS + ALL_IN_FADE_MILLIS).toLong()
+        }
+    return tossMillis + outcomeMillis
+}
+
 private const val COIN_COUNT = 8
 private const val BILL_COUNT = 4
 private const val GEM_COUNT = 3

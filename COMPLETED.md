@@ -1059,3 +1059,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   weapon/effect overlay and its seated-avatar gesture, including the reactor's delayed collapse tail
   that outlasts the weapon); the cue is held separately from the flash message so it can go live
   ahead of the callout (follow-up: SS-213 finish-hold undercount).
+- **SS-213** — Combat animations must survive re-seating and finish transitions: a K.O. re-seated
+  the stage the same frame its cue went live, so the downed player snapped to a head icon and the
+  Collapse (and attacker's strike) never played; a two-player match-ending K.O. also wrongly became
+  a head icon. The just-downed player is now force-seated via CombatAnimationCue.collapsingUserId /
+  seatingFor's collapsingTargetUserId, derived same-frame from flashMessages so no pane swaps out
+  from under the cue, released once the sequencer finishes the collapse (3+ players morph to a head
+  icon after the animation) or held through the finish hold when the match ends. Finish transition
+  also now sums each closing cue's real playbackDurationMillis so long closers play in full.

@@ -173,35 +173,6 @@ plus one ticket per ability, worked one at a time. The seam is ready:
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
 
-### SS-213 — Combat animations must survive re-seating and finish transitions
-
-- [ ] Not completed
-- **Symptom (found during SS-203):** a knockout re-seats the stage (`CombatSeating` drops the downed
-  target) in the same frame its animation cue goes live. The stage lives inside a seating-keyed
-  `AnimatedContent`, so the fresh pane initializes its skip-history guard against the already-live
-  cue and silently skips the whole animation. This affects every K.O. cue, not just Prepare Attack.
-- **Partly fixed (SS-203):** the weapon/ability effect overlays and the avatar-bounds registry were
-  hoisted out of the seating transition (`CombatEffectsOverlay`), so the cross-seat effects now
-  survive any pane swap. **Remaining:** the seated-avatar body gestures (`rememberAvatarGesture`)
-  still live inside the panes and are skipped when a K.O. re-seats the stage — the attacker's body
-  motion and the target's Collapse are lost exactly when they matter most.
-- **Reproduced (2-player Prepare Attack K.O.):** the K.O.'d Necromancer snapped straight to its head
-  icon with no Collapse, and in a 2-player (match-ending) game it should never become a head icon at
-  all since the game is over. Two roots: (1) the K.O.'d-player state and its flash message arrive in
-  the same emission, so `seatingFor` drops the target to a head icon a frame before the collapse cue
-  goes live, swapping the `AnimatedContent` pane out from under the animation; (2) the `isMatchEnding`
-  seat-hold seats `targetedOpponentUserId`, which resolves only to a *conscious* lone opponent (or the
-  in-flight `lockedTargetUserId`), so an activated-ability K.O. victim resolves to empty and is never
-  seated — this is why normal-attack match-enders held their seat but Prepare Attack did not.
-- **Fixed (finish transition):** `finishHoldMillis` now sums each new closing message's
-  `playbackDurationMillis()` on top of its flash window, mirroring the sequencer's real wall-clock,
-  so a closing animation longer than the flash window plays in full before the Finished transition.
-- **Direction:** hold the seating snapshot (and the finish transition) until the playing cue's
-  window ends — e.g. clear `FlashPlaybackState.currentMessage` when a message's playback window
-  closes, freeze seating while a message is live, and give every long cue its real duration (the
-  `AllIn` / `LuckyCoin*` opt-ins already tracked in SS-201).
-- **Parent:** SS-191. Related: SS-184 (finish hold), SS-201 (sequencing).
-
 ### SS-193 — Gambler ability animations
 
 - [ ] Not completed

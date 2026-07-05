@@ -308,7 +308,11 @@ class CombatSeatingTest {
 
     private fun seatingOf(state: ArenaState.Combat, isMatchEnding: Boolean = false): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
-        return state.seatingFor(targetUserId = targetUserId, isMatchEnding = isMatchEnding)
+        return state.seatingFor(
+            targetUserId = targetUserId,
+            isMatchEnding = isMatchEnding,
+            collapsingTargetUserId = null,
+        )
     }
 
     private fun combatState(

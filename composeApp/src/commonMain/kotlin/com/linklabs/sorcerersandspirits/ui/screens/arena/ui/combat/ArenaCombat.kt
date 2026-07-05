@@ -21,6 +21,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
@@ -93,6 +95,8 @@ internal fun ArenaCombat(
                         state.seatingFor(
                             targetUserId = targetedOpponentUserId,
                             isMatchEnding = screenState.isFinishPending,
+                            collapsingTargetUserId =
+                                screenState.collapsingSeatUserId(playback = flashPlayback),
                         ),
                     label = AVATAR_SEATING_TRANSITION_LABEL,
                     modifier = Modifier.weight(weight = 1f),
@@ -153,6 +157,21 @@ internal fun ArenaCombat(
             )
         }
     }
+}
+
+/**
+ * The player to hold in the second large seat because their collapse is in flight: the latest flash
+ * message that knocks someone out, kept seated until the sequencer finishes playing it, or for the
+ * whole finish hold when the match is ending so the downed avatar never becomes a head icon
+ * (SS-213). Read straight from [ArenaScreenState.flashMessages] so the seat is held the same frame
+ * the knockout arrives, before the sequenced cue goes live and the pane would otherwise swap.
+ */
+private fun ArenaScreenState.collapsingSeatUserId(playback: FlashPlaybackState): String? {
+    val latestCollapse =
+        flashMessages.lastOrNull { it.combatAnimationCue?.collapsingUserId != null } ?: return null
+    val isCollapseFinished = latestCollapse.id == playback.finishedCollapseMessageId
+    val shouldHoldSeat = isFinishPending || !isCollapseFinished
+    return if (shouldHoldSeat) latestCollapse.combatAnimationCue?.collapsingUserId else null
 }
 
 /**

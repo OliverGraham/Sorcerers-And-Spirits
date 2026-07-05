@@ -225,6 +225,35 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
         }
 
 /**
+ * The player who folds into a [Collapse][AvatarGesture] for this cue — the one knocked out — or
+ * null when the cue knocks no one out. Mirrors the Collapse assignments in [gestureFor]. Used to
+ * keep the downed player in their large seat while the collapse plays out, and through the
+ * match-ending finish hold, instead of snapping them to a head icon the instant they fall (SS-213).
+ */
+val CombatAnimationCue.collapsingUserId: String?
+    get() =
+        when (this) {
+            is CombatAnimationCue.NormalAttack ->
+                if (outcome == NormalRollMessageType.Knockout) defenderUserId else null
+
+            is CombatAnimationCue.PrepareAttack -> if (isSuccessful) targetUserId else null
+
+            is CombatAnimationCue.LuckyCoinHighRollerThrow ->
+                if (isKnockout) attackerUserId else null
+
+            is CombatAnimationCue.AllIn ->
+                if (outcome == AllInOutcome.SelfKnockout) gamblerUserId else null
+
+            is CombatAnimationCue.KillingMomentum -> null
+
+            is CombatAnimationCue.Dodge -> null
+
+            is CombatAnimationCue.LuckyCoinFlip -> null
+
+            is CombatAnimationCue.LuckyCoinHighRoller -> null
+        }
+
+/**
  * The gesture the player with [userId] performs for this cue, or null when the cue is not theirs to
  * act — a spectator seat holds still.
  */

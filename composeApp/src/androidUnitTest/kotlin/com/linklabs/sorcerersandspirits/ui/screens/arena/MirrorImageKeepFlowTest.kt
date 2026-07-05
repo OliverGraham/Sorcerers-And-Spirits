@@ -315,7 +315,11 @@ class MirrorImageKeepFlowTest {
 
     private fun seatingOf(state: ArenaState.Combat): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
-        return state.seatingFor(targetUserId = targetUserId, isMatchEnding = false)
+        return state.seatingFor(
+            targetUserId = targetUserId,
+            isMatchEnding = false,
+            collapsingTargetUserId = null,
+        )
     }
 
     private fun bothSeated(userPlayerId: String, opponentUserId: String) =

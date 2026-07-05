@@ -1,14 +1,12 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -117,32 +116,26 @@ internal fun PrepareAttackOverlay(
 ) {
     val state = remember { PrepareAttackEffectState() }
     val density = LocalDensity.current
-    var lastPlayedCueId by remember { mutableStateOf(value = animationCue?.id) }
 
-    LaunchedEffect(key1 = animationCue) {
-        val cue = animationCue
-        if (cue !is CombatAnimationCue.PrepareAttack) {
-            state.scene = null
-            lastPlayedCueId = cue?.id
-            return@LaunchedEffect
-        }
-        if (cue.id == lastPlayedCueId) return@LaunchedEffect
-        lastPlayedCueId = cue.id
-
-        val duelistBounds = avatarBoundsFor(cue.duelistUserId) ?: return@LaunchedEffect
-        val targetBounds = avatarBoundsFor(cue.targetUserId) ?: return@LaunchedEffect
-
-        val scene =
-            prepareAttackScene(
-                duelistBounds = duelistBounds,
-                targetBounds = targetBounds,
-                accentColor = CharacterClassType.Duelist.toColor(),
-                density = density,
-            ) ?: return@LaunchedEffect
-        state.play(scene = scene, isSuccessful = cue.isSuccessful)
-    }
-
-    Canvas(modifier = modifier) { drawPrepareAttack(state = state) }
+    CueEffectOverlay(
+        animationCue = animationCue,
+        select = { it as? CombatAnimationCue.PrepareAttack },
+        onCancel = { state.scene = null },
+        play = playLabel@{ cue ->
+                val duelistBounds = avatarBoundsFor(cue.duelistUserId) ?: return@playLabel
+                val targetBounds = avatarBoundsFor(cue.targetUserId) ?: return@playLabel
+                val scene =
+                    prepareAttackScene(
+                        duelistBounds = duelistBounds,
+                        targetBounds = targetBounds,
+                        accentColor = CharacterClassType.Duelist.toColor(),
+                        density = density,
+                    ) ?: return@playLabel
+                state.play(scene = scene, isSuccessful = cue.isSuccessful)
+            },
+        modifier = modifier,
+        draw = { drawPrepareAttack(state = state) },
+    )
 }
 
 private fun prepareAttackScene(

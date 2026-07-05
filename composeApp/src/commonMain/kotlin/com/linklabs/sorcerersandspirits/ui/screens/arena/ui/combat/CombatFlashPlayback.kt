@@ -10,11 +10,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatWeapon
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_TOTAL_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.duelistNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
 import kotlinx.coroutines.delay
 
 private const val FLASH_HOLD_MILLIS = 850L
@@ -92,7 +97,10 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
 internal fun CombatAnimationCue.playbackDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
-            attackerClassType.combatWeapon.strikeDurationMillis(outcome = outcome)
+            normalAttackPlaybackDurationMillis(
+                attackerClassType = attackerClassType,
+                outcome = outcome,
+            )
 
         is CombatAnimationCue.KillingMomentum -> 0L
 
@@ -107,6 +115,22 @@ internal fun CombatAnimationCue.playbackDurationMillis(): Long =
         is CombatAnimationCue.LuckyCoinHighRollerThrow -> 0L
 
         is CombatAnimationCue.PrepareAttack -> PREPARE_ATTACK_TOTAL_MILLIS
+    }
+
+/**
+ * The attacker-side normal-attack animation length per class: each class that has landed its strike
+ * (SS-192…SS-194) reports how long it runs, and any class still on the generic body lunge fits
+ * inside the flash window and needs no extension.
+ */
+private fun normalAttackPlaybackDurationMillis(
+    attackerClassType: CharacterClassType,
+    outcome: NormalRollMessageType,
+): Long =
+    when (attackerClassType) {
+        CharacterClassType.Rogue -> rogueNormalAttackDurationMillis(outcome = outcome)
+        CharacterClassType.Gambler -> gamblerNormalAttackDurationMillis()
+        CharacterClassType.Duelist -> duelistNormalAttackDurationMillis()
+        else -> 0L
     }
 
 /**

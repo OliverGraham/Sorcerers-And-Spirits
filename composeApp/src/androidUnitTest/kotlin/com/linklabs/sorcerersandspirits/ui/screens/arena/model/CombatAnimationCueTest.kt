@@ -150,24 +150,6 @@ class CombatAnimationCueTest {
     }
 
     @Test
-    fun `Given a Rogue, then their strike weapon is the dagger`() {
-        assertEquals(expected = CombatWeapon.Dagger, actual = CharacterClassType.Rogue.combatWeapon)
-    }
-
-    @Test
-    fun `Given a Duelist, then their strike weapon is the twin swords`() {
-        assertEquals(
-            expected = CombatWeapon.TwinSwords,
-            actual = CharacterClassType.Duelist.combatWeapon,
-        )
-    }
-
-    @Test
-    fun `Given a class without a weapon yet, then they have none`() {
-        assertNull(actual = CharacterClassType.Mage.combatWeapon)
-    }
-
-    @Test
     fun `Given a spectator, then a normal attack gives them no gesture`() {
         val cue = normalAttackCue(outcome = NormalRollMessageType.ArmorClassHit)
 

@@ -113,6 +113,7 @@ enum class AvatarGesture {
     Slash,
     SlashFinish,
     SlashWhiff,
+    Cast,
     PreparedThrust,
     PreparedThrustWhiff,
     Throw,
@@ -392,6 +393,7 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
         CharacterClassType.Rogue -> rogueStrike()
         CharacterClassType.Gambler -> gamblerStrike()
         CharacterClassType.Duelist -> duelistStrike()
+        CharacterClassType.Necromancer -> AvatarGesture.Cast
         else -> genericStrike()
     }
 

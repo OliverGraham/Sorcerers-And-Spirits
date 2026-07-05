@@ -197,13 +197,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191. Abilities split into SS-203 (Prepare Attack) and SS-204 (Riposte).
 
-### SS-195 — Necromancer normal-attack animation
-
-- [ ] Not completed
-- **Goal:** TBD — attacker-side normal-attack animation set to be described.
-- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191. Ability split into SS-205 (Summon Minion).
-
 ### SS-205 — Necromancer Summon Minion animation
 
 - [ ] Not completed

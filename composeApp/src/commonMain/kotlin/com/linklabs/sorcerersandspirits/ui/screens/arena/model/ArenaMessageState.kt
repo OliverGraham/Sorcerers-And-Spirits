@@ -134,6 +134,7 @@ sealed interface ArenaMessageState {
     @Immutable
     data class SummonMinion(
         override val id: String,
+        val necroUserId: String,
         val necroName: String,
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
@@ -542,6 +543,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.SummonMinion ->
             ArenaMessageState.SummonMinion(
                 id = id,
+                necroUserId = necroUserId,
                 necroName = participants.resolveClassName(userId = necroUserId),
                 singleDie = singleDie,
                 outcome = summonMinionOutcomeFor(singleDie = singleDie),

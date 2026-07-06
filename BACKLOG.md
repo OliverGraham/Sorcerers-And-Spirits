@@ -181,27 +181,18 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191.
 
-### SS-194 — Duelist normal-attack animation
-
-- [ ] Not completed
-- **Normal attack (needs tweak):** the Duelist wields twin swords (`CombatWeapon.TwinSwords`). The
-  two blades slash the defender one after the other — the lead from the left, the follow from the
-  right roughly half a second later — in smooth, fluid arcs, each flaring a class-color burst on
-  contact (armor holds → the cuts sweep past while the defender sidesteps). Both blades are on screen
-  the whole time: they rise into an erect ready pose, hold, then slash one after the other and fade
-  out together. Attacker body plays a two-beat fence (`Slash` / `SlashFinish` / `SlashWhiff`). Owner
-  wants a tweak to this pass before it's final.
-- **Sequencer fix (done):** because the twin-sword combo runs longer than the fixed flash window, it
-  used to be cut off and the blades froze on screen. The message sequencer now waits out each cue's
-  `playbackDurationMillis()` (see SS-201) so the animation completes and clears itself.
-- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191. Abilities split into SS-203 (Prepare Attack) and SS-204 (Riposte).
-
 ### SS-205 — Necromancer Summon Minion animation
 
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Offensive ability: roll 1d6 to fizzle / gain a skeleton
-  (with optional heal) / gain a golem.
+- [ ] Follow-up pending
+- **Goal:** every outcome opens the same green glowing portal at the summoner's feet, then diverges:
+  a fizzle drains the portal gray and closes it; a skeleton (white, green-eyed) or a larger brownish
+  clay golem (green runes/eyes) rises up out of the portal and then fades; a heal (skeleton-and-heal
+  or golem) plays a red-green burst off the Necromancer with a few `ic_health` icons floating up and
+  fading. Portal + creatures + heal drawn in the overlay; summoner plays the existing Cast gesture.
+- **Done (first pass, shipped):** portal/fizzle/heal/float-up and the choreography, wiring, and
+  per-outcome previews all landed; the skeleton and golem are hand-drawn Canvas shapes for now.
+- **Follow-up:** replace the hand-drawn skeleton and golem in `NecromancerMinions.kt` with an image
+  asset of each (keep the portal, heal burst, and rise/fade choreography). Then close the ticket.
 - **Cue sources:** `ArenaMessageState.SummonMinion`.
 - **Parent:** SS-191. Split out of SS-195.
 

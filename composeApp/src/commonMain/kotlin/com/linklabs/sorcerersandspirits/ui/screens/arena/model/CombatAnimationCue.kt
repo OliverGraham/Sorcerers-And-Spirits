@@ -85,6 +85,13 @@ sealed interface CombatAnimationCue {
         val attackerUserId: String,
         val phase: RipostePhase,
     ) : CombatAnimationCue
+
+    @Immutable
+    data class SummonMinion(
+        override val id: String,
+        val necroUserId: String,
+        val outcome: SummonMinionOutcome,
+    ) : CombatAnimationCue
 }
 
 /**
@@ -233,8 +240,12 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     phase = if (isSuccessful) RipostePhase.Landed else RipostePhase.Missed,
                 )
 
-            // TODO(SS-195): Necromancer ability animations.
-            is ArenaMessageState.SummonMinion -> null
+            is ArenaMessageState.SummonMinion ->
+                CombatAnimationCue.SummonMinion(
+                    id = id,
+                    necroUserId = necroUserId,
+                    outcome = outcome,
+                )
 
             // TODO(SS-196): Bard ability animations.
             is ArenaMessageState.Encore,
@@ -287,6 +298,8 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.LuckyCoinFlip -> null
 
             is CombatAnimationCue.LuckyCoinHighRoller -> null
+
+            is CombatAnimationCue.SummonMinion -> null
         }
 
 /**
@@ -313,6 +326,9 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.PrepareAttack -> prepareAttackGestureFor(userId = userId)
 
         is CombatAnimationCue.Riposte -> riposteGestureFor(userId = userId)
+
+        is CombatAnimationCue.SummonMinion ->
+            if (userId == necroUserId) AvatarGesture.Cast else null
     }
 
 /**

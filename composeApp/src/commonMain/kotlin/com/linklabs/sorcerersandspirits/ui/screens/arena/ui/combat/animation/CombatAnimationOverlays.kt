@@ -15,6 +15,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.GamblerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.LuckyCoinOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.RogueNormalAttackOverlay
 
 /**
@@ -67,6 +68,11 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Necromancer in presentClasses) {
             NecromancerNormalAttackOverlay(
+                animationCue = animationCue,
+                avatarBoundsFor = avatarBounds::boundsFor,
+                modifier = Modifier.fillMaxSize(),
+            )
+            NecromancerSummonMinionOverlay(
                 animationCue = animationCue,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),

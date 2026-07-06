@@ -253,6 +253,8 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         is CombatAnimationCue.SummonMinion -> CAST_BODY_MILLIS
 
         is CombatAnimationCue.Persuade -> 0L
+
+        is CombatAnimationCue.Encore -> 0L
     }
 
 /**

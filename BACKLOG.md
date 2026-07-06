@@ -198,9 +198,27 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 ### SS-206 — Bard Encore animation
 
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Offensive ability: after dealing damage, roll 1d6; on
-  5/6 the Bard attacks again.
+- [ ] Follow-up pending
+- **Goal:** the moment Encore triggers (the Bard has dealt damage or scored a K.O.) the whole arena
+  drops into concert dark — the screen darkens on all sides to a spotlit stage with a 3D standing
+  microphone, and the crowd is made of numerous small copies of every class avatar packed into the
+  distance. The crowd and the light off the mic keep moving so the scene is alive while the roll is
+  awaited. On the roll the mic throws off sound and music notes; on a landing the crowd goes wild
+  (success) or boos (failure). A failed Encore greys the music the way the other Bard failures do.
+  After Encore finishes the lights come up and the darkness lifts.
+- **Done (first pass, shipped):** full-screen concert scene with the darkness fall/lift, spotlight
+  cone + pool, receding crowd of all eight avatars (ambient sway, wild-jump vs boo-shake), 3D
+  chrome microphone (radial-shaded head with sweeping glint, banded stand, domed base), music-note
+  burst + sound rings on the roll, the grey drain on failure, the vignette frame, and the cue/phase
+  wiring (`EncorePhase` SetStage/Success/Failure) plus success/failure previews. Everything is
+  hand-drawn Canvas over the avatar PNGs (`BardEncore.kt`, `EncoreStage.kt`).
+- **Note:** the concert scene is hosted inside the weighted stage region (above the seating, below
+  `BottomControls`) rather than over the whole screen, so the roll buttons stay visible/usable while
+  the darkened stage holds waiting for the Encore roll — it darkens the stage, not the controls bar.
+- **Follow-up:** replace the hand-drawn microphone with an image asset for a truer 3D look (keep the
+  glint, note behaviours, grey drain, and darkness fall/lift choreography); polish/tune the crowd
+  density, proportions, colours, and timing once seen on-device; and consider a real crowd-noise
+  cue for the wild/boo beat. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Encore.*`.
 - **Parent:** SS-191. Split out of SS-196.
 

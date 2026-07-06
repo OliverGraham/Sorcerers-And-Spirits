@@ -410,6 +410,7 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
         CharacterClassType.Gambler -> gamblerStrike()
         CharacterClassType.Duelist -> duelistStrike()
         CharacterClassType.Necromancer -> AvatarGesture.Cast
+        CharacterClassType.Bard -> AvatarGesture.Cast
         else -> genericStrike()
     }
 

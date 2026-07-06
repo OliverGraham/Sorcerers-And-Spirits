@@ -196,13 +196,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.SummonMinion`.
 - **Parent:** SS-191. Split out of SS-195.
 
-### SS-196 — Bard normal-attack animation
-
-- [ ] Not completed
-- **Goal:** TBD — attacker-side normal-attack animation set to be described.
-- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191. Abilities split into SS-206 (Encore) and SS-207 (Persuade).
-
 ### SS-206 — Bard Encore animation
 
 - [ ] Not completed

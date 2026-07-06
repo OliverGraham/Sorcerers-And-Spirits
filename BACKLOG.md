@@ -28,9 +28,11 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - **Flash:** `arena_flash_*` — short, animated. Hit/Damage/Knockout render in the **acting
       class's color**, everything else neutral white. Built from the sealed `FlashCallout` (each
       variant carries the color + the data its resource needs) via `CombatFlashText.text()`.
-    - **Log:** `arena_message_*` — the more complete, passive record, built in `ArenaMessageDisplay`.
+    - **Log:** `arena_message_*` — the more complete, passive record, built in
+      `ArenaMessageDisplay`.
       Final wording **TBD** (owner-refined).
-- **No wrapper type:** one `ArenaMessageState` maps to both resources at the two display sites; there
+- **No wrapper type:** one `ArenaMessageState` maps to both resources at the two display sites;
+  there
   is no `FlashMessage`/pair object. `flashCallout`'s `when` is **exhaustive over every message**, so
   a new message type is a compile error until its flash is chosen.
 - **Coverage (this pass):** **every** message currently flashes — round/turn/connection/info and
@@ -57,10 +59,13 @@ are archived in [COMPLETED.md](COMPLETED.md).
   roll step). Decide which messages should be **log-only** and stop them flashing, so the flash
   channel stays punchy and reads as combat narration rather than echoing the whole log.
 - **Mechanism:** `ArenaMessageState.flashCallout` (in `FlashCallout.kt`) already returns
-  `FlashCallout?` and `ArenaScreenState.flashMessages` already filters nulls — return `null` from the
+  `FlashCallout?` and `ArenaScreenState.flashMessages` already filters nulls — return `null` from
+  the
   branches that should be log-only. No structural change needed.
-- **Open for owner:** the exact keep/cut list (likely cut: `NewRound`, `NewTurn`, `ConnectedToArena`,
-  `ChoseCharacterClass`, and intermediate roll steps like `Teleport.Roll`, `LuckyCoin.HighRollerTrigger`).
+- **Open for owner:** the exact keep/cut list (likely cut: `NewRound`, `NewTurn`,
+  `ConnectedToArena`,
+  `ChoseCharacterClass`, and intermediate roll steps like `Teleport.Roll`,
+  `LuckyCoin.HighRollerTrigger`).
 - **Related:** SS-164 (one message → two resources).
 
 ### SS-178 — One reusable button for the whole app (text + icon, incl. combat)
@@ -104,7 +109,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Related:** SS-097 (class names in messages), SS-153 (class colors), SS-164 (flash
   wording/color),
   SS-029 (string resources).
-
 
 ### SS-029 — Use StringResources in ArenaCombatControl
 
@@ -161,8 +165,10 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ## Combat animations
 
 Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system
-(SS-191) is the extensibility seam; the per-class tickets (SS-192…SS-199 normal attacks, SS-203…SS-212
-abilities) fill in their animations on top of it. No Lottie/Compottie — plain Compose `Animatable`/`graphicsLayer` transforms plus
+(SS-191) is the extensibility seam; the per-class tickets (SS-192…SS-199 normal attacks,
+SS-203…SS-212
+abilities) fill in their animations on top of it. No Lottie/Compottie — plain Compose `Animatable`/
+`graphicsLayer` transforms plus
 `ColorMatrix` color effects on the existing avatar art (SS-068 dropped Lottie).
 
 Owner direction (2026-07-02): every class gets a **unique attacker-side animation set for normal
@@ -215,7 +221,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Note:** the concert scene is hosted inside the weighted stage region (above the seating, below
   `BottomControls`) rather than over the whole screen, so the roll buttons stay visible/usable while
   the darkened stage holds waiting for the Encore roll — it darkens the stage, not the controls bar.
-- **Follow-up:** replace the hand-drawn microphone with an image asset for a truer 3D look (keep the
+- **Follow-up:** Make sure Encore is not triggered in incorrect scenarios (such as knocking out the
+  last opponent). Replace the hand-drawn microphone with an image asset for a truer 3D look (keep the
   glint, note behaviours, grey drain, and darkness fall/lift choreography); polish/tune the crowd
   density, proportions, colours, and timing once seen on-device; and consider a real crowd-noise
   cue for the wild/boo beat. Then close the ticket.
@@ -262,7 +269,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 ### SS-209 — Illusionist Mirror Image animation
 
 - [ ] Not completed
-- **Goal:** TBD — animation to be described. Defensive ability: once per attack phase, reroll 1d6 and
+- **Goal:** TBD — animation to be described. Defensive ability: once per attack phase, reroll 1d6
+  and
   give the result -1 (during ArmorClass or Damage rolls against the defender).
 - **Cue sources:** `ArenaMessageState.MirrorImage.*`.
 - **Parent:** SS-191. Split out of SS-197.
@@ -301,7 +309,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 - [ ] Not completed
 - **Goal:** TBD — animation to be described. Defensive ability: once per match, when K.O.'d, roll
-  2d6; on 10/11/12 the Paladin survives with 1 Health and deals unblockable 1d6 to the attacker (a 12
+  2d6; on 10/11/12 the Paladin survives with 1 Health and deals unblockable 1d6 to the attacker (a
+  12
   also stops Duelist's Prepare Attack).
 - **Cue sources:** `ArenaMessageState.HolyShield.*`.
 - **Parent:** SS-191. Split out of SS-199.

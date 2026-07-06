@@ -1059,6 +1059,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   the rear blade swings down into a counter-thrust — landing on the attacker with a class-color burst
   on a successful reversal, or sailing past on a failure. Split across Trigger/EnGarde with the cue
   held live between them; Trigger/EnGarde plumbed with duelist + attacker userIds through all layers.
+- **SS-194** — Duelist normal-attack animation: twin swords (CombatWeapon.TwinSwords) rise into an
+  erect ready pose, hold, then slash the defender one after the other — lead from the left, follow
+  from the right ~half a second later — in smooth fluid arcs, each flaring a class-color burst on
+  contact (armor holds → the cuts sweep past while the defender sidesteps), then both blades fade out
+  together; attacker body plays a two-beat fence (Slash / SlashFinish / SlashWhiff). Sequencer waits
+  out each cue's playbackDurationMillis (SS-201) so the long combo completes and clears itself.
 - **SS-201** — Combat animation completes before its flash call-out plays: the sequencer now runs a
   message's seated-avatar cue to completion, then shows the flash callout, so an effect is never
   flashed over. Every cue reports its true full length via playbackDurationMillis (the max of its

@@ -28,6 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinThrowDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerSummonMinionDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
 import kotlinx.coroutines.delay
 
@@ -163,6 +164,9 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
                 RipostePhase.Landed,
                 RipostePhase.Missed -> RIPOSTE_TOTAL_MILLIS
             }
+
+        is CombatAnimationCue.SummonMinion ->
+            necromancerSummonMinionDurationMillis(outcome = outcome)
     }
 
 /**

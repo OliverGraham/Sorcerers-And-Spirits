@@ -79,6 +79,7 @@ private const val COLLAPSE_BODY_MILLIS = 650L
 private const val DODGE_FLOURISH_BODY_MILLIS = 450L
 private const val DODGE_BRACE_BODY_MILLIS = 860L
 private const val REARM_BODY_MILLIS = 650L
+private const val CAST_BODY_MILLIS = 480L
 private const val ALL_IN_BUST_JOLT_MILLIS = 160L
 
 private val feetPivot = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1f)
@@ -246,6 +247,8 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
 
         is CombatAnimationCue.Riposte ->
             if (phase == RipostePhase.Landed) RIPOSTE_STRIKE_MILLIS + FLINCH_BODY_MILLIS else 0L
+
+        is CombatAnimationCue.SummonMinion -> CAST_BODY_MILLIS
     }
 
 /**

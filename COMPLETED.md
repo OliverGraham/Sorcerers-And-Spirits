@@ -1089,3 +1089,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   slash-arc math extracted from DuelistNormalAttack into shared CombatSlashArc; wired into the
   overlay host, playback-duration, and defender-reaction-delay registries; ships interactive Compose
   previews per outcome.
+- **SS-196** — Bard normal-attack animation: a wooden snare drum pops up in front of the Bard, a
+  wooden drumstick appears above it and then pivots on a fixed fulcrum to swing down and strike the
+  white batter head (which dimples into a shaded bowl and springs back with an underdamped bounce),
+  sending bard-colored sound rings rippling toward the opponent; a landed strike answers with
+  bard-colored music notes rising off the drum, a miss stays silent. Shell is stained wood with
+  bard-gold counterhoops (bottom hoop drawn front-arc-only so it can't show through) and tension
+  rods. New Cast body gesture (drum/stick overlay carries the attack, no lunge); wired into the
+  overlay host, playback-duration, and defender-reaction-delay registries; ships interactive Compose
+  previews per outcome (Knockout/Damage/ArmorClassHit/ArmorClassMiss).

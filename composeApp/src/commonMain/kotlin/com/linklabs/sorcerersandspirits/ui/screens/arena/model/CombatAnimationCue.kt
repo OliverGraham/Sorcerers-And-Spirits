@@ -92,6 +92,26 @@ sealed interface CombatAnimationCue {
         val necroUserId: String,
         val outcome: SummonMinionOutcome,
     ) : CombatAnimationCue
+
+    @Immutable
+    data class Persuade(override val id: String, val bardUserId: String, val phase: PersuadePhase) :
+        CombatAnimationCue
+}
+
+/**
+ * The stage a Persuade is in (SS-207): [Summon] is the Bard's lute conjured the moment their armor
+ * is passed, held while the roll is made; [StrumFailed] and [StrumStopped] are the resolved roll —
+ * the strings ring and notes bloom, then either drain to grey as the attack presses on, or hold
+ * their colour in a flourish as the attack is lulled to a stop. [CharmSummon] is the same stopping
+ * flourish followed by the lute crossfading into a flute, and [CharmComplete] is that flute played,
+ * air breathing through it, wreathed in the slow hypnotic swirl that redirects the attacker.
+ */
+enum class PersuadePhase {
+    Summon,
+    StrumFailed,
+    StrumStopped,
+    CharmSummon,
+    CharmComplete,
 }
 
 /**
@@ -247,9 +267,39 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     outcome = outcome,
                 )
 
-            // TODO(SS-196): Bard ability animations.
-            is ArenaMessageState.Encore,
-            is ArenaMessageState.Persuade -> null
+            is ArenaMessageState.Persuade.Trigger ->
+                CombatAnimationCue.Persuade(
+                    id = id,
+                    bardUserId = bardUserId,
+                    phase = PersuadePhase.Summon,
+                )
+
+            is ArenaMessageState.Persuade.StrumLute ->
+                CombatAnimationCue.Persuade(
+                    id = id,
+                    bardUserId = bardUserId,
+                    phase =
+                        if (isSuccessful) PersuadePhase.StrumStopped else PersuadePhase.StrumFailed,
+                )
+
+            is ArenaMessageState.Persuade.CharmActivation ->
+                CombatAnimationCue.Persuade(
+                    id = id,
+                    bardUserId = bardUserId,
+                    phase = PersuadePhase.CharmSummon,
+                )
+
+            is ArenaMessageState.Persuade.Charm ->
+                CombatAnimationCue.Persuade(
+                    id = id,
+                    bardUserId = bardUserId,
+                    phase = PersuadePhase.CharmComplete,
+                )
+
+            is ArenaMessageState.Persuade.Lull -> null
+
+            // TODO(SS-206): Bard Encore animation.
+            is ArenaMessageState.Encore -> null
 
             // TODO(SS-197): Illusionist ability animations.
             is ArenaMessageState.Impersonate,
@@ -300,6 +350,8 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.LuckyCoinHighRoller -> null
 
             is CombatAnimationCue.SummonMinion -> null
+
+            is CombatAnimationCue.Persuade -> null
         }
 
 /**
@@ -329,6 +381,8 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
 
         is CombatAnimationCue.SummonMinion ->
             if (userId == necroUserId) AvatarGesture.Cast else null
+
+        is CombatAnimationCue.Persuade -> null
     }
 
 /**

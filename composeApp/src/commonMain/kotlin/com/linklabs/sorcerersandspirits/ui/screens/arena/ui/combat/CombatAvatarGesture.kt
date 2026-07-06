@@ -251,6 +251,8 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
             if (phase == RipostePhase.Landed) RIPOSTE_STRIKE_MILLIS + FLINCH_BODY_MILLIS else 0L
 
         is CombatAnimationCue.SummonMinion -> CAST_BODY_MILLIS
+
+        is CombatAnimationCue.Persuade -> 0L
     }
 
 /**

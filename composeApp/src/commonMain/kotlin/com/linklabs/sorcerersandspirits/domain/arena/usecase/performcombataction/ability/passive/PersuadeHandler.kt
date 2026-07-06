@@ -15,7 +15,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     fun charm(charm: AbilityAction.Passive.Persuade.Charm) = combatMutator.charm(charm = charm)
 
     private fun CombatMutator.triggerPersuade() {
-        addMessage(message = ArenaMessage.Persuade.Trigger)
+        addMessage(message = ArenaMessage.Persuade.Trigger(bardUserId = defenderUserId))
 
         setNextAbilityRoll(
             purpose = AbilityAction.Passive.Persuade.StrumLute,
@@ -34,7 +34,12 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.handleStrumLuteFailure(persuadeDie: Int) {
         addMessage(
-            message = ArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = false)
+            message =
+                ArenaMessage.Persuade.StrumLute(
+                    bardUserId = defenderUserId,
+                    diceRoll = persuadeDie,
+                    isSuccessful = false,
+                )
         )
 
         continueAttackWithHealthRoll()
@@ -56,13 +61,18 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.strumLuteToLull(persuadeDie: Int) {
         addMessage(
-            message = ArenaMessage.Persuade.StrumLute(diceRoll = persuadeDie, isSuccessful = true)
+            message =
+                ArenaMessage.Persuade.StrumLute(
+                    bardUserId = defenderUserId,
+                    diceRoll = persuadeDie,
+                    isSuccessful = true,
+                )
         )
         resolveTurnEnd()
     }
 
     private fun CombatMutator.strumLuteToCharm(targetableUserIds: Set<String>) {
-        addMessage(message = ArenaMessage.Persuade.CharmActivation)
+        addMessage(message = ArenaMessage.Persuade.CharmActivation(bardUserId = defenderUserId))
 
         setNextAbilityRoll(
             purpose = AbilityAction.Passive.Persuade.Charm(targetableUserIds = targetableUserIds),
@@ -76,6 +86,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         addMessage(
             message =
                 ArenaMessage.Persuade.Charm(
+                    bardUserId = defenderUserId,
                     attackerUserId = attackerUserId,
                     defenderUserId = selectedCharmTargetUserId,
                 )

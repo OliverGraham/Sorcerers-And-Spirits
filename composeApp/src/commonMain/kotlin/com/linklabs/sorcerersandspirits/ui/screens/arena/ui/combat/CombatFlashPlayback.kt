@@ -19,6 +19,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.bardNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.persuadeDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_TOTAL_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.RIPOSTE_READY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.RIPOSTE_TOTAL_MILLIS
@@ -168,6 +169,8 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
 
         is CombatAnimationCue.SummonMinion ->
             necromancerSummonMinionDurationMillis(outcome = outcome)
+
+        is CombatAnimationCue.Persuade -> persuadeDurationMillis(phase = phase)
     }
 
 /**

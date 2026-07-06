@@ -142,22 +142,25 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Persuade : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : Persuade
+        @Immutable data class Trigger(override val id: String, val bardUserId: String) : Persuade
 
         @Immutable
         data class StrumLute(
             override val id: String,
+            val bardUserId: String,
             val diceRoll: Int,
             val isSuccessful: Boolean,
         ) : Persuade
 
-        @Immutable data class CharmActivation(override val id: String) : Persuade
+        @Immutable
+        data class CharmActivation(override val id: String, val bardUserId: String) : Persuade
 
         @Immutable data class Lull(override val id: String) : Persuade
 
         @Immutable
         data class Charm(
             override val id: String,
+            val bardUserId: String,
             val attackerName: String,
             val defenderName: String,
         ) : Persuade
@@ -484,23 +487,26 @@ private fun ArenaMessage.toState(
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageState.Persuade.Charm(
                 id = id,
+                bardUserId = bardUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 defenderName = participants.resolveClassName(userId = defenderUserId),
             )
 
         is ArenaMessage.Persuade.CharmActivation ->
-            ArenaMessageState.Persuade.CharmActivation(id = id)
+            ArenaMessageState.Persuade.CharmActivation(id = id, bardUserId = bardUserId)
 
         is ArenaMessage.Persuade.Lull -> ArenaMessageState.Persuade.Lull(id = id)
 
         is ArenaMessage.Persuade.StrumLute ->
             ArenaMessageState.Persuade.StrumLute(
                 id = id,
+                bardUserId = bardUserId,
                 diceRoll = diceRoll,
                 isSuccessful = isSuccessful,
             )
 
-        is ArenaMessage.Persuade.Trigger -> ArenaMessageState.Persuade.Trigger(id = id)
+        is ArenaMessage.Persuade.Trigger ->
+            ArenaMessageState.Persuade.Trigger(id = id, bardUserId = bardUserId)
 
         is ArenaMessage.PrepareAttack ->
             ArenaMessageState.PrepareAttack(

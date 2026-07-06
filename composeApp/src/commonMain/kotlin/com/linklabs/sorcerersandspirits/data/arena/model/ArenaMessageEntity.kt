@@ -134,19 +134,20 @@ sealed interface ArenaMessageEntity {
     sealed interface Persuade : ArenaMessageEntity {
         @Serializable
         @SerialName(value = PERSUADE_TRIGGER)
-        data class Trigger(override val id: String) : Persuade
+        data class Trigger(override val id: String, val bardUserId: String) : Persuade
 
         @Serializable
         @SerialName(value = PERSUADE_STRUM_LUTE)
         data class StrumLute(
             override val id: String,
+            val bardUserId: String,
             val diceRoll: Int,
             val isSuccessful: Boolean,
         ) : Persuade
 
         @Serializable
         @SerialName(value = PERSUADE_CHARM_ACTIVATION)
-        data class CharmActivation(override val id: String) : Persuade
+        data class CharmActivation(override val id: String, val bardUserId: String) : Persuade
 
         @Serializable
         @SerialName(value = PERSUADE_LULL)
@@ -156,6 +157,7 @@ sealed interface ArenaMessageEntity {
         @SerialName(value = PERSUADE_CHARM)
         data class Charm(
             override val id: String,
+            val bardUserId: String,
             val attackerUserId: String,
             val defenderUserId: String,
         ) : Persuade
@@ -388,17 +390,24 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
             is ArenaMessageEntity.SummonMinion ->
                 ArenaMessage.SummonMinion(necroUserId = necroUserId, singleDie = singleDie)
 
-            is ArenaMessageEntity.Persuade.Trigger -> ArenaMessage.Persuade.Trigger
+            is ArenaMessageEntity.Persuade.Trigger ->
+                ArenaMessage.Persuade.Trigger(bardUserId = bardUserId)
 
             is ArenaMessageEntity.Persuade.StrumLute ->
-                ArenaMessage.Persuade.StrumLute(diceRoll = diceRoll, isSuccessful = isSuccessful)
+                ArenaMessage.Persuade.StrumLute(
+                    bardUserId = bardUserId,
+                    diceRoll = diceRoll,
+                    isSuccessful = isSuccessful,
+                )
 
-            is ArenaMessageEntity.Persuade.CharmActivation -> ArenaMessage.Persuade.CharmActivation
+            is ArenaMessageEntity.Persuade.CharmActivation ->
+                ArenaMessage.Persuade.CharmActivation(bardUserId = bardUserId)
 
             is ArenaMessageEntity.Persuade.Lull -> ArenaMessage.Persuade.Lull
 
             is ArenaMessageEntity.Persuade.Charm ->
                 ArenaMessage.Persuade.Charm(
+                    bardUserId = bardUserId,
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                 )
@@ -561,23 +570,26 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 singleDie = singleDie,
             )
 
-        is ArenaMessage.Persuade.Trigger -> ArenaMessageEntity.Persuade.Trigger(id = id)
+        is ArenaMessage.Persuade.Trigger ->
+            ArenaMessageEntity.Persuade.Trigger(id = id, bardUserId = bardUserId)
 
         is ArenaMessage.Persuade.StrumLute ->
             ArenaMessageEntity.Persuade.StrumLute(
                 id = id,
+                bardUserId = bardUserId,
                 diceRoll = diceRoll,
                 isSuccessful = isSuccessful,
             )
 
         is ArenaMessage.Persuade.CharmActivation ->
-            ArenaMessageEntity.Persuade.CharmActivation(id = id)
+            ArenaMessageEntity.Persuade.CharmActivation(id = id, bardUserId = bardUserId)
 
         is ArenaMessage.Persuade.Lull -> ArenaMessageEntity.Persuade.Lull(id = id)
 
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageEntity.Persuade.Charm(
                 id = id,
+                bardUserId = bardUserId,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
             )

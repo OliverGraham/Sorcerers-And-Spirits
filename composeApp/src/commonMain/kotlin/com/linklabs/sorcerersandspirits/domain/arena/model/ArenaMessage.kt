@@ -65,15 +65,20 @@ sealed interface ArenaMessage {
 
     sealed interface Persuade : ArenaMessage {
 
-        data object Trigger : Persuade
+        data class Trigger(val bardUserId: String) : Persuade
 
-        data class StrumLute(val diceRoll: Int, val isSuccessful: Boolean) : Persuade
+        data class StrumLute(val bardUserId: String, val diceRoll: Int, val isSuccessful: Boolean) :
+            Persuade
 
-        data object CharmActivation : Persuade
+        data class CharmActivation(val bardUserId: String) : Persuade
 
         data object Lull : Persuade
 
-        data class Charm(val attackerUserId: String, val defenderUserId: String) : Persuade
+        data class Charm(
+            val bardUserId: String,
+            val attackerUserId: String,
+            val defenderUserId: String,
+        ) : Persuade
     }
 
     sealed interface Encore : ArenaMessage {

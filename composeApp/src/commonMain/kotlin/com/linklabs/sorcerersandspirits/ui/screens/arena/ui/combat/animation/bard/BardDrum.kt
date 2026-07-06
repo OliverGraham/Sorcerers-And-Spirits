@@ -425,7 +425,7 @@ private fun musicNoteFade(phase: Float): Float =
     }
 
 /** One eighth note: a slanted filled head, a stem up its right side, and a small flag. */
-private fun DrawScope.drawMusicNote(center: Offset, color: Color, alpha: Float) {
+internal fun DrawScope.drawMusicNote(center: Offset, color: Color, alpha: Float) {
     val headRadiusX = 5.dp.toPx()
     val headRadiusY = 3.6.dp.toPx()
     drawOval(

@@ -96,6 +96,22 @@ sealed interface CombatAnimationCue {
     @Immutable
     data class Persuade(override val id: String, val bardUserId: String, val phase: PersuadePhase) :
         CombatAnimationCue
+
+    @Immutable
+    data class Encore(override val id: String, val phase: EncorePhase) : CombatAnimationCue
+}
+
+/**
+ * The stage a Bard's Encore is in (SS-206): [SetStage] is the concert scene rising the moment
+ * Encore triggers — the arena darkens to a spotlit stage with a standing microphone and a restless
+ * crowd of the class avatars, held alive while the roll is made; [Success] and [Failure] are the
+ * resolved 1d6 — the mic throws off music as the crowd roars for the encore, or the notes drain to
+ * grey as the crowd boos, before the house lights come back up and the darkness lifts either way.
+ */
+enum class EncorePhase {
+    SetStage,
+    Success,
+    Failure,
 }
 
 /**
@@ -298,8 +314,14 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
 
             is ArenaMessageState.Persuade.Lull -> null
 
-            // TODO(SS-206): Bard Encore animation.
-            is ArenaMessageState.Encore -> null
+            is ArenaMessageState.Encore.Trigger ->
+                CombatAnimationCue.Encore(id = id, phase = EncorePhase.SetStage)
+
+            is ArenaMessageState.Encore.Roll ->
+                CombatAnimationCue.Encore(
+                    id = id,
+                    phase = if (isSuccessful) EncorePhase.Success else EncorePhase.Failure,
+                )
 
             // TODO(SS-197): Illusionist ability animations.
             is ArenaMessageState.Impersonate,
@@ -352,6 +374,8 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.SummonMinion -> null
 
             is CombatAnimationCue.Persuade -> null
+
+            is CombatAnimationCue.Encore -> null
         }
 
 /**
@@ -383,6 +407,8 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
             if (userId == necroUserId) AvatarGesture.Cast else null
 
         is CombatAnimationCue.Persuade -> null
+
+        is CombatAnimationCue.Encore -> null
     }
 
 /**

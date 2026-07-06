@@ -9,6 +9,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BardNormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.EncoreOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.PersuadeOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.DuelistNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PrepareAttackOverlay
@@ -92,6 +93,7 @@ internal fun CombatAnimationOverlays(
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
+            EncoreOverlay(animationCue = animationCue, modifier = Modifier.fillMaxSize())
         }
 
         if (CharacterClassType.Duelist in presentClasses) {

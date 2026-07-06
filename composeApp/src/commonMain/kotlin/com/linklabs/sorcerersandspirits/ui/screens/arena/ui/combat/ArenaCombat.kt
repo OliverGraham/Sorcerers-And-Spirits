@@ -90,35 +90,44 @@ internal fun ArenaCombat(
                     },
                 )
 
-                AnimatedContent(
-                    targetState =
-                        state.seatingFor(
-                            targetUserId = targetedOpponentUserId,
-                            isMatchEnding = screenState.isFinishPending,
-                            collapsingTargetUserId =
-                                screenState.collapsingSeatUserId(playback = flashPlayback),
-                        ),
-                    label = AVATAR_SEATING_TRANSITION_LABEL,
-                    modifier = Modifier.weight(weight = 1f),
-                ) { seating ->
-                    SharedTransitionProvider(
-                        sharedTransitionScope = this@SharedTransitionLayout,
-                        animatedVisibilityScope = this@AnimatedContent,
-                    ) {
-                        CombatStage(
-                            state = state,
-                            seating = seating,
-                            animationCue = flashPlayback.combatAnimationCue,
-                            onSelectTarget = { selectedOpponentUserId = it },
-                            onInspect = { inspectedUserId = it },
-                            isTargetable =
-                                state.isItThisUsersTurn &&
-                                    state.lockedTargetUserId == null &&
-                                    !isTargetLockedOptimistically,
-                            onAvatarBoundsChanged = avatarBounds::reportAvatarBounds,
-                            onDiceHomeBoundsChanged = { diceHomeBounds = it },
-                        )
+                Box(modifier = Modifier.weight(weight = 1f)) {
+                    AnimatedContent(
+                        targetState =
+                            state.seatingFor(
+                                targetUserId = targetedOpponentUserId,
+                                isMatchEnding = screenState.isFinishPending,
+                                collapsingTargetUserId =
+                                    screenState.collapsingSeatUserId(playback = flashPlayback),
+                            ),
+                        label = AVATAR_SEATING_TRANSITION_LABEL,
+                        modifier = Modifier.fillMaxSize(),
+                    ) { seating ->
+                        SharedTransitionProvider(
+                            sharedTransitionScope = this@SharedTransitionLayout,
+                            animatedVisibilityScope = this@AnimatedContent,
+                        ) {
+                            CombatStage(
+                                state = state,
+                                seating = seating,
+                                animationCue = flashPlayback.combatAnimationCue,
+                                onSelectTarget = { selectedOpponentUserId = it },
+                                onInspect = { inspectedUserId = it },
+                                isTargetable =
+                                    state.isItThisUsersTurn &&
+                                        state.lockedTargetUserId == null &&
+                                        !isTargetLockedOptimistically,
+                                onAvatarBoundsChanged = avatarBounds::reportAvatarBounds,
+                                onDiceHomeBoundsChanged = { diceHomeBounds = it },
+                            )
+                        }
                     }
+
+                    CombatAnimationOverlays(
+                        animationCue = flashPlayback.combatAnimationCue,
+                        avatarBounds = avatarBounds,
+                        presentClasses = presentClasses,
+                        modifier = Modifier.fillMaxSize(),
+                    )
                 }
 
                 BottomControls(
@@ -131,13 +140,6 @@ internal fun ArenaCombat(
                     onActionDispatched = { isActionInFlight = true },
                 )
             }
-
-            CombatAnimationOverlays(
-                animationCue = flashPlayback.combatAnimationCue,
-                avatarBounds = avatarBounds,
-                presentClasses = presentClasses,
-                modifier = Modifier.fillMaxSize(),
-            )
 
             MessageLogOverlay(
                 messages = screenState.messages,

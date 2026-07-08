@@ -13,18 +13,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -52,6 +55,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_oil_barrel
 
 internal const val ALL_IN_TOSS_MILLIS = 1100
 internal const val ALL_IN_SETTLE_MILLIS = 300
@@ -80,7 +86,7 @@ private const val COIN_COUNT = 8
 private const val BILL_COUNT = 4
 private const val GEM_COUNT = 3
 private const val PAINTING_COUNT = 2
-private const val BARREL_COUNT = 2
+private const val BARREL_COUNT = 1
 private const val DOLLAR_SIGN_COUNT = 6
 private const val DOLLAR_MEASURE_SP = 24
 
@@ -109,6 +115,8 @@ private val canvasColors =
     )
 private val barrelBody = Color(color = 0xFF3A3A42)
 private val barrelBand = Color(color = 0xFF8A8F98)
+private val grayBarrelBody = Color(color = 0xFFBDBDBD)
+private val grayBarrelBand = Color(color = 0xFFE0E0E0)
 private val dollarSignColor = Color(color = 0xFFF4C752)
 private val blastCore = Color(color = 0xFFFFF3D0)
 
@@ -195,6 +203,7 @@ internal fun AllInOverlay(
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
+    val barrelPainter = painterResource(resource = Res.drawable.ic_oil_barrel)
     val dollarLayout =
         remember(textMeasurer) {
             textMeasurer.measure(
@@ -220,7 +229,9 @@ internal fun AllInOverlay(
                 )
             },
         modifier = modifier,
-        draw = { drawAllIn(state = state, dollarLayout = dollarLayout) },
+        draw = {
+            drawAllIn(state = state, dollarLayout = dollarLayout, barrelPainter = barrelPainter)
+        },
     )
 }
 
@@ -235,34 +246,39 @@ private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed:
     val explodeDistance = with(density) { 96.dp.toPx() }
 
     val valuables =
-        valuableKinds().shuffled(random = random).map { kind ->
-            val angle = random.nextFloat(min = 0f, max = (2f * PI).toFloat())
-            val (color, accent) = valuableColors(kind = kind, random = random)
-            Valuable(
-                kind = kind,
-                color = color,
-                accent = accent,
-                launchStart =
-                    center +
+        valuableKinds()
+            .shuffled(random = random)
+            .map { kind ->
+                val angle = random.nextFloat(min = 0f, max = (2f * PI).toFloat())
+                val (color, accent) = valuableColors(kind = kind, random = random)
+                Valuable(
+                    kind = kind,
+                    color = color,
+                    accent = accent,
+                    launchStart =
+                        center +
+                            Offset(
+                                x = random.nextFloat(min = -0.16f, max = 0.16f) * width,
+                                y = random.nextFloat(min = -0.06f, max = 0.14f) * height,
+                            ),
+                    apex =
                         Offset(
-                            x = random.nextFloat(min = -0.16f, max = 0.16f) * width,
-                            y = random.nextFloat(min = -0.06f, max = 0.14f) * height,
+                            x = center.x + random.nextFloat(min = -0.42f, max = 0.42f) * width,
+                            y = bounds.top + random.nextFloat(min = 0f, max = 0.18f) * height,
                         ),
-                apex =
-                    Offset(
-                        x = center.x + random.nextFloat(min = -0.42f, max = 0.42f) * width,
-                        y = bounds.top + random.nextFloat(min = 0f, max = 0.18f) * height,
-                    ),
-                rest =
-                    Offset(
-                        x = pileCenter.x + random.nextFloat(min = -1f, max = 1f) * pileHalfWidth,
-                        y = pileCenter.y - random.nextFloat(min = 0f, max = 0.1f) * height,
-                    ),
-                explodeDir = Offset(x = cos(angle), y = sin(angle)),
-                radiusPx = with(density) { valuableRadiusDp(kind = kind).dp.toPx() },
-                spinTurns = random.nextInt(from = 2, until = 4).toFloat(),
-            )
-        }
+                    rest =
+                        Offset(
+                            x =
+                                pileCenter.x +
+                                    random.nextFloat(min = -1f, max = 1f) * pileHalfWidth,
+                            y = pileCenter.y - random.nextFloat(min = 0f, max = 0.1f) * height,
+                        ),
+                    explodeDir = Offset(x = cos(angle), y = sin(angle)),
+                    radiusPx = with(density) { valuableRadiusDp(kind = kind).dp.toPx() },
+                    spinTurns = random.nextInt(from = 2, until = 4).toFloat(),
+                )
+            }
+            .sortedBy { it.kind }
 
     val dollarSigns =
         (0 until DOLLAR_SIGN_COUNT).map { index ->
@@ -334,7 +350,11 @@ private suspend fun AllInEffectState.play(scene: AllInScene, outcome: AllInOutco
     this.scene = null
 }
 
-private fun DrawScope.drawAllIn(state: AllInEffectState, dollarLayout: TextLayoutResult) {
+private fun DrawScope.drawAllIn(
+    state: AllInEffectState,
+    dollarLayout: TextLayoutResult,
+    barrelPainter: Painter,
+) {
     val scene = state.scene ?: return
     val toss = state.toss.value
     val explode = state.explode.value
@@ -360,6 +380,7 @@ private fun DrawScope.drawAllIn(state: AllInEffectState, dollarLayout: TextLayou
                 gray = gray,
                 spinDegrees = spinDegrees,
                 alpha = valuableAlpha,
+                barrelPainter = barrelPainter,
             )
         }
     }
@@ -387,6 +408,7 @@ private fun DrawScope.drawValuable(
     gray: Float,
     spinDegrees: Float,
     alpha: Float,
+    barrelPainter: Painter,
 ) {
     when (valuable.kind) {
         ValuableKind.Coin ->
@@ -435,8 +457,7 @@ private fun DrawScope.drawValuable(
             drawBarrel(
                 center = center,
                 radius = valuable.radiusPx,
-                body = valuable.color,
-                band = valuable.accent,
+                barrelPainter = barrelPainter,
                 gray = gray,
                 spinDegrees = spinDegrees,
                 alpha = alpha,
@@ -555,75 +576,77 @@ private fun DrawScope.drawPainting(
 
     rotate(degrees = spinDegrees, pivot = center) {
         val halfWidth = radius * 0.85f
-        val halfHeight = radius
         drawRect(
             color = frameColor,
-            topLeft = Offset(x = center.x - halfWidth, y = center.y - halfHeight),
-            size = Size(width = halfWidth * 2f, height = halfHeight * 2f),
+            topLeft = Offset(x = center.x - halfWidth, y = center.y - radius),
+            size = Size(width = halfWidth * 2f, height = radius * 2f),
             alpha = alpha,
         )
         val inset = radius * 0.24f
         drawRect(
             color = canvasColor,
-            topLeft = Offset(x = center.x - halfWidth + inset, y = center.y - halfHeight + inset),
-            size = Size(width = (halfWidth - inset) * 2f, height = (halfHeight - inset) * 2f),
+            topLeft = Offset(x = center.x - halfWidth + inset, y = center.y - radius + inset),
+            size = Size(width = (halfWidth - inset) * 2f, height = (radius - inset) * 2f),
             alpha = alpha,
         )
         drawLine(
             color = frameColor,
-            start = Offset(x = center.x - halfWidth * 0.4f, y = center.y + halfHeight * 0.3f),
-            end = Offset(x = center.x + halfWidth * 0.4f, y = center.y - halfHeight * 0.1f),
+            start = Offset(x = center.x - halfWidth * 0.4f, y = center.y + radius * 0.3f),
+            end = Offset(x = center.x + halfWidth * 0.4f, y = center.y - radius * 0.1f),
             strokeWidth = radius * 0.12f,
             alpha = alpha * 0.7f,
         )
     }
 }
 
-/** An oil barrel tumbling: a dark drum banded with metal hoops and a lid ellipse on top. */
+/** An oil barrel tumbling: its drawn using the [barrelPainter] icon. */
 private fun DrawScope.drawBarrel(
     center: Offset,
     radius: Float,
-    body: Color,
-    band: Color,
+    barrelPainter: Painter,
     gray: Float,
     spinDegrees: Float,
     alpha: Float,
 ) {
-    val bodyColor = lerp(start = body, stop = grayRim, fraction = gray)
-    val bandColor = lerp(start = band, stop = grayShine, fraction = gray)
+    // We map the icon's black (#000) and white (#fff) to our target colors.
+    // To ensure the "no effect" state is visibly gray and not too dark,
+    // we use a lighter gray for the barrel body when at full gray fraction.
+    val currentBlack = lerp(start = barrelBody, stop = grayBarrelBody, fraction = gray)
+    val currentWhite = lerp(start = barrelBand, stop = grayBarrelBand, fraction = gray)
+
+    val matrix =
+        ColorMatrix(
+            floatArrayOf(
+                currentWhite.red - currentBlack.red,
+                0f,
+                0f,
+                0f,
+                currentBlack.red,
+                0f,
+                currentWhite.green - currentBlack.green,
+                0f,
+                0f,
+                currentBlack.green,
+                0f,
+                0f,
+                currentWhite.blue - currentBlack.blue,
+                0f,
+                currentBlack.blue,
+                0f,
+                0f,
+                0f,
+                1f,
+                0f,
+            )
+        )
+    val colorFilter = ColorFilter.colorMatrix(colorMatrix = matrix)
 
     rotate(degrees = spinDegrees, pivot = center) {
-        val halfWidth = radius * 0.6f
-        val halfHeight = radius
-        val topLeft = Offset(x = center.x - halfWidth, y = center.y - halfHeight)
-        val barrelSize = Size(width = halfWidth * 2f, height = halfHeight * 2f)
-        drawRoundRect(
-            color = bodyColor,
-            topLeft = topLeft,
-            size = barrelSize,
-            cornerRadius = CornerRadius(x = radius * 0.28f),
-            alpha = alpha,
-        )
-        val bandHeight = radius * 0.16f
-        listOf(-0.42f, 0.42f).forEach { offset ->
-            drawRect(
-                color = bandColor,
-                topLeft =
-                    Offset(
-                        x = center.x - halfWidth,
-                        y = center.y + halfHeight * offset - bandHeight / 2f,
-                    ),
-                size = Size(width = halfWidth * 2f, height = bandHeight),
-                alpha = alpha,
-            )
+        val halfWidth = radius * 0.7f
+        val size = Size(width = halfWidth * 2f, height = radius * 2f)
+        translate(left = center.x - halfWidth, top = center.y - radius) {
+            with(barrelPainter) { draw(size = size, alpha = alpha, colorFilter = colorFilter) }
         }
-        drawOval(
-            color = bandColor,
-            topLeft =
-                Offset(x = center.x - halfWidth, y = center.y - halfHeight - bandHeight * 0.4f),
-            size = Size(width = halfWidth * 2f, height = bandHeight * 1.6f),
-            alpha = alpha,
-        )
     }
 }
 
@@ -708,7 +731,7 @@ private fun valuableRadiusDp(kind: ValuableKind): Float =
         ValuableKind.Gem -> 7f
         ValuableKind.Bill -> 10f
         ValuableKind.Painting -> 12f
-        ValuableKind.Barrel -> 12f
+        ValuableKind.Barrel -> 17f
     }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

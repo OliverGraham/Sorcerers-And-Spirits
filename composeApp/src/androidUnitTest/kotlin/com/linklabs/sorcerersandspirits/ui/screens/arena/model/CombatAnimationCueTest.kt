@@ -20,6 +20,7 @@ class CombatAnimationCueTest {
                     attackerClassType = CharacterClassType.Mage,
                     defenderUserId = DEFENDER_ID,
                     outcome = NormalRollMessageType.ArmorClassHit,
+                    impersonatedClassType = null,
                 ),
             actual = message.combatAnimationCue,
         )
@@ -220,6 +221,7 @@ class CombatAnimationCueTest {
             secondDie = 5,
             bonus = 0,
             type = type,
+            impersonatedClassType = null,
         )
 
     private fun normalAttackCue(outcome: NormalRollMessageType) =
@@ -229,6 +231,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Mage,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
+            impersonatedClassType = null,
         )
 
     private fun rogueAttackCue(outcome: NormalRollMessageType) =
@@ -238,6 +241,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Rogue,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
+            impersonatedClassType = null,
         )
 
     private fun duelistAttackCue(outcome: NormalRollMessageType) =
@@ -247,6 +251,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Duelist,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
+            impersonatedClassType = null,
         )
 
     private fun dodgeMessage(didArmorIncrease: Boolean) =

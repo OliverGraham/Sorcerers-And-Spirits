@@ -28,6 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_APPEAR_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_STRIKE_MILLIS
@@ -201,7 +202,7 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
     }
 
 private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): Long =
-    when (attackerClassType) {
+    when (weaponClassType) {
         CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
         CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
         CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS

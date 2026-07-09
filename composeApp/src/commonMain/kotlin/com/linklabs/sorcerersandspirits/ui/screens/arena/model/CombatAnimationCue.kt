@@ -22,6 +22,11 @@ private const val HIGH_ROLLER_ROLL = 6
 sealed interface CombatAnimationCue {
     val id: String
 
+    /**
+     * [impersonatedClassType] is set only when the attacker is an Illusionist that has copied an
+     * offensive ability, naming the class whose weapon its borrowed normal attack renders (SS-197);
+     * null for every real class and for an Illusionist that has not impersonated anyone.
+     */
     @Immutable
     data class NormalAttack(
         override val id: String,
@@ -29,6 +34,7 @@ sealed interface CombatAnimationCue {
         val attackerClassType: CharacterClassType,
         val defenderUserId: String,
         val outcome: NormalRollMessageType,
+        val impersonatedClassType: CharacterClassType?,
     ) : CombatAnimationCue
 
     @Immutable
@@ -189,6 +195,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     attackerClassType = attackerClassType,
                     defenderUserId = defenderUserId,
                     outcome = type,
+                    impersonatedClassType = impersonatedClassType,
                 )
 
             is ArenaMessageState.KillingMomentum ->
@@ -323,8 +330,10 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     phase = if (isSuccessful) EncorePhase.Success else EncorePhase.Failure,
                 )
 
-            // TODO(SS-197): Illusionist ability animations.
-            is ArenaMessageState.Impersonate,
+            // TODO(SS-208): Illusionist Impersonate animation.
+            is ArenaMessageState.Impersonate -> null
+
+            // TODO(SS-209): Illusionist Mirror Image animation.
             is ArenaMessageState.MirrorImage -> null
 
             // TODO(SS-198): Mage ability animations.
@@ -481,11 +490,47 @@ private fun CombatAnimationCue.NormalAttack.normalAttackGestureFor(userId: Strin
 }
 
 /**
+ * The classes whose normal-attack weapon has a built renderer (SS-192…SS-196). The Illusionist
+ * borrows from this set: impersonating one of them shows its weapon, and impersonating a class
+ * outside it — or no one — falls back to a random pick from it (SS-197). Mage and Paladin join once
+ * SS-198/SS-199 land.
+ */
+internal val builtWeaponClassTypes =
+    listOf(
+        CharacterClassType.Rogue,
+        CharacterClassType.Gambler,
+        CharacterClassType.Duelist,
+        CharacterClassType.Necromancer,
+        CharacterClassType.Bard,
+    )
+
+/**
+ * The class whose weapon renders for this normal attack. Every real class renders its own; the
+ * Illusionist borrows the weapon of the class it impersonated (recolored to Illusionist blue by its
+ * overlay), or — with no built weapon to borrow — a per-attack random pick from
+ * [builtWeaponClassTypes], keyed on the cue id so every timing and draw site resolves the same
+ * weapon for a given attack (SS-197).
+ */
+internal val CombatAnimationCue.NormalAttack.weaponClassType: CharacterClassType
+    get() {
+        if (attackerClassType != CharacterClassType.Illusionist) return attackerClassType
+        val borrowedWeapon = impersonatedClassType?.takeIf { it in builtWeaponClassTypes }
+        return borrowedWeapon ?: randomBuiltWeaponFor(cueId = id)
+    }
+
+private fun randomBuiltWeaponFor(cueId: String): CharacterClassType {
+    val count = builtWeaponClassTypes.size
+    val index = ((cueId.hashCode() % count) + count) % count
+    return builtWeaponClassTypes[index]
+}
+
+/**
  * Every class gets its own attacker-side strike set (SS-192…SS-199); the generic lunges are the
- * fallback for classes whose set has not landed yet. The defender-side reactions stay shared.
+ * fallback for classes whose set has not landed yet. An Illusionist mirrors the body motion of the
+ * weapon it borrows via [weaponClassType]. The defender-side reactions stay shared.
  */
 private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
-    when (attackerClassType) {
+    when (weaponClassType) {
         CharacterClassType.Rogue -> rogueStrike()
         CharacterClassType.Gambler -> gamblerStrike()
         CharacterClassType.Duelist -> duelistStrike()

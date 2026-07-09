@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
@@ -97,6 +98,7 @@ internal fun GamblerNormalAttackOverlay(
                         cue = cue,
                         attackerBounds = attackerBounds,
                         defenderBounds = defenderBounds,
+                        accentColor = cue.attackerClassType.toColor(),
                         density = density,
                     ),
                 outcome = cue.outcome,
@@ -113,7 +115,7 @@ internal fun GamblerNormalAttackOverlay(
  */
 internal fun gamblerNormalAttackDurationMillis(): Long = THROW_FLIGHT_MILLIS + 200L
 
-private suspend fun GamblerStrikeState.play(
+internal suspend fun GamblerStrikeState.play(
     geometry: WeaponStrikeGeometry,
     outcome: NormalRollMessageType,
 ) {
@@ -188,7 +190,7 @@ private suspend fun GamblerStrikeState.throwPast() {
     }
 }
 
-private fun DrawScope.drawGamblerStrike(state: GamblerStrikeState) {
+internal fun DrawScope.drawGamblerStrike(state: GamblerStrikeState) {
     val geometry = state.scene ?: return
 
     val weaponAlpha = state.weaponAlpha.value
@@ -362,6 +364,7 @@ private fun GamblerNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Gambler,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
+                impersonatedClassType = null,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {

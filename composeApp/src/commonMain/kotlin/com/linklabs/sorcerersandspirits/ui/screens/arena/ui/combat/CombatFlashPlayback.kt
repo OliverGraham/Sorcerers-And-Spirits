@@ -18,6 +18,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.bardNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.encoreDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.persuadeDurationMillis
@@ -140,10 +141,7 @@ internal fun CombatAnimationCue.playbackDurationMillis(): Long =
 private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
-            normalAttackOverlayDurationMillis(
-                attackerClassType = attackerClassType,
-                outcome = outcome,
-            )
+            normalAttackOverlayDurationMillis(weaponClassType = weaponClassType, outcome = outcome)
 
         is CombatAnimationCue.KillingMomentum -> 0L
 
@@ -177,15 +175,16 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
     }
 
 /**
- * The attacker-side normal-attack overlay length per class: each class that has landed its weapon
- * (SS-192…SS-194) reports how long its strike runs, while a class still on the generic body lunge
- * has no weapon overlay, so its length comes from the seated avatars alone.
+ * The attacker-side normal-attack overlay length per weapon: each class that has landed its weapon
+ * (SS-192…SS-196) reports how long its strike runs, while a class still on the generic body lunge
+ * has no weapon overlay, so its length comes from the seated avatars alone. Keyed on the borrowed
+ * weapon, not the raw attacker, so an Illusionist's strike runs as long as the weapon it copied.
  */
 private fun normalAttackOverlayDurationMillis(
-    attackerClassType: CharacterClassType,
+    weaponClassType: CharacterClassType,
     outcome: NormalRollMessageType,
 ): Long =
-    when (attackerClassType) {
+    when (weaponClassType) {
         CharacterClassType.Rogue -> rogueNormalAttackDurationMillis(outcome = outcome)
         CharacterClassType.Gambler -> gamblerNormalAttackDurationMillis()
         CharacterClassType.Duelist -> duelistNormalAttackDurationMillis()

@@ -153,7 +153,7 @@ internal fun duelistNormalAttackDurationMillis(): Long {
  * sweeps in cleanly with no flare while the defender sidesteps. Both blades fade out together once
  * the combo lands.
  */
-private suspend fun DuelistStrikeState.play(
+internal suspend fun DuelistStrikeState.play(
     geometry: WeaponStrikeGeometry,
     outcome: NormalRollMessageType,
 ) {
@@ -249,7 +249,7 @@ private suspend fun DuelistStrikeState.sweepBlade(
  * The Duelist's twin blades (SS-194): the lead blade slashes in from the defender's left, the
  * follow blade from the right, so the two cuts cross over the defender.
  */
-private fun DrawScope.drawTwinSwordSlash(state: DuelistStrikeState) {
+internal fun DrawScope.drawTwinSwordSlash(state: DuelistStrikeState) {
     val geometry = state.scene ?: return
 
     drawBladeSlash(geometry = geometry, blade = state.leadSlash, fromSide = -1f)
@@ -372,6 +372,7 @@ private fun DuelistNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Duelist,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
+                impersonatedClassType = null,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Duelist, seats = seats) {

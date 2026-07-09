@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.due
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.AllInOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.GamblerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.LuckyCoinOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.IllusionistNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.RogueNormalAttackOverlay
@@ -108,6 +109,14 @@ internal fun CombatAnimationOverlays(
                 modifier = Modifier.fillMaxSize(),
             )
             RiposteOverlay(
+                animationCue = animationCue,
+                avatarBoundsFor = avatarBounds::boundsFor,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        if (CharacterClassType.Illusionist in presentClasses) {
+            IllusionistNormalAttackOverlay(
                 animationCue = animationCue,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),

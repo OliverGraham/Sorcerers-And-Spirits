@@ -108,6 +108,7 @@ internal class NecromancerStrikeState {
     val impactScale = Animatable(initialValue = 0f)
 
     var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
+    var palette by mutableStateOf(value = necroScythePalette)
 }
 
 /**
@@ -137,9 +138,10 @@ internal fun NecromancerNormalAttackOverlay(
                     weaponStrikeGeometry(
                         attackerBounds = attackerBounds,
                         target = defenderBounds.center,
-                        accentColor = necroBladeGreen,
+                        accentColor = necroScythePalette.blade,
                         density = density,
                     ),
+                palette = necroScythePalette,
                 outcome = cue.outcome,
             )
         },
@@ -165,8 +167,9 @@ internal fun necromancerNormalAttackDurationMillis(): Long =
  * then winds up and reaps across them. A landed reap flares a burst as the blade bites; a parried
  * one carries across cleanly with no flare. The whole construct fades out once it lands.
  */
-private suspend fun NecromancerStrikeState.play(
+internal suspend fun NecromancerStrikeState.play(
     geometry: WeaponStrikeGeometry,
+    palette: ScythePalette,
     outcome: NormalRollMessageType,
 ) {
     bodyAlpha.snapTo(targetValue = 0f)
@@ -176,6 +179,7 @@ private suspend fun NecromancerStrikeState.play(
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
     this.scene = geometry
+    this.palette = palette
 
     val connects = outcome != NormalRollMessageType.ArmorClassMiss
     val burstScale =
@@ -246,10 +250,11 @@ private suspend fun NecromancerStrikeState.play(
     this.scene = null
 }
 
-private fun DrawScope.drawScytheReap(state: NecromancerStrikeState) {
+internal fun DrawScope.drawScytheReap(state: NecromancerStrikeState) {
     val geometry = state.scene ?: return
     drawReapSweep(
         geometry = geometry,
+        palette = state.palette,
         rise = state.rise.value,
         reap = state.reap.value,
         glow = state.glow.value,
@@ -278,6 +283,7 @@ private fun DrawScope.drawScytheReap(state: NecromancerStrikeState) {
  */
 private fun DrawScope.drawReapSweep(
     geometry: WeaponStrikeGeometry,
+    palette: ScythePalette,
     rise: Float,
     reap: Float,
     glow: Float,
@@ -302,6 +308,7 @@ private fun DrawScope.drawReapSweep(
     if (hasReaped) {
         drawSlashArc(
             pivot = pivot,
+            palette = palette,
             uprightDegrees = uprightDegrees,
             grip = grip,
             reap = reap,
@@ -311,7 +318,7 @@ private fun DrawScope.drawReapSweep(
 
     rotate(degrees = uprightDegrees + scytheSwingDegrees(reap = reap), pivot = pivot) {
         translate(left = pivot.x - grip.x, top = pivot.y - grip.y) {
-            drawScytheShape(glow = glow, alpha = alpha)
+            drawScytheShape(palette = palette, glow = glow, alpha = alpha)
         }
     }
 }
@@ -336,6 +343,7 @@ private fun scytheSwingDegrees(reap: Float): Float =
  */
 private fun DrawScope.drawSlashArc(
     pivot: Offset,
+    palette: ScythePalette,
     uprightDegrees: Float,
     grip: Offset,
     reap: Float,
@@ -369,7 +377,7 @@ private fun DrawScope.drawSlashArc(
 
     drawPath(
         path = arc,
-        color = necroGlowGreen,
+        color = palette.glow,
         style = Stroke(width = 20.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         alpha = alpha * 0.3f,
     )
@@ -377,7 +385,7 @@ private fun DrawScope.drawSlashArc(
         path = arc,
         brush =
             Brush.linearGradient(
-                colors = listOf(Color.Transparent, necroGlowGreen, necroBladeCore),
+                colors = listOf(Color.Transparent, palette.glow, palette.core),
                 start = tail,
                 end = head,
             ),
@@ -433,6 +441,7 @@ private fun NecromancerNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Necromancer,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
+                impersonatedClassType = null,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Necromancer, seats = seats) {

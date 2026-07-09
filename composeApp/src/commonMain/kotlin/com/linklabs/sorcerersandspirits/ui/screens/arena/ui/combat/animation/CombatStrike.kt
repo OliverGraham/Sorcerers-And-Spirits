@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -76,12 +75,14 @@ internal fun weaponStrikeGeometry(
 /**
  * The strike line for a projectile weapon (SS-192/193): the dagger or card lands on the defender's
  * center, or slips past into empty air on a miss. Shared by every class whose weapon flies at the
- * defender rather than sweeping an arc.
+ * defender rather than sweeping an arc. [accentColor] lets an Illusionist borrow the weapon in its
+ * own blue (SS-197) rather than the attacker's class color.
  */
 internal fun projectileStrikeGeometry(
     cue: CombatAnimationCue.NormalAttack,
     attackerBounds: Rect,
     defenderBounds: Rect,
+    accentColor: Color,
     density: Density,
 ): WeaponStrikeGeometry {
     val target =
@@ -93,7 +94,7 @@ internal fun projectileStrikeGeometry(
     return weaponStrikeGeometry(
         attackerBounds = attackerBounds,
         target = target,
-        accentColor = cue.attackerClassType.toColor(),
+        accentColor = accentColor,
         density = density,
     )
 }

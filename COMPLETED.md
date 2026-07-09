@@ -1098,3 +1098,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   rods. New Cast body gesture (drum/stick overlay carries the attack, no lunge); wired into the
   overlay host, playback-duration, and defender-reaction-delay registries; ships interactive Compose
   previews per outcome (Knockout/Damage/ArmorClassHit/ArmorClassMiss).
+- **SS-197** — Illusionist normal-attack animation: the Illusionist has no weapon of its own, so it
+  borrows another class's — impersonating a class plays that class's weapon, while impersonating no
+  one (or a class with no built weapon yet) plays a random built weapon, fresh each attack — always
+  recolored to Illusionist blue (incl. a blue variant of the Necromancer scythe via a parameterized
+  ScythePalette). A shared weaponClassType resolver (impersonated, else a per-cue-id deterministic
+  random from builtWeaponClassTypes) drives the overlay, playback-duration, defender-reaction-delay,
+  and attacker body gesture so the weapon, its timing, and its motion agree; the flash stays blue.
+  Impersonated class threaded UI-only by tracking the last Impersonate message in toStates (no
+  domain/data changes); the five weapon renderers widened to internal and reused by a new Illusionist
+  dispatch overlay; ships interactive previews per borrowed weapon plus a random one. Abilities split
+  to SS-208 (Impersonate) and SS-209 (Mirror Image).

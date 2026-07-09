@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 @Immutable
 sealed interface ArenaMessageState {
@@ -43,6 +44,7 @@ sealed interface ArenaMessageState {
         val secondDie: Int,
         val bonus: Int,
         val type: NormalRollMessageType,
+        val impersonatedClassType: CharacterClassType?,
     ) : ArenaMessageState {
         /**
          * The true roll total: the two die faces plus any consecutive-doubles bonus that applied.
@@ -326,6 +328,7 @@ fun List<IncomingArenaMessage>.toStates(
     participants: Map<String, ParticipantClass>
 ): List<ArenaMessageState> {
     var lastNormalRoll: ArenaMessage.NormalRoll? = null
+    var impersonatedClassType: CharacterClassType? = null
     return map { incomingMessage ->
         val message = incomingMessage.message
         val state =
@@ -333,18 +336,40 @@ fun List<IncomingArenaMessage>.toStates(
                 id = incomingMessage.id,
                 participants = participants,
                 lastNormalRoll = lastNormalRoll,
+                impersonatedClassType = impersonatedClassType,
             )
-        if (message is ArenaMessage.NormalRoll) {
-            lastNormalRoll = message
+        when (message) {
+            is ArenaMessage.NormalRoll -> lastNormalRoll = message
+
+            is ArenaMessage.Impersonate ->
+                impersonatedClassType =
+                    message.impersonateAbility.impersonatedAbility.impersonatedClassType
+
+            else -> {}
         }
         state
     }
 }
 
+/** The class an Illusionist's copied offensive ability belongs to; null before anyone is copied. */
+private val OffensiveAbility.impersonatedClassType: CharacterClassType?
+    get() =
+        when (this) {
+            is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
+            is OffensiveAbility.AllIn -> CharacterClassType.Gambler
+            is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
+            is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
+            is OffensiveAbility.Encore -> CharacterClassType.Bard
+            is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
+            is OffensiveAbility.Impersonate -> CharacterClassType.Illusionist
+            is OffensiveAbility.None -> null
+        }
+
 private fun ArenaMessage.toState(
     id: String,
     participants: Map<String, ParticipantClass>,
     lastNormalRoll: ArenaMessage.NormalRoll?,
+    impersonatedClassType: CharacterClassType?,
 ): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
@@ -470,19 +495,23 @@ private fun ArenaMessage.toState(
                 outcome = outcome,
             )
 
-        is ArenaMessage.NormalRoll ->
+        is ArenaMessage.NormalRoll -> {
+            val attackerClassType = participants.resolveClassType(userId = attackerUserId)
+            val isImpersonatingAttacker = attackerClassType == CharacterClassType.Illusionist
             ArenaMessageState.NormalRoll(
                 id = id,
                 attackerUserId = attackerUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
-                attackerClassType = participants.resolveClassType(userId = attackerUserId),
+                attackerClassType = attackerClassType,
                 defenderUserId = defenderUserId,
                 defenderName = participants.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = bonus,
                 type = type,
+                impersonatedClassType = if (isImpersonatingAttacker) impersonatedClassType else null,
             )
+        }
 
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageState.Persuade.Charm(

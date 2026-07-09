@@ -17,17 +17,38 @@ internal val necroGlowGreen = Color(color = 0xFF66E048)
 internal val necroSnathGreen = Color(color = 0xFF3F5A11)
 
 /**
+ * The four energy tones the summoned scythe is lit with (SS-195): [core] is the hot inner edge,
+ * [blade] the crescent body, [glow] the radiating aura, and [snath] the dim handle. An Illusionist
+ * borrows the whole weapon in its own blue by swapping this palette (SS-197).
+ */
+internal data class ScythePalette(
+    val core: Color,
+    val blade: Color,
+    val glow: Color,
+    val snath: Color,
+)
+
+/** The spectral greens the Necromancer's own scythe is lit with (SS-195). */
+internal val necroScythePalette =
+    ScythePalette(
+        core = necroBladeCore,
+        blade = necroBladeGreen,
+        glow = necroGlowGreen,
+        snath = necroSnathGreen,
+    )
+
+/**
  * The Necromancer's scythe in local coordinates (SS-195): a manifested magic weapon, not a physical
  * one — a long snath trailing down from the origin and a long, slim, curved crescent blade leading
- * off it, drawn as green energy rather than wood and steel. The tip sits at the origin, the snath
- * falls away behind it, and a green glow radiates off the blade. [glow] fades that aura in as the
- * weapon is summoned; [alpha] fades the whole construct in and out.
+ * off it, drawn as energy rather than wood and steel. The tip sits at the origin, the snath falls
+ * away behind it, and a glow radiates off the blade in the [palette]'s tones. [glow] fades that
+ * aura in as the weapon is summoned; [alpha] fades the whole construct in and out.
  */
-internal fun DrawScope.drawScytheShape(glow: Float, alpha: Float) {
+internal fun DrawScope.drawScytheShape(palette: ScythePalette, glow: Float, alpha: Float) {
     val blade = scytheBladePath()
-    drawScytheGlow(blade = blade, glow = glow, alpha = alpha)
-    drawSnath(alpha = alpha)
-    drawBladeFill(blade = blade, alpha = alpha)
+    drawScytheGlow(blade = blade, palette = palette, glow = glow, alpha = alpha)
+    drawSnath(palette = palette, alpha = alpha)
+    drawBladeFill(blade = blade, palette = palette, alpha = alpha)
 }
 
 /** The tip that leads the reap, at the origin of the local frame. */
@@ -78,12 +99,12 @@ private fun DrawScope.scytheBladePath(): Path =
     }
 
 /** The blade body, a bright energy fill deepening down the crescent with a hot edge on the cut. */
-private fun DrawScope.drawBladeFill(blade: Path, alpha: Float) {
+private fun DrawScope.drawBladeFill(blade: Path, palette: ScythePalette, alpha: Float) {
     drawPath(
         path = blade,
         brush =
             Brush.linearGradient(
-                colors = listOf(necroBladeCore, necroBladeGreen, necroSnathGreen),
+                colors = listOf(palette.core, palette.blade, palette.snath),
                 start = scytheTip,
                 end = scytheNeck(),
             ),
@@ -98,14 +119,14 @@ private fun DrawScope.drawBladeFill(blade: Path, alpha: Float) {
         }
     drawPath(
         path = edge,
-        color = necroBladeCore,
+        color = palette.core,
         style = Stroke(width = 1.2.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         alpha = alpha * 0.9f,
     )
 }
 
-/** The snath: a long S-curved handle of dim green energy falling away behind the blade. */
-private fun DrawScope.drawSnath(alpha: Float) {
+/** The snath: a long S-curved handle of dim energy falling away behind the blade. */
+private fun DrawScope.drawSnath(palette: ScythePalette, alpha: Float) {
     val snath =
         Path().apply {
             moveTo(x = scytheNeck().x, y = scytheNeck().y - 2.dp.toPx())
@@ -120,44 +141,49 @@ private fun DrawScope.drawSnath(alpha: Float) {
         }
     drawPath(
         path = snath,
-        color = necroSnathGreen,
+        color = palette.snath,
         style = Stroke(width = 5.dp.toPx(), cap = StrokeCap.Round),
         alpha = alpha,
     )
     drawPath(
         path = snath,
-        color = necroBladeGreen,
+        color = palette.blade,
         style = Stroke(width = 1.8.dp.toPx(), cap = StrokeCap.Round),
         alpha = alpha * 0.7f,
     )
 }
 
 /**
- * The scythe's aura: the blade wrapped in a green energy glow — a wide soft halo layered off its
- * outline down to a tight bright rim, plus an inner bloom filling the blade — so the weapon reads
- * as summoned energy radiating off the blade rather than a solid object.
+ * The scythe's aura: the blade wrapped in an energy glow — a wide soft halo layered off its outline
+ * down to a tight bright rim, plus an inner bloom filling the blade — so the weapon reads as
+ * summoned energy radiating off the blade rather than a solid object.
  */
-private fun DrawScope.drawScytheGlow(blade: Path, glow: Float, alpha: Float) {
+private fun DrawScope.drawScytheGlow(
+    blade: Path,
+    palette: ScythePalette,
+    glow: Float,
+    alpha: Float,
+) {
     if (glow <= 0f) return
     val auraAlpha = glow * alpha
 
     drawPath(
         path = blade,
-        color = necroGlowGreen,
+        color = palette.glow,
         style = Stroke(width = 26.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         alpha = auraAlpha * 0.16f,
     )
     drawPath(
         path = blade,
-        color = necroGlowGreen,
+        color = palette.glow,
         style = Stroke(width = 15.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         alpha = auraAlpha * 0.24f,
     )
     drawPath(
         path = blade,
-        color = necroBladeGreen,
+        color = palette.blade,
         style = Stroke(width = 7.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         alpha = auraAlpha * 0.35f,
     )
-    drawPath(path = blade, color = necroGlowGreen, alpha = auraAlpha * 0.3f)
+    drawPath(path = blade, color = palette.glow, alpha = auraAlpha * 0.3f)
 }

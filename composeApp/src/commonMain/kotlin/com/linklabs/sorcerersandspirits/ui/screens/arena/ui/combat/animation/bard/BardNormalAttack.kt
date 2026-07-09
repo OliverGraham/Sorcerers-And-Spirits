@@ -133,7 +133,7 @@ internal fun bardNormalAttackDurationMillis(): Long =
  * contact the head dimples and springs back, sound rings ripple toward the opponent, and — only on
  * a hit — music notes rise off the drum. The whole kit fades once the sound has rung out.
  */
-private suspend fun BardStrikeState.play(
+internal suspend fun BardStrikeState.play(
     geometry: WeaponStrikeGeometry,
     outcome: NormalRollMessageType,
 ) {
@@ -227,7 +227,7 @@ private suspend fun BardStrikeState.play(
     this.scene = null
 }
 
-private fun DrawScope.drawBardDrumStrike(state: BardStrikeState) {
+internal fun DrawScope.drawBardDrumStrike(state: BardStrikeState) {
     val geometry = state.scene ?: return
     val drumCenter = geometry.start
     val axisVector = geometry.target - drumCenter
@@ -327,6 +327,7 @@ private fun BardNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Bard,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
+                impersonatedClassType = null,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Bard, seats = seats) {

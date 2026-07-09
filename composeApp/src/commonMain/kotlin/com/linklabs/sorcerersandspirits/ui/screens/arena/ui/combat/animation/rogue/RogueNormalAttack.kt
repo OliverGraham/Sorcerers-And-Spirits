@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
@@ -98,6 +99,7 @@ internal fun RogueNormalAttackOverlay(
                         cue = cue,
                         attackerBounds = attackerBounds,
                         defenderBounds = defenderBounds,
+                        accentColor = cue.attackerClassType.toColor(),
                         density = density,
                     ),
                 outcome = cue.outcome,
@@ -120,7 +122,7 @@ internal fun rogueNormalAttackDurationMillis(outcome: NormalRollMessageType): Lo
         WITHDRAW_MILLIS +
         if (outcome == NormalRollMessageType.Knockout) 120L else 0L
 
-private suspend fun RogueStrikeState.play(
+internal suspend fun RogueStrikeState.play(
     geometry: WeaponStrikeGeometry,
     outcome: NormalRollMessageType,
 ) {
@@ -245,7 +247,7 @@ private suspend fun RogueStrikeState.withdraw(dashFraction: Float) {
     }
 }
 
-private fun DrawScope.drawRogueStrike(state: RogueStrikeState) {
+internal fun DrawScope.drawRogueStrike(state: RogueStrikeState) {
     val geometry = state.scene ?: return
 
     val weaponAlpha = state.weaponAlpha.value
@@ -407,6 +409,7 @@ private fun RogueNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
+                impersonatedClassType = null,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Rogue, seats = seats) {

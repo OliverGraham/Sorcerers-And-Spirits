@@ -170,6 +170,7 @@ private fun ArenaCombatFlashPreview() {
                 secondDie = 6,
                 bonus = 0,
                 type = NormalRollMessageType.Knockout,
+                impersonatedClassType = null,
             ),
     )
 }

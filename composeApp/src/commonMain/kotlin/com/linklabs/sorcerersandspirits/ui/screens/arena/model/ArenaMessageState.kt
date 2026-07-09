@@ -180,7 +180,9 @@ sealed interface ArenaMessageState {
     @Immutable
     data class Impersonate(
         override val id: String,
+        val illusionistUserId: String,
         val illusionistName: String,
+        val impersonatedClassType: CharacterClassType,
         val impersonatedAbilityName: String,
     ) : ArenaMessageState
 
@@ -434,7 +436,11 @@ private fun ArenaMessage.toState(
         is ArenaMessage.Impersonate ->
             ArenaMessageState.Impersonate(
                 id = id,
+                illusionistUserId = illusionistUserId,
                 illusionistName = participants.resolveClassName(userId = illusionistUserId),
+                impersonatedClassType =
+                    impersonateAbility.impersonatedAbility.impersonatedClassType
+                        ?: CharacterClassType.Illusionist,
                 impersonatedAbilityName =
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )

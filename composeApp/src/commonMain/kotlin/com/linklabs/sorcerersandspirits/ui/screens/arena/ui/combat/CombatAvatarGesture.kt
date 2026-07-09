@@ -256,6 +256,8 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         is CombatAnimationCue.Persuade -> 0L
 
         is CombatAnimationCue.Encore -> 0L
+
+        is CombatAnimationCue.Impersonate -> 0L
     }
 
 /**

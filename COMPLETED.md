@@ -1055,14 +1055,18 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   survive re-seating (follow-up: SS-213).
 - **SS-204** — Duelist Riposte animation: paired blades rise upright and side-by-side into a waiting
   parry stance the moment the Duelist's armor is passed (on the Riposte.Trigger message) and hold
-  through the roll-off; once the roll resolves the forward blade flicks a quick deflecting beat, then
-  the rear blade swings down into a counter-thrust — landing on the attacker with a class-color burst
+  through the roll-off; once the roll resolves the forward blade flicks a quick deflecting beat,
+  then
+  the rear blade swings down into a counter-thrust — landing on the attacker with a class-color
+  burst
   on a successful reversal, or sailing past on a failure. Split across Trigger/EnGarde with the cue
-  held live between them; Trigger/EnGarde plumbed with duelist + attacker userIds through all layers.
+  held live between them; Trigger/EnGarde plumbed with duelist + attacker userIds through all
+  layers.
 - **SS-194** — Duelist normal-attack animation: twin swords (CombatWeapon.TwinSwords) rise into an
   erect ready pose, hold, then slash the defender one after the other — lead from the left, follow
   from the right ~half a second later — in smooth fluid arcs, each flaring a class-color burst on
-  contact (armor holds → the cuts sweep past while the defender sidesteps), then both blades fade out
+  contact (armor holds → the cuts sweep past while the defender sidesteps), then both blades fade
+  out
   together; attacker body plays a two-beat fence (Slash / SlashFinish / SlashWhiff). Sequencer waits
   out each cue's playbackDurationMillis (SS-201) so the long combo completes and clears itself.
 - **SS-201** — Combat animation completes before its flash call-out plays: the sequencer now runs a
@@ -1106,6 +1110,26 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   random from builtWeaponClassTypes) drives the overlay, playback-duration, defender-reaction-delay,
   and attacker body gesture so the weapon, its timing, and its motion agree; the flash stays blue.
   Impersonated class threaded UI-only by tracking the last Impersonate message in toStates (no
-  domain/data changes); the five weapon renderers widened to internal and reused by a new Illusionist
-  dispatch overlay; ships interactive previews per borrowed weapon plus a random one. Abilities split
+  domain/data changes); the five weapon renderers widened to internal and reused by a new
+  Illusionist
+  dispatch overlay; ships interactive previews per borrowed weapon plus a random one. Abilities
+  split
   to SS-208 (Impersonate) and SS-209 (Mirror Image).
+- **ss-208** - The Illusionist pulls out a personal 3D hand mirror with a handle. It first shows no
+  reflection, then the Illusionist's own class head icon for a moment, then crossfades through a
+  blurry morph into the head icon of the class it is impersonating — the settled reflection washed
+  in
+  an Illusionist-blue tint that comes in after the change. Offensive ability: copy a living
+  opponent's offensive ability until end of match or another is chosen.
+- **Done (first pass):** the full choreography — mirror rise, empty glass, own-face reveal,
+  blurred crossfade, blue tint, and mirror lower — in `ImpersonateOverlay.kt`, with a new
+  `CombatAnimationCue.Impersonate` cue carrying the Illusionist's userId and impersonated class,
+  `ArenaMessageState.Impersonate` plumbed with `illusionistUserId`/`impersonatedClassType`, duration
+  wired into the flash sequencer, and per-class interactive previews. The hand mirror is a
+  hand-drawn
+  Canvas shape (rim/glass/handle) and the blur is a jittered-copies fake for now.
+- **Follow-up:** polish/tune proportions, colors, and timing once seen on-device; consider a truer
+  3D
+  mirror and a real blur if a portable one lands. Then close the ticket.
+- **Cue sources:** `ArenaMessageState.Impersonate`.
+- **Parent:** SS-191. Split out of SS-197.

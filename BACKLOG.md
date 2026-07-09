@@ -222,7 +222,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `BottomControls`) rather than over the whole screen, so the roll buttons stay visible/usable while
   the darkened stage holds waiting for the Encore roll — it darkens the stage, not the controls bar.
 - **Follow-up:** Make sure Encore is not triggered in incorrect scenarios (such as knocking out the
-  last opponent). Replace the hand-drawn microphone with an image asset for a truer 3D look (keep the
+  last opponent). Replace the hand-drawn microphone with an image asset for a truer 3D look (keep
+  the
   glint, note behaviours, grey drain, and darkness fall/lift choreography); polish/tune the crowd
   density, proportions, colours, and timing once seen on-device; and consider a real crowd-noise
   cue for the wild/boo beat. Then close the ticket.
@@ -250,14 +251,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   consider making the charm swirl read more literally as a snake-charm coil. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
-
-### SS-208 — Illusionist Impersonate animation
-
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Offensive ability: copy a living opponent's offensive
-  ability until end of match or another is chosen.
-- **Cue sources:** `ArenaMessageState.Impersonate`.
-- **Parent:** SS-191. Split out of SS-197.
 
 ### SS-209 — Illusionist Mirror Image animation
 

@@ -105,6 +105,19 @@ sealed interface CombatAnimationCue {
 
     @Immutable
     data class Encore(override val id: String, val phase: EncorePhase) : CombatAnimationCue
+
+    /**
+     * The Illusionist copies a living opponent's offensive ability (SS-208): a personal hand mirror
+     * is pulled out showing the Illusionist's own face, which then crossfades through a blur into
+     * the [impersonatedClassType]'s face under an Illusionist-blue tint. [impersonatedClassType] is
+     * the Illusionist's own class only in the degenerate case where nothing was copied.
+     */
+    @Immutable
+    data class Impersonate(
+        override val id: String,
+        val illusionistUserId: String,
+        val impersonatedClassType: CharacterClassType,
+    ) : CombatAnimationCue
 }
 
 /**
@@ -330,8 +343,12 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     phase = if (isSuccessful) EncorePhase.Success else EncorePhase.Failure,
                 )
 
-            // TODO(SS-208): Illusionist Impersonate animation.
-            is ArenaMessageState.Impersonate -> null
+            is ArenaMessageState.Impersonate ->
+                CombatAnimationCue.Impersonate(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    impersonatedClassType = impersonatedClassType,
+                )
 
             // TODO(SS-209): Illusionist Mirror Image animation.
             is ArenaMessageState.MirrorImage -> null
@@ -385,6 +402,8 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.Persuade -> null
 
             is CombatAnimationCue.Encore -> null
+
+            is CombatAnimationCue.Impersonate -> null
         }
 
 /**
@@ -418,6 +437,8 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.Persuade -> null
 
         is CombatAnimationCue.Encore -> null
+
+        is CombatAnimationCue.Impersonate -> null
     }
 
 /**

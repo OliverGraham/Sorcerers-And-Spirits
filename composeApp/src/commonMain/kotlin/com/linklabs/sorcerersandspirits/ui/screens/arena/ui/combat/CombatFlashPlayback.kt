@@ -31,6 +31,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinHighRollerDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinThrowDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.illusionistImpersonateDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerSummonMinionDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
@@ -172,6 +173,8 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
         is CombatAnimationCue.Persuade -> persuadeDurationMillis(phase = phase)
 
         is CombatAnimationCue.Encore -> encoreDurationMillis(phase = phase)
+
+        is CombatAnimationCue.Impersonate -> illusionistImpersonateDurationMillis()
     }
 
 /**

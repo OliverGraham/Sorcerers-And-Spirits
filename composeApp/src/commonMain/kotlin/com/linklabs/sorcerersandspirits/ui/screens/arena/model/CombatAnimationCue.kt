@@ -298,17 +298,16 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
 
             is ArenaMessageState.LuckyCoin.Flip -> {
                 val isHighRollerArmorResolution = singleDie == HIGH_ROLLER_ROLL
-                if (gamblerUserId == null) {
-                    null
-                } else if (isHighRollerArmorResolution) {
-                    null
-                } else {
-                    CombatAnimationCue.LuckyCoinFlip(
-                        id = id,
-                        gamblerUserId = gamblerUserId,
-                        faceValue = singleDie,
-                        didStopAttack = didStopAttack,
-                    )
+                when {
+                    gamblerUserId == null || isHighRollerArmorResolution -> null
+
+                    else ->
+                        CombatAnimationCue.LuckyCoinFlip(
+                            id = id,
+                            gamblerUserId = gamblerUserId,
+                            faceValue = singleDie,
+                            didStopAttack = didStopAttack,
+                        )
                 }
             }
 
@@ -320,18 +319,17 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 }
 
             is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-                if (gamblerUserId == null) {
-                    null
-                } else if (attackerUserId == null) {
-                    null
-                } else {
-                    CombatAnimationCue.LuckyCoinHighRollerThrow(
-                        id = id,
-                        gamblerUserId = gamblerUserId,
-                        attackerUserId = attackerUserId,
-                        damage = singleDie,
-                        isKnockout = isKnockout,
-                    )
+                when {
+                    gamblerUserId == null || attackerUserId == null -> null
+
+                    else ->
+                        CombatAnimationCue.LuckyCoinHighRollerThrow(
+                            id = id,
+                            gamblerUserId = gamblerUserId,
+                            attackerUserId = attackerUserId,
+                            damage = singleDie,
+                            isKnockout = isKnockout,
+                        )
                 }
 
             is ArenaMessageState.PrepareAttack ->
@@ -457,40 +455,28 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 )
 
             is ArenaMessageState.Teleport.Trigger ->
-                if (mageUserId != null) {
-                    CombatAnimationCue.Teleport(
-                        id = id,
-                        mageUserId = mageUserId,
-                        phase = TeleportPhase.Open,
-                        didEscape = null,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Open,
+                    didEscape = null,
+                )
 
             is ArenaMessageState.Teleport.Roll ->
-                if (mageUserId != null) {
-                    CombatAnimationCue.Teleport(
-                        id = id,
-                        mageUserId = mageUserId,
-                        phase = TeleportPhase.Hold,
-                        didEscape = null,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Hold,
+                    didEscape = null,
+                )
 
             is ArenaMessageState.Teleport.Result ->
-                if (mageUserId != null) {
-                    CombatAnimationCue.Teleport(
-                        id = id,
-                        mageUserId = mageUserId,
-                        phase = TeleportPhase.Resolve,
-                        didEscape = didDefenderEscape,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Resolve,
+                    didEscape = didDefenderEscape,
+                )
 
             // TODO(SS-199): Paladin ability animations.
             is ArenaMessageState.HolyShield -> null

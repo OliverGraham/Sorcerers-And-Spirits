@@ -10,11 +10,11 @@ internal class TriggerKillingMomentum(private val combatMutator: CombatMutator) 
     }
 
     private fun CombatMutator.triggerKillingMomentum() {
-        addMessage(message = ArenaMessage.KillingMomentum)
+        addMessage(message = ArenaMessage.KillingMomentum(attackerUserId = attackerUserId))
         grantBonusAttack()
 
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = attackerUserId))
         )
     }
 }

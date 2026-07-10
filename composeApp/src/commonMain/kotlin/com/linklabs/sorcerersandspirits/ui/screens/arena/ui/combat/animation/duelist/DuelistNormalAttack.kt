@@ -372,7 +372,7 @@ private fun DuelistNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Duelist,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
-                impersonatedClassType = null,
+                impersonatedClassType = CharacterClassType.None,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Duelist, seats = seats) {

@@ -25,6 +25,12 @@ internal class TriggerDodge(
             }
         }
 
-        addMessage(message = ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease))
+        addMessage(
+            message =
+                ArenaMessage.Dodge(
+                    didArmorIncrease = didArmorIncrease,
+                    dodgerUserId = defenderUserId,
+                )
+        )
     }
 }

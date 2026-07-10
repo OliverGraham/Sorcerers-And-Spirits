@@ -2319,7 +2319,13 @@ class PerformCombatActionUseCaseTest {
         // Assert: the Paladin survived, so the Rogue earns no Killing Momentum follow-up.
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = paladinUserId))
-        assertFalse(actual = outcome.messages.contains(element = ArenaMessage.KillingMomentum))
+        assertFalse(
+            actual =
+                outcome.messages.contains(
+                    element =
+                        ArenaMessage.KillingMomentum(attackerUserId = currentAction.attackerUserId)
+                )
+        )
         assertTrue(actual = !outcome.isMatchFinished)
     }
 

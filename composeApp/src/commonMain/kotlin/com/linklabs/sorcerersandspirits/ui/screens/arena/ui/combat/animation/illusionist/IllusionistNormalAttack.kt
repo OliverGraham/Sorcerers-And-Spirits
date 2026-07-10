@@ -31,6 +31,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.due
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.GamblerStrikeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.drawGamblerStrike
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.play as playGamblerStrike
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageBoltState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.mageElementFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.palette
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.play
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerStrikeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.ScythePalette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.drawScytheReap
@@ -75,6 +79,7 @@ internal fun IllusionistNormalAttackOverlay(
     val duelistState = remember { DuelistStrikeState() }
     val necromancerState = remember { NecromancerStrikeState() }
     val bardState = remember { BardStrikeState() }
+    val mageState = remember { MageBoltState() }
     var activeWeapon by remember { mutableStateOf<CharacterClassType?>(value = null) }
     val density = LocalDensity.current
     val accentColor = CharacterClassType.Illusionist.toColor()
@@ -90,6 +95,7 @@ internal fun IllusionistNormalAttackOverlay(
             duelistState.scene = null
             necromancerState.scene = null
             bardState.scene = null
+            mageState.scene = null
         },
         play = { cue, attackerBounds, defenderBounds ->
             val weapon = cue.weaponClassType
@@ -158,6 +164,22 @@ internal fun IllusionistNormalAttackOverlay(
                         outcome = cue.outcome,
                     )
 
+                CharacterClassType.Mage -> {
+                    val element = mageElementFor(cueId = cue.id)
+                    mageState.play(
+                        geometry =
+                            projectileStrikeGeometry(
+                                cue = cue,
+                                attackerBounds = attackerBounds,
+                                defenderBounds = defenderBounds,
+                                accentColor = element.palette().glow,
+                                density = density,
+                            ),
+                        element = element,
+                        outcome = cue.outcome,
+                    )
+                }
+
                 else -> activeWeapon = null
             }
         },
@@ -222,16 +244,25 @@ private fun IllusionistBorrowsBardPreview() {
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
+private fun IllusionistBorrowsMagePreview() {
+    IllusionistNormalAttackPreview(
+        impersonatedClassType = CharacterClassType.Mage,
+        outcome = NormalRollMessageType.Damage,
+    )
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
 private fun IllusionistRandomWeaponPreview() {
     IllusionistNormalAttackPreview(
-        impersonatedClassType = null,
+        impersonatedClassType = CharacterClassType.None,
         outcome = NormalRollMessageType.Knockout,
     )
 }
 
 @Composable
 private fun IllusionistNormalAttackPreview(
-    impersonatedClassType: CharacterClassType?,
+    impersonatedClassType: CharacterClassType,
     outcome: NormalRollMessageType,
 ) {
     val seats = rememberDuoSeats()

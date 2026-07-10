@@ -15,6 +15,7 @@ class ArenaMessageStateTest {
     fun `Given a Mirror Image reroll, when mapped to state, then it surfaces the raw die and its -1 penalty`() {
         val message =
             ArenaMessage.MirrorImage.TemptFate(
+                illusionistUserId = DEFENDER_ID,
                 rerolledMirrorImageDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 5, reroll = 4),
                 attackerUserId = ATTACKER_ID,
@@ -33,6 +34,7 @@ class ArenaMessageStateTest {
     fun `Given a Mirror Image reroll of a 1, when mapped to state, then the penalised result is 0`() {
         val message =
             ArenaMessage.MirrorImage.TemptFate(
+                illusionistUserId = DEFENDER_ID,
                 rerolledMirrorImageDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6, reroll = 1),
                 attackerUserId = ATTACKER_ID,
@@ -52,7 +54,10 @@ class ArenaMessageStateTest {
         val states =
             listOf(
                     incomingNormalRoll(id = "roll", type = NormalRollMessageType.Knockout),
-                    IncomingArenaMessage(id = "trigger", message = ArenaMessage.KillingMomentum),
+                    IncomingArenaMessage(
+                        id = "trigger",
+                        message = ArenaMessage.KillingMomentum(attackerUserId = ATTACKER_ID),
+                    ),
                 )
                 .toStates(participants = participants)
 
@@ -70,7 +75,8 @@ class ArenaMessageStateTest {
                     incomingNormalRoll(id = "roll", type = NormalRollMessageType.ArmorClassMiss),
                     IncomingArenaMessage(
                         id = "trigger",
-                        message = ArenaMessage.Dodge(didArmorIncrease = true),
+                        message =
+                            ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = DEFENDER_ID),
                     ),
                 )
                 .toStates(participants = participants)
@@ -82,18 +88,6 @@ class ArenaMessageStateTest {
                     didArmorIncrease = true,
                     dodgerUserId = DEFENDER_ID,
                 ),
-            actual = states.last(),
-        )
-    }
-
-    @Test
-    fun `Given a trigger with no roll before it, then it carries no actor`() {
-        val states =
-            listOf(IncomingArenaMessage(id = "trigger", message = ArenaMessage.KillingMomentum))
-                .toStates(participants = participants)
-
-        assertEquals(
-            expected = ArenaMessageState.KillingMomentum(id = "trigger", attackerUserId = null),
             actual = states.last(),
         )
     }
@@ -114,6 +108,7 @@ class ArenaMessageStateTest {
                     secondDie = 3,
                     bonus = 0,
                     type = type,
+                    impersonatedCharacterType = CharacterClassType.None,
                 ),
         )
 

@@ -20,7 +20,7 @@ class CombatAnimationCueTest {
                     attackerClassType = CharacterClassType.Mage,
                     defenderUserId = DEFENDER_ID,
                     outcome = NormalRollMessageType.ArmorClassHit,
-                    impersonatedClassType = null,
+                    impersonatedClassType = CharacterClassType.None,
                 ),
             actual = message.combatAnimationCue,
         )
@@ -230,13 +230,6 @@ class CombatAnimationCueTest {
     }
 
     @Test
-    fun `Given a Killing Momentum message with no known attacker, then it has no cue`() {
-        val message = ArenaMessageState.KillingMomentum(id = MESSAGE_ID, attackerUserId = null)
-
-        assertNull(actual = message.combatAnimationCue)
-    }
-
-    @Test
     fun `Given a Dodge without an armor increase, then only the dodger flourishes`() {
         val cue = dodgeMessage(didArmorIncrease = false).combatAnimationCue
 
@@ -255,14 +248,6 @@ class CombatAnimationCueTest {
             expected = AvatarGesture.DodgeBrace,
             actual = cue?.gestureFor(userId = DEFENDER_ID),
         )
-    }
-
-    @Test
-    fun `Given a Dodge with no known dodger, then it has no cue`() {
-        val message =
-            ArenaMessageState.Dodge(id = MESSAGE_ID, didArmorIncrease = true, dodgerUserId = null)
-
-        assertNull(actual = message.combatAnimationCue)
     }
 
     @Test
@@ -288,19 +273,6 @@ class CombatAnimationCueTest {
         )
         assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
         assertNull(actual = cue?.collapsingUserId)
-    }
-
-    @Test
-    fun `Given a Mirror Image split with no known illusionist, then it has no cue`() {
-        val message =
-            ArenaMessageState.MirrorImage.Trigger(
-                id = MESSAGE_ID,
-                illusionistUserId = null,
-                firstDie = 3,
-                secondDie = 4,
-            )
-
-        assertNull(actual = message.combatAnimationCue)
     }
 
     @Test
@@ -378,14 +350,6 @@ class CombatAnimationCueTest {
         )
     }
 
-    // TODO: Delete
-    @Test
-    fun `Given a Teleport with no known Mage, then it has no cue`() {
-        val message = ArenaMessageState.Teleport.Trigger(id = MESSAGE_ID, mageUserId = null)
-
-        assertNull(actual = message.combatAnimationCue)
-    }
-
     @Test
     fun `Given a resolved Teleport, then the cue carries the escape outcome and never collapses`() {
         val escaped = teleportResultCue(didDefenderEscape = true)
@@ -417,7 +381,7 @@ class CombatAnimationCueTest {
             secondDie = 5,
             bonus = 0,
             type = type,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun normalAttackCue(outcome: NormalRollMessageType) =
@@ -427,7 +391,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Paladin,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun mageAttackCue(outcome: NormalRollMessageType) =
@@ -437,7 +401,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Mage,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun rogueAttackCue(outcome: NormalRollMessageType) =
@@ -447,7 +411,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Rogue,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun duelistAttackCue(outcome: NormalRollMessageType) =
@@ -457,7 +421,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Duelist,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun dodgeMessage(didArmorIncrease: Boolean) =

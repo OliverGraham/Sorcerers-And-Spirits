@@ -25,7 +25,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         holyShield: DefensiveAbility.HolyShield,
         holyShieldUserId: String,
     ) {
-        addMessage(message = ArenaMessage.HolyShield.Trigger)
+        addMessage(message = ArenaMessage.HolyShield.Trigger(paladinUserId = holyShieldUserId))
 
         updatePlayerClass(userId = holyShieldUserId) { playerClass ->
             playerClass.copy(defensiveAbility = holyShield.copy(usedThisMatch = true))
@@ -50,6 +50,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         addMessage(
             message =
                 ArenaMessage.HolyShield.Prayer(
+                    paladinUserId = defenderUserId,
                     firstDie = result.firstDie,
                     secondDie = result.secondDie,
                     didSurvive = didSurvive,

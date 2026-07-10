@@ -409,7 +409,7 @@ private fun RogueNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
-                impersonatedClassType = null,
+                impersonatedClassType = CharacterClassType.None,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Rogue, seats = seats) {

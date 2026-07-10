@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 sealed interface ArenaMessage {
@@ -24,29 +25,47 @@ sealed interface ArenaMessage {
         val secondDie: Int,
         val bonus: Int,
         val type: NormalRollMessageType,
+        val impersonatedCharacterType: CharacterClassType,
     ) : ArenaMessage
 
-    data object KillingMomentum : ArenaMessage
+    data class KillingMomentum(val attackerUserId: String) : ArenaMessage
 
-    data class Dodge(val didArmorIncrease: Boolean) : ArenaMessage
+    data class Dodge(val didArmorIncrease: Boolean, val dodgerUserId: String) : ArenaMessage
 
     sealed interface Teleport : ArenaMessage {
-        data object Trigger : Teleport
+        val mageUserId: String
 
-        data class Roll(val userId: String, val singleDie: Int) : Teleport
+        data class Trigger(override val mageUserId: String) : Teleport
 
-        data class Result(val didDefenderEscape: Boolean) : Teleport
+        data class Roll(override val mageUserId: String, val userId: String, val singleDie: Int) :
+            Teleport
+
+        data class Result(override val mageUserId: String, val didDefenderEscape: Boolean) :
+            Teleport
     }
 
     sealed interface LuckyCoin : ArenaMessage {
+        val gamblerUserId: String
 
-        data object Trigger : LuckyCoin
+        data class Trigger(override val gamblerUserId: String) : LuckyCoin
 
-        data class Flip(val singleDie: Int, val didStopAttack: Boolean) : LuckyCoin
+        data class Flip(
+            override val gamblerUserId: String,
+            val singleDie: Int,
+            val didStopAttack: Boolean,
+        ) : LuckyCoin
 
-        data class HighRollerTrigger(val targetUserId: String) : LuckyCoin
+        data class HighRollerTrigger(
+            override val gamblerUserId: String,
+            val attackerUserId: String,
+        ) : LuckyCoin
 
-        data class HighRollerDamage(val singleDie: Int, val isKnockout: Boolean) : LuckyCoin
+        data class HighRollerDamage(
+            override val gamblerUserId: String,
+            val attackerUserId: String,
+            val singleDie: Int,
+            val isKnockout: Boolean,
+        ) : LuckyCoin
     }
 
     sealed interface Riposte : ArenaMessage {
@@ -82,9 +101,15 @@ sealed interface ArenaMessage {
     }
 
     sealed interface Encore : ArenaMessage {
-        data object Trigger : Encore
+        val bardUserId: String
 
-        data class Roll(val encoreDie: Int, val isSuccessful: Boolean) : ArenaMessage
+        data class Trigger(override val bardUserId: String) : Encore
+
+        data class Roll(
+            override val bardUserId: String,
+            val encoreDie: Int,
+            val isSuccessful: Boolean,
+        ) : Encore
     }
 
     data class Impersonate(
@@ -93,6 +118,8 @@ sealed interface ArenaMessage {
     ) : ArenaMessage
 
     sealed interface MirrorImage : ArenaMessage {
+        val illusionistUserId: String
+
         /**
          * Mirror Image interrupted the attacker's roll of [firstDie] and [secondDie] to offer the
          * Illusionist the reroll choice. The dice are carried so every device's resting dice show
@@ -100,17 +127,25 @@ sealed interface ArenaMessage {
          * this trigger, so this is the only record of what was rolled (SS-181). Null only on
          * messages persisted before the dice were carried.
          */
-        data class Trigger(val firstDie: Int?, val secondDie: Int?) : MirrorImage
+        data class Trigger(
+            override val illusionistUserId: String,
+            val firstDie: Int?,
+            val secondDie: Int?,
+        ) : MirrorImage
 
         /** The Illusionist let the attacker's roll stand; [outcome] is how that roll resolved. */
-        data class Pass(val attackerUserId: String, val outcome: NormalRollMessageType) :
-            MirrorImage
+        data class Pass(
+            override val illusionistUserId: String,
+            val attackerUserId: String,
+            val outcome: NormalRollMessageType,
+        ) : MirrorImage
 
         /**
          * The Illusionist rerolled a die ([rerolledMirrorImageDie]) against [attackerUserId]'s
          * attack; [outcome] is how the modified roll resolved.
          */
         data class TemptFate(
+            override val illusionistUserId: String,
             val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie,
             val attackerUserId: String,
             val outcome: NormalRollMessageType,
@@ -125,14 +160,19 @@ sealed interface ArenaMessage {
     ) : ArenaMessage
 
     sealed interface HolyShield : ArenaMessage {
+        val paladinUserId: String
 
-        data object Trigger : HolyShield
+        data class Trigger(override val paladinUserId: String) : HolyShield
 
-        data class Prayer(val firstDie: Int, val secondDie: Int, val didSurvive: Boolean) :
-            HolyShield
+        data class Prayer(
+            override val paladinUserId: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val didSurvive: Boolean,
+        ) : HolyShield
 
         data class Wrath(
-            val paladinUserId: String,
+            override val paladinUserId: String,
             val attackerUserId: String,
             val singleDie: Int,
         ) : HolyShield

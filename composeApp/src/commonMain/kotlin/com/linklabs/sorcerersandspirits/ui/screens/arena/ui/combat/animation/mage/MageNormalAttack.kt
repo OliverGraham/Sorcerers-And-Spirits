@@ -267,7 +267,7 @@ private fun MageNormalAttackPreview(element: MageSpellElement, outcome: NormalRo
                 attackerClassType = CharacterClassType.Mage,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
-                impersonatedClassType = null,
+                impersonatedClassType = CharacterClassType.None,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Mage, seats = seats) {

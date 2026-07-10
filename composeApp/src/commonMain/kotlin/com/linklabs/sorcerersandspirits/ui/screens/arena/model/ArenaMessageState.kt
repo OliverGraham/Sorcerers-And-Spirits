@@ -44,7 +44,7 @@ sealed interface ArenaMessageState {
         val secondDie: Int,
         val bonus: Int,
         val type: NormalRollMessageType,
-        val impersonatedClassType: CharacterClassType?,
+        val impersonatedClassType: CharacterClassType,
     ) : ArenaMessageState {
         /**
          * The true roll total: the two die faces plus any consecutive-doubles bonus that applied.
@@ -58,7 +58,7 @@ sealed interface ArenaMessageState {
      * that earned the momentum; null when that roll is no longer in the log.
      */
     @Immutable
-    data class KillingMomentum(override val id: String, val attackerUserId: String?) :
+    data class KillingMomentum(override val id: String, val attackerUserId: String) :
         ArenaMessageState
 
     /**
@@ -69,25 +69,21 @@ sealed interface ArenaMessageState {
     data class Dodge(
         override val id: String,
         val didArmorIncrease: Boolean,
-        val dodgerUserId: String?,
+        val dodgerUserId: String,
     ) : ArenaMessageState
 
     @Immutable
     sealed interface Teleport : ArenaMessageState {
-        /**
-         * The Mage escaping the attack, so the portal animation anchors to their seat. Read from
-         * the armor-break roll that preceded this trigger (SS-211), the same way Mirror Image finds
-         * its Illusionist; null only when no such roll is on record. // TODO: make non-nullable
-         */
-        val mageUserId: String?
+        /** The Mage escaping the attack, so the portal animation anchors to their seat. */
+        val mageUserId: String
 
         @Immutable
-        data class Trigger(override val id: String, override val mageUserId: String?) : Teleport
+        data class Trigger(override val id: String, override val mageUserId: String) : Teleport
 
         @Immutable
         data class Roll(
             override val id: String,
-            override val mageUserId: String?,
+            override val mageUserId: String,
             val playerName: String,
             val singleDie: Int,
         ) : Teleport
@@ -95,19 +91,22 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Result(
             override val id: String,
-            override val mageUserId: String?,
+            override val mageUserId: String,
             val didDefenderEscape: Boolean,
         ) : Teleport
     }
 
     @Immutable
     sealed interface LuckyCoin : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : LuckyCoin
+        val gamblerUserId: String
+
+        @Immutable
+        data class Trigger(override val id: String, override val gamblerUserId: String) : LuckyCoin
 
         @Immutable
         data class Flip(
             override val id: String,
-            val gamblerUserId: String?,
+            override val gamblerUserId: String,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -115,15 +114,15 @@ sealed interface ArenaMessageState {
         @Immutable
         data class HighRollerTrigger(
             override val id: String,
-            val gamblerUserId: String?,
+            override val gamblerUserId: String,
             val targetName: String,
         ) : LuckyCoin
 
         @Immutable
         data class HighRollerDamage(
             override val id: String,
-            val gamblerUserId: String?,
-            val attackerUserId: String?,
+            override val gamblerUserId: String,
+            val attackerUserId: String,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin
@@ -186,11 +185,18 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Encore : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : Encore
+        val bardUserId: String
 
         @Immutable
-        data class Roll(override val id: String, val encoreDie: Int, val isSuccessful: Boolean) :
-            Encore
+        data class Trigger(override val id: String, override val bardUserId: String) : Encore
+
+        @Immutable
+        data class Roll(
+            override val id: String,
+            override val bardUserId: String,
+            val encoreDie: Int,
+            val isSuccessful: Boolean,
+        ) : Encore
     }
 
     @Immutable
@@ -206,15 +212,14 @@ sealed interface ArenaMessageState {
     sealed interface MirrorImage : ArenaMessageState {
         /**
          * The Illusionist defending the attack, so the split-image animation anchors to their seat.
-         * Read from the armor-break roll that preceded this trigger (SS-209), the same way Dodge
-         * finds its dodger; null only when no such roll is on record.
+         * Read from the armor-break roll that preceded this trigger (SS-209).
          */
-        val illusionistUserId: String?
+        val illusionistUserId: String
 
         @Immutable
         data class Trigger(
             override val id: String,
-            override val illusionistUserId: String?,
+            override val illusionistUserId: String,
             val firstDie: Int?,
             val secondDie: Int?,
         ) : MirrorImage
@@ -222,7 +227,7 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Pass(
             override val id: String,
-            override val illusionistUserId: String?,
+            override val illusionistUserId: String,
             val attackerName: String,
             val outcome: NormalRollMessageType,
         ) : MirrorImage
@@ -230,7 +235,7 @@ sealed interface ArenaMessageState {
         @Immutable
         data class TemptFate(
             override val id: String,
-            override val illusionistUserId: String?,
+            override val illusionistUserId: String,
             val originalRoll: Int,
             val rawReroll: Int,
             val finalRoll: Int,
@@ -259,11 +264,15 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface HolyShield : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : HolyShield
+        val paladinUserId: String
+
+        @Immutable
+        data class Trigger(override val id: String, override val paladinUserId: String) : HolyShield
 
         @Immutable
         data class Prayer(
             override val id: String,
+            override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
             val didSurvive: Boolean,
@@ -272,6 +281,7 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Wrath(
             override val id: String,
+            override val paladinUserId: String,
             val paladinName: String,
             val attackerName: String,
             val singleDie: Int,
@@ -359,50 +369,32 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
  */
 fun List<IncomingArenaMessage>.toStates(
     participants: Map<String, ParticipantClass>
-): List<ArenaMessageState> {
-    var lastNormalRoll: ArenaMessage.NormalRoll? = null
-    var impersonatedClassType: CharacterClassType? = null
-    return map { incomingMessage ->
-        val message = incomingMessage.message
-        val state =
-            message.toState(
-                id = incomingMessage.id,
-                participants = participants,
-                lastNormalRoll = lastNormalRoll,
-                impersonatedClassType = impersonatedClassType,
-            )
-        when (message) {
-            is ArenaMessage.NormalRoll -> lastNormalRoll = message
-
-            is ArenaMessage.Impersonate ->
-                impersonatedClassType =
-                    message.impersonateAbility.impersonatedAbility.impersonatedClassType
-
-            else -> {}
-        }
-        state
-    }
+): List<ArenaMessageState> = map { incomingMessage ->
+    incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
 }
 
 /** The class an Illusionist's copied offensive ability belongs to; null before anyone is copied. */
-private val OffensiveAbility.impersonatedClassType: CharacterClassType?
-    get() =
-        when (this) {
-            is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
-            is OffensiveAbility.AllIn -> CharacterClassType.Gambler
-            is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
-            is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
-            is OffensiveAbility.Encore -> CharacterClassType.Bard
-            is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
-            is OffensiveAbility.Impersonate -> CharacterClassType.Illusionist
-            is OffensiveAbility.None -> null
-        }
+private fun OffensiveAbility.toImpersonatedClassType() =
+    when (this) {
+        is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
+
+        is OffensiveAbility.AllIn -> CharacterClassType.Gambler
+
+        is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
+
+        is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
+
+        is OffensiveAbility.Encore -> CharacterClassType.Bard
+
+        is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
+
+        is OffensiveAbility.Impersonate,
+        is OffensiveAbility.None -> CharacterClassType.Illusionist
+    }
 
 private fun ArenaMessage.toState(
     id: String,
     participants: Map<String, ParticipantClass>,
-    lastNormalRoll: ArenaMessage.NormalRoll?,
-    impersonatedClassType: CharacterClassType?,
 ): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
@@ -434,14 +426,16 @@ private fun ArenaMessage.toState(
             ArenaMessageState.Dodge(
                 id = id,
                 didArmorIncrease = didArmorIncrease,
-                dodgerUserId = lastNormalRoll?.defenderUserId,
+                dodgerUserId = dodgerUserId,
             )
 
-        is ArenaMessage.Encore.Trigger -> ArenaMessageState.Encore.Trigger(id = id)
+        is ArenaMessage.Encore.Trigger ->
+            ArenaMessageState.Encore.Trigger(id = id, bardUserId = bardUserId)
 
         is ArenaMessage.Encore.Roll ->
             ArenaMessageState.Encore.Roll(
                 id = id,
+                bardUserId = bardUserId,
                 encoreDie = encoreDie,
                 isSuccessful = isSuccessful,
             )
@@ -449,6 +443,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.HolyShield.Wrath ->
             ArenaMessageState.HolyShield.Wrath(
                 id = id,
+                paladinUserId = paladinUserId,
                 paladinName = participants.resolveClassName(userId = paladinUserId),
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 singleDie = singleDie,
@@ -457,12 +452,14 @@ private fun ArenaMessage.toState(
         is ArenaMessage.HolyShield.Prayer ->
             ArenaMessageState.HolyShield.Prayer(
                 id = id,
+                paladinUserId = paladinUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
                 didSurvive = didSurvive,
             )
 
-        is ArenaMessage.HolyShield.Trigger -> ArenaMessageState.HolyShield.Trigger(id = id)
+        is ArenaMessage.HolyShield.Trigger ->
+            ArenaMessageState.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
 
         is ArenaMessage.Impersonate ->
             ArenaMessageState.Impersonate(
@@ -470,22 +467,18 @@ private fun ArenaMessage.toState(
                 illusionistUserId = illusionistUserId,
                 illusionistName = participants.resolveClassName(userId = illusionistUserId),
                 impersonatedClassType =
-                    impersonateAbility.impersonatedAbility.impersonatedClassType
-                        ?: CharacterClassType.Illusionist,
+                    impersonateAbility.impersonatedAbility.toImpersonatedClassType(),
                 impersonatedAbilityName =
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )
 
         is ArenaMessage.KillingMomentum ->
-            ArenaMessageState.KillingMomentum(
-                id = id,
-                attackerUserId = lastNormalRoll?.attackerUserId,
-            )
+            ArenaMessageState.KillingMomentum(id = id, attackerUserId = attackerUserId)
 
         is ArenaMessage.LuckyCoin.Flip ->
             ArenaMessageState.LuckyCoin.Flip(
                 id = id,
-                gamblerUserId = lastNormalRoll?.defenderUserId,
+                gamblerUserId = gamblerUserId,
                 singleDie = singleDie,
                 didStopAttack = didStopAttack,
             )
@@ -493,8 +486,8 @@ private fun ArenaMessage.toState(
         is ArenaMessage.LuckyCoin.HighRollerDamage ->
             ArenaMessageState.LuckyCoin.HighRollerDamage(
                 id = id,
-                gamblerUserId = lastNormalRoll?.defenderUserId,
-                attackerUserId = lastNormalRoll?.attackerUserId,
+                gamblerUserId = gamblerUserId,
+                attackerUserId = attackerUserId,
                 singleDie = singleDie,
                 isKnockout = isKnockout,
             )
@@ -502,16 +495,17 @@ private fun ArenaMessage.toState(
         is ArenaMessage.LuckyCoin.HighRollerTrigger ->
             ArenaMessageState.LuckyCoin.HighRollerTrigger(
                 id = id,
-                gamblerUserId = lastNormalRoll?.defenderUserId,
-                targetName = participants.resolveClassName(userId = targetUserId),
+                gamblerUserId = gamblerUserId,
+                targetName = participants.resolveClassName(userId = attackerUserId),
             )
 
-        is ArenaMessage.LuckyCoin.Trigger -> ArenaMessageState.LuckyCoin.Trigger(id = id)
+        is ArenaMessage.LuckyCoin.Trigger ->
+            ArenaMessageState.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
 
         is ArenaMessage.MirrorImage.Pass ->
             ArenaMessageState.MirrorImage.Pass(
                 id = id,
-                illusionistUserId = lastNormalRoll?.defenderUserId,
+                illusionistUserId = illusionistUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 outcome = outcome,
             )
@@ -519,7 +513,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.MirrorImage.Trigger ->
             ArenaMessageState.MirrorImage.Trigger(
                 id = id,
-                illusionistUserId = lastNormalRoll?.defenderUserId,
+                illusionistUserId = illusionistUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
             )
@@ -527,7 +521,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.MirrorImage.TemptFate ->
             ArenaMessageState.MirrorImage.TemptFate(
                 id = id,
-                illusionistUserId = lastNormalRoll?.defenderUserId,
+                illusionistUserId = illusionistUserId,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 rawReroll = rerolledMirrorImageDie.reroll ?: rerolledMirrorImageDie.originalRoll,
                 finalRoll = rerolledMirrorImageDie.finalValue,
@@ -535,23 +529,20 @@ private fun ArenaMessage.toState(
                 outcome = outcome,
             )
 
-        is ArenaMessage.NormalRoll -> {
-            val attackerClassType = participants.resolveClassType(userId = attackerUserId)
-            val isImpersonatingAttacker = attackerClassType == CharacterClassType.Illusionist
+        is ArenaMessage.NormalRoll ->
             ArenaMessageState.NormalRoll(
                 id = id,
                 attackerUserId = attackerUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
-                attackerClassType = attackerClassType,
+                attackerClassType = participants.resolveClassType(userId = attackerUserId),
                 defenderUserId = defenderUserId,
                 defenderName = participants.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = bonus,
                 type = type,
-                impersonatedClassType = if (isImpersonatingAttacker) impersonatedClassType else null,
+                impersonatedClassType = impersonatedCharacterType,
             )
-        }
 
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageState.Persuade.Charm(
@@ -629,20 +620,20 @@ private fun ArenaMessage.toState(
         is ArenaMessage.Teleport.Result ->
             ArenaMessageState.Teleport.Result(
                 id = id,
-                mageUserId = lastNormalRoll?.defenderUserId,
+                mageUserId = mageUserId,
                 didDefenderEscape = didDefenderEscape,
             )
 
         is ArenaMessage.Teleport.Roll ->
             ArenaMessageState.Teleport.Roll(
                 id = id,
-                mageUserId = lastNormalRoll?.defenderUserId,
+                mageUserId = mageUserId,
                 playerName = participants.resolveClassName(userId = userId),
                 singleDie = singleDie,
             )
 
         is ArenaMessage.Teleport.Trigger ->
-            ArenaMessageState.Teleport.Trigger(id = id, mageUserId = lastNormalRoll?.defenderUserId)
+            ArenaMessageState.Teleport.Trigger(id = id, mageUserId = mageUserId)
 
         is ArenaMessage.Doubles ->
             ArenaMessageState.Doubles(

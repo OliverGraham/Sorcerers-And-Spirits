@@ -327,7 +327,7 @@ private fun BardNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Bard,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
-                impersonatedClassType = null,
+                impersonatedClassType = CharacterClassType.None,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Bard, seats = seats) {

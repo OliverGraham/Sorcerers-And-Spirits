@@ -34,7 +34,7 @@ sealed interface CombatAnimationCue {
         val attackerClassType: CharacterClassType,
         val defenderUserId: String,
         val outcome: NormalRollMessageType,
-        val impersonatedClassType: CharacterClassType?,
+        val impersonatedClassType: CharacterClassType,
     ) : CombatAnimationCue
 
     @Immutable
@@ -104,7 +104,8 @@ sealed interface CombatAnimationCue {
         CombatAnimationCue
 
     @Immutable
-    data class Encore(override val id: String, val phase: EncorePhase) : CombatAnimationCue
+    data class Encore(override val id: String, val bardUserId: String, val phase: EncorePhase) :
+        CombatAnimationCue
 
     /**
      * The Illusionist copies a living opponent's offensive ability (SS-208): a personal hand mirror
@@ -154,7 +155,7 @@ sealed interface CombatAnimationCue {
      * opens beside them ([TeleportPhase.Open]) and churns while the roll-off is made
      * ([TeleportPhase.Hold]); on the resolving roll ([TeleportPhase.Resolve]) the Mage either slips
      * through the portal and vanishes before reappearing when [didEscape] is true, or lunges for a
-     * portal that snaps shut too soon and the scene greys out when it is false. [didEscape] is null
+     * portal that snaps shut too soon and the scene grays out when it is false. [didEscape] is null
      * until the roll resolves. [mageUserId] is the defender of the armor-break roll that preceded
      * this, read the same way Mirror Image finds its Illusionist; null only when no such roll is on
      * record, in which case no cue is emitted.
@@ -264,9 +265,9 @@ enum class AvatarGesture {
 
 /**
  * The animation cue for a message, mirroring [flashCallout]: derived from the same message both
- * displays share, with the exhaustive [when] making a new message type a compile error until its
- * cue is chosen. Null means the avatars sit the event out — the branch each ability-animation
- * ticket later replaces with its cue.
+ * displays share, with the exhaustive when making a new message type a compile error until its cue
+ * is chosen. Null means the avatars sit the event out — the branch each ability-animation ticket
+ * later replaces with its cue.
  */
 val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
     get() =
@@ -282,22 +283,14 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 )
 
             is ArenaMessageState.KillingMomentum ->
-                if (attackerUserId != null) {
-                    CombatAnimationCue.KillingMomentum(id = id, attackerUserId = attackerUserId)
-                } else {
-                    null
-                }
+                CombatAnimationCue.KillingMomentum(id = id, attackerUserId = attackerUserId)
 
             is ArenaMessageState.Dodge ->
-                if (dodgerUserId != null) {
-                    CombatAnimationCue.Dodge(
-                        id = id,
-                        dodgerUserId = dodgerUserId,
-                        didArmorIncrease = didArmorIncrease,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Dodge(
+                    id = id,
+                    dodgerUserId = dodgerUserId,
+                    didArmorIncrease = didArmorIncrease,
+                )
 
             is ArenaMessageState.AllIn ->
                 CombatAnimationCue.AllIn(id = id, gamblerUserId = gamblerUserId, outcome = outcome)
@@ -305,10 +298,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.LuckyCoin.Trigger -> null
 
             is ArenaMessageState.LuckyCoin.Flip -> {
-                val isHighRollerArmorResolution = singleDie == HIGH_ROLLER_ROLL
-                if (gamblerUserId == null) {
-                    null
-                } else if (isHighRollerArmorResolution) {
+                if (singleDie == HIGH_ROLLER_ROLL) {
                     null
                 } else {
                     CombatAnimationCue.LuckyCoinFlip(
@@ -321,26 +311,16 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             }
 
             is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
-                if (gamblerUserId != null) {
-                    CombatAnimationCue.LuckyCoinHighRoller(id = id, gamblerUserId = gamblerUserId)
-                } else {
-                    null
-                }
+                CombatAnimationCue.LuckyCoinHighRoller(id = id, gamblerUserId = gamblerUserId)
 
             is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-                if (gamblerUserId == null) {
-                    null
-                } else if (attackerUserId == null) {
-                    null
-                } else {
-                    CombatAnimationCue.LuckyCoinHighRollerThrow(
-                        id = id,
-                        gamblerUserId = gamblerUserId,
-                        attackerUserId = attackerUserId,
-                        damage = singleDie,
-                        isKnockout = isKnockout,
-                    )
-                }
+                CombatAnimationCue.LuckyCoinHighRollerThrow(
+                    id = id,
+                    gamblerUserId = gamblerUserId,
+                    attackerUserId = attackerUserId,
+                    damage = singleDie,
+                    isKnockout = isKnockout,
+                )
 
             is ArenaMessageState.PrepareAttack ->
                 CombatAnimationCue.PrepareAttack(
@@ -405,11 +385,16 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.Persuade.Lull -> null
 
             is ArenaMessageState.Encore.Trigger ->
-                CombatAnimationCue.Encore(id = id, phase = EncorePhase.SetStage)
+                CombatAnimationCue.Encore(
+                    id = id,
+                    bardUserId = bardUserId,
+                    phase = EncorePhase.SetStage,
+                )
 
             is ArenaMessageState.Encore.Roll ->
                 CombatAnimationCue.Encore(
                     id = id,
+                    bardUserId = bardUserId,
                     phase = if (isSuccessful) EncorePhase.Success else EncorePhase.Failure,
                 )
 
@@ -421,40 +406,28 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 )
 
             is ArenaMessageState.MirrorImage.Trigger ->
-                if (illusionistUserId != null) {
-                    CombatAnimationCue.MirrorImage(
-                        id = id,
-                        illusionistUserId = illusionistUserId,
-                        phase = MirrorImagePhase.Split,
-                        outcome = null,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.MirrorImage(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    phase = MirrorImagePhase.Split,
+                    outcome = null,
+                )
 
             is ArenaMessageState.MirrorImage.Pass ->
-                if (illusionistUserId != null) {
-                    CombatAnimationCue.MirrorImage(
-                        id = id,
-                        illusionistUserId = illusionistUserId,
-                        phase = MirrorImagePhase.Resolve,
-                        outcome = outcome,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.MirrorImage(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    phase = MirrorImagePhase.Resolve,
+                    outcome = outcome,
+                )
 
             is ArenaMessageState.MirrorImage.TemptFate ->
-                if (illusionistUserId != null) {
-                    CombatAnimationCue.MirrorImage(
-                        id = id,
-                        illusionistUserId = illusionistUserId,
-                        phase = MirrorImagePhase.Resolve,
-                        outcome = outcome,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.MirrorImage(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    phase = MirrorImagePhase.Resolve,
+                    outcome = outcome,
+                )
 
             is ArenaMessageState.SpellPotency ->
                 CombatAnimationCue.SpellPotency(
@@ -465,40 +438,28 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 )
 
             is ArenaMessageState.Teleport.Trigger ->
-                if (mageUserId != null) {
-                    CombatAnimationCue.Teleport(
-                        id = id,
-                        mageUserId = mageUserId,
-                        phase = TeleportPhase.Open,
-                        didEscape = null,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Open,
+                    didEscape = null,
+                )
 
             is ArenaMessageState.Teleport.Roll ->
-                if (mageUserId != null) {
-                    CombatAnimationCue.Teleport(
-                        id = id,
-                        mageUserId = mageUserId,
-                        phase = TeleportPhase.Hold,
-                        didEscape = null,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Hold,
+                    didEscape = null,
+                )
 
             is ArenaMessageState.Teleport.Result ->
-                if (mageUserId != null) {
-                    CombatAnimationCue.Teleport(
-                        id = id,
-                        mageUserId = mageUserId,
-                        phase = TeleportPhase.Resolve,
-                        didEscape = didDefenderEscape,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Resolve,
+                    didEscape = didDefenderEscape,
+                )
 
             // TODO(SS-199): Paladin ability animations.
             is ArenaMessageState.HolyShield -> null
@@ -704,6 +665,7 @@ internal val builtWeaponClassTypes =
         CharacterClassType.Duelist,
         CharacterClassType.Necromancer,
         CharacterClassType.Bard,
+        CharacterClassType.Mage,
     )
 
 /**
@@ -716,7 +678,7 @@ internal val builtWeaponClassTypes =
 internal val CombatAnimationCue.NormalAttack.weaponClassType: CharacterClassType
     get() {
         if (attackerClassType != CharacterClassType.Illusionist) return attackerClassType
-        val borrowedWeapon = impersonatedClassType?.takeIf { it in builtWeaponClassTypes }
+        val borrowedWeapon = impersonatedClassType.takeIf { it in builtWeaponClassTypes }
         return borrowedWeapon ?: randomBuiltWeaponFor(cueId = id)
     }
 

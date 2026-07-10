@@ -364,7 +364,7 @@ private fun GamblerNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Gambler,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
-                impersonatedClassType = null,
+                impersonatedClassType = CharacterClassType.None,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {

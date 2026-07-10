@@ -46,7 +46,12 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
     ) {
         addMessage(
-            message = ArenaMessage.MirrorImage.Trigger(firstDie = firstDie, secondDie = secondDie)
+            message =
+                ArenaMessage.MirrorImage.Trigger(
+                    illusionistUserId = defenderUserId,
+                    firstDie = firstDie,
+                    secondDie = secondDie,
+                )
         )
 
         val purpose =
@@ -79,6 +84,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         resolveModifiedRoll(mirrorImage = rolledMirrorImage, isKeptRollDoubles = false) { outcome ->
             ArenaMessage.MirrorImage.TemptFate(
+                illusionistUserId = defenderUserId,
                 rerolledMirrorImageDie = rerolledDie,
                 attackerUserId = attackerUserId,
                 outcome = outcome,
@@ -117,7 +123,11 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         resolveModifiedRoll(mirrorImage = mirrorImage, isKeptRollDoubles = isKeptRollDoubles) {
             outcome ->
-            ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
+            ArenaMessage.MirrorImage.Pass(
+                illusionistUserId = defenderUserId,
+                attackerUserId = attackerUserId,
+                outcome = outcome,
+            )
         }
     }
 

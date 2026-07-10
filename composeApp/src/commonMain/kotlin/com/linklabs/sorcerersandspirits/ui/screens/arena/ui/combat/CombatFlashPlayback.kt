@@ -175,6 +175,8 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
         is CombatAnimationCue.Encore -> encoreDurationMillis(phase = phase)
 
         is CombatAnimationCue.Impersonate -> illusionistImpersonateDurationMillis()
+
+        is CombatAnimationCue.MirrorImage -> 0L
     }
 
 /**

@@ -1133,3 +1133,20 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   mirror and a real blur if a portable one lands. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Impersonate`.
 - **Parent:** SS-191. Split out of SS-197.
+- **SS-209** — Illusionist Mirror Image animation: when struck, the seated Illusionist splits into
+  two blurry, translucent copies of itself, held while the reroll is chosen; on the resolving roll
+  the struck copy poofs (fades, rises, grows) while the real copy slides back to center,
+  re-solidifies, and reacts to the outcome — dodging a foiled attack, or flinching/collapsing under
+  one that lands. Built into the seat itself (not an overlay) so the avatar art literally splits:
+  `GestureClassAvatar` renders the art twice via a new `MirrorSplitClassAvatar` whenever
+  `AvatarGestureState.mirrorSplit > 0`, driven by three new channels (`mirrorSplit`, `mirrorReturn`,
+  `mirrorFakeVanish`) and a `playMirrorImage` path in `rememberAvatarGesture` that runs the poof,
+  return, and reaction in parallel without the `snapToRest` that would drop the split mid-resolve. A
+  new `CombatAnimationCue.MirrorImage` (phase + outcome) is derived from the three
+  `ArenaMessageState.MirrorImage.*` states, each now carrying `illusionistUserId` resolved from the
+  preceding armor-break roll (the Dodge pattern); `collapsingUserId` keeps a knocked-out Illusionist
+  seated. Ships three interactive previews (miss/hit/knockout) that stand a real seated avatar and
+  loop the Split→Resolve cue. Tunable knobs (`MIRROR_SPLIT_OFFSET_FRACTION`, `MIRROR_COPY_ALPHA`,
+  timings) at the top of `CombatAvatarGesture.kt` for on-device polish.
+- **Cue sources:** `ArenaMessageState.MirrorImage.*`.
+- **Parent:** SS-191. Split out of SS-197.

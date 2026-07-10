@@ -209,6 +209,76 @@ class CombatAnimationCueTest {
         assertNull(actual = message.combatAnimationCue)
     }
 
+    @Test
+    fun `Given a Mirror Image split, then it holds still with no seat reaction`() {
+        val cue =
+            ArenaMessageState.MirrorImage.Trigger(
+                    id = MESSAGE_ID,
+                    illusionistUserId = DEFENDER_ID,
+                    firstDie = 3,
+                    secondDie = 4,
+                )
+                .combatAnimationCue
+
+        assertEquals(
+            expected =
+                CombatAnimationCue.MirrorImage(
+                    id = MESSAGE_ID,
+                    illusionistUserId = DEFENDER_ID,
+                    phase = MirrorImagePhase.Split,
+                    outcome = null,
+                ),
+            actual = cue,
+        )
+        assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
+        assertNull(actual = cue?.collapsingUserId)
+    }
+
+    @Test
+    fun `Given a Mirror Image split with no known illusionist, then it has no cue`() {
+        val message =
+            ArenaMessageState.MirrorImage.Trigger(
+                id = MESSAGE_ID,
+                illusionistUserId = null,
+                firstDie = 3,
+                secondDie = 4,
+            )
+
+        assertNull(actual = message.combatAnimationCue)
+    }
+
+    @Test
+    fun `Given a foiled Mirror Image roll, then the real Illusionist dodges`() {
+        val cue = mirrorImageResolveCue(outcome = NormalRollMessageType.ArmorClassMiss)
+
+        assertEquals(
+            expected = AvatarGesture.Sidestep,
+            actual = cue?.gestureFor(userId = DEFENDER_ID),
+        )
+        assertNull(actual = cue?.collapsingUserId)
+        assertNull(actual = cue?.gestureFor(userId = SPECTATOR_ID))
+    }
+
+    @Test
+    fun `Given a landed Mirror Image knockout, then the real Illusionist collapses`() {
+        val cue = mirrorImageResolveCue(outcome = NormalRollMessageType.Knockout)
+
+        assertEquals(
+            expected = AvatarGesture.Collapse,
+            actual = cue?.gestureFor(userId = DEFENDER_ID),
+        )
+        assertEquals(expected = DEFENDER_ID, actual = cue?.collapsingUserId)
+    }
+
+    private fun mirrorImageResolveCue(outcome: NormalRollMessageType) =
+        ArenaMessageState.MirrorImage.Pass(
+                id = MESSAGE_ID,
+                illusionistUserId = DEFENDER_ID,
+                attackerName = "Mage",
+                outcome = outcome,
+            )
+            .combatAnimationCue
+
     private fun normalRollMessage(type: NormalRollMessageType) =
         ArenaMessageState.NormalRoll(
             id = MESSAGE_ID,

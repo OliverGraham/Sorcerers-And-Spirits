@@ -306,6 +306,30 @@ class CombatSeatingTest {
         )
     }
 
+    @Test
+    fun `Given a downed Paladin owes a Holy Shield survival roll, then they keep their large-avatar seat`() {
+        val state =
+            combatState(
+                combatActionState =
+                    holyShieldRoll(attackerUserId = OPPONENT_ID, defenderUserId = USER_ID),
+                playerMap =
+                    twoPlayers(
+                        userClass = TestCharacterClasses.paladin().copy(hitPoints = 0),
+                        opponentClass = TestCharacterClasses.rogue(),
+                    ),
+            )
+
+        assertEquals(
+            expected =
+                CombatSeating(
+                    topSeatUserId = OPPONENT_ID,
+                    bottomSeatUserId = USER_ID,
+                    headIconUserIds = emptyList(),
+                ),
+            actual = seatingOf(state = state),
+        )
+    }
+
     private fun seatingOf(state: ArenaState.Combat, isMatchEnding: Boolean = false): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
         return state.seatingFor(
@@ -352,6 +376,15 @@ class CombatSeatingTest {
                     attackerDoublesBonus = 0,
                     mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 ),
+            attackerUserId = attackerUserId,
+            defenderUserId = defenderUserId,
+            originalTurnUserId = attackerUserId,
+            activeUserIds = setOf(element = defenderUserId),
+        )
+
+    private fun holyShieldRoll(attackerUserId: String, defenderUserId: String) =
+        CombatActionState.AbilityRoll(
+            action = AbilityActionState.Passive.HolyShield.Prayer,
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
             originalTurnUserId = attackerUserId,

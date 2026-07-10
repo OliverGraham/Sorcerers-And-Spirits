@@ -118,6 +118,31 @@ sealed interface CombatAnimationCue {
         val illusionistUserId: String,
         val impersonatedClassType: CharacterClassType,
     ) : CombatAnimationCue
+
+    /**
+     * The Illusionist's Mirror Image (SS-209): when struck, the Illusionist splits into two blurry,
+     * translucent copies of itself ([MirrorImagePhase.Split]); when the reroll resolves
+     * ([MirrorImagePhase.Resolve]), one copy is struck and poofs while the other slides back to
+     * reveal the real Illusionist, which reacts to [outcome] — dodging a miss, or flinching and
+     * collapsing under a hit. [outcome] is null for the opening split, before the roll resolves.
+     */
+    @Immutable
+    data class MirrorImage(
+        override val id: String,
+        val illusionistUserId: String,
+        val phase: MirrorImagePhase,
+        val outcome: NormalRollMessageType?,
+    ) : CombatAnimationCue
+}
+
+/**
+ * The stage a Mirror Image is in (SS-209): [Split] is the Illusionist fracturing into two copies
+ * the moment it is struck, held while the reroll choice is made; [Resolve] is the attack landing on
+ * a copy and the illusion collapsing back to the real Illusionist once the roll resolves.
+ */
+enum class MirrorImagePhase {
+    Split,
+    Resolve,
 }
 
 /**
@@ -350,8 +375,41 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     impersonatedClassType = impersonatedClassType,
                 )
 
-            // TODO(SS-209): Illusionist Mirror Image animation.
-            is ArenaMessageState.MirrorImage -> null
+            is ArenaMessageState.MirrorImage.Trigger ->
+                if (illusionistUserId != null) {
+                    CombatAnimationCue.MirrorImage(
+                        id = id,
+                        illusionistUserId = illusionistUserId,
+                        phase = MirrorImagePhase.Split,
+                        outcome = null,
+                    )
+                } else {
+                    null
+                }
+
+            is ArenaMessageState.MirrorImage.Pass ->
+                if (illusionistUserId != null) {
+                    CombatAnimationCue.MirrorImage(
+                        id = id,
+                        illusionistUserId = illusionistUserId,
+                        phase = MirrorImagePhase.Resolve,
+                        outcome = outcome,
+                    )
+                } else {
+                    null
+                }
+
+            is ArenaMessageState.MirrorImage.TemptFate ->
+                if (illusionistUserId != null) {
+                    CombatAnimationCue.MirrorImage(
+                        id = id,
+                        illusionistUserId = illusionistUserId,
+                        phase = MirrorImagePhase.Resolve,
+                        outcome = outcome,
+                    )
+                } else {
+                    null
+                }
 
             // TODO(SS-198): Mage ability animations.
             is ArenaMessageState.SpellPotency,
@@ -404,6 +462,9 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.Encore -> null
 
             is CombatAnimationCue.Impersonate -> null
+
+            is CombatAnimationCue.MirrorImage ->
+                if (outcome == NormalRollMessageType.Knockout) illusionistUserId else null
         }
 
 /**
@@ -439,7 +500,21 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.Encore -> null
 
         is CombatAnimationCue.Impersonate -> null
+
+        is CombatAnimationCue.MirrorImage -> mirrorImageGestureFor(userId = userId)
     }
+
+/**
+ * The Illusionist's Mirror Image (SS-209): the split itself is drawn entirely by the effect
+ * overlay, so the seat holds still through it; only on the resolving roll does the real Illusionist
+ * react — dodging a foiled attack or flinching and collapsing under one that lands.
+ */
+private fun CombatAnimationCue.MirrorImage.mirrorImageGestureFor(userId: String): AvatarGesture? {
+    if (phase != MirrorImagePhase.Resolve) return null
+    if (userId != illusionistUserId) return null
+    val resolvedOutcome = outcome ?: return null
+    return defenderReactionGesture(outcome = resolvedOutcome)
+}
 
 /**
  * The Duelist's Riposte (SS-204): the paired blades of the effect overlay carry the whole reversal
@@ -606,6 +681,10 @@ private fun CombatAnimationCue.NormalAttack.genericStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.defenderReaction(): AvatarGesture =
+    defenderReactionGesture(outcome = outcome)
+
+/** The shared defender reaction to a resolved attack roll, reused wherever a struck seat reacts. */
+internal fun defenderReactionGesture(outcome: NormalRollMessageType): AvatarGesture =
     when (outcome) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep

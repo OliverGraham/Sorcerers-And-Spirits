@@ -252,15 +252,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
 
-### SS-209 — Illusionist Mirror Image animation
-
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Defensive ability: once per attack phase, reroll 1d6
-  and
-  give the result -1 (during ArmorClass or Damage rolls against the defender).
-- **Cue sources:** `ArenaMessageState.MirrorImage.*`.
-- **Parent:** SS-191. Split out of SS-197.
-
 ### SS-198 — Mage normal-attack animation
 
 - [ ] Not completed

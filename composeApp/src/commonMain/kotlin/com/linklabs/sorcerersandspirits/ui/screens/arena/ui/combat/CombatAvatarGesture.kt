@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -26,6 +27,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.MirrorImagePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
@@ -64,6 +66,15 @@ private const val SLASH_RECOVER_MILLIS = 240
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 private const val COLLAPSE_ROTATION_DEGREES = 80f
 private const val COLLAPSE_FEET_SLIDE_FRACTION = 0.4f
+
+private const val MIRROR_SPLIT_MILLIS = 360
+private const val MIRROR_SPLIT_HOLD_MILLIS = 160L
+private const val MIRROR_POOF_MILLIS = 340
+private const val MIRROR_RETURN_MILLIS = 320
+private const val MIRROR_SPLIT_OFFSET_FRACTION = 0.28f
+private const val MIRROR_COPY_ALPHA = 0.72f
+private const val MIRROR_POOF_SCALE_GROWTH = 0.2f
+private const val MIRROR_POOF_RISE_FRACTION = 0.12f
 private const val HURT_TINT_MAX_RED_OFFSET = 130f
 private const val HURT_TINT_CHANNEL_DAMP = 0.45f
 private const val ARMOR_TINT_MAX_BLUE_OFFSET = 110f
@@ -105,6 +116,16 @@ internal class AvatarGestureState {
     val armorTint = Animatable(initialValue = 0f)
     val saturation = Animatable(initialValue = 1f)
 
+    /**
+     * The Mirror Image split (SS-209): [mirrorSplit] fans the avatar into two translucent copies of
+     * itself, [mirrorReturn] slides the surviving real copy back to center and re-solidifies it,
+     * and [mirrorFakeVanish] dissolves the struck copy away. At rest (all 0) the seat draws its
+     * single solid avatar; any non-zero [mirrorSplit] switches it to the two-copy render.
+     */
+    val mirrorSplit = Animatable(initialValue = 0f)
+    val mirrorReturn = Animatable(initialValue = 0f)
+    val mirrorFakeVanish = Animatable(initialValue = 0f)
+
     val colorFilter: ColorFilter?
         get() {
             val isAtRest = hurtTint.value == 0f && armorTint.value == 0f && saturation.value == 1f
@@ -128,11 +149,79 @@ internal fun GestureClassAvatar(
     gestureState: AvatarGestureState,
     modifier: Modifier = Modifier,
 ) {
-    ClassAvatar(
+    val isMirrorSplit = gestureState.mirrorSplit.value > 0f
+    if (!isMirrorSplit) {
+        ClassAvatar(
+            characterClass = characterClass,
+            colorFilter = gestureState.colorFilter,
+            modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
+        )
+        return
+    }
+
+    MirrorSplitClassAvatar(
         characterClass = characterClass,
-        colorFilter = gestureState.colorFilter,
-        modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
+        gestureState = gestureState,
+        modifier = modifier,
     )
+}
+
+/**
+ * The Mirror Image render (SS-209): the same seated avatar art drawn twice — a fading fake copy the
+ * attack strikes and poofs, and the real copy that carries the gesture reaction and slides back to
+ * center — so the Illusionist itself splits and reforms rather than a separate overlay standing in
+ * for it.
+ */
+@Composable
+private fun MirrorSplitClassAvatar(
+    characterClass: CharacterClassState,
+    gestureState: AvatarGestureState,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        ClassAvatar(
+            characterClass = characterClass,
+            modifier =
+                Modifier.matchParentSize().graphicsLayer {
+                    applyMirrorFake(gestureState = gestureState)
+                },
+        )
+        ClassAvatar(
+            characterClass = characterClass,
+            colorFilter = gestureState.colorFilter,
+            modifier =
+                Modifier.matchParentSize().graphicsLayer {
+                    applyMirrorReal(gestureState = gestureState)
+                },
+        )
+    }
+}
+
+/**
+ * The struck copy: held at its split offset, dissolving upward in a puff as the illusion breaks.
+ */
+private fun GraphicsLayerScope.applyMirrorFake(gestureState: AvatarGestureState) {
+    val split = gestureState.mirrorSplit.value
+    val vanish = gestureState.mirrorFakeVanish.value
+    transformOrigin = feetPivot
+    translationX = -size.width * MIRROR_SPLIT_OFFSET_FRACTION * split
+    translationY = -size.height * MIRROR_POOF_RISE_FRACTION * vanish
+    val grow = 1f + MIRROR_POOF_SCALE_GROWTH * vanish
+    scaleX = grow
+    scaleY = grow
+    alpha = MIRROR_COPY_ALPHA * (1f - vanish)
+}
+
+/**
+ * The real copy: the full gesture transform plus a return that slides it from its split offset back
+ * to center and re-solidifies it from translucent to opaque as the illusion collapses.
+ */
+private fun GraphicsLayerScope.applyMirrorReal(gestureState: AvatarGestureState) {
+    applyGesture(gestureState = gestureState)
+    val split = gestureState.mirrorSplit.value
+    val returnFraction = gestureState.mirrorReturn.value
+    translationX += size.width * MIRROR_SPLIT_OFFSET_FRACTION * split * (1f - returnFraction)
+    alpha = MIRROR_COPY_ALPHA + (1f - MIRROR_COPY_ALPHA) * returnFraction
 }
 
 /**
@@ -175,6 +264,12 @@ internal fun rememberAvatarGesture(
         if (cue.id == lastPlayedCueId) return@LaunchedEffect
         lastPlayedCueId = cue.id
 
+        val mirrorImageCue = cue.mirrorImageActingFor(userId = userId)
+        if (mirrorImageCue != null) {
+            gestureState.playMirrorImage(cue = mirrorImageCue, density = density)
+            return@LaunchedEffect
+        }
+
         val gesture = cue.gestureFor(userId = userId) ?: return@LaunchedEffect
         gestureState.play(
             gesture = gesture,
@@ -186,6 +281,94 @@ internal fun rememberAvatarGesture(
 
     return gestureState
 }
+
+private fun CombatAnimationCue.mirrorImageActingFor(
+    userId: String
+): CombatAnimationCue.MirrorImage? =
+    (this as? CombatAnimationCue.MirrorImage)?.takeIf { it.illusionistUserId == userId }
+
+/**
+ * The Illusionist's own body during Mirror Image (SS-209): the split fans two translucent copies
+ * apart and holds while the reroll is chosen; the resolve poofs the struck copy, slides the real
+ * one home and re-solidifies it, and plays the real copy's reaction to how the roll landed.
+ */
+private suspend fun AvatarGestureState.playMirrorImage(
+    cue: CombatAnimationCue.MirrorImage,
+    density: Density,
+) {
+    when (cue.phase) {
+        MirrorImagePhase.Split -> mirrorSplitOut()
+        MirrorImagePhase.Resolve -> mirrorResolve(outcome = cue.outcome, density = density)
+    }
+}
+
+private suspend fun AvatarGestureState.mirrorSplitOut() {
+    snapToRest()
+    mirrorSplit.animateTo(
+        targetValue = 1f,
+        animationSpec = tween(durationMillis = MIRROR_SPLIT_MILLIS, easing = FastOutSlowInEasing),
+    )
+}
+
+private suspend fun AvatarGestureState.mirrorResolve(
+    outcome: NormalRollMessageType?,
+    density: Density,
+) {
+    if (mirrorSplit.value == 0f) mirrorSplit.snapTo(targetValue = 1f)
+    mirrorReturn.snapTo(targetValue = 0f)
+    mirrorFakeVanish.snapTo(targetValue = 0f)
+
+    coroutineScope {
+        launch {
+            mirrorFakeVanish.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = MIRROR_POOF_MILLIS),
+            )
+        }
+        launch {
+            mirrorReturn.animateTo(
+                targetValue = 1f,
+                animationSpec =
+                    tween(durationMillis = MIRROR_RETURN_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        if (outcome != null) {
+            launch { playDefenderReaction(outcome = outcome, density = density) }
+        }
+    }
+
+    mirrorSplit.snapTo(targetValue = 0f)
+    mirrorReturn.snapTo(targetValue = 0f)
+    mirrorFakeVanish.snapTo(targetValue = 0f)
+}
+
+/**
+ * The shared defender reaction body, driven straight from the outcome so Mirror Image's real copy
+ * can flinch, dodge, or collapse without the [snapToRest] a full gesture play runs first — which
+ * would drop the split mid-resolve.
+ */
+private suspend fun AvatarGestureState.playDefenderReaction(
+    outcome: NormalRollMessageType,
+    density: Density,
+) =
+    with(density) {
+        when (outcome) {
+            NormalRollMessageType.ArmorClassHit ->
+                flinch(
+                    shakePx = 10.dp.toPx(),
+                    tintPeak = 0.7f,
+                    reactionDelayMillis = REACTION_DELAY_MILLIS,
+                )
+
+            NormalRollMessageType.ArmorClassMiss ->
+                sidestep(distancePx = 40.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
+
+            NormalRollMessageType.Damage ->
+                flinchHeavy(shakePx = 16.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
+
+            NormalRollMessageType.Knockout -> collapse(reactionDelayMillis = REACTION_DELAY_MILLIS)
+        }
+    }
 
 /**
  * How long a defender holds still before reacting, so the shared reactions land in step with the
@@ -258,6 +441,29 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         is CombatAnimationCue.Encore -> 0L
 
         is CombatAnimationCue.Impersonate -> 0L
+
+        is CombatAnimationCue.MirrorImage -> mirrorImageBodyMillis()
+    }
+
+/**
+ * The Illusionist's own body during Mirror Image (SS-209): the split fans out and holds, while the
+ * resolve runs the poof, the real copy's return, and its reaction in parallel — held for the
+ * longest of the three.
+ */
+private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
+    when (phase) {
+        MirrorImagePhase.Split -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
+
+        MirrorImagePhase.Resolve -> {
+            val resolvedOutcome = outcome
+            val reactionMillis =
+                if (resolvedOutcome != null) {
+                    REACTION_DELAY_MILLIS + defenderReactionBodyMillis(outcome = resolvedOutcome)
+                } else {
+                    0L
+                }
+            maxOf(MIRROR_POOF_MILLIS.toLong(), MIRROR_RETURN_MILLIS.toLong(), reactionMillis)
+        }
     }
 
 /**
@@ -934,6 +1140,9 @@ private suspend fun AvatarGestureState.snapToRest() {
     hurtTint.snapTo(targetValue = 0f)
     armorTint.snapTo(targetValue = 0f)
     saturation.snapTo(targetValue = 1f)
+    mirrorSplit.snapTo(targetValue = 0f)
+    mirrorReturn.snapTo(targetValue = 0f)
+    mirrorFakeVanish.snapTo(targetValue = 0f)
 }
 
 private fun armorTintMatrix(tint: Float): ColorMatrix {

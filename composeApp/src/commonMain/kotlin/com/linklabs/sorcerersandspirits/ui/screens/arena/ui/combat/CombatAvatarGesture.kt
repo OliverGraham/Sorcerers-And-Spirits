@@ -52,6 +52,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PALADIN_SWING_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_DASH_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_EMBED_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_REACTION_DELAY_MILLIS
@@ -518,6 +519,7 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
         CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
         CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
         CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
+        CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
         else -> REACTION_DELAY_MILLIS
     }
 

@@ -206,15 +206,14 @@ sealed interface ArenaMessageState {
     sealed interface MirrorImage : ArenaMessageState {
         /**
          * The Illusionist defending the attack, so the split-image animation anchors to their seat.
-         * Read from the armor-break roll that preceded this trigger (SS-209), the same way Dodge
-         * finds its dodger; null only when no such roll is on record.
+         * Read from the armor-break roll that preceded this trigger (SS-209).
          */
-        val illusionistUserId: String?
+        val illusionistUserId: String
 
         @Immutable
         data class Trigger(
             override val id: String,
-            override val illusionistUserId: String?,
+            override val illusionistUserId: String,
             val firstDie: Int?,
             val secondDie: Int?,
         ) : MirrorImage
@@ -222,7 +221,7 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Pass(
             override val id: String,
-            override val illusionistUserId: String?,
+            override val illusionistUserId: String,
             val attackerName: String,
             val outcome: NormalRollMessageType,
         ) : MirrorImage
@@ -230,7 +229,7 @@ sealed interface ArenaMessageState {
         @Immutable
         data class TemptFate(
             override val id: String,
-            override val illusionistUserId: String?,
+            override val illusionistUserId: String,
             val originalRoll: Int,
             val rawReroll: Int,
             val finalRoll: Int,
@@ -508,7 +507,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.MirrorImage.Pass ->
             ArenaMessageState.MirrorImage.Pass(
                 id = id,
-                illusionistUserId = lastNormalRoll?.defenderUserId,
+                illusionistUserId = illusionistUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 outcome = outcome,
             )
@@ -516,7 +515,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.MirrorImage.Trigger ->
             ArenaMessageState.MirrorImage.Trigger(
                 id = id,
-                illusionistUserId = lastNormalRoll?.defenderUserId,
+                illusionistUserId = illusionistUserId,
                 firstDie = firstDie,
                 secondDie = secondDie,
             )
@@ -524,7 +523,7 @@ private fun ArenaMessage.toState(
         is ArenaMessage.MirrorImage.TemptFate ->
             ArenaMessageState.MirrorImage.TemptFate(
                 id = id,
-                illusionistUserId = lastNormalRoll?.defenderUserId,
+                illusionistUserId = illusionistUserId,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 rawReroll = rerolledMirrorImageDie.reroll ?: rerolledMirrorImageDie.originalRoll,
                 finalRoll = rerolledMirrorImageDie.finalValue,

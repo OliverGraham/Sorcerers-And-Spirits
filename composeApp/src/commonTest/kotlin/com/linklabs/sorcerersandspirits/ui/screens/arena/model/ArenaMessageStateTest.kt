@@ -15,6 +15,7 @@ class ArenaMessageStateTest {
     fun `Given a Mirror Image reroll, when mapped to state, then it surfaces the raw die and its -1 penalty`() {
         val message =
             ArenaMessage.MirrorImage.TemptFate(
+                illusionistUserId = DEFENDER_ID,
                 rerolledMirrorImageDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 5, reroll = 4),
                 attackerUserId = ATTACKER_ID,
@@ -33,6 +34,7 @@ class ArenaMessageStateTest {
     fun `Given a Mirror Image reroll of a 1, when mapped to state, then the penalised result is 0`() {
         val message =
             ArenaMessage.MirrorImage.TemptFate(
+                illusionistUserId = DEFENDER_ID,
                 rerolledMirrorImageDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6, reroll = 1),
                 attackerUserId = ATTACKER_ID,

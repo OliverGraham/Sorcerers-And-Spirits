@@ -276,19 +276,6 @@ class CombatAnimationCueTest {
     }
 
     @Test
-    fun `Given a Mirror Image split with no known illusionist, then it has no cue`() {
-        val message =
-            ArenaMessageState.MirrorImage.Trigger(
-                id = MESSAGE_ID,
-                illusionistUserId = null,
-                firstDie = 3,
-                secondDie = 4,
-            )
-
-        assertNull(actual = message.combatAnimationCue)
-    }
-
-    @Test
     fun `Given a foiled Mirror Image roll, then the real Illusionist dodges`() {
         val cue = mirrorImageResolveCue(outcome = NormalRollMessageType.ArmorClassMiss)
 

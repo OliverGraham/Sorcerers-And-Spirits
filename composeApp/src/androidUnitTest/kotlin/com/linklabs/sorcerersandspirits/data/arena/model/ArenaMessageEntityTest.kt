@@ -101,12 +101,18 @@ class ArenaMessageEntityTest {
                     impersonateAbility =
                         OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.AllIn()),
                 ),
-                ArenaMessage.MirrorImage.Trigger(firstDie = 3, secondDie = 4),
+                ArenaMessage.MirrorImage.Trigger(
+                    illusionistUserId = "illusionist",
+                    firstDie = 3,
+                    secondDie = 4,
+                ),
                 ArenaMessage.MirrorImage.Pass(
+                    illusionistUserId = "illusionist",
                     attackerUserId = "attacker",
                     outcome = NormalRollMessageType.ArmorClassMiss,
                 ),
                 ArenaMessage.MirrorImage.TemptFate(
+                    illusionistUserId = "illusionist",
                     rerolledMirrorImageDie =
                         AbilityAction.Passive.MirrorImage.MirrorImageDie(
                             originalRoll = 4,

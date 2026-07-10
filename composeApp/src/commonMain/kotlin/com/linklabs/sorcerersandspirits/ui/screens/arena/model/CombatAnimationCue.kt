@@ -423,28 +423,20 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 }
 
             is ArenaMessageState.MirrorImage.Pass ->
-                if (illusionistUserId != null) {
-                    CombatAnimationCue.MirrorImage(
-                        id = id,
-                        illusionistUserId = illusionistUserId,
-                        phase = MirrorImagePhase.Resolve,
-                        outcome = outcome,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.MirrorImage(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    phase = MirrorImagePhase.Resolve,
+                    outcome = outcome,
+                )
 
             is ArenaMessageState.MirrorImage.TemptFate ->
-                if (illusionistUserId != null) {
-                    CombatAnimationCue.MirrorImage(
-                        id = id,
-                        illusionistUserId = illusionistUserId,
-                        phase = MirrorImagePhase.Resolve,
-                        outcome = outcome,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.MirrorImage(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    phase = MirrorImagePhase.Resolve,
+                    outcome = outcome,
+                )
 
             is ArenaMessageState.SpellPotency ->
                 CombatAnimationCue.SpellPotency(

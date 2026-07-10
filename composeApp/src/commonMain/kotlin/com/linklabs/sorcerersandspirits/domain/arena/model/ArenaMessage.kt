@@ -97,6 +97,8 @@ sealed interface ArenaMessage {
     ) : ArenaMessage
 
     sealed interface MirrorImage : ArenaMessage {
+        val illusionistUserId: String
+
         /**
          * Mirror Image interrupted the attacker's roll of [firstDie] and [secondDie] to offer the
          * Illusionist the reroll choice. The dice are carried so every device's resting dice show
@@ -104,17 +106,25 @@ sealed interface ArenaMessage {
          * this trigger, so this is the only record of what was rolled (SS-181). Null only on
          * messages persisted before the dice were carried.
          */
-        data class Trigger(val firstDie: Int?, val secondDie: Int?) : MirrorImage
+        data class Trigger(
+            override val illusionistUserId: String,
+            val firstDie: Int?,
+            val secondDie: Int?,
+        ) : MirrorImage
 
         /** The Illusionist let the attacker's roll stand; [outcome] is how that roll resolved. */
-        data class Pass(val attackerUserId: String, val outcome: NormalRollMessageType) :
-            MirrorImage
+        data class Pass(
+            override val illusionistUserId: String,
+            val attackerUserId: String,
+            val outcome: NormalRollMessageType,
+        ) : MirrorImage
 
         /**
          * The Illusionist rerolled a die ([rerolledMirrorImageDie]) against [attackerUserId]'s
          * attack; [outcome] is how the modified roll resolved.
          */
         data class TemptFate(
+            override val illusionistUserId: String,
             val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie,
             val attackerUserId: String,
             val outcome: NormalRollMessageType,

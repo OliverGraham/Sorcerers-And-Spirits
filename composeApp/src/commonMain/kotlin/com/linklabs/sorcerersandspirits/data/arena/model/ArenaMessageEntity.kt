@@ -203,10 +203,13 @@ sealed interface ArenaMessageEntity {
     @Serializable
     @SerialName(value = MIRROR_IMAGE)
     sealed interface MirrorImage : ArenaMessageEntity {
+        val illusionistUserId: String
+
         @Serializable
         @SerialName(value = MIRROR_IMAGE_TRIGGER)
         data class Trigger(
             override val id: String,
+            override val illusionistUserId: String,
             val firstDie: Int? = null,
             val secondDie: Int? = null,
         ) : MirrorImage
@@ -215,6 +218,7 @@ sealed interface ArenaMessageEntity {
         @SerialName(value = MIRROR_IMAGE_PASS)
         data class Pass(
             override val id: String,
+            override val illusionistUserId: String,
             val attackerUserId: String,
             val outcome: NormalRollMessageType,
         ) : MirrorImage
@@ -223,6 +227,7 @@ sealed interface ArenaMessageEntity {
         @SerialName(value = MIRROR_IMAGE_TEMPT_FATE)
         data class TemptFate(
             override val id: String,
+            override val illusionistUserId: String,
             val originalRoll: Int,
             val reroll: Int? = null,
             val attackerUserId: String,
@@ -451,13 +456,22 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.MirrorImage.Trigger ->
-                ArenaMessage.MirrorImage.Trigger(firstDie = firstDie, secondDie = secondDie)
+                ArenaMessage.MirrorImage.Trigger(
+                    illusionistUserId = illusionistUserId,
+                    firstDie = firstDie,
+                    secondDie = secondDie,
+                )
 
             is ArenaMessageEntity.MirrorImage.Pass ->
-                ArenaMessage.MirrorImage.Pass(attackerUserId = attackerUserId, outcome = outcome)
+                ArenaMessage.MirrorImage.Pass(
+                    illusionistUserId = illusionistUserId,
+                    attackerUserId = attackerUserId,
+                    outcome = outcome,
+                )
 
             is ArenaMessageEntity.MirrorImage.TemptFate ->
                 ArenaMessage.MirrorImage.TemptFate(
+                    illusionistUserId = illusionistUserId,
                     rerolledMirrorImageDie =
                         AbilityAction.Passive.MirrorImage.MirrorImageDie(
                             originalRoll = originalRoll,
@@ -654,6 +668,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
 
         is ArenaMessage.MirrorImage.Trigger ->
             ArenaMessageEntity.MirrorImage.Trigger(
+                illusionistUserId = illusionistUserId,
                 id = id,
                 firstDie = firstDie,
                 secondDie = secondDie,
@@ -661,6 +676,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
 
         is ArenaMessage.MirrorImage.Pass ->
             ArenaMessageEntity.MirrorImage.Pass(
+                illusionistUserId = illusionistUserId,
                 id = id,
                 attackerUserId = attackerUserId,
                 outcome = outcome,
@@ -668,6 +684,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
 
         is ArenaMessage.MirrorImage.TemptFate ->
             ArenaMessageEntity.MirrorImage.TemptFate(
+                illusionistUserId = illusionistUserId,
                 id = id,
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 reroll = rerolledMirrorImageDie.reroll,

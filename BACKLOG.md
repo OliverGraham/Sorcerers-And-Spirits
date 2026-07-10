@@ -252,13 +252,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
 
-### SS-199 — Paladin normal-attack animation
-
-- [ ] Not completed
-- **Goal:** TBD — attacker-side normal-attack animation set to be described.
-- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191. Ability split into SS-212 (Holy Shield).
-
 ### SS-212 — Paladin Holy Shield animation
 
 - [ ] Not completed

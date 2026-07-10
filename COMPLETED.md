@@ -1115,6 +1115,17 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   dispatch overlay; ships interactive previews per borrowed weapon plus a random one. Abilities
   split
   to SS-208 (Impersonate) and SS-209 (Mirror Image).
+- **SS-199** — Paladin normal-attack animation: a massive two-handed maul (D&D-maul silhouette — a
+  heavy hexagonal steel head with gold reinforcement bands, rivets, and a bright striking face, on a
+  long dark-iron haft with gold langets, a bound grip, and a gold pommel) hoisted into a cocked
+  overhead windup and swung down onto the defender along a bowed over-the-top arc, the blunt face
+  leading. A green essence force-plume streams off the back of the head, its reach and glow scaling
+  with the outcome tier (Knockout brightest → ArmorClassMiss faintest); a landed swing flares a green
+  burst on contact, a miss whiffs past while the defender sidesteps. New paladin/ package
+  (PaladinMace draws the weapon, PaladinNormalAttack the choreography + four outcome previews);
+  Paladin joins builtWeaponClassTypes (Illusionist can borrow the maul) with a Slash-family body
+  gesture, and is wired into the overlay host, playback-duration, and defender-reaction-delay
+  registries. Parent: SS-191. Ability split out to SS-212 (Holy Shield).
 - **ss-208** - The Illusionist pulls out a personal 3D hand mirror with a handle. It first shows no
   reflection, then the Illusionist's own class head icon for a moment, then crossfades through a
   blurry morph into the head icon of the class it is impersonating — the settled reflection washed

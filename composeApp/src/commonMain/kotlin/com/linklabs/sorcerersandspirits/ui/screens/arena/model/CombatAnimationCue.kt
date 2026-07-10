@@ -653,10 +653,9 @@ private fun CombatAnimationCue.NormalAttack.normalAttackGestureFor(userId: Strin
 }
 
 /**
- * The classes whose normal-attack weapon has a built renderer (SS-192…SS-196). The Illusionist
+ * The classes whose normal-attack weapon has a built renderer (SS-192…SS-199). The Illusionist
  * borrows from this set: impersonating one of them shows its weapon, and impersonating a class
- * outside it — or no one — falls back to a random pick from it (SS-197). Mage and Paladin join once
- * SS-198/SS-199 land.
+ * outside it — or no one — falls back to a random pick from it (SS-197).
  */
 internal val builtWeaponClassTypes =
     listOf(
@@ -666,6 +665,7 @@ internal val builtWeaponClassTypes =
         CharacterClassType.Necromancer,
         CharacterClassType.Bard,
         CharacterClassType.Mage,
+        CharacterClassType.Paladin,
     )
 
 /**
@@ -701,7 +701,21 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
         CharacterClassType.Necromancer -> AvatarGesture.Cast
         CharacterClassType.Bard -> AvatarGesture.Cast
         CharacterClassType.Mage -> AvatarGesture.Cast
+        CharacterClassType.Paladin -> paladinStrike()
         else -> genericStrike()
+    }
+
+/**
+ * The Paladin's mace work (SS-199): the swung mace of the weapon overlay carries the attack, and
+ * these gestures are the two-handed swinging footwork behind the blow — a committed swing that ends
+ * heavier on a knockout.
+ */
+private fun CombatAnimationCue.NormalAttack.paladinStrike(): AvatarGesture =
+    when (outcome) {
+        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
+        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
+        NormalRollMessageType.Damage -> AvatarGesture.Slash
+        NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
     }
 
 /**

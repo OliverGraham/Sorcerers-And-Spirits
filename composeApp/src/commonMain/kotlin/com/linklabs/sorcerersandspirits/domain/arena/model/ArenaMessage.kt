@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 sealed interface ArenaMessage {
@@ -24,6 +25,7 @@ sealed interface ArenaMessage {
         val secondDie: Int,
         val bonus: Int,
         val type: NormalRollMessageType,
+        val impersonatedCharacterType: CharacterClassType,
     ) : ArenaMessage
 
     data class KillingMomentum(val attackerUserId: String) : ArenaMessage

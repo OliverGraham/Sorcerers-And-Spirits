@@ -34,7 +34,7 @@ sealed interface CombatAnimationCue {
         val attackerClassType: CharacterClassType,
         val defenderUserId: String,
         val outcome: NormalRollMessageType,
-        val impersonatedClassType: CharacterClassType?,
+        val impersonatedClassType: CharacterClassType,
     ) : CombatAnimationCue
 
     @Immutable
@@ -406,16 +406,12 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 )
 
             is ArenaMessageState.MirrorImage.Trigger ->
-                if (illusionistUserId != null) {
-                    CombatAnimationCue.MirrorImage(
-                        id = id,
-                        illusionistUserId = illusionistUserId,
-                        phase = MirrorImagePhase.Split,
-                        outcome = null,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.MirrorImage(
+                    id = id,
+                    illusionistUserId = illusionistUserId,
+                    phase = MirrorImagePhase.Split,
+                    outcome = null,
+                )
 
             is ArenaMessageState.MirrorImage.Pass ->
                 CombatAnimationCue.MirrorImage(
@@ -669,6 +665,7 @@ internal val builtWeaponClassTypes =
         CharacterClassType.Duelist,
         CharacterClassType.Necromancer,
         CharacterClassType.Bard,
+        CharacterClassType.Mage,
     )
 
 /**
@@ -681,7 +678,7 @@ internal val builtWeaponClassTypes =
 internal val CombatAnimationCue.NormalAttack.weaponClassType: CharacterClassType
     get() {
         if (attackerClassType != CharacterClassType.Illusionist) return attackerClassType
-        val borrowedWeapon = impersonatedClassType?.takeIf { it in builtWeaponClassTypes }
+        val borrowedWeapon = impersonatedClassType.takeIf { it in builtWeaponClassTypes }
         return borrowedWeapon ?: randomBuiltWeaponFor(cueId = id)
     }
 

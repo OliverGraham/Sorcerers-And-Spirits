@@ -15,6 +15,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
@@ -206,6 +207,7 @@ internal class NormalAttackRollHandler(
                     secondDie = secondDie,
                     bonus = bonus,
                     type = type,
+                    impersonatedCharacterType = getImpersonatedCharacterTypeOrNone(),
                 )
         )
 
@@ -233,6 +235,16 @@ internal class NormalAttackRollHandler(
             )
 
         return true
+    }
+
+    private fun CombatMutator.getImpersonatedCharacterTypeOrNone(): CharacterClassType {
+        if (attacker.type != CharacterClassType.Illusionist) return CharacterClassType.None
+
+        if (attacker.offensiveAbility.effective is OffensiveAbility.None) {
+            return CharacterClassType.None
+        }
+
+        return attacker.type
     }
 
     companion object {

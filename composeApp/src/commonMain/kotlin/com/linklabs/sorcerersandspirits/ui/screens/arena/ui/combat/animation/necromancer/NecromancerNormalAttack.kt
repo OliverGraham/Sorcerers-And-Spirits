@@ -441,7 +441,7 @@ private fun NecromancerNormalAttackPreview(outcome: NormalRollMessageType) {
                 attackerClassType = CharacterClassType.Necromancer,
                 defenderUserId = PREVIEW_TARGET_ID,
                 outcome = outcome,
-                impersonatedClassType = null,
+                impersonatedClassType = CharacterClassType.None,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Necromancer, seats = seats) {

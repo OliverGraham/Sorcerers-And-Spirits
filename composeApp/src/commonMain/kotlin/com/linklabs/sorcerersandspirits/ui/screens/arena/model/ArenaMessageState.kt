@@ -44,7 +44,7 @@ sealed interface ArenaMessageState {
         val secondDie: Int,
         val bonus: Int,
         val type: NormalRollMessageType,
-        val impersonatedClassType: CharacterClassType?,
+        val impersonatedClassType: CharacterClassType,
     ) : ArenaMessageState {
         /**
          * The true roll total: the two die faces plus any consecutive-doubles bonus that applied.
@@ -74,11 +74,7 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Teleport : ArenaMessageState {
-        /**
-         * The Mage escaping the attack, so the portal animation anchors to their seat. Read from
-         * the armor-break roll that preceded this trigger (SS-211), the same way Mirror Image finds
-         * its Illusionist; null only when no such roll is on record. // TODO: make non-nullable
-         */
+        /** The Mage escaping the attack, so the portal animation anchors to their seat. */
         val mageUserId: String
 
         @Immutable
@@ -373,45 +369,32 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
  */
 fun List<IncomingArenaMessage>.toStates(
     participants: Map<String, ParticipantClass>
-): List<ArenaMessageState> {
-    var impersonatedClassType: CharacterClassType? = null
-    return map { incomingMessage ->
-        val message = incomingMessage.message
-        val state =
-            message.toState(
-                id = incomingMessage.id,
-                participants = participants,
-                impersonatedClassType = impersonatedClassType,
-            )
-        when (message) {
-            is ArenaMessage.Impersonate ->
-                impersonatedClassType =
-                    message.impersonateAbility.impersonatedAbility.impersonatedClassType
-
-            else -> {}
-        }
-        state
-    }
+): List<ArenaMessageState> = map { incomingMessage ->
+    incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
 }
 
 /** The class an Illusionist's copied offensive ability belongs to; null before anyone is copied. */
-private val OffensiveAbility.impersonatedClassType: CharacterClassType?
-    get() =
-        when (this) {
-            is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
-            is OffensiveAbility.AllIn -> CharacterClassType.Gambler
-            is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
-            is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
-            is OffensiveAbility.Encore -> CharacterClassType.Bard
-            is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
-            is OffensiveAbility.Impersonate -> CharacterClassType.Illusionist
-            is OffensiveAbility.None -> null
-        }
+private fun OffensiveAbility.toImpersonatedClassType() =
+    when (this) {
+        is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
+
+        is OffensiveAbility.AllIn -> CharacterClassType.Gambler
+
+        is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
+
+        is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
+
+        is OffensiveAbility.Encore -> CharacterClassType.Bard
+
+        is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
+
+        is OffensiveAbility.Impersonate,
+        is OffensiveAbility.None -> CharacterClassType.Illusionist
+    }
 
 private fun ArenaMessage.toState(
     id: String,
     participants: Map<String, ParticipantClass>,
-    impersonatedClassType: CharacterClassType?,
 ): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
@@ -484,8 +467,7 @@ private fun ArenaMessage.toState(
                 illusionistUserId = illusionistUserId,
                 illusionistName = participants.resolveClassName(userId = illusionistUserId),
                 impersonatedClassType =
-                    impersonateAbility.impersonatedAbility.impersonatedClassType
-                        ?: CharacterClassType.Illusionist,
+                    impersonateAbility.impersonatedAbility.toImpersonatedClassType(),
                 impersonatedAbilityName =
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )
@@ -547,23 +529,20 @@ private fun ArenaMessage.toState(
                 outcome = outcome,
             )
 
-        is ArenaMessage.NormalRoll -> {
-            val attackerClassType = participants.resolveClassType(userId = attackerUserId)
-            val isImpersonatingAttacker = attackerClassType == CharacterClassType.Illusionist
+        is ArenaMessage.NormalRoll ->
             ArenaMessageState.NormalRoll(
                 id = id,
                 attackerUserId = attackerUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
-                attackerClassType = attackerClassType,
+                attackerClassType = participants.resolveClassType(userId = attackerUserId),
                 defenderUserId = defenderUserId,
                 defenderName = participants.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = bonus,
                 type = type,
-                impersonatedClassType = if (isImpersonatingAttacker) impersonatedClassType else null,
+                impersonatedClassType = impersonatedCharacterType,
             )
-        }
 
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageState.Persuade.Charm(

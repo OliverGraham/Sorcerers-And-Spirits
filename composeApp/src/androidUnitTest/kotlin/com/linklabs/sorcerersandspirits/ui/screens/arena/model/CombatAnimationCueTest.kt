@@ -20,7 +20,7 @@ class CombatAnimationCueTest {
                     attackerClassType = CharacterClassType.Mage,
                     defenderUserId = DEFENDER_ID,
                     outcome = NormalRollMessageType.ArmorClassHit,
-                    impersonatedClassType = null,
+                    impersonatedClassType = CharacterClassType.None,
                 ),
             actual = message.combatAnimationCue,
         )
@@ -381,7 +381,7 @@ class CombatAnimationCueTest {
             secondDie = 5,
             bonus = 0,
             type = type,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun normalAttackCue(outcome: NormalRollMessageType) =
@@ -391,7 +391,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Paladin,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun mageAttackCue(outcome: NormalRollMessageType) =
@@ -401,7 +401,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Mage,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun rogueAttackCue(outcome: NormalRollMessageType) =
@@ -411,7 +411,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Rogue,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun duelistAttackCue(outcome: NormalRollMessageType) =
@@ -421,7 +421,7 @@ class CombatAnimationCueTest {
             attackerClassType = CharacterClassType.Duelist,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
-            impersonatedClassType = null,
+            impersonatedClassType = CharacterClassType.None,
         )
 
     private fun dodgeMessage(didArmorIncrease: Boolean) =

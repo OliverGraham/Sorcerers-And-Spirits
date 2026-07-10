@@ -108,6 +108,7 @@ class ArenaMessageStateTest {
                     secondDie = 3,
                     bonus = 0,
                     type = type,
+                    impersonatedCharacterType = CharacterClassType.None,
                 ),
         )
 

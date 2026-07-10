@@ -58,6 +58,7 @@ class ArenaMessageEntityTest {
                     secondDie = 5,
                     bonus = 1,
                     type = NormalRollMessageType.Knockout,
+                    impersonatedCharacterType = CharacterClassType.None,
                 ),
                 ArenaMessage.KillingMomentum(attackerUserId = "rogue"),
                 ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = "rogue"),

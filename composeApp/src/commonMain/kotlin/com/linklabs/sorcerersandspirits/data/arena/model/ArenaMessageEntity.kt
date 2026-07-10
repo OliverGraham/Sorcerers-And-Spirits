@@ -50,6 +50,7 @@ sealed interface ArenaMessageEntity {
         val secondDie: Int,
         val bonus: Int = 0,
         val messageType: NormalRollMessageType,
+        val impersonatedCharacterType: CharacterClassType,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -386,6 +387,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     secondDie = secondDie,
                     bonus = bonus,
                     type = messageType,
+                    impersonatedCharacterType = impersonatedCharacterType,
                 )
 
             is ArenaMessageEntity.KillingMomentum ->
@@ -590,6 +592,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 secondDie = secondDie,
                 bonus = bonus,
                 messageType = type,
+                impersonatedCharacterType = impersonatedCharacterType,
             )
 
         is ArenaMessage.KillingMomentum ->

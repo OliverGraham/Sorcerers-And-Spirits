@@ -151,6 +151,62 @@ class CombatAnimationCueTest {
     }
 
     @Test
+    fun `Given a Mage normal attack, then the Mage casts and the defender reacts`() {
+        val cue = mageAttackCue(outcome = NormalRollMessageType.Damage)
+
+        assertEquals(expected = AvatarGesture.Cast, actual = cue.gestureFor(userId = ATTACKER_ID))
+        assertEquals(
+            expected = AvatarGesture.FlinchHeavy,
+            actual = cue.gestureFor(userId = DEFENDER_ID),
+        )
+    }
+
+    @Test
+    fun `Given a Mage knockout, then the Mage still only casts`() {
+        val cue = mageAttackCue(outcome = NormalRollMessageType.Knockout)
+
+        assertEquals(expected = AvatarGesture.Cast, actual = cue.gestureFor(userId = ATTACKER_ID))
+        assertEquals(
+            expected = AvatarGesture.Collapse,
+            actual = cue.gestureFor(userId = DEFENDER_ID),
+        )
+    }
+
+    @Test
+    fun `Given a Spell Potency message, then the Mage casts and the main target flinches`() {
+        val message =
+            ArenaMessageState.SpellPotency(
+                id = MESSAGE_ID,
+                mageUserId = ATTACKER_ID,
+                mageName = "Mage",
+                mainTargetUserId = DEFENDER_ID,
+                mainTargetName = "Bard",
+                mainDamage = 8,
+                splashDamage = 4,
+            )
+
+        val cue = message.combatAnimationCue
+
+        assertEquals(
+            expected =
+                CombatAnimationCue.SpellPotency(
+                    id = MESSAGE_ID,
+                    mageUserId = ATTACKER_ID,
+                    mainTargetUserId = DEFENDER_ID,
+                    mainDamage = 8,
+                ),
+            actual = cue,
+        )
+        assertEquals(expected = AvatarGesture.Cast, actual = cue?.gestureFor(userId = ATTACKER_ID))
+        assertEquals(
+            expected = AvatarGesture.FlinchHeavy,
+            actual = cue?.gestureFor(userId = DEFENDER_ID),
+        )
+        assertNull(actual = cue?.gestureFor(userId = SPECTATOR_ID))
+        assertNull(actual = cue?.collapsingUserId)
+    }
+
+    @Test
     fun `Given a spectator, then a normal attack gives them no gesture`() {
         val cue = normalAttackCue(outcome = NormalRollMessageType.ArmorClassHit)
 
@@ -295,6 +351,16 @@ class CombatAnimationCueTest {
         )
 
     private fun normalAttackCue(outcome: NormalRollMessageType) =
+        CombatAnimationCue.NormalAttack(
+            id = MESSAGE_ID,
+            attackerUserId = ATTACKER_ID,
+            attackerClassType = CharacterClassType.Paladin,
+            defenderUserId = DEFENDER_ID,
+            outcome = outcome,
+            impersonatedClassType = null,
+        )
+
+    private fun mageAttackCue(outcome: NormalRollMessageType) =
         CombatAnimationCue.NormalAttack(
             id = MESSAGE_ID,
             attackerUserId = ATTACKER_ID,

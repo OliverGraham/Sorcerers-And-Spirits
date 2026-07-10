@@ -32,6 +32,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.drawGamblerStrike
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.play as playGamblerStrike
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageBoltState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.drawMageCast
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.mageElementFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.palette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.play
@@ -191,6 +192,7 @@ internal fun IllusionistNormalAttackOverlay(
                 CharacterClassType.Duelist -> drawTwinSwordSlash(state = duelistState)
                 CharacterClassType.Necromancer -> drawScytheReap(state = necromancerState)
                 CharacterClassType.Bard -> drawBardDrumStrike(state = bardState)
+                CharacterClassType.Mage -> drawMageCast(state = mageState)
                 else -> {}
             }
         },

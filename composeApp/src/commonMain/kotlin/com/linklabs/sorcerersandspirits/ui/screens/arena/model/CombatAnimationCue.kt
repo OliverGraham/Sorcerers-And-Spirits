@@ -104,7 +104,8 @@ sealed interface CombatAnimationCue {
         CombatAnimationCue
 
     @Immutable
-    data class Encore(override val id: String, val phase: EncorePhase) : CombatAnimationCue
+    data class Encore(override val id: String, val bardUserId: String, val phase: EncorePhase) :
+        CombatAnimationCue
 
     /**
      * The Illusionist copies a living opponent's offensive ability (SS-208): a personal hand mirror
@@ -264,9 +265,9 @@ enum class AvatarGesture {
 
 /**
  * The animation cue for a message, mirroring [flashCallout]: derived from the same message both
- * displays share, with the exhaustive [when] making a new message type a compile error until its
- * cue is chosen. Null means the avatars sit the event out — the branch each ability-animation
- * ticket later replaces with its cue.
+ * displays share, with the exhaustive when making a new message type a compile error until its cue
+ * is chosen. Null means the avatars sit the event out — the branch each ability-animation ticket
+ * later replaces with its cue.
  */
 val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
     get() =
@@ -297,40 +298,29 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.LuckyCoin.Trigger -> null
 
             is ArenaMessageState.LuckyCoin.Flip -> {
-                val isHighRollerArmorResolution = singleDie == HIGH_ROLLER_ROLL
-                when {
-                    gamblerUserId == null || isHighRollerArmorResolution -> null
-
-                    else ->
-                        CombatAnimationCue.LuckyCoinFlip(
-                            id = id,
-                            gamblerUserId = gamblerUserId,
-                            faceValue = singleDie,
-                            didStopAttack = didStopAttack,
-                        )
+                if (singleDie == HIGH_ROLLER_ROLL) {
+                    null
+                } else {
+                    CombatAnimationCue.LuckyCoinFlip(
+                        id = id,
+                        gamblerUserId = gamblerUserId,
+                        faceValue = singleDie,
+                        didStopAttack = didStopAttack,
+                    )
                 }
             }
 
             is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
-                if (gamblerUserId != null) {
-                    CombatAnimationCue.LuckyCoinHighRoller(id = id, gamblerUserId = gamblerUserId)
-                } else {
-                    null
-                }
+                CombatAnimationCue.LuckyCoinHighRoller(id = id, gamblerUserId = gamblerUserId)
 
             is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-                when {
-                    gamblerUserId == null || attackerUserId == null -> null
-
-                    else ->
-                        CombatAnimationCue.LuckyCoinHighRollerThrow(
-                            id = id,
-                            gamblerUserId = gamblerUserId,
-                            attackerUserId = attackerUserId,
-                            damage = singleDie,
-                            isKnockout = isKnockout,
-                        )
-                }
+                CombatAnimationCue.LuckyCoinHighRollerThrow(
+                    id = id,
+                    gamblerUserId = gamblerUserId,
+                    attackerUserId = attackerUserId,
+                    damage = singleDie,
+                    isKnockout = isKnockout,
+                )
 
             is ArenaMessageState.PrepareAttack ->
                 CombatAnimationCue.PrepareAttack(
@@ -395,11 +385,16 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.Persuade.Lull -> null
 
             is ArenaMessageState.Encore.Trigger ->
-                CombatAnimationCue.Encore(id = id, phase = EncorePhase.SetStage)
+                CombatAnimationCue.Encore(
+                    id = id,
+                    bardUserId = bardUserId,
+                    phase = EncorePhase.SetStage,
+                )
 
             is ArenaMessageState.Encore.Roll ->
                 CombatAnimationCue.Encore(
                     id = id,
+                    bardUserId = bardUserId,
                     phase = if (isSuccessful) EncorePhase.Success else EncorePhase.Failure,
                 )
 

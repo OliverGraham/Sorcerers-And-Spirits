@@ -13,7 +13,7 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     fun rollEncore() = combatMutator.rollEncore()
 
     private fun CombatMutator.triggerEncore() {
-        addMessage(message = ArenaMessage.Encore.Trigger)
+        addMessage(message = ArenaMessage.Encore.Trigger(bardUserId = attackerUserId))
 
         setNextAbilityRoll(
             purpose = AbilityAction.Passive.Encore,
@@ -26,7 +26,12 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
         val isSuccessful = result in abilityConfig.encoreSuccessRange
 
         addMessage(
-            message = ArenaMessage.Encore.Roll(encoreDie = result, isSuccessful = isSuccessful)
+            message =
+                ArenaMessage.Encore.Roll(
+                    bardUserId = attackerUserId,
+                    encoreDie = result,
+                    isSuccessful = isSuccessful,
+                )
         )
 
         if (isSuccessful) {

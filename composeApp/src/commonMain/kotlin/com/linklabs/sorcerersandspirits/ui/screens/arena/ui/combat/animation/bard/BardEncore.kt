@@ -316,4 +316,8 @@ private fun BardEncorePreview(resolution: EncorePhase) {
 }
 
 private fun encoreCue(iteration: Int, phase: EncorePhase): CombatAnimationCue.Encore =
-    CombatAnimationCue.Encore(id = "encore-$phase-$iteration", phase = phase)
+    CombatAnimationCue.Encore(
+        id = "encore-$phase-$iteration",
+        bardUserId = "bardUserId",
+        phase = phase,
+    )

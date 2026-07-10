@@ -43,14 +43,27 @@ sealed interface ArenaMessage {
     }
 
     sealed interface LuckyCoin : ArenaMessage {
+        val gamblerUserId: String
 
-        data object Trigger : LuckyCoin
+        data class Trigger(override val gamblerUserId: String) : LuckyCoin
 
-        data class Flip(val singleDie: Int, val didStopAttack: Boolean) : LuckyCoin
+        data class Flip(
+            override val gamblerUserId: String,
+            val singleDie: Int,
+            val didStopAttack: Boolean,
+        ) : LuckyCoin
 
-        data class HighRollerTrigger(val targetUserId: String) : LuckyCoin
+        data class HighRollerTrigger(
+            override val gamblerUserId: String,
+            val attackerUserId: String,
+        ) : LuckyCoin
 
-        data class HighRollerDamage(val singleDie: Int, val isKnockout: Boolean) : LuckyCoin
+        data class HighRollerDamage(
+            override val gamblerUserId: String,
+            val attackerUserId: String,
+            val singleDie: Int,
+            val isKnockout: Boolean,
+        ) : LuckyCoin
     }
 
     sealed interface Riposte : ArenaMessage {
@@ -86,9 +99,15 @@ sealed interface ArenaMessage {
     }
 
     sealed interface Encore : ArenaMessage {
-        data object Trigger : Encore
+        val bardUserId: String
 
-        data class Roll(val encoreDie: Int, val isSuccessful: Boolean) : ArenaMessage
+        data class Trigger(override val bardUserId: String) : Encore
+
+        data class Roll(
+            override val bardUserId: String,
+            val encoreDie: Int,
+            val isSuccessful: Boolean,
+        ) : Encore
     }
 
     data class Impersonate(
@@ -139,14 +158,19 @@ sealed interface ArenaMessage {
     ) : ArenaMessage
 
     sealed interface HolyShield : ArenaMessage {
+        val paladinUserId: String
 
-        data object Trigger : HolyShield
+        data class Trigger(override val paladinUserId: String) : HolyShield
 
-        data class Prayer(val firstDie: Int, val secondDie: Int, val didSurvive: Boolean) :
-            HolyShield
+        data class Prayer(
+            override val paladinUserId: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val didSurvive: Boolean,
+        ) : HolyShield
 
         data class Wrath(
-            val paladinUserId: String,
+            override val paladinUserId: String,
             val attackerUserId: String,
             val singleDie: Int,
         ) : HolyShield

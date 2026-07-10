@@ -29,6 +29,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.MirrorImagePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TeleportPhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
@@ -68,6 +69,17 @@ private const val SLASH_RECOVER_MILLIS = 240
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 private const val COLLAPSE_ROTATION_DEGREES = 80f
 private const val COLLAPSE_FEET_SLIDE_FRACTION = 0.4f
+
+private const val TELEPORT_REACT_MILLIS = 120L
+private const val TELEPORT_ENTER_MILLIS = 300
+private const val TELEPORT_GONE_MILLIS = 220L
+private const val TELEPORT_RETURN_MILLIS = 260
+private const val TELEPORT_LUNGE_MILLIS = 160
+private const val TELEPORT_RECOIL_MILLIS = 180
+private const val TELEPORT_GRAY_MILLIS = 320
+private const val TELEPORT_ENTER_SCALE = 0.5f
+private const val TELEPORT_RETURN_SCALE = 0.72f
+private const val TELEPORT_GRAY_SATURATION = 0.12f
 
 private const val MIRROR_SPLIT_MILLIS = 360
 private const val MIRROR_SPLIT_HOLD_MILLIS = 160L
@@ -127,6 +139,13 @@ internal class AvatarGestureState {
     val mirrorSplit = Animatable(initialValue = 0f)
     val mirrorReturn = Animatable(initialValue = 0f)
     val mirrorFakeVanish = Animatable(initialValue = 0f)
+
+    /**
+     * The Mage's Teleport escape (SS-211): [teleportVanish] dissolves the avatar away as it slips
+     * through the overhead portal and fades it back in when it reappears. At rest (0) the seat
+     * draws the avatar solid.
+     */
+    val teleportVanish = Animatable(initialValue = 0f)
 
     val colorFilter: ColorFilter?
         get() {
@@ -244,6 +263,7 @@ private fun GraphicsLayerScope.applyGesture(gestureState: AvatarGestureState) {
     rotationZ = gestureState.rotation.value + COLLAPSE_ROTATION_DEGREES * collapse
     scaleX = gestureState.scaleX.value * collapseScale
     scaleY = gestureState.scaleY.value * collapseScale
+    alpha = 1f - gestureState.teleportVanish.value
 }
 
 /**
@@ -272,6 +292,12 @@ internal fun rememberAvatarGesture(
             return@LaunchedEffect
         }
 
+        val teleportCue = cue.teleportActingFor(userId = userId)
+        if (teleportCue != null) {
+            gestureState.playTeleport(cue = teleportCue, density = density)
+            return@LaunchedEffect
+        }
+
         val gesture = cue.gestureFor(userId = userId) ?: return@LaunchedEffect
         gestureState.play(
             gesture = gesture,
@@ -288,6 +314,103 @@ private fun CombatAnimationCue.mirrorImageActingFor(
     userId: String
 ): CombatAnimationCue.MirrorImage? =
     (this as? CombatAnimationCue.MirrorImage)?.takeIf { it.illusionistUserId == userId }
+
+private fun CombatAnimationCue.teleportActingFor(userId: String): CombatAnimationCue.Teleport? =
+    (this as? CombatAnimationCue.Teleport)?.takeIf { it.mageUserId == userId }
+
+/**
+ * The Mage's own body during Teleport (SS-211): it sits still while the portal opens and churns
+ * through the roll-off, and only on the resolving roll does it act — rising up through the overhead
+ * portal and vanishing before reappearing on a successful escape, or lunging for a portal that
+ * snaps shut too soon and greying out when the escape fails.
+ */
+private suspend fun AvatarGestureState.playTeleport(
+    cue: CombatAnimationCue.Teleport,
+    density: Density,
+) {
+    if (cue.phase != TeleportPhase.Resolve) return
+    val didEscape = cue.didEscape ?: return
+
+    snapToRest()
+    if (didEscape) teleportEscape(density = density) else teleportFail(density = density)
+}
+
+/** The escape: the Mage rises into the portal, dissolves away, then fades back in at its seat. */
+private suspend fun AvatarGestureState.teleportEscape(density: Density) =
+    with(density) {
+        delay(timeMillis = TELEPORT_REACT_MILLIS)
+        coroutineScope {
+            launch {
+                offsetY.animateTo(
+                    targetValue = -60.dp.toPx(),
+                    animationSpec =
+                        tween(
+                            durationMillis = TELEPORT_ENTER_MILLIS,
+                            easing = FastOutLinearInEasing,
+                        ),
+                )
+            }
+            launch {
+                stretchTo(
+                    targetX = TELEPORT_ENTER_SCALE,
+                    targetY = TELEPORT_ENTER_SCALE,
+                    durationMillis = TELEPORT_ENTER_MILLIS,
+                )
+            }
+            launch {
+                teleportVanish.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = TELEPORT_ENTER_MILLIS),
+                )
+            }
+        }
+
+        delay(timeMillis = TELEPORT_GONE_MILLIS)
+
+        offsetY.snapTo(targetValue = 0f)
+        scaleX.snapTo(targetValue = TELEPORT_RETURN_SCALE)
+        scaleY.snapTo(targetValue = TELEPORT_RETURN_SCALE)
+        coroutineScope {
+            launch {
+                teleportVanish.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(durationMillis = TELEPORT_RETURN_MILLIS),
+                )
+            }
+            launch {
+                stretchTo(targetX = 1f, targetY = 1f, durationMillis = TELEPORT_RETURN_MILLIS)
+            }
+        }
+    }
+
+/** The failed escape: the Mage lunges for the portal, is thrown back as it shuts, and greys out. */
+private suspend fun AvatarGestureState.teleportFail(density: Density) =
+    with(density) {
+        delay(timeMillis = TELEPORT_REACT_MILLIS)
+        offsetY.animateTo(
+            targetValue = -24.dp.toPx(),
+            animationSpec =
+                tween(durationMillis = TELEPORT_LUNGE_MILLIS, easing = FastOutSlowInEasing),
+        )
+        coroutineScope {
+            launch {
+                offsetY.animateTo(
+                    targetValue = 8.dp.toPx(),
+                    animationSpec = tween(durationMillis = TELEPORT_RECOIL_MILLIS / 2),
+                )
+                offsetY.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(durationMillis = TELEPORT_RECOIL_MILLIS / 2),
+                )
+            }
+            launch {
+                saturation.animateTo(
+                    targetValue = TELEPORT_GRAY_SATURATION,
+                    animationSpec = tween(durationMillis = TELEPORT_GRAY_MILLIS),
+                )
+            }
+        }
+    }
 
 /**
  * The Illusionist's own body during Mirror Image (SS-209): the split fans two translucent copies
@@ -450,6 +573,30 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
 
         is CombatAnimationCue.SpellPotency ->
             MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS + FLINCH_HEAVY_BODY_MILLIS
+
+        is CombatAnimationCue.Teleport -> teleportBodyMillis()
+    }
+
+/**
+ * The Mage's own body during Teleport (SS-211): still while the portal opens and holds, and on the
+ * resolve as long as the escape's rise-vanish-reappear, or the failed lunge, recoil, and grey-out.
+ */
+private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
+    when (phase) {
+        TeleportPhase.Open,
+        TeleportPhase.Hold -> 0L
+
+        TeleportPhase.Resolve ->
+            if (didEscape == true) {
+                TELEPORT_REACT_MILLIS +
+                    TELEPORT_ENTER_MILLIS +
+                    TELEPORT_GONE_MILLIS +
+                    TELEPORT_RETURN_MILLIS
+            } else {
+                TELEPORT_REACT_MILLIS +
+                    TELEPORT_LUNGE_MILLIS +
+                    maxOf(TELEPORT_RECOIL_MILLIS.toLong(), TELEPORT_GRAY_MILLIS.toLong())
+            }
     }
 
 /**
@@ -1150,6 +1297,7 @@ private suspend fun AvatarGestureState.snapToRest() {
     mirrorSplit.snapTo(targetValue = 0f)
     mirrorReturn.snapTo(targetValue = 0f)
     mirrorFakeVanish.snapTo(targetValue = 0f)
+    teleportVanish.snapTo(targetValue = 0f)
 }
 
 private fun armorTintMatrix(tint: Float): ColorMatrix {

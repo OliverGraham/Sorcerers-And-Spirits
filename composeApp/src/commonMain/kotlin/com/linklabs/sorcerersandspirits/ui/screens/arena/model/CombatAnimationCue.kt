@@ -148,6 +148,36 @@ sealed interface CombatAnimationCue {
         val mainTargetUserId: String,
         val mainDamage: Int,
     ) : CombatAnimationCue
+
+    /**
+     * The Mage's Teleport (SS-211): the instant the Mage's armor is passed a swirling blue portal
+     * opens beside them ([TeleportPhase.Open]) and churns while the roll-off is made
+     * ([TeleportPhase.Hold]); on the resolving roll ([TeleportPhase.Resolve]) the Mage either slips
+     * through the portal and vanishes before reappearing when [didEscape] is true, or lunges for a
+     * portal that snaps shut too soon and the scene greys out when it is false. [didEscape] is null
+     * until the roll resolves. [mageUserId] is the defender of the armor-break roll that preceded
+     * this, read the same way Mirror Image finds its Illusionist; null only when no such roll is on
+     * record, in which case no cue is emitted.
+     */
+    @Immutable
+    data class Teleport(
+        override val id: String,
+        val mageUserId: String,
+        val phase: TeleportPhase,
+        val didEscape: Boolean?,
+    ) : CombatAnimationCue
+}
+
+/**
+ * The stage a Teleport is in (SS-211): [Open] is the portal tearing open the moment the Mage's
+ * armor is passed; [Hold] keeps it swirling through each roll-off die without re-opening it;
+ * [Resolve] is the roll landing — the Mage escaping through the portal, or the portal closing on a
+ * failed escape.
+ */
+enum class TeleportPhase {
+    Open,
+    Hold,
+    Resolve,
 }
 
 /**
@@ -434,8 +464,41 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     mainDamage = mainDamage,
                 )
 
-            // TODO(SS-211): Mage Teleport animation.
-            is ArenaMessageState.Teleport -> null
+            is ArenaMessageState.Teleport.Trigger ->
+                if (mageUserId != null) {
+                    CombatAnimationCue.Teleport(
+                        id = id,
+                        mageUserId = mageUserId,
+                        phase = TeleportPhase.Open,
+                        didEscape = null,
+                    )
+                } else {
+                    null
+                }
+
+            is ArenaMessageState.Teleport.Roll ->
+                if (mageUserId != null) {
+                    CombatAnimationCue.Teleport(
+                        id = id,
+                        mageUserId = mageUserId,
+                        phase = TeleportPhase.Hold,
+                        didEscape = null,
+                    )
+                } else {
+                    null
+                }
+
+            is ArenaMessageState.Teleport.Result ->
+                if (mageUserId != null) {
+                    CombatAnimationCue.Teleport(
+                        id = id,
+                        mageUserId = mageUserId,
+                        phase = TeleportPhase.Resolve,
+                        didEscape = didDefenderEscape,
+                    )
+                } else {
+                    null
+                }
 
             // TODO(SS-199): Paladin ability animations.
             is ArenaMessageState.HolyShield -> null
@@ -489,6 +552,8 @@ val CombatAnimationCue.collapsingUserId: String?
                 if (outcome == NormalRollMessageType.Knockout) illusionistUserId else null
 
             is CombatAnimationCue.SpellPotency -> null
+
+            is CombatAnimationCue.Teleport -> null
         }
 
 /**
@@ -528,6 +593,8 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.MirrorImage -> mirrorImageGestureFor(userId = userId)
 
         is CombatAnimationCue.SpellPotency -> spellPotencyGestureFor(userId = userId)
+
+        is CombatAnimationCue.Teleport -> null
     }
 
 /**

@@ -21,6 +21,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ill
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.ImpersonateOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageSpellPotencyOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageTeleportOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.RogueNormalAttackOverlay
@@ -125,6 +126,11 @@ internal fun CombatAnimationOverlays(
                 modifier = Modifier.fillMaxSize(),
             )
             MageSpellPotencyOverlay(
+                animationCue = animationCue,
+                avatarBoundsFor = avatarBounds::boundsFor,
+                modifier = Modifier.fillMaxSize(),
+            )
+            MageTeleportOverlay(
                 animationCue = animationCue,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),

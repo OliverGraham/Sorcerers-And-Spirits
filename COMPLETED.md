@@ -1150,3 +1150,46 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   timings) at the top of `CombatAvatarGesture.kt` for on-device polish.
 - **Cue sources:** `ArenaMessageState.MirrorImage.*`.
 - **Parent:** SS-191. Split out of SS-197.
+- **ss-198** - The Mage's normal attack is a cast projectile with several elemental variations,
+  picked
+  at random per attack (deterministic from the cue id). Each is a focused, subtle projectile that
+  flies from the Mage to the target: an **Icebolt** (ice bolt with a snowflake/ice trail, shatter
+  on hit), a **Lightningbolt** (a single arc of lightning), and a **Fireball** (a flaming ball that
+  explodes on hit). Three elements this pass; the framework is built to grow toward six.
+- **Tie to SS-210:** the normal attack and Spell Potency never co-occur — the domain resolves a
+  Mage's doubles roll as Spell Potency and returns without a `NormalRoll` message, so a non-doubles
+  attack shows the focused projectile (SS-198) and a doubles attack shows the amplified AoE
+  (SS-210). SS-210 reuses the same element renderers, amplified.
+- **Done:** the `mage/` overlay package, the `MageSpellElement` enum + a deterministic per-cue-id
+  element picker, and all three focused projectiles — Icebolt, Lightningbolt, Fireball — each with
+  its own trail, head, and impact, dispatched through element-agnostic draw seams
+  (`drawMageBolt`/`drawMageImpact`/`drawMageAtmosphere`). Adding elements 4–6 is one enum entry plus
+  its draw branches.
+- **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
+- **Parent:** SS-191. Abilities split into SS-210 (Spell Potency) and SS-211 (Teleport).
+- **ss-210** - The amplified version of the SS-198 normal-attack projectile. A Mage's doubles roll
+  triggers Spell Potency (dice-total to the main target, half splashing to every other conscious
+  opponent, then end turn). The amplified cast incorporates the focused projectile — the singular
+  bolt is fired **X** times at the main target, where **X** is the total roll (`mainDamage`) — and
+  wraps it in a large, extravagant area-of-effect: for Ice, a **Blizzard** — a swirling, dome-shaped
+  cloud of icy wind over the arena. Lightning gets a **Thunderstorm** (dark cloud with lightning),
+  Fire an **Inferno** (pillars of fire, red glow).
+- **Done:** the `CombatAnimationCue.SpellPotency` cue (mage + main-target seats, `mainDamage`
+  copies), all three amplified AoEs — Blizzard, Thunderstorm, Inferno — each filling the whole
+  battlefield centered on the **opponent** (never the Mage), and the Mage-Cast / main-target-flinch
+  seated gestures wired into the sequencer, reaction-delay, and duration registries. The barrage
+  fires in staggered **waves** (up to 4 bolts at once), gathered across a horizontal band at the
+  Mage and blasted across the opponent, each bolt bowed sideways so the volley reads alive rather
+  than single-file.
+- **Splash HP:** decrementing the splashed opponents' class-head icons is **SS-214**.
+- **Known first-pass gap:** the main target plays a heavy flinch, not a collapse, even when the
+  cast is lethal — the domain resolves Spell Potency without a `NormalRoll`/knockout message, so the
+  cue carries no outcome and `collapsingUserId` is null. A lethal cast therefore morphs the target
+  straight to a head icon rather than collapsing in-seat. Revisit alongside SS-214 if it reads
+  poorly on-device.
+- **Cue sources:** `ArenaMessageState.SpellPotency`.
+- **Parent:** SS-191. Split out of SS-198.
+- **ss-211** - Portal animation. Defensive ability: when armor is passed, roll off 1d6
+  with the attacker; if the Mage rolls higher, escape the attack.
+- **Cue sources:** `ArenaMessageState.Teleport.*`.
+- **Parent:** SS-191. Split out of SS-198.

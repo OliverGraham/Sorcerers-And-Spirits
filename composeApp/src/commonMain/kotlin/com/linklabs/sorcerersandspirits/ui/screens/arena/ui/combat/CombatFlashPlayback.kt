@@ -34,6 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.illusionistImpersonateDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.mageNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.mageSpellPotencyDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.teleportOverlayDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerSummonMinionDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
@@ -182,6 +183,9 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
 
         is CombatAnimationCue.SpellPotency ->
             mageSpellPotencyDurationMillis(mainDamage = mainDamage)
+
+        is CombatAnimationCue.Teleport ->
+            teleportOverlayDurationMillis(phase = phase, didEscape = didEscape)
     }
 
 /**

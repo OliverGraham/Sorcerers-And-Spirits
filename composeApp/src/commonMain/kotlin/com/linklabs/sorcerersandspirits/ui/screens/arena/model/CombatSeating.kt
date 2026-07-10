@@ -27,6 +27,10 @@ data class CombatSeating(
  * A [collapsingTargetUserId] holds the just-downed player in the second seat while their collapse
  * plays out, even though they are no longer conscious and the live target resolution has moved on,
  * so the Collapse animates in place instead of the pane swapping out from under it (SS-213).
+ *
+ * A Paladin mid-Holy-Shield is held the same way: the triggering hit drops them to 0 HP before the
+ * survival roll resolves, so they keep their seat while that roll is in flight rather than
+ * collapsing to a head icon before the knockout is final (SS-212).
  */
 internal fun ArenaState.Combat.seatingFor(
     targetUserId: String,
@@ -34,7 +38,9 @@ internal fun ArenaState.Combat.seatingFor(
     collapsingTargetUserId: String?,
 ): CombatSeating {
     val forcedSecondSeatUserId =
-        collapsingTargetUserId?.takeIf { it in playerMap.keys && it != attackingUserId }
+        (collapsingTargetUserId ?: holyShieldDefenderUserId())?.takeIf {
+            it in playerMap.keys && it != attackingUserId
+        }
     val secondSeatUserId =
         forcedSecondSeatUserId
             ?: seatedTargetUserId(targetUserId = targetUserId, isMatchEnding = isMatchEnding)
@@ -46,6 +52,18 @@ internal fun ArenaState.Combat.seatingFor(
         bottomSeatUserId = bottomSeatUserId,
         headIconUserIds = playerMap.keys.filter { it !in seatedUserIds },
     )
+}
+
+/**
+ * The Paladin whose Holy Shield is being resolved this moment — the defender of an in-flight Prayer
+ * or Wrath roll — or null when no Holy Shield roll is owed. The triggering hit already dropped them
+ * to 0 HP, so this keeps them seated as a large avatar through the survival roll instead of
+ * dropping to a head icon before the knockout is final (SS-212).
+ */
+private fun ArenaState.Combat.holyShieldDefenderUserId(): String? {
+    val abilityRoll = combatActionState as? CombatActionState.AbilityRoll ?: return null
+    val isHolyShieldRoll = abilityRoll.action is AbilityActionState.Passive.HolyShield
+    return if (isHolyShieldRoll) abilityRoll.defenderUserId else null
 }
 
 /** The player occupying [seatUserId], or null for an empty seat. */

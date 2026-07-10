@@ -230,13 +230,6 @@ class CombatAnimationCueTest {
     }
 
     @Test
-    fun `Given a Killing Momentum message with no known attacker, then it has no cue`() {
-        val message = ArenaMessageState.KillingMomentum(id = MESSAGE_ID, attackerUserId = null)
-
-        assertNull(actual = message.combatAnimationCue)
-    }
-
-    @Test
     fun `Given a Dodge without an armor increase, then only the dodger flourishes`() {
         val cue = dodgeMessage(didArmorIncrease = false).combatAnimationCue
 
@@ -255,14 +248,6 @@ class CombatAnimationCueTest {
             expected = AvatarGesture.DodgeBrace,
             actual = cue?.gestureFor(userId = DEFENDER_ID),
         )
-    }
-
-    @Test
-    fun `Given a Dodge with no known dodger, then it has no cue`() {
-        val message =
-            ArenaMessageState.Dodge(id = MESSAGE_ID, didArmorIncrease = true, dodgerUserId = null)
-
-        assertNull(actual = message.combatAnimationCue)
     }
 
     @Test
@@ -376,14 +361,6 @@ class CombatAnimationCueTest {
                 ),
             actual = cue,
         )
-    }
-
-    // TODO: Delete
-    @Test
-    fun `Given a Teleport with no known Mage, then it has no cue`() {
-        val message = ArenaMessageState.Teleport.Trigger(id = MESSAGE_ID, mageUserId = null)
-
-        assertNull(actual = message.combatAnimationCue)
     }
 
     @Test

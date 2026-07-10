@@ -154,7 +154,7 @@ sealed interface CombatAnimationCue {
      * opens beside them ([TeleportPhase.Open]) and churns while the roll-off is made
      * ([TeleportPhase.Hold]); on the resolving roll ([TeleportPhase.Resolve]) the Mage either slips
      * through the portal and vanishes before reappearing when [didEscape] is true, or lunges for a
-     * portal that snaps shut too soon and the scene greys out when it is false. [didEscape] is null
+     * portal that snaps shut too soon and the scene grays out when it is false. [didEscape] is null
      * until the roll resolves. [mageUserId] is the defender of the armor-break roll that preceded
      * this, read the same way Mirror Image finds its Illusionist; null only when no such roll is on
      * record, in which case no cue is emitted.
@@ -282,22 +282,14 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                 )
 
             is ArenaMessageState.KillingMomentum ->
-                if (attackerUserId != null) {
-                    CombatAnimationCue.KillingMomentum(id = id, attackerUserId = attackerUserId)
-                } else {
-                    null
-                }
+                CombatAnimationCue.KillingMomentum(id = id, attackerUserId = attackerUserId)
 
             is ArenaMessageState.Dodge ->
-                if (dodgerUserId != null) {
-                    CombatAnimationCue.Dodge(
-                        id = id,
-                        dodgerUserId = dodgerUserId,
-                        didArmorIncrease = didArmorIncrease,
-                    )
-                } else {
-                    null
-                }
+                CombatAnimationCue.Dodge(
+                    id = id,
+                    dodgerUserId = dodgerUserId,
+                    didArmorIncrease = didArmorIncrease,
+                )
 
             is ArenaMessageState.AllIn ->
                 CombatAnimationCue.AllIn(id = id, gamblerUserId = gamblerUserId, outcome = outcome)

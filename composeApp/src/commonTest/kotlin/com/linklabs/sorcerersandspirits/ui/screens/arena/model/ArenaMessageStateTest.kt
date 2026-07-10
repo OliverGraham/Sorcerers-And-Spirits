@@ -52,7 +52,10 @@ class ArenaMessageStateTest {
         val states =
             listOf(
                     incomingNormalRoll(id = "roll", type = NormalRollMessageType.Knockout),
-                    IncomingArenaMessage(id = "trigger", message = ArenaMessage.KillingMomentum),
+                    IncomingArenaMessage(
+                        id = "trigger",
+                        message = ArenaMessage.KillingMomentum(attackerUserId = ATTACKER_ID),
+                    ),
                 )
                 .toStates(participants = participants)
 
@@ -70,7 +73,8 @@ class ArenaMessageStateTest {
                     incomingNormalRoll(id = "roll", type = NormalRollMessageType.ArmorClassMiss),
                     IncomingArenaMessage(
                         id = "trigger",
-                        message = ArenaMessage.Dodge(didArmorIncrease = true),
+                        message =
+                            ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = DEFENDER_ID),
                     ),
                 )
                 .toStates(participants = participants)
@@ -82,18 +86,6 @@ class ArenaMessageStateTest {
                     didArmorIncrease = true,
                     dodgerUserId = DEFENDER_ID,
                 ),
-            actual = states.last(),
-        )
-    }
-
-    @Test
-    fun `Given a trigger with no roll before it, then it carries no actor`() {
-        val states =
-            listOf(IncomingArenaMessage(id = "trigger", message = ArenaMessage.KillingMomentum))
-                .toStates(participants = participants)
-
-        assertEquals(
-            expected = ArenaMessageState.KillingMomentum(id = "trigger", attackerUserId = null),
             actual = states.last(),
         )
     }

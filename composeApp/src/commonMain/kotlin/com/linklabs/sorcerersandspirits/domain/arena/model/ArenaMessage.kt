@@ -26,16 +26,20 @@ sealed interface ArenaMessage {
         val type: NormalRollMessageType,
     ) : ArenaMessage
 
-    data object KillingMomentum : ArenaMessage
+    data class KillingMomentum(val attackerUserId: String) : ArenaMessage
 
-    data class Dodge(val didArmorIncrease: Boolean) : ArenaMessage
+    data class Dodge(val didArmorIncrease: Boolean, val dodgerUserId: String) : ArenaMessage
 
     sealed interface Teleport : ArenaMessage {
-        data object Trigger : Teleport
+        val mageUserId: String
 
-        data class Roll(val userId: String, val singleDie: Int) : Teleport
+        data class Trigger(override val mageUserId: String) : Teleport
 
-        data class Result(val didDefenderEscape: Boolean) : Teleport
+        data class Roll(override val mageUserId: String, val userId: String, val singleDie: Int) :
+            Teleport
+
+        data class Result(override val mageUserId: String, val didDefenderEscape: Boolean) :
+            Teleport
     }
 
     sealed interface LuckyCoin : ArenaMessage {

@@ -54,26 +54,42 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = KILLING_MOMENTUM)
-    data class KillingMomentum(override val id: String) : ArenaMessageEntity
+    data class KillingMomentum(override val id: String, val attackerUserId: String) :
+        ArenaMessageEntity
 
     @Serializable
     @SerialName(value = DODGE)
-    data class Dodge(override val id: String, val didArmorIncrease: Boolean) : ArenaMessageEntity
+    data class Dodge(
+        override val id: String,
+        val didArmorIncrease: Boolean,
+        val dodgerUserId: String,
+    ) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = TELEPORT)
     sealed interface Teleport : ArenaMessageEntity {
+        val mageUserId: String
+
         @Serializable
         @SerialName(value = TELEPORT_TRIGGER)
-        data class Trigger(override val id: String) : Teleport
+        data class Trigger(override val id: String, override val mageUserId: String) : Teleport
 
         @Serializable
         @SerialName(value = TELEPORT_ROLL)
-        data class Roll(override val id: String, val userId: String, val singleDie: Int) : Teleport
+        data class Roll(
+            override val id: String,
+            override val mageUserId: String,
+            val userId: String,
+            val singleDie: Int,
+        ) : Teleport
 
         @Serializable
         @SerialName(value = TELEPORT_RESULT)
-        data class Result(override val id: String, val didDefenderEscape: Boolean) : Teleport
+        data class Result(
+            override val id: String,
+            override val mageUserId: String,
+            val didDefenderEscape: Boolean,
+        ) : Teleport
     }
 
     @Serializable
@@ -346,17 +362,27 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     type = messageType,
                 )
 
-            is ArenaMessageEntity.KillingMomentum -> ArenaMessage.KillingMomentum
+            is ArenaMessageEntity.KillingMomentum ->
+                ArenaMessage.KillingMomentum(attackerUserId = attackerUserId)
 
-            is ArenaMessageEntity.Dodge -> ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease)
+            is ArenaMessageEntity.Dodge ->
+                ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease, dodgerUserId = dodgerUserId)
 
-            is ArenaMessageEntity.Teleport.Trigger -> ArenaMessage.Teleport.Trigger
+            is ArenaMessageEntity.Teleport.Trigger ->
+                ArenaMessage.Teleport.Trigger(mageUserId = mageUserId)
 
             is ArenaMessageEntity.Teleport.Roll ->
-                ArenaMessage.Teleport.Roll(userId = userId, singleDie = singleDie)
+                ArenaMessage.Teleport.Roll(
+                    userId = userId,
+                    singleDie = singleDie,
+                    mageUserId = mageUserId,
+                )
 
             is ArenaMessageEntity.Teleport.Result ->
-                ArenaMessage.Teleport.Result(didDefenderEscape = didDefenderEscape)
+                ArenaMessage.Teleport.Result(
+                    didDefenderEscape = didDefenderEscape,
+                    mageUserId = mageUserId,
+                )
 
             is ArenaMessageEntity.LuckyCoin.Trigger -> ArenaMessage.LuckyCoin.Trigger
 
@@ -514,18 +540,33 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 messageType = type,
             )
 
-        is ArenaMessage.KillingMomentum -> ArenaMessageEntity.KillingMomentum(id = id)
+        is ArenaMessage.KillingMomentum ->
+            ArenaMessageEntity.KillingMomentum(id = id, attackerUserId = attackerUserId)
 
         is ArenaMessage.Dodge ->
-            ArenaMessageEntity.Dodge(id = id, didArmorIncrease = didArmorIncrease)
+            ArenaMessageEntity.Dodge(
+                id = id,
+                didArmorIncrease = didArmorIncrease,
+                dodgerUserId = dodgerUserId,
+            )
 
-        is ArenaMessage.Teleport.Trigger -> ArenaMessageEntity.Teleport.Trigger(id = id)
+        is ArenaMessage.Teleport.Trigger ->
+            ArenaMessageEntity.Teleport.Trigger(id = id, mageUserId = mageUserId)
 
         is ArenaMessage.Teleport.Roll ->
-            ArenaMessageEntity.Teleport.Roll(id = id, userId = userId, singleDie = singleDie)
+            ArenaMessageEntity.Teleport.Roll(
+                id = id,
+                userId = userId,
+                singleDie = singleDie,
+                mageUserId = mageUserId,
+            )
 
         is ArenaMessage.Teleport.Result ->
-            ArenaMessageEntity.Teleport.Result(id = id, didDefenderEscape = didDefenderEscape)
+            ArenaMessageEntity.Teleport.Result(
+                id = id,
+                didDefenderEscape = didDefenderEscape,
+                mageUserId = mageUserId,
+            )
 
         is ArenaMessage.LuckyCoin.Trigger -> ArenaMessageEntity.LuckyCoin.Trigger(id = id)
 

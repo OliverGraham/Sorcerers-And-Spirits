@@ -58,7 +58,7 @@ sealed interface ArenaMessageState {
      * that earned the momentum; null when that roll is no longer in the log.
      */
     @Immutable
-    data class KillingMomentum(override val id: String, val attackerUserId: String?) :
+    data class KillingMomentum(override val id: String, val attackerUserId: String) :
         ArenaMessageState
 
     /**
@@ -69,7 +69,7 @@ sealed interface ArenaMessageState {
     data class Dodge(
         override val id: String,
         val didArmorIncrease: Boolean,
-        val dodgerUserId: String?,
+        val dodgerUserId: String,
     ) : ArenaMessageState
 
     @Immutable
@@ -79,15 +79,15 @@ sealed interface ArenaMessageState {
          * the armor-break roll that preceded this trigger (SS-211), the same way Mirror Image finds
          * its Illusionist; null only when no such roll is on record. // TODO: make non-nullable
          */
-        val mageUserId: String?
+        val mageUserId: String
 
         @Immutable
-        data class Trigger(override val id: String, override val mageUserId: String?) : Teleport
+        data class Trigger(override val id: String, override val mageUserId: String) : Teleport
 
         @Immutable
         data class Roll(
             override val id: String,
-            override val mageUserId: String?,
+            override val mageUserId: String,
             val playerName: String,
             val singleDie: Int,
         ) : Teleport
@@ -95,7 +95,7 @@ sealed interface ArenaMessageState {
         @Immutable
         data class Result(
             override val id: String,
-            override val mageUserId: String?,
+            override val mageUserId: String,
             val didDefenderEscape: Boolean,
         ) : Teleport
     }
@@ -434,7 +434,7 @@ private fun ArenaMessage.toState(
             ArenaMessageState.Dodge(
                 id = id,
                 didArmorIncrease = didArmorIncrease,
-                dodgerUserId = lastNormalRoll?.defenderUserId,
+                dodgerUserId = dodgerUserId,
             )
 
         is ArenaMessage.Encore.Trigger -> ArenaMessageState.Encore.Trigger(id = id)
@@ -477,10 +477,7 @@ private fun ArenaMessage.toState(
             )
 
         is ArenaMessage.KillingMomentum ->
-            ArenaMessageState.KillingMomentum(
-                id = id,
-                attackerUserId = lastNormalRoll?.attackerUserId,
-            )
+            ArenaMessageState.KillingMomentum(id = id, attackerUserId = attackerUserId)
 
         is ArenaMessage.LuckyCoin.Flip ->
             ArenaMessageState.LuckyCoin.Flip(
@@ -629,20 +626,20 @@ private fun ArenaMessage.toState(
         is ArenaMessage.Teleport.Result ->
             ArenaMessageState.Teleport.Result(
                 id = id,
-                mageUserId = lastNormalRoll?.defenderUserId,
+                mageUserId = mageUserId,
                 didDefenderEscape = didDefenderEscape,
             )
 
         is ArenaMessage.Teleport.Roll ->
             ArenaMessageState.Teleport.Roll(
                 id = id,
-                mageUserId = lastNormalRoll?.defenderUserId,
+                mageUserId = mageUserId,
                 playerName = participants.resolveClassName(userId = userId),
                 singleDie = singleDie,
             )
 
         is ArenaMessage.Teleport.Trigger ->
-            ArenaMessageState.Teleport.Trigger(id = id, mageUserId = lastNormalRoll?.defenderUserId)
+            ArenaMessageState.Teleport.Trigger(id = id, mageUserId = mageUserId)
 
         is ArenaMessage.Doubles ->
             ArenaMessageState.Doubles(

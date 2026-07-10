@@ -335,6 +335,76 @@ class CombatAnimationCueTest {
             )
             .combatAnimationCue
 
+    @Test
+    fun `Given a Teleport trigger, then the portal opens with no seat gesture`() {
+        val cue =
+            ArenaMessageState.Teleport.Trigger(id = MESSAGE_ID, mageUserId = DEFENDER_ID)
+                .combatAnimationCue
+
+        assertEquals(
+            expected =
+                CombatAnimationCue.Teleport(
+                    id = MESSAGE_ID,
+                    mageUserId = DEFENDER_ID,
+                    phase = TeleportPhase.Open,
+                    didEscape = null,
+                ),
+            actual = cue,
+        )
+        assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
+        assertNull(actual = cue?.collapsingUserId)
+    }
+
+    @Test
+    fun `Given a Teleport roll-off die, then the portal holds without re-opening`() {
+        val cue =
+            ArenaMessageState.Teleport.Roll(
+                    id = MESSAGE_ID,
+                    mageUserId = DEFENDER_ID,
+                    playerName = "Mage",
+                    singleDie = 5,
+                )
+                .combatAnimationCue
+
+        assertEquals(
+            expected =
+                CombatAnimationCue.Teleport(
+                    id = MESSAGE_ID,
+                    mageUserId = DEFENDER_ID,
+                    phase = TeleportPhase.Hold,
+                    didEscape = null,
+                ),
+            actual = cue,
+        )
+    }
+
+    // TODO: Delete
+    @Test
+    fun `Given a Teleport with no known Mage, then it has no cue`() {
+        val message = ArenaMessageState.Teleport.Trigger(id = MESSAGE_ID, mageUserId = null)
+
+        assertNull(actual = message.combatAnimationCue)
+    }
+
+    @Test
+    fun `Given a resolved Teleport, then the cue carries the escape outcome and never collapses`() {
+        val escaped = teleportResultCue(didDefenderEscape = true)
+        val failed = teleportResultCue(didDefenderEscape = false)
+
+        assertEquals(expected = true, actual = (escaped as? CombatAnimationCue.Teleport)?.didEscape)
+        assertEquals(expected = false, actual = (failed as? CombatAnimationCue.Teleport)?.didEscape)
+        assertNull(actual = escaped?.collapsingUserId)
+        assertNull(actual = failed?.collapsingUserId)
+    }
+
+    private fun teleportResultCue(didDefenderEscape: Boolean) =
+        ArenaMessageState.Teleport.Result(
+                id = MESSAGE_ID,
+                mageUserId = DEFENDER_ID,
+                didDefenderEscape = didDefenderEscape,
+            )
+            .combatAnimationCue
+
     private fun normalRollMessage(type: NormalRollMessageType) =
         ArenaMessageState.NormalRoll(
             id = MESSAGE_ID,

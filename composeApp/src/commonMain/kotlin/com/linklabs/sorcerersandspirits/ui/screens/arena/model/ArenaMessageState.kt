@@ -74,14 +74,30 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Teleport : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String) : Teleport
+        /**
+         * The Mage escaping the attack, so the portal animation anchors to their seat. Read from
+         * the armor-break roll that preceded this trigger (SS-211), the same way Mirror Image finds
+         * its Illusionist; null only when no such roll is on record. // TODO: make non-nullable
+         */
+        val mageUserId: String?
 
         @Immutable
-        data class Roll(override val id: String, val playerName: String, val singleDie: Int) :
-            Teleport
+        data class Trigger(override val id: String, override val mageUserId: String?) : Teleport
 
         @Immutable
-        data class Result(override val id: String, val didDefenderEscape: Boolean) : Teleport
+        data class Roll(
+            override val id: String,
+            override val mageUserId: String?,
+            val playerName: String,
+            val singleDie: Int,
+        ) : Teleport
+
+        @Immutable
+        data class Result(
+            override val id: String,
+            override val mageUserId: String?,
+            val didDefenderEscape: Boolean,
+        ) : Teleport
     }
 
     @Immutable
@@ -611,16 +627,22 @@ private fun ArenaMessage.toState(
             )
 
         is ArenaMessage.Teleport.Result ->
-            ArenaMessageState.Teleport.Result(id = id, didDefenderEscape = didDefenderEscape)
+            ArenaMessageState.Teleport.Result(
+                id = id,
+                mageUserId = lastNormalRoll?.defenderUserId,
+                didDefenderEscape = didDefenderEscape,
+            )
 
         is ArenaMessage.Teleport.Roll ->
             ArenaMessageState.Teleport.Roll(
                 id = id,
+                mageUserId = lastNormalRoll?.defenderUserId,
                 playerName = participants.resolveClassName(userId = userId),
                 singleDie = singleDie,
             )
 
-        is ArenaMessage.Teleport.Trigger -> ArenaMessageState.Teleport.Trigger(id = id)
+        is ArenaMessage.Teleport.Trigger ->
+            ArenaMessageState.Teleport.Trigger(id = id, mageUserId = lastNormalRoll?.defenderUserId)
 
         is ArenaMessage.Doubles ->
             ArenaMessageState.Doubles(

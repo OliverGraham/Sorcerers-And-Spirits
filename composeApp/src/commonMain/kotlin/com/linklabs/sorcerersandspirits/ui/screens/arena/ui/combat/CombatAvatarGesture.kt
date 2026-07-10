@@ -47,6 +47,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.due
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.ALL_IN_SETTLE_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.ALL_IN_TOSS_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.THROW_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_BOLT_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_DASH_MILLIS
@@ -381,6 +383,7 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
         is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
         is CombatAnimationCue.PrepareAttack -> prepareAttackReactionDelayMillis()
         is CombatAnimationCue.Riposte -> RIPOSTE_STRIKE_MILLIS
+        is CombatAnimationCue.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
         else -> REACTION_DELAY_MILLIS
     }
 
@@ -391,6 +394,7 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
         CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
         CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
         CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
+        CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
         else -> REACTION_DELAY_MILLIS
     }
 
@@ -443,6 +447,9 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         is CombatAnimationCue.Impersonate -> 0L
 
         is CombatAnimationCue.MirrorImage -> mirrorImageBodyMillis()
+
+        is CombatAnimationCue.SpellPotency ->
+            MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS + FLINCH_HEAVY_BODY_MILLIS
     }
 
 /**

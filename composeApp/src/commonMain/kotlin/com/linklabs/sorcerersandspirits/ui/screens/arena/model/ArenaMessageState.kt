@@ -233,7 +233,9 @@ sealed interface ArenaMessageState {
     @Immutable
     data class SpellPotency(
         override val id: String,
+        val mageUserId: String,
         val mageName: String,
+        val mainTargetUserId: String,
         val mainTargetName: String,
         val mainDamage: Int,
         val splashDamage: Int,
@@ -591,7 +593,9 @@ private fun ArenaMessage.toState(
         is ArenaMessage.SpellPotency ->
             ArenaMessageState.SpellPotency(
                 id = id,
+                mageUserId = mageUserId,
                 mageName = participants.resolveClassName(userId = mageUserId),
+                mainTargetUserId = mainTargetUserId,
                 mainTargetName = participants.resolveClassName(userId = mainTargetUserId),
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,

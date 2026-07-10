@@ -133,6 +133,21 @@ sealed interface CombatAnimationCue {
         val phase: MirrorImagePhase,
         val outcome: NormalRollMessageType?,
     ) : CombatAnimationCue
+
+    /**
+     * The Mage's Spell Potency (SS-210): the amplified form of its normal-attack projectile
+     * (SS-198). A doubles roll fires the singular bolt [mainDamage] times at the main target and
+     * wraps it in a large area-of-effect (a Blizzard for Ice, etc.), while every other conscious
+     * opponent takes the splash off-stage. The element renders from [id] the same way the normal
+     * attack picks it, so the amplified cast reads as the same spell, scaled up.
+     */
+    @Immutable
+    data class SpellPotency(
+        override val id: String,
+        val mageUserId: String,
+        val mainTargetUserId: String,
+        val mainDamage: Int,
+    ) : CombatAnimationCue
 }
 
 /**
@@ -411,8 +426,15 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     null
                 }
 
-            // TODO(SS-198): Mage ability animations.
-            is ArenaMessageState.SpellPotency,
+            is ArenaMessageState.SpellPotency ->
+                CombatAnimationCue.SpellPotency(
+                    id = id,
+                    mageUserId = mageUserId,
+                    mainTargetUserId = mainTargetUserId,
+                    mainDamage = mainDamage,
+                )
+
+            // TODO(SS-211): Mage Teleport animation.
             is ArenaMessageState.Teleport -> null
 
             // TODO(SS-199): Paladin ability animations.
@@ -465,6 +487,8 @@ val CombatAnimationCue.collapsingUserId: String?
 
             is CombatAnimationCue.MirrorImage ->
                 if (outcome == NormalRollMessageType.Knockout) illusionistUserId else null
+
+            is CombatAnimationCue.SpellPotency -> null
         }
 
 /**
@@ -502,6 +526,21 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.Impersonate -> null
 
         is CombatAnimationCue.MirrorImage -> mirrorImageGestureFor(userId = userId)
+
+        is CombatAnimationCue.SpellPotency -> spellPotencyGestureFor(userId = userId)
+    }
+
+/**
+ * The Mage's Spell Potency (SS-210): the amplified projectiles and the area-of-effect are drawn by
+ * the effect overlay, so the Mage only casts behind them while the seated main target takes the
+ * barrage with a heavy flinch. The splashed opponents are off-stage head icons, animated separately
+ * (SS-214).
+ */
+private fun CombatAnimationCue.SpellPotency.spellPotencyGestureFor(userId: String): AvatarGesture? =
+    when (userId) {
+        mageUserId -> AvatarGesture.Cast
+        mainTargetUserId -> AvatarGesture.FlinchHeavy
+        else -> null
     }
 
 /**
@@ -632,6 +671,7 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
         CharacterClassType.Duelist -> duelistStrike()
         CharacterClassType.Necromancer -> AvatarGesture.Cast
         CharacterClassType.Bard -> AvatarGesture.Cast
+        CharacterClassType.Mage -> AvatarGesture.Cast
         else -> genericStrike()
     }
 

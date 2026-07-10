@@ -32,6 +32,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerLuckyCoinThrowDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.gamblerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.illusionistImpersonateDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.mageNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.mageSpellPotencyDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerSummonMinionDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
@@ -177,6 +179,9 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
         is CombatAnimationCue.Impersonate -> illusionistImpersonateDurationMillis()
 
         is CombatAnimationCue.MirrorImage -> 0L
+
+        is CombatAnimationCue.SpellPotency ->
+            mageSpellPotencyDurationMillis(mainDamage = mainDamage)
     }
 
 /**
@@ -195,6 +200,7 @@ private fun normalAttackOverlayDurationMillis(
         CharacterClassType.Duelist -> duelistNormalAttackDurationMillis()
         CharacterClassType.Necromancer -> necromancerNormalAttackDurationMillis()
         CharacterClassType.Bard -> bardNormalAttackDurationMillis()
+        CharacterClassType.Mage -> mageNormalAttackDurationMillis(outcome = outcome)
         else -> 0L
     }
 

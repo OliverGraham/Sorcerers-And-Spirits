@@ -255,15 +255,46 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 ### SS-198 — Mage normal-attack animation
 
 - [ ] Not completed
-- **Goal:** TBD — attacker-side normal-attack animation set to be described.
+- **Goal:** The Mage's normal attack is a cast projectile with several elemental variations, picked
+  at random per attack (deterministic from the cue id). Each is a focused, subtle projectile that
+  flies from the Mage to the target: an **Icebolt** (ice bolt with a snowflake/ice trail, shatter
+  on hit), a **Lightningbolt** (a single arc of lightning), and a **Fireball** (a flaming ball that
+  explodes on hit). Three elements this pass; the framework is built to grow toward six.
+- **Tie to SS-210:** the normal attack and Spell Potency never co-occur — the domain resolves a
+  Mage's doubles roll as Spell Potency and returns without a `NormalRoll` message, so a non-doubles
+  attack shows the focused projectile (SS-198) and a doubles attack shows the amplified AoE
+  (SS-210). SS-210 reuses the same element renderers, amplified.
+- **Done:** the `mage/` overlay package, the `MageSpellElement` enum + a deterministic per-cue-id
+  element picker, and all three focused projectiles — Icebolt, Lightningbolt, Fireball — each with
+  its own trail, head, and impact, dispatched through element-agnostic draw seams
+  (`drawMageBolt`/`drawMageImpact`/`drawMageAtmosphere`). Adding elements 4–6 is one enum entry plus
+  its draw branches.
 - **Cue sources:** `ArenaMessageState.NormalRoll` (attacker side).
 - **Parent:** SS-191. Abilities split into SS-210 (Spell Potency) and SS-211 (Teleport).
 
 ### SS-210 — Mage Spell Potency animation
 
 - [ ] Not completed
-- **Goal:** TBD — animation to be described. Offensive ability: roll doubles to pass armor or deal
-  damage → dice-total damage to target and half to all other opponents, then end turn.
+- **Goal:** The amplified version of the SS-198 normal-attack projectile. A Mage's doubles roll
+  triggers Spell Potency (dice-total to the main target, half splashing to every other conscious
+  opponent, then end turn). The amplified cast incorporates the focused projectile — the singular
+  bolt is fired **X** times at the main target, where **X** is the total roll (`mainDamage`) — and
+  wraps it in a large, extravagant area-of-effect: for Ice, a **Blizzard** — a swirling, dome-shaped
+  cloud of icy wind over the arena. Lightning gets a **Thunderstorm** (dark cloud with lightning),
+  Fire an **Inferno** (pillars of fire, red glow).
+- **Done:** the `CombatAnimationCue.SpellPotency` cue (mage + main-target seats, `mainDamage`
+  copies), all three amplified AoEs — Blizzard, Thunderstorm, Inferno — each filling the whole
+  battlefield centered on the **opponent** (never the Mage), and the Mage-Cast / main-target-flinch
+  seated gestures wired into the sequencer, reaction-delay, and duration registries. The barrage
+  fires in staggered **waves** (up to 4 bolts at once), gathered across a horizontal band at the
+  Mage and blasted across the opponent, each bolt bowed sideways so the volley reads alive rather
+  than single-file.
+- **Splash HP:** decrementing the splashed opponents' class-head icons is **SS-214**.
+- **Known first-pass gap:** the main target plays a heavy flinch, not a collapse, even when the
+  cast is lethal — the domain resolves Spell Potency without a `NormalRoll`/knockout message, so the
+  cue carries no outcome and `collapsingUserId` is null. A lethal cast therefore morphs the target
+  straight to a head icon rather than collapsing in-seat. Revisit alongside SS-214 if it reads
+  poorly on-device.
 - **Cue sources:** `ArenaMessageState.SpellPotency`.
 - **Parent:** SS-191. Split out of SS-198.
 
@@ -291,6 +322,25 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   also stops Duelist's Prepare Attack).
 - **Cue sources:** `ArenaMessageState.HolyShield.*`.
 - **Parent:** SS-191. Split out of SS-199.
+
+### SS-214 — Spell Potency splash: decrement HP off the class-head icons
+
+- [ ] Not completed
+- **Goal:** When Spell Potency triggers (SS-210), the main target is on the combat stage and reacts
+  there, but the half-damage **splash** lands on every *other* conscious opponent — who are shown as
+  **class-head icons**, not seated avatars. Those splashed opponents need a visible hit-point
+  decrement animation on their head icons (only the conscious ones — a knocked-out player takes no
+  splash and should not animate), so a multiplayer Spell Potency reads as hitting the whole table,
+  not just the one seated target.
+- **Context:** `ArenaMessage.SpellPotency` already carries `mageUserId`, `mainTargetUserId`,
+  `mainDamage`, and `splashDamage`; the splash targets are "every conscious player except the mage
+  and the main target" (see `SpellPotencyRoll.splashTargets`). The animation needs those userIds and
+  their pre/post health to drive per-icon decrement effects. Decide whether to thread the splashed
+  userIds through `ArenaMessageState.SpellPotency` and the `SpellPotency` cue, or derive them at the
+  head-icon layer from the health diff.
+- **Related:** SS-210 (Spell Potency animation), the class-head icon UI (`ClassHeadIcon.kt` /
+  `CombatClassIcons.kt`).
+- **Parent:** SS-191.
 
 ---
 

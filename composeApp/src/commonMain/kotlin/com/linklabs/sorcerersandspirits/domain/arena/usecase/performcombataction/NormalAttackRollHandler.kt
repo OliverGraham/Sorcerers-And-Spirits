@@ -244,13 +244,10 @@ internal class NormalAttackRollHandler(
     }
 
     private fun CombatMutator.getImpersonatedCharacterTypeOrNone(): CharacterClassType {
-        if (attacker.type != CharacterClassType.Illusionist) return CharacterClassType.None
+        val offensiveAbility = attacker.offensiveAbility
+        if (offensiveAbility !is OffensiveAbility.Impersonate) return CharacterClassType.None
 
-        if (attacker.offensiveAbility.effective is OffensiveAbility.None) {
-            return CharacterClassType.None
-        }
-
-        return attacker.type
+        return offensiveAbility.impersonatedClassType
     }
 
     companion object {

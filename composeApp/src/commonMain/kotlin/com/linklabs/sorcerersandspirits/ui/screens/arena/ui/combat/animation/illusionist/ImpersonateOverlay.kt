@@ -39,6 +39,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.visibleAvatarWidth
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -176,7 +177,7 @@ private suspend fun ImpersonateEffectState.play(scene: ImpersonateScene) {
 }
 
 private fun impersonateScene(bounds: Rect): ImpersonateScene {
-    val glassRadiusX = bounds.width * 0.40f
+    val glassRadiusX = bounds.visibleAvatarWidth() * 0.30f
     val glassRadiusY = glassRadiusX * 1.30f
     val rimWidth = glassRadiusX * 0.16f
     val glassCenter = Offset(x = bounds.center.x, y = bounds.center.y - bounds.height * 0.08f)

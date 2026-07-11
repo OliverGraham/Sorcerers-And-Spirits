@@ -40,6 +40,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.rememberAvatarGesture
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlin.math.PI
@@ -64,12 +65,14 @@ private const val GRAY_FADE_MILLIS = 460
 private const val SPIRAL_TURNS = 1.35f
 
 /**
- * How big the portal opens, off the avatar width, and how far it floats above the head, off its own
- * height.
+ * The portal opens beside the Mage rather than over their head: [PORTAL_RADIUS_X_FRACTION] and
+ * [PORTAL_RADIUS_Y_FRACTION] size it off the visible avatar width, [PORTAL_SIDE_OFFSET_FRACTION]
+ * pushes it clear of the body, and [PORTAL_HEIGHT_FRACTION] seats it at head height off the bounds.
  */
-private const val PORTAL_RADIUS_X_FRACTION = 0.5f
-private const val PORTAL_RADIUS_Y_FRACTION = 0.6f
-private const val PORTAL_LIFT_FRACTION = 0.55f
+private const val PORTAL_RADIUS_X_FRACTION = 0.3f
+private const val PORTAL_RADIUS_Y_FRACTION = 0.36f
+private const val PORTAL_SIDE_OFFSET_FRACTION = 0.52f
+private const val PORTAL_HEIGHT_FRACTION = 0.3f
 
 private const val GRAY_WASH_PEAK_ALPHA = 0.55f
 
@@ -103,7 +106,7 @@ internal data class TeleportScene(val center: Offset, val radiusX: Float, val ra
 
 /**
  * The Mage's Teleport portal (SS-211). The instant the Mage's armor is passed a swirling blue
- * portal tears open above them and churns endlessly through the roll-off. On the resolving roll it
+ * portal tears open beside them and churns endlessly through the roll-off. On the resolving roll it
  * either flashes and closes behind the escaping Mage, or — on a failed escape — snaps shut too soon
  * and washes the scene gray. Anchored to the Mage's measured seat via [avatarBoundsFor]; sits out
  * any cue that is not a Teleport.
@@ -149,10 +152,14 @@ internal fun teleportOverlayDurationMillis(phase: TeleportPhase, didEscape: Bool
     }
 
 private fun teleportScene(mageBounds: Rect): TeleportScene {
-    val radiusX = mageBounds.width * PORTAL_RADIUS_X_FRACTION
-    val radiusY = mageBounds.width * PORTAL_RADIUS_Y_FRACTION
-    val liftPx = radiusY * PORTAL_LIFT_FRACTION
-    val center = Offset(x = mageBounds.center.x, y = mageBounds.top - liftPx)
+    val avatarWidth = mageBounds.visibleAvatarWidth()
+    val radiusX = avatarWidth * PORTAL_RADIUS_X_FRACTION
+    val radiusY = avatarWidth * PORTAL_RADIUS_Y_FRACTION
+    val center =
+        Offset(
+            x = mageBounds.center.x + avatarWidth * PORTAL_SIDE_OFFSET_FRACTION,
+            y = mageBounds.top + mageBounds.height * PORTAL_HEIGHT_FRACTION,
+        )
     return TeleportScene(center = center, radiusX = radiusX, radiusY = radiusY)
 }
 
@@ -314,9 +321,9 @@ private fun DrawScope.drawPortal(scene: TeleportScene, open: Float, swirl: Float
                 Brush.radialGradient(
                     colors = listOf(PORTAL_GLOW.copy(alpha = 0.55f), Color.Transparent),
                     center = center,
-                    radius = radius * 1.7f,
+                    radius = radius * 1.3f,
                 ),
-            radius = radius * 1.7f,
+            radius = radius * 1.3f,
             center = center,
         )
         drawCircle(

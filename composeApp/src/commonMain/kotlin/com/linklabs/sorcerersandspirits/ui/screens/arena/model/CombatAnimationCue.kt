@@ -633,9 +633,12 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
  * The Paladin's Holy Shield (SS-212): the shield and its light are drawn entirely by the effect
  * overlay, so the Paladin holds still behind them through the raise and the prayer roll. Only a
  * failed prayer moves the body — the Paladin folds into the normal knockout collapse as the shield
- * topples.
+ * topples. On Wrath the struck attacker takes a heavy shake as the divine blast lands on them.
  */
 private fun CombatAnimationCue.HolyShield.holyShieldGestureFor(userId: String): AvatarGesture? {
+    val isSmoteAttacker = phase == HolyShieldPhase.Wrath && userId == attackerUserId
+    if (isSmoteAttacker) return AvatarGesture.FlinchHeavy
+
     if (userId != paladinUserId) return null
     val didFailPrayer = phase == HolyShieldPhase.Pray && didSurvive == false
     return if (didFailPrayer) AvatarGesture.Collapse else null

@@ -186,6 +186,26 @@ class CombatAnimationCueTest {
     }
 
     @Test
+    fun `Given a Holy Shield Wrath, then only the struck attacker shakes`() {
+        val cue =
+            CombatAnimationCue.HolyShield(
+                id = MESSAGE_ID,
+                paladinUserId = DEFENDER_ID,
+                phase = HolyShieldPhase.Wrath,
+                didSurvive = true,
+                attackerUserId = ATTACKER_ID,
+                wrathIntensity = 5,
+            )
+
+        assertEquals(
+            expected = AvatarGesture.FlinchHeavy,
+            actual = cue.gestureFor(userId = ATTACKER_ID),
+        )
+        assertNull(actual = cue.gestureFor(userId = DEFENDER_ID))
+        assertNull(actual = cue.gestureFor(userId = SPECTATOR_ID))
+    }
+
+    @Test
     fun `Given a Mage normal attack, then the Mage casts and the defender reacts`() {
         val cue = mageAttackCue(outcome = NormalRollMessageType.Damage)
 

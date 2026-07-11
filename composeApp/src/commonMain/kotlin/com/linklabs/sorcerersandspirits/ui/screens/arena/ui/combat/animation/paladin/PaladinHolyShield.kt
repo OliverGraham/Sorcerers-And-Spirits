@@ -46,6 +46,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.visibleAvatarWidth
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -69,6 +70,19 @@ private const val WRATH_GONE_MILLIS = 200
 private const val WRATH_BLAST_RISE_MILLIS = 240
 private const val WRATH_BLAST_HOLD_MILLIS = 220
 private const val WRATH_BLAST_FADE_MILLIS = 380
+
+/** When in the Wrath choreography the blast lands, so the struck attacker shakes on impact. */
+internal const val HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS =
+    WRATH_ROLLUP_MILLIS + WRATH_GONE_MILLIS + WRATH_BLAST_RISE_MILLIS
+
+/**
+ * The held shield's placement off the Paladin: a compact heater carried to one side rather than
+ * covering the whole body, sized off the visible avatar width and its bounds height.
+ */
+private const val SHIELD_HALF_WIDTH_FRACTION = 0.3f
+private const val SHIELD_HEIGHT_FRACTION = 0.46f
+private const val SHIELD_SIDE_OFFSET_FRACTION = 0.42f
+private const val SHIELD_TOP_FRACTION = 0.24f
 
 /** How far the failed shield topples off its bottom point, in degrees. */
 private const val TOPPLE_DEGREES = 84f
@@ -390,7 +404,7 @@ private fun DrawScope.drawHolyShield(state: HolyShieldState, plusOneLayout: Text
     val beam = state.holyBeam.value
     if (beam > 0f) {
         drawHolyBeam(
-            geometry = geometry,
+            geometry = beamGeometry(paladin = scene.paladin),
             beam = beam,
             rollUp = state.beamRollUp.value,
             shimmer = state.shimmer.value,
@@ -421,13 +435,15 @@ private fun DrawScope.drawHolyShield(state: HolyShieldState, plusOneLayout: Text
 }
 
 /**
- * The fixed geometry of one shield: an ornate heater covering the upper body of the Paladin seat.
+ * The fixed geometry of one shield: a compact ornate heater held to one side of the Paladin seat,
+ * as a shield carried on the arm rather than a wall drawn over the whole body.
  */
 private fun shieldGeometry(paladin: Rect): ShieldGeometry {
-    val halfWidth = paladin.width * 0.48f
-    val top = paladin.top + paladin.height * 0.07f
-    val height = paladin.height * 0.76f
-    val centerX = paladin.center.x
+    val avatarWidth = paladin.visibleAvatarWidth()
+    val halfWidth = avatarWidth * SHIELD_HALF_WIDTH_FRACTION
+    val top = paladin.top + paladin.height * SHIELD_TOP_FRACTION
+    val height = paladin.height * SHIELD_HEIGHT_FRACTION
+    val centerX = paladin.center.x - avatarWidth * SHIELD_SIDE_OFFSET_FRACTION
     return ShieldGeometry(
         centerX = centerX,
         top = top,
@@ -447,20 +463,37 @@ private data class ShieldGeometry(
     val tip: Offset,
 )
 
+/**
+ * The saving beam's column, centered on the Paladin rather than the side-held shield, so the holy
+ * light lands on the character it revives.
+ */
+private fun beamGeometry(paladin: Rect): ShieldGeometry {
+    val centerX = paladin.center.x
+    return ShieldGeometry(
+        centerX = centerX,
+        top = paladin.top,
+        height = paladin.height,
+        halfWidth = paladin.visibleAvatarWidth() * 0.5f,
+        center = Offset(x = centerX, y = paladin.top + paladin.height * 0.42f),
+        tip = Offset(x = centerX, y = paladin.top + paladin.height),
+    )
+}
+
 private fun DrawScope.drawStoneWash(paladin: Rect, amount: Float) {
+    val avatarWidth = paladin.visibleAvatarWidth()
     drawRoundRect(
         color = stoneGray.copy(alpha = amount * STONE_WASH_ALPHA),
-        topLeft = paladin.topLeft,
-        size = paladin.size,
-        cornerRadius = CornerRadius(x = paladin.width * 0.16f),
+        topLeft = Offset(x = paladin.center.x - avatarWidth / 2f, y = paladin.top),
+        size = Size(width = avatarWidth, height = paladin.height),
+        cornerRadius = CornerRadius(x = avatarWidth * 0.16f),
     )
 }
 
 /**
- * The beam of holy light shining down on the shield: a widening column from the heavens, a bright
- * pool where it meets the shield, drifting motes, and shimmering rays — all winding off [shimmer]
- * so it reads as endlessly alive. [rollUp] lifts the beam's foot toward the top, rolling it up to
- * the heavens during Wrath.
+ * The beam of holy light shining down on the Paladin: a widening column from the heavens, a bright
+ * pool where it meets them, drifting motes, and shimmering rays — all winding off [shimmer] so it
+ * reads as endlessly alive. [rollUp] lifts the beam's foot toward the top, rolling it up to the
+ * heavens during Wrath.
  */
 private fun DrawScope.drawHolyBeam(
     geometry: ShieldGeometry,
@@ -836,9 +869,10 @@ private fun heartPath(center: Offset, size: Float): Path =
  */
 private fun DrawScope.drawWrathBlast(attacker: Rect, blast: Float, intensity: Float) {
     val impact = attacker.center
+    val avatarWidth = attacker.visibleAvatarWidth()
     val topY = -attacker.height * 0.4f
     val columnHalfWidth =
-        attacker.width * lerp(start = 0.3f, stop = 0.7f, fraction = intensity) * blast
+        avatarWidth * lerp(start = 0.3f, stop = 0.7f, fraction = intensity) * blast
     val reach = lerp(start = 0.7f, stop = 1f, fraction = intensity)
 
     val columnPath =
@@ -864,8 +898,7 @@ private fun DrawScope.drawWrathBlast(attacker: Rect, blast: Float, intensity: Fl
             ),
     )
 
-    val burstRadius =
-        attacker.width * lerp(start = 0.55f, stop = 1.1f, fraction = intensity) * blast
+    val burstRadius = avatarWidth * lerp(start = 0.55f, stop = 1.1f, fraction = intensity) * blast
     drawCircle(
         brush =
             Brush.radialGradient(
@@ -891,7 +924,7 @@ private fun DrawScope.drawWrathBlast(attacker: Rect, blast: Float, intensity: Fl
             color = holyCore.copy(alpha = 0.6f * blast * intensity),
             start = impact,
             end = impact + Offset(x = cos(x = angle) * length, y = sin(x = angle) * length),
-            strokeWidth = attacker.width * 0.03f,
+            strokeWidth = avatarWidth * 0.03f,
         )
     }
 }

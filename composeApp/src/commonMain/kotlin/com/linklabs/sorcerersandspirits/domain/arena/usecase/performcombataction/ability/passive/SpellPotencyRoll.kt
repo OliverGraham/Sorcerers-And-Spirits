@@ -30,8 +30,8 @@ internal class SpellPotencyRoll(
                 diceTotal / abilityConfig.spellPotencySplashDivisor
             }
 
-        addSpellPotencyMessage(splashTargets = splashTargets, splashDamage = splashDamage)
         applyFullDamageToDefender()
+        addSpellPotencyMessage(splashTargets = splashTargets, splashDamage = splashDamage)
         applySplashDamage(splashTargets = splashTargets, splashDamage = splashDamage)
 
         if (!triggerHolyShieldIfApplicable()) {
@@ -71,6 +71,7 @@ internal class SpellPotencyRoll(
                     mainDamage = diceTotal,
                     splashDamage = splashDamage,
                     splashTargetUserIds = splashTargets.map { it.userId },
+                    isMainTargetKnockedOut = !defender.isConscious(),
                 )
         )
     }

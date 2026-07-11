@@ -195,6 +195,7 @@ private fun SpellPotencySplashPreview() {
                 mainDamage = 8,
                 splashDamage = 3,
                 splashTargetUserIds = headIconPlayers.map { it.userId },
+                isMainTargetKnockedOut = false,
             )
         }
     SorcerersAndSpiritsTheme {

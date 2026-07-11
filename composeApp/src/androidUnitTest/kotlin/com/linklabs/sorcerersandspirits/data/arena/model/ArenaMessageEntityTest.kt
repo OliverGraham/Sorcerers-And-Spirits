@@ -142,6 +142,7 @@ class ArenaMessageEntityTest {
                     mainDamage = 8,
                     splashDamage = 4,
                     splashTargetUserIds = listOf("rogue", "bard"),
+                    isMainTargetKnockedOut = true,
                 ),
                 ArenaMessage.HolyShield.Trigger(paladinUserId = "paladin"),
                 ArenaMessage.HolyShield.Prayer(
@@ -154,6 +155,7 @@ class ArenaMessageEntityTest {
                     paladinUserId = "paladin",
                     attackerUserId = "attacker",
                     singleDie = 4,
+                    isAttackerKnockedOut = true,
                 ),
                 ArenaMessage.AllIn(gamblerUserId = "gambler", singleDie = 1),
                 ArenaMessage.PrepareAttack(

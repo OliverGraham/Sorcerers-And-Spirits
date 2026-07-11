@@ -262,6 +262,7 @@ sealed interface ArenaMessageState {
         val mainDamage: Int,
         val splashDamage: Int,
         val splashTargetUserIds: List<String>,
+        val isMainTargetKnockedOut: Boolean,
     ) : ArenaMessageState
 
     @Immutable
@@ -288,6 +289,7 @@ sealed interface ArenaMessageState {
             val attackerUserId: String,
             val attackerName: String,
             val singleDie: Int,
+            val isAttackerKnockedOut: Boolean,
         ) : HolyShield
     }
 
@@ -432,6 +434,7 @@ private fun ArenaMessage.toState(
                 attackerUserId = attackerUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 singleDie = singleDie,
+                isAttackerKnockedOut = isAttackerKnockedOut,
             )
 
         is ArenaMessage.HolyShield.Prayer ->
@@ -593,6 +596,7 @@ private fun ArenaMessage.toState(
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,
                 splashTargetUserIds = splashTargetUserIds,
+                isMainTargetKnockedOut = isMainTargetKnockedOut,
             )
 
         is ArenaMessage.SummonMinion ->

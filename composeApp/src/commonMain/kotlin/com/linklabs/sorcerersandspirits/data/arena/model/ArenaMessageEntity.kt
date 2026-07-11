@@ -265,6 +265,7 @@ sealed interface ArenaMessageEntity {
         val mainDamage: Int,
         val splashDamage: Int,
         val splashTargetUserIds: List<String> = emptyList(),
+        val isMainTargetKnockedOut: Boolean,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -293,6 +294,7 @@ sealed interface ArenaMessageEntity {
             override val paladinUserId: String,
             val attackerUserId: String,
             val singleDie: Int,
+            val isAttackerKnockedOut: Boolean,
         ) : HolyShield
     }
 
@@ -531,6 +533,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     mainDamage = mainDamage,
                     splashDamage = splashDamage,
                     splashTargetUserIds = splashTargetUserIds,
+                    isMainTargetKnockedOut = isMainTargetKnockedOut,
                 )
 
             is ArenaMessageEntity.HolyShield.Trigger ->
@@ -549,6 +552,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     paladinUserId = paladinUserId,
                     attackerUserId = attackerUserId,
                     singleDie = singleDie,
+                    isAttackerKnockedOut = isAttackerKnockedOut,
                 )
 
             is ArenaMessageEntity.AllIn ->
@@ -759,6 +763,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,
                 splashTargetUserIds = splashTargetUserIds,
+                isMainTargetKnockedOut = isMainTargetKnockedOut,
             )
 
         is ArenaMessage.HolyShield.Trigger ->
@@ -779,6 +784,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 paladinUserId = paladinUserId,
                 attackerUserId = attackerUserId,
                 singleDie = singleDie,
+                isAttackerKnockedOut = isAttackerKnockedOut,
             )
 
         is ArenaMessage.AllIn ->

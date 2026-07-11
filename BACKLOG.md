@@ -189,9 +189,10 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   burst + sound rings on the roll, the gray drain on failure, the vignette frame, and the cue/phase
   wiring (`EncorePhase` SetStage/Success/Failure) plus success/failure previews. Everything is
   hand-drawn Canvas over the avatar PNGs (`BardEncore.kt`, `EncoreStage.kt`).
-- **Note:** the concert scene is hosted inside the weighted stage region (above the seating, below
-  `BottomControls`) rather than over the whole screen, so the roll buttons stay visible/usable while
-  the darkened stage holds waiting for the Encore roll — it darkens the stage, not the controls bar.
+- **Note:** the concert scene now covers the **whole screen** (`EncoreFullScreenOverlay`, hosted in
+  the outer arena `Box` **below** `BottomControls`), so the darkness reaches the edges while the roll
+  buttons float on top of it and stay visible/usable — the arena darkens to a smooth gradient behind
+  the buttons rather than stopping at the stage region.
 - **Follow-up:** Make sure Encore is not triggered in incorrect scenarios (such as knocking out the
   last opponent). Replace the hand-drawn microphone with an image asset for a truer 3D look (keep
   the
@@ -222,6 +223,27 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   consider making the charm swirl read more literally as a snake-charm coil. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
+
+### SS-215 — Lock combat controls until all animations finish playing
+
+- [ ] Not completed
+- **Symptom:** After acting, the combat buttons re-enable as soon as the resolution message arrives,
+  but the resolution's animations can run several seconds longer. A user can therefore fire the next
+  action while the previous effect is still playing, stacking animations until it becomes impossible
+  to see what is going on.
+- **Goal:** The buttons must not be usable (they fade out entirely) until **all** of a resolution's
+  queued animations have played through — the controls return only once the flash sequencer is idle.
+- **Mechanism (first pass, implemented):** `FlashPlaybackState.isSequencing` is set true while the
+  sequencer plays out a fresh batch of messages (their `combatAnimationCue`s and flash callouts) and
+  false once the batch finishes; `BottomControls` folds it into `areButtonsShown` so the buttons
+  fade out via the existing `AnimatedVisibility` while animations play. A "waiting for the user's
+  roll" beat (e.g. Encore SetStage, where the sequencer goes idle after the darkness rises) still
+  shows the buttons, so the Encore/roll prompts are unaffected.
+- **Open for owner:** verify on-device across multi-step resolutions (chained KOs, Spell Potency
+  splash, Encore-again, Riposte redirects) that the controls hide/return at the right beats and no
+  legitimate roll prompt is ever swallowed.
+- **Related:** SS-201 (animation-before-flash sequencing), SS-185 (flash coverage), SS-210 (Spell
+  Potency full-screen), SS-206 (Encore full-screen).
 
 ---
 

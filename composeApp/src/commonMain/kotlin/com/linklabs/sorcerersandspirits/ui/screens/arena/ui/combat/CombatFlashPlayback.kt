@@ -74,7 +74,19 @@ internal class FlashPlaybackState {
     var finishedCollapseMessageId by mutableStateOf<String?>(value = null)
         private set
 
+    /**
+     * Whether the sequencer is currently playing out a batch of freshly-arrived messages — their
+     * animations and flash callouts (SS-215). The combat controls hide while this is true, so the
+     * user cannot stack a new action on top of an effect that has not finished playing.
+     */
+    var isSequencing by mutableStateOf(value = false)
+        private set
+
     val visibleState = MutableTransitionState(initialState = false)
+
+    fun updateSequencing(isPlaying: Boolean) {
+        isSequencing = isPlaying
+    }
 
     /**
      * Send a message's seated-avatar cue live; its flash callout follows once the cue plays out.
@@ -112,6 +124,9 @@ internal fun rememberFlashPlayback(messages: List<ArenaMessageState>): FlashPlay
                 if (wasReset) lastPlayedId = null
 
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
+                val hasPlayable =
+                    fresh.any { it.combatAnimationCue != null || it.flashCallout != null }
+                if (hasPlayable) playback.updateSequencing(isPlaying = true)
                 for (message in fresh) {
                     val cue = message.combatAnimationCue
                     val callout = message.flashCallout
@@ -129,6 +144,7 @@ internal fun rememberFlashPlayback(messages: List<ArenaMessageState>): FlashPlay
                         playback.markCollapseFinished(messageId = message.id)
                     }
                 }
+                if (hasPlayable) playback.updateSequencing(isPlaying = false)
                 lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
                 lastSize = messages.size
             }

@@ -9,7 +9,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BardNormalAttackOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.EncoreOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.PersuadeOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.DuelistNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PrepareAttackOverlay
@@ -20,7 +19,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.IllusionistNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.ImpersonateOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageNormalAttackOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageSpellPotencyOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageTeleportOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
@@ -48,7 +46,9 @@ internal fun CombatAnimationOverlays(
 ) {
     Box(
         modifier =
-            modifier.onGloballyPositioned { avatarBounds.reportOverlayBounds(it.boundsInRoot()) }
+            modifier.fillMaxSize().onGloballyPositioned {
+                avatarBounds.reportOverlayBounds(it.boundsInRoot())
+            }
     ) {
         if (CharacterClassType.Rogue in presentClasses) {
             RogueNormalAttackOverlay(
@@ -100,7 +100,6 @@ internal fun CombatAnimationOverlays(
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
-            EncoreOverlay(animationCue = animationCue, modifier = Modifier.fillMaxSize())
         }
 
         if (CharacterClassType.Duelist in presentClasses) {
@@ -123,11 +122,6 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Mage in presentClasses) {
             MageNormalAttackOverlay(
-                animationCue = animationCue,
-                avatarBoundsFor = avatarBounds::boundsFor,
-                modifier = Modifier.fillMaxSize(),
-            )
-            MageSpellPotencyOverlay(
                 animationCue = animationCue,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),

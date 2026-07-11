@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -58,7 +59,6 @@ private const val RAISE_MILLIS = 620
 
 internal const val HOLY_SHIELD_PRAY_GLOW_MILLIS = 560
 
-private const val RESTORE_MILLIS = 520
 private const val BEAM_DESCEND_MILLIS = 560
 private const val HEART_FLOAT_MILLIS = 1000
 private const val SHIMMER_PERIOD_MILLIS = 2200
@@ -87,8 +87,8 @@ private const val SHIELD_TOP_FRACTION = 0.24f
 /** How far the failed shield topples off its bottom point, in degrees. */
 private const val TOPPLE_DEGREES = 84f
 
-/** The stone-gray wash's peak opacity over the drained Paladin. */
-private const val STONE_WASH_ALPHA = 0.66f
+/** The holy aura's peak opacity as it bathes the Paladin the instant the knockout would land. */
+private const val SANCTIFY_GLOW_ALPHA = 0.85f
 
 /** The lowest Wrath blast force even a 1 keeps, so the weakest roll still lands with intent. */
 private const val WRATH_MIN_INTENSITY = 0.45f
@@ -174,15 +174,16 @@ internal fun paladinHolyShieldOverlayDurationMillis(
 /**
  * The state of one Holy Shield (SS-212). The choreography drives these Animatables and the draw
  * layer reads them, so the shield rises, glows, saves or topples, and blasts without recomposing.
- * [gray] stones the Paladin; [shieldRaise] scales the shield in; [shieldGlow] is the roll's holy
- * light; [holyBeam] is the saving beam of light shining down; [shimmer] winds forever so that beam
- * reads as endlessly alive; [heart] floats the +1 up; [shieldFall] and [shieldDrain] topple and
- * gray a failed shield; [beamRollUp] rolls the saved light up to the heavens; [dissolve] fades the
- * spent shield; and [blast] slams the Wrath light down on the attacker.
+ * [sanctify] bathes the Paladin in holy light; [shieldRaise] scales the shield in; [shieldGlow] is
+ * the roll's holy light; [holyBeam] is the saving beam of light shining down; [shimmer] winds
+ * forever so that beam reads as endlessly alive; [heart] floats the +1 up; [shieldFall] and
+ * [shieldDrain] topple and gray a failed shield; [beamRollUp] rolls the saved light up to the
+ * heavens; [dissolve] fades the spent shield; and [blast] slams the Wrath light down on the
+ * attacker.
  */
 @Stable
 internal class HolyShieldState {
-    val gray = Animatable(initialValue = 0f)
+    val sanctify = Animatable(initialValue = 0f)
     val shieldRaise = Animatable(initialValue = 0f)
     val shieldGlow = Animatable(initialValue = 0f)
     val holyBeam = Animatable(initialValue = 0f)
@@ -228,14 +229,15 @@ private suspend fun HolyShieldState.play(
 }
 
 /**
- * The shield rises to cover the Paladin as they gray to stone, the moment the knockout would land.
+ * The shield rises to cover the Paladin as holy light gathers over them, the moment the knockout
+ * would land.
  */
 private suspend fun HolyShieldState.raise(paladin: Rect) {
     resetAll()
     scene = HolyShieldScene(paladin = paladin, attacker = null)
     coroutineScope {
         launch {
-            gray.animateTo(
+            sanctify.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(durationMillis = RAISE_MILLIS, easing = FastOutSlowInEasing),
             )
@@ -250,9 +252,9 @@ private suspend fun HolyShieldState.raise(paladin: Rect) {
 }
 
 /**
- * A saved prayer: the shield glows through the roll, then the Paladin returns to colour under a
- * beam of holy light with a +1 heart floating up. The beam shimmers forever, held alive until
- * Wrath.
+ * A saved prayer: the shield glows through the roll, then a beam of holy light shines down on the
+ * Paladin with a +1 heart floating up, the sanctifying aura held bright around them. The beam
+ * shimmers forever, held alive until Wrath.
  */
 private suspend fun HolyShieldState.praySuccess(paladin: Rect) {
     scene = HolyShieldScene(paladin = paladin, attacker = null)
@@ -264,9 +266,6 @@ private suspend fun HolyShieldState.praySuccess(paladin: Rect) {
     )
 
     coroutineScope {
-        launch {
-            gray.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = RESTORE_MILLIS))
-        }
         launch {
             holyBeam.animateTo(
                 targetValue = 1f,
@@ -315,6 +314,12 @@ private suspend fun HolyShieldState.prayFail(paladin: Rect) {
                 animationSpec = tween(durationMillis = SHIELD_FALL_MILLIS),
             )
         }
+        launch {
+            sanctify.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SHIELD_FALL_MILLIS),
+            )
+        }
     }
     dissolve.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = WRATH_GONE_MILLIS))
 
@@ -328,7 +333,7 @@ private suspend fun HolyShieldState.prayFail(paladin: Rect) {
 private suspend fun HolyShieldState.wrath(paladin: Rect, attacker: Rect?, intensity: Float) {
     scene = HolyShieldScene(paladin = paladin, attacker = attacker)
     wrathIntensity = intensity
-    gray.snapTo(targetValue = 0f)
+    sanctify.snapTo(targetValue = 1f)
     if (holyBeam.value == 0f) holyBeam.snapTo(targetValue = 1f)
     if (shieldRaise.value == 0f) shieldRaise.snapTo(targetValue = 1f)
 
@@ -375,7 +380,7 @@ private suspend fun HolyShieldState.shimmerForever() {
 }
 
 private suspend fun HolyShieldState.resetAll() {
-    gray.snapTo(targetValue = 0f)
+    sanctify.snapTo(targetValue = 0f)
     shieldRaise.snapTo(targetValue = 0f)
     shieldGlow.snapTo(targetValue = 0f)
     holyBeam.snapTo(targetValue = 0f)
@@ -398,8 +403,8 @@ private fun DrawScope.drawHolyShield(state: HolyShieldState, plusOneLayout: Text
     val scene = state.scene ?: return
     val geometry = shieldGeometry(paladin = scene.paladin)
 
-    val gray = state.gray.value
-    if (gray > 0f) drawStoneWash(paladin = scene.paladin, amount = gray)
+    val sanctify = state.sanctify.value
+    if (sanctify > 0f) drawSanctifyGlow(paladin = scene.paladin, amount = sanctify)
 
     val beam = state.holyBeam.value
     if (beam > 0f) {
@@ -479,13 +484,29 @@ private fun beamGeometry(paladin: Rect): ShieldGeometry {
     )
 }
 
-private fun DrawScope.drawStoneWash(paladin: Rect, amount: Float) {
-    val avatarWidth = paladin.visibleAvatarWidth()
-    drawRoundRect(
-        color = stoneGray.copy(alpha = amount * STONE_WASH_ALPHA),
-        topLeft = Offset(x = paladin.center.x - avatarWidth / 2f, y = paladin.top),
-        size = Size(width = avatarWidth, height = paladin.height),
-        cornerRadius = CornerRadius(x = avatarWidth * 0.16f),
+/**
+ * The sanctifying aura that bathes the Paladin in holy light the instant a knockout would land: a
+ * bright radial glow of essence-green and gold blooming over the whole avatar rather than a dull
+ * stone wash, so the divine save reads as light gathering around them.
+ */
+private fun DrawScope.drawSanctifyGlow(paladin: Rect, amount: Float) {
+    val center = Offset(x = paladin.center.x, y = paladin.top + paladin.height * 0.5f)
+    val radius = paladin.height * 0.62f
+    drawCircle(
+        brush =
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        paladinEssenceCore.copy(alpha = SANCTIFY_GLOW_ALPHA * amount),
+                        paladinEssenceGreen.copy(alpha = 0.5f * amount),
+                        paladinGold.copy(alpha = 0.28f * amount),
+                        Color.Transparent,
+                    ),
+                center = center,
+                radius = radius,
+            ),
+        radius = radius,
+        center = center,
     )
 }
 
@@ -603,6 +624,10 @@ private fun DrawScope.drawShield(
         scale(scale = lerp(start = 0.7f, stop = 1f, fraction = raise), pivot = geometry.center) {
             val outline = shieldPath(geometry = geometry, inset = 0f)
 
+            translate(left = geometry.halfWidth * 0.16f, top = geometry.height * 0.05f) {
+                drawPath(path = outline, color = Color.Black.copy(alpha = 0.34f * alpha))
+            }
+
             if (glow > 0f || holyBeam > 0f) {
                 val glowStrength = maxOf(glow, holyBeam)
                 drawCircle(
@@ -629,6 +654,22 @@ private fun DrawScope.drawShield(
                         colors = listOf(face, faceDeep),
                         startY = geometry.top,
                         endY = geometry.tip.y,
+                    ),
+                alpha = alpha,
+            )
+
+            drawPath(
+                path = outline,
+                brush =
+                    Brush.radialGradient(
+                        colors =
+                            listOf(holyCore.copy(alpha = 0.55f * (1f - drain)), Color.Transparent),
+                        center =
+                            Offset(
+                                x = geometry.centerX - geometry.halfWidth * 0.42f,
+                                y = geometry.top + geometry.height * 0.16f,
+                            ),
+                        radius = geometry.height * 0.55f,
                     ),
                 alpha = alpha,
             )

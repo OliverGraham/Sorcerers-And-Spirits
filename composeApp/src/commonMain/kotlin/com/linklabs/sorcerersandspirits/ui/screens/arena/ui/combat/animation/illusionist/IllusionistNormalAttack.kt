@@ -40,6 +40,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.nec
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.ScythePalette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.drawScytheReap
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.play as playNecromancerReap
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PaladinStrikeState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.drawMaceSwing
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.play as playPaladinStrike
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
@@ -81,6 +84,7 @@ internal fun IllusionistNormalAttackOverlay(
     val necromancerState = remember { NecromancerStrikeState() }
     val bardState = remember { BardStrikeState() }
     val mageState = remember { MageBoltState() }
+    val paladinState = remember { PaladinStrikeState() }
     var activeWeapon by remember { mutableStateOf<CharacterClassType?>(value = null) }
     val density = LocalDensity.current
     val accentColor = CharacterClassType.Illusionist.toColor()
@@ -97,6 +101,7 @@ internal fun IllusionistNormalAttackOverlay(
             necromancerState.scene = null
             bardState.scene = null
             mageState.scene = null
+            paladinState.scene = null
         },
         play = { cue, attackerBounds, defenderBounds ->
             val weapon = cue.weaponClassType
@@ -181,6 +186,18 @@ internal fun IllusionistNormalAttackOverlay(
                     )
                 }
 
+                CharacterClassType.Paladin ->
+                    paladinState.playPaladinStrike(
+                        geometry =
+                            weaponStrikeGeometry(
+                                attackerBounds = attackerBounds,
+                                target = defenderBounds.center,
+                                accentColor = accentColor,
+                                density = density,
+                            ),
+                        outcome = cue.outcome,
+                    )
+
                 else -> activeWeapon = null
             }
         },
@@ -193,6 +210,7 @@ internal fun IllusionistNormalAttackOverlay(
                 CharacterClassType.Necromancer -> drawScytheReap(state = necromancerState)
                 CharacterClassType.Bard -> drawBardDrumStrike(state = bardState)
                 CharacterClassType.Mage -> drawMageCast(state = mageState)
+                CharacterClassType.Paladin -> drawMaceSwing(state = paladinState)
                 else -> {}
             }
         },
@@ -250,6 +268,15 @@ private fun IllusionistBorrowsMagePreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Mage,
         outcome = NormalRollMessageType.Damage,
+    )
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun IllusionistBorrowsPaladinPreview() {
+    IllusionistNormalAttackPreview(
+        impersonatedClassType = CharacterClassType.Paladin,
+        outcome = NormalRollMessageType.Knockout,
     )
 }
 

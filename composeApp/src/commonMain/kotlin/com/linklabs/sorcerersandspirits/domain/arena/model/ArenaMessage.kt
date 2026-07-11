@@ -157,6 +157,7 @@ sealed interface ArenaMessage {
         val mainTargetUserId: String,
         val mainDamage: Int,
         val splashDamage: Int,
+        val splashTargetUserIds: List<String>,
     ) : ArenaMessage
 
     sealed interface HolyShield : ArenaMessage {

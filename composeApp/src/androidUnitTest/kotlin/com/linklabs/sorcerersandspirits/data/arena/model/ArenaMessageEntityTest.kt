@@ -139,6 +139,7 @@ class ArenaMessageEntityTest {
                     mainTargetUserId = "target",
                     mainDamage = 8,
                     splashDamage = 4,
+                    splashTargetUserIds = listOf("rogue", "bard"),
                 ),
                 ArenaMessage.HolyShield.Trigger(paladinUserId = "paladin"),
                 ArenaMessage.HolyShield.Prayer(

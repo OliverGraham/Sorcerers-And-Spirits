@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -25,7 +26,8 @@ private val USER_MARKER_ICON_INSET = 4.dp
 /**
  * The right column of collapsed class heads — every player not seated as a full avatar (SS-143).
  * Tapping a head targets it on the user's own turn, otherwise it opens the inspect drawer. The
- * local player's head carries the identity marker at the foot of its circle.
+ * local player's head carries the identity marker at the foot of its circle. [animationCue] drives
+ * the Spell Potency splash decrement on the splashed opponents' heads (SS-214).
  */
 @Composable
 internal fun ClassIcons(
@@ -34,6 +36,7 @@ internal fun ClassIcons(
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
+    animationCue: CombatAnimationCue?,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -48,6 +51,7 @@ internal fun ClassIcons(
                 isTargetable = isTargetable,
                 onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
+                animationCue = animationCue,
             )
         }
     }
@@ -60,10 +64,14 @@ private fun ClassIcon(
     isTargetable: Boolean,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
+    animationCue: CombatAnimationCue?,
     modifier: Modifier = Modifier,
 ) {
     val isConscious = player.characterClass.isConscious
     val isTargetingTap = isTargetable && isConscious
+
+    // TODO: only call this function if there's a conscious character with SpellPotency
+    val splash = rememberSpellPotencySplash(animationCue = animationCue, player = player)
 
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val headWidth = minOf(a = maxWidth, b = maxHeight)
@@ -72,10 +80,17 @@ private fun ClassIcon(
             characterClass = player.characterClass,
             isEnabled = isConscious,
             width = headWidth,
+            hitPointsEmphasis = splash.hitPointsEmphasis,
             modifier =
                 Modifier.sharedBounds(key = player.userId).clickable {
                     if (isTargetingTap) onSelectTarget(player.userId) else onInspect(player.userId)
                 },
+        )
+
+        SpellPotencySplashIndicator(
+            splash = splash,
+            headWidth = headWidth,
+            modifier = Modifier.align(alignment = Alignment.TopEnd),
         )
 
         if (isUserPlayer) {

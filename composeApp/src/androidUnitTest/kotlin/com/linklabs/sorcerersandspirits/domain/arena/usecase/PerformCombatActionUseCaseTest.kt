@@ -1973,6 +1973,13 @@ class PerformCombatActionUseCaseTest {
         val expectedSplashDamage = if (isThreePlayer) diceTotal / 2 else 0
         assertEquals(expected = expectedSplashDamage, actual = spellPotencyMessage.splashDamage)
 
+        // The splashed opponents are named so their head icons can decrement (SS-214)
+        val expectedSplashTargets = if (isThreePlayer) listOf(THIRD_PLAYER_ID) else emptyList()
+        assertEquals(
+            expected = expectedSplashTargets,
+            actual = spellPotencyMessage.splashTargetUserIds,
+        )
+
         // Turn ends
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertEquals(expected = !isThreePlayer, actual = outcome.isMatchFinished)

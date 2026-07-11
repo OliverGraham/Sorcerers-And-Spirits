@@ -20,6 +20,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -70,6 +72,11 @@ private const val STAT_ICON_DIAMETER_FRACTION = 0.27f
 private const val VALUE_TEXT_FRACTION = 0.13f
 private const val VALUE_SHADOW_FRACTION = 0.012f
 
+// A splashed hit-point value swells and flushes red at the peak of the Spell Potency decrement, so
+// the drop reads on the head icon itself (SS-214).
+private val HIT_POINTS_EMPHASIS_COLOR = Color(color = 0xFFE23B3B)
+private const val HIT_POINTS_EMPHASIS_MAX_SCALE = 0.65f
+
 /**
  * The collapsed, at-a-glance "class head" shown for a player in the Arena while they are not the
  * active roller. A cluster of class-colored gradient circles — one behind the head and one behind
@@ -77,7 +84,8 @@ private const val VALUE_SHADOW_FRACTION = 0.012f
  * in a wooden frame at the centre. Speed sits on top (value to its right), Armor at the start
  * (value below), Hitpoints at the end (value below). The expanded detail view is a separate concern
  * (SS-150). A knocked-out player is shown with [isEnabled] false: faded and gray rather than
- * class-colored, so it reads as out of the fight (SS-152).
+ * class-colored, so it reads as out of the fight (SS-152). [hitPointsEmphasis] swells and reddens
+ * the hit-point value while a Spell Potency splash lands on this head (SS-214); 0f leaves it plain.
  */
 @Composable
 fun ClassHeadIcon(
@@ -85,6 +93,7 @@ fun ClassHeadIcon(
     modifier: Modifier = Modifier,
     width: Dp = DEFAULT_HEAD_ICON_WIDTH,
     isEnabled: Boolean = true,
+    hitPointsEmphasis: Float = 0f,
 ) {
     val height = width / ASPECT_RATIO
     val circleColors = if (isEnabled) characterClass.type.toGradient() else DISABLED_GRADIENT
@@ -152,6 +161,7 @@ fun ClassHeadIcon(
             center = HIT_POINTS_VALUE_CENTER,
             width = width,
             height = height,
+            emphasis = hitPointsEmphasis,
         )
     }
 }
@@ -202,13 +212,26 @@ private fun BoxScope.StatIcon(icon: DrawableResource, center: Offset, width: Dp,
 }
 
 @Composable
-private fun BoxScope.StatValue(value: Int, center: Offset, width: Dp, height: Dp) {
+private fun BoxScope.StatValue(
+    value: Int,
+    center: Offset,
+    width: Dp,
+    height: Dp,
+    emphasis: Float = 0f,
+) {
+    val emphasisScale = 1f + emphasis * HIT_POINTS_EMPHASIS_MAX_SCALE
     OverlayAt(center = center, width = width, height = height) {
         Text(
             text = value.toString(),
+            modifier = Modifier.graphicsLayer(scaleX = emphasisScale, scaleY = emphasisScale),
             style =
                 TextStyle(
-                    color = Color.White,
+                    color =
+                        lerp(
+                            start = Color.White,
+                            stop = HIT_POINTS_EMPHASIS_COLOR,
+                            fraction = emphasis,
+                        ),
                     fontSize = (width.value * VALUE_TEXT_FRACTION).sp,
                     fontWeight = FontWeight.Bold,
                     shadow =

@@ -79,8 +79,9 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
 
 /**
  * Whether [control] is an Impersonate the Illusionist cannot meaningfully use against the chosen
- * target. Re-copying a class whose offensive ability has already been impersonated is a no-op, so
- * its control is disabled while that target is selected.
+ * target: the target has no offensive ability to copy (the Paladin), or re-copying its already
+ * impersonated offensive ability would be a no-op. Either way the control is disabled while that
+ * target is selected.
  */
 internal fun ArenaState.Combat.isImpersonateRedundant(
     control: ArenaCombatControl,
@@ -91,6 +92,10 @@ internal fun ArenaState.Combat.isImpersonateRedundant(
             control.action is AbilityActionState.Activated.Impersonate
     if (!isImpersonateControl) return false
 
+    val target = playerMap[targetedOpponentUserId] ?: return false
+    val targetOffensiveAbility = target.characterClass.offensiveAbility
+    if (targetOffensiveAbility is OffensiveAbilityState.None) return true
+
     val impersonateAbility = userPlayer.characterClass.offensiveAbility
     val copiedAbility =
         if (impersonateAbility is OffensiveAbilityState.Impersonate) {
@@ -100,8 +105,7 @@ internal fun ArenaState.Combat.isImpersonateRedundant(
         }
     if (copiedAbility is OffensiveAbilityState.None) return false
 
-    val target = playerMap[targetedOpponentUserId] ?: return false
-    return target.characterClass.offensiveAbility::class == copiedAbility::class
+    return targetOffensiveAbility::class == copiedAbility::class
 }
 
 /**

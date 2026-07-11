@@ -84,7 +84,9 @@ sealed interface OffensiveAbility : Ability {
     data object Encore : OffensiveAbility
 
     data class Impersonate(override val impersonatedAbility: OffensiveAbility = None) :
-        OffensiveAbility, ActivatedAbility, ImpersonateAbility<OffensiveAbility>
+        OffensiveAbility, ActivatedAbility, ImpersonateAbility<OffensiveAbility> {
+        val impersonatedClassType = impersonatedAbility.effective.owningClassType()
+    }
 
     data object SpellPotency : OffensiveAbility
 
@@ -98,6 +100,29 @@ sealed interface OffensiveAbility : Ability {
  */
 val OffensiveAbility.effective: OffensiveAbility
     get() = if (this is OffensiveAbility.Impersonate) impersonatedAbility else this
+
+/**
+ * The class an offensive ability belongs to. Drives the Illusionist's borrowed normal attack, which
+ * renders the weapon of the class whose offensive ability it copied (SS-197). Impersonate itself
+ * and None are the Illusionist's own, with no opponent class to borrow from.
+ */
+private fun OffensiveAbility.owningClassType(): CharacterClassType =
+    when (this) {
+        is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
+
+        is OffensiveAbility.AllIn -> CharacterClassType.Gambler
+
+        is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
+
+        is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
+
+        is OffensiveAbility.Encore -> CharacterClassType.Bard
+
+        is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
+
+        is OffensiveAbility.Impersonate,
+        is OffensiveAbility.None -> CharacterClassType.Illusionist
+    }
 
 /**
  * The ability stripped of any state it has accumulated this match, leaving only its behaviour. An

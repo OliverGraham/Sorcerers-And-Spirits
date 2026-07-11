@@ -6,7 +6,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 @Immutable
 sealed interface ArenaMessageState {
@@ -377,25 +376,6 @@ fun List<IncomingArenaMessage>.toStates(
     incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
 }
 
-/** The class an Illusionist's copied offensive ability belongs to; null before anyone is copied. */
-private fun OffensiveAbility.toImpersonatedClassType() =
-    when (this) {
-        is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
-
-        is OffensiveAbility.AllIn -> CharacterClassType.Gambler
-
-        is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
-
-        is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
-
-        is OffensiveAbility.Encore -> CharacterClassType.Bard
-
-        is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
-
-        is OffensiveAbility.Impersonate,
-        is OffensiveAbility.None -> CharacterClassType.Illusionist
-    }
-
 private fun ArenaMessage.toState(
     id: String,
     participants: Map<String, ParticipantClass>,
@@ -471,8 +451,7 @@ private fun ArenaMessage.toState(
                 id = id,
                 illusionistUserId = illusionistUserId,
                 illusionistName = participants.resolveClassName(userId = illusionistUserId),
-                impersonatedClassType =
-                    impersonateAbility.impersonatedAbility.toImpersonatedClassType(),
+                impersonatedClassType = impersonateAbility.impersonatedClassType,
                 impersonatedAbilityName =
                     impersonateAbility.impersonatedAbility::class.simpleName.orEmpty(),
             )

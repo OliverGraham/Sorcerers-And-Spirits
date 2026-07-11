@@ -1092,6 +1092,30 @@ class ArenaScreenViewModelTest {
             )
         }
 
+    @Test
+    fun `Given the target is a Paladin, then Impersonate is redundant`() = runTest {
+        val combatState =
+            combatViewModel(
+                    nextCombatAction = idleTurn(USER_ID),
+                    playerMap =
+                        twoPlayerMap(
+                            userClass = TestCharacterClasses.illusionist(),
+                            opponentClass = TestCharacterClasses.paladin(),
+                        ),
+                )
+                .requireCombatState()
+
+        val impersonateControl =
+            combatState.activatedControlFor<AbilityActionState.Activated.Impersonate>()
+        assertTrue(
+            actual =
+                combatState.isImpersonateRedundant(
+                    control = impersonateControl,
+                    targetedOpponentUserId = OPPONENT_ID,
+                )
+        )
+    }
+
     // ---------- Controls while an attack is in progress ----------
 
     @Test

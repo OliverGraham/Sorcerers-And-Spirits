@@ -608,6 +608,75 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `Given an Illusionist impersonating a class, then the normal roll carries that class's type`() {
+        // Arrange
+        val illusionist =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility = OffensiveAbility.SpellPotency
+                        )
+                )
+        val arguments = createTwoPlayerArguments(attackerClass = illusionist)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll>().first()
+        assertEquals(
+            actual = normalRoll.impersonatedCharacterType,
+            expected = CharacterClassType.Mage,
+        )
+    }
+
+    @Test
+    fun `Given an Illusionist that has not impersonated, then the normal roll borrows no opponent class`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(attackerClass = TestCharacterClasses.illusionist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert: no opponent class copied resolves to the Illusionist's own class, which borrows a
+        // random weapon rather than an impersonated one.
+        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll>().first()
+        assertEquals(
+            actual = normalRoll.impersonatedCharacterType,
+            expected = CharacterClassType.Illusionist,
+        )
+    }
+
+    @Test
+    fun `Given a non-Illusionist attacker, then the normal roll carries no impersonated type`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(attackerClass = TestCharacterClasses.rogue())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getNormalAttackAction()
+
+        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll>().first()
+        assertEquals(
+            actual = normalRoll.impersonatedCharacterType,
+            expected = CharacterClassType.None,
+        )
+    }
+
+    @Test
     fun `When an attacker misses a Rogue's armor, then Dodge triggers and the Rogue's armor bonus increases`() {
         // Arrange
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.rogue())

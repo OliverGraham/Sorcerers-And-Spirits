@@ -49,12 +49,14 @@ private const val FLASH_EXIT_MILLIS = 320L
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
 
 /**
- * The single sequencer for flash-worthy messages: newly-arrived ones play one at a time, so a
- * single resolution narrates as a sequence. A message's seated-avatar [combatAnimationCue] plays to
- * completion first, then its flash callout appears to spell out what the roll and animation meant
- * (SS-201), so an effect is never flashed over before it finishes. The cue is held separately from
- * [currentMessage] so it can go live ahead of the callout. The history present on first composition
- * is skipped so reconnecting never replays old events.
+ * The single sequencer for newly-arrived messages: they play one at a time, so a single resolution
+ * narrates as a sequence. A message's seated-avatar [combatAnimationCue] plays to completion first;
+ * then, only if the message still flashes (SS-185), its flash callout appears to spell out what the
+ * roll and animation meant (SS-201), so an effect is never flashed over before it finishes. A
+ * log-only message with an animation still plays that animation — the flash is text layered on top,
+ * not the gate. The cue is held separately from [currentMessage] so it can go live ahead of the
+ * callout. The history present on first composition is skipped so reconnecting never replays old
+ * events.
  */
 @Stable
 internal class FlashPlaybackState {
@@ -97,9 +99,9 @@ internal class FlashPlaybackState {
 }
 
 @Composable
-internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): FlashPlaybackState {
+internal fun rememberFlashPlayback(messages: List<ArenaMessageState>): FlashPlaybackState {
     val playback = remember { FlashPlaybackState() }
-    val latestMessages by rememberUpdatedState(newValue = flashMessages)
+    val latestMessages by rememberUpdatedState(newValue = messages)
 
     LaunchedEffect(key1 = Unit) {
         var lastPlayedId = latestMessages.lastOrNull()?.id
@@ -111,15 +113,18 @@ internal fun rememberFlashPlayback(flashMessages: List<ArenaMessageState>): Flas
 
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
                 for (message in fresh) {
-                    if (message.flashCallout == null) continue
                     val cue = message.combatAnimationCue
+                    val callout = message.flashCallout
+                    if (cue == null && callout == null) continue
                     playback.playAnimation(cue = cue)
                     val animationMillis = cue?.playbackDurationMillis() ?: 0L
                     if (animationMillis > 0L) delay(timeMillis = animationMillis)
-                    playback.show(message = message)
-                    delay(timeMillis = FLASH_HOLD_MILLIS)
-                    playback.dismiss()
-                    delay(timeMillis = FLASH_EXIT_MILLIS)
+                    if (callout != null) {
+                        playback.show(message = message)
+                        delay(timeMillis = FLASH_HOLD_MILLIS)
+                        playback.dismiss()
+                        delay(timeMillis = FLASH_EXIT_MILLIS)
+                    }
                     if (cue?.collapsingUserId != null) {
                         playback.markCollapseFinished(messageId = message.id)
                     }

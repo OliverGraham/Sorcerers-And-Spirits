@@ -134,27 +134,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   PNGs; remove the superseded PNGs if nothing else depends on them.
 - **Notes:** Related: SS-136. Asset-prep discipline per [[downsample-figma-raster-assets]].
 
-### SS-200 — Attacks-remaining stat in AvatarStatsBar (turn owner only)
-
-- [ ] Not completed
-- **Goal:** Add an attacks-remaining stat + icon to `AvatarStatsBar` so the current turn owner sees
-  how many attacks they still have this turn, decrementing as they spend them and bumping up when an
-  ability grants a bonus attack.
-- **Count is domain-owned:** `CharacterClass.attacksRemaining` (persisted via `CharacterClassEntity`
-  so every client agrees). Encore/Killing Momentum keep no persistent flag, so a UI derivation
-  can't see their bonus — the domain must track it. Maintained in `CombatMutator`:
-    - **Reset** at each turn start (beside `resetMinionAttacks`) to `1 + minionAttacks`.
-    - **Decrement** optimistically the instant dice are rolled — the turn owner's opening
-      Armor-class roll (`NormalAttackRollHandler`) — floored at 0.
-    - **Increment** on each bonus-attack grant: All-In attack-twice, Encore success, Killing
-      Momentum trigger. (Minion follow-ups are already in the reset total; All-In does not decrement
-      since it doesn't use up an attack.)
-- **Visibility:** shown only for the avatar whose player is the current `turnOwnerUserId`; hidden
-  otherwise. `turnOwnerUserId` threaded from `ArenaState.Combat` through `CombatAvatarColumn`.
-- **Animation:** the pill enters/exits with `AnimatedVisibility` when the turn owner changes; the
-  number swaps with `AnimatedContent` when `attacksRemaining` updates.
-- **Icon:** reuses the existing `ic_attack_button` drawable (rename the resource later).
-
 > The two head-icon transition targets originally tracked here as SS-140 (head → large targeted
 > avatar) and SS-141 (head → expanded stat view) were placeholders; both are now realized concretely
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
@@ -178,14 +157,6 @@ plus one ticket per ability, worked one at a time. The seam is ready:
 `ArenaMessageState.NormalRoll` already carries `attackerClassType`, so a class ticket threads it
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
-
-### SS-193 — Gambler ability animations
-
-- [ ] Not completed
-- **Goal:** TBD — animations to be described.
-- **Cue sources:** `ArenaMessageState.AllIn`, `ArenaMessageState.LuckyCoin.*`,
-  `ArenaMessageState.NormalRoll` (attacker side).
-- **Parent:** SS-191.
 
 ### SS-205 — Necromancer Summon Minion animation
 
@@ -251,25 +222,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   consider making the charm swirl read more literally as a snake-charm coil. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
-
-### SS-214 — Spell Potency splash: decrement HP off the class-head icons
-
-- [ ] Not completed
-- **Goal:** When Spell Potency triggers (SS-210), the main target is on the combat stage and reacts
-  there, but the half-damage **splash** lands on every *other* conscious opponent — who are shown as
-  **class-head icons**, not seated avatars. Those splashed opponents need a visible hit-point
-  decrement animation on their head icons (only the conscious ones — a knocked-out player takes no
-  splash and should not animate), so a multiplayer Spell Potency reads as hitting the whole table,
-  not just the one seated target.
-- **Context:** `ArenaMessage.SpellPotency` already carries `mageUserId`, `mainTargetUserId`,
-  `mainDamage`, and `splashDamage`; the splash targets are "every conscious player except the mage
-  and the main target" (see `SpellPotencyRoll.splashTargets`). The animation needs those userIds and
-  their pre/post health to drive per-icon decrement effects. Decide whether to thread the splashed
-  userIds through `ArenaMessageState.SpellPotency` and the `SpellPotency` cue, or derive them at the
-  head-icon layer from the health diff.
-- **Related:** SS-210 (Spell Potency animation), the class-head icon UI (`ClassHeadIcon.kt` /
-  `CombatClassIcons.kt`).
-- **Parent:** SS-191.
 
 ---
 

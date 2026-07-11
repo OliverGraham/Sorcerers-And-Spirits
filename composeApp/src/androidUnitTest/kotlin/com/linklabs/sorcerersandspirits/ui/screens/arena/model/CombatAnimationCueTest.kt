@@ -151,6 +151,41 @@ class CombatAnimationCueTest {
     }
 
     @Test
+    fun `Given a Paladin armor hit, then the Paladin swings and the defender flinches`() {
+        val cue = paladinAttackCue(outcome = NormalRollMessageType.ArmorClassHit)
+
+        assertEquals(expected = AvatarGesture.Slash, actual = cue.gestureFor(userId = ATTACKER_ID))
+        assertEquals(expected = AvatarGesture.Flinch, actual = cue.gestureFor(userId = DEFENDER_ID))
+    }
+
+    @Test
+    fun `Given a Paladin armor miss, then the swing whiffs`() {
+        val cue = paladinAttackCue(outcome = NormalRollMessageType.ArmorClassMiss)
+
+        assertEquals(
+            expected = AvatarGesture.SlashWhiff,
+            actual = cue.gestureFor(userId = ATTACKER_ID),
+        )
+    }
+
+    @Test
+    fun `Given a Paladin damaging health roll, then the Paladin swings`() {
+        val cue = paladinAttackCue(outcome = NormalRollMessageType.Damage)
+
+        assertEquals(expected = AvatarGesture.Slash, actual = cue.gestureFor(userId = ATTACKER_ID))
+    }
+
+    @Test
+    fun `Given a Paladin knockout, then the Paladin finishes with a heavier swing`() {
+        val cue = paladinAttackCue(outcome = NormalRollMessageType.Knockout)
+
+        assertEquals(
+            expected = AvatarGesture.SlashFinish,
+            actual = cue.gestureFor(userId = ATTACKER_ID),
+        )
+    }
+
+    @Test
     fun `Given a Mage normal attack, then the Mage casts and the defender reacts`() {
         val cue = mageAttackCue(outcome = NormalRollMessageType.Damage)
 
@@ -391,7 +426,7 @@ class CombatAnimationCueTest {
         CombatAnimationCue.NormalAttack(
             id = MESSAGE_ID,
             attackerUserId = ATTACKER_ID,
-            attackerClassType = CharacterClassType.Paladin,
+            attackerClassType = CharacterClassType.None,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
             impersonatedClassType = CharacterClassType.None,
@@ -422,6 +457,16 @@ class CombatAnimationCueTest {
             id = MESSAGE_ID,
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.Duelist,
+            defenderUserId = DEFENDER_ID,
+            outcome = outcome,
+            impersonatedClassType = CharacterClassType.None,
+        )
+
+    private fun paladinAttackCue(outcome: NormalRollMessageType) =
+        CombatAnimationCue.NormalAttack(
+            id = MESSAGE_ID,
+            attackerUserId = ATTACKER_ID,
+            attackerClassType = CharacterClassType.Paladin,
             defenderUserId = DEFENDER_ID,
             outcome = outcome,
             impersonatedClassType = CharacterClassType.None,

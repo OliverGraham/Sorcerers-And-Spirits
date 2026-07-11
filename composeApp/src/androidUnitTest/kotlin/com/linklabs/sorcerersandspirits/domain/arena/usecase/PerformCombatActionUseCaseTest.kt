@@ -1969,6 +1969,10 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = defenderUserId, actual = spellPotencyMessage.mainTargetUserId)
         assertEquals(expected = diceTotal, actual = spellPotencyMessage.mainDamage)
 
+        // The message carries the doubles that were rolled so the dice can settle on them
+        assertEquals(expected = dieValue, actual = spellPotencyMessage.firstDie)
+        assertEquals(expected = dieValue, actual = spellPotencyMessage.secondDie)
+
         // With no other opponents to splash (2-player), the message carries 0 splash (SS-115)
         val expectedSplashDamage = if (isThreePlayer) diceTotal / 2 else 0
         assertEquals(expected = expectedSplashDamage, actual = spellPotencyMessage.splashDamage)

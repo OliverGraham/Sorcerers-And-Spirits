@@ -15,6 +15,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
  */
 internal class SpellPotencyRoll(
     private val combatMutator: CombatMutator,
+    private val firstDie: Int,
+    private val secondDie: Int,
     private val diceTotal: Int,
 ) {
     operator fun invoke() = combatMutator.resolveSpellPotency()
@@ -64,6 +66,8 @@ internal class SpellPotencyRoll(
                 ArenaMessage.SpellPotency(
                     mageUserId = attackerUserId,
                     mainTargetUserId = defenderUserId,
+                    firstDie = firstDie,
+                    secondDie = secondDie,
                     mainDamage = diceTotal,
                     splashDamage = splashDamage,
                     splashTargetUserIds = splashTargets.map { it.userId },

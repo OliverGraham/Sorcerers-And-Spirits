@@ -216,6 +216,8 @@ class CombatAnimationCueTest {
                 mageName = "Mage",
                 mainTargetUserId = DEFENDER_ID,
                 mainTargetName = "Bard",
+                firstDie = 4,
+                secondDie = 4,
                 mainDamage = 8,
                 splashDamage = 4,
                 splashTargetUserIds = listOf(SPECTATOR_ID),

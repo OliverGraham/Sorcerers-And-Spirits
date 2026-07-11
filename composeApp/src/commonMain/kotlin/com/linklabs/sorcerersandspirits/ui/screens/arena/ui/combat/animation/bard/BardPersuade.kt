@@ -81,7 +81,7 @@ internal class PersuadeEffectState {
 /**
  * The Bard's Persuade effect (SS-207). The instant the Bard's armor is passed a lute is conjured in
  * front of them and held while the roll is made. On the roll the strings ring and notes bloom off
- * the soundhole: a failed roll drains the whole instrument to grey and tips the notes over sideways
+ * the soundhole: a failed roll drains the whole instrument to gray and tips the notes over sideways
  * as the attack presses on, while a stopping roll holds its colour and sweeps the notes up in a
  * bright flourish. A charming six plays that same flourish, then crossfades the lute into a
  * charmer's flute that breathes air through a slow hypnotic swirl of notes as the attacker is bent
@@ -118,7 +118,7 @@ internal fun PersuadeOverlay(
 
 /**
  * How long each Persuade phase runs, so the message sequencer holds its callout until the lute has
- * finished ringing, greying, flourishing, or breathing out its charm rather than cutting it short.
+ * finished ringing, graying, flourishing, or breathing out its charm rather than cutting it short.
  */
 internal fun persuadeDurationMillis(phase: PersuadePhase): Long =
     when (phase) {
@@ -177,7 +177,7 @@ private suspend fun PersuadeEffectState.summon(scene: PersuadeScene) {
     }
 }
 
-/** A failed roll: the strings ring, then the whole lute greys out and the notes tumble sideways. */
+/** A failed roll: the strings ring, then the whole lute grays out and the notes tumble sideways. */
 private suspend fun PersuadeEffectState.strumFailed(scene: PersuadeScene) {
     beginResolve(scene = scene)
     ringStrings()

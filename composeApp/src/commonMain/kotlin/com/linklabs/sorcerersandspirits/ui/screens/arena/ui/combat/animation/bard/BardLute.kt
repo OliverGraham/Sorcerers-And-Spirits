@@ -39,7 +39,7 @@ private const val LUTE_STRING_COUNT = 5
 private const val STRING_VIBRATION_CYCLES = 3.5f
 private val stringVibrationAmplitude = 4.dp
 
-/** Lerp any colour toward the failure ash, so a whole scene greys out in step. */
+/** Lerp any colour toward the failure ash, so a whole scene grays out in step. */
 private fun Color.grayed(fraction: Float): Color =
     lerp(start = this, stop = persuadeAsh, fraction = fraction)
 
@@ -397,7 +397,7 @@ private val persuadeNoteDelays = listOf(0f, 0.12f, 0.24f, 0.36f)
 /**
  * The notes a strummed lute throws off (SS-207). As [enter] rises each note blooms up to its hover
  * seat around the soundhole and holds. A failed Persuade then tips them over with [fall] — they
- * tumble sideways and down, greying and fading — while a stopped one sends them up in a [flourish],
+ * tumble sideways and down, graying and fading — while a stopped one sends them up in a [flourish],
  * swept outward and up on a bright sparkle. Only one of [fall] or [flourish] ever runs.
  */
 internal fun DrawScope.drawPersuadeNotes(

@@ -210,12 +210,12 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   microphone, and the crowd is made of numerous small copies of every class avatar packed into the
   distance. The crowd and the light off the mic keep moving so the scene is alive while the roll is
   awaited. On the roll the mic throws off sound and music notes; on a landing the crowd goes wild
-  (success) or boos (failure). A failed Encore greys the music the way the other Bard failures do.
+  (success) or boos (failure). A failed Encore grays the music the way the other Bard failures do.
   After Encore finishes the lights come up and the darkness lifts.
 - **Done (first pass, shipped):** full-screen concert scene with the darkness fall/lift, spotlight
   cone + pool, receding crowd of all eight avatars (ambient sway, wild-jump vs boo-shake), 3D
   chrome microphone (radial-shaded head with sweeping glint, banded stand, domed base), music-note
-  burst + sound rings on the roll, the grey drain on failure, the vignette frame, and the cue/phase
+  burst + sound rings on the roll, the gray drain on failure, the vignette frame, and the cue/phase
   wiring (`EncorePhase` SetStage/Success/Failure) plus success/failure previews. Everything is
   hand-drawn Canvas over the avatar PNGs (`BardEncore.kt`, `EncoreStage.kt`).
 - **Note:** the concert scene is hosted inside the weighted stage region (above the seating, below
@@ -224,7 +224,7 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Follow-up:** Make sure Encore is not triggered in incorrect scenarios (such as knocking out the
   last opponent). Replace the hand-drawn microphone with an image asset for a truer 3D look (keep
   the
-  glint, note behaviours, grey drain, and darkness fall/lift choreography); polish/tune the crowd
+  glint, note behaviours, gray drain, and darkness fall/lift choreography); polish/tune the crowd
   density, proportions, colours, and timing once seen on-device; and consider a real crowd-noise
   cue for the wild/boo beat. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Encore.*`.
@@ -251,16 +251,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   consider making the charm swirl read more literally as a snake-charm coil. Then close the ticket.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
-
-### SS-212 — Paladin Holy Shield animation
-
-- [ ] Not completed
-- **Goal:** TBD — animation to be described. Defensive ability: once per match, when K.O.'d, roll
-  2d6; on 10/11/12 the Paladin survives with 1 Health and deals unblockable 1d6 to the attacker (a
-  12
-  also stops Duelist's Prepare Attack).
-- **Cue sources:** `ArenaMessageState.HolyShield.*`.
-- **Parent:** SS-191. Split out of SS-199.
 
 ### SS-214 — Spell Potency splash: decrement HP off the class-head icons
 

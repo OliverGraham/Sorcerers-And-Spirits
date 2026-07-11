@@ -757,7 +757,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   select a knocked-out opponent and attack them — `GridPlayerCard` gated targeting only on
   `isItThisUsersTurn && !isTargetLocked`, with no consciousness check, so a knocked-out opponent's
   card stayed tappable and the roll dispatched against them. Now also gated on
-  `characterClass.isConscious`, so a knocked-out opponent still renders (greyed/KO'd) but cannot be
+  `characterClass.isConscious`, so a knocked-out opponent still renders (grayed/KO'd) but cannot be
   tapped or selected; the Domain already skips knocked-out players for turn order.
 - **SS-122** — Computer opponent (and any later chooser) could pick a duplicate class:
   Class-availability checks compared full `CharacterClassState` by value equality (
@@ -767,7 +767,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   duplicate it. Changed `unavailableClasses` to `Set<CharacterClassType>` and keyed
   `classSelections` by `CharacterClassType` in `ArenaScreenState.prepareClassSelectionInfo`; all
   four consumers (`ComputerOpponentHandler`, the user timeout auto-pick in `ArenaScreenViewModel`,
-  the `CharacterClassWheel` selection guard / greyed spokes, and the wheel's "chosen by" label) now
+  the `CharacterClassWheel` selection guard / grayed spokes, and the wheel's "chosen by" label) now
   compare by class type. Regression test in `ArenaScreenStateTest` (an opponent's diverged-stats
   Gambler still makes the Gambler type unavailable). Child of SS-092.
 - **SS-118** — Mirror Image: show the rerolled value and its -1 in the UI: The Tempt Fate message
@@ -1120,7 +1120,8 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   long dark-iron haft with gold langets, a bound grip, and a gold pommel) hoisted into a cocked
   overhead windup and swung down onto the defender along a bowed over-the-top arc, the blunt face
   leading. A green essence force-plume streams off the back of the head, its reach and glow scaling
-  with the outcome tier (Knockout brightest → ArmorClassMiss faintest); a landed swing flares a green
+  with the outcome tier (Knockout brightest → ArmorClassMiss faintest); a landed swing flares a
+  green
   burst on contact, a miss whiffs past while the defender sidesteps. New paladin/ package
   (PaladinMace draws the weapon, PaladinNormalAttack the choreography + four outcome previews);
   Paladin joins builtWeaponClassTypes (Illusionist can borrow the maul) with a Slash-family body
@@ -1204,3 +1205,7 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   with the attacker; if the Mage rolls higher, escape the attack.
 - **Cue sources:** `ArenaMessageState.Teleport.*`.
 - **Parent:** SS-191. Split out of SS-198.
+- **ss212** - Defensive ability: once per match, when K.O.'d, roll
+  2d6; on 10/11/12 the Paladin survives with 1 Health and deals unblockable 1d6 to the attacker.
+- **Cue sources:** `ArenaMessageState.HolyShield.*`.
+- **Parent:** SS-191. Split out of SS-199.

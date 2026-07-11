@@ -105,7 +105,7 @@ internal data class TeleportScene(val center: Offset, val radiusX: Float, val ra
  * The Mage's Teleport portal (SS-211). The instant the Mage's armor is passed a swirling blue
  * portal tears open above them and churns endlessly through the roll-off. On the resolving roll it
  * either flashes and closes behind the escaping Mage, or — on a failed escape — snaps shut too soon
- * and washes the scene grey. Anchored to the Mage's measured seat via [avatarBoundsFor]; sits out
+ * and washes the scene gray. Anchored to the Mage's measured seat via [avatarBoundsFor]; sits out
  * any cue that is not a Teleport.
  */
 @Composable
@@ -131,7 +131,7 @@ internal fun MageTeleportOverlay(
 
 /**
  * How long each Teleport phase's portal runs, so the message sequencer holds its callout until the
- * portal has opened, closed behind the escape, or snapped shut and washed grey — rather than
+ * portal has opened, closed behind the escape, or snapped shut and washed gray — rather than
  * cutting it off. The hold phase re-asserts the already-open portal, so it adds no wait.
  */
 internal fun teleportOverlayDurationMillis(phase: TeleportPhase, didEscape: Boolean?): Long =
@@ -248,7 +248,7 @@ private suspend fun TeleportPortalState.resolveEscape(scene: TeleportScene) {
     this.scene = null
 }
 
-/** A failed escape: the portal snaps shut too soon while a grey wash blooms over the scene. */
+/** A failed escape: the portal snaps shut too soon while a gray wash blooms over the scene. */
 private suspend fun TeleportPortalState.resolveFail(scene: TeleportScene) {
     this.scene = scene
     if (open.value == 0f) open.snapTo(targetValue = 1f)
@@ -404,7 +404,7 @@ private fun MageTeleportFailPreview() {
 /**
  * The whole Teleport played over a real seated Mage: the portal opens and churns through two roll
  * dice, then the Mage either rises through it and vanishes, or lunges and is thrown back as the
- * scene greys — the seat gesture and the portal overlay driven off the one replaying cue.
+ * scene grays — the seat gesture and the portal overlay driven off the one replaying cue.
  */
 @Composable
 private fun MageTeleportPreview(didEscape: Boolean) {

@@ -22,7 +22,7 @@ internal val bardShellDark = Color(color = 0xFF6B4522)
 internal val bardStickLight = Color(color = 0xFFD8AE6A)
 internal val bardStickDark = Color(color = 0xFF8A6230)
 
-/** The white batter head, and the grey it shades to as the stick drives a dip into it. */
+/** The white batter head, and the gray it shades to as the stick drives a dip into it. */
 internal val bardHeadWhite = Color(color = 0xFFF6F3EA)
 internal val bardHeadShade = Color(color = 0xFFBFB9A6)
 

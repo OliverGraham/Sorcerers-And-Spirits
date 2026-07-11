@@ -152,6 +152,7 @@ sealed interface CombatAnimationCue {
         val mainDamage: Int,
         val splashDamage: Int,
         val splashTargetUserIds: List<String>,
+        val isMainTargetKnockedOut: Boolean,
     ) : CombatAnimationCue
 
     /**
@@ -191,6 +192,7 @@ sealed interface CombatAnimationCue {
         val didSurvive: Boolean?,
         val attackerUserId: String?,
         val wrathIntensity: Int?,
+        val isAttackerKnockedOut: Boolean,
     ) : CombatAnimationCue
 }
 
@@ -474,6 +476,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     mainDamage = mainDamage,
                     splashDamage = splashDamage,
                     splashTargetUserIds = splashTargetUserIds,
+                    isMainTargetKnockedOut = isMainTargetKnockedOut,
                 )
 
             is ArenaMessageState.Teleport.Trigger ->
@@ -508,6 +511,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     didSurvive = null,
                     attackerUserId = null,
                     wrathIntensity = null,
+                    isAttackerKnockedOut = false,
                 )
 
             is ArenaMessageState.HolyShield.Prayer ->
@@ -518,6 +522,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     didSurvive = didSurvive,
                     attackerUserId = null,
                     wrathIntensity = null,
+                    isAttackerKnockedOut = false,
                 )
 
             is ArenaMessageState.HolyShield.Wrath ->
@@ -528,6 +533,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     didSurvive = true,
                     attackerUserId = attackerUserId,
                     wrathIntensity = singleDie,
+                    isAttackerKnockedOut = isAttackerKnockedOut,
                 )
 
             is ArenaMessageState.NewRound,
@@ -578,12 +584,17 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.MirrorImage ->
                 if (outcome == NormalRollMessageType.Knockout) illusionistUserId else null
 
-            is CombatAnimationCue.SpellPotency -> null
+            is CombatAnimationCue.SpellPotency ->
+                if (isMainTargetKnockedOut) mainTargetUserId else null
 
             is CombatAnimationCue.Teleport -> null
 
             is CombatAnimationCue.HolyShield ->
-                if (phase == HolyShieldPhase.Pray && didSurvive == false) paladinUserId else null
+                when {
+                    phase == HolyShieldPhase.Pray && didSurvive == false -> paladinUserId
+                    phase == HolyShieldPhase.Wrath && isAttackerKnockedOut -> attackerUserId
+                    else -> null
+                }
         }
 
 /**
@@ -637,7 +648,9 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
  */
 private fun CombatAnimationCue.HolyShield.holyShieldGestureFor(userId: String): AvatarGesture? {
     val isSmoteAttacker = phase == HolyShieldPhase.Wrath && userId == attackerUserId
-    if (isSmoteAttacker) return AvatarGesture.FlinchHeavy
+    if (isSmoteAttacker) {
+        return if (isAttackerKnockedOut) AvatarGesture.Collapse else AvatarGesture.FlinchHeavy
+    }
 
     if (userId != paladinUserId) return null
     val didFailPrayer = phase == HolyShieldPhase.Pray && didSurvive == false
@@ -653,7 +666,10 @@ private fun CombatAnimationCue.HolyShield.holyShieldGestureFor(userId: String): 
 private fun CombatAnimationCue.SpellPotency.spellPotencyGestureFor(userId: String): AvatarGesture? =
     when (userId) {
         mageUserId -> AvatarGesture.Cast
-        mainTargetUserId -> AvatarGesture.FlinchHeavy
+
+        mainTargetUserId ->
+            if (isMainTargetKnockedOut) AvatarGesture.Collapse else AvatarGesture.FlinchHeavy
+
         else -> null
     }
 

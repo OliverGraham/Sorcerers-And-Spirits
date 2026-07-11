@@ -160,6 +160,7 @@ sealed interface ArenaMessage {
         val mainDamage: Int,
         val splashDamage: Int,
         val splashTargetUserIds: List<String>,
+        val isMainTargetKnockedOut: Boolean,
     ) : ArenaMessage
 
     sealed interface HolyShield : ArenaMessage {
@@ -178,6 +179,7 @@ sealed interface ArenaMessage {
             override val paladinUserId: String,
             val attackerUserId: String,
             val singleDie: Int,
+            val isAttackerKnockedOut: Boolean,
         ) : HolyShield
     }
 

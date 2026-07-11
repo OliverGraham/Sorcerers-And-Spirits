@@ -1034,6 +1034,7 @@ private fun holyShieldPreviewCue(
     didSurvive: Boolean? = null,
     attackerUserId: String? = null,
     wrathIntensity: Int? = null,
+    isAttackerKnockedOut: Boolean = false,
 ): CombatAnimationCue.HolyShield =
     CombatAnimationCue.HolyShield(
         id = "holy-shield-$phase-$didSurvive-$iteration",
@@ -1042,4 +1043,5 @@ private fun holyShieldPreviewCue(
         didSurvive = didSurvive,
         attackerUserId = attackerUserId,
         wrathIntensity = wrathIntensity,
+        isAttackerKnockedOut = isAttackerKnockedOut,
     )

@@ -98,16 +98,17 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.wrathRoll() {
         val result = diceRoller.roll1D6(userId = defenderUserId).total
 
+        updateAttackerClass { attacker -> attacker.copy(hitPoints = attacker.hitPoints - result) }
+
         addMessage(
             message =
                 ArenaMessage.HolyShield.Wrath(
                     paladinUserId = defenderUserId,
                     attackerUserId = attackerUserId,
                     singleDie = result,
+                    isAttackerKnockedOut = !attacker.isConscious(),
                 )
         )
-
-        updateAttackerClass { attacker -> attacker.copy(hitPoints = attacker.hitPoints - result) }
 
         resolveWrath()
     }

@@ -341,6 +341,7 @@ private fun MageSpellPotencyPreview(element: MageSpellElement, mainDamage: Int) 
                 mainDamage = mainDamage,
                 splashDamage = mainDamage / 2,
                 splashTargetUserIds = emptyList(),
+                isMainTargetKnockedOut = false,
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Mage, seats = seats) {

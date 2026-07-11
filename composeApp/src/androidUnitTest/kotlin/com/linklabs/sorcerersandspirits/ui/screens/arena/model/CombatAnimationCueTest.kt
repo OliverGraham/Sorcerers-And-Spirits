@@ -195,6 +195,7 @@ class CombatAnimationCueTest {
                 didSurvive = true,
                 attackerUserId = ATTACKER_ID,
                 wrathIntensity = 5,
+                isAttackerKnockedOut = false,
             )
 
         assertEquals(
@@ -203,6 +204,27 @@ class CombatAnimationCueTest {
         )
         assertNull(actual = cue.gestureFor(userId = DEFENDER_ID))
         assertNull(actual = cue.gestureFor(userId = SPECTATOR_ID))
+        assertNull(actual = cue.collapsingUserId)
+    }
+
+    @Test
+    fun `Given a Holy Shield Wrath knockout, then the struck attacker collapses and holds`() {
+        val cue =
+            CombatAnimationCue.HolyShield(
+                id = MESSAGE_ID,
+                paladinUserId = DEFENDER_ID,
+                phase = HolyShieldPhase.Wrath,
+                didSurvive = true,
+                attackerUserId = ATTACKER_ID,
+                wrathIntensity = 6,
+                isAttackerKnockedOut = true,
+            )
+
+        assertEquals(
+            expected = AvatarGesture.Collapse,
+            actual = cue.gestureFor(userId = ATTACKER_ID),
+        )
+        assertEquals(expected = ATTACKER_ID, actual = cue.collapsingUserId)
     }
 
     @Test
@@ -241,6 +263,7 @@ class CombatAnimationCueTest {
                 mainDamage = 8,
                 splashDamage = 4,
                 splashTargetUserIds = listOf(SPECTATOR_ID),
+                isMainTargetKnockedOut = false,
             )
 
         val cue = message.combatAnimationCue
@@ -254,6 +277,7 @@ class CombatAnimationCueTest {
                     mainDamage = 8,
                     splashDamage = 4,
                     splashTargetUserIds = listOf(SPECTATOR_ID),
+                    isMainTargetKnockedOut = false,
                 ),
             actual = cue,
         )
@@ -264,6 +288,32 @@ class CombatAnimationCueTest {
         )
         assertNull(actual = cue?.gestureFor(userId = SPECTATOR_ID))
         assertNull(actual = cue?.collapsingUserId)
+    }
+
+    @Test
+    fun `Given a Spell Potency knockout, then the main target collapses and holds their seat`() {
+        val message =
+            ArenaMessageState.SpellPotency(
+                id = MESSAGE_ID,
+                mageUserId = ATTACKER_ID,
+                mageName = "Mage",
+                mainTargetUserId = DEFENDER_ID,
+                mainTargetName = "Bard",
+                firstDie = 4,
+                secondDie = 4,
+                mainDamage = 8,
+                splashDamage = 4,
+                splashTargetUserIds = listOf(SPECTATOR_ID),
+                isMainTargetKnockedOut = true,
+            )
+
+        val cue = message.combatAnimationCue
+
+        assertEquals(
+            expected = AvatarGesture.Collapse,
+            actual = cue?.gestureFor(userId = DEFENDER_ID),
+        )
+        assertEquals(expected = DEFENDER_ID, actual = cue?.collapsingUserId)
     }
 
     @Test

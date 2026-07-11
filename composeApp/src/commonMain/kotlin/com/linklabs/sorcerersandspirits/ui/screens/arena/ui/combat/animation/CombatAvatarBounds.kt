@@ -31,3 +31,14 @@ internal class CombatAvatarBounds {
         return boundsInRoot.translate(offset = -overlayBounds.topLeft)
     }
 }
+
+/**
+ * The character bust art's width-to-height ratio. The avatar image is drawn ContentScale.Fit and
+ * centered inside a seat box that fills the full stage width, so the reported bounds are far wider
+ * than the visible character. Effects sized off that raw width balloon across the screen; sizing
+ * off [visibleAvatarWidth] keeps them anchored to the character the player actually sees.
+ */
+private const val AVATAR_ART_ASPECT = 0.75f
+
+/** The on-screen width of the visible character within its letterboxed seat bounds. */
+internal fun Rect.visibleAvatarWidth(): Float = height * AVATAR_ART_ASPECT

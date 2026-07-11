@@ -54,6 +54,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PALADIN_SWING_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_DASH_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_EMBED_MILLIS
@@ -507,10 +508,20 @@ private suspend fun AvatarGestureState.playDefenderReaction(
 private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
+
         is CombatAnimationCue.PrepareAttack -> prepareAttackReactionDelayMillis()
+
         is CombatAnimationCue.Riposte -> RIPOSTE_STRIKE_MILLIS
+
         is CombatAnimationCue.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
-        is CombatAnimationCue.HolyShield -> HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
+
+        is CombatAnimationCue.HolyShield ->
+            if (phase == HolyShieldPhase.Wrath) {
+                HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong()
+            } else {
+                HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
+            }
+
         else -> REACTION_DELAY_MILLIS
     }
 
@@ -581,12 +592,15 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
 
         is CombatAnimationCue.Teleport -> teleportBodyMillis()
 
-        is CombatAnimationCue.HolyShield ->
-            if (phase == HolyShieldPhase.Pray && didSurvive == false) {
-                HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong() + COLLAPSE_BODY_MILLIS
-            } else {
-                0L
+        is CombatAnimationCue.HolyShield -> {
+            val isWrath = phase == HolyShieldPhase.Wrath
+            val didFailPrayer = phase == HolyShieldPhase.Pray && didSurvive == false
+            when {
+                isWrath -> HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong() + FLINCH_HEAVY_BODY_MILLIS
+                didFailPrayer -> HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong() + COLLAPSE_BODY_MILLIS
+                else -> 0L
             }
+        }
     }
 
 /**

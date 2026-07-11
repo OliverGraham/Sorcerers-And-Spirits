@@ -40,7 +40,7 @@ internal fun ArenaCombat(
 ) {
     val diceRoll = rememberDiceRoll()
 
-    val flashPlayback = rememberFlashPlayback(flashMessages = screenState.flashMessages)
+    val flashPlayback = rememberFlashPlayback(messages = screenState.messages)
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }

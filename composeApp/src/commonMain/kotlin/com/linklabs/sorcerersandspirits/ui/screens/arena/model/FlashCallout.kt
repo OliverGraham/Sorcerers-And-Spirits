@@ -118,31 +118,22 @@ sealed interface FlashCallout {
 }
 
 /**
- * The flash call-out for a message. Every message currently flashes (SS-164); paring some back to
- * log-only is a follow-up, which the nullable return and the [ArenaScreenState.flashMessages]
- * filter keep room for. Normal-attack outcomes flash their result; an ability flashes every step it
- * takes — its name then the outcome of its roll — so a defensive ability narrates as a sequence
- * (e.g. [Hit] then [FlashCallout.LuckyCoin] then [FlashCallout.AttackStopped]). The exhaustive
- * [when] makes a new message type a compile error until its flash is chosen.
+ * The flash call-out for a message, or null when the message is log-only (SS-185). Only messages
+ * that involve a die/dice roll flash: every normal-attack outcome and the roll steps of an ability
+ * (the roll itself and its immediate resolution). An ability's dice-less announcements and
+ * reactions stay in the log — the [Trigger] steps, Impersonate (which rolls nothing), and
+ * downstream effects like Killing Momentum, Dodge, and Persuade's charm/lull/redirect. The pure
+ * game-flow messages (new round/turn, joining, class choice) are log-only too.
+ * [ArenaScreenState.flashMessages] filters the nulls out; the exhaustive [when] makes a new message
+ * type a compile error until its flash is chosen.
  */
 val ArenaMessageState.flashCallout: FlashCallout?
     get() =
         when (this) {
-            is ArenaMessageState.NewRound -> FlashCallout.NewRound(roundNumber = roundNumber)
-
-            is ArenaMessageState.ChoseCharacterClass ->
-                FlashCallout.ChoseClass(
-                    className = characterClassInfo.className,
-                    actingClassType = characterClassInfo.type,
-                )
-
-            is ArenaMessageState.ConnectedToArena -> FlashCallout.Joined(playerName = displayName)
-
-            is ArenaMessageState.NewTurn ->
-                FlashCallout.TurnStart(
-                    className = characterClassInfo.className,
-                    actingClassType = characterClassInfo.type,
-                )
+            is ArenaMessageState.NewRound,
+            is ArenaMessageState.ChoseCharacterClass,
+            is ArenaMessageState.ConnectedToArena,
+            is ArenaMessageState.NewTurn -> null
 
             is ArenaMessageState.NormalRoll ->
                 when (type) {
@@ -158,20 +149,19 @@ val ArenaMessageState.flashCallout: FlashCallout?
                         FlashCallout.Knockout(actingClassType = attackerClassType)
                 }
 
-            is ArenaMessageState.KillingMomentum -> FlashCallout.KillingMomentum
+            is ArenaMessageState.KillingMomentum,
+            is ArenaMessageState.Dodge -> null
 
-            is ArenaMessageState.Dodge -> FlashCallout.Dodge
-
-            is ArenaMessageState.Teleport.Trigger -> FlashCallout.Teleport
+            is ArenaMessageState.Teleport.Trigger -> null
 
             is ArenaMessageState.Teleport.Roll -> FlashCallout.TeleportRoll(die = singleDie)
 
             is ArenaMessageState.Teleport.Result ->
                 if (didDefenderEscape) FlashCallout.Escaped else FlashCallout.Caught
 
-            is ArenaMessageState.LuckyCoin.Trigger -> FlashCallout.LuckyCoin
+            is ArenaMessageState.LuckyCoin.Trigger -> null
 
-            is ArenaMessageState.LuckyCoin.HighRollerTrigger -> FlashCallout.HighRoller
+            is ArenaMessageState.LuckyCoin.HighRollerTrigger -> null
 
             is ArenaMessageState.LuckyCoin.Flip ->
                 if (didStopAttack) {
@@ -183,7 +173,7 @@ val ArenaMessageState.flashCallout: FlashCallout?
             is ArenaMessageState.LuckyCoin.HighRollerDamage ->
                 if (isKnockout) FlashCallout.Knockout() else FlashCallout.Damage(amount = singleDie)
 
-            is ArenaMessageState.Riposte.Trigger -> FlashCallout.Riposte
+            is ArenaMessageState.Riposte.Trigger -> null
 
             is ArenaMessageState.Riposte.EnGarde ->
                 if (isSuccessful) FlashCallout.Reversed else FlashCallout.CounterFailed
@@ -200,7 +190,7 @@ val ArenaMessageState.flashCallout: FlashCallout?
                     SummonMinionOutcome.Golem -> FlashCallout.Golem(necromancerName = necroName)
                 }
 
-            is ArenaMessageState.Persuade.Trigger -> FlashCallout.Persuade
+            is ArenaMessageState.Persuade.Trigger -> null
 
             is ArenaMessageState.Persuade.StrumLute ->
                 if (isSuccessful) {
@@ -209,29 +199,25 @@ val ArenaMessageState.flashCallout: FlashCallout?
                     FlashCallout.AttackContinues(die = diceRoll)
                 }
 
-            is ArenaMessageState.Persuade.CharmActivation -> FlashCallout.Charmed
+            is ArenaMessageState.Persuade.CharmActivation,
+            is ArenaMessageState.Persuade.Lull,
+            is ArenaMessageState.Persuade.Charm -> null
 
-            is ArenaMessageState.Persuade.Lull -> FlashCallout.Lulled
-
-            is ArenaMessageState.Persuade.Charm ->
-                FlashCallout.Redirected(targetName = defenderName)
-
-            is ArenaMessageState.Encore.Trigger -> FlashCallout.Encore
+            is ArenaMessageState.Encore.Trigger -> null
 
             is ArenaMessageState.Encore.Roll ->
                 if (isSuccessful) FlashCallout.EncoreAgain else FlashCallout.NoEncore
 
-            is ArenaMessageState.Impersonate -> FlashCallout.Impersonate
+            is ArenaMessageState.Impersonate -> null
 
-            is ArenaMessageState.MirrorImage.Trigger -> FlashCallout.MirrorImage
-
-            is ArenaMessageState.MirrorImage.Pass -> FlashCallout.MirrorHolds
+            is ArenaMessageState.MirrorImage.Trigger,
+            is ArenaMessageState.MirrorImage.Pass -> null
 
             is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(finalRoll = finalRoll)
 
             is ArenaMessageState.SpellPotency -> FlashCallout.SpellPotency
 
-            is ArenaMessageState.HolyShield.Trigger -> FlashCallout.HolyShield
+            is ArenaMessageState.HolyShield.Trigger -> null
 
             is ArenaMessageState.HolyShield.Prayer ->
                 if (didSurvive) FlashCallout.Saved else FlashCallout.StruckDown

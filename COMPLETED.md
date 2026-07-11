@@ -1209,3 +1209,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   2d6; on 10/11/12 the Paladin survives with 1 Health and deals unblockable 1d6 to the attacker.
 - **Cue sources:** `ArenaMessageState.HolyShield.*`.
 - **Parent:** SS-191. Split out of SS-199.
+- **SS-200** — Attacks-remaining stat in AvatarStatsBar (turn owner only): domain-owned
+  `CharacterClass.attacksRemaining` shown as a stat + icon for the current turn owner, reset at turn
+  start and decremented/incremented as attacks are spent or bonus attacks are granted.
+- **SS-193** — Gambler ability animations: All-In and Lucky Coin ability animations built on the
+  SS-191 seam. Cue sources: `ArenaMessageState.AllIn`, `ArenaMessageState.LuckyCoin.*`.
+- **SS-214** — Spell Potency splash: decrement HP off the class-head icons: splashed conscious
+  opponents get a per-head-icon hit-point decrement animation so a multiplayer Spell Potency reads
+  as hitting the whole table, not just the seated main target. Cue: `ArenaMessageState.SpellPotency`.

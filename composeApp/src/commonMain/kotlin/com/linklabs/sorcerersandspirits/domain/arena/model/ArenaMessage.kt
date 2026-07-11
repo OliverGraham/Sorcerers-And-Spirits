@@ -155,6 +155,8 @@ sealed interface ArenaMessage {
     data class SpellPotency(
         val mageUserId: String,
         val mainTargetUserId: String,
+        val firstDie: Int,
+        val secondDie: Int,
         val mainDamage: Int,
         val splashDamage: Int,
         val splashTargetUserIds: List<String>,

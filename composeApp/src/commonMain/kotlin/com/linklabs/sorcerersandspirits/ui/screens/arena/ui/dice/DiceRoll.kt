@@ -59,8 +59,13 @@ internal class DiceRoll {
 
     private var pendingFromRollId by mutableStateOf<String?>(value = null)
 
+    private var pendingFromMessageId by mutableStateOf<String?>(value = null)
+
     // Updated every composition by [rememberDiceRoll] from the latest roll on show.
     internal var latestRollId by mutableStateOf<String?>(value = null)
+
+    // The newest message of any kind, roll-bearing or not, updated every composition.
+    internal var latestMessageId by mutableStateOf<String?>(value = null)
 
     var slotFaces by mutableStateOf(value = List(size = DIE_COUNT) { DIE_RESTING_FACE })
         private set
@@ -99,6 +104,7 @@ internal class DiceRoll {
         val shouldRoll = isArmed || isDoubleTap
         if (shouldRoll && !isAwaitingResult) {
             pendingFromRollId = latestRollId
+            pendingFromMessageId = latestMessageId
             isRollPending = true
             commit()
         }
@@ -115,6 +121,17 @@ internal class DiceRoll {
 
     internal fun finishAwaiting() {
         isRollPending = false
+    }
+
+    /**
+     * Stop awaiting a committed roll whose turn already resolved without a roll-bearing result:
+     * newer messages have landed since the roll was released but none rolled the dice, so tumbling
+     * on to the safety cap would only stall on a stale value. A whole turn's messages arrive in one
+     * batch, so a batch that carries no roll is a turn that produced none for this device.
+     */
+    internal fun settleIfResolvedWithoutResult() {
+        val hasTurnResolvedWithoutRoll = isRollPending && latestMessageId != pendingFromMessageId
+        if (hasTurnResolvedWithoutRoll) finishAwaiting()
     }
 
     /**
@@ -173,6 +190,7 @@ internal fun rememberDiceRoll(): DiceRoll {
     val roll = remember { DiceRoll() }
 
     roll.latestRollId = latestRoll.messageId
+    roll.latestMessageId = latestRoll.latestMessageId
 
     var committedRollId by remember { mutableStateOf<String?>(value = null) }
     val result = latestRoll.result
@@ -181,6 +199,8 @@ internal fun rememberDiceRoll(): DiceRoll {
         committedRollId = latestRoll.messageId
         roll.commitRoll(result = result, isOwnRoll = isOwnRoll)
     }
+
+    roll.settleIfResolvedWithoutResult()
 
     // While the dice are held, each phone shake kicks them around, arms the roll so the release
     // commits it, and drives a smooth haptic buzz (SS-112).

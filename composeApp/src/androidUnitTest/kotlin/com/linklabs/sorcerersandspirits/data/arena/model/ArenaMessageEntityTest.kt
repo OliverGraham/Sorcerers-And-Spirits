@@ -137,6 +137,8 @@ class ArenaMessageEntityTest {
                 ArenaMessage.SpellPotency(
                     mageUserId = "mage",
                     mainTargetUserId = "target",
+                    firstDie = 4,
+                    secondDie = 4,
                     mainDamage = 8,
                     splashDamage = 4,
                     splashTargetUserIds = listOf("rogue", "bard"),

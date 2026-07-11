@@ -52,7 +52,13 @@ internal class NormalAttackRollHandler(
                 firstDie == secondDie
 
         if (isSpellPotencyRoll) {
-            SpellPotencyRoll(combatMutator = this, diceTotal = diceTotal).invoke()
+            SpellPotencyRoll(
+                    combatMutator = this,
+                    firstDie = firstDie,
+                    secondDie = secondDie,
+                    diceTotal = diceTotal,
+                )
+                .invoke()
         }
 
         return isSpellPotencyRoll

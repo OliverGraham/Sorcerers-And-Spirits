@@ -24,6 +24,8 @@ internal fun ArenaMessageState.rolledDice(): RollResult? =
 
         is ArenaMessageState.PrepareAttack -> twoDice(first = firstDie, second = secondDie)
 
+        is ArenaMessageState.SpellPotency -> twoDice(first = firstDie, second = secondDie)
+
         is ArenaMessageState.Riposte.EnGarde -> twoDice(first = firstDie, second = secondDie)
 
         is ArenaMessageState.HolyShield.Prayer -> twoDice(first = firstDie, second = secondDie)
@@ -66,16 +68,28 @@ private fun twoDice(first: Int, second: Int): RollResult.Faces =
 /**
  * The most recent roll across all players: what it did to the dice, and the id of the message that
  * carried it so a fresh roll can be told apart from the previous one even when it lands on the same
- * faces.
+ * faces. [latestMessageId] is the id of the newest message of any kind, so a committed roll can
+ * tell its turn resolved even when the resolution carried no dice and settle instead of stalling.
  */
 @Immutable
-internal data class LatestRoll(val result: RollResult? = null, val messageId: String? = null)
+internal data class LatestRoll(
+    val result: RollResult? = null,
+    val messageId: String? = null,
+    val latestMessageId: String? = null,
+)
 
 /** The most recent roll across all players, or an empty [LatestRoll] if nothing has been rolled. */
 internal fun List<ArenaMessageState>.latestRoll(): LatestRoll {
+    val latestMessageId = lastOrNull()?.id
     for (message in asReversed()) {
         val result = message.rolledDice()
-        if (result != null) return LatestRoll(result = result, messageId = message.id)
+        if (result != null) {
+            return LatestRoll(
+                result = result,
+                messageId = message.id,
+                latestMessageId = latestMessageId,
+            )
+        }
     }
-    return LatestRoll()
+    return LatestRoll(latestMessageId = latestMessageId)
 }

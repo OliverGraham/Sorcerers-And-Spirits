@@ -53,6 +53,9 @@ import sorcerersandspirits.composeapp.generated.resources.ic_teleport_button
 
 private val arenaButtonSize = 72.dp
 private val arenaButtonLift = 6.dp
+
+/** The fixed height the bottom action row always reserves, so the stage above it never reflows. */
+internal val BOTTOM_CONTROLS_HEIGHT = arenaButtonSize + arenaButtonLift + 24.dp
 private val arenaButtonShape = CircleShape
 private val arenaButtonFaceColor = Color(color = 0xFF323232)
 private val arenaButtonNeutralBorder = Color(color = 0xFF555555)
@@ -69,6 +72,10 @@ private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
  * [AnimatedVisibility] rather than appearing and disappearing, so the avatars above do not reflow
  * as turns pass (there are no controls on an opponent's turn) or while a finish is pending
  * ([areControlsVisible]).
+ *
+ * The buttons also fade out while a resolution's animations are still playing ([isSequencing],
+ * SS-215), so the user cannot stack the next action on top of an effect that has not finished — the
+ * controls return only once the screen is idle.
  */
 @Composable
 internal fun BottomControls(
@@ -78,6 +85,7 @@ internal fun BottomControls(
     diceRoll: DiceRoll,
     areControlsVisible: Boolean,
     isActionInFlight: Boolean,
+    isSequencing: Boolean,
     onActionDispatched: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -90,7 +98,7 @@ internal fun BottomControls(
     val impersonateControl = controls.firstOrNull { it.isImpersonate() }
     val abilityControls = controls.filter { it != attackControl && it != impersonateControl }
     val shouldLabelAbilities = abilityControls.size > 1
-    val areButtonsShown = areControlsVisible && controls.isNotEmpty()
+    val areButtonsShown = areControlsVisible && !isSequencing && controls.isNotEmpty()
 
     fun isEnabled(control: ArenaCombatControl): Boolean =
         !isActionInFlight &&
@@ -109,10 +117,7 @@ internal fun BottomControls(
             onActionDispatched = onActionDispatched,
         )
 
-    Box(
-        modifier =
-            modifier.fillMaxWidth().height(height = arenaButtonSize + arenaButtonLift + 24.dp)
-    ) {
+    Box(modifier = modifier.fillMaxWidth().height(height = BOTTOM_CONTROLS_HEIGHT)) {
         AnimatedVisibility(visible = areButtonsShown, enter = fadeIn(), exit = fadeOut()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

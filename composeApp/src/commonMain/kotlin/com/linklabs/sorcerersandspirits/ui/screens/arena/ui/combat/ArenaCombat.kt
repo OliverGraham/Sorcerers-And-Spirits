@@ -5,7 +5,9 @@ import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -13,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
@@ -28,6 +31,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
@@ -126,20 +131,34 @@ internal fun ArenaCombat(
                         animationCue = flashPlayback.combatAnimationCue,
                         avatarBounds = avatarBounds,
                         presentClasses = presentClasses,
-                        modifier = Modifier.fillMaxSize(),
                     )
                 }
 
-                BottomControls(
-                    state = state,
-                    targetedOpponentUserId = targetedOpponentUserId,
-                    lockTarget = { isTargetLockedOptimistically = true },
-                    diceRoll = diceRoll,
-                    areControlsVisible = !screenState.isFinishPending,
-                    isActionInFlight = isActionInFlight,
-                    onActionDispatched = { isActionInFlight = true },
-                )
+                Spacer(modifier = Modifier.height(height = BOTTOM_CONTROLS_HEIGHT))
             }
+
+            EncoreFullScreenOverlay(
+                animationCue = flashPlayback.combatAnimationCue,
+                presentClasses = presentClasses,
+            )
+
+            BottomControls(
+                state = state,
+                targetedOpponentUserId = targetedOpponentUserId,
+                lockTarget = { isTargetLockedOptimistically = true },
+                diceRoll = diceRoll,
+                areControlsVisible = !screenState.isFinishPending,
+                isActionInFlight = isActionInFlight,
+                isSequencing = flashPlayback.isSequencing,
+                onActionDispatched = { isActionInFlight = true },
+                modifier = Modifier.align(alignment = Alignment.BottomCenter),
+            )
+
+            SpellPotencyFullScreenOverlay(
+                animationCue = flashPlayback.combatAnimationCue,
+                avatarBounds = avatarBounds,
+                presentClasses = presentClasses,
+            )
 
             MessageLogOverlay(
                 messages = screenState.messages,

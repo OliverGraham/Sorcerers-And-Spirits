@@ -167,6 +167,39 @@ sealed interface CombatAnimationCue {
         val phase: TeleportPhase,
         val didEscape: Boolean?,
     ) : CombatAnimationCue
+
+    /**
+     * The Paladin's Holy Shield (SS-212): the instant a knockout would land, the Paladin grays to
+     * stone and an ornate mace-gold shield rises to cover them ([HolyShieldPhase.Raise]); on the
+     * survival roll the shield glows with green-gold holy light ([HolyShieldPhase.Pray]) and either
+     * — when [didSurvive] is true — the Paladin returns to colour under a living beam of light with
+     * a +1 heart floating up, or the shield topples and grays as the Paladin falls to the normal
+     * knockout. A survived shield then rolls its light up to the heavens and blasts it back down on
+     * the attacker ([HolyShieldPhase.Wrath]), the blast's force scaled by [wrathIntensity] (the 1–6
+     * damage die). [attackerUserId] and [wrathIntensity] are set only on Wrath; [didSurvive] is
+     * null until the prayer resolves.
+     */
+    @Immutable
+    data class HolyShield(
+        override val id: String,
+        val paladinUserId: String,
+        val phase: HolyShieldPhase,
+        val didSurvive: Boolean?,
+        val attackerUserId: String?,
+        val wrathIntensity: Int?,
+    ) : CombatAnimationCue
+}
+
+/**
+ * The stage a Holy Shield is in (SS-212): [Raise] is the shield rising over the grayed Paladin the
+ * moment the knockout would land; [Pray] is the survival roll — the shield glowing before it either
+ * saves the Paladin or topples; [Wrath] is the saved Paladin's light rolling up to the heavens and
+ * blasting back down on the attacker.
+ */
+enum class HolyShieldPhase {
+    Raise,
+    Pray,
+    Wrath,
 }
 
 /**
@@ -196,7 +229,7 @@ enum class MirrorImagePhase {
  * Encore triggers — the arena darkens to a spotlit stage with a standing microphone and a restless
  * crowd of the class avatars, held alive while the roll is made; [Success] and [Failure] are the
  * resolved 1d6 — the mic throws off music as the crowd roars for the encore, or the notes drain to
- * grey as the crowd boos, before the house lights come back up and the darkness lifts either way.
+ * gray as the crowd boos, before the house lights come back up and the darkness lifts either way.
  */
 enum class EncorePhase {
     SetStage,
@@ -207,7 +240,7 @@ enum class EncorePhase {
 /**
  * The stage a Persuade is in (SS-207): [Summon] is the Bard's lute conjured the moment their armor
  * is passed, held while the roll is made; [StrumFailed] and [StrumStopped] are the resolved roll —
- * the strings ring and notes bloom, then either drain to grey as the attack presses on, or hold
+ * the strings ring and notes bloom, then either drain to gray as the attack presses on, or hold
  * their colour in a flourish as the attack is lulled to a stop. [CharmSummon] is the same stopping
  * flourish followed by the lute crossfading into a flute, and [CharmComplete] is that flute played,
  * air breathing through it, wreathed in the slow hypnotic swirl that redirects the attacker.
@@ -461,8 +494,35 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     didEscape = didDefenderEscape,
                 )
 
-            // TODO(SS-199): Paladin ability animations.
-            is ArenaMessageState.HolyShield -> null
+            is ArenaMessageState.HolyShield.Trigger ->
+                CombatAnimationCue.HolyShield(
+                    id = id,
+                    paladinUserId = paladinUserId,
+                    phase = HolyShieldPhase.Raise,
+                    didSurvive = null,
+                    attackerUserId = null,
+                    wrathIntensity = null,
+                )
+
+            is ArenaMessageState.HolyShield.Prayer ->
+                CombatAnimationCue.HolyShield(
+                    id = id,
+                    paladinUserId = paladinUserId,
+                    phase = HolyShieldPhase.Pray,
+                    didSurvive = didSurvive,
+                    attackerUserId = null,
+                    wrathIntensity = null,
+                )
+
+            is ArenaMessageState.HolyShield.Wrath ->
+                CombatAnimationCue.HolyShield(
+                    id = id,
+                    paladinUserId = paladinUserId,
+                    phase = HolyShieldPhase.Wrath,
+                    didSurvive = true,
+                    attackerUserId = attackerUserId,
+                    wrathIntensity = singleDie,
+                )
 
             is ArenaMessageState.NewRound,
             is ArenaMessageState.ChoseCharacterClass,
@@ -515,6 +575,9 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.SpellPotency -> null
 
             is CombatAnimationCue.Teleport -> null
+
+            is CombatAnimationCue.HolyShield ->
+                if (phase == HolyShieldPhase.Pray && didSurvive == false) paladinUserId else null
         }
 
 /**
@@ -556,7 +619,21 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.SpellPotency -> spellPotencyGestureFor(userId = userId)
 
         is CombatAnimationCue.Teleport -> null
+
+        is CombatAnimationCue.HolyShield -> holyShieldGestureFor(userId = userId)
     }
+
+/**
+ * The Paladin's Holy Shield (SS-212): the shield and its light are drawn entirely by the effect
+ * overlay, so the Paladin holds still behind them through the raise and the prayer roll. Only a
+ * failed prayer moves the body — the Paladin folds into the normal knockout collapse as the shield
+ * topples.
+ */
+private fun CombatAnimationCue.HolyShield.holyShieldGestureFor(userId: String): AvatarGesture? {
+    if (userId != paladinUserId) return null
+    val didFailPrayer = phase == HolyShieldPhase.Pray && didSurvive == false
+    return if (didFailPrayer) AvatarGesture.Collapse else null
+}
 
 /**
  * The Mage's Spell Potency (SS-210): the amplified projectiles and the area-of-effect are drawn by

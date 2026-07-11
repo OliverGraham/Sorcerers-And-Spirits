@@ -92,7 +92,7 @@ internal class EncoreEffectState {
  * dark and a spotlit stage rises, a 3D standing microphone picked out of the black while a restless
  * crowd of the class avatars sways in the distance, held alive as the roll is made. When the die
  * lands the mic throws off music in rising notes and rings of sound: a success sends the crowd wild
- * for the encore, while a failure drains the music to grey and turns the crowd to booing. Either
+ * for the encore, while a failure drains the music to gray and turns the crowd to booing. Either
  * way the house lights then come up and the darkness lifts. Full-screen and centre-staged rather
  * than anchored to a seat; sits out any cue that is not an Encore.
  */
@@ -200,7 +200,7 @@ private suspend fun EncoreEffectState.setStage(accentColor: Color) {
 
 /**
  * The roll lands: the mic sounds, the crowd swings to its [mood], and — on a failure — the music
- * drains to grey in step, before the house lights come up and the whole scene lifts away.
+ * drains to gray in step, before the house lights come up and the whole scene lifts away.
  */
 private suspend fun EncoreEffectState.resolve(accentColor: Color, mood: EncoreMood) {
     scene = EncoreScene(accentColor = accentColor, mood = mood)

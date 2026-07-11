@@ -283,6 +283,7 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val paladinUserId: String,
             val paladinName: String,
+            val attackerUserId: String,
             val attackerName: String,
             val singleDie: Int,
         ) : HolyShield
@@ -445,6 +446,7 @@ private fun ArenaMessage.toState(
                 id = id,
                 paladinUserId = paladinUserId,
                 paladinName = participants.resolveClassName(userId = paladinUserId),
+                attackerUserId = attackerUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 singleDie = singleDie,
             )

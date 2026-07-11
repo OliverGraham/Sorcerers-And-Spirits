@@ -37,6 +37,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.teleportOverlayDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necromancerSummonMinionDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.paladinHolyShieldOverlayDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.paladinNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
 import kotlinx.coroutines.delay
@@ -187,6 +188,9 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
 
         is CombatAnimationCue.Teleport ->
             teleportOverlayDurationMillis(phase = phase, didEscape = didEscape)
+
+        is CombatAnimationCue.HolyShield ->
+            paladinHolyShieldOverlayDurationMillis(phase = phase, didSurvive = didSurvive)
     }
 
 /**

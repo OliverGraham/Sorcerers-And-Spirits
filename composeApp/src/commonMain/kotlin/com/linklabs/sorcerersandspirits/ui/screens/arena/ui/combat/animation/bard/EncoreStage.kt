@@ -104,7 +104,7 @@ internal fun DrawScope.drawEncoreScrim(darkness: Float) {
  * receding rows, dim silhouettes lit faintly by the stage. As the ambient [sway] runs each face
  * bobs and leans on its own phase so the crowd reads alive; a landed roll then swings the whole
  * house through [reaction] — a [wild] crowd leaps and brightens for the encore, while a booing one
- * shrinks down and shakes, souring toward grey.
+ * shrinks down and shakes, souring toward gray.
  */
 internal fun DrawScope.drawEncoreCrowd(
     crowd: List<EncoreCrowdMember>,
@@ -359,7 +359,7 @@ private val encoreNoteDelays = listOf(0f, 0.1f, 0.18f, 0.26f, 0.34f, 0.42f)
 /**
  * The music the microphone throws off as the roll lands (SS-206): notes bursting outward from the
  * head and rising away on a stagger, ringed by expanding rings of sound. A success keeps them warm
- * and bright; a failure drains them to grey as they scatter, matching the other Bard failures.
+ * and bright; a failure drains them to gray as they scatter, matching the other Bard failures.
  */
 internal fun DrawScope.drawEncoreMusic(
     accentColor: Color,

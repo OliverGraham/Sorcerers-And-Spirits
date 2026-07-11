@@ -27,6 +27,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.HolyShieldPhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.MirrorImagePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TeleportPhase
@@ -52,6 +53,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PALADIN_SWING_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_DASH_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.MELEE_EMBED_MILLIS
@@ -323,7 +325,7 @@ private fun CombatAnimationCue.teleportActingFor(userId: String): CombatAnimatio
  * The Mage's own body during Teleport (SS-211): it sits still while the portal opens and churns
  * through the roll-off, and only on the resolving roll does it act — rising up through the overhead
  * portal and vanishing before reappearing on a successful escape, or lunging for a portal that
- * snaps shut too soon and greying out when the escape fails.
+ * snaps shut too soon and graying out when the escape fails.
  */
 private suspend fun AvatarGestureState.playTeleport(
     cue: CombatAnimationCue.Teleport,
@@ -384,7 +386,7 @@ private suspend fun AvatarGestureState.teleportEscape(density: Density) =
         }
     }
 
-/** The failed escape: the Mage lunges for the portal, is thrown back as it shuts, and greys out. */
+/** The failed escape: the Mage lunges for the portal, is thrown back as it shuts, and grays out. */
 private suspend fun AvatarGestureState.teleportFail(density: Density) =
     with(density) {
         delay(timeMillis = TELEPORT_REACT_MILLIS)
@@ -508,6 +510,7 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
         is CombatAnimationCue.PrepareAttack -> prepareAttackReactionDelayMillis()
         is CombatAnimationCue.Riposte -> RIPOSTE_STRIKE_MILLIS
         is CombatAnimationCue.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
+        is CombatAnimationCue.HolyShield -> HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
         else -> REACTION_DELAY_MILLIS
     }
 
@@ -577,11 +580,18 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
             MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS + FLINCH_HEAVY_BODY_MILLIS
 
         is CombatAnimationCue.Teleport -> teleportBodyMillis()
+
+        is CombatAnimationCue.HolyShield ->
+            if (phase == HolyShieldPhase.Pray && didSurvive == false) {
+                HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong() + COLLAPSE_BODY_MILLIS
+            } else {
+                0L
+            }
     }
 
 /**
  * The Mage's own body during Teleport (SS-211): still while the portal opens and holds, and on the
- * resolve as long as the escape's rise-vanish-reappear, or the failed lunge, recoil, and grey-out.
+ * resolve as long as the escape's rise-vanish-reappear, or the failed lunge, recoil, and gray-out.
  */
 private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
     when (phase) {

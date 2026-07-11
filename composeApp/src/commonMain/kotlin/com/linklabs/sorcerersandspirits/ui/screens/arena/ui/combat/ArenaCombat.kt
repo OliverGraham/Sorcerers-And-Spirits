@@ -223,6 +223,7 @@ private fun CombatStage(
                 isTargetable = isTargetable,
                 onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
+                animationCue = animationCue,
                 modifier = Modifier.weight(weight = 0.3f),
             )
         }

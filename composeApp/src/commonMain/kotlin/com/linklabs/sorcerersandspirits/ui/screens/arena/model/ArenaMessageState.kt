@@ -260,6 +260,7 @@ sealed interface ArenaMessageState {
         val mainTargetName: String,
         val mainDamage: Int,
         val splashDamage: Int,
+        val splashTargetUserIds: List<String>,
     ) : ArenaMessageState
 
     @Immutable
@@ -608,6 +609,7 @@ private fun ArenaMessage.toState(
                 mainTargetName = participants.resolveClassName(userId = mainTargetUserId),
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,
+                splashTargetUserIds = splashTargetUserIds,
             )
 
         is ArenaMessage.SummonMinion ->

@@ -183,6 +183,7 @@ class CombatAnimationCueTest {
                 mainTargetName = "Bard",
                 mainDamage = 8,
                 splashDamage = 4,
+                splashTargetUserIds = listOf(SPECTATOR_ID),
             )
 
         val cue = message.combatAnimationCue
@@ -194,6 +195,8 @@ class CombatAnimationCueTest {
                     mageUserId = ATTACKER_ID,
                     mainTargetUserId = DEFENDER_ID,
                     mainDamage = 8,
+                    splashDamage = 4,
+                    splashTargetUserIds = listOf(SPECTATOR_ID),
                 ),
             actual = cue,
         )

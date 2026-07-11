@@ -262,6 +262,7 @@ sealed interface ArenaMessageEntity {
         val mainTargetUserId: String,
         val mainDamage: Int,
         val splashDamage: Int,
+        val splashTargetUserIds: List<String> = emptyList(),
     ) : ArenaMessageEntity
 
     @Serializable
@@ -525,6 +526,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     mainTargetUserId = mainTargetUserId,
                     mainDamage = mainDamage,
                     splashDamage = splashDamage,
+                    splashTargetUserIds = splashTargetUserIds,
                 )
 
             is ArenaMessageEntity.HolyShield.Trigger ->
@@ -750,6 +752,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 mainTargetUserId = mainTargetUserId,
                 mainDamage = mainDamage,
                 splashDamage = splashDamage,
+                splashTargetUserIds = splashTargetUserIds,
             )
 
         is ArenaMessage.HolyShield.Trigger ->

@@ -28,7 +28,7 @@ internal class SpellPotencyRoll(
                 diceTotal / abilityConfig.spellPotencySplashDivisor
             }
 
-        addSpellPotencyMessage(splashDamage = splashDamage)
+        addSpellPotencyMessage(splashTargets = splashTargets, splashDamage = splashDamage)
         applyFullDamageToDefender()
         applySplashDamage(splashTargets = splashTargets, splashDamage = splashDamage)
 
@@ -55,7 +55,10 @@ internal class SpellPotencyRoll(
         }
     }
 
-    private fun CombatMutator.addSpellPotencyMessage(splashDamage: Int) {
+    private fun CombatMutator.addSpellPotencyMessage(
+        splashTargets: List<ArenaPlayer.Selected>,
+        splashDamage: Int,
+    ) {
         addMessage(
             message =
                 ArenaMessage.SpellPotency(
@@ -63,6 +66,7 @@ internal class SpellPotencyRoll(
                     mainTargetUserId = defenderUserId,
                     mainDamage = diceTotal,
                     splashDamage = splashDamage,
+                    splashTargetUserIds = splashTargets.map { it.userId },
                 )
         )
     }

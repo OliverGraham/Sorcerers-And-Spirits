@@ -14,11 +14,6 @@ private const val ANIMATED_SECONDS_SCALE_IN_DURATION_MILLIS = 220
 private const val ANIMATED_SECONDS_SCALE_IN_DELAY_MILLIS = 90
 private const val ANIMATED_SECONDS_SCALE_OUT_DURATION_MILLIS = 220
 
-/**
- * Crossfades a changing whole-second value with a brief scale in/out so countdowns tick over
- * smoothly. The [content] slot renders each second however the caller needs it (styling, suffix,
- * urgency emphasis, and so on).
- */
 @Composable
 internal fun AnimatedSeconds(
     seconds: Int,

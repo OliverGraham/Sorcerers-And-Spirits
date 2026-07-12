@@ -34,13 +34,6 @@ private const val APP_BUTTON_BASE_DARKEN = 0.5f
 private const val APP_BUTTON_DISABLED_ALPHA = 0.4f
 private const val APP_BUTTON_PRESS_LABEL = "AppButtonPress"
 
-/**
- * The single 3D button style used across the whole app: a raised face over a darker base that drops
- * onto the base while pressed, so the button reads as physically pushed in. The [borderColor] rims
- * the face and tints the base depth; it defaults to the theme primary but can be handed a class
- * color where the screen is class-themed. Mirrors the arena combat buttons (SS-160) for one
- * consistent feel.
- */
 @Composable
 internal fun AppButton(
     onClick: () -> Unit,

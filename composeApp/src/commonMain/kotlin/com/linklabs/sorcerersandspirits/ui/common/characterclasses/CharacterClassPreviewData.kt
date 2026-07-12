@@ -29,7 +29,6 @@ private val PREVIEW_COPY_NAMES =
         ClassCopyKeys.HOLY_SHIELD to "Holy Shield",
     )
 
-/** Sample class copy for previews and design tooling only; real copy comes from RemoteConfig. */
 internal fun previewCharacterClassCopy(): CharacterClassCopy =
     CharacterClassCopy(
         entries =
@@ -38,11 +37,6 @@ internal fun previewCharacterClassCopy(): CharacterClassCopy =
             }
     )
 
-/**
- * A sample state for [type] for previews and design tooling only. Built with placeholder stats via
- * the production [CharacterClass.create] builder so ability wiring stays correct without
- * duplicating the RemoteConfig-owned stat values.
- */
 internal fun previewCharacterClassState(type: CharacterClassType): CharacterClassState =
     CharacterClass.create(
             type = type,
@@ -53,6 +47,5 @@ internal fun previewCharacterClassState(type: CharacterClassType): CharacterClas
         )
         .toState()
 
-/** Sample states for every playable class, for previews and design tooling only. */
 internal fun previewCharacterClassStates(): List<CharacterClassState> =
     CharacterClass.playableTypes().map { type -> previewCharacterClassState(type = type) }

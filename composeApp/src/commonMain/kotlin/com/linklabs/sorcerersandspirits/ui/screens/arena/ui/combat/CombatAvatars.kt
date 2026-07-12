@@ -69,6 +69,7 @@ private const val HALO_SWEEP_TRANSLATE_LABEL = "haloSweepTranslate"
 private val statPillShape = RoundedCornerShape(size = 8.dp)
 private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
+private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 
 /**
  * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
@@ -177,6 +178,7 @@ private fun LargeAvatar(
             isUserPlayer = isUserPlayer,
             isTurnOwner = isTurnOwner,
             classColor = classColor,
+            modifier = Modifier.sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
         )
 
         Box(

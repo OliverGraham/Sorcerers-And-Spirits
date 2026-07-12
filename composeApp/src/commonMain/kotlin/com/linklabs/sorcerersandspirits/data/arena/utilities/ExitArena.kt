@@ -16,8 +16,6 @@ internal class ExitArena(private val userId: String) {
     private fun ArenaMatchEntity.exitArenaTransaction(): ArenaMatchEntity? {
         val remainingPlayers = playerEntitiesMap - userId
 
-        // A match with no human players left is dead: the computer opponents have no client to play
-        // or leave, so delete the whole match rather than orphaning it.
         val hasRemainingHumanPlayer =
             remainingPlayers.keys.any { id -> !ComputerOpponents.isComputer(userId = id) }
         if (!hasRemainingHumanPlayer) return null
@@ -27,6 +25,7 @@ internal class ExitArena(private val userId: String) {
                 copy(playerEntitiesMap = playerEntitiesMap - userId)
 
             is ArenaMatchEntity.ChoosingClasses -> {
+                // TODO: make function
                 val updatedPlayers = playerEntitiesMap - userId
 
                 if (updatedPlayers.size < 2) {
@@ -51,6 +50,7 @@ internal class ExitArena(private val userId: String) {
             }
 
             is ArenaMatchEntity.Combat -> {
+                // TODO: make function
                 val updatedPlayers = playerEntitiesMap - userId
 
                 if (updatedPlayers.size < 2) {

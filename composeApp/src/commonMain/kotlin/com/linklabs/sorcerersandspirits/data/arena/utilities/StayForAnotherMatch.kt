@@ -42,13 +42,6 @@ internal class StayForAnotherMatch(private val userId: String) {
         }
     }
 
-    /**
-     * Within a Gauntlet players keep their locked class (SS-108): the next match skips class
-     * selection and goes straight to Combat with each class reset to a fresh, full-health instance.
-     * Once the final match of the Gauntlet is done, "Go Again" starts a brand-new Gauntlet, so it
-     * returns to class selection. Returns null to end the session when fewer than two players
-     * remain.
-     */
     private fun ArenaMatchEntity.startNextMatch(
         players: Map<String, ArenaPlayerEntity>,
         messagesReference: DatabaseReference,

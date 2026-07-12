@@ -89,6 +89,7 @@ internal fun ArenaCombat(
                     isTimerVisible = screenState.isTimerVisible,
                     isTimerUrgent = screenState.isTimerUrgent,
                     unreadMessageCount = unreadMessageCount,
+                    diceHomeBounds = diceHomeBounds,
                     onToggleExpanded = {
                         isMessagesExpanded = !isMessagesExpanded
                         unreadMessageCount = 0
@@ -164,6 +165,7 @@ internal fun ArenaCombat(
                 messages = screenState.messages,
                 isExpanded = isMessagesExpanded,
                 diceHomeBounds = diceHomeBounds,
+                onDismiss = { isMessagesExpanded = false },
             )
 
             // TODO Yourself: These things truly go on top of the screen column, but perhaps

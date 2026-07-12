@@ -28,12 +28,7 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
 
     override fun getUserId() = auth.currentUser?.uid
 
-    /**
-     * Awaits the first auth-state emission instead of reading [currentUser] outright. Firebase
-     * restores the persisted user from disk asynchronously, and the auth-state listener only fires
-     * once that restore completes; reading the snapshot beforehand reports a returning user as
-     * signed-out, which on a cold start sends them back to the first-launch dialog.
-     */
+    /** Awaits the first auth-state emission instead of reading auth.currentUser outright. */
     override suspend fun isSignedIn() = auth.authStateChanged.first() != null
 
     override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
@@ -66,13 +61,13 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
         try {
             auth.createUserWithEmailAndPassword(email = email, password = password)
             LinkAccountResult.SUCCESS
-        } catch (collision: FirebaseAuthUserCollisionException) {
+        } catch (_: FirebaseAuthUserCollisionException) {
             signInWithEmailAndPassword(email = email, password = password)
-        } catch (weakPassword: FirebaseAuthWeakPasswordException) {
+        } catch (_: FirebaseAuthWeakPasswordException) {
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (invalidCredentials: FirebaseAuthInvalidCredentialsException) {
+        } catch (_: FirebaseAuthInvalidCredentialsException) {
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (error: Exception) {
+        } catch (_: Exception) {
             LinkAccountResult.ERROR
         }
 
@@ -83,12 +78,12 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
         try {
             auth.signInWithEmailAndPassword(email = email, password = password)
             LinkAccountResult.SUCCESS
-        } catch (invalidUser: FirebaseAuthInvalidUserException) {
+        } catch (_: FirebaseAuthInvalidUserException) {
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (invalidCredentials: FirebaseAuthInvalidCredentialsException) {
+        } catch (_: FirebaseAuthInvalidCredentialsException) {
             // The email exists but the password is wrong.
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (error: Exception) {
+        } catch (_: Exception) {
             LinkAccountResult.ERROR
         }
 
@@ -104,13 +99,13 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
         return try {
             currentUser.linkWithCredential(credential = credential)
             LinkAccountResult.SUCCESS
-        } catch (collision: FirebaseAuthUserCollisionException) {
+        } catch (_: FirebaseAuthUserCollisionException) {
             LinkAccountResult.CREDENTIAL_IN_USE
-        } catch (weakPassword: FirebaseAuthWeakPasswordException) {
+        } catch (_: FirebaseAuthWeakPasswordException) {
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (invalidCredentials: FirebaseAuthInvalidCredentialsException) {
+        } catch (_: FirebaseAuthInvalidCredentialsException) {
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (error: Exception) {
+        } catch (_: Exception) {
             LinkAccountResult.ERROR
         }
     }
@@ -124,9 +119,9 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
         try {
             auth.signInWithCredential(authCredential = credential)
             LinkAccountResult.SUCCESS
-        } catch (invalidCredentials: FirebaseAuthInvalidCredentialsException) {
+        } catch (_: FirebaseAuthInvalidCredentialsException) {
             LinkAccountResult.INVALID_CREDENTIAL
-        } catch (error: Exception) {
+        } catch (_: Exception) {
             LinkAccountResult.ERROR
         }
 }

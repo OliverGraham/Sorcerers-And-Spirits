@@ -32,11 +32,6 @@ class FirebaseTavernRepository(
 
     private var travelerPresenceJob: Job? = null
 
-    /**
-     * Observes the user's mailbox for the current challengeId, then switches to that challenge's
-     * updates. If the mailbox is empty, this emits `null`; if the mailbox changes, observation
-     * moves to the newly referenced challenge.
-     */
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> =
         dataSource.mailboxChallengeIdFlow(userId = userId).distinctUntilChanged().transformLatest {

@@ -16,10 +16,6 @@ data class ProfileEntity(
     val unlockedAchievements: Map<String, Long> = emptyMap(),
 )
 
-/**
- * A reservation in the [FireStoreKeys.DISPLAY_NAMES] collection, keyed by the normalized display
- * name, recording which user currently owns that name so display names stay unique (SS-039).
- */
 @Serializable data class DisplayNameEntity(val userId: String = "", val displayName: String = "")
 
 @Serializable
@@ -121,11 +117,6 @@ internal fun GameStats.toEntity() =
         timesSelected = timesSelected,
     )
 
-/**
- * Flattens the non-zero counters of this delta into the Firestore field paths (relative to the
- * profile document) that each map to a FieldValue.increment. Paths are nested: stats.overall.<stat>
- * and stats.perClass.<ClassName>.<stat>.
- */
 internal fun ProfileStats.toStatIncrements(): Map<List<String>, Int> = buildMap {
     overall.toFieldIncrements().forEach { (statKey, amount) ->
         put(listOf(FireStoreKeys.STATS, FireStoreKeys.OVERALL, statKey), amount)

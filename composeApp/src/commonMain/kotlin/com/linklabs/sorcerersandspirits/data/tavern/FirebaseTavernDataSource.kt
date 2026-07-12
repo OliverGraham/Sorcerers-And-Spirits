@@ -26,14 +26,6 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     private val mailboxChallengesReference = root.child(path = CHALLENGE_MAILBOXES_PATH)
     private val challengesReference = root.child(path = CHALLENGES_PATH)
 
-    /**
-     * Streams travelers as deltas rather than re-reading the whole node. RTDB
-     * [valueEvents][dev.gitlive.firebase.database.Query.valueEvents] re-emits the entire
-     * [TAVERN_TRAVELERS_PATH] snapshot whenever any single traveler changes, so every join, exit,
-     * or status flip pushes an N-element payload to every connected client. Folding child events
-     * into a locally-maintained map means each change carries only the one affected traveler, while
-     * the emitted [List] keeps the same contract for the layers above.
-     */
     override fun travelerEntitiesFlow(): Flow<List<TravelerEntity>> =
         tavernTravelersReference
             .childEvents(ChildEvent.Type.ADDED, ChildEvent.Type.CHANGED, ChildEvent.Type.REMOVED)
@@ -190,11 +182,6 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     }
 }
 
-/**
- * Write-only shape of a challenge. [startTimeMillis] is the [ServerValue.TIMESTAMP] sentinel, which
- * the backend resolves to its own clock on write. It is read back through [ChallengeEntity], whose
- * `startTimeMillis` is a resolved `Long`.
- */
 @Serializable
 private data class ChallengeWriteEntity(
     val challengeId: String,

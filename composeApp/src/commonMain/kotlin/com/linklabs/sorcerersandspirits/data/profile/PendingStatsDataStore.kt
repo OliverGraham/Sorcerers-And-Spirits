@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import okio.Path.Companion.toPath
 
-/** File name of the [Preferences] DataStore backing [DataStorePendingStatsStore]. */
 const val PENDING_STATS_DATASTORE_FILE = "pending_stats.preferences_pb"
 
 /**

@@ -3,11 +3,6 @@ package com.linklabs.sorcerersandspirits.data.config
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import kotlinx.serialization.Serializable
 
-/**
- * The remotely-tunable ability roll thresholds as carried in the RemoteConfig payload. Mirrors
- * every field of the domain [AbilityConfig]; ranges are serialized as [min, max] pairs and mapped
- * back to [IntRange] in [toDomain].
- */
 @Serializable
 data class AbilityConfigEntity(
     val holyShieldSuccessRange: IntRangeEntity,

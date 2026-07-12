@@ -29,8 +29,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
@@ -178,14 +179,19 @@ fun CharacterClassWheel(
         }
     }
 
-    Column(modifier = modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        BoxWithConstraints(
-            modifier =
-                Modifier.fillMaxWidth().widthIn(max = WHEEL_MAX_SIZE).aspectRatio(ratio = 1f),
-            contentAlignment = Alignment.Center,
-        ) {
-            val wheelSize = maxWidth
+    BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
+        val isHeightBounded = constraints.hasBoundedHeight
+        val wheelSize =
+            minOf(
+                maxWidth,
+                WHEEL_MAX_SIZE,
+                if (isHeightBounded) maxHeight * WHEEL_HEIGHT_FRACTION else Dp.Infinity,
+            )
 
+        Column(
+            modifier = if (isHeightBounded) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             Box(
                 modifier =
                     Modifier.size(size = wheelSize)
@@ -245,16 +251,19 @@ fun CharacterClassWheel(
                     onClassClick = { index -> select(index = index) },
                 )
             }
-        }
 
-        ClassStatBar(
-            characterClass = centeredClass,
-            selectedBy = classSelections[centeredClass.type],
-        )
+            ClassStatBar(
+                characterClass = centeredClass,
+                selectedBy = classSelections[centeredClass.type],
+                modifier =
+                    if (isHeightBounded) Modifier.weight(weight = 1f, fill = false) else Modifier,
+            )
+        }
     }
 }
 
 private val WHEEL_MAX_SIZE = 320.dp
+private const val WHEEL_HEIGHT_FRACTION = 0.6f
 private val WHEEL_SNAP_SPEC =
     spring<Float>(
         dampingRatio = Spring.DampingRatioLowBouncy,
@@ -480,6 +489,7 @@ private fun ClassStatBar(
         Column(
             modifier =
                 Modifier.fillMaxWidth()
+                    .verticalScroll(state = rememberScrollState())
                     .animateContentSize()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

@@ -12,15 +12,6 @@ internal class Timer(
 ) {
     private var timerJob: Job? = null
 
-    fun startTimerIfNotStarted(
-        timerDuration: Int = SIXTY_SECONDS,
-        callOnTimerExpiration: Boolean = true,
-    ) {
-        if (timerJob != null) return
-
-        startTimer(timerDuration = timerDuration, callOnTimerExpiration = callOnTimerExpiration)
-    }
-
     fun startTimer(timerDuration: Int = SIXTY_SECONDS, callOnTimerExpiration: Boolean = true) {
         stopTimer()
 

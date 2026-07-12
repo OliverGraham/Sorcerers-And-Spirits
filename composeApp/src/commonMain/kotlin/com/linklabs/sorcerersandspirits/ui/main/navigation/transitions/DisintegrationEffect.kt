@@ -40,26 +40,18 @@ private const val PARTICLE_WOBBLE_MIN_FREQUENCY = 6f
 private const val PARTICLE_WOBBLE_MAX_FREQUENCY = 14f
 private const val FULL_TURN_RADIANS = 6.2831855f
 
-/**
- * Plays the signature "burn to dust" pop animation: the captured outgoing screen dissolves
- * left-to-right into drifting coloured particles, revealing whatever is drawn beneath it.
- *
- * [snapshot] must be a pixel-for-pixel capture of the screen being popped, so its dimensions line
- * up one-to-one with this overlay's draw surface. [onComplete] fires once the dust has fully
- * cleared, which is the caller's cue to drop the overlay.
- */
 @Composable
 fun DisintegrationEffect(
     snapshot: ImageBitmap,
     onComplete: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    var progress by remember(snapshot) { mutableFloatStateOf(value = 0f) }
-    val particles = remember(snapshot) { snapshot.toDustParticles() }
+    var progress by remember(key1 = snapshot) { mutableFloatStateOf(value = 0f) }
+    val particles = remember(key1 = snapshot) { snapshot.toDustParticles() }
     val stripWidth =
-        remember(snapshot) { (snapshot.width / STRIP_COUNT).coerceAtLeast(minimumValue = 1) }
+        remember(key1 = snapshot) { (snapshot.width / STRIP_COUNT).coerceAtLeast(minimumValue = 1) }
 
-    LaunchedEffect(snapshot) {
+    LaunchedEffect(key1 = snapshot) {
         var startNanos = 0L
         do {
             withFrameNanos { frameNanos ->
@@ -74,6 +66,7 @@ fun DisintegrationEffect(
                     )
             }
         } while (progress < 1f)
+
         onComplete()
     }
 
@@ -149,6 +142,7 @@ private fun ImageBitmap.toDustParticles(): List<DustParticle> {
     val pixels = toPixelMap()
     val particles = mutableListOf<DustParticle>()
     var x = 0
+
     while (x < width) {
         var y = 0
         while (y < height) {
@@ -176,6 +170,7 @@ private fun ImageBitmap.toDustParticles(): List<DustParticle> {
         }
         x += SAMPLE_STEP_PIXELS
     }
+
     return particles
 }
 

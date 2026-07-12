@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -12,15 +13,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.navigation3.runtime.NavBackStack
+import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.version.AppUpgradeStatus
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
-import com.linklabs.sorcerersandspirits.ui.main.AppState
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
@@ -51,52 +52,44 @@ internal fun SorcerersAndSpiritsNavigationHost(
         is UiState.Error -> ErrorContent(onRetry = viewModel::retry, modifier = modifier)
 
         is UiState.Loaded -> {
-            val data = state.data
+            val appState = state.data
+            val isOffline = appState.isOffline
 
-            if (data.showSignInDialog) {
+            if (appState.showSignInDialog) {
                 SignInNameDialog(
-                    displayName = data.displayName,
-                    isOffline = data.isOffline,
-                    isNameTaken = data.isNameTaken,
-                    linkStatusMessage = linkErrorMessage(result = data.linkResult),
+                    displayName = appState.displayName,
+                    isOffline = isOffline,
+                    isNameTaken = appState.isNameTaken,
+                    linkStatusMessage = linkErrorMessage(result = appState.linkResult),
                     onRandomNameClick = viewModel::getRandomName,
                     onAcceptClick = viewModel::createProfile,
                     onSocialMethodClick = { method ->
                         viewModel.onSignInWithSocialMethod(
-                            displayName = data.displayName,
+                            displayName = appState.displayName,
                             method = method,
                         )
                     },
                     onEmailLink = { email, password ->
                         viewModel.onSignInWithEmail(
-                            displayName = data.displayName,
+                            displayName = appState.displayName,
                             email = email,
                             password = password,
                         )
                     },
-                    // A profile is required before the app is usable, so the sign-in dialog is
-                    // intentionally non-dismissible: dismiss attempts keep it on screen.
-                    onDismissRequest = {},
                 )
             } else {
-                SorcerersAndSpirits(appState = data, modifier = modifier)
+                SorcerersAndSpirits(isOffline = isOffline, modifier = modifier)
             }
         }
 
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 
-    // Overlays every state (including loading) so an unsupported client is gated before it can
-    // touch the shared game state.
     if (appUpgradeStatus != AppUpgradeStatus.UP_TO_DATE) {
         AppUpgradeDialog(status = appUpgradeStatus, onDismiss = viewModel::onDismissUpdateNudge)
     }
 }
 
-/**
- * SUCCESS and CANCELLED don't warrant an in-dialog message (success navigates away; cancel is the
- * player's own choice), so they map to no message.
- */
 @Composable
 private fun linkErrorMessage(result: LinkAccountResult?): String? =
     when (result) {
@@ -119,23 +112,19 @@ private fun linkErrorMessage(result: LinkAccountResult?): String? =
 
 @Composable
 private fun SorcerersAndSpirits(
-    appState: AppState,
+    isOffline: Boolean,
     challengeViewModel: ChallengeViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(navigationRoutesConfiguration, Route.TavernScreen)
 
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-    val scope = rememberCoroutineScope()
-
-    val challengeState by challengeViewModel.challengeStateFlow.collectAsState()
-
-    // Hosted above the NavDisplay so an accepted challenge can route to the arena from any screen.
-    LaunchedEffect(Unit) {
+    LaunchedEffect(key1 = Unit) {
         challengeViewModel.navigateToArenaFlow.collect { arguments ->
             backStack.add(element = Route.ArenaScreen(arguments = arguments.toSerializable()))
         }
     }
+
+    val challengeState by challengeViewModel.challengeStateFlow.collectAsState()
 
     CompositionLocalProvider(
         LocalChallengeActions provides
@@ -147,29 +136,35 @@ private fun SorcerersAndSpirits(
             ),
         LocalChallengeState provides challengeState,
     ) {
-        ModalNavigationDrawer(
-            drawerState = drawerState,
-            drawerContent = {
-                ModalDrawerSheet {
-                    SettingsDrawer(backStack = backStack, drawerState = drawerState, scope = scope)
-                }
-            },
-            gesturesEnabled = true,
-        ) {
-            Scaffold(modifier = modifier) { innerPadding ->
-                Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
-                    OfflineBanner(isOffline = appState.isOffline)
+        AppContent(isOffline = isOffline, backStack = backStack, modifier = modifier)
 
-                    NavigationDisplay(backStack = backStack, modifier = modifier)
-                }
-            }
+        val challengeState = LocalChallengeState.current
+        if (challengeState?.showChallengeDialog == true) {
+            ChallengeDialog(challengeState = challengeState)
         }
+    }
+}
 
-        // A Dialog renders in its own window, so the challenge invite overlays whatever screen
-        // (Tavern, Profile, Leaderboard, Game Rules) is currently showing.
-        val activeChallenge = challengeState
-        if (activeChallenge?.showChallengeDialog == true) {
-            ChallengeDialog(challengeState = activeChallenge)
+@Composable
+private fun AppContent(
+    isOffline: Boolean,
+    backStack: NavBackStack<NavKey>,
+    modifier: Modifier = Modifier,
+    drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
+) {
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet { SettingsDrawer(backStack = backStack, drawerState = drawerState) }
+        },
+        gesturesEnabled = true,
+    ) {
+        Scaffold(modifier = modifier) { innerPadding ->
+            Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
+                OfflineBanner(isOffline = isOffline)
+
+                NavigationDisplay(backStack = backStack, modifier = modifier)
+            }
         }
     }
 }

@@ -40,9 +40,6 @@ internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifi
     val screenLayer = rememberGraphicsLayer()
     var dustSnapshot by remember { mutableStateOf<ImageBitmap?>(value = null) }
 
-    // Backward navigation can't be expressed as a Nav3 ExitTransition, so the pop is intercepted:
-    // the outgoing screen is captured to a bitmap, then popped (revealing the destination beneath)
-    // while the captured pixels disintegrate into dust on top.
     val popWithDust: () -> Unit = {
         scope.launch {
             dustSnapshot = screenLayer.toImageBitmap()

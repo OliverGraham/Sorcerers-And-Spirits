@@ -64,12 +64,6 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
 internal fun NavKey.isHomeScreen(): Boolean =
     this is Route.TavernScreen || this is Route.ArenaScreen
 
-/**
- * Trims any trailing non-home screens so the top of the stack is the nearest home screen. Drawer
- * navigation calls this before pushing its destination, so that backing out of a drawer-opened
- * screen returns to a home screen rather than whatever screen the drawer happened to be opened
- * from.
- */
 internal fun NavBackStack<NavKey>.popToNearestHomeScreen() {
     while (size > 1 && !last().isHomeScreen()) {
         removeLastOrNull()

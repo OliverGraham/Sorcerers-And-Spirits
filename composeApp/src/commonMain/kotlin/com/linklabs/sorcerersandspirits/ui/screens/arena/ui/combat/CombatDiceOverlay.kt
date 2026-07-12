@@ -23,7 +23,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
 
 private const val DICE_HOME_DIE_COUNT = 2
 private val diceHomeHeight = 56.dp
-private val diceRestSpacing = 76.dp
+internal val diceRestSpacing = 76.dp
+
+/** The x-center a die rests at for its [slot], shared so overlays can anchor to a specific die. */
+internal fun dieRestCenterX(homeCenterX: Float, slot: Int, spacingPx: Float): Float =
+    homeCenterX + (slot - (DICE_HOME_DIE_COUNT - 1) / 2f) * spacingPx
 
 /**
  * The empty resting slot below the avatars that reserves space for the dice and reports its bounds.
@@ -48,9 +52,7 @@ internal fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = 
  * non-interactive, so taps fall through to the content (the buttons) beneath it.
  */
 @Composable
-internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect?, modifier: Modifier = Modifier) {
-    if (homeBounds == null) return
-
+internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect, modifier: Modifier = Modifier) {
     var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
 
     BoxWithConstraints(
@@ -66,7 +68,12 @@ internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect?, modifier: Modifi
             val isActive = index in diceRoll.activeSlots
             val restCenter =
                 Offset(
-                    x = homeCenter.x + (index - (DICE_HOME_DIE_COUNT - 1) / 2f) * spacingPx,
+                    x =
+                        dieRestCenterX(
+                            homeCenterX = homeCenter.x,
+                            slot = index,
+                            spacingPx = spacingPx,
+                        ),
                     y = homeCenter.y,
                 )
             Die3d(

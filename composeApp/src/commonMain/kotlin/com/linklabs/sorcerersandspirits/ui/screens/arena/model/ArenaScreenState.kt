@@ -56,6 +56,34 @@ data class ArenaScreenState(
      * newly-arrived ones in sequence (e.g. "Hit!" then "X Damage!" then "Knocked Out!").
      */
     val flashMessages: List<ArenaMessageState> = messages.filter { it.flashCallout != null }
+
+    /**
+     * The modifier chip to show beside the resting dice, or null when neither modifier is live: the
+     * consecutive-doubles +1 while its announced bonus is still pending, otherwise the Mirror Image
+     * -1 while a penalized reroll is the dice' last roll.
+     *
+     * The doubles chip is driven by the emitted [ArenaMessageState.Doubles] message, not the raw
+     * match bonus: the domain only announces a Doubles when the +1 stays with the same hands, so a
+     * doubles that misses and passes the turn to another player never announces and never shows
+     * here (the raw match bonus lingers until the next roll clears it, so it must not gate the
+     * chip). The bonus is pending only until a later roll consumes it, so any roll-bearing message
+     * after the announcement retires the chip.
+     */
+    val diceBadge: DiceBadge? = deriveDiceBadge()
+
+    private fun deriveDiceBadge(): DiceBadge? {
+        val lastDoublesIndex = messages.indexOfLast { it is ArenaMessageState.Doubles }
+        val isDoublesPending =
+            lastDoublesIndex >= 0 &&
+                messages.drop(n = lastDoublesIndex + 1).none { it.rolledDice() != null }
+        if (isDoublesPending) return DiceBadge.DoublesBonus
+
+        val latestRollMessage = messages.lastOrNull { it.rolledDice() != null }
+        val isMirrorReroll = latestRollMessage is ArenaMessageState.MirrorImage.TemptFate
+        if (isMirrorReroll) return DiceBadge.MirrorPenalty
+
+        return null
+    }
 }
 
 @Immutable

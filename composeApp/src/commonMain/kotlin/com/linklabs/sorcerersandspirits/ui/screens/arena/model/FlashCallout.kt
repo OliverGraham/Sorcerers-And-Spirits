@@ -17,13 +17,20 @@ sealed interface FlashCallout {
         get() = null
 
     @Immutable
-    data class Hit(override val actingClassType: CharacterClassType, val total: Int) : FlashCallout
+    data class Hit(
+        override val actingClassType: CharacterClassType,
+        val total: Int,
+        val doublesBonus: Int,
+    ) : FlashCallout
 
     @Immutable data object Miss : FlashCallout
 
     @Immutable
-    data class Damage(val amount: Int, override val actingClassType: CharacterClassType? = null) :
-        FlashCallout
+    data class Damage(
+        val amount: Int,
+        override val actingClassType: CharacterClassType? = null,
+        val doublesBonus: Int = 0,
+    ) : FlashCallout
 
     @Immutable
     data class Knockout(override val actingClassType: CharacterClassType? = null) : FlashCallout
@@ -138,12 +145,20 @@ val ArenaMessageState.flashCallout: FlashCallout?
             is ArenaMessageState.NormalRoll ->
                 when (type) {
                     NormalRollMessageType.ArmorClassHit ->
-                        FlashCallout.Hit(actingClassType = attackerClassType, total = total)
+                        FlashCallout.Hit(
+                            actingClassType = attackerClassType,
+                            total = total,
+                            doublesBonus = bonus,
+                        )
 
                     NormalRollMessageType.ArmorClassMiss -> FlashCallout.Miss
 
                     NormalRollMessageType.Damage ->
-                        FlashCallout.Damage(amount = total, actingClassType = attackerClassType)
+                        FlashCallout.Damage(
+                            amount = total,
+                            actingClassType = attackerClassType,
+                            doublesBonus = bonus,
+                        )
 
                     NormalRollMessageType.Knockout ->
                         FlashCallout.Knockout(actingClassType = attackerClassType)

@@ -2,13 +2,6 @@ package com.linklabs.sorcerersandspirits.domain.profile
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
-/**
- * The full game-statistics record persisted on a profile. [overall] aggregates every scope, while
- * [perClass] keeps a separate [GameStats] for each class the player has used — enough to derive
- * class-specific milestones (e.g. "win a Gauntlet with every class") without enumerating them here.
- *
- * Like [GameStats], a [ProfileStats] is both the stored totals and a per-write delta.
- */
 data class ProfileStats(
     val overall: GameStats = GameStats(),
     val perClass: Map<CharacterClassType, GameStats> = emptyMap(),
@@ -16,12 +9,6 @@ data class ProfileStats(
     val isEmpty: Boolean
         get() = overall.isEmpty && perClass.values.all { it.isEmpty }
 
-    /**
-     * A single number summarizing the player's overall record (SS-128): weighted wins and knockouts
-     * dealt, minus weighted losses and forfeits, floored at 0. Additive points reward both skill
-     * and play volume. Weights are tuned here in code; RemoteConfig tuning is deferred until
-     * there's a considered need.
-     */
     val rating: Long
         get() {
             val earned =

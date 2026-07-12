@@ -4,11 +4,6 @@ import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepo
 import com.linklabs.sorcerersandspirits.domain.leaderboard.LeaderboardEntry
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 
-/**
- * Reads the top players — fetched ordered by Gauntlets won, the unit a stats write is attributed to
- * (SS-073) — and tags the signed-in player's own row so the screen can highlight it. The display
- * order/rank is decided by the UI (SS-132).
- */
 class GetLeaderboardUseCase(
     private val profileRepository: ProfileRepository,
     private val authenticationRepository: AuthenticationRepository,

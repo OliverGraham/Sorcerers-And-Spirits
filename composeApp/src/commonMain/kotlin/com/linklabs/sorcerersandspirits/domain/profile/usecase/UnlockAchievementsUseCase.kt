@@ -8,7 +8,7 @@ import kotlin.time.ExperimentalTime
 /**
  * Re-evaluates every achievement against the signed-in user's freshly-written stats and records any
  * that are newly satisfied. Idempotent: already-unlocked achievements are left untouched, so
- * running it after each stats write (and on launch replay, SS-076) only ever adds.
+ * running it after each stats write (and on launch replay) only ever adds.
  */
 @OptIn(ExperimentalTime::class)
 class UnlockAchievementsUseCase(

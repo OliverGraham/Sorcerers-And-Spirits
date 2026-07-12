@@ -281,7 +281,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
             stringResource(resource = Res.string.arena_message_mirror_image_trigger)
 
         is ArenaMessageState.MirrorImage.Pass ->
-            when (outcome) {
+            when (messageType) {
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_pass_armor_broke,
@@ -308,7 +308,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
             }
 
         is ArenaMessageState.MirrorImage.TemptFate ->
-            when (outcome) {
+            when (messageType) {
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_armor_broke,

@@ -49,7 +49,6 @@ internal class CombatMutator(
         nextCombatAction = nextAction
     }
 
-    /** The current attack continues: the attacker passed armor and now rolls against Health. */
     fun continueAttackWithHealthRoll() {
         setNextCombatAction(
             nextAction =
@@ -124,12 +123,6 @@ internal class CombatMutator(
         updateDefenderClass { defender -> defender.copy(hitPoints = hitPoints) }
     }
 
-    /**
-     * Spends one of the turn owner's attacks the moment they commit to it — an opening Armor-class
-     * roll — so the attacks-remaining marker (SS-200) drops optimistically as the dice leave the
-     * hand. Only the turn owner's own attacks count; a Riposte reversal is the Duelist's swing, not
-     * the turn owner's.
-     */
     fun spendTurnOwnerAttack() {
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
             characterClass.copy(
@@ -139,11 +132,6 @@ internal class CombatMutator(
         }
     }
 
-    /**
-     * Grants the turn owner an extra attack for the attacks-remaining marker (SS-200): the
-     * Gambler's successful All-In, a Bard's Encore, or a Rogue's Killing Momentum. Minion
-     * follow-ups are already counted at turn start, so they do not grant here.
-     */
     fun grantBonusAttack() {
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
             characterClass.copy(attacksRemaining = characterClass.attacksRemaining + 1)
@@ -154,11 +142,6 @@ internal class CombatMutator(
         messages.add(element = message)
     }
 
-    /**
-     * Flags that a Mirror Image reroll's penalized die is the dice' latest roll, so the
-     * resting-dice penalty badge is driven by this decision rather than by inspecting the last roll
-     * message.
-     */
     fun markMirrorImagePenalty() {
         isMirrorImagePenaltyActive = true
     }

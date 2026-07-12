@@ -228,7 +228,7 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val illusionistUserId: String,
             val attackerName: String,
-            val outcome: NormalRollMessageType,
+            val messageType: NormalRollMessageType,
         ) : MirrorImage
 
         @Immutable
@@ -239,7 +239,7 @@ sealed interface ArenaMessageState {
             val rawReroll: Int,
             val finalRoll: Int,
             val attackerName: String,
-            val outcome: NormalRollMessageType,
+            val messageType: NormalRollMessageType,
         ) : MirrorImage {
             /**
              * The reroll shown as the raw die and its -1 penalty (e.g. "4 - 1"), mirroring the
@@ -494,7 +494,7 @@ private fun ArenaMessage.toState(
                 id = id,
                 illusionistUserId = illusionistUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
-                outcome = outcome,
+                messageType = messageType,
             )
 
         is ArenaMessage.MirrorImage.Trigger ->
@@ -513,7 +513,7 @@ private fun ArenaMessage.toState(
                 rawReroll = rerolledMirrorImageDie.reroll ?: rerolledMirrorImageDie.originalRoll,
                 finalRoll = rerolledMirrorImageDie.finalValue,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
-                outcome = outcome,
+                messageType = messageType,
             )
 
         is ArenaMessage.NormalRoll ->

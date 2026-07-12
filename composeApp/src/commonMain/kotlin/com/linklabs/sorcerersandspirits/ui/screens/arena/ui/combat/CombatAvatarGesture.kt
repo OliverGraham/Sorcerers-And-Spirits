@@ -427,7 +427,7 @@ private suspend fun AvatarGestureState.playMirrorImage(
 ) {
     when (cue.phase) {
         MirrorImagePhase.Split -> mirrorSplitOut()
-        MirrorImagePhase.Resolve -> mirrorResolve(outcome = cue.outcome, density = density)
+        MirrorImagePhase.Resolve -> mirrorResolve(outcome = cue.messageType, density = density)
     }
 }
 
@@ -635,7 +635,7 @@ private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
         MirrorImagePhase.Split -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
 
         MirrorImagePhase.Resolve -> {
-            val resolvedOutcome = outcome
+            val resolvedOutcome = messageType
             val reactionMillis =
                 if (resolvedOutcome != null) {
                     REACTION_DELAY_MILLIS + defenderReactionBodyMillis(outcome = resolvedOutcome)

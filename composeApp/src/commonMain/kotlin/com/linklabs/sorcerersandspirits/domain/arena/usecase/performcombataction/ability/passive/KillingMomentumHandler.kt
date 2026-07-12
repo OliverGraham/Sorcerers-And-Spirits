@@ -4,10 +4,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 
-internal class TriggerKillingMomentum(private val combatMutator: CombatMutator) {
-    operator fun invoke() {
-        combatMutator.triggerKillingMomentum()
-    }
+internal class KillingMomentumHandler(private val combatMutator: CombatMutator) {
+
+    fun triggerKillingMomentum() = combatMutator.triggerKillingMomentum()
 
     private fun CombatMutator.triggerKillingMomentum() {
         addMessage(message = ArenaMessage.KillingMomentum(attackerUserId = attackerUserId))

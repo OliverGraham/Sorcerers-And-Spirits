@@ -3,6 +3,8 @@ package com.linklabs.sorcerersandspirits.domain.achievement
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 
+// TODO: Delete this docstring and add steps ina real document of some kind
+
 /**
  * One unlockable achievement: its [id] and the rule that unlocks it, both owned by the app. Copy
  * (name, description) is a presentation concern resolved from string resources in the UI layer,
@@ -18,21 +20,18 @@ sealed interface Achievement {
     fun isUnlockedBy(stats: ProfileStats): Boolean
 }
 
-/** Win a single match. */
 data object WinAMatch : Achievement {
     override val id = AchievementId.WinAMatch
 
     override fun isUnlockedBy(stats: ProfileStats): Boolean = stats.overall.matchesWon >= 1
 }
 
-/** Win a full Gauntlet. */
 data object WinAGauntlet : Achievement {
     override val id = AchievementId.WinAGauntlet
 
     override fun isUnlockedBy(stats: ProfileStats): Boolean = stats.overall.gauntletsWon >= 1
 }
 
-/** Win at least one match as every playable class. */
 data object WinAMatchWithEveryClass : Achievement {
     override val id = AchievementId.WinAMatchWithEveryClass
 
@@ -42,7 +41,6 @@ data object WinAMatchWithEveryClass : Achievement {
         }
 }
 
-/** Win at least one Gauntlet as every playable class. */
 data object WinAGauntletWithEveryClass : Achievement {
     override val id = AchievementId.WinAGauntletWithEveryClass
 

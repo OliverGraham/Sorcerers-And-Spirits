@@ -53,28 +53,20 @@ class AppViewModel(
     val appUpgradeStatusFlow = _appUpgradeStatusFlow.asStateFlow()
 
     private var screenStateJob: Job? = null
-
-    // Once a profile exists (anonymously) this session, the dialog's actions only need to enter the
-    // app rather than create another profile — re-creating would collide with the reserved name.
     private var hasCreatedProfile = false
 
     init {
         viewModelScope.launch {
-            // The version thresholds live in RemoteConfig, so the gate can only be evaluated once
-            // the config has been fetched/activated.
             initializeGameConfigUseCase()
             _appUpgradeStatusFlow.value = checkAppVersionUseCase()
         }
 
-        // Replays any stat delta a previous session persisted but never flushed — e.g. a crash or
-        // kill mid-match (SS-076). Independent of the screen state, so it runs in its own job.
         viewModelScope.launch { flushPendingStatsUseCase() }
 
         loadScreenState()
     }
 
     fun onDismissUpdateNudge() {
-        // Only the soft "update available" nudge is dismissible; a force-upgrade block stays put.
         val isDismissibleNudge = _appUpgradeStatusFlow.value == AppUpgradeStatus.UPDATE_AVAILABLE
         if (isDismissibleNudge) {
             _appUpgradeStatusFlow.value = AppUpgradeStatus.UP_TO_DATE
@@ -95,12 +87,6 @@ class AppViewModel(
                     return@launch
                 }
 
-                // A signed-in account with no profile (e.g. sign-in succeeded but profile creation
-                // never did) would otherwise hang forever on the loading indicator, since the
-                // profile flow just keeps emitting null. Route back to the dialog to create one for
-                // the current account. Only checked while online: offline, the one-shot read can't
-                // tell "no profile" from "unreachable", so defer to collectScreenState's offline
-                // shell, which recovers once back online.
                 val isOnline = connectivityObserver.isOnline.first()
                 if (isOnline && getProfileUseCase() == null) {
                     showSignInDialog()
@@ -112,15 +98,13 @@ class AppViewModel(
 
     fun createProfile(newDisplayName: String) {
         viewModelScope.launch {
-            // A link attempt may have already created the anonymous profile; just enter the app.
             if (hasCreatedProfile) {
                 collectScreenState()
                 return@launch
             }
 
             if (!connectivityObserver.isOnline.first()) {
-                // Signing in requires the network. Keep the dialog up with an offline notice
-                // instead of hanging on the loading indicator.
+                // TODO: Offline experience
                 _uiStateFlow.value =
                     UiState.Loaded(
                         data =
@@ -135,9 +119,7 @@ class AppViewModel(
 
             _uiStateFlow.value = UiState.Loading
 
-            // The dialog also appears for an already-signed-in account that is missing its profile
-            // (see loadScreenState). There, create the profile for the current account rather than
-            // signing in anonymously again, which would orphan the existing one.
+            // TODO: Functions (for readability)
             val createResult =
                 if (isUserSignedInUseCase()) {
                     createProfileForCurrentUserUseCase(displayName = newDisplayName)
@@ -181,13 +163,6 @@ class AppViewModel(
         }
     }
 
-    /**
-     * From the first-launch dialog a provider sign-in either recovers an existing account (e.g. a
-     * returning player who reinstalled) or provisions a new one — there is no anonymous data to
-     * preserve, so we sign in rather than link. On success we make sure the account has a profile
-     * (recovered accounts already do; brand-new ones get one with the typed name) and enter the
-     * app; on failure the dialog stays up with the reason.
-     */
     private fun signInFromDialog(displayName: String, signIn: suspend () -> LinkAccountResult) {
         viewModelScope.launch {
             if (!connectivityObserver.isOnline.first()) {
@@ -222,11 +197,7 @@ class AppViewModel(
         }
     }
 
-    /**
-     * A recovered account already has a profile; a brand-new provider account does not, so create
-     * one with the typed name before entering (otherwise the screen would hang waiting for a
-     * profile).
-     */
+    // TODO: Looks like same things are happening - make functions
     private suspend fun enterAppEnsuringProfile(displayName: String) {
         if (getProfileUseCase() != null) {
             hasCreatedProfile = true
@@ -272,11 +243,11 @@ class AppViewModel(
     }
 
     private suspend fun collectScreenState() {
-        // Reused if we show the offline shell before a profile is ever loaded, so the name stays
-        // stable across connectivity changes.
         val displayNameWhenOffline = getRandomTravelerNameUseCase()
 
-        combine(getProfileFlowUseCase(), connectivityObserver.isOnline) { profile, isOnline ->
+        combine(flow = getProfileFlowUseCase(), flow2 = connectivityObserver.isOnline) {
+                profile,
+                isOnline ->
                 profile to isOnline
             }
             .catch { _uiStateFlow.value = UiState.Error }
@@ -295,16 +266,12 @@ class AppViewModel(
                             )
                     }
 
-                    // No profile yet and offline: show the shell so the app stays usable instead
-                    // of hanging on the loading indicator. Recovers once back online.
                     !isOnline ->
                         _uiStateFlow.value =
                             UiState.Loaded(
                                 data =
                                     AppState(displayName = displayNameWhenOffline, isOffline = true)
                             )
-
-                // Online but the profile hasn't arrived yet: keep showing the loading indicator.
                 }
             }
     }

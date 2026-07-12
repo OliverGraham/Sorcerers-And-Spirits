@@ -481,7 +481,18 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   the wheel size and the stats card height adapt (e.g. cap/scale the wheel by available height, let
   the expanded card scroll or size to content within a constrained viewport); verify on Small +
   Medium previews/emulators. Short copy (SS-081) will also reduce overflow.
-- **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081.
+- **Progress:** Responsive foundation landed in the `theme` package: `ScreenSizeClass`
+  (Small/Medium/Large) derived from the live window width via cross-platform
+  `LocalWindowInfo.containerSize` (Android + iOS, no adaptive-lib dependency — its actual-size API
+  is Android-only and its multiplatform buckets can't split small vs medium phones), exposed as
+  `LocalScreenSizeClass`, and a `Typography.scaledBy(factor)` that scales all `MaterialTheme.typography`
+  text app-wide from `SorcerersAndSpiritsTheme`. Medium is the unscaled baseline; Small = 0.75×,
+  Large = 1.1× (scale factors tunable in `ScreenSizeClass.kt`). Combat avatars are proportional
+  (`BoxWithConstraints`) and intentionally untouched.
+  Remaining: apply `LocalScreenSizeClass` to button/icon `dp` sizes, and the actual wheel + stats-card
+  layout fit/scroll below.
+- **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081. The
+  `ScreenSizeClass.Large` bucket also seeds SS-083 (tablet).
 
 ### SS-182 — ArenaScreen top padding should sit just below the system UI
 

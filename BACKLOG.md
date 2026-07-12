@@ -485,12 +485,25 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   (Small/Medium/Large) derived from the live window width via cross-platform
   `LocalWindowInfo.containerSize` (Android + iOS, no adaptive-lib dependency — its actual-size API
   is Android-only and its multiplatform buckets can't split small vs medium phones), exposed as
-  `LocalScreenSizeClass`, and a `Typography.scaledBy(factor)` that scales all `MaterialTheme.typography`
-  text app-wide from `SorcerersAndSpiritsTheme`. Medium is the unscaled baseline; Small = 0.75×,
-  Large = 1.1× (scale factors tunable in `ScreenSizeClass.kt`). Combat avatars are proportional
-  (`BoxWithConstraints`) and intentionally untouched.
-  Remaining: apply `LocalScreenSizeClass` to button/icon `dp` sizes, and the actual wheel + stats-card
-  layout fit/scroll below.
+  `LocalScreenSizeClass`. Medium is the unscaled baseline.
+  Scaling is now **app-wide by construction**: `SorcerersAndSpiritsTheme` overrides `LocalDensity`
+  once — `density *= dpScale`, `fontScale = fontScale * textScale / dpScale` — so **every `dp` and
+  `sp` in the whole app scales from one place**, no per-widget annotation. Text scales harder than
+  dp chrome: `textScale` Small 0.75×/Large 1.1×, `dpScale` Small 0.85×/Large 1.1× (both tunable in
+  `ScreenSizeClass.kt`). The window bucket is read from the real density before the override, so it
+  can't feed back. Replaced the earlier `Typography.scaledBy` + per-widget `Dp.scaledBy` approach
+  (deleted `ScaledTypography.kt`) — it was unrealistic across ~426 dp literals in ~60 files and left
+  things like the arena combat buttons (`arenaButtonSize = 72.dp`) oversized on small phones; those
+  now shrink automatically. Combat avatars are proportional (`BoxWithConstraints`) so density leaves
+  them untouched; window insets round-trip (same density both directions).
+  Wheel + stats-card fit: `CharacterClassWheel` is now a root `BoxWithConstraints`; when the parent
+  bounds the height it caps the wheel to `WHEEL_HEIGHT_FRACTION` (0.6) of it so the stats card always
+  keeps room, and the stats card takes the remaining space via `weight(fill = false)` with the card's
+  content in a `verticalScroll` so an expanded card scrolls instead of clipping. Unbounded-height
+  hosts keep the old wrap-content behavior. The wheel is being moved off `TavernScreen` (overhaul
+  pending), so Tavern-specific fit is deferred to that work.
+  Remaining: on-device verify on Small + Medium phones (combat screen, dialogs, dice tray, wheel
+  collapsed + expanded); tune the `dpScale`/`textScale` factors against real devices if needed.
 - **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081. The
   `ScreenSizeClass.Large` bucket also seeds SS-083 (tablet).
 

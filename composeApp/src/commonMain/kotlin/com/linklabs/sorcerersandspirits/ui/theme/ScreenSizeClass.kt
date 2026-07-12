@@ -15,6 +15,10 @@ private const val SMALL_TEXT_SCALE = 0.75f
 private const val MEDIUM_TEXT_SCALE = 1f
 private const val LARGE_TEXT_SCALE = 1.1f
 
+private const val SMALL_DP_SCALE = 0.85f
+private const val MEDIUM_DP_SCALE = 1f
+private const val LARGE_DP_SCALE = 1.1f
+
 /**
  * The window's coarse size bucket, tuned for this game's phone-first layouts. [Medium] is the
  * baseline reference size (a typical phone) and is left unscaled; [Small] and [Large] scale UI
@@ -35,6 +39,18 @@ internal fun ScreenSizeClass.textScale(): Float =
         is ScreenSizeClass.Small -> SMALL_TEXT_SCALE
         is ScreenSizeClass.Medium -> MEDIUM_TEXT_SCALE
         is ScreenSizeClass.Large -> LARGE_TEXT_SCALE
+    }
+
+/**
+ * Multiplier applied to every dp in the app by bending the ambient density in
+ * [SorcerersAndSpiritsTheme], so all fixed dimensions track the screen size. Gentler than
+ * [textScale] because dp chrome doesn't need to shrink as hard as copy to stay legible.
+ */
+internal fun ScreenSizeClass.dpScale(): Float =
+    when (this) {
+        is ScreenSizeClass.Small -> SMALL_DP_SCALE
+        is ScreenSizeClass.Medium -> MEDIUM_DP_SCALE
+        is ScreenSizeClass.Large -> LARGE_DP_SCALE
     }
 
 internal val LocalScreenSizeClass =

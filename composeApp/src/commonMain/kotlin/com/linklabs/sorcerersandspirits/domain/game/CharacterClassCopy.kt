@@ -1,21 +1,11 @@
 package com.linklabs.sorcerersandspirits.domain.game
 
-/**
- * The remotely-tunable display copy for a single stat or ability, in two registers: a [long]
- * variant for the rules screen (SS-067) and a [short] one for space-constrained surfaces like the
- * class wheel's stat card. [name] is the heading shown in both places.
- */
 data class AbilityCopy(val name: String, val long: String, val short: String) {
     companion object {
         val EMPTY = AbilityCopy(name = "", long = "", short = "")
     }
 }
 
-/**
- * All class stat + ability copy, keyed by the stable identifiers in [ClassCopyKeys]. Sourced from
- * RemoteConfig (the same fetch [CharacterClassProvider.refresh] activates) so copy can be tuned
- * without a release (SS-081). Unknown keys resolve to [AbilityCopy.EMPTY] rather than throwing.
- */
 data class CharacterClassCopy(private val entries: Map<String, AbilityCopy>) {
     operator fun get(key: String): AbilityCopy = entries[key] ?: AbilityCopy.EMPTY
 

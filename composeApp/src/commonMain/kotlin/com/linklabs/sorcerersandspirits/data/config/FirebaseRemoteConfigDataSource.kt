@@ -9,12 +9,18 @@ import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.MINIMUM_SUP
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.RANDOM_TRAVELER_NAMES
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfig
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlinx.serialization.json.Json
 import sorcerersandspirits.composeapp.generated.resources.Res
 
+/**
+ * TODO: Use something like Moshi that can generate data classes from Json, so none of this
+ *   [ClassCopyKeys] bullshit would have to be used. Or, why did Claude use a map in the first
+ *   place? Why not a data class?
+ */
 class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteConfig) :
     RemoteConfigDataSource {
 

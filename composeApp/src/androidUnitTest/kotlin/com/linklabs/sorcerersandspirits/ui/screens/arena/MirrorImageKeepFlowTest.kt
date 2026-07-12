@@ -300,6 +300,7 @@ class MirrorImageKeepFlowTest {
             roundNumber = 1,
             isNewRound = false,
             doublesBonus = null,
+            isMirrorImagePenaltyActive = false,
         )
     }
 

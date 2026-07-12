@@ -59,30 +59,23 @@ data class ArenaScreenState(
 
     /**
      * The modifier chip to show beside the resting dice, or null when neither modifier is live: the
-     * consecutive-doubles +1 while its announced bonus is still pending, otherwise the Mirror Image
-     * -1 while a penalized reroll is the dice' last roll.
+     * consecutive-doubles +1 the domain has banked for the next roll, otherwise the Mirror Image -1
+     * the domain applied to the reroll that is the dice' latest roll.
      *
-     * The doubles chip is driven by the emitted [ArenaMessageState.Doubles] message, not the raw
-     * match bonus: the domain only announces a Doubles when the +1 stays with the same hands, so a
-     * doubles that misses and passes the turn to another player never announces and never shows
-     * here (the raw match bonus lingers until the next roll clears it, so it must not gate the
-     * chip). The bonus is pending only until a later roll consumes it, so any roll-bearing message
-     * after the announcement retires the chip.
+     * Both flags are decisions the Domain makes and passes down through [ArenaState.Combat]; the UI
+     * only reflects them. It never reconstructs them from the message log, so a message changing
+     * shape can never change which chip shows.
      */
     val diceBadge: DiceBadge? = deriveDiceBadge()
 
     private fun deriveDiceBadge(): DiceBadge? {
-        val lastDoublesIndex = messages.indexOfLast { it is ArenaMessageState.Doubles }
-        val isDoublesPending =
-            lastDoublesIndex >= 0 &&
-                messages.drop(n = lastDoublesIndex + 1).none { it.rolledDice() != null }
-        if (isDoublesPending) return DiceBadge.DoublesBonus
+        val combatArenaState = arenaState as? ArenaState.Combat ?: return null
 
-        val latestRollMessage = messages.lastOrNull { it.rolledDice() != null }
-        val isMirrorReroll = latestRollMessage is ArenaMessageState.MirrorImage.TemptFate
-        if (isMirrorReroll) return DiceBadge.MirrorPenalty
-
-        return null
+        return when {
+            combatArenaState.isDoublesBonusLive -> DiceBadge.DoublesBonus
+            combatArenaState.isMirrorImagePenaltyActive -> DiceBadge.MirrorPenalty
+            else -> null
+        }
     }
 }
 
@@ -112,9 +105,18 @@ sealed interface ArenaState {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonus: DoublesBonus?,
+        val isMirrorImagePenaltyActive: Boolean,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
+
+        /**
+         * Whether the pending consecutive-doubles +1 will land on the next roll: the bonus is owned
+         * by whoever is about to roll. The raw [doublesBonus] lingers until the next roll clears
+         * it, so it is scoped to the active roller here — a doubles that missed and passed the turn
+         * to someone else no longer shows, since its owner is no longer the one rolling.
+         */
+        val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
         val turnOwnerUserId = combatActionState.turnOwnerUserId
@@ -278,6 +280,7 @@ internal fun ArenaMatch.toUpdatedState(
                     roundNumber = roundNumber,
                     isNewRound = isNewRound,
                     doublesBonus = doublesBonus,
+                    isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
                 )
             }
 

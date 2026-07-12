@@ -7,7 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
@@ -340,47 +339,20 @@ class ArenaScreenStateTest {
         )
 
     @Test
-    fun `Given a doubles roll missed and passed the turn on without announcing, then no doubles badge shows`() {
+    fun `Given the pending doubles bonus is owned by the player about to roll, then the doubles badge shows`() {
         val state =
             screenState(
                 arenaState =
-                    ArenaState.Combat(
-                        playerMap = players(),
-                        userPlayerId = USER_ID,
+                    combatState(
                         combatActionState =
-                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
-                        roundNumber = 1,
-                        isNewRound = false,
+                            CombatActionState.NormalAttack(
+                                roll = NormalAttackType.Health,
+                                attackerUserId = USER_ID,
+                                defenderUserId = OPPONENT_ID,
+                                originalTurnUserId = USER_ID,
+                                activeUserIds = setOf(element = USER_ID),
+                            ),
                         doublesBonus = DoublesBonus(userId = USER_ID),
-                    ),
-                messages =
-                    listOf(
-                        element =
-                            normalRoll(
-                                id = "roll",
-                                type = NormalRollMessageType.ArmorClassMiss,
-                                firstDie = 3,
-                                secondDie = 3,
-                            )
-                    ),
-            )
-
-        assertNull(actual = state.diceBadge)
-    }
-
-    @Test
-    fun `Given a doubles was announced and not yet consumed, then the doubles badge shows`() {
-        val state =
-            screenState(
-                messages =
-                    listOf(
-                        normalRoll(
-                            id = "roll",
-                            type = NormalRollMessageType.ArmorClassHit,
-                            firstDie = 4,
-                            secondDie = 4,
-                        ),
-                        ArenaMessageState.Doubles(id = "doubles", playerName = "Paladin"),
                     )
             )
 
@@ -388,39 +360,54 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given the consecutive roll consumed the announced doubles, then the doubles badge clears`() {
+    fun `Given a doubles bonus lingers but the turn passed to another player, then no doubles badge shows`() {
         val state =
             screenState(
-                messages =
-                    listOf(
-                        normalRoll(
-                            id = "armor",
-                            type = NormalRollMessageType.ArmorClassHit,
-                            firstDie = 4,
-                            secondDie = 4,
-                        ),
-                        ArenaMessageState.Doubles(id = "doubles", playerName = "Paladin"),
-                        normalRoll(
-                            id = "damage",
-                            type = NormalRollMessageType.Damage,
-                            firstDie = 5,
-                            secondDie = 2,
-                            bonus = 1,
-                        ),
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                        doublesBonus = DoublesBonus(userId = USER_ID),
                     )
             )
 
         assertNull(actual = state.diceBadge)
     }
 
-    private fun combatState(combatActionState: CombatActionState) =
+    @Test
+    fun `Given the domain marked a mirror image penalty on the latest roll, then the mirror penalty badge shows`() {
+        val state =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.NormalAttack(
+                                roll = NormalAttackType.Health,
+                                attackerUserId = OPPONENT_ID,
+                                defenderUserId = USER_ID,
+                                originalTurnUserId = OPPONENT_ID,
+                                activeUserIds = setOf(element = OPPONENT_ID),
+                            ),
+                        isMirrorImagePenaltyActive = true,
+                    )
+            )
+
+        assertEquals(expected = DiceBadge.MirrorPenalty, actual = state.diceBadge)
+    }
+
+    private fun combatState(
+        combatActionState: CombatActionState,
+        doublesBonus: DoublesBonus? = null,
+        isMirrorImagePenaltyActive: Boolean = false,
+    ) =
         ArenaState.Combat(
             playerMap = players(),
             userPlayerId = USER_ID,
             combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = false,
-            doublesBonus = null,
+            doublesBonus = doublesBonus,
+            isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
         )
 
     private fun holyShieldRoll(
@@ -449,27 +436,6 @@ class ArenaScreenStateTest {
             arenaState = arenaState,
             participants = emptyMap(),
             numberOfNewMessages = 0,
-        )
-
-    private fun normalRoll(
-        id: String,
-        type: NormalRollMessageType,
-        firstDie: Int,
-        secondDie: Int,
-        bonus: Int = 0,
-    ) =
-        ArenaMessageState.NormalRoll(
-            id = id,
-            attackerUserId = USER_ID,
-            attackerName = "Paladin",
-            attackerClassType = CharacterClassType.Paladin,
-            defenderUserId = OPPONENT_ID,
-            defenderName = "Rogue",
-            firstDie = firstDie,
-            secondDie = secondDie,
-            bonus = bonus,
-            type = type,
-            impersonatedClassType = CharacterClassType.Paladin,
         )
 
     private fun players() =

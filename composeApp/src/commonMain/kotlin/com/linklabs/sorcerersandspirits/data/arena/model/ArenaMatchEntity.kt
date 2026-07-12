@@ -40,6 +40,7 @@ sealed interface ArenaMatchEntity {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonusEntity: DoublesBonusEntity? = null,
+        val isMirrorImagePenaltyActive: Boolean = false,
         override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatchEntity
 
@@ -97,6 +98,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
                 doublesBonus = doublesBonusEntity?.toDomain(),
+                isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
 

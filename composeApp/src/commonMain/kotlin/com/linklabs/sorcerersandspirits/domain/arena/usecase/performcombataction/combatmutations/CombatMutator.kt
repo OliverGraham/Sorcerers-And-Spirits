@@ -32,6 +32,7 @@ internal class CombatMutator(
 ) {
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
+    private var isMirrorImagePenaltyActive = false
 
     val attacker
         get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
@@ -92,6 +93,7 @@ internal class CombatMutator(
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
             doublesBonus = diceRoller.getDoublesBonus(),
+            isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
             isMatchFinished = getIsMatchFinished(),
         )
 
@@ -150,6 +152,15 @@ internal class CombatMutator(
 
     fun addMessage(message: ArenaMessage) {
         messages.add(element = message)
+    }
+
+    /**
+     * Flags that a Mirror Image reroll's penalized die is the dice' latest roll, so the
+     * resting-dice penalty badge is driven by this decision rather than by inspecting the last roll
+     * message.
+     */
+    fun markMirrorImagePenalty() {
+        isMirrorImagePenaltyActive = true
     }
 
     fun resolveTurnEnd() {

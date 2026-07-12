@@ -350,6 +350,7 @@ class CombatSeatingTest {
             roundNumber = 1,
             isNewRound = false,
             doublesBonus = null,
+            isMirrorImagePenaltyActive = false,
         )
 
     private fun normalAttack(

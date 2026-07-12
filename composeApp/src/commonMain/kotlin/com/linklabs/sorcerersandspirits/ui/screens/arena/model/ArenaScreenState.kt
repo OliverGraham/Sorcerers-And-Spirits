@@ -56,6 +56,27 @@ data class ArenaScreenState(
      * newly-arrived ones in sequence (e.g. "Hit!" then "X Damage!" then "Knocked Out!").
      */
     val flashMessages: List<ArenaMessageState> = messages.filter { it.flashCallout != null }
+
+    /**
+     * The modifier chip to show beside the resting dice, or null when neither modifier is live: the
+     * consecutive-doubles +1 the domain has banked for the next roll, otherwise the Mirror Image -1
+     * the domain applied to the reroll that is the dice' latest roll.
+     *
+     * Both flags are decisions the Domain makes and passes down through [ArenaState.Combat]; the UI
+     * only reflects them. It never reconstructs them from the message log, so a message changing
+     * shape can never change which chip shows.
+     */
+    val diceBadge: DiceBadge? = deriveDiceBadge()
+
+    private fun deriveDiceBadge(): DiceBadge? {
+        val combatArenaState = arenaState as? ArenaState.Combat ?: return null
+
+        return when {
+            combatArenaState.isDoublesBonusLive -> DiceBadge.DoublesBonus
+            combatArenaState.isMirrorImagePenaltyActive -> DiceBadge.MirrorPenalty
+            else -> null
+        }
+    }
 }
 
 @Immutable
@@ -84,9 +105,18 @@ sealed interface ArenaState {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonus: DoublesBonus?,
+        val isMirrorImagePenaltyActive: Boolean,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
+
+        /**
+         * Whether the pending consecutive-doubles +1 will land on the next roll: the bonus is owned
+         * by whoever is about to roll. The raw [doublesBonus] lingers until the next roll clears
+         * it, so it is scoped to the active roller here — a doubles that missed and passed the turn
+         * to someone else no longer shows, since its owner is no longer the one rolling.
+         */
+        val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
         val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
         val turnOwnerUserId = combatActionState.turnOwnerUserId
@@ -250,6 +280,7 @@ internal fun ArenaMatch.toUpdatedState(
                     roundNumber = roundNumber,
                     isNewRound = isNewRound,
                     doublesBonus = doublesBonus,
+                    isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
                 )
             }
 

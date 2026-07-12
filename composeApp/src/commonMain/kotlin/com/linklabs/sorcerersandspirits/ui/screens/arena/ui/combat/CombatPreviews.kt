@@ -268,6 +268,7 @@ private fun previewCombatState(
         roundNumber = 1,
         isNewRound = true,
         doublesBonus = null,
+        isMirrorImagePenaltyActive = false,
     )
 }
 

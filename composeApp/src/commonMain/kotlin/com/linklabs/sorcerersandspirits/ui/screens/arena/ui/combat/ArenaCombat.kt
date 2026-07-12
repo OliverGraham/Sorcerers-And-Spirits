@@ -24,6 +24,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
@@ -170,7 +171,21 @@ internal fun ArenaCombat(
 
             // TODO Yourself: These things truly go on top of the screen column, but perhaps
             //                Should be elsewhere
-            DiceOverlay(diceRoll = diceRoll, homeBounds = diceHomeBounds)
+            val homeBounds = diceHomeBounds
+            if (homeBounds != null) {
+                DiceOverlay(diceRoll = diceRoll, homeBounds = homeBounds)
+                val badgeDieSlot =
+                    if (screenState.diceBadge is DiceBadge.MirrorPenalty) {
+                        diceRoll.restingSlots.singleOrNull()
+                    } else {
+                        null
+                    }
+                DiceModifierBadgeOverlay(
+                    badge = screenState.diceBadge,
+                    dieSlot = badgeDieSlot,
+                    homeBounds = homeBounds,
+                )
+            }
 
             FlashOverlay(playback = flashPlayback)
 

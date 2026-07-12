@@ -177,8 +177,10 @@
     <string name="arena_message_prepare_attack_failed">%1$s studied %2$s, rolled %3$s and %4$s — the preparation fails</string>
 
     <string name="arena_flash_hit">%1$s · Hit!</string>
+    <string name="arena_flash_hit_doubles">%1$s (+%2$s) · Hit!</string>
     <string name="arena_flash_miss">Miss!</string>
     <string name="arena_flash_damage">%1$s Damage!</string>
+    <string name="arena_flash_damage_doubles">%1$s Damage! (+%2$s)</string>
     <string name="arena_flash_knockout">Knocked Out!</string>
     <string name="arena_flash_killing_momentum">Killing Momentum!</string>
     <string name="arena_flash_dodge">Dodge!</string>
@@ -207,7 +209,7 @@
     <string name="arena_flash_charmed">Charmed!</string>
     <string name="arena_flash_redirected">Redirected to %1$s!</string>
     <string name="arena_flash_mirror_image">Mirror Image!</string>
-    <string name="arena_flash_reroll">Reroll %1$s!</string>
+    <string name="arena_flash_reroll">Reroll %1$s (−1)!</string>
     <string name="arena_flash_holy_shield">Holy Shield!</string>
     <string name="arena_flash_saved">Saved!</string>
     <string name="arena_flash_struck_down">Struck down!</string>

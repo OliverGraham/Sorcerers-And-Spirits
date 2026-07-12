@@ -114,6 +114,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             roundNumber = 1,
             isNewRound = true,
             doublesBonus = null,
+            isMirrorImagePenaltyActive = false,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

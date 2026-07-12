@@ -1663,6 +1663,7 @@ class ArenaScreenViewModelTest {
                 roundNumber = roundNumber,
                 isNewRound = false,
                 doublesBonus = null,
+                isMirrorImagePenaltyActive = false,
             )
 
         private fun idleTurn(vararg activeUserIds: String) =

@@ -96,7 +96,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_hit,
                         attackerName,
                         defenderName,
-                        firstDie + secondDie,
+                        rolledTotalDisplay(total = total, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
@@ -104,7 +104,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_miss,
                         attackerName,
                         defenderName,
-                        firstDie + secondDie,
+                        rolledTotalDisplay(total = total, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.Damage ->
@@ -112,7 +112,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_damage,
                         attackerName,
                         defenderName,
-                        total,
+                        rolledTotalDisplay(total = total, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.Knockout ->
@@ -120,7 +120,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_knockout,
                         attackerName,
                         defenderName,
-                        firstDie + secondDie,
+                        rolledTotalDisplay(total = total, doublesBonus = bonus),
                     )
             }
 
@@ -428,3 +428,6 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 )
             }
     }
+
+private fun rolledTotalDisplay(total: Int, doublesBonus: Int): String =
+    if (doublesBonus > 0) "$total (+$doublesBonus)" else total.toString()

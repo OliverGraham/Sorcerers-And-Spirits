@@ -54,6 +54,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
             roundNumber = result.roundNumber,
             isNewRound = result.isNewRound,
             doublesBonusEntity = result.doublesBonus?.toEntity(),
+            isMirrorImagePenaltyActive = result.isMirrorImagePenaltyActive,
             matchNumberInGauntlet = matchNumberInGauntlet,
         )
 }

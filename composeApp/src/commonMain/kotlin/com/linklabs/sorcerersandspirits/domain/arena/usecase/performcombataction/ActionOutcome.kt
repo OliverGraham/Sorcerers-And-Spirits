@@ -13,5 +13,6 @@ data class ActionOutcome(
     val roundNumber: Int,
     val isNewRound: Boolean,
     val doublesBonus: DoublesBonus?,
+    val isMirrorImagePenaltyActive: Boolean,
     val isMatchFinished: Boolean,
 )

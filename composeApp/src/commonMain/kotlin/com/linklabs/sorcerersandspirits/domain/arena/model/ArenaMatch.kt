@@ -30,6 +30,7 @@ sealed interface ArenaMatch {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonus: DoublesBonus?,
+        val isMirrorImagePenaltyActive: Boolean,
         override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatch
 

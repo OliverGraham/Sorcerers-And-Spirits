@@ -67,6 +67,8 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleReroll(mirrorImage: AbilityAction.Passive.MirrorImage) {
+        markMirrorImagePenalty()
+
         updateDefenderClass { defender ->
             defender.copy(
                 defensiveAbility =
@@ -172,17 +174,21 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         if (brokeArmor) {
             addMessage(message = message(NormalRollMessageType.ArmorClassHit))
+
             if (isKeptRollDoubles) {
                 addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
             }
+
             continueAttackWithHealthRoll()
         } else {
             addMessage(message = message(NormalRollMessageType.ArmorClassMiss))
+
             val shouldMessageDoubles =
                 isKeptRollDoubles && shouldMessageDoublesAfterArmorClassMiss()
             if (shouldMessageDoubles) {
                 addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
             }
+
             resolveTurnEnd()
         }
     }

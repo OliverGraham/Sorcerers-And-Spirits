@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
@@ -337,14 +338,76 @@ class ArenaScreenStateTest {
                 ),
         )
 
-    private fun combatState(combatActionState: CombatActionState) =
+    @Test
+    fun `Given the pending doubles bonus is owned by the player about to roll, then the doubles badge shows`() {
+        val state =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.NormalAttack(
+                                roll = NormalAttackType.Health,
+                                attackerUserId = USER_ID,
+                                defenderUserId = OPPONENT_ID,
+                                originalTurnUserId = USER_ID,
+                                activeUserIds = setOf(element = USER_ID),
+                            ),
+                        doublesBonus = DoublesBonus(userId = USER_ID),
+                    )
+            )
+
+        assertEquals(expected = DiceBadge.DoublesBonus, actual = state.diceBadge)
+    }
+
+    @Test
+    fun `Given a doubles bonus lingers but the turn passed to another player, then no doubles badge shows`() {
+        val state =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                        doublesBonus = DoublesBonus(userId = USER_ID),
+                    )
+            )
+
+        assertNull(actual = state.diceBadge)
+    }
+
+    @Test
+    fun `Given the domain marked a mirror image penalty on the latest roll, then the mirror penalty badge shows`() {
+        val state =
+            screenState(
+                arenaState =
+                    combatState(
+                        combatActionState =
+                            CombatActionState.NormalAttack(
+                                roll = NormalAttackType.Health,
+                                attackerUserId = OPPONENT_ID,
+                                defenderUserId = USER_ID,
+                                originalTurnUserId = OPPONENT_ID,
+                                activeUserIds = setOf(element = OPPONENT_ID),
+                            ),
+                        isMirrorImagePenaltyActive = true,
+                    )
+            )
+
+        assertEquals(expected = DiceBadge.MirrorPenalty, actual = state.diceBadge)
+    }
+
+    private fun combatState(
+        combatActionState: CombatActionState,
+        doublesBonus: DoublesBonus? = null,
+        isMirrorImagePenaltyActive: Boolean = false,
+    ) =
         ArenaState.Combat(
             playerMap = players(),
             userPlayerId = USER_ID,
             combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = false,
-            doublesBonus = null,
+            doublesBonus = doublesBonus,
+            isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
         )
 
     private fun holyShieldRoll(
@@ -362,9 +425,10 @@ class ArenaScreenStateTest {
     private fun screenState(
         arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
         hasReadiedForNextMatch: Boolean = false,
+        messages: List<ArenaMessageState> = emptyList(),
     ) =
         ArenaScreenState(
-            messages = emptyList(),
+            messages = messages,
             secondsRemaining = 0,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,

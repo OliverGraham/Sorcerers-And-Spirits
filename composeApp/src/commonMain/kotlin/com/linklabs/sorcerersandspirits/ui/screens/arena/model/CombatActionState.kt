@@ -43,13 +43,14 @@ sealed interface CombatActionState {
  * the same player in both seats (SS-157, SS-165). On an idle turn it is the single player about to
  * act.
  */
-val CombatActionState.turnOwnerUserId: String
-    get() =
-        when (this) {
-            is CombatActionState.Idle -> activeUserIds.first()
-            is CombatActionState.NormalAttack -> originalTurnUserId
-            is CombatActionState.AbilityRoll -> originalTurnUserId
-        }
+fun CombatActionState.getTurnOwnerUserId() =
+    when (this) {
+        is CombatActionState.Idle -> activeUserIds.first()
+        is CombatActionState.NormalAttack -> originalTurnUserId
+        is CombatActionState.AbilityRoll -> originalTurnUserId
+    }
+
+// TODO: This can't be right, nor necessary
 
 /**
  * The combatant currently pressing the attack, always seated as a large avatar. This is the
@@ -57,13 +58,12 @@ val CombatActionState.turnOwnerUserId: String
  * Riposte reverses the attack: the Duelist (defender) becomes the attacker while it stays the
  * original attacker's turn (SS-165). On an idle turn it is the player about to act.
  */
-val CombatActionState.attackingUserId: String
-    get() =
-        when (this) {
-            is CombatActionState.Idle -> activeUserIds.first()
-            is CombatActionState.NormalAttack -> attackerUserId
-            is CombatActionState.AbilityRoll -> attackerUserId
-        }
+fun CombatActionState.getAttackingUserId() =
+    when (this) {
+        is CombatActionState.Idle -> activeUserIds.first()
+        is CombatActionState.NormalAttack -> attackerUserId
+        is CombatActionState.AbilityRoll -> attackerUserId
+    }
 
 /**
  * The player being targeted by the in-flight action, or null on an idle turn with no target yet.

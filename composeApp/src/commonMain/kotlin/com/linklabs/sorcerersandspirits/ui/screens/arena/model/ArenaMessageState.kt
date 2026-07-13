@@ -45,25 +45,13 @@ sealed interface ArenaMessageState {
         val type: NormalRollMessageType,
         val impersonatedClassType: CharacterClassType,
     ) : ArenaMessageState {
-        /**
-         * The true roll total: the two die faces plus any consecutive-doubles bonus that applied.
-         * It is both the Armor-class total behind a "Hit!" and the true damage behind a "Damage!".
-         */
         val total: Int = firstDie + secondDie + bonus
     }
 
-    /**
-     * The domain trigger names no one, so [attackerUserId] is carried over from the knockout roll
-     * that earned the momentum; null when that roll is no longer in the log.
-     */
     @Immutable
     data class KillingMomentum(override val id: String, val attackerUserId: String) :
         ArenaMessageState
 
-    /**
-     * The domain trigger names no one, so [dodgerUserId] is carried over from the missed roll the
-     * Rogue dodged; null when that roll is no longer in the log.
-     */
     @Immutable
     data class Dodge(
         override val id: String,
@@ -73,7 +61,6 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Teleport : ArenaMessageState {
-        /** The Mage escaping the attack, so the portal animation anchors to their seat. */
         val mageUserId: String
 
         @Immutable
@@ -209,10 +196,6 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface MirrorImage : ArenaMessageState {
-        /**
-         * The Illusionist defending the attack, so the split-image animation anchors to their seat.
-         * Read from the armor-break roll that preceded this trigger (SS-209).
-         */
         val illusionistUserId: String
 
         @Immutable
@@ -241,11 +224,7 @@ sealed interface ArenaMessageState {
             val attackerName: String,
             val messageType: NormalRollMessageType,
         ) : MirrorImage {
-            /**
-             * The reroll shown as the raw die and its -1 penalty (e.g. "4 - 1"), mirroring the
-             * Summon Minion hit-point display, so the player sees what was rolled and the penalty
-             * Mirror Image applied to it.
-             */
+            // TODO: update this
             val rerollDisplay: String = "$rawReroll - 1"
         }
     }
@@ -318,7 +297,6 @@ sealed interface ArenaMessageState {
     data class Doubles(override val id: String, val playerName: String) : ArenaMessageState
 }
 
-/** The four distinct results of a Necromancer's Summon Minion roll, keyed off the rolled die. */
 enum class SummonMinionOutcome {
     Fizzle,
     Skeleton,
@@ -326,7 +304,6 @@ enum class SummonMinionOutcome {
     Golem,
 }
 
-/** The three distinct results of a Gambler's All-In roll, keyed off the rolled die. */
 enum class AllInOutcome {
     SelfKnockout,
     NoEffect,
@@ -359,24 +336,13 @@ private fun allInOutcomeFor(singleDie: Int): AllInOutcome =
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-/**
- * The class a participant played, kept for every player who has ever been in the arena so their
- * messages still resolve a name and color after they leave. Messages refer to players by class name
- * (SS-097); the [type] additionally colors normal-attack flashes in the acting class's color.
- */
+// TODO: figure out how to do this better
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
-/**
- * Maps the incoming messages in order while remembering the most recent [ArenaMessage.NormalRoll],
- * because the KillingMomentum and Dodge triggers name no players of their own: the domain emits
- * each one immediately after the roll that triggered it, so the actor their avatar animation needs
- * (SS-192) is read from that roll.
- */
-fun List<IncomingArenaMessage>.toStates(
-    participants: Map<String, ParticipantClass>
-): List<ArenaMessageState> = map { incomingMessage ->
-    incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
-}
+fun List<IncomingArenaMessage>.toStates(participants: Map<String, ParticipantClass>) =
+    map { incomingMessage ->
+        incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
+    }
 
 private fun ArenaMessage.toState(
     id: String,
@@ -633,6 +599,7 @@ private fun ArenaMessage.toState(
             )
     }
 
+// TODO: These, again, can simply be data passed through as necessary. This is ridiculous
 private fun Map<String, ParticipantClass>.resolveClassName(userId: String) =
     getValue(key = userId).className
 

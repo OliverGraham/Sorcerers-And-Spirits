@@ -9,8 +9,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 
 /**
  * A combat action the user can currently take, derived from [ArenaState.Combat] by
- * [deriveCombatControls]. Composables only render these controls; whether an action is currently
- * legal is decided here from state the Domain already exposes.
+ * [deriveCombatControls].
  */
 @Immutable
 sealed interface ArenaCombatControl {
@@ -77,12 +76,6 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
             }
     }
 
-/**
- * Whether [control] is an Impersonate the Illusionist cannot meaningfully use against the chosen
- * target: the target has no offensive ability to copy (the Paladin), or re-copying its already
- * impersonated offensive ability would be a no-op. Either way the control is disabled while that
- * target is selected.
- */
 internal fun ArenaState.Combat.isImpersonateRedundant(
     control: ArenaCombatControl,
     targetedOpponentUserId: String,
@@ -108,10 +101,6 @@ internal fun ArenaState.Combat.isImpersonateRedundant(
     return targetOffensiveAbility::class == copiedAbility::class
 }
 
-/**
- * The controls for an ability roll the user owns. Most abilities are a single roll, but Mirror
- * Image is a choice: reroll either of the attacker's two dice, or keep the roll as-is.
- */
 private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl> =
     when (this) {
         is AbilityActionState.Passive.MirrorImage -> mirrorImageControls()
@@ -146,12 +135,6 @@ private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<A
         ),
     )
 
-/**
- * The user is already in [CombatActionState.activeUserIds] when this is checked. The Teleport
- * roll-off has both combatants active at once (SS-169), so confirm the user's own die is still
- * unrolled before offering the control — otherwise their button would linger after they have
- * rolled.
- */
 private fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
     when (this) {
         is AbilityActionState.Passive.Teleport ->
@@ -173,7 +156,6 @@ private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl
                                     usedThisTurn = usedThisTurn,
                                 )
                         )
-                        // All-In can only be activated once per turn
                         .toControl(enabled = !usedThisTurn)
             )
 

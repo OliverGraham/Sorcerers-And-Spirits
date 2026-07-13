@@ -7,9 +7,7 @@ private const val SECOND_DIE_SLOT = 1
 
 /**
  * What a roll-bearing message did to the shared dice, like two real dice sitting on a table that
- * everyone watches. [Faces] sets specific dice to the faces the Domain rolled; [Reroll] is the
- * Illusionist's Mirror Image, which replaces the single die that was showing [originalFace] with
- * [newFace] and leaves the other die untouched (SS-166).
+ * everyone watches.
  */
 @Immutable
 internal sealed interface RollResult {
@@ -68,8 +66,7 @@ private fun twoDice(first: Int, second: Int): RollResult.Faces =
 /**
  * The most recent roll across all players: what it did to the dice, and the id of the message that
  * carried it so a fresh roll can be told apart from the previous one even when it lands on the same
- * faces. [latestMessageId] is the id of the newest message of any kind, so a committed roll can
- * tell its turn resolved even when the resolution carried no dice and settle instead of stalling.
+ * faces.
  */
 @Immutable
 internal data class LatestRoll(
@@ -78,7 +75,6 @@ internal data class LatestRoll(
     val latestMessageId: String? = null,
 )
 
-/** The most recent roll across all players, or an empty [LatestRoll] if nothing has been rolled. */
 internal fun List<ArenaMessageState>.latestRoll(): LatestRoll {
     val latestMessageId = lastOrNull()?.id
     for (message in asReversed()) {

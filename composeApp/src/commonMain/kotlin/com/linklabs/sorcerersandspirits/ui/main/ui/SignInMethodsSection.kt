@@ -27,12 +27,7 @@ import sorcerersandspirits.composeapp.generated.resources.link_account_google
 import sorcerersandspirits.composeapp.generated.resources.link_account_optional_note
 import sorcerersandspirits.composeapp.generated.resources.link_account_password_label
 
-/**
- * Optional account-linking affordances (Google, Apple, email). Reused by the first-launch
- * [SignInNameDialog] and the ProfileScreen (SS-064): both delegate the same domain
- * `LinkAccountUseCase`, so this stays purely presentational — it only emits the chosen method and
- * the typed email credentials, and renders whatever status the caller passes back.
- */
+/** Optional account-linking affordances (Google, Apple, email). */
 @Composable
 fun SignInMethodsSection(
     onSocialMethodClick: (SignInMethod) -> Unit,

@@ -22,10 +22,6 @@ import sorcerersandspirits.composeapp.generated.resources.paladin_bust
 import sorcerersandspirits.composeapp.generated.resources.rogue_avatar
 import sorcerersandspirits.composeapp.generated.resources.rogue_bust
 
-// The single source of per-class style — artwork and colors — for all class UI (head icon, wheel,
-// Arena views). Colors come from Figma and are defined per color *family*: two classes share each
-// family (see [toColorGroup]). Update the family gradients in one place below.
-
 internal fun CharacterClassType.toBustResource(): DrawableResource =
     when (this) {
         CharacterClassType.Rogue -> Res.drawable.rogue_bust
@@ -52,7 +48,7 @@ internal fun CharacterClassType.toAvatarResource(): DrawableResource =
         CharacterClassType.None -> Res.drawable.rogue_avatar
     }
 
-/** The four class color families. Two classes share each family. */
+// TODO: refactor this logic - don't need all these extra enums and mapping
 enum class ClassColorGroup {
     Red,
     Yellow,
@@ -60,11 +56,9 @@ enum class ClassColorGroup {
     Blue,
 }
 
-/** A two-stop vertical gradient for a class color family. */
 @Immutable class ClassGradient(val topStop: Color, val bottomStop: Color)
 
-/** The color family a class belongs to. */
-fun CharacterClassType.toColorGroup(): ClassColorGroup =
+private fun CharacterClassType.toColorGroup(): ClassColorGroup =
     when (this) {
         CharacterClassType.Rogue,
         CharacterClassType.Duelist -> ClassColorGroup.Red
@@ -81,7 +75,6 @@ fun CharacterClassType.toColorGroup(): ClassColorGroup =
         CharacterClassType.None -> ClassColorGroup.Red
     }
 
-/** The class color gradient, used where a class is rendered with a fill (e.g. the head icon). */
 fun CharacterClassType.toGradient(): ClassGradient =
     when (toColorGroup()) {
         ClassColorGroup.Red -> RED
@@ -90,16 +83,11 @@ fun CharacterClassType.toGradient(): ClassGradient =
         ClassColorGroup.Blue -> BLUE
     }
 
-/**
- * The single representative shade for a class, used where one color is needed (e.g. wheel spokes).
- */
 fun CharacterClassType.toColor(): Color = toGradient().topStop
 
-/** The representative color of each of the four class families, in [ClassColorGroup] order. */
 fun classFamilyColors(): List<Color> =
     listOf(RED.topStop, YELLOW.topStop, GREEN.topStop, BLUE.topStop)
 
-// Figma per-family gradients (two classes share each).
 private val RED =
     ClassGradient(topStop = Color(color = 0xFF9D2920), bottomStop = Color(color = 0xFF581310))
 private val YELLOW =

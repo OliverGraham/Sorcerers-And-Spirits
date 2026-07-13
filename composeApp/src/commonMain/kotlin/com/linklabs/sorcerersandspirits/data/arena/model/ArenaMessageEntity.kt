@@ -239,7 +239,7 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val illusionistUserId: String,
             val attackerUserId: String,
-            val outcome: NormalRollMessageType,
+            val messageType: NormalRollMessageType,
         ) : MirrorImage
 
         @Serializable
@@ -250,7 +250,7 @@ sealed interface ArenaMessageEntity {
             val originalRoll: Int,
             val reroll: Int? = null,
             val attackerUserId: String,
-            val outcome: NormalRollMessageType,
+            val messageType: NormalRollMessageType,
         ) : MirrorImage
     }
 
@@ -509,7 +509,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                 ArenaMessage.MirrorImage.Pass(
                     illusionistUserId = illusionistUserId,
                     attackerUserId = attackerUserId,
-                    outcome = outcome,
+                    messageType = messageType,
                 )
 
             is ArenaMessageEntity.MirrorImage.TemptFate ->
@@ -521,7 +521,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                             reroll = reroll,
                         ),
                     attackerUserId = attackerUserId,
-                    outcome = outcome,
+                    messageType = messageType,
                 )
 
             is ArenaMessageEntity.SpellPotency ->
@@ -740,7 +740,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 illusionistUserId = illusionistUserId,
                 id = id,
                 attackerUserId = attackerUserId,
-                outcome = outcome,
+                messageType = messageType,
             )
 
         is ArenaMessage.MirrorImage.TemptFate ->
@@ -750,7 +750,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 originalRoll = rerolledMirrorImageDie.originalRoll,
                 reroll = rerolledMirrorImageDie.reroll,
                 attackerUserId = attackerUserId,
-                outcome = outcome,
+                messageType = messageType,
             )
 
         is ArenaMessage.SpellPotency ->

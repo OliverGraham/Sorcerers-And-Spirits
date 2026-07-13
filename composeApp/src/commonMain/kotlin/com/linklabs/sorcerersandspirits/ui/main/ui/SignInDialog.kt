@@ -42,11 +42,11 @@ fun SignInNameDialog(
     isNameTaken: Boolean = false,
     linkStatusMessage: String? = null,
     isLinkStatusError: Boolean = true,
-    onDismissRequest: () -> Unit = {},
 ) {
     var currentDisplayName by remember(key1 = displayName) { mutableStateOf(value = displayName) }
 
-    Dialog(onDismissRequest = onDismissRequest) {
+    // TODO: Allow dismisses but first create offline experience
+    Dialog(onDismissRequest = {}) {
         Surface(shape = RoundedCornerShape(size = 24.dp), tonalElevation = 8.dp) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(all = 24.dp),
@@ -120,6 +120,7 @@ fun SignInNameDialog(
     }
 }
 
+// TODO: Update all deprecated @Preview
 @Preview
 @Composable
 private fun SignInNameDialogPreview() {

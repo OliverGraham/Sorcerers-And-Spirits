@@ -42,18 +42,12 @@ import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 
 private val DEFAULT_HEAD_ICON_WIDTH = 132.dp
-
-// A knocked-out player's icon is shown faded and drained of class color so it reads as out of the
-// fight (SS-152). Placeholder treatment — the finalized disabled design lands later.
 private const val DISABLED_ALPHA = 0.45f
 private val DISABLED_GRADIENT =
     ClassGradient(topStop = Color(color = 0xFF8A8A8A), bottomStop = Color(color = 0xFF4A4A4A))
 
-// The Figma frame is wider than it is tall; keep that footprint so the laid-out circles match.
 private const val ASPECT_RATIO = 176.627f / 154.811f
 
-// Normalised element centres (fraction of width / height) lifted straight from the Figma node so
-// the overlapping circles, icons and numbers land where the designer placed them.
 private val HEAD_CENTER = Offset(x = 0.500f, y = 0.526f)
 private val SPEED_ICON_CENTER = Offset(x = 0.476f, y = 0.207f)
 private val SPEED_VALUE_CENTER = Offset(x = 0.667f, y = 0.165f)
@@ -72,21 +66,9 @@ private const val STAT_ICON_DIAMETER_FRACTION = 0.27f
 private const val VALUE_TEXT_FRACTION = 0.13f
 private const val VALUE_SHADOW_FRACTION = 0.012f
 
-// A splashed hit-point value swells and flushes red at the peak of the Spell Potency decrement, so
-// the drop reads on the head icon itself (SS-214).
 private val HIT_POINTS_EMPHASIS_COLOR = Color(color = 0xFFE23B3B)
 private const val HIT_POINTS_EMPHASIS_MAX_SCALE = 0.65f
 
-/**
- * The collapsed, at-a-glance "class head" shown for a player in the Arena while they are not the
- * active roller. A cluster of class-colored gradient circles — one behind the head and one behind
- * each stat icon and value — overlaps to form the cloud silhouette, with the class avatar mounted
- * in a wooden frame at the centre. Speed sits on top (value to its right), Armor at the start
- * (value below), Hitpoints at the end (value below). The expanded detail view is a separate concern
- * (SS-150). A knocked-out player is shown with [isEnabled] false: faded and gray rather than
- * class-colored, so it reads as out of the fight (SS-152). [hitPointsEmphasis] swells and reddens
- * the hit-point value while a Spell Potency splash lands on this head (SS-214); 0f leaves it plain.
- */
 @Composable
 fun ClassHeadIcon(
     characterClass: CharacterClassState,
@@ -114,8 +96,6 @@ fun ClassHeadIcon(
             )
         }
 
-        // TODO(SS-136): the class avatar art doubles as the head bust; swap for dedicated head art
-        // if the designer provides it.
         OverlayAt(center = HEAD_CENTER, width = width, height = height) {
             Image(
                 painter = painterResource(resource = characterClass.type.toBustResource()),
@@ -169,9 +149,7 @@ fun ClassHeadIcon(
 @Composable
 private fun BackingCircles(colors: ClassGradient, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
-        // Drawn back-to-front: the stat-value circles sit furthest back, then the head's centre
-        // circle, then the icon circles in front — so each stat's value circle tucks behind the
-        // circle holding its icon.
+        // Drawn back-to-front
         val circles =
             listOf(
                 SPEED_VALUE_CENTER to VALUE_BACKING_RADIUS_FRACTION,
@@ -245,7 +223,6 @@ private fun BoxScope.StatValue(
     }
 }
 
-/** Places [content] so its centre lands on the normalised [center] within the icon box. */
 @Composable
 private fun BoxScope.OverlayAt(
     center: Offset,

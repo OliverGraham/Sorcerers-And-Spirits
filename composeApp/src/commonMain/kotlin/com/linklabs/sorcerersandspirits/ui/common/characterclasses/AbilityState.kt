@@ -65,21 +65,9 @@ sealed interface OffensiveAbilityState : AbilityState {
     @Immutable data object None : OffensiveAbilityState
 }
 
-/**
- * The offensive ability whose effect actually applies, mirroring the domain
- * [com.linklabs.sorcerersandspirits.domain.game.effective]: an Illusionist that copied an ability
- * resolves to the copy, so derived UI (e.g. the minion shield in the hit-point display) reflects
- * the impersonated ability rather than the wrapper. Every other ability is itself.
- */
 internal val OffensiveAbilityState.effective: OffensiveAbilityState
     get() = if (this is OffensiveAbilityState.Impersonate) impersonatedAbility else this
 
-/**
- * Whether a summoner has begun their minion follow-up attacks this turn. Summon Minion is a
- * first-action choice; once the summoner has taken an attack, every remaining minion attack must be
- * a normal attack, so no activated ability is offered until their next turn. The minions can sit
- * inside an Illusionist's Impersonate wrapper, so the effective ability is read.
- */
 internal val OffensiveAbilityState.isMinionAttackInProgress: Boolean
     get() {
         val minions = effective as? OffensiveAbilityState.SummonMinion ?: return false

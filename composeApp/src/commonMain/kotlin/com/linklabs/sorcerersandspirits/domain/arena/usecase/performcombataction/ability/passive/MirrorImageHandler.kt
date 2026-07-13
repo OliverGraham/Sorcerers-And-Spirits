@@ -6,7 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterArmorClassMiss
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.hasPendingExtraAttack
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterDamage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterKnockout
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -84,20 +84,17 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 rolledMirrorImage.secondDie
             }
 
-        resolveModifiedRoll(mirrorImage = rolledMirrorImage, isKeptRollDoubles = false) { outcome ->
+        resolveModifiedRoll(mirrorImage = rolledMirrorImage, isKeptRollDoubles = false) {
+            messageType ->
             ArenaMessage.MirrorImage.TemptFate(
                 illusionistUserId = defenderUserId,
                 rerolledMirrorImageDie = rerolledDie,
                 attackerUserId = attackerUserId,
-                outcome = outcome,
+                messageType = messageType,
             )
         }
     }
 
-    /**
-     * Rolls a fresh 1d6 for the die the Illusionist chose to reroll. The roll's `-1` adjustment is
-     * applied later by [MirrorImageDie.finalValue].
-     */
     private fun CombatMutator.rollSelectedDie(
         mirrorImage: AbilityAction.Passive.MirrorImage
     ): AbilityAction.Passive.MirrorImage {
@@ -114,30 +111,20 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    /**
-     * A kept doubles roll stays consecutive: the Illusionist never touched the dice, so the
-     * attacker's +1 bonus survives and the Doubles message deferred by the roll handler is added
-     * here instead.
-     */
     private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {
         val isKeptRollDoubles =
             mirrorImage.firstDie.originalRoll == mirrorImage.secondDie.originalRoll
 
         resolveModifiedRoll(mirrorImage = mirrorImage, isKeptRollDoubles = isKeptRollDoubles) {
-            outcome ->
+            messageType ->
             ArenaMessage.MirrorImage.Pass(
                 illusionistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
-                outcome = outcome,
+                messageType = messageType,
             )
         }
     }
 
-    /**
-     * Resolves the (possibly rerolled) attack against the defending Illusionist, emitting the
-     * supplied message with the resulting [NormalRollMessageType] before applying the outcome's
-     * side effects.
-     */
     private fun CombatMutator.resolveModifiedRoll(
         mirrorImage: AbilityAction.Passive.MirrorImage,
         isKeptRollDoubles: Boolean,
@@ -183,8 +170,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         } else {
             addMessage(message = message(NormalRollMessageType.ArmorClassMiss))
 
-            val shouldMessageDoubles =
-                isKeptRollDoubles && shouldMessageDoublesAfterArmorClassMiss()
+            val shouldMessageDoubles = isKeptRollDoubles && hasPendingExtraAttack()
             if (shouldMessageDoubles) {
                 addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
             }
@@ -227,7 +213,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         val isKillingMomentumEarned =
             isKnockout && attacker.offensiveAbility.effective == OffensiveAbility.KillingMomentum
         if (isKillingMomentumEarned) {
-            TriggerKillingMomentum(combatMutator = this).invoke()
+            KillingMomentumHandler(combatMutator = this).triggerKillingMomentum()
             return
         }
 

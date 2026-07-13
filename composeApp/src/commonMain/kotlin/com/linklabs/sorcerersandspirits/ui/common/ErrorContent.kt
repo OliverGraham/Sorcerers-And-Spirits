@@ -13,16 +13,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.error_generic_message
 import sorcerersandspirits.composeapp.generated.resources.retry_button
 
-/**
- * The shared full-screen error pattern for every screen's [UiState.Error] branch. Shows a message
- * and a retry button so a failed load can be recovered without leaving the screen.
- */
 @Composable
 internal fun ErrorContent(
     onRetry: () -> Unit,

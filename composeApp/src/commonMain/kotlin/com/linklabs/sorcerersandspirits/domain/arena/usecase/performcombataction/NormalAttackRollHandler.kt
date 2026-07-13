@@ -4,16 +4,16 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.DodgeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.EncoreHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldHandler
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.KillingMomentumHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.LuckyCoinHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.MirrorImageHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.PersuadeHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.RiposteHandler
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyRoll
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.SpellPotencyHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerDodge
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TriggerKillingMomentum
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -52,13 +52,13 @@ internal class NormalAttackRollHandler(
                 firstDie == secondDie
 
         if (isSpellPotencyRoll) {
-            SpellPotencyRoll(
+            SpellPotencyHandler(
                     combatMutator = this,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     diceTotal = diceTotal,
                 )
-                .invoke()
+                .handleSpellPotency()
         }
 
         return isSpellPotencyRoll
@@ -74,7 +74,7 @@ internal class NormalAttackRollHandler(
         } else {
             addNormalRollMessage(
                 type = NormalRollMessageType.ArmorClassMiss,
-                shouldMessageDoubles = shouldMessageDoublesAfterArmorClassMiss(),
+                shouldMessageDoubles = hasPendingExtraAttack(),
             )
             resolveArmorClassMiss()
         }
@@ -101,10 +101,6 @@ internal class NormalAttackRollHandler(
         }
     }
 
-    /**
-     * A pending Holy Shield means the downed Paladin still gets a survival roll, so the hit reads
-     * as damage rather than a knockout until that roll resolves.
-     */
     private fun CombatMutator.knockoutMessageType(): NormalRollMessageType =
         if (HolyShieldHandler.isHolyShieldAvailable(defender.defensiveAbility)) {
             NormalRollMessageType.Damage
@@ -125,15 +121,16 @@ internal class NormalAttackRollHandler(
             return
         }
 
-        if (attacker.offensiveAbility.effective == OffensiveAbility.KillingMomentum) {
-            TriggerKillingMomentum(combatMutator = this).invoke()
+        val attackerOffensiveAbility = attacker.offensiveAbility.effective
+        if (attackerOffensiveAbility == OffensiveAbility.KillingMomentum) {
+            KillingMomentumHandler(combatMutator = this).triggerKillingMomentum()
             return
         }
 
         val wasEncoreTriggered =
             EncoreHandler.triggerEncoreIfApplicable(
                 combatMutator = this,
-                offensiveAbility = attacker.offensiveAbility.effective,
+                offensiveAbility = attackerOffensiveAbility,
             )
         if (wasEncoreTriggered) return
 
@@ -194,7 +191,7 @@ internal class NormalAttackRollHandler(
     private fun CombatMutator.resolveArmorClassMiss() {
         val defensiveAbility = defender.defensiveAbility
         if (defensiveAbility is DefensiveAbility.Dodge) {
-            TriggerDodge(combatMutator = this, dodge = defensiveAbility).invoke()
+            DodgeHandler(combatMutator = this, dodge = defensiveAbility).triggerDodge()
         }
 
         resolveTurnEnd()

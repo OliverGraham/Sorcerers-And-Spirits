@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepo
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 
-/** One-shot read of the signed-in user's profile, or null if they have none yet. */
 class GetProfileUseCase(
     private val authenticationRepository: AuthenticationRepository,
     private val profileRepository: ProfileRepository,

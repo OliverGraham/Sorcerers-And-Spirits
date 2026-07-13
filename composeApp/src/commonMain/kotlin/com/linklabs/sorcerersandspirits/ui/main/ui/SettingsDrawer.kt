@@ -13,22 +13,23 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import com.linklabs.sorcerersandspirits.ui.main.navigation.Route
 import com.linklabs.sorcerersandspirits.ui.main.navigation.popToNearestHomeScreen
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
 internal fun SettingsDrawer(
     backStack: NavBackStack<NavKey>,
     drawerState: DrawerState,
-    scope: CoroutineScope,
     modifier: Modifier = Modifier,
 ) {
+    val scope = rememberCoroutineScope()
+
     fun navigateTo(route: Route) {
         backStack.popToNearestHomeScreen()
         backStack.add(route)
@@ -38,16 +39,18 @@ internal fun SettingsDrawer(
     DrawerContent(
         onNavigateToHome = {
             backStack.clear()
-            backStack.add(Route.TavernScreen)
+            backStack.add(element = Route.TavernScreen)
             scope.launch { drawerState.close() }
         },
-        onNavigateToProfile = { navigateTo(Route.ProfileScreen) },
-        onNavigateToLeaderboard = { navigateTo(Route.LeaderboardScreen) },
-        onNavigateToAchievements = { navigateTo(Route.AchievementsScreen) },
-        onNavigateToGameRules = { navigateTo(Route.GameRulesScreen) },
+        onNavigateToProfile = { navigateTo(route = Route.ProfileScreen) },
+        onNavigateToLeaderboard = { navigateTo(route = Route.LeaderboardScreen) },
+        onNavigateToAchievements = { navigateTo(route = Route.AchievementsScreen) },
+        onNavigateToGameRules = { navigateTo(route = Route.GameRulesScreen) },
         modifier = modifier,
     )
 }
+
+// TODO: StringResources
 
 @Composable
 private fun DrawerContent(

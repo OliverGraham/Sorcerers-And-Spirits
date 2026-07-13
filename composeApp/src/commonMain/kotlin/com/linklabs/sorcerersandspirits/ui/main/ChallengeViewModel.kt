@@ -18,11 +18,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
-/**
- * Owns the incoming-challenge lifecycle above the navigation host so the challenge dialog overlays
- * whatever screen is showing. The Tavern only initiates challenges; receiving, the countdown,
- * accept/decline, and the ready-to-start hand-off all live here.
- */
 @KoinViewModel
 class ChallengeViewModel(
     private val getActiveChallengeFlowUseCase: GetActiveChallengeFlowUseCase,

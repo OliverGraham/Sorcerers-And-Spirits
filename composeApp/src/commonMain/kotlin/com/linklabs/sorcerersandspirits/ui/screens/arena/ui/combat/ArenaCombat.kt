@@ -27,9 +27,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetedDefenderUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
@@ -265,3 +265,24 @@ private fun CombatStage(
         }
     }
 }
+
+internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
+    val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
+    val userChosenTarget =
+        if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""
+
+    return userChosenTarget
+        .ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
+        .ifEmpty { getTurnOwnerLoneOpponentUserId() }
+}
+
+/**
+ * The single conscious opponent of the current turn owner, or null when they have none or more than
+ * one. With only one possible target there is no choice to make, so it is the implicit target every
+ * device shows before the turn owner commits a roll.
+ */
+private fun ArenaState.Combat.getTurnOwnerLoneOpponentUserId(): String =
+    playerMap.values
+        .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
+        ?.userId
+        .orEmpty()

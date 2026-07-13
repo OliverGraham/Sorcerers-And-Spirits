@@ -10,12 +10,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
-/**
- * Persists the unflushed stats delta as a single JSON blob in a [Preferences] DataStore, reusing
- * the Firestore [ProfileStatsEntity] mapping so the on-disk shape stays in step with the remote
- * schema. DataStore serializes writes, so the frequent in-match [save]s and the final [clear] do
- * not race.
- */
 class DataStorePendingStatsStore(private val dataStore: DataStore<Preferences>) :
     PendingStatsStore {
 

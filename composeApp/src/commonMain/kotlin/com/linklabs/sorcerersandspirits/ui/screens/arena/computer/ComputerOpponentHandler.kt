@@ -30,14 +30,6 @@ private const val MAX_THINKING_DELAY_MILLIS = 3000L
 /**
  * Drives the computer opponents in a match. A computer player has no client of its own, so the
  * challenging user's client owns this handler and plays the bots' turns through it.
- *
- * After each match-state update [onArenaState] decides whether a computer currently owes the action
- * (it is the active class chooser, it is its combat turn, or it owes a reaction roll). If so the
- * action is scheduled behind a short randomized "thinking" delay, keyed on an action signature so
- * unrelated emissions (such as incoming messages) neither re-trigger nor double-fire the same owed
- * action. Decisions are lightly smart — attack the weakest opponent and activate an offensive
- * ability only when clearly favorable — and are dispatched straight to the use cases, exactly as a
- * human turn would be.
  */
 internal class ComputerOpponentHandler(
     private val arenaId: String,
@@ -77,11 +69,6 @@ internal class ComputerOpponentHandler(
             }
     }
 
-    /**
-     * Readies every computer opponent up for the next match. The bots have no client to ready
-     * themselves, so the user's client does it here, otherwise the match would hang waiting on a
-     * never-ready bot.
-     */
     suspend fun readyUpForNextMatch() {
         computerOpponentIds.forEach { computerId ->
             stayForAnotherMatchUseCase(arenaId = arenaId, playerUserId = computerId)
@@ -93,16 +80,6 @@ internal class ComputerOpponentHandler(
         scheduledActionSignature = null
     }
 
-    /**
-     * Acts on the [arenaState] captured when the action was scheduled. The bot only ever schedules
-     * a think while a computer owes the action — its own turn or reaction — and nothing else can
-     * mutate the shared state in that window: the only emissions that arrive carry a different
-     * action signature (which cancels and reschedules this job) or come from the user leaving
-     * (which calls [cancel]). So the captured state is still authoritative when the delay elapses,
-     * with no need to re-read live state. (A future mixed human+computer match would add one more
-     * case — a non-acting player leaving mid-think — which should be handled by folding the roster
-     * into the signature.)
-     */
     private suspend fun performAction(
         arenaState: ArenaState,
         computerId: String,
@@ -150,8 +127,6 @@ internal class ComputerOpponentHandler(
     }
 
     private suspend fun resolveCombat(arenaState: ArenaState.Combat, computerId: String) {
-        // The computer owes an action only when its id is among the active ids (its turn, or a roll
-        // it owns); otherwise there is nothing to resolve.
         if (computerId !in arenaState.combatActionState.activeUserIds) return
 
         val currentAction =
@@ -178,10 +153,6 @@ internal class ComputerOpponentHandler(
         arenaState.dispatchCombatAction(currentAction = currentAction)
     }
 
-    /**
-     * The computer's free choice at the start of its turn: activate an offensive ability when it is
-     * clearly favorable, otherwise attack the weakest (lowest-HP) living opponent to secure kills.
-     */
     private fun chooseTurnAction(
         arenaState: ArenaState.Combat,
         computerId: String,
@@ -218,13 +189,6 @@ internal class ComputerOpponentHandler(
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
     }
 
-    /**
-     * The clearly-beneficial offensive ability for the computer to activate this turn instead of
-     * attacking, or null to attack. Only the Necromancer's Summon Minion qualifies, and only while
-     * it still has something to gain — it can build minion shields and heal toward full with no
-     * real downside beyond a fizzle. The riskier gambits (All-In's self-knockout, Prepare Attack
-     * forgoing a hit, Impersonate) are intentionally left to a normal attack.
-     */
     private fun CharacterClassState.favorableOffensiveAbility(): AbilityActionState.Activated? {
         if (offensiveAbility.isMinionAttackInProgress) return null
 
@@ -250,10 +214,6 @@ internal class ComputerOpponentHandler(
         }
     }
 
-    /**
-     * The lowest-HP living opponent, ties broken at random so the computer is not fully
-     * predictable.
-     */
     private fun weakestLivingOpponent(
         arenaState: ArenaState.Combat,
         excludingPlayerId: String,
@@ -275,12 +235,6 @@ internal class ComputerOpponentHandler(
             ?.randomOrNull()
             .orEmpty()
 
-    /**
-     * The computer opponent that owes the current action, or null if none does. A computer owes its
-     * own die even while the user is co-active — the Mage Teleport roll-off has both combatants
-     * rolling at once, and each rolls only their own die (SS-169), so the computer must still act
-     * on its thinking delay rather than stalling the roll-off.
-     */
     private fun ArenaState.pendingComputerActorId(): String? =
         when (this) {
             is ArenaState.ChoosingClasses -> activePlayerUserId.takeIf { it in computerOpponentIds }

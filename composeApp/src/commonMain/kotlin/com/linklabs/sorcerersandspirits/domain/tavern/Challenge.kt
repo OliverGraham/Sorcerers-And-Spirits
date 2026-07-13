@@ -8,12 +8,6 @@ data class Challenge(
     val challengers: Map<String, Challenger>,
     val endTimeMillis: Long? = null,
 ) {
-    /**
-     * Seconds left until the communal [endTimeMillis] deadline, given the caller's current time.
-     * Falls back to the full challenge duration when no deadline is known yet (e.g. the server has
-     * not stamped the start time), so every client counts down to the same backend deadline rather
-     * than its own.
-     */
     fun secondsRemaining(nowMillis: Long): Int {
         val deadlineMillis = endTimeMillis ?: return CHALLENGE_DURATION_SECONDS
         return ((deadlineMillis - nowMillis) / ONE_SECOND).toInt().coerceAtLeast(minimumValue = 0)

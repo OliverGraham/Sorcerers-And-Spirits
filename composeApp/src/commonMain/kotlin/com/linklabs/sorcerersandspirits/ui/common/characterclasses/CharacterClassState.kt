@@ -19,18 +19,7 @@ data class CharacterClassState(
 ) {
     val className: String = type.name
     val isConscious: Boolean = hitPoints > 0
-
-    /**
-     * The hit points shown to the player: base alone, or base plus the minion shield contribution
-     * (e.g. "7 + 2") so base and shield health stay visibly distinct.
-     */
     val hitPointsDisplay: String = buildHitPointsDisplay()
-
-    /**
-     * The armor class shown to the player: base alone, or base plus the active Rogue Dodge bonus
-     * (e.g. "13 + 1") so the earned bonus stays visibly distinct, mirroring [hitPointsDisplay]. The
-     * domain folds the bonus into [armorClass], so the base is recovered by removing the bonus.
-     */
     val armorClassDisplay: String = buildArmorClassDisplay()
 
     private fun buildHitPointsDisplay(): String {

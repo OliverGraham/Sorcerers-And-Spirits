@@ -38,11 +38,6 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         )
     }
 
-    /**
-     * A doubles prayer only earns its +1 when the Paladin survives: they keep the dice and roll
-     * Wrath next. A failed prayer knocks the Paladin out and the attacker's follow-up rolls next,
-     * so the bonus is not consecutive and is left unannounced.
-     */
     private fun CombatMutator.attemptPrayer() {
         val result = diceRoller.roll2D6(userId = defenderUserId)
         val didSurvive = result.total in abilityConfig.holyShieldSuccessRange
@@ -81,7 +76,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
         when (attackerAbility) {
             OffensiveAbility.KillingMomentum ->
-                TriggerKillingMomentum(combatMutator = this).invoke()
+                KillingMomentumHandler(combatMutator = this).triggerKillingMomentum()
 
             OffensiveAbility.Encore -> EncoreHandler(combatMutator = combatMutator).triggerEncore()
 
@@ -113,11 +108,6 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         resolveWrath()
     }
 
-    /**
-     * Wrath is only reached after a successful Holy Shield, so the Paladin survived: the attacker
-     * scored no knockout and Killing Momentum is not earned. The attacker did still deal damage,
-     * however, so a still-conscious Bard's Encore applies.
-     */
     private fun CombatMutator.resolveWrath() {
         val isAttackerConscious = attacker.isConscious()
         val shouldTriggerEncore =
@@ -131,11 +121,6 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     companion object {
-        /**
-         * Whether an unused Holy Shield would trigger for this defender. A pending Holy Shield
-         * means a knockout is not yet final — the survival roll still has to happen — so callers
-         * use this to phrase the triggering hit as damage rather than as a knockout.
-         */
         @OptIn(ExperimentalContracts::class)
         fun isHolyShieldAvailable(defenderDefensiveAbility: DefensiveAbility): Boolean {
             contract {

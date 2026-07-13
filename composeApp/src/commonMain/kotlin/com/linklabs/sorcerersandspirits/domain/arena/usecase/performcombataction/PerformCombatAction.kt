@@ -42,10 +42,6 @@ internal class PerformCombatAction(
         return combatMutator.getOutcome()
     }
 
-    /**
-     * The combatant rolling this action's dice. A normal attack always has the attacker rolling; an
-     * ability roll carries its own roller so a simultaneous Teleport roll-off fills the right die.
-     */
     private fun CurrentCombatAction.rollingUserId(): String =
         when (this) {
             is CurrentCombatAction.NormalAttack -> attackerUserId

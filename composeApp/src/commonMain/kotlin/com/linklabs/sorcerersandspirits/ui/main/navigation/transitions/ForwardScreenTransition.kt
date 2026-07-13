@@ -20,11 +20,7 @@ private const val PORTAL_EXIT_SCALE = 1.05f
 private const val FADE_THROUGH_ENTER_SCALE = 0.92f
 private const val SLIDE_FRACTION = 6
 
-/**
- * The catalogue of forward-navigation transitions. A new one is chosen at random per navigation so
- * moving through the app feels fresh rather than uniform. Backward navigation uses the bespoke
- * disintegration effect instead and is intentionally not part of this set.
- */
+// TODO: These aren't working right (there's no "Portal" effect as far as I can tell)
 enum class ForwardScreenTransition {
     Portal,
     FadeThrough,

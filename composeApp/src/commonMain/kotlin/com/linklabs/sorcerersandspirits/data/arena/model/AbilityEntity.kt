@@ -69,11 +69,6 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
     @Serializable data object None : OffensiveAbilityEntity
 }
 
-/**
- * Clears the per-match state an ability accumulates (e.g. Dodge's armor stacks, a spent Holy
- * Shield, an Illusionist's copied ability) so a class carried into the next match of the Gauntlet
- * starts fresh. Stateless abilities are returned unchanged.
- */
 internal fun OffensiveAbilityEntity.resetForNewMatch(): OffensiveAbilityEntity =
     when (this) {
         is OffensiveAbilityEntity.AllIn -> OffensiveAbilityEntity.AllIn()

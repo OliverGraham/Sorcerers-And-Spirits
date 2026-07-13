@@ -61,13 +61,13 @@ private fun MirrorImageSeatPreview(outcome: NormalRollMessageType) {
                     id = "mirror-split-$iteration",
                     illusionistUserId = PREVIEW_ACTOR_ID,
                     phase = MirrorImagePhase.Split,
-                    outcome = null,
+                    messageType = null,
                 ),
                 CombatAnimationCue.MirrorImage(
                     id = "mirror-resolve-$iteration",
                     illusionistUserId = PREVIEW_ACTOR_ID,
                     phase = MirrorImagePhase.Resolve,
-                    outcome = outcome,
+                    messageType = outcome,
                 ),
             )
         }

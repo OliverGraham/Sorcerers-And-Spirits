@@ -7,15 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
 import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
 
-/**
- * The Doubles message announces the +1 bonus, so it is only added when the attacker's next roll is
- * consecutive: the dice stay in their hands. A defender ability that rolls in between (Riposte,
- * Persuade, Lucky Coin) nullifies the bonus, while Teleport's roll-off die and the attacker's own
- * Health roll keep it.
- *
- * An unused Mirror Image defers the decision to the Illusionist: the message is suppressed here and
- * added only if the Illusionist keeps the roll.
- */
 internal fun CombatMutator.shouldMessageDoublesAfterArmorClassHit(): Boolean =
     when (val defensiveAbility = defender.defensiveAbility) {
         is DefensiveAbility.Teleport,
@@ -30,9 +21,6 @@ internal fun CombatMutator.shouldMessageDoublesAfterArmorClassHit(): Boolean =
         is DefensiveAbility.MirrorImage -> defensiveAbility.usedThisAttack
     }
 
-internal fun CombatMutator.shouldMessageDoublesAfterArmorClassMiss(): Boolean =
-    hasPendingExtraAttack()
-
 internal fun CombatMutator.shouldMessageDoublesAfterKnockout(): Boolean {
     val isHolyShieldPending =
         HolyShieldHandler.isHolyShieldAvailable(
@@ -46,11 +34,13 @@ internal fun CombatMutator.shouldMessageDoublesAfterKnockout(): Boolean {
     val isFollowUpRollEarned =
         attackerAbility == OffensiveAbility.KillingMomentum ||
             attackerAbility == OffensiveAbility.Encore
+
     return isFollowUpRollEarned || hasPendingExtraAttack()
 }
 
 internal fun CombatMutator.shouldMessageDoublesAfterDamage(): Boolean {
     val isEncoreEarned = attacker.offensiveAbility.effective == OffensiveAbility.Encore
+
     return isEncoreEarned || hasPendingExtraAttack()
 }
 
@@ -58,7 +48,7 @@ internal fun CombatMutator.shouldMessageDoublesAfterDamage(): Boolean {
  * An extra attack keeps the dice with the attacker only while the turn is theirs; after a Riposte
  * reversal the Duelist is the attacker, so the turn player's pending attacks would change hands.
  */
-private fun CombatMutator.hasPendingExtraAttack(): Boolean {
+internal fun CombatMutator.hasPendingExtraAttack(): Boolean {
     val isAttackerTheTurnPlayer = attackerUserId == originalTurnUserId
     if (!isAttackerTheTurnPlayer) return false
 

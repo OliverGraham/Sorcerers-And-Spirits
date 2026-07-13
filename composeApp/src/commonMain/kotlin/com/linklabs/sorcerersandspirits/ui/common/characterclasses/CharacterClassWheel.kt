@@ -131,9 +131,6 @@ fun CharacterClassWheel(
             characterClasses.indexOf(selectedClass).coerceAtLeast(minimumValue = 0)
         }
 
-    // Live rotation is a plain float updated synchronously on every drag frame; the Animatable
-    // is used only for the settle/tap/selection animations so dragging never hops through a
-    // coroutine.
     var rotationDegrees by
         remember(key1 = count) { mutableFloatStateOf(rotationForIndex(index = initialIndex)) }
     var animationJob by remember { mutableStateOf<Job?>(null) }
@@ -194,52 +191,49 @@ fun CharacterClassWheel(
         ) {
             Box(
                 modifier =
-                    Modifier.size(size = wheelSize)
-                        // Angular drag: rotate by the angle the finger sweeps around the centre so
-                        // the grabbed point always tracks the thumb, whatever the clock position.
-                        .pointerInput(key1 = count) {
-                            detectDragGestures(
-                                onDragStart = { animationJob?.cancel() },
-                                onDragEnd = {
-                                    select(
-                                        index =
-                                            centeredIndex(
-                                                rotationDegrees = rotationDegrees,
-                                                count = count,
-                                            )
-                                    )
-                                },
-                                onDragCancel = {
-                                    select(
-                                        index =
-                                            centeredIndex(
-                                                rotationDegrees = rotationDegrees,
-                                                count = count,
-                                            )
-                                    )
-                                },
-                                onDrag = { change, _ ->
-                                    change.consume()
-                                    val centerX = size.width / 2f
-                                    val centerY = size.height / 2f
-                                    val previousAngle =
-                                        atan2(
-                                            y = change.previousPosition.y - centerY,
-                                            x = change.previousPosition.x - centerX,
+                    Modifier.size(size = wheelSize).pointerInput(key1 = count) {
+                        detectDragGestures(
+                            onDragStart = { animationJob?.cancel() },
+                            onDragEnd = {
+                                select(
+                                    index =
+                                        centeredIndex(
+                                            rotationDegrees = rotationDegrees,
+                                            count = count,
                                         )
-                                    val currentAngle =
-                                        atan2(
-                                            y = change.position.y - centerY,
-                                            x = change.position.x - centerX,
+                                )
+                            },
+                            onDragCancel = {
+                                select(
+                                    index =
+                                        centeredIndex(
+                                            rotationDegrees = rotationDegrees,
+                                            count = count,
                                         )
-                                    var sweptDegrees =
-                                        (currentAngle - previousAngle) * 180f / PI.toFloat()
-                                    if (sweptDegrees > 180f) sweptDegrees -= 360f
-                                    if (sweptDegrees < -180f) sweptDegrees += 360f
-                                    rotationDegrees += sweptDegrees
-                                },
-                            )
-                        },
+                                )
+                            },
+                            onDrag = { change, _ ->
+                                change.consume()
+                                val centerX = size.width / 2f
+                                val centerY = size.height / 2f
+                                val previousAngle =
+                                    atan2(
+                                        y = change.previousPosition.y - centerY,
+                                        x = change.previousPosition.x - centerX,
+                                    )
+                                val currentAngle =
+                                    atan2(
+                                        y = change.position.y - centerY,
+                                        x = change.position.x - centerX,
+                                    )
+                                var sweptDegrees =
+                                    (currentAngle - previousAngle) * 180f / PI.toFloat()
+                                if (sweptDegrees > 180f) sweptDegrees -= 360f
+                                if (sweptDegrees < -180f) sweptDegrees += 360f
+                                rotationDegrees += sweptDegrees
+                            },
+                        )
+                    },
                 contentAlignment = Alignment.Center,
             ) {
                 RotatingWheel(
@@ -387,12 +381,6 @@ private fun BoxScope.ClassAvatar(
     }
 }
 
-/**
- * The glowing, see-through class-color halo behind the selected class head (SS-176). A brightened
- * class-color radial gradient stays vivid out past the head's silhouette before fading to
- * transparent, and continuously breathes — pulsing in both size and brightness — so the selection
- * reads as a living aura rather than a static ring.
- */
 @Composable
 private fun ClassAura(color: Color, diameter: Dp, modifier: Modifier = Modifier) {
     val transition = rememberInfiniteTransition(label = AURA_TRANSITION_LABEL)
@@ -641,8 +629,6 @@ private fun centeredIndex(rotationDegrees: Float, count: Int): Int {
     return ((rawIndex % count) + count) % count
 }
 
-// The rotation that brings [index] to the top, picking whichever full-turn representation
-// is closest to [fromDegrees] so the wheel always animates the short way round.
 private fun nearestRotationForIndex(index: Int, fromDegrees: Float): Float {
     val base = rotationForIndex(index = index)
     val turns = ((fromDegrees - base) / 360f).roundToInt()

@@ -157,10 +157,5 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         )
 }
 
-/**
- * Preview-only fixture. Class names are derived from [CharacterClassType] so the previews share the
- * single enum source of truth rather than repeating string literals; the user-facing copy itself is
- * still resolved from string resources at render time.
- */
 private fun CharacterClassType.toMessageInfoState() =
     CharacterClassMessageInfoState(className = name, type = this)

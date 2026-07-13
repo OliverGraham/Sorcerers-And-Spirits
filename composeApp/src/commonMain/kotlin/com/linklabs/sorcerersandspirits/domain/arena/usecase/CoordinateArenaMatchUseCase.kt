@@ -21,8 +21,6 @@ class CoordinateArenaMatchUseCase(
         val userId = authenticationRepository.getUserId() ?: return flowOf(value = null)
         val profile = profileRepository.getProfile(userId = userId) ?: return flowOf(value = null)
 
-        // Seed the computer opponents first so the user connects last and becomes the first active
-        // chooser. Connecting is idempotent, so re-subscribing to the flow will not duplicate them.
         computerOpponents.forEach { opponent ->
             arenaRepository.connectToArena(
                 arenaId = arenaId,

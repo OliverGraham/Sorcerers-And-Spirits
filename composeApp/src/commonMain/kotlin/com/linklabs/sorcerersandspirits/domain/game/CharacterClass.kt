@@ -17,12 +17,8 @@ data class CharacterClass(
 
     fun isConscious() = hitPoints > 0
 
-    /**
-     * Applies [damage] to this class. A Necromancer's summoned minions are effective hit points:
-     * the shield total absorbs damage before any reaches base [hitPoints]. The surviving shield is
-     * re-expressed as minions, so a golem spent down to its last point becomes a
-     * skeleton-equivalent rather than being wasted.
-     */
+    // TODO: Make another method that handles this from elsewhere. Also, branch off Necromancer
+    //       only code
     fun takeDamage(damage: Int): CharacterClass {
         val minions =
             offensiveAbility.effective as? OffensiveAbility.SummonMinion
@@ -42,18 +38,9 @@ data class CharacterClass(
     }
 
     companion object {
-        /**
-         * The classes a player can pick, in display order: every [CharacterClassType] except
-         * [CharacterClassType.None].
-         */
         fun playableTypes(): List<CharacterClassType> =
             CharacterClassType.entries.filter { type -> type != CharacterClassType.None }
 
-        /**
-         * Builds a class from its remotely-tuned stats, wiring the fixed abilities that belong to
-         * [type]. Stats are the only tunable data and always come from config; the ability wiring
-         * is code, resolved through [offensiveAbilityFor]/[defensiveAbilityFor].
-         */
         fun create(
             type: CharacterClassType,
             hitPoints: Int,

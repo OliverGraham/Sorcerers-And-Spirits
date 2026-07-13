@@ -12,9 +12,6 @@ import sorcerersandspirits.composeapp.generated.resources.achievement_win_a_matc
 import sorcerersandspirits.composeapp.generated.resources.achievement_win_a_match_every_class_name
 import sorcerersandspirits.composeapp.generated.resources.achievement_win_a_match_name
 
-/**
- * The display-name string resource for an achievement, resolved with [stringResource] in the UI.
- */
 val AchievementId.displayNameResource: StringResource
     get() =
         when (this) {
@@ -29,7 +26,6 @@ val AchievementId.displayNameResource: StringResource
                 Res.string.achievement_win_a_gauntlet_every_class_name
         }
 
-/** The description string resource for an achievement, resolved with [stringResource] in the UI. */
 val AchievementId.descriptionResource: StringResource
     get() =
         when (this) {

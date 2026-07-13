@@ -58,7 +58,6 @@ sealed interface AbilityAction {
         ) : Passive {
             val isReroll = rerollSelection != RerollSelection.None
 
-            /** Which of the attacker's two dice the Illusionist chose to reroll, if any. */
             enum class RerollSelection {
                 None,
                 First,

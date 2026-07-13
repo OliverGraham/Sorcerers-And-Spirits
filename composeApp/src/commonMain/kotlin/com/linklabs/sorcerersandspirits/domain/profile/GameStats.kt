@@ -1,19 +1,5 @@
 package com.linklabs.sorcerersandspirits.domain.profile
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
-
-/**
- * A bundle of cumulative counters for a single scope of play. The same shape is reused for a
- * player's overall record and for each per-class record (see [ProfileStats]), so a counter added
- * here is automatically tracked in every scope.
- *
- * A Gauntlet ([Gauntlet]) is the unit a stats write is attributed to, hence both per-match and
- * per-gauntlet counters.
- *
- * Each [GameStats] doubles as a stored total and as a per-write delta. To add a new stat: add a
- * field here, mirror it on GameStatsEntity, and map it in its toFieldIncrements — [isEmpty] needs
- * no change because it is derived from equality with an all-zero instance.
- */
 data class GameStats(
     val matchesPlayed: Long = 0,
     val matchesWon: Long = 0,

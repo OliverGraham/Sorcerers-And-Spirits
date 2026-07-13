@@ -4,13 +4,11 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 
-internal class TriggerDodge(
+internal class DodgeHandler(
     private val combatMutator: CombatMutator,
     private val dodge: DefensiveAbility.Dodge,
 ) {
-    operator fun invoke() {
-        combatMutator.triggerDodge()
-    }
+    fun triggerDodge() = combatMutator.triggerDodge()
 
     private fun CombatMutator.triggerDodge() {
         val didArmorIncrease = dodge.armorBonus < abilityConfig.dodgeMaxArmorBonus

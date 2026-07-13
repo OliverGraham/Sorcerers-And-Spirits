@@ -124,15 +124,16 @@ sealed interface CombatAnimationCue {
      * The Illusionist's Mirror Image (SS-209): when struck, the Illusionist splits into two blurry,
      * translucent copies of itself ([MirrorImagePhase.Split]); when the reroll resolves
      * ([MirrorImagePhase.Resolve]), one copy is struck and poofs while the other slides back to
-     * reveal the real Illusionist, which reacts to [outcome] — dodging a miss, or flinching and
-     * collapsing under a hit. [outcome] is null for the opening split, before the roll resolves.
+     * reveal the real Illusionist, which reacts to [messageType] — dodging a miss, or flinching and
+     * collapsing under a hit. [messageType] is null for the opening split, before the roll
+     * resolves.
      */
     @Immutable
     data class MirrorImage(
         override val id: String,
         val illusionistUserId: String,
         val phase: MirrorImagePhase,
-        val outcome: NormalRollMessageType?,
+        val messageType: NormalRollMessageType?,
     ) : CombatAnimationCue
 
     /**
@@ -449,7 +450,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     id = id,
                     illusionistUserId = illusionistUserId,
                     phase = MirrorImagePhase.Split,
-                    outcome = null,
+                    messageType = null,
                 )
 
             is ArenaMessageState.MirrorImage.Pass ->
@@ -457,7 +458,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     id = id,
                     illusionistUserId = illusionistUserId,
                     phase = MirrorImagePhase.Resolve,
-                    outcome = outcome,
+                    messageType = messageType,
                 )
 
             is ArenaMessageState.MirrorImage.TemptFate ->
@@ -465,7 +466,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     id = id,
                     illusionistUserId = illusionistUserId,
                     phase = MirrorImagePhase.Resolve,
-                    outcome = outcome,
+                    messageType = messageType,
                 )
 
             is ArenaMessageState.SpellPotency ->
@@ -582,7 +583,7 @@ val CombatAnimationCue.collapsingUserId: String?
             is CombatAnimationCue.Impersonate -> null
 
             is CombatAnimationCue.MirrorImage ->
-                if (outcome == NormalRollMessageType.Knockout) illusionistUserId else null
+                if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
 
             is CombatAnimationCue.SpellPotency ->
                 if (isMainTargetKnockedOut) mainTargetUserId else null
@@ -681,7 +682,7 @@ private fun CombatAnimationCue.SpellPotency.spellPotencyGestureFor(userId: Strin
 private fun CombatAnimationCue.MirrorImage.mirrorImageGestureFor(userId: String): AvatarGesture? {
     if (phase != MirrorImagePhase.Resolve) return null
     if (userId != illusionistUserId) return null
-    val resolvedOutcome = outcome ?: return null
+    val resolvedOutcome = messageType ?: return null
     return defenderReactionGesture(outcome = resolvedOutcome)
 }
 

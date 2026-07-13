@@ -18,6 +18,7 @@ private const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
 private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
+// TODO: Can this massive data class be reduced in some way?
 @Immutable
 data class ArenaScreenState(
     val messages: List<ArenaMessageState>,
@@ -36,36 +37,10 @@ data class ArenaScreenState(
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
 
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
-
-    /**
-     * Whether the combat view is being held over a finished match while the closing flash queue
-     * drains (SS-171). The combat controls are withheld during this hold so the match cannot be
-     * acted on after it is already over.
-     */
     val isFinishPending: Boolean = pendingFinishedState != null
 
-    /**
-     * The most recent roll, so the shake-to-roll dice settle on the rolled value (SS-077) and a new
-     * roll is told apart from the previous one even when it lands on the same faces (SS-117).
-     */
     internal val latestRoll: LatestRoll = messages.latestRoll()
-
-    /**
-     * The flash-worthy events in order, read from the raw [messages] so the full-screen call-outs
-     * fire immediately rather than waiting for the throttled log (SS-148/SS-164). The overlay plays
-     * newly-arrived ones in sequence (e.g. "Hit!" then "X Damage!" then "Knocked Out!").
-     */
-    val flashMessages: List<ArenaMessageState> = messages.filter { it.flashCallout != null }
-
-    /**
-     * The modifier chip to show beside the resting dice, or null when neither modifier is live: the
-     * consecutive-doubles +1 the domain has banked for the next roll, otherwise the Mirror Image -1
-     * the domain applied to the reroll that is the dice' latest roll.
-     *
-     * Both flags are decisions the Domain makes and passes down through [ArenaState.Combat]; the UI
-     * only reflects them. It never reconstructs them from the message log, so a message changing
-     * shape can never change which chip shows.
-     */
+    val flashMessages: List<ArenaMessageState> = messages.filterNot { it.flashCallout == null }
     val diceBadge: DiceBadge? = deriveDiceBadge()
 
     private fun deriveDiceBadge(): DiceBadge? {
@@ -109,21 +84,20 @@ sealed interface ArenaState {
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
-
-        /**
-         * Whether the pending consecutive-doubles +1 will land on the next roll: the bonus is owned
-         * by whoever is about to roll. The raw [doublesBonus] lingers until the next roll clears
-         * it, so it is scoped to the active roller here — a doubles that missed and passed the turn
-         * to someone else no longer shows, since its owner is no longer the one rolling.
-         */
         val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
-        val otherPlayers = playerMap.filterKeys { it !in activeUserIds }
         val isItThisUsersTurn = userPlayerId in activeUserIds
-        val turnOwnerUserId = combatActionState.turnOwnerUserId
-        val attackingUserId = combatActionState.attackingUserId
+
+        // TODO: Obviously, this was supposed to simply come from the domain
+        val turnOwnerUserId = combatActionState.getTurnOwnerUserId()
+
+        // TODO: Obviously, this was supposed to simply come from the domain
+        val attackingUserId = combatActionState.getAttackingUserId()
+
+        // TODO: Obviously, this was supposed to simply come from the domain
         val combatControls = deriveCombatControls()
+
+        // TODO: Obviously, this was supposed to simply come from the domain
         val lockedTargetUserId = deriveLockedTargetUserId()
-        val autoTargetedOpponentUserId = deriveAutoTargetedOpponentUserId()
     }
 
     @Immutable
@@ -133,15 +107,15 @@ sealed interface ArenaState {
     ) : ArenaState {
         val survivors = players.filter { it.characterClass.isConscious }
         val winner = survivors.singleOrNull()
-
-        /**
-         * Whether another match can start from this arena. A player only leaves the shared player
-         * map by exiting the arena, so a single remaining player means everyone else has left and a
-         * next match would be an impossible single-player state (SS-170). The Finished screen then
-         * offers only Leave.
-         */
         val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
     }
+}
+
+private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
+    val inFlightAttack = combatActionState as? CombatActionState.NormalAttack ?: return null
+    val isUsersOwnAttack = inFlightAttack.attackerUserId == userPlayerId
+
+    return if (isUsersOwnAttack) inFlightAttack.defenderUserId else null
 }
 
 @Immutable
@@ -149,70 +123,6 @@ sealed interface ActiveState : ArenaState {
     val playerMap: Map<UserId, PlayerState>
     val userPlayerId: String
 }
-
-/**
- * The opponent the user is committed to attacking while one of their own normal attacks is
- * mid-resolution — the Armor-class roll is already committed and a follow-up roll is owed. The UI
- * pins the target to this opponent and stops offering others, so the user cannot change targets
- * after rolling. Null when the user is free to choose a target: at the start of their turn or when
- * an ability selects its own target.
- */
-private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
-    val inFlightAttack = combatActionState as? CombatActionState.NormalAttack ?: return null
-    val isUsersOwnAttack = inFlightAttack.attackerUserId == userPlayerId
-    return if (isUsersOwnAttack) inFlightAttack.defenderUserId else null
-}
-
-/**
- * The lone opponent to pre-target when the user has nothing to choose this turn. With a single
- * opponent and a normal attack as the only action the user can actually take, there is no target
- * decision to make, so the UI selects that opponent automatically rather than requiring a manual
- * tap. Only enabled controls count: a disabled ability is not a real choice, so leaving it in the
- * list must not suppress auto-targeting — otherwise the Gambler's granted All-In second attack,
- * which sits in an idle turn alongside the now-disabled All-In control, could never be rolled in a
- * two-player match (SS-116). Null whenever a real choice exists: more than one opponent, another
- * enabled activated ability is available, or it is not the user's free-choice turn.
- */
-private fun ArenaState.Combat.deriveAutoTargetedOpponentUserId(): String? {
-    val isStartOfUsersTurn = isItThisUsersTurn && combatActionState is CombatActionState.Idle
-    if (!isStartOfUsersTurn) return null
-
-    val enabledControls = combatControls.filter { it.enabled }
-    val isNormalAttackOnlyAction = enabledControls.singleOrNull() is ArenaCombatControl.NormalAttack
-    if (!isNormalAttackOnlyAction) return null
-
-    return playerMap.keys.singleOrNull { it != userPlayerId }
-}
-
-/**
- * The player shown in the right-hand target avatar slot, in priority order. The Domain-pinned
- * defender of an in-flight attack wins; then, on the user's own turn, the user's tapped
- * [selectedOpponentUserId]; then the in-flight action's defender for a turn the user is only
- * watching (SS-157); and finally the turn owner's lone conscious opponent. That last fallback is
- * the implicit target when there is no choice to make — a two-player match, or any match down to
- * one conscious opponent — so it shows on every device and for every class, with no targeting phase
- * (SS-101). Empty only when the turn owner has several conscious opponents and has not picked one.
- * The selection is Composable-local interaction state, threaded in rather than derived at map time.
- */
-internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
-    val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
-    val userChosenTarget =
-        if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""
-    return userChosenTarget
-        .ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
-        .ifEmpty { turnOwnerLoneOpponentUserId.orEmpty() }
-}
-
-/**
- * The single conscious opponent of the current turn owner, or null when they have none or more than
- * one. With only one possible target there is no choice to make, so it is the implicit target every
- * device shows before the turn owner commits a roll.
- */
-private val ArenaState.Combat.turnOwnerLoneOpponentUserId: String?
-    get() =
-        playerMap.values
-            .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
-            ?.userId
 
 // TODO(SS-031): Need to refactor this badly
 
@@ -423,6 +333,7 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
+// TODO: Group similar code into separate files when it grows like this. 3 timer-related functions.
 internal fun determineTimerAction(
     previous: ArenaState?,
     next: ArenaState,
@@ -467,13 +378,6 @@ internal fun determineTimerAction(
             }
     }
 
-/**
- * A non-final match starts its countdown the instant the Finished screen is entered — no one needs
- * to ready first — after which a timeout auto-readies each remaining player into the next match
- * (SS-172). Once started the countdown keeps running across later updates. A lone survivor cannot
- * start a next match, so no countdown runs and no auto-ready fires into an impossible single-player
- * match (SS-170).
- */
 private fun determineMatchFinishedTimerAction(
     previous: ArenaState?,
     next: ArenaState.Finished,
@@ -484,12 +388,6 @@ private fun determineMatchFinishedTimerAction(
         else -> TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
     }
 
-/**
- * The final match ends the Gauntlet, whose Finished screen waits indefinitely until someone readies
- * for a new Gauntlet; the first ready starts a single, longer countdown (shared across clients,
- * since readiness is shared), after which a timeout auto-readies each remaining player. Later
- * readies neither restart nor stop it (SS-172).
- */
 private fun determineGauntletFinishedTimerAction(
     previous: ArenaState?,
     next: ArenaState.Finished,

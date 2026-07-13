@@ -5,23 +5,15 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 
-/**
- * Resolves the Mage's Spell Potency: when the Mage rolls doubles to pass armor or deal damage, the
- * [diceTotal] is dealt to the main target and half of it (rounded down) splashes to every other
- * conscious opponent, then the turn ends.
- *
- * The casting Mage and the main target are excluded from the splash. Applying the damage can knock
- * a Paladin out, so the turn only ends if a downed player's Holy Shield does not trigger.
- */
-internal class SpellPotencyRoll(
+internal class SpellPotencyHandler(
     private val combatMutator: CombatMutator,
     private val firstDie: Int,
     private val secondDie: Int,
     private val diceTotal: Int,
 ) {
-    operator fun invoke() = combatMutator.resolveSpellPotency()
+    fun handleSpellPotency() = combatMutator.handleSpellPotency()
 
-    private fun CombatMutator.resolveSpellPotency() {
+    private fun CombatMutator.handleSpellPotency() {
         val splashTargets = splashTargets()
         val splashDamage =
             if (splashTargets.isEmpty()) {

@@ -5,11 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.game.AbilityCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 
-/**
- * The active class stat/ability copy for the current screen (SS-081). Provided from each screen's
- * state; defaults to [CharacterClassCopy.EMPTY] so a screen that forgets to provide it renders
- * blank copy rather than crashing.
- */
 val LocalCharacterClassCopy = staticCompositionLocalOf { CharacterClassCopy.EMPTY }
 
 internal fun OffensiveAbilityState.copyKey(): String? =

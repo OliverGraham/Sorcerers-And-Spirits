@@ -6,12 +6,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.utilities.CHALLENGE_DURATION_MILLIS
 import kotlinx.serialization.Serializable
 
-/**
- * Persisted challenge state. [startTimeMillis] is the single server-stamped epoch start (written as
- * RTDB `ServerValue.TIMESTAMP`), so every client shares one authoritative clock; the deadline the
- * clients count down to is derived as [startTimeMillis] + `CHALLENGE_DURATION_MILLIS` in
- * [toDomain]. Null until the server resolves the timestamp.
- */
 @Serializable
 data class ChallengeEntity(
     val challengeId: String = "",

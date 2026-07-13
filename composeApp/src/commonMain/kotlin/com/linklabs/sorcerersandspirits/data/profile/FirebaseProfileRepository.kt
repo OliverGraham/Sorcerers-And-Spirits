@@ -133,14 +133,9 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
         displayNamesCollection.document(documentPath = displayName.normalize())
 }
 
-/** Dotted Firestore field path to the overall Gauntlets-won counter the leaderboard ranks by. */
 private const val OVERALL_GAUNTLETS_WON_PATH =
     FireStoreKeys.STATS + "." + FireStoreKeys.OVERALL + "." + FireStoreKeys.GAUNTLETS_WON
 
-/**
- * The key a display name is reserved under. Names are unique case-insensitively, with surrounding
- * whitespace and path separators (which Firestore would treat as subcollections) stripped.
- */
 private fun String.normalize(): String = trim().lowercase().replace(oldChar = '/', newChar = '_')
 
 private suspend fun Transaction.isReservedByOther(

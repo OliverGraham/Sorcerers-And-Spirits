@@ -9,6 +9,5 @@ data class AppState(
     val showSignInDialog: Boolean = false,
     val isOffline: Boolean = false,
     val isNameTaken: Boolean = false,
-    // Outcome of the most recent optional sign-in (account linking) attempt from the dialog.
     val linkResult: LinkAccountResult? = null,
 )

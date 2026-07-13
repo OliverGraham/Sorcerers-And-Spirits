@@ -93,7 +93,10 @@ sealed interface ArenaState {
         // TODO: Obviously, this was supposed to simply come from the domain
         val attackingUserId = combatActionState.getAttackingUserId()
 
+        // TODO: Obviously, this was supposed to simply come from the domain
         val combatControls = deriveCombatControls()
+
+        // TODO: Obviously, this was supposed to simply come from the domain
         val lockedTargetUserId = deriveLockedTargetUserId()
     }
 
@@ -330,6 +333,7 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     return unavailableClasses to classSelections
 }
 
+// TODO: Group similar code into separate files when it grows like this. 3 timer-related functions.
 internal fun determineTimerAction(
     previous: ArenaState?,
     next: ArenaState,
@@ -374,13 +378,6 @@ internal fun determineTimerAction(
             }
     }
 
-/**
- * A non-final match starts its countdown the instant the Finished screen is entered — no one needs
- * to ready first — after which a timeout auto-readies each remaining player into the next match
- * (SS-172). Once started the countdown keeps running across later updates. A lone survivor cannot
- * start a next match, so no countdown runs and no auto-ready fires into an impossible single-player
- * match (SS-170).
- */
 private fun determineMatchFinishedTimerAction(
     previous: ArenaState?,
     next: ArenaState.Finished,
@@ -391,12 +388,6 @@ private fun determineMatchFinishedTimerAction(
         else -> TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
     }
 
-/**
- * The final match ends the Gauntlet, whose Finished screen waits indefinitely until someone readies
- * for a new Gauntlet; the first ready starts a single, longer countdown (shared across clients,
- * since readiness is shared), after which a timeout auto-readies each remaining player. Later
- * readies neither restart nor stop it (SS-172).
- */
 private fun determineGauntletFinishedTimerAction(
     previous: ArenaState?,
     next: ArenaState.Finished,

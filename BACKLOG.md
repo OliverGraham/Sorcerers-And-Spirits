@@ -606,6 +606,13 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 ### SS-134 — Music & sound-effect playback (KMP)
 
 - [ ] Not completed
+- **Status (foundation shipped):** The KMP audio plumbing is built and merged — `commonMain`
+  `MusicPlayer` / `SoundEffectPlayer` interfaces + `MusicTrack` / `SoundEffect` sealed catalogs (no
+  entries yet), Android `AndroidMusicPlayer` (Media3 ExoPlayer, gapless loop + volume cross-fade) and
+  `AndroidSoundEffectPlayer` (SoundPool), iOS `IosMusicPlayer` (`AVAudioPlayer` fade) and
+  `IosSoundEffectPlayer` (pooled `AVAudioPlayer`), and Koin DI in both `PlatformModule`s. Nothing
+  plays yet: no asset files, no catalog entries, no trigger wiring, no mute UI, no remote-URL
+  override. Those are decomposed into SS-217…SS-221. This umbrella closes once its children land.
 - **Goal:** Add an audio layer to the app covering two distinct kinds of playback:
     1. **Long-running music tracks** — background music that plays on a screen and persists/loops
        while
@@ -685,7 +692,54 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   music to navigation (with cross-fade) and SFX to Arena combat events; add a mute/volume control;
   add the optional RemoteConfig music-URL override with bundled fallback. Source/author the audio
   assets in the correct formats.
-- **Notes:** Likely spawns child tickets (asset authoring, per-screen track mapping, mute/settings
-  UI,
-  audio-focus/ducking polish). Related: SS-068 (UI/animation overhaul), SS-025 (Arena message
-  events).
+- **Notes:** Child tickets carved out of this epic: SS-217 (catalog entries + asset files), SS-218
+  (SFX ← Arena combat events), SS-219 (music + cross-fade ← navigation), SS-220 (mute/volume UI +
+  audio-focus/ducking), SS-221 (RemoteConfig music-URL override). Related: SS-068 (UI/animation
+  overhaul), SS-025 (Arena message events).
+
+### SS-217 — Audio catalog entries + bundled asset files
+
+- [ ] Not completed
+- **Goal:** Populate the SS-134 audio foundation with real content. Add `MusicTrack` /
+  `SoundEffect` implementations (each a `data object` overriding `assetFileName`) and drop the encoded
+  files: SFX as 44.1 kHz / 16-bit mono WAV, music as 44.1 kHz stereo ~128–160 kbps VBR AAC in an
+  `.m4a` container (gapless-loop metadata intact). Android SFX resolve from `androidMain` assets under
+  `assets/audio/`; Android music loads via the `asset:///audio/…` URI; iOS resolves both from the app
+  bundle via `NSBundle`. Prep assets to the correct format/size before committing, per
+  [[downsample-figma-raster-assets]] discipline.
+- **Related:** SS-134 (foundation).
+
+### SS-218 — Trigger SFX from Arena combat events
+
+- [ ] Not completed
+- **Goal:** Fire `SoundEffectPlayer.play(effect = …)` off domain combat events surfaced to the UI
+  (e.g. hit landing, armor break, K.O., dice settling). Inject the player via Koin and keep all
+  triggering in the UI/state layer, never in Domain combat logic ([[domain-is-source-of-truth]],
+  [[message-log-is-passive]]). Arena messages map ~1:1 to events (SS-025/SS-068).
+- **Related:** SS-134 (foundation), SS-217 (needs catalog entries + assets).
+
+### SS-219 — Drive background music + cross-fade from navigation
+
+- [ ] Not completed
+- **Goal:** Call `MusicPlayer.play(track = …)` / `stop()` from navigation so entering/leaving a
+  screen cross-fades the active track. Map each screen/route to its `MusicTrack`. Respect
+  lifecycle: pause/duck on backgrounding and clean up on disposal.
+- **Related:** SS-134 (foundation), SS-217 (needs catalog entries + assets).
+
+### SS-220 — Mute/volume setting + audio-focus/ducking polish
+
+- [ ] Not completed
+- **Goal:** Add a user mute/volume control (settings UI + persistence) wired to
+  `MusicPlayer.setMuted` / `SoundEffectPlayer.setMuted`. Add Android `AudioFocus` handling
+  (duck/pause on focus loss and backgrounding) and iOS `AVAudioSession` category + interruption
+  handling.
+- **Related:** SS-134 (foundation).
+
+### SS-221 — Optional RemoteConfig music-URL override with bundled fallback
+
+- [ ] Not completed
+- **Goal:** Let a music track optionally source from a remote URL via RemoteConfig, treated as an
+  optional override over the bundled `.m4a` source of truth
+  ([[remoteconfig-optional-override-not-required-map]]). Degrade gracefully to the bundled track on
+  fetch failure/offline ([[connectivity-resilience-priority]]).
+- **Related:** SS-134 (foundation), SS-217 (bundled track is the fallback).

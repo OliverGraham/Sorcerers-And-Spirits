@@ -14,10 +14,11 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashCallout
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayableMessage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.combatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.flashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.bardNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.encoreDurationMillis
@@ -45,40 +46,25 @@ import kotlinx.coroutines.delay
 private const val FLASH_HOLD_MILLIS = 850L
 private const val FLASH_EXIT_MILLIS = 320L
 
-/** Wall-clock time one queued flash callout occupies the overlay: its hold plus its pop-out. */
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
 
-/**
- * The single sequencer for newly-arrived messages: they play one at a time, so a single resolution
- * narrates as a sequence. A message's seated-avatar [combatAnimationCue] plays to completion first;
- * then, only if the message still flashes (SS-185), its flash callout appears to spell out what the
- * roll and animation meant (SS-201), so an effect is never flashed over before it finishes. A
- * log-only message with an animation still plays that animation — the flash is text layered on top,
- * not the gate. The cue is held separately from [currentMessage] so it can go live ahead of the
- * callout. The history present on first composition is skipped so reconnecting never replays old
- * events.
- */
 @Stable
 internal class FlashPlaybackState {
     var currentMessage by mutableStateOf<ArenaMessageState?>(value = null)
         private set
 
+    var currentCallout by mutableStateOf<FlashCallout?>(value = null)
+        private set
+
+    var currentAnchor by mutableStateOf<FlashAnchor>(value = FlashAnchor.Center)
+        private set
+
     var combatAnimationCue by mutableStateOf<CombatAnimationCue?>(value = null)
         private set
 
-    /**
-     * The id of the most recent collapse message whose playback window has fully closed, so the
-     * seating can release the downed player from their seat once their Collapse has played and let
-     * them morph to a head icon in a match that continues (SS-213).
-     */
     var finishedCollapseMessageId by mutableStateOf<String?>(value = null)
         private set
 
-    /**
-     * Whether the sequencer is currently playing out a batch of freshly-arrived messages — their
-     * animations and flash callouts (SS-215). The combat controls hide while this is true, so the
-     * user cannot stack a new action on top of an effect that has not finished playing.
-     */
     var isSequencing by mutableStateOf(value = false)
         private set
 
@@ -88,20 +74,18 @@ internal class FlashPlaybackState {
         isSequencing = isPlaying
     }
 
-    /**
-     * Send a message's seated-avatar cue live; its flash callout follows once the cue plays out.
-     */
     fun playAnimation(cue: CombatAnimationCue?) {
         combatAnimationCue = cue
     }
 
-    /** Marks a collapse message's playback window closed, releasing its downed player's seat. */
     fun markCollapseFinished(messageId: String) {
         finishedCollapseMessageId = messageId
     }
 
-    fun show(message: ArenaMessageState) {
+    fun show(message: ArenaMessageState, callout: FlashCallout, anchor: FlashAnchor) {
         currentMessage = message
+        currentCallout = callout
+        currentAnchor = anchor
         visibleState.targetState = true
     }
 
@@ -111,7 +95,7 @@ internal class FlashPlaybackState {
 }
 
 @Composable
-internal fun rememberFlashPlayback(messages: List<ArenaMessageState>): FlashPlaybackState {
+internal fun rememberFlashPlayback(messages: List<PlayableMessage>): FlashPlaybackState {
     val playback = remember { FlashPlaybackState() }
     val latestMessages by rememberUpdatedState(newValue = messages)
 
@@ -124,26 +108,34 @@ internal fun rememberFlashPlayback(messages: List<ArenaMessageState>): FlashPlay
                 if (wasReset) lastPlayedId = null
 
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
-                val hasPlayable =
-                    fresh.any { it.combatAnimationCue != null || it.flashCallout != null }
+                val hasPlayable = fresh.any { it.cue != null || it.callout != null }
                 if (hasPlayable) playback.updateSequencing(isPlaying = true)
-                for (message in fresh) {
-                    val cue = message.combatAnimationCue
-                    val callout = message.flashCallout
+
+                for (playable in fresh) {
+                    val cue = playable.cue
+                    val callout = playable.callout
                     if (cue == null && callout == null) continue
+
                     playback.playAnimation(cue = cue)
                     val animationMillis = cue?.playbackDurationMillis() ?: 0L
                     if (animationMillis > 0L) delay(timeMillis = animationMillis)
+
                     if (callout != null) {
-                        playback.show(message = message)
+                        playback.show(
+                            message = playable.message,
+                            callout = callout,
+                            anchor = playable.anchor,
+                        )
                         delay(timeMillis = FLASH_HOLD_MILLIS)
                         playback.dismiss()
                         delay(timeMillis = FLASH_EXIT_MILLIS)
                     }
+
                     if (cue?.collapsingUserId != null) {
-                        playback.markCollapseFinished(messageId = message.id)
+                        playback.markCollapseFinished(messageId = playable.message.id)
                     }
                 }
+
                 if (hasPlayable) playback.updateSequencing(isPlaying = false)
                 lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
                 lastSize = messages.size
@@ -153,14 +145,8 @@ internal fun rememberFlashPlayback(messages: List<ArenaMessageState>): FlashPlay
     return playback
 }
 
-/**
- * How long a cue's whole animation runs — its weapon and effect overlays and its seated-avatar
- * gestures, whichever ends last — so the sequencer can play the animation to completion before the
- * flash callout lands (SS-201). Every cue reports its real length; a cue with no animation returns
- * 0 and the callout shows at once. New cues report their length here.
- */
 internal fun CombatAnimationCue.playbackDurationMillis(): Long =
-    maxOf(effectOverlayDurationMillis(), seatedAvatarDurationMillis())
+    maxOf(a = effectOverlayDurationMillis(), b = seatedAvatarDurationMillis())
 
 /**
  * The length of a cue's weapon and effect overlays, apart from the seated avatars' own gestures.
@@ -214,12 +200,6 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
             paladinHolyShieldOverlayDurationMillis(phase = phase, didSurvive = didSurvive)
     }
 
-/**
- * The attacker-side normal-attack overlay length per weapon: each class that has landed its weapon
- * (SS-192…SS-196) reports how long its strike runs, while a class still on the generic body lunge
- * has no weapon overlay, so its length comes from the seated avatars alone. Keyed on the borrowed
- * weapon, not the raw attacker, so an Illusionist's strike runs as long as the weapon it copied.
- */
 private fun normalAttackOverlayDurationMillis(
     weaponClassType: CharacterClassType,
     outcome: NormalRollMessageType,
@@ -235,12 +215,7 @@ private fun normalAttackOverlayDurationMillis(
         else -> 0L
     }
 
-/**
- * The flash messages that arrived after [lastPlayedId], i.e. the ones not yet played. A null
- * [lastPlayedId] means nothing has played, so every message is fresh; an unknown id (e.g. dropped
- * by the log cap) skips the batch rather than replaying the whole history.
- */
-private fun List<ArenaMessageState>.freshAfter(lastPlayedId: String?): List<ArenaMessageState> {
+private fun List<PlayableMessage>.freshAfter(lastPlayedId: String?): List<PlayableMessage> {
     if (lastPlayedId == null) return this
 
     val lastPlayedIndex = indexOfLast { it.id == lastPlayedId }

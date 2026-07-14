@@ -96,9 +96,8 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
             nextAction =
                 NextCombatAction.NormalAttack(
                     roll = NormalAttackType.ArmorClass,
-                    attackerUserId = attackerUserId,
+                    attackTurn = currentAttackTurn(),
                     defenderUserId = selectedCharmTargetUserId,
-                    originalTurnUserId = originalTurnUserId,
                     activeUserIds = setOf(element = attackerUserId),
                 )
         )

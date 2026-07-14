@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
@@ -374,9 +375,8 @@ class ArenaScreenViewModelTest {
                     nextCombatAction =
                         NextCombatAction.NormalAttack(
                             roll = NormalAttackType.Health,
-                            attackerUserId = USER_ID,
+                            attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
                             defenderUserId = OPPONENT_ID,
-                            originalTurnUserId = USER_ID,
                             activeUserIds = setOf(USER_ID),
                         ),
                     userClass = TestCharacterClasses.duelist(),
@@ -411,9 +411,8 @@ class ArenaScreenViewModelTest {
                     nextCombatAction =
                         NextCombatAction.AbilityRoll(
                             purpose = AbilityAction.Passive.Riposte(attackerRollTotal = 7),
-                            attackerUserId = USER_ID,
+                            attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
                             defenderUserId = OPPONENT_ID,
-                            originalTurnUserId = USER_ID,
                             activeUserIds = setOf(OPPONENT_ID),
                         ),
                     userClass = TestCharacterClasses.gambler(),
@@ -443,9 +442,9 @@ class ArenaScreenViewModelTest {
             val currentAction = currentCombatActionSlot.captured
             assertIs<CurrentCombatAction.NormalAttack>(value = currentAction)
             assertEquals(expected = NormalAttackType.ArmorClass, actual = currentAction.roll)
-            assertEquals(expected = USER_ID, actual = currentAction.attackerUserId)
+            assertEquals(expected = USER_ID, actual = currentAction.attackTurn.attackerUserId)
             assertEquals(expected = OPPONENT_ID, actual = currentAction.defenderUserId)
-            assertEquals(expected = USER_ID, actual = currentAction.originalTurnUserId)
+            assertEquals(expected = USER_ID, actual = currentAction.attackTurn.turnOwnerUserId)
 
             val combatArguments = combatActionArgumentsSlot.captured
             assertEquals(expected = arguments.arenaId, actual = combatArguments.arenaId)
@@ -485,9 +484,9 @@ class ArenaScreenViewModelTest {
             val allIn = assertIs<AbilityAction.Activated.AllIn>(value = abilityRoll.purpose)
             assertFalse(actual = allIn.allInAbility.usedThisTurn)
 
-            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
-            assertEquals(expected = USER_ID, actual = abilityRoll.originalTurnUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.turnOwnerUserId)
         }
 
     @Test
@@ -518,7 +517,7 @@ class ArenaScreenViewModelTest {
                 assertIs<CurrentCombatAction.AbilityRoll>(value = currentCombatActionSlot.captured)
             assertIs<AbilityAction.Activated.PrepareAttack>(value = abilityRoll.purpose)
 
-            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = OPPONENT_ID, actual = abilityRoll.defenderUserId)
         }
 
@@ -555,7 +554,7 @@ class ArenaScreenViewModelTest {
             assertEquals(expected = USER_ID, actual = teleport.defenderRoll.userId)
             assertNull(actual = teleport.defenderRoll.roll)
 
-            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
         }
 
@@ -1243,9 +1242,9 @@ class ArenaScreenViewModelTest {
 
             val abilityRoll = capturedAbilityRoll()
             assertIs<AbilityAction.Activated.SummonMinion>(value = abilityRoll.purpose)
-            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
-            assertEquals(expected = USER_ID, actual = abilityRoll.originalTurnUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.turnOwnerUserId)
         }
 
     @Test
@@ -1271,7 +1270,7 @@ class ArenaScreenViewModelTest {
             val abilityRoll = capturedAbilityRoll()
             val impersonate =
                 assertIs<AbilityAction.Activated.Impersonate>(value = abilityRoll.purpose)
-            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = OPPONENT_ID, actual = abilityRoll.defenderUserId)
             // The targeted Mage's offensive ability is copied, not the Illusionist's own (None).
             assertEquals(
@@ -1306,7 +1305,7 @@ class ArenaScreenViewModelTest {
 
             val abilityRoll = capturedAbilityRoll()
             assertIs<AbilityAction.Activated.AllIn>(value = abilityRoll.purpose)
-            assertEquals(expected = USER_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = USER_ID, actual = abilityRoll.attackTurn.attackerUserId)
         }
 
     @Test
@@ -1330,7 +1329,7 @@ class ArenaScreenViewModelTest {
 
             val normalAttack = capturedNormalAttack()
             assertEquals(expected = NormalAttackType.Health, actual = normalAttack.roll)
-            assertEquals(expected = USER_ID, actual = normalAttack.attackerUserId)
+            assertEquals(expected = USER_ID, actual = normalAttack.attackTurn.attackerUserId)
             assertEquals(expected = OPPONENT_ID, actual = normalAttack.defenderUserId)
         }
 
@@ -1359,9 +1358,9 @@ class ArenaScreenViewModelTest {
 
             val abilityRoll = capturedAbilityRoll()
             assertIs<AbilityAction.Passive.Riposte>(value = abilityRoll.purpose)
-            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
-            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.originalTurnUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackTurn.turnOwnerUserId)
         }
 
     @Test
@@ -1389,7 +1388,7 @@ class ArenaScreenViewModelTest {
 
             val abilityRoll = capturedAbilityRoll()
             assertIs<AbilityAction.Passive.HolyShield.Prayer>(value = abilityRoll.purpose)
-            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackerUserId)
+            assertEquals(expected = OPPONENT_ID, actual = abilityRoll.attackTurn.attackerUserId)
             assertEquals(expected = USER_ID, actual = abilityRoll.defenderUserId)
         }
 
@@ -1456,7 +1455,7 @@ class ArenaScreenViewModelTest {
 
             val normalAttack = capturedNormalAttack()
             assertEquals(expected = NormalAttackType.ArmorClass, actual = normalAttack.roll)
-            assertEquals(expected = USER_ID, actual = normalAttack.attackerUserId)
+            assertEquals(expected = USER_ID, actual = normalAttack.attackTurn.attackerUserId)
             assertEquals(expected = SECOND_OPPONENT_ID, actual = normalAttack.defenderUserId)
         }
 
@@ -1589,6 +1588,16 @@ class ArenaScreenViewModelTest {
         private fun idleTurn(vararg activeUserIds: String) =
             NextCombatAction.Idle(activeUserIds = activeUserIds.toSet())
 
+        private fun attackTurnOf(attackerUserId: String, turnOwnerUserId: String): AttackTurn =
+            if (attackerUserId == turnOwnerUserId) {
+                AttackTurn.Standard(attackerUserId = attackerUserId)
+            } else {
+                AttackTurn.RiposteReversal(
+                    attackerUserId = attackerUserId,
+                    turnOwnerUserId = turnOwnerUserId,
+                )
+            }
+
         private fun normalAttackAction(
             roll: NormalAttackType,
             attackerUserId: String,
@@ -1598,9 +1607,12 @@ class ArenaScreenViewModelTest {
         ) =
             NextCombatAction.NormalAttack(
                 roll = roll,
-                attackerUserId = attackerUserId,
+                attackTurn =
+                    attackTurnOf(
+                        attackerUserId = attackerUserId,
+                        turnOwnerUserId = originalTurnUserId,
+                    ),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
 
@@ -1613,9 +1625,12 @@ class ArenaScreenViewModelTest {
         ) =
             NextCombatAction.AbilityRoll(
                 purpose = purpose,
-                attackerUserId = attackerUserId,
+                attackTurn =
+                    attackTurnOf(
+                        attackerUserId = attackerUserId,
+                        turnOwnerUserId = originalTurnUserId,
+                    ),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
 

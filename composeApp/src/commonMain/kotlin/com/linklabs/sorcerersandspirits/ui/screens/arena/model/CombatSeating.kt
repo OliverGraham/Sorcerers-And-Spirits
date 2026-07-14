@@ -96,8 +96,8 @@ private fun ArenaState.Combat.seatedTargetUserId(
 private fun ArenaState.Combat.actorUserId(): String =
     when (val action = combatActionState) {
         is CombatActionState.Idle -> action.activeUserIds.first()
-        is CombatActionState.NormalAttack -> action.attackerUserId
-        is CombatActionState.AbilityRoll -> action.attackerUserId
+        is CombatActionState.NormalAttack -> action.attackTurn.attackerUserId
+        is CombatActionState.AbilityRoll -> action.attackTurn.attackerUserId
     }
 
 /**

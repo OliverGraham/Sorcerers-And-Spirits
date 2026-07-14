@@ -29,11 +29,11 @@ internal class PerformCombatAction(
         combatMutator =
             CombatMutator(
                 updatedPlayerMap = arguments.playerMap.toMutableMap(),
-                attackerUserId = currentAction.attackerUserId,
+                attackerUserId = currentAction.attackTurn.attackerUserId,
                 defenderUserId = currentAction.defenderUserId,
                 rollingUserId = currentAction.rollingUserId(),
                 roundNumber = arguments.roundNumber,
-                originalTurnUserId = currentAction.originalTurnUserId,
+                originalTurnUserId = currentAction.attackTurn.turnOwnerUserId,
                 diceRoller = diceRoller,
                 abilityConfig = abilityConfig,
             )
@@ -44,7 +44,7 @@ internal class PerformCombatAction(
 
     private fun CurrentCombatAction.rollingUserId(): String =
         when (this) {
-            is CurrentCombatAction.NormalAttack -> attackerUserId
+            is CurrentCombatAction.NormalAttack -> attackTurn.attackerUserId
             is CurrentCombatAction.AbilityRoll -> rollingUserId
         }
 

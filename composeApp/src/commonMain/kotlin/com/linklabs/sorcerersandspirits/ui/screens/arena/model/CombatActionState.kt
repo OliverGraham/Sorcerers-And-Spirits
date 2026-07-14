@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
@@ -19,18 +20,16 @@ sealed interface CombatActionState {
     @Immutable
     data class NormalAttack(
         val roll: NormalAttackType,
-        val attackerUserId: String,
+        val attackTurn: AttackTurn,
         val defenderUserId: String,
-        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : CombatActionState
 
     @Immutable
     data class AbilityRoll(
         val action: AbilityActionState,
-        val attackerUserId: String,
+        val attackTurn: AttackTurn,
         val defenderUserId: String,
-        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : CombatActionState
 }
@@ -140,9 +139,8 @@ internal fun AttackArguments.toDomain(
             if (isUsersTurn) {
                 CurrentCombatAction.NormalAttack(
                     roll = NormalAttackType.ArmorClass,
-                    attackerUserId = userPlayerId,
+                    attackTurn = AttackTurn.Standard(attackerUserId = userPlayerId),
                     defenderUserId = targetedOpponentUserId,
-                    originalTurnUserId = userPlayerId,
                 )
             } else {
                 null
@@ -150,12 +148,11 @@ internal fun AttackArguments.toDomain(
         }
 
         is CombatActionState.NormalAttack ->
-            if (combatActionState.attackerUserId == userPlayerId) {
+            if (combatActionState.attackTurn.attackerUserId == userPlayerId) {
                 CurrentCombatAction.NormalAttack(
                     roll = combatActionState.roll,
-                    attackerUserId = combatActionState.attackerUserId,
+                    attackTurn = combatActionState.attackTurn,
                     defenderUserId = combatActionState.defenderUserId,
-                    originalTurnUserId = combatActionState.originalTurnUserId,
                 )
             } else {
                 null
@@ -185,9 +182,8 @@ internal fun UseAbilityArguments.toDomain(
             if (isResponseToOwedStep) {
                 CurrentCombatAction.AbilityRoll(
                     purpose = purpose,
-                    attackerUserId = combatActionState.attackerUserId,
+                    attackTurn = combatActionState.attackTurn,
                     defenderUserId = combatActionState.defenderUserId,
-                    originalTurnUserId = combatActionState.originalTurnUserId,
                     rollingUserId = userPlayerId,
                 )
             } else {
@@ -202,9 +198,8 @@ internal fun UseAbilityArguments.toDomain(
             if (isActivationOfUsersTurn) {
                 CurrentCombatAction.AbilityRoll(
                     purpose = purpose,
-                    attackerUserId = userPlayerId,
+                    attackTurn = AttackTurn.Standard(attackerUserId = userPlayerId),
                     defenderUserId = targetedOpponentUserId.ifEmpty { userPlayerId },
-                    originalTurnUserId = userPlayerId,
                     rollingUserId = userPlayerId,
                 )
             } else {
@@ -329,18 +324,16 @@ internal fun NextCombatAction.toCombatActionState(): CombatActionState =
         is NextCombatAction.NormalAttack ->
             CombatActionState.NormalAttack(
                 roll = roll,
-                attackerUserId = attackerUserId,
+                attackTurn = attackTurn,
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
 
         is NextCombatAction.AbilityRoll ->
             CombatActionState.AbilityRoll(
                 action = purpose.toState(),
-                attackerUserId = attackerUserId,
+                attackTurn = attackTurn,
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
     }

@@ -438,6 +438,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Domain layer
 
+- **SS-216** — Encapsulate the Riposte turn-owner divergence: Collapse the near-duplicate
+  `attackerUserId`/`originalTurnUserId` pair on the combat actions into one polymorphic `AttackTurn`
+  (`Standard` = one id; `RiposteReversal` = both), across domain/data/UI + entity mirror
+  (`AttackTurnEntity`). SS-029 follow-up (field-collapse only; availability/StringResources still
+  open under SS-029).
 - **SS-046** — Add maximum HP: Introduce a max-HP concept so healing/shields can't exceed a cap (
   interacts with Necromancer heal-to-full, shields).
 - **SS-047** — Class stat values from RemoteConfig: Drive class stat tuning values (`hitPoints`/

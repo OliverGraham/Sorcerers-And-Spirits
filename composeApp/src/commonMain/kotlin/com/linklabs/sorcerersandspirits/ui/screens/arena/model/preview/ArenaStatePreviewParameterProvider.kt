@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview
 
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -101,9 +102,8 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         combatActionState: CombatActionState =
             CombatActionState.NormalAttack(
                 roll = NormalAttackType.ArmorClass,
-                attackerUserId = "player1",
+                attackTurn = AttackTurn.Standard(attackerUserId = "player1"),
                 defenderUserId = "player2",
-                originalTurnUserId = "player1",
                 activeUserIds = setOf("player1"),
             ),
     ) =

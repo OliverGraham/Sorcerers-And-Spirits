@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
@@ -24,9 +25,9 @@ class CombatActionDispatchTest {
                 )
 
         val dispatched = assertNotNull(actual = action)
-        assertEquals(expected = OPPONENT_ID, actual = dispatched.attackerUserId)
+        assertEquals(expected = OPPONENT_ID, actual = dispatched.attackTurn.attackerUserId)
         assertEquals(expected = USER_ID, actual = dispatched.defenderUserId)
-        assertEquals(expected = OPPONENT_ID, actual = dispatched.originalTurnUserId)
+        assertEquals(expected = OPPONENT_ID, actual = dispatched.attackTurn.turnOwnerUserId)
         assertEquals(expected = USER_ID, actual = dispatched.rollingUserId)
     }
 
@@ -35,9 +36,8 @@ class CombatActionDispatchTest {
         val healthRollInFlight =
             CombatActionState.NormalAttack(
                 roll = NormalAttackType.Health,
-                attackerUserId = OPPONENT_ID,
+                attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
                 defenderUserId = USER_ID,
-                originalTurnUserId = OPPONENT_ID,
                 activeUserIds = setOf(element = OPPONENT_ID),
             )
 
@@ -93,8 +93,8 @@ class CombatActionDispatchTest {
                 )
 
         val dispatched = assertNotNull(actual = action)
-        assertEquals(expected = USER_ID, actual = dispatched.attackerUserId)
-        assertEquals(expected = USER_ID, actual = dispatched.originalTurnUserId)
+        assertEquals(expected = USER_ID, actual = dispatched.attackTurn.attackerUserId)
+        assertEquals(expected = USER_ID, actual = dispatched.attackTurn.turnOwnerUserId)
     }
 
     @Test
@@ -124,7 +124,7 @@ class CombatActionDispatchTest {
                 )
 
         val dispatched = assertNotNull(actual = action)
-        assertEquals(expected = USER_ID, actual = dispatched.attackerUserId)
+        assertEquals(expected = USER_ID, actual = dispatched.attackTurn.attackerUserId)
         assertEquals(expected = OPPONENT_ID, actual = dispatched.defenderUserId)
     }
 
@@ -145,9 +145,8 @@ class CombatActionDispatchTest {
         val healthRollInFlight =
             CombatActionState.NormalAttack(
                 roll = NormalAttackType.Health,
-                attackerUserId = USER_ID,
+                attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
                 defenderUserId = OPPONENT_ID,
-                originalTurnUserId = USER_ID,
                 activeUserIds = setOf(element = USER_ID),
             )
 
@@ -157,7 +156,7 @@ class CombatActionDispatchTest {
 
         val dispatched = assertNotNull(actual = action)
         assertEquals(expected = NormalAttackType.Health, actual = dispatched.roll)
-        assertEquals(expected = USER_ID, actual = dispatched.attackerUserId)
+        assertEquals(expected = USER_ID, actual = dispatched.attackTurn.attackerUserId)
     }
 
     @Test
@@ -165,9 +164,8 @@ class CombatActionDispatchTest {
         val opponentsAttack =
             CombatActionState.NormalAttack(
                 roll = NormalAttackType.Health,
-                attackerUserId = OPPONENT_ID,
+                attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
                 defenderUserId = USER_ID,
-                originalTurnUserId = OPPONENT_ID,
                 activeUserIds = setOf(element = OPPONENT_ID),
             )
 
@@ -198,9 +196,8 @@ class CombatActionDispatchTest {
     private fun abilityRoll(action: AbilityActionState, defenderUserId: String) =
         CombatActionState.AbilityRoll(
             action = action,
-            attackerUserId = OPPONENT_ID,
+            attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
             defenderUserId = defenderUserId,
-            originalTurnUserId = OPPONENT_ID,
             activeUserIds = setOf(element = defenderUserId),
         )
 

@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
@@ -65,9 +66,12 @@ internal class RiposteHandler(
             nextAction =
                 NextCombatAction.NormalAttack(
                     roll = NormalAttackType.ArmorClass,
-                    attackerUserId = defenderUserId,
+                    attackTurn =
+                        AttackTurn.RiposteReversal(
+                            attackerUserId = defenderUserId,
+                            turnOwnerUserId = originalTurnUserId,
+                        ),
                     defenderUserId = attackerUserId,
-                    originalTurnUserId = originalTurnUserId,
                     activeUserIds = setOf(element = defenderUserId),
                 )
         )

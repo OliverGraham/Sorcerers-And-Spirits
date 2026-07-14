@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
@@ -49,14 +50,23 @@ internal class CombatMutator(
         nextCombatAction = nextAction
     }
 
+    fun currentAttackTurn(): AttackTurn =
+        if (attackerUserId == originalTurnUserId) {
+            AttackTurn.Standard(attackerUserId = attackerUserId)
+        } else {
+            AttackTurn.RiposteReversal(
+                attackerUserId = attackerUserId,
+                turnOwnerUserId = originalTurnUserId,
+            )
+        }
+
     fun continueAttackWithHealthRoll() {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.NormalAttack(
                     roll = NormalAttackType.Health,
-                    attackerUserId = attackerUserId,
+                    attackTurn = currentAttackTurn(),
                     defenderUserId = defenderUserId,
-                    originalTurnUserId = originalTurnUserId,
                     activeUserIds = setOf(element = attackerUserId),
                 )
         )
@@ -76,9 +86,8 @@ internal class CombatMutator(
             nextAction =
                 NextCombatAction.AbilityRoll(
                     purpose = purpose,
-                    attackerUserId = attackerUserId,
+                    attackTurn = currentAttackTurn(),
                     defenderUserId = defenderUserId,
-                    originalTurnUserId = originalTurnUserId,
                     activeUserIds = activeUserIds,
                 )
         )

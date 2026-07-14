@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
@@ -57,7 +58,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments()
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId)
 
@@ -78,7 +79,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments()
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 4, secondDie = 4)
 
@@ -98,7 +99,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments()
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 5, secondDie = 6)
 
@@ -116,7 +117,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 2, secondDie = 2)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 2,
+            secondDie = 2,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -137,7 +142,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 2, secondDie = 2)
 
@@ -158,7 +163,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 3,
+            secondDie = 3,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -173,7 +182,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.mage())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 3, secondDie = 3)
 
@@ -195,7 +204,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 2, secondDie = 2)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 2,
+            secondDie = 2,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -215,7 +228,7 @@ class PerformCombatActionUseCaseTest {
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 2, secondDie = 2)
 
@@ -236,7 +249,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 3,
+            secondDie = 3,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -252,7 +269,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 3, secondDie = 3)
 
@@ -273,7 +290,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 4, secondDie = 4)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 4,
+            secondDie = 4,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -289,7 +310,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 3,
+            secondDie = 3,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -312,7 +337,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -356,7 +381,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(defenderClass = defenderClass)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = attackerUserId, firstDie = 5, secondDie = 3)
 
@@ -378,7 +403,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 2)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 2,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -397,7 +426,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
 
         val currentAction = getHealthAttackAction()
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -419,7 +448,7 @@ class PerformCombatActionUseCaseTest {
         val secondDie = 2
         val rollTotal = firstDie + secondDie
         setupTwoDiceRoll(
-            userId = currentAction.attackerUserId,
+            userId = currentAction.attackTurn.attackerUserId,
             firstDie = firstDie,
             secondDie = secondDie,
         )
@@ -449,7 +478,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -474,7 +503,7 @@ class PerformCombatActionUseCaseTest {
         val secondDie = 2
         val rollTotal = firstDie + secondDie
         setupTwoDiceRoll(
-            userId = currentAction.attackerUserId,
+            userId = currentAction.attackTurn.attackerUserId,
             firstDie = firstDie,
             secondDie = secondDie,
         )
@@ -504,7 +533,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 1,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -522,7 +555,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val rogueUserId = currentAction.attackerUserId
+        val rogueUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = rogueUserId)
 
@@ -550,7 +583,7 @@ class PerformCombatActionUseCaseTest {
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val rogueUserId = currentAction.attackerUserId
+        val rogueUserId = currentAction.attackTurn.attackerUserId
 
         val firstDie = 2
         val secondDie = 2
@@ -590,7 +623,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createThreePlayerArguments(attackerClass = illusionist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = illusionistUserId)
 
@@ -622,7 +655,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -642,7 +675,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -663,7 +696,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -683,7 +716,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 2)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 2,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -715,7 +752,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 2)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 2,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -740,7 +781,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAllInAction(gambler = gambler)
-        val gamblerUserId = currentAction.attackerUserId
+        val gamblerUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = gamblerUserId, die = 1)
 
@@ -761,7 +802,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAllInAction(gambler = gambler)
-        val gamblerUserId = currentAction.attackerUserId
+        val gamblerUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = gamblerUserId, die = 6)
 
@@ -784,7 +825,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAllInAction(gambler = gambler)
-        val gamblerUserId = currentAction.attackerUserId
+        val gamblerUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = gamblerUserId, die = 3)
 
@@ -815,7 +856,7 @@ class PerformCombatActionUseCaseTest {
             getAbilityRollAction(
                 purpose = AbilityAction.Activated.AllIn(allInAbility = OffensiveAbility.AllIn())
             )
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = illusionistUserId, die = 6)
 
@@ -846,7 +887,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = illusionist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = illusionistUserId, firstDie = 1, secondDie = 2)
 
@@ -877,7 +918,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 1,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -910,7 +955,7 @@ class PerformCombatActionUseCaseTest {
                         summonMinionAbility = OffensiveAbility.SummonMinion()
                     )
             )
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = illusionistUserId, die = 2)
 
@@ -965,7 +1010,9 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
-        assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
+        assertTrue(
+            actual = nextAction.isThisUserNext(userId = currentAction.attackTurn.attackerUserId)
+        )
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -1009,7 +1056,7 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         val updatedAttacker =
-            outcome.getPlayerById(userId = currentAction.attackerUserId).characterClass
+            outcome.getPlayerById(userId = currentAction.attackTurn.attackerUserId).characterClass
         assertTrue(actual = updatedAttacker.hitPoints <= 0)
         assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
         assertTrue(actual = outcome.isMatchFinished)
@@ -1027,7 +1074,7 @@ class PerformCombatActionUseCaseTest {
 
         val attackerRollTotal = 10
         val currentAction = getLuckyCoinHighRollerAction(attackerRollTotal = attackerRollTotal)
-        val attackerUserId = currentAction.attackerUserId
+        val attackerUserId = currentAction.attackTurn.attackerUserId
         val gamblerUserId = currentAction.defenderUserId
 
         setupOneDiceRoll(userId = gamblerUserId, die = 4)
@@ -1055,7 +1102,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getPrepareAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 5, secondDie = 5)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 5,
+            secondDie = 5,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1076,7 +1127,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getPrepareAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 4)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 3,
+            secondDie = 4,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1098,7 +1153,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 5, secondDie = 5)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 5,
+            secondDie = 5,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1124,7 +1183,7 @@ class PerformCombatActionUseCaseTest {
         val attackerRollTotal = 10
         val currentAction = getRiposteAction(attackerRollTotal = attackerRollTotal)
         val duelistUserId = currentAction.defenderUserId
-        val initialAttackerUserId = currentAction.attackerUserId
+        val initialAttackerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = duelistUserId, firstDie = 3, secondDie = 4)
 
@@ -1135,9 +1194,12 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertEquals(actual = nextAction.roll, expected = NormalAttackType.ArmorClass)
-        assertEquals(expected = duelistUserId, actual = nextAction.attackerUserId)
+        assertEquals(expected = duelistUserId, actual = nextAction.attackTurn.attackerUserId)
         assertEquals(expected = initialAttackerUserId, actual = nextAction.defenderUserId)
-        assertEquals(expected = initialAttackerUserId, actual = nextAction.originalTurnUserId)
+        assertEquals(
+            expected = initialAttackerUserId,
+            actual = nextAction.attackTurn.turnOwnerUserId,
+        )
         assertTrue(actual = nextAction.isThisUserNext(userId = duelistUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -1152,7 +1214,7 @@ class PerformCombatActionUseCaseTest {
         val attackerRollTotal = 10
         val currentAction = getRiposteAction(attackerRollTotal = attackerRollTotal)
         val duelistUserId = currentAction.defenderUserId
-        val initialAttackerUserId = currentAction.attackerUserId
+        val initialAttackerUserId = currentAction.attackTurn.attackerUserId
 
         // total 4 (outside 6..8)
         setupTwoDiceRoll(userId = duelistUserId, firstDie = 2, secondDie = 2)
@@ -1164,7 +1226,10 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
         assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
-        assertEquals(expected = initialAttackerUserId, actual = nextAction.attackerUserId)
+        assertEquals(
+            expected = initialAttackerUserId,
+            actual = nextAction.attackTurn.attackerUserId,
+        )
         assertEquals(expected = duelistUserId, actual = nextAction.defenderUserId)
         assertTrue(actual = nextAction.isThisUserNext(userId = initialAttackerUserId))
         assertTrue(actual = !outcome.isMatchFinished)
@@ -1199,7 +1264,11 @@ class PerformCombatActionUseCaseTest {
             )
 
         // Set up a miss to end the sequence
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 1,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1209,7 +1278,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(
             actual =
                 outcome
-                    .getPlayerById(userId = currentAction.originalTurnUserId)
+                    .getPlayerById(userId = currentAction.attackTurn.turnOwnerUserId)
                     .characterClass
                     .hasActedThisRound
         )
@@ -1286,7 +1355,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = necromancer)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getSummonMinionAction(necromancer = necromancer)
-        val necromancerUserId = currentAction.attackerUserId
+        val necromancerUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = necromancerUserId, die = dieRoll)
 
@@ -1320,7 +1389,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 2, secondDie = 2)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 2,
+            secondDie = 2,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1344,7 +1417,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = necromancer)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val necromancerUserId = currentAction.attackerUserId
+        val necromancerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = necromancerUserId, firstDie = 1, secondDie = 2)
 
@@ -1368,7 +1441,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = necromancer)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val necromancerUserId = currentAction.attackerUserId
+        val necromancerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = necromancerUserId, firstDie = 1, secondDie = 2)
 
@@ -1395,7 +1468,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = necromancer)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val necromancerUserId = currentAction.attackerUserId
+        val necromancerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = necromancerUserId, firstDie = 1, secondDie = 2)
 
@@ -1422,7 +1495,11 @@ class PerformCombatActionUseCaseTest {
         val currentAction = getNormalAttackAction()
         val necromancerUserId = currentAction.defenderUserId
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 1,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1444,7 +1521,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = necromancer)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getSummonMinionAction(necromancer = necromancer)
-        val necromancerUserId = currentAction.attackerUserId
+        val necromancerUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = necromancerUserId, die = 1)
 
@@ -1471,7 +1548,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = illusionist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = illusionistUserId, firstDie = 1, secondDie = 2)
 
@@ -1494,7 +1571,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = bard)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val bardUserId = currentAction.attackerUserId
+        val bardUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = bardUserId, firstDie = 1, secondDie = 2)
 
@@ -1525,7 +1602,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.Encore)
 
-        setupOneDiceRoll(userId = currentAction.attackerUserId, die = dieRoll)
+        setupOneDiceRoll(userId = currentAction.attackTurn.attackerUserId, die = dieRoll)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1544,7 +1621,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 5, secondDie = 5)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 5,
+            secondDie = 5,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1597,7 +1678,7 @@ class PerformCombatActionUseCaseTest {
             )
         val currentAction =
             getAbilityRollAction(purpose = charmPurpose, defenderUserId = THIRD_PLAYER_ID)
-        val charmedAttackerUserId = currentAction.attackerUserId
+        val charmedAttackerUserId = currentAction.attackTurn.attackerUserId
 
         // Act 1: Persuade charms the attacker into attacking the Bard's chosen target instead
         val outcome1 = performCombatAction.invoke(currentAction = currentAction)
@@ -1606,7 +1687,10 @@ class PerformCombatActionUseCaseTest {
         val nextAction1 = outcome1.nextCombatAction
         assertTrue(actual = nextAction1 is NextCombatAction.NormalAttack)
         assertEquals(actual = nextAction1.roll, expected = NormalAttackType.ArmorClass)
-        assertEquals(expected = charmedAttackerUserId, actual = nextAction1.attackerUserId)
+        assertEquals(
+            expected = charmedAttackerUserId,
+            actual = nextAction1.attackTurn.attackerUserId,
+        )
         assertEquals(expected = newTargetUserId, actual = nextAction1.defenderUserId)
         assertTrue(actual = nextAction1.isThisUserNext(userId = charmedAttackerUserId))
 
@@ -1626,7 +1710,10 @@ class PerformCombatActionUseCaseTest {
         val nextAction2 = outcome2.nextCombatAction
         assertTrue(actual = nextAction2 is NextCombatAction.NormalAttack)
         assertEquals(actual = nextAction2.roll, expected = NormalAttackType.Health)
-        assertEquals(expected = charmedAttackerUserId, actual = nextAction2.attackerUserId)
+        assertEquals(
+            expected = charmedAttackerUserId,
+            actual = nextAction2.attackTurn.attackerUserId,
+        )
         assertEquals(expected = newTargetUserId, actual = nextAction2.defenderUserId)
         assertTrue(actual = nextAction2.isThisUserNext(userId = charmedAttackerUserId))
         assertTrue(actual = !outcome2.isMatchFinished)
@@ -1647,7 +1734,7 @@ class PerformCombatActionUseCaseTest {
             )
         val currentAction =
             getAbilityRollAction(purpose = charmPurpose, defenderUserId = THIRD_PLAYER_ID)
-        val charmedAttackerUserId = currentAction.attackerUserId
+        val charmedAttackerUserId = currentAction.attackTurn.attackerUserId
 
         // Act 1: Persuade charms the attacker into attacking the Bard's chosen target instead
         val outcome1 = performCombatAction.invoke(currentAction = currentAction)
@@ -1746,7 +1833,7 @@ class PerformCombatActionUseCaseTest {
                 abilityToImpersonate =
                     OffensiveAbility.SummonMinion(skeletonCount = 1, golemCount = 0)
             )
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1771,7 +1858,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = illusionist)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getImpersonateAction(abilityToImpersonate = abilityToImpersonate)
-        val illusionistUserId = currentAction.attackerUserId
+        val illusionistUserId = currentAction.attackTurn.attackerUserId
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1797,7 +1884,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 4)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 3,
+            secondDie = 4,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -1987,14 +2078,13 @@ class PerformCombatActionUseCaseTest {
         val currentAction =
             CurrentCombatAction.NormalAttack(
                 roll = attackRoll,
-                attackerUserId = DEFAULT_ATTACKER_ID,
+                attackTurn = AttackTurn.Standard(attackerUserId = DEFAULT_ATTACKER_ID),
                 defenderUserId = DEFAULT_DEFENDER_ID,
-                originalTurnUserId = DEFAULT_ATTACKER_ID,
             )
         val defenderUserId = currentAction.defenderUserId
 
         setupTwoDiceRoll(
-            userId = currentAction.attackerUserId,
+            userId = currentAction.attackTurn.attackerUserId,
             firstDie = dieValue,
             secondDie = dieValue,
         )
@@ -2013,9 +2103,12 @@ class PerformCombatActionUseCaseTest {
 
         // The casting mage never takes its own splash damage (SS-054)
         val updatedMage =
-            outcome.getPlayerById(userId = currentAction.attackerUserId).characterClass
+            outcome.getPlayerById(userId = currentAction.attackTurn.attackerUserId).characterClass
         val initialMageHp =
-            arguments.playerMap.getValue(currentAction.attackerUserId).characterClass.hitPoints
+            arguments.playerMap
+                .getValue(currentAction.attackTurn.attackerUserId)
+                .characterClass
+                .hitPoints
         assertEquals(expected = initialMageHp, actual = updatedMage.hitPoints)
 
         // Splash damage (if 3 players)
@@ -2032,7 +2125,7 @@ class PerformCombatActionUseCaseTest {
                 value = outcome.messages.single { it is ArenaMessage.SpellPotency }
             )
         assertEquals(
-            expected = currentAction.attackerUserId,
+            expected = currentAction.attackTurn.attackerUserId,
             actual = spellPotencyMessage.mageUserId,
         )
         assertEquals(expected = defenderUserId, actual = spellPotencyMessage.mainTargetUserId)
@@ -2066,7 +2159,7 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2077,7 +2170,9 @@ class PerformCombatActionUseCaseTest {
         val nextAction = outcome.nextCombatAction
         assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.Teleport)
-        assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
+        assertTrue(
+            actual = nextAction.isThisUserNext(userId = currentAction.attackTurn.attackerUserId)
+        )
         assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.defenderUserId))
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -2097,7 +2192,7 @@ class PerformCombatActionUseCaseTest {
         val currentAction = getAbilityRollAction(purpose = purpose)
 
         val attackerRoll = 4
-        setupOneDiceRoll(userId = currentAction.attackerUserId, die = attackerRoll)
+        setupOneDiceRoll(userId = currentAction.attackTurn.attackerUserId, die = attackerRoll)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2111,7 +2206,9 @@ class PerformCombatActionUseCaseTest {
         assertEquals(expected = null, actual = teleport.defenderRoll.roll)
         // Both combatants stay active until each has rolled their own die.
         assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.defenderUserId))
-        assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
+        assertTrue(
+            actual = nextAction.isThisUserNext(userId = currentAction.attackTurn.attackerUserId)
+        )
         assertTrue(actual = !outcome.isMatchFinished)
     }
 
@@ -2161,7 +2258,9 @@ class PerformCombatActionUseCaseTest {
             val nextAction = outcome.nextCombatAction
             assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
             assertEquals(actual = nextAction.roll, expected = NormalAttackType.Health)
-            assertTrue(actual = nextAction.isThisUserNext(userId = currentAction.attackerUserId))
+            assertTrue(
+                actual = nextAction.isThisUserNext(userId = currentAction.attackTurn.attackerUserId)
+            )
         }
         assertTrue(actual = !outcome.isMatchFinished)
     }
@@ -2189,7 +2288,7 @@ class PerformCombatActionUseCaseTest {
         val currentAction = getAbilityRollAction(purpose = purpose)
 
         val attackerDie = 3
-        setupOneDiceRoll(userId = currentAction.attackerUserId, die = attackerDie)
+        setupOneDiceRoll(userId = currentAction.attackTurn.attackerUserId, die = attackerDie)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2270,7 +2369,7 @@ class PerformCombatActionUseCaseTest {
         val currentAction = getHealthAttackAction()
         val paladinUserId = currentAction.defenderUserId
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId)
+        setupTwoDiceRoll(userId = currentAction.attackTurn.attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2368,7 +2467,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = paladinUserId))
 
         val updatedAttacker =
-            outcome.getPlayerById(userId = currentAction.attackerUserId).characterClass
+            outcome.getPlayerById(userId = currentAction.attackTurn.attackerUserId).characterClass
 
         assertEquals(
             expected = attackerStartingHitPoints - wrathDamage,
@@ -2403,7 +2502,9 @@ class PerformCombatActionUseCaseTest {
             actual =
                 outcome.messages.contains(
                     element =
-                        ArenaMessage.KillingMomentum(attackerUserId = currentAction.attackerUserId)
+                        ArenaMessage.KillingMomentum(
+                            attackerUserId = currentAction.attackTurn.attackerUserId
+                        )
                 )
         )
         assertTrue(actual = !outcome.isMatchFinished)
@@ -2419,7 +2520,7 @@ class PerformCombatActionUseCaseTest {
             )
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Wrath)
-        val bardUserId = currentAction.attackerUserId
+        val bardUserId = currentAction.attackTurn.attackerUserId
 
         setupOneDiceRoll(userId = currentAction.defenderUserId, die = 4)
 
@@ -2447,7 +2548,11 @@ class PerformCombatActionUseCaseTest {
         val currentAction = getNormalAttackAction()
 
         val spellPotencyTotal = 6
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 3, secondDie = 3)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 3,
+            secondDie = 3,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2485,7 +2590,7 @@ class PerformCombatActionUseCaseTest {
         val prayerAction =
             getAbilityRollAction(
                 purpose = AbilityAction.Passive.HolyShield.Prayer,
-                attackerUserId = currentAction.attackerUserId,
+                attackerUserId = currentAction.attackTurn.attackerUserId,
                 defenderUserId = THIRD_PLAYER_ID,
             )
         setupTwoDiceRoll(userId = THIRD_PLAYER_ID, firstDie = 4, secondDie = 6)
@@ -2499,7 +2604,7 @@ class PerformCombatActionUseCaseTest {
         // The Paladin's Wrath deals unblockable damage to the Mage, the splash attacker.
         val mageHitPointsBeforeWrath =
             prayerOutcome
-                .getPlayerById(userId = currentAction.attackerUserId)
+                .getPlayerById(userId = currentAction.attackTurn.attackerUserId)
                 .characterClass
                 .hitPoints
         val wrathArguments =
@@ -2512,7 +2617,7 @@ class PerformCombatActionUseCaseTest {
         val wrathAction =
             getAbilityRollAction(
                 purpose = AbilityAction.Passive.HolyShield.Wrath,
-                attackerUserId = currentAction.attackerUserId,
+                attackerUserId = currentAction.attackTurn.attackerUserId,
                 defenderUserId = THIRD_PLAYER_ID,
             )
         val wrathDamage = 4
@@ -2524,7 +2629,7 @@ class PerformCombatActionUseCaseTest {
             expected = mageHitPointsBeforeWrath - wrathDamage,
             actual =
                 wrathOutcome
-                    .getPlayerById(userId = currentAction.attackerUserId)
+                    .getPlayerById(userId = currentAction.attackTurn.attackerUserId)
                     .characterClass
                     .hitPoints,
         )
@@ -2547,7 +2652,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getPrepareAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 6, secondDie = 6)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 6,
+            secondDie = 6,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2582,7 +2691,11 @@ class PerformCombatActionUseCaseTest {
 
         // 1. Duelist attacks Paladin with 12
         val currentAction1 = getPrepareAttackAction()
-        setupTwoDiceRoll(userId = currentAction1.attackerUserId, firstDie = 6, secondDie = 6)
+        setupTwoDiceRoll(
+            userId = currentAction1.attackTurn.attackerUserId,
+            firstDie = 6,
+            secondDie = 6,
+        )
         val performCombatAction1 = getPerformCombatAction(arguments = arguments)
         val outcome1 = performCombatAction1.invoke(currentAction = currentAction1)
 
@@ -2607,7 +2720,11 @@ class PerformCombatActionUseCaseTest {
 
         val currentAction2 =
             getNormalAttackAction(attackerUserId = mageUserId, defenderUserId = duelistUserId)
-        setupTwoDiceRoll(userId = currentAction2.attackerUserId, firstDie = 1, secondDie = 1)
+        setupTwoDiceRoll(
+            userId = currentAction2.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 1,
+        )
         val performCombatAction2 = getPerformCombatAction(arguments = arguments2)
         val outcome2 = performCombatAction2.invoke(currentAction = currentAction2)
 
@@ -2628,7 +2745,11 @@ class PerformCombatActionUseCaseTest {
         val currentAction = getPrepareAttackAction()
         val paladinUserId = currentAction.defenderUserId
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 5, secondDie = 5)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 5,
+            secondDie = 5,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2662,7 +2783,7 @@ class PerformCombatActionUseCaseTest {
         val secondDie = 4
         val bonus = 1
         setupTwoDiceRoll(
-            userId = currentAction.attackerUserId,
+            userId = currentAction.attackTurn.attackerUserId,
             firstDie = firstDie,
             secondDie = secondDie,
             bonus = bonus,
@@ -2712,7 +2833,7 @@ class PerformCombatActionUseCaseTest {
         assertTrue(actual = nextAction is NextCombatAction.NormalAttack)
 
         assertIs<NormalAttackType>(value = nextAction.roll)
-        assertEquals(expected = duelistUserId, actual = nextAction.attackerUserId)
+        assertEquals(expected = duelistUserId, actual = nextAction.attackTurn.attackerUserId)
     }
 
     @Test
@@ -2730,7 +2851,7 @@ class PerformCombatActionUseCaseTest {
 
         // Set up a miss
         setupTwoDiceRoll(
-            userId = currentAction.attackerUserId,
+            userId = currentAction.attackTurn.attackerUserId,
             firstDie = 1,
             secondDie = 1,
             bonus = 1,
@@ -2752,7 +2873,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val rogueUserId = currentAction.attackerUserId
+        val rogueUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = rogueUserId, firstDie = 5, secondDie = 5)
         every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = rogueUserId)
@@ -2799,7 +2920,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val gamblerUserId = currentAction.attackerUserId
+        val gamblerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = gamblerUserId, firstDie = 3, secondDie = 3)
         every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = gamblerUserId)
@@ -2823,7 +2944,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val gamblerUserId = currentAction.attackerUserId
+        val gamblerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = gamblerUserId, firstDie = 1, secondDie = 2)
 
@@ -2849,7 +2970,7 @@ class PerformCombatActionUseCaseTest {
         val arguments = createTwoPlayerArguments(attackerClass = gambler)
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getHealthAttackAction()
-        val gamblerUserId = currentAction.attackerUserId
+        val gamblerUserId = currentAction.attackTurn.attackerUserId
 
         setupTwoDiceRoll(userId = gamblerUserId, firstDie = 1, secondDie = 2)
 
@@ -2873,7 +2994,11 @@ class PerformCombatActionUseCaseTest {
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getNormalAttackAction()
 
-        setupTwoDiceRoll(userId = currentAction.attackerUserId, firstDie = 1, secondDie = 1)
+        setupTwoDiceRoll(
+            userId = currentAction.attackTurn.attackerUserId,
+            firstDie = 1,
+            secondDie = 1,
+        )
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -2899,6 +3024,16 @@ class PerformCombatActionUseCaseTest {
         private const val DEFAULT_DEFENDER_ID = "defenderId"
         private const val THIRD_PLAYER_ID = "thirdPlayerId"
 
+        private fun attackTurnOf(attackerUserId: String, turnOwnerUserId: String): AttackTurn =
+            if (attackerUserId == turnOwnerUserId) {
+                AttackTurn.Standard(attackerUserId = attackerUserId)
+            } else {
+                AttackTurn.RiposteReversal(
+                    attackerUserId = attackerUserId,
+                    turnOwnerUserId = turnOwnerUserId,
+                )
+            }
+
         private fun getNormalAttackAction(
             attackerUserId: String = DEFAULT_ATTACKER_ID,
             defenderUserId: String = DEFAULT_DEFENDER_ID,
@@ -2906,17 +3041,19 @@ class PerformCombatActionUseCaseTest {
         ) =
             CurrentCombatAction.NormalAttack(
                 roll = NormalAttackType.ArmorClass,
-                attackerUserId = attackerUserId,
+                attackTurn =
+                    attackTurnOf(
+                        attackerUserId = attackerUserId,
+                        turnOwnerUserId = originalTurnUserId,
+                    ),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
             )
 
         private fun getHealthAttackAction() =
             CurrentCombatAction.NormalAttack(
                 roll = NormalAttackType.Health,
-                attackerUserId = DEFAULT_ATTACKER_ID,
+                attackTurn = AttackTurn.Standard(attackerUserId = DEFAULT_ATTACKER_ID),
                 defenderUserId = DEFAULT_DEFENDER_ID,
-                originalTurnUserId = DEFAULT_ATTACKER_ID,
             )
 
         private fun getAbilityRollAction(
@@ -2928,9 +3065,12 @@ class PerformCombatActionUseCaseTest {
         ) =
             CurrentCombatAction.AbilityRoll(
                 purpose = purpose,
-                attackerUserId = attackerUserId,
+                attackTurn =
+                    attackTurnOf(
+                        attackerUserId = attackerUserId,
+                        turnOwnerUserId = originalTurnUserId,
+                    ),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 rollingUserId = rollingUserId,
             )
 

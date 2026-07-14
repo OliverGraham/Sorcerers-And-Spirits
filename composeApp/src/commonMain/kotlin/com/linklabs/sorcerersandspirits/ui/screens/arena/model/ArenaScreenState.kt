@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
+import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
+import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
@@ -81,6 +83,8 @@ sealed interface ArenaState {
         val isNewRound: Boolean,
         val doublesBonus: DoublesBonus?,
         val isMirrorImagePenaltyActive: Boolean,
+        val turnOwnerUserId: String,
+        val lockedTargetUserId: String?,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
@@ -88,16 +92,7 @@ sealed interface ArenaState {
         val isItThisUsersTurn = userPlayerId in activeUserIds
 
         // TODO: Obviously, this was supposed to simply come from the domain
-        val turnOwnerUserId = combatActionState.getTurnOwnerUserId()
-
-        // TODO: Obviously, this was supposed to simply come from the domain
-        val attackingUserId = combatActionState.getAttackingUserId()
-
-        // TODO: Obviously, this was supposed to simply come from the domain
         val combatControls = deriveCombatControls()
-
-        // TODO: Obviously, this was supposed to simply come from the domain
-        val lockedTargetUserId = deriveLockedTargetUserId()
     }
 
     @Immutable
@@ -109,13 +104,6 @@ sealed interface ArenaState {
         val winner = survivors.singleOrNull()
         val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
     }
-}
-
-private fun ArenaState.Combat.deriveLockedTargetUserId(): String? {
-    val inFlightAttack = combatActionState as? CombatActionState.NormalAttack ?: return null
-    val isUsersOwnAttack = inFlightAttack.attackerUserId == userPlayerId
-
-    return if (isUsersOwnAttack) inFlightAttack.defenderUserId else null
 }
 
 @Immutable
@@ -191,6 +179,8 @@ internal fun ArenaMatch.toUpdatedState(
                     isNewRound = isNewRound,
                     doublesBonus = doublesBonus,
                     isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
+                    turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
+                    lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
                 )
             }
 

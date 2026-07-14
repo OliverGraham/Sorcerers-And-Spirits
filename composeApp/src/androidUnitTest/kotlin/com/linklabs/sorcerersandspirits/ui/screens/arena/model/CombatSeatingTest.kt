@@ -351,6 +351,8 @@ class CombatSeatingTest {
             isNewRound = false,
             doublesBonus = null,
             isMirrorImagePenaltyActive = false,
+            turnOwnerUserId = USER_ID,
+            lockedTargetUserId = null,
         )
 
     private fun normalAttack(

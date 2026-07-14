@@ -408,6 +408,8 @@ class ArenaScreenStateTest {
             isNewRound = false,
             doublesBonus = doublesBonus,
             isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
+            turnOwnerUserId = USER_ID,
+            lockedTargetUserId = null,
         )
 
     private fun holyShieldRoll(

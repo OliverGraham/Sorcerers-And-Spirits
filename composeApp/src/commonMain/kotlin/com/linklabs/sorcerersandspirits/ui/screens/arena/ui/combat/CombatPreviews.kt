@@ -269,6 +269,8 @@ private fun previewCombatState(
         isNewRound = true,
         doublesBonus = null,
         isMirrorImagePenaltyActive = false,
+        turnOwnerUserId = userId,
+        lockedTargetUserId = null,
     )
 }
 

@@ -19,7 +19,7 @@ class ArenaMessageStateTest {
                 rerolledMirrorImageDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 5, reroll = 4),
                 attackerUserId = ATTACKER_ID,
-                outcome = NormalRollMessageType.ArmorClassMiss,
+                messageType = NormalRollMessageType.ArmorClassMiss,
             )
 
         val state = message.toSingleState()
@@ -38,7 +38,7 @@ class ArenaMessageStateTest {
                 rerolledMirrorImageDie =
                     AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6, reroll = 1),
                 attackerUserId = ATTACKER_ID,
-                outcome = NormalRollMessageType.ArmorClassMiss,
+                messageType = NormalRollMessageType.ArmorClassMiss,
             )
 
         val state = message.toSingleState()

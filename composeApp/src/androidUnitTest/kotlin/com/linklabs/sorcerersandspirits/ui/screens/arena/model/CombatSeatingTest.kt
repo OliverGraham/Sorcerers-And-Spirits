@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -351,9 +352,21 @@ class CombatSeatingTest {
             isNewRound = false,
             doublesBonus = null,
             isMirrorImagePenaltyActive = false,
-            turnOwnerUserId = USER_ID,
-            lockedTargetUserId = null,
+            turnOwnerUserId = turnOwner(combatActionState = combatActionState),
+            lockedTargetUserId = lockedTarget(combatActionState = combatActionState),
         )
+
+    private fun turnOwner(combatActionState: CombatActionState): String =
+        when (combatActionState) {
+            is CombatActionState.Idle -> combatActionState.activeUserIds.first()
+            is CombatActionState.NormalAttack -> combatActionState.attackTurn.turnOwnerUserId
+            is CombatActionState.AbilityRoll -> combatActionState.attackTurn.turnOwnerUserId
+        }
+
+    private fun lockedTarget(combatActionState: CombatActionState): String? {
+        val attack = combatActionState as? CombatActionState.NormalAttack ?: return null
+        return if (attack.attackTurn.attackerUserId == USER_ID) attack.defenderUserId else null
+    }
 
     private fun attackTurnOf(attackerUserId: String, turnOwnerUserId: String): AttackTurn =
         if (attackerUserId == turnOwnerUserId) {

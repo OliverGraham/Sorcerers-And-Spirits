@@ -377,7 +377,7 @@ class CombatAnimationCueTest {
                     id = MESSAGE_ID,
                     illusionistUserId = DEFENDER_ID,
                     phase = MirrorImagePhase.Split,
-                    outcome = null,
+                    messageType = null,
                 ),
             actual = cue,
         )
@@ -413,7 +413,7 @@ class CombatAnimationCueTest {
                 id = MESSAGE_ID,
                 illusionistUserId = DEFENDER_ID,
                 attackerName = "Mage",
-                outcome = outcome,
+                messageType = outcome,
             )
             .combatAnimationCue
 

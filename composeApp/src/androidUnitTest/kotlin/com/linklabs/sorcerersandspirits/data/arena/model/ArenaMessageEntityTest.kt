@@ -122,7 +122,7 @@ class ArenaMessageEntityTest {
                 ArenaMessage.MirrorImage.Pass(
                     illusionistUserId = "illusionist",
                     attackerUserId = "attacker",
-                    outcome = NormalRollMessageType.ArmorClassMiss,
+                    messageType = NormalRollMessageType.ArmorClassMiss,
                 ),
                 ArenaMessage.MirrorImage.TemptFate(
                     illusionistUserId = "illusionist",
@@ -132,7 +132,7 @@ class ArenaMessageEntityTest {
                             reroll = 6,
                         ),
                     attackerUserId = "attacker",
-                    outcome = NormalRollMessageType.Knockout,
+                    messageType = NormalRollMessageType.Knockout,
                 ),
                 ArenaMessage.SpellPotency(
                     mageUserId = "mage",

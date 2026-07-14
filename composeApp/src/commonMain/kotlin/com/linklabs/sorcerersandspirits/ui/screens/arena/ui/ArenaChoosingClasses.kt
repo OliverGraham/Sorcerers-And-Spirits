@@ -101,16 +101,17 @@ private fun ArenaState.ChoosingClasses.ChoosingClassesCards(
 @Composable
 private fun ArenaState.ChoosingClasses.ConfirmSelectionButton() {
     val onClassConfirmed = ArenaActionsProvider.current.onChooseCharacterClass
+    val confirmableClass = selectedClass?.takeIf { it.type !in unavailableClasses }
 
     Spacer(modifier = Modifier.height(height = 24.dp))
 
     AppButton(
         onClick = {
-            if (selectedClass != null) {
-                onClassConfirmed(playerMap.getValue(key = userPlayerId), selectedClass)
+            if (confirmableClass != null) {
+                onClassConfirmed(playerMap.getValue(key = userPlayerId), confirmableClass)
             }
         },
-        isEnabled = selectedClass != null,
+        isEnabled = confirmableClass != null,
         modifier = Modifier.padding(bottom = 16.dp),
     ) {
         Text(text = stringResource(resource = Res.string.arena_choosing_classes_confirm))

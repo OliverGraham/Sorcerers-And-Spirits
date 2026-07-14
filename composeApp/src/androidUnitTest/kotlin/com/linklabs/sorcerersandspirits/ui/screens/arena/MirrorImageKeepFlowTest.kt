@@ -26,12 +26,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollResult as RollResultState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.latestRoll
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveTargetUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toStates
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test

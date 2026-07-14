@@ -406,8 +406,13 @@ class ArenaScreenStateTest {
             doublesBonus = doublesBonus,
             isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
             turnOwnerUserId = USER_ID,
-            lockedTargetUserId = null,
+            lockedTargetUserId = lockedTarget(combatActionState = combatActionState),
         )
+
+    private fun lockedTarget(combatActionState: CombatActionState): String? {
+        val attack = combatActionState as? CombatActionState.NormalAttack ?: return null
+        return if (attack.attackTurn.attackerUserId == USER_ID) attack.defenderUserId else null
+    }
 
     private fun holyShieldRoll(
         action: AbilityActionState.Passive.HolyShield,

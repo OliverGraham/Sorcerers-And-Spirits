@@ -35,6 +35,7 @@ data class ArenaScreenState(
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
     val pendingFinishedState: ArenaState.Finished? = null,
+    val playbackMessages: List<PlayableMessage> = messages.map { it.toPlayable() },
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
 
@@ -42,7 +43,6 @@ data class ArenaScreenState(
     val isFinishPending: Boolean = pendingFinishedState != null
 
     internal val latestRoll: LatestRoll = messages.latestRoll()
-    val flashMessages: List<ArenaMessageState> = messages.filterNot { it.flashCallout == null }
     val diceBadge: DiceBadge? = deriveDiceBadge()
 
     private fun deriveDiceBadge(): DiceBadge? {

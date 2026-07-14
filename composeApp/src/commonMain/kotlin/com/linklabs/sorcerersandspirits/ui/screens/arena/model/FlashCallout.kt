@@ -124,130 +124,120 @@ sealed interface FlashCallout {
     @Immutable data object MirrorHolds : FlashCallout
 }
 
-/**
- * The flash call-out for a message, or null when the message is log-only (SS-185). Only messages
- * that involve a die/dice roll flash: every normal-attack outcome and the roll steps of an ability
- * (the roll itself and its immediate resolution). An ability's dice-less announcements and
- * reactions stay in the log — the [Trigger] steps, Impersonate (which rolls nothing), and
- * downstream effects like Killing Momentum, Dodge, and Persuade's charm/lull/redirect. The pure
- * game-flow messages (new round/turn, joining, class choice) are log-only too.
- * [ArenaScreenState.flashMessages] filters the nulls out; the exhaustive [when] makes a new message
- * type a compile error until its flash is chosen.
- */
-val ArenaMessageState.flashCallout: FlashCallout?
-    get() =
-        when (this) {
-            is ArenaMessageState.NewRound,
-            is ArenaMessageState.ChoseCharacterClass,
-            is ArenaMessageState.ConnectedToArena,
-            is ArenaMessageState.NewTurn -> null
+/** The flash call-out for a message, or null when the message is log-only. */
+fun ArenaMessageState.toFlashCallout() =
+    when (this) {
+        is ArenaMessageState.NewRound,
+        is ArenaMessageState.ChoseCharacterClass,
+        is ArenaMessageState.ConnectedToArena,
+        is ArenaMessageState.NewTurn -> null
 
-            is ArenaMessageState.NormalRoll ->
-                when (type) {
-                    NormalRollMessageType.ArmorClassHit ->
-                        FlashCallout.Hit(
-                            actingClassType = attackerClassType,
-                            total = total,
-                            doublesBonus = bonus,
-                        )
+        is ArenaMessageState.NormalRoll ->
+            when (type) {
+                NormalRollMessageType.ArmorClassHit ->
+                    FlashCallout.Hit(
+                        actingClassType = attackerClassType,
+                        total = total,
+                        doublesBonus = bonus,
+                    )
 
-                    NormalRollMessageType.ArmorClassMiss -> FlashCallout.Miss
+                NormalRollMessageType.ArmorClassMiss -> FlashCallout.Miss
 
-                    NormalRollMessageType.Damage ->
-                        FlashCallout.Damage(
-                            amount = total,
-                            actingClassType = attackerClassType,
-                            doublesBonus = bonus,
-                        )
+                NormalRollMessageType.Damage ->
+                    FlashCallout.Damage(
+                        amount = total,
+                        actingClassType = attackerClassType,
+                        doublesBonus = bonus,
+                    )
 
-                    NormalRollMessageType.Knockout ->
-                        FlashCallout.Knockout(actingClassType = attackerClassType)
-                }
+                NormalRollMessageType.Knockout ->
+                    FlashCallout.Knockout(actingClassType = attackerClassType)
+            }
 
-            is ArenaMessageState.KillingMomentum,
-            is ArenaMessageState.Dodge -> null
+        is ArenaMessageState.KillingMomentum,
+        is ArenaMessageState.Dodge -> null
 
-            is ArenaMessageState.Teleport.Trigger -> null
+        is ArenaMessageState.Teleport.Trigger -> null
 
-            is ArenaMessageState.Teleport.Roll -> FlashCallout.TeleportRoll(die = singleDie)
+        is ArenaMessageState.Teleport.Roll -> FlashCallout.TeleportRoll(die = singleDie)
 
-            is ArenaMessageState.Teleport.Result ->
-                if (didDefenderEscape) FlashCallout.Escaped else FlashCallout.Caught
+        is ArenaMessageState.Teleport.Result ->
+            if (didDefenderEscape) FlashCallout.Escaped else FlashCallout.Caught
 
-            is ArenaMessageState.LuckyCoin.Trigger -> null
+        is ArenaMessageState.LuckyCoin.Trigger -> null
 
-            is ArenaMessageState.LuckyCoin.HighRollerTrigger -> null
+        is ArenaMessageState.LuckyCoin.HighRollerTrigger -> null
 
-            is ArenaMessageState.LuckyCoin.Flip ->
-                if (didStopAttack) {
-                    FlashCallout.AttackStopped
-                } else {
-                    FlashCallout.AttackContinues(die = singleDie)
-                }
+        is ArenaMessageState.LuckyCoin.Flip ->
+            if (didStopAttack) {
+                FlashCallout.AttackStopped
+            } else {
+                FlashCallout.AttackContinues(die = singleDie)
+            }
 
-            is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-                if (isKnockout) FlashCallout.Knockout() else FlashCallout.Damage(amount = singleDie)
+        is ArenaMessageState.LuckyCoin.HighRollerDamage ->
+            if (isKnockout) FlashCallout.Knockout() else FlashCallout.Damage(amount = singleDie)
 
-            is ArenaMessageState.Riposte.Trigger -> null
+        is ArenaMessageState.Riposte.Trigger -> null
 
-            is ArenaMessageState.Riposte.EnGarde ->
-                if (isSuccessful) FlashCallout.Reversed else FlashCallout.CounterFailed
+        is ArenaMessageState.Riposte.EnGarde ->
+            if (isSuccessful) FlashCallout.Reversed else FlashCallout.CounterFailed
 
-            is ArenaMessageState.SummonMinion ->
-                when (outcome) {
-                    SummonMinionOutcome.Fizzle -> FlashCallout.Fizzle
+        is ArenaMessageState.SummonMinion ->
+            when (outcome) {
+                SummonMinionOutcome.Fizzle -> FlashCallout.Fizzle
 
-                    SummonMinionOutcome.Skeleton -> FlashCallout.Skeleton
+                SummonMinionOutcome.Skeleton -> FlashCallout.Skeleton
 
-                    SummonMinionOutcome.SkeletonAndHeal ->
-                        FlashCallout.SkeletonAndHeal(necromancerName = necroName)
+                SummonMinionOutcome.SkeletonAndHeal ->
+                    FlashCallout.SkeletonAndHeal(necromancerName = necroName)
 
-                    SummonMinionOutcome.Golem -> FlashCallout.Golem(necromancerName = necroName)
-                }
+                SummonMinionOutcome.Golem -> FlashCallout.Golem(necromancerName = necroName)
+            }
 
-            is ArenaMessageState.Persuade.Trigger -> null
+        is ArenaMessageState.Persuade.Trigger -> null
 
-            is ArenaMessageState.Persuade.StrumLute ->
-                if (isSuccessful) {
-                    FlashCallout.AttackStopped
-                } else {
-                    FlashCallout.AttackContinues(die = diceRoll)
-                }
+        is ArenaMessageState.Persuade.StrumLute ->
+            if (isSuccessful) {
+                FlashCallout.AttackStopped
+            } else {
+                FlashCallout.AttackContinues(die = diceRoll)
+            }
 
-            is ArenaMessageState.Persuade.CharmActivation,
-            is ArenaMessageState.Persuade.Lull,
-            is ArenaMessageState.Persuade.Charm -> null
+        is ArenaMessageState.Persuade.CharmActivation,
+        is ArenaMessageState.Persuade.Lull,
+        is ArenaMessageState.Persuade.Charm -> null
 
-            is ArenaMessageState.Encore.Trigger -> null
+        is ArenaMessageState.Encore.Trigger -> null
 
-            is ArenaMessageState.Encore.Roll ->
-                if (isSuccessful) FlashCallout.EncoreAgain else FlashCallout.NoEncore
+        is ArenaMessageState.Encore.Roll ->
+            if (isSuccessful) FlashCallout.EncoreAgain else FlashCallout.NoEncore
 
-            is ArenaMessageState.Impersonate -> null
+        is ArenaMessageState.Impersonate -> null
 
-            is ArenaMessageState.MirrorImage.Trigger,
-            is ArenaMessageState.MirrorImage.Pass -> null
+        is ArenaMessageState.MirrorImage.Trigger,
+        is ArenaMessageState.MirrorImage.Pass -> null
 
-            is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(finalRoll = finalRoll)
+        is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(finalRoll = finalRoll)
 
-            is ArenaMessageState.SpellPotency -> FlashCallout.SpellPotency
+        is ArenaMessageState.SpellPotency -> FlashCallout.SpellPotency
 
-            is ArenaMessageState.HolyShield.Trigger -> null
+        is ArenaMessageState.HolyShield.Trigger -> null
 
-            is ArenaMessageState.HolyShield.Prayer ->
-                if (didSurvive) FlashCallout.Saved else FlashCallout.StruckDown
+        is ArenaMessageState.HolyShield.Prayer ->
+            if (didSurvive) FlashCallout.Saved else FlashCallout.StruckDown
 
-            is ArenaMessageState.HolyShield.Wrath -> FlashCallout.HolyWrath
+        is ArenaMessageState.HolyShield.Wrath -> FlashCallout.HolyWrath
 
-            is ArenaMessageState.AllIn ->
-                when (outcome) {
-                    AllInOutcome.SelfKnockout -> FlashCallout.Knockout()
-                    AllInOutcome.DoubleAttack -> FlashCallout.AllInStrikeTwice
-                    AllInOutcome.NoEffect -> FlashCallout.AllIn
-                }
+        is ArenaMessageState.AllIn ->
+            when (outcome) {
+                AllInOutcome.SelfKnockout -> FlashCallout.Knockout()
+                AllInOutcome.DoubleAttack -> FlashCallout.AllInStrikeTwice
+                AllInOutcome.NoEffect -> FlashCallout.AllIn
+            }
 
-            is ArenaMessageState.PrepareAttack ->
-                if (isSuccessful) FlashCallout.PreparedStrike else FlashCallout.AttackWhiffed
+        is ArenaMessageState.PrepareAttack ->
+            if (isSuccessful) FlashCallout.PreparedStrike else FlashCallout.AttackWhiffed
 
-            is ArenaMessageState.Doubles -> FlashCallout.Doubles
-        }
+        is ArenaMessageState.Doubles -> FlashCallout.Doubles
+    }

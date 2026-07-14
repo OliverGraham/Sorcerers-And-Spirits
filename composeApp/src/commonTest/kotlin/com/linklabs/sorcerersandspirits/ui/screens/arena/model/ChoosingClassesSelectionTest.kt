@@ -5,8 +5,6 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
 
 class ChoosingClassesSelectionTest {
 
@@ -16,15 +14,14 @@ class ChoosingClassesSelectionTest {
         characterClasses.first { it.type == type }
 
     @Test
-    fun `a previous selection taken by another player is dropped, never re-selected (SS-187)`() {
+    fun `a previous selection taken by another player is kept, not moved to Rogue (SS-187)`() {
         val resolved =
             characterClasses.resolveSelectedClass(
-                previousSelection = classOfType(type = CharacterClassType.Rogue),
-                unavailableClasses = setOf(CharacterClassType.Rogue),
+                previousSelection = classOfType(type = CharacterClassType.Mage),
+                unavailableClasses = setOf(CharacterClassType.Mage),
             )
 
-        assertNotNull(actual = resolved)
-        assertTrue(actual = resolved.type != CharacterClassType.Rogue)
+        assertEquals(expected = CharacterClassType.Mage, actual = resolved?.type)
     }
 
     @Test

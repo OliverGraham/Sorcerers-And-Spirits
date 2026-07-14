@@ -1,10 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.audio
 
 import android.content.Context
-import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import com.linklabs.sorcerersandspirits.domain.audio.MusicPlayer
 import com.linklabs.sorcerersandspirits.domain.audio.MusicTrack
@@ -16,7 +14,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-@OptIn(UnstableApi::class)
 class AndroidMusicPlayer(private val context: Context) : MusicPlayer {
 
     private val scope = CoroutineScope(context = Dispatchers.Main + SupervisorJob())

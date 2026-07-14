@@ -288,18 +288,11 @@ private fun List<CharacterClassState>.defaultSelectedClass(
     return if (isRogueAvailable) rogue else firstOrNull { it.type !in unavailableClasses }
 }
 
-/**
- * The class to keep selected as the shared match state updates: the user's [previousSelection] when
- * it is still available, otherwise a fresh [defaultSelectedClass]. Dropping a previous selection
- * that another player has since taken is what stops a stale local pick — everyone defaults to Rogue
- * (SS-176) — from being confirmed into a duplicate class (SS-187).
- */
 internal fun List<CharacterClassState>.resolveSelectedClass(
     previousSelection: CharacterClassState?,
     unavailableClasses: Set<CharacterClassType>,
 ): CharacterClassState? =
-    previousSelection?.takeIf { it.type !in unavailableClasses }
-        ?: defaultSelectedClass(unavailableClasses = unavailableClasses)
+    previousSelection ?: defaultSelectedClass(unavailableClasses = unavailableClasses)
 
 private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     userId: String

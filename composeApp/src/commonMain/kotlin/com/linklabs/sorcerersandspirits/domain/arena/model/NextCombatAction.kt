@@ -22,3 +22,15 @@ sealed interface NextCombatAction {
         override val activeUserIds: Set<String>,
     ) : NextCombatAction
 }
+
+fun NextCombatAction.turnOwnerUserId(): String =
+    when (this) {
+        is NextCombatAction.Idle -> activeUserIds.first()
+        is NextCombatAction.NormalAttack -> originalTurnUserId
+        is NextCombatAction.AbilityRoll -> originalTurnUserId
+    }
+
+fun NextCombatAction.lockedTargetUserId(userId: String): String? {
+    val attack = this as? NextCombatAction.NormalAttack ?: return null
+    return if (attack.attackerUserId == userId) attack.defenderUserId else null
+}

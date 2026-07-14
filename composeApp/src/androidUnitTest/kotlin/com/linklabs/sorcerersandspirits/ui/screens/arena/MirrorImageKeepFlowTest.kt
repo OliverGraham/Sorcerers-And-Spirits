@@ -9,6 +9,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
+import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatAction
@@ -301,6 +303,8 @@ class MirrorImageKeepFlowTest {
             isNewRound = false,
             doublesBonus = null,
             isMirrorImagePenaltyActive = false,
+            turnOwnerUserId = roundTrippedAction.turnOwnerUserId(),
+            lockedTargetUserId = roundTrippedAction.lockedTargetUserId(userId = userPlayerId),
         )
     }
 

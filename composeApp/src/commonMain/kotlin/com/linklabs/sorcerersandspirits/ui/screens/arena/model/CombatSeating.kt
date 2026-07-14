@@ -37,14 +37,15 @@ internal fun ArenaState.Combat.seatingFor(
     isMatchEnding: Boolean,
     collapsingTargetUserId: String?,
 ): CombatSeating {
+    val actorUserId = actorUserId()
     val forcedSecondSeatUserId =
         (collapsingTargetUserId ?: holyShieldDefenderUserId())?.takeIf {
-            it in playerMap.keys && it != attackingUserId
+            it in playerMap.keys && it != actorUserId
         }
     val secondSeatUserId =
         forcedSecondSeatUserId
             ?: seatedTargetUserId(targetUserId = targetUserId, isMatchEnding = isMatchEnding)
-    val seatedUserIds = setOfNotNull(attackingUserId, secondSeatUserId)
+    val seatedUserIds = setOfNotNull(actorUserId, secondSeatUserId)
     val (topSeatUserId, bottomSeatUserId) = assignSeats(seatedUserIds = seatedUserIds)
 
     return CombatSeating(
@@ -89,8 +90,15 @@ private fun ArenaState.Combat.seatedTargetUserId(
     val target = playerMap[targetUserId] ?: return null
     val isKnockedOutMidMatch = !target.characterClass.isConscious && !isMatchEnding
     if (isKnockedOutMidMatch) return null
-    return if (target.userId == attackingUserId) null else target.userId
+    return if (target.userId == actorUserId()) null else target.userId
 }
+
+private fun ArenaState.Combat.actorUserId(): String =
+    when (val action = combatActionState) {
+        is CombatActionState.Idle -> action.activeUserIds.first()
+        is CombatActionState.NormalAttack -> action.attackerUserId
+        is CombatActionState.AbilityRoll -> action.attackerUserId
+    }
 
 /**
  * Assigns the seated players to the (top, bottom) seats by identity. The user's own player always

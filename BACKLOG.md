@@ -110,11 +110,19 @@ are archived in [COMPLETED.md](COMPLETED.md).
   wording/color),
   SS-029 (string resources).
 
-### SS-029 — Use StringResources in ArenaCombatControl
+### SS-029 — Move combat-action availability to the domain + StringResources in ArenaCombatControl
 
 - [ ] Not completed
-- **Source:** `ArenaCombatControl.kt:164` (`// TODO: Always StringResources`)
-- **Goal:** Replace hardcoded strings with string resources.
+- **Source:** `ArenaCombatControl.kt` (`// TODO(SS-029): Always StringResources`), `deriveCombatControls`
+- **Goal (Phase 2 of the ArenaScreenState TODO cleanup):**
+  - Move the combat-action *availability* logic (`ArenaState.Combat.deriveCombatControls`) into the
+    domain, producing plain domain action types for the current user (no UI types, no labels). The
+    domain already has the userId + playerMap to compute this.
+  - Remove the hardcoded `label: String` from `ArenaCombatControl`; the UI maps action type →
+    `stringResource` at render time (the type carries the identity). Dynamic labels (e.g. Mirror
+    Image "Reroll the 3") carry the die value as data and use a parameterized string resource.
+- **Note:** Phase 1 (turn owner / locked target / attacker resolution) already moved to the domain;
+  this is the remaining piece.
 
 ### SS-138 — Export head-icon stat icons as SVG (speed, armor, hitpoints)
 

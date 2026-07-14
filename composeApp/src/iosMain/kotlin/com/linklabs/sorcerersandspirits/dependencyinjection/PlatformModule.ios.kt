@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import com.linklabs.sorcerersandspirits.data.audio.IosMusicPlayer
+import com.linklabs.sorcerersandspirits.data.audio.IosSoundEffectPlayer
 import com.linklabs.sorcerersandspirits.data.authentication.IosSocialSignInProvider
 import com.linklabs.sorcerersandspirits.data.connectivity.IosConnectivityObserver
 import com.linklabs.sorcerersandspirits.data.haptics.IosHaptics
@@ -9,6 +11,8 @@ import com.linklabs.sorcerersandspirits.data.profile.PENDING_STATS_DATASTORE_FIL
 import com.linklabs.sorcerersandspirits.data.profile.createPendingStatsDataStore
 import com.linklabs.sorcerersandspirits.data.sensor.IosShakeDetector
 import com.linklabs.sorcerersandspirits.data.version.IosCurrentAppVersionProvider
+import com.linklabs.sorcerersandspirits.domain.audio.MusicPlayer
+import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.SocialSignInProvider
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.haptics.Haptics
@@ -26,6 +30,8 @@ actual fun platformModule(): Module = module {
     single<ConnectivityObserver> { IosConnectivityObserver() }
     single<ShakeDetector> { IosShakeDetector() }
     single<Haptics> { IosHaptics() }
+    single<MusicPlayer> { IosMusicPlayer() }
+    single<SoundEffectPlayer> { IosSoundEffectPlayer() }
     single<CurrentAppVersionProvider> { IosCurrentAppVersionProvider() }
     single<SocialSignInProvider> { IosSocialSignInProvider(bridge = get()) }
     single<DataStore<Preferences>> {

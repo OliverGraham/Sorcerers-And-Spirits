@@ -38,6 +38,8 @@ kotlin {
             implementation(dependencyNotation = libs.androidx.credentials.play.services.auth)
             implementation(dependencyNotation = libs.googleid)
 
+            implementation(dependencyNotation = libs.androidx.media3.exoplayer)
+
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)
         }

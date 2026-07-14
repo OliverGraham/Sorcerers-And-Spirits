@@ -63,7 +63,9 @@ private fun ArenaState.Combat.abilityAction(
     lockTarget: () -> Unit,
     onActionDispatched: () -> Unit,
 ): () -> Unit = {
-    if (requiresTarget) lockTarget()
+    val isImpersonateCopyPick = action is AbilityActionState.Activated.Impersonate
+    val shouldLockTarget = requiresTarget && !isImpersonateCopyPick
+    if (shouldLockTarget) lockTarget()
     onActionDispatched()
     onUseAbility(
         UseAbilityArguments(

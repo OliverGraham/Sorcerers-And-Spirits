@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
@@ -26,9 +27,8 @@ class ArenaScreenStateTest {
                 combatActionState =
                     CombatActionState.NormalAttack(
                         roll = NormalAttackType.Health,
-                        attackerUserId = USER_ID,
+                        attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
                         defenderUserId = OPPONENT_ID,
-                        originalTurnUserId = USER_ID,
                         activeUserIds = setOf(element = USER_ID),
                     )
             )
@@ -53,9 +53,8 @@ class ArenaScreenStateTest {
                 combatActionState =
                     CombatActionState.NormalAttack(
                         roll = NormalAttackType.Health,
-                        attackerUserId = OPPONENT_ID,
+                        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
                         defenderUserId = USER_ID,
-                        originalTurnUserId = OPPONENT_ID,
                         activeUserIds = setOf(element = OPPONENT_ID),
                     )
             )
@@ -347,9 +346,8 @@ class ArenaScreenStateTest {
                         combatActionState =
                             CombatActionState.NormalAttack(
                                 roll = NormalAttackType.Health,
-                                attackerUserId = USER_ID,
+                                attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
                                 defenderUserId = OPPONENT_ID,
-                                originalTurnUserId = USER_ID,
                                 activeUserIds = setOf(element = USER_ID),
                             ),
                         doublesBonus = DoublesBonus(userId = USER_ID),
@@ -383,9 +381,8 @@ class ArenaScreenStateTest {
                         combatActionState =
                             CombatActionState.NormalAttack(
                                 roll = NormalAttackType.Health,
-                                attackerUserId = OPPONENT_ID,
+                                attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
                                 defenderUserId = USER_ID,
-                                originalTurnUserId = OPPONENT_ID,
                                 activeUserIds = setOf(element = OPPONENT_ID),
                             ),
                         isMirrorImagePenaltyActive = true,
@@ -418,9 +415,8 @@ class ArenaScreenStateTest {
     ) =
         CombatActionState.AbilityRoll(
             action = action,
-            attackerUserId = OPPONENT_ID,
+            attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
             defenderUserId = defenderUserId,
-            originalTurnUserId = OPPONENT_ID,
             activeUserIds = setOf(defenderUserId),
         )
 

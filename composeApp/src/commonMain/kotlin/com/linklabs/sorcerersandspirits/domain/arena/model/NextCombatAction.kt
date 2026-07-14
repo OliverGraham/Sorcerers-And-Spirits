@@ -8,17 +8,15 @@ sealed interface NextCombatAction {
 
     data class NormalAttack(
         val roll: NormalAttackType,
-        val attackerUserId: String,
+        val attackTurn: AttackTurn,
         val defenderUserId: String,
-        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatAction
 
     data class AbilityRoll(
         val purpose: AbilityAction,
-        val attackerUserId: String,
+        val attackTurn: AttackTurn,
         val defenderUserId: String,
-        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatAction
 }
@@ -26,11 +24,11 @@ sealed interface NextCombatAction {
 fun NextCombatAction.turnOwnerUserId(): String =
     when (this) {
         is NextCombatAction.Idle -> activeUserIds.first()
-        is NextCombatAction.NormalAttack -> originalTurnUserId
-        is NextCombatAction.AbilityRoll -> originalTurnUserId
+        is NextCombatAction.NormalAttack -> attackTurn.turnOwnerUserId
+        is NextCombatAction.AbilityRoll -> attackTurn.turnOwnerUserId
     }
 
 fun NextCombatAction.lockedTargetUserId(userId: String): String? {
     val attack = this as? NextCombatAction.NormalAttack ?: return null
-    return if (attack.attackerUserId == userId) attack.defenderUserId else null
+    return if (attack.attackTurn.attackerUserId == userId) attack.defenderUserId else null
 }

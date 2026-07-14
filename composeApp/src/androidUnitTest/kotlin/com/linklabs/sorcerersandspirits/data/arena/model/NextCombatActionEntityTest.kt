@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -23,9 +24,8 @@ class NextCombatActionEntityTest {
                     mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                     rerollSelection = rerollSelection,
                 ),
-            attackerUserId = "attacker",
+            attackTurn = AttackTurn.Standard(attackerUserId = "attacker"),
             defenderUserId = "defender",
-            originalTurnUserId = "attacker",
             activeUserIds = setOf("defender"),
         )
 

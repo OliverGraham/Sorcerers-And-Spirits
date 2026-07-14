@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -18,20 +19,35 @@ sealed interface NextCombatActionEntity {
     @Serializable
     data class NormalAttackEntity(
         val roll: NormalAttackType,
-        val attackerUserId: String,
+        val attackTurn: AttackTurnEntity,
         val defenderUserId: String,
-        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatActionEntity
 
     @Serializable
     data class AbilityRollEntity(
         val purpose: AbilityActionEntity,
-        val attackerUserId: String,
+        val attackTurn: AttackTurnEntity,
         val defenderUserId: String,
-        val originalTurnUserId: String,
         override val activeUserIds: Set<String>,
     ) : NextCombatActionEntity
+}
+
+@Serializable
+sealed interface AttackTurnEntity {
+    val attackerUserId: String
+    val turnOwnerUserId: String
+
+    @Serializable
+    data class StandardEntity(override val attackerUserId: String) : AttackTurnEntity {
+        override val turnOwnerUserId = attackerUserId
+    }
+
+    @Serializable
+    data class RiposteReversalEntity(
+        override val attackerUserId: String,
+        override val turnOwnerUserId: String,
+    ) : AttackTurnEntity
 }
 
 @Serializable
@@ -129,19 +145,28 @@ internal fun NextCombatAction.toEntity(): NextCombatActionEntity =
         is NextCombatAction.NormalAttack ->
             NextCombatActionEntity.NormalAttackEntity(
                 roll = roll,
-                attackerUserId = attackerUserId,
+                attackTurn = attackTurn.toEntity(),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
 
         is NextCombatAction.AbilityRoll ->
             NextCombatActionEntity.AbilityRollEntity(
                 purpose = purpose.toEntity(),
-                attackerUserId = attackerUserId,
+                attackTurn = attackTurn.toEntity(),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
+            )
+    }
+
+internal fun AttackTurn.toEntity(): AttackTurnEntity =
+    when (this) {
+        is AttackTurn.Standard -> AttackTurnEntity.StandardEntity(attackerUserId = attackerUserId)
+
+        is AttackTurn.RiposteReversal ->
+            AttackTurnEntity.RiposteReversalEntity(
+                attackerUserId = attackerUserId,
+                turnOwnerUserId = turnOwnerUserId,
             )
     }
 
@@ -152,19 +177,28 @@ internal fun NextCombatActionEntity.toDomain(): NextCombatAction =
         is NextCombatActionEntity.NormalAttackEntity ->
             NextCombatAction.NormalAttack(
                 roll = roll,
-                attackerUserId = attackerUserId,
+                attackTurn = attackTurn.toDomain(),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
             )
 
         is NextCombatActionEntity.AbilityRollEntity ->
             NextCombatAction.AbilityRoll(
                 purpose = purpose.toDomain(),
-                attackerUserId = attackerUserId,
+                attackTurn = attackTurn.toDomain(),
                 defenderUserId = defenderUserId,
-                originalTurnUserId = originalTurnUserId,
                 activeUserIds = activeUserIds,
+            )
+    }
+
+internal fun AttackTurnEntity.toDomain(): AttackTurn =
+    when (this) {
+        is AttackTurnEntity.StandardEntity -> AttackTurn.Standard(attackerUserId = attackerUserId)
+
+        is AttackTurnEntity.RiposteReversalEntity ->
+            AttackTurn.RiposteReversal(
+                attackerUserId = attackerUserId,
+                turnOwnerUserId = turnOwnerUserId,
             )
     }
 

@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
@@ -91,9 +92,9 @@ class MirrorImageKeepFlowTest {
 
         val mirrorAction = assertIs<NextCombatAction.AbilityRoll>(value = armorRollOutcome)
         assertIs<AbilityAction.Passive.MirrorImage>(value = mirrorAction.purpose)
-        assertEquals(expected = ROGUE_ID, actual = mirrorAction.attackerUserId)
+        assertEquals(expected = ROGUE_ID, actual = mirrorAction.attackTurn.attackerUserId)
         assertEquals(expected = ILLUSIONIST_ID, actual = mirrorAction.defenderUserId)
-        assertEquals(expected = ROGUE_ID, actual = mirrorAction.originalTurnUserId)
+        assertEquals(expected = ROGUE_ID, actual = mirrorAction.attackTurn.turnOwnerUserId)
         assertEquals(expected = setOf(ILLUSIONIST_ID), actual = mirrorAction.activeUserIds)
 
         val illusionistPhoneState =
@@ -110,16 +111,16 @@ class MirrorImageKeepFlowTest {
 
         val keepRollAction = keepRollDispatch(illusionistPhoneState = illusionistPhoneState)
 
-        assertEquals(expected = ROGUE_ID, actual = keepRollAction.attackerUserId)
+        assertEquals(expected = ROGUE_ID, actual = keepRollAction.attackTurn.attackerUserId)
         assertEquals(expected = ILLUSIONIST_ID, actual = keepRollAction.defenderUserId)
-        assertEquals(expected = ROGUE_ID, actual = keepRollAction.originalTurnUserId)
+        assertEquals(expected = ROGUE_ID, actual = keepRollAction.attackTurn.turnOwnerUserId)
         assertEquals(expected = ILLUSIONIST_ID, actual = keepRollAction.rollingUserId)
 
         val keepRollOutcome = performAction(players = players, currentAction = keepRollAction)
 
         val healthRoll = assertIs<NextCombatAction.NormalAttack>(value = keepRollOutcome)
         assertEquals(expected = NormalAttackType.Health, actual = healthRoll.roll)
-        assertEquals(expected = ROGUE_ID, actual = healthRoll.attackerUserId)
+        assertEquals(expected = ROGUE_ID, actual = healthRoll.attackTurn.attackerUserId)
         assertEquals(expected = ILLUSIONIST_ID, actual = healthRoll.defenderUserId)
         assertEquals(expected = setOf(ROGUE_ID), actual = healthRoll.activeUserIds)
 
@@ -174,9 +175,8 @@ class MirrorImageKeepFlowTest {
         val healthRollAction =
             CurrentCombatAction.NormalAttack(
                 roll = NormalAttackType.Health,
-                attackerUserId = ROGUE_ID,
+                attackTurn = AttackTurn.Standard(attackerUserId = ROGUE_ID),
                 defenderUserId = ILLUSIONIST_ID,
-                originalTurnUserId = ROGUE_ID,
             )
 
         val outcome =

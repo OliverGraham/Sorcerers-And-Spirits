@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
@@ -174,9 +175,8 @@ class CombatSeatingTest {
                 combatActionState =
                     CombatActionState.AbilityRoll(
                         action = AbilityActionState.Activated.PrepareAttack,
-                        attackerUserId = OPPONENT_ID,
+                        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
                         defenderUserId = OPPONENT_ID,
-                        originalTurnUserId = OPPONENT_ID,
                         activeUserIds = setOf(element = OPPONENT_ID),
                     )
             )
@@ -355,6 +355,16 @@ class CombatSeatingTest {
             lockedTargetUserId = null,
         )
 
+    private fun attackTurnOf(attackerUserId: String, turnOwnerUserId: String): AttackTurn =
+        if (attackerUserId == turnOwnerUserId) {
+            AttackTurn.Standard(attackerUserId = attackerUserId)
+        } else {
+            AttackTurn.RiposteReversal(
+                attackerUserId = attackerUserId,
+                turnOwnerUserId = turnOwnerUserId,
+            )
+        }
+
     private fun normalAttack(
         roll: NormalAttackType,
         attackerUserId: String,
@@ -363,9 +373,9 @@ class CombatSeatingTest {
     ) =
         CombatActionState.NormalAttack(
             roll = roll,
-            attackerUserId = attackerUserId,
+            attackTurn =
+                attackTurnOf(attackerUserId = attackerUserId, turnOwnerUserId = originalTurnUserId),
             defenderUserId = defenderUserId,
-            originalTurnUserId = originalTurnUserId,
             activeUserIds = setOf(element = attackerUserId),
         )
 
@@ -379,18 +389,16 @@ class CombatSeatingTest {
                     attackerDoublesBonus = 0,
                     mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 ),
-            attackerUserId = attackerUserId,
+            attackTurn = AttackTurn.Standard(attackerUserId = attackerUserId),
             defenderUserId = defenderUserId,
-            originalTurnUserId = attackerUserId,
             activeUserIds = setOf(element = defenderUserId),
         )
 
     private fun holyShieldRoll(attackerUserId: String, defenderUserId: String) =
         CombatActionState.AbilityRoll(
             action = AbilityActionState.Passive.HolyShield.Prayer,
-            attackerUserId = attackerUserId,
+            attackTurn = AttackTurn.Standard(attackerUserId = attackerUserId),
             defenderUserId = defenderUserId,
-            originalTurnUserId = attackerUserId,
             activeUserIds = setOf(element = defenderUserId),
         )
 

@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
+import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
@@ -260,9 +261,8 @@ private fun previewCombatState(
             combatActionState
                 ?: CombatActionState.NormalAttack(
                     roll = NormalAttackType.ArmorClass,
-                    attackerUserId = userId,
+                    attackTurn = AttackTurn.Standard(attackerUserId = userId),
                     defenderUserId = players[1].userId,
-                    originalTurnUserId = userId,
                     activeUserIds = setOf(userId),
                 ),
         roundNumber = 1,

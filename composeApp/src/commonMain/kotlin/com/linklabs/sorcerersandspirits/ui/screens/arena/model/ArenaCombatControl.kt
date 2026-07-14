@@ -60,7 +60,7 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
             }
 
         is CombatActionState.NormalAttack ->
-            if (actionState.attackerUserId == userPlayerId) {
+            if (actionState.attackTurn.attackerUserId == userPlayerId) {
                 listOf(element = ArenaCombatControl.NormalAttack(requiresTarget = false))
             } else {
                 emptyList()

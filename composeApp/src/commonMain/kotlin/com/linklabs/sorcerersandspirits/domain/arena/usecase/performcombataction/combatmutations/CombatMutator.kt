@@ -103,6 +103,7 @@ internal class CombatMutator(
             doublesBonus = diceRoller.getDoublesBonus(),
             isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
             isMatchFinished = getIsMatchFinished(),
+            myDiceRoll = diceRoller.getDiceRoll(),
         )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {

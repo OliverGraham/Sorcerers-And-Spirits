@@ -1,9 +1,12 @@
 package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
+import com.linklabs.sorcerersandspirits.domain.arena.model.MyDiceRoll
 import kotlin.random.Random
 
 interface DiceRoller {
+    fun getDiceRoll(): MyDiceRoll?
+
     fun roll1D6(userId: String): RollResult.OneDie
 
     fun roll2D6(userId: String): RollResult.TwoDice
@@ -28,19 +31,26 @@ sealed interface RollResult {
 }
 
 class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
+    private var diceRoll: MyDiceRoll? = null
+
     private var doublesBonus: DoublesBonus? = initialBonus
 
     override fun roll1D6(userId: String): RollResult.OneDie {
-        val bonus = consumeBonus(userId = userId)
-        return RollResult.OneDie(die = Random.nextInt(from = 1, until = 7), bonus = bonus)
+        val roll = Random.nextInt(from = 1, until = 7)
+        diceRoll = MyDiceRoll.OneDie(value = roll)
+
+        return RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
     }
 
     override fun roll2D6(userId: String): RollResult.TwoDice {
-        val bonus = consumeBonus(userId = userId)
+        val firstDie = Random.nextInt(from = 1, until = 7)
+        val secondDie = Random.nextInt(from = 1, until = 7)
+        diceRoll = MyDiceRoll.TwoDice(firstDie = firstDie, secondDie = secondDie)
+
         return RollResult.TwoDice(
-                firstDie = Random.nextInt(from = 1, until = 7),
-                secondDie = Random.nextInt(from = 1, until = 7),
-                bonus = bonus,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                bonus = consumeBonus(userId = userId),
             )
             .also { result ->
                 if (result.isDoubles) {
@@ -48,6 +58,8 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
                 }
             }
     }
+
+    override fun getDiceRoll() = diceRoll
 
     override fun getDoublesBonus(): DoublesBonus? = doublesBonus
 

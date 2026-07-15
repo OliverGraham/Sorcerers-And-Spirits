@@ -7,10 +7,11 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.RolledDice
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
+import com.linklabs.sorcerersandspirits.domain.arena.model.rolledDice
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
@@ -24,13 +25,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollResult as RollResultState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.latestRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import io.mockk.every
 import io.mockk.mockk
@@ -208,14 +206,9 @@ class MirrorImageKeepFlowTest {
         assertEquals(expected = 2, actual = trigger.firstDie)
         assertEquals(expected = 5, actual = trigger.secondDie)
 
-        val latestRoll =
-            outcome.messages
-                .map { IncomingArenaMessage(id = it.hashCode().toString(), message = it) }
-                .toStates(participants = emptyMap())
-                .latestRoll()
         assertEquals(
-            expected = RollResultState.Faces(slotFaces = mapOf(0 to 2, 1 to 5)),
-            actual = latestRoll.result,
+            expected = RolledDice.Faces(slotFaces = mapOf(0 to 2, 1 to 5)),
+            actual = outcome.rollMessage?.rolledDice(),
         )
     }
 

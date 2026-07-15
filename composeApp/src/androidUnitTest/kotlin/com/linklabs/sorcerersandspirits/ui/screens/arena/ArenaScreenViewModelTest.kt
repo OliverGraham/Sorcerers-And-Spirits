@@ -751,11 +751,10 @@ class ArenaScreenViewModelTest {
             // Loading
             awaitItem()
 
-            // 1. Initial Match with two players who have chosen classes
+            // 1. Combat with two players; the data layer captured the participants at combat start.
             arenaMatchFlow.value =
-                ArenaMatch.WaitingForAllPlayers(
-                    messages = emptyList(),
-                    numberOfNewMessages = 0,
+                createCombatMatch(
+                    nextCombatAction = idleTurn(USER_ID),
                     playerMap =
                         mapOf(
                             USER_ID to
@@ -769,15 +768,20 @@ class ArenaScreenViewModelTest {
             assertEquals(CharacterClassType.Rogue.name, state1.participants[USER_ID]?.className)
             assertEquals(CharacterClassType.Mage.name, state1.participants[OPPONENT_ID]?.className)
 
-            // 2. Opponent leaves
+            // 2. Opponent leaves: they drop out of the player map, but the data layer carries the
+            // participants forward, so their class still resolves for earlier messages.
             arenaMatchFlow.value =
-                ArenaMatch.WaitingForAllPlayers(
-                    messages = emptyList(),
-                    numberOfNewMessages = 0,
+                createCombatMatch(
+                    nextCombatAction = idleTurn(USER_ID),
                     playerMap =
                         mapOf(
                             USER_ID to
                                 selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue())
+                        ),
+                    participants =
+                        mapOf(
+                            USER_ID to CharacterClassType.Rogue,
+                            OPPONENT_ID to CharacterClassType.Mage,
                         ),
                 )
 
@@ -1573,6 +1577,8 @@ class ArenaScreenViewModelTest {
             nextCombatAction: NextCombatAction,
             playerMap: Map<String, ArenaPlayer.Selected>,
             roundNumber: Int = 1,
+            participants: Map<String, CharacterClassType> =
+                playerMap.mapValues { it.value.characterClass.type },
         ) =
             ArenaMatch.Combat(
                 messages = emptyList(),
@@ -1583,6 +1589,7 @@ class ArenaScreenViewModelTest {
                 isNewRound = false,
                 doublesBonus = null,
                 isMirrorImagePenaltyActive = false,
+                participants = participants,
             )
 
         private fun idleTurn(vararg activeUserIds: String) =

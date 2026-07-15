@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -26,8 +27,8 @@ sealed interface ArenaMatchEntity {
         override val messages: List<ArenaMessageEntity>,
         override val numberOfNewMessages: Int,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
-        val activePlayerUserId: String,
         override val matchNumberInGauntlet: Int = 1,
+        val activePlayerUserId: String,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -36,12 +37,14 @@ sealed interface ArenaMatchEntity {
         override val messages: List<ArenaMessageEntity>,
         override val numberOfNewMessages: Int,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity.Selected>,
+        override val matchNumberInGauntlet: Int = 1,
         val nextCombatActionEntity: NextCombatActionEntity,
         val roundNumber: Int,
         val isNewRound: Boolean,
         val doublesBonusEntity: DoublesBonusEntity? = null,
         val isMirrorImagePenaltyActive: Boolean = false,
-        override val matchNumberInGauntlet: Int = 1,
+        val myDiceRoll: MyDiceRollEntity? = null,
+        val participants: Map<String, CharacterClassType> = emptyMap(),
     ) : ArenaMatchEntity
 
     @Serializable
@@ -51,6 +54,7 @@ sealed interface ArenaMatchEntity {
         override val numberOfNewMessages: Int,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
         override val matchNumberInGauntlet: Int = 1,
+        val participants: Map<String, CharacterClassType> = emptyMap(),
     ) : ArenaMatchEntity
 
     companion object {
@@ -63,6 +67,12 @@ sealed interface ArenaMatchEntity {
         val messagesName = ArenaMatchEntity::messages.name
     }
 }
+
+// TODO: Double check this. The mapping should be able to be done without any filtering
+internal fun Map<String, ArenaPlayerEntity>.toParticipants(): Map<String, CharacterClassType> =
+    values.filterIsInstance<ArenaPlayerEntity.Selected>().associate {
+        it.userId to it.characterClassEntity.type
+    }
 
 internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
     val messages = messages.map { it.toDomain() }
@@ -100,6 +110,8 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 doublesBonus = doublesBonusEntity?.toDomain(),
                 isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
                 matchNumberInGauntlet = matchNumberInGauntlet,
+                myDiceRoll = myDiceRoll?.toDomain(),
+                participants = participants,
             )
 
         is ArenaMatchEntity.Finished ->
@@ -108,6 +120,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 numberOfNewMessages = numberOfNewMessages,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 matchNumberInGauntlet = matchNumberInGauntlet,
+                participants = participants,
             )
     }
 }

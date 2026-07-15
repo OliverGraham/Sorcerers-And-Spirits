@@ -20,3 +20,6 @@ sealed interface ArenaPlayer {
         override val isReadyForNextMatch: Boolean = false,
     ) : ArenaPlayer
 }
+
+fun ArenaPlayer.isKnockedOut(): Boolean =
+    this is ArenaPlayer.Selected && !characterClass.isConscious()

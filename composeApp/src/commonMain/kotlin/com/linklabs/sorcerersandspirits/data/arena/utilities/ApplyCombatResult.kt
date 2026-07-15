@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.data.arena.utilities
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import dev.gitlive.firebase.database.DatabaseReference
@@ -26,29 +27,31 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
                 outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
             }
 
+        val updatedMessages = messages.appendCapped(newMessages = newMessages)
         return if (result.isMatchFinished) {
-            toFinished(newMessages = newMessages)
+            toFinished(updatedMessages = updatedMessages)
         } else {
-            toUpdatedCombat(newMessages = newMessages)
+            toUpdatedCombat(updatedMessages = updatedMessages)
         }
     }
 
     private fun ArenaMatchEntity.Combat.toFinished(
-        newMessages: List<ArenaMessageEntity>
+        updatedMessages: List<ArenaMessageEntity>
     ): ArenaMatchEntity.Finished =
         ArenaMatchEntity.Finished(
-            messages = messages.appendCapped(newMessages = newMessages),
-            numberOfNewMessages = newMessages.size,
+            messages = updatedMessages,
+            numberOfNewMessages = result.messages.size,
             playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
             matchNumberInGauntlet = matchNumberInGauntlet,
+            participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
         )
 
     private fun ArenaMatchEntity.Combat.toUpdatedCombat(
-        newMessages: List<ArenaMessageEntity>
+        updatedMessages: List<ArenaMessageEntity>
     ): ArenaMatchEntity.Combat =
         ArenaMatchEntity.Combat(
-            messages = messages.appendCapped(newMessages = newMessages),
-            numberOfNewMessages = newMessages.size,
+            messages = updatedMessages,
+            numberOfNewMessages = result.messages.size,
             playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
             nextCombatActionEntity = result.nextCombatAction.toEntity(),
             roundNumber = result.roundNumber,
@@ -56,5 +59,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
             doublesBonusEntity = result.doublesBonus?.toEntity(),
             isMirrorImagePenaltyActive = result.isMirrorImagePenaltyActive,
             matchNumberInGauntlet = matchNumberInGauntlet,
+            myDiceRoll = result.myDiceRoll?.toEntity(),
+            participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
         )
 }

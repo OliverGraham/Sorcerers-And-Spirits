@@ -55,6 +55,7 @@ internal fun ArenaCombat(
     var isTargetLockedOptimistically by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
 
+    // TODO: Don't use messages for logic - do this later, Claude
     var isActionInFlight by
         remember(key1 = state.combatActionState, key2 = screenState.messages.lastOrNull()?.id) {
             mutableStateOf(value = false)

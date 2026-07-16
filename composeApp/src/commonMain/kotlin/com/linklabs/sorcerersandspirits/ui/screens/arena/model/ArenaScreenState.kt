@@ -49,20 +49,13 @@ internal fun ArenaMatch.toUpdatedState(
     characterClasses: List<CharacterClassState> = emptyList(),
     classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
 ): ArenaStateUpdate {
-    val userPlayer = playerMap.getValue(key = userId)
-
-    // ArenaMessages refer to players by class name (SS-097), so the resolution map is keyed on the
-    // class each player selected. Players who have left the arena are retained so their earlier
-    // messages still resolve.
-    val currentParticipants =
-        playerMap.values.filterIsInstance<ArenaPlayer.Selected>().associate {
-            it.userId to
-                ParticipantClass(
-                    className = it.characterClass.className,
-                    type = it.characterClass.type,
-                )
-        }
-    val participants = (previousState?.participants ?: emptyMap()) + currentParticipants
+    // TODO: Make function - do this later, Claude
+    val participants =
+        when (this) {
+            is ArenaMatch.Combat -> this.participants
+            is ArenaMatch.Finished -> this.participants
+            else -> emptyMap()
+        }.mapValues { ParticipantClass(className = it.value.name, type = it.value) }
 
     val messages = messages.toStates(participants = participants)
 

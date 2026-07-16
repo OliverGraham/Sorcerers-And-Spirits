@@ -16,27 +16,26 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiePosition
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DieState
 
-private const val DICE_HOME_DIE_COUNT = 2
 internal val diceSpacing = 152.dp
 
-/** The x-center a die rests at for its [slot], shared so overlays can anchor to a specific die. */
-internal fun dieRestCenterX(homeCenterX: Float, slot: Int, spacingPx: Float): Float =
-    homeCenterX + (slot - (DICE_HOME_DIE_COUNT - 1) / 2f) * spacingPx
-
-/**
- * The empty resting slot below the avatars that reserves space for the dice and reports its bounds.
- * The dice themselves are drawn in the screen-spanning [DiceOverlay] so they can roll over all the
- * content; at rest they sit centered in this slot (SS-149).
- */
+// TODO: The dice are nice and centered in multiplayer (there's the classHeadIcons on the side)
+//       Otherwise, for two player, they're skewed - needs to always be centered. Should NOT
+//       use a method of changing values based on the 2 player vs multiplayer - do this later,
+// Claude
 @Composable
 internal fun dieRestCenterX(
     homeCenterX: Float,
-    isFirstDie: Boolean,
+    diePosition: DiePosition,
     spacingPx: Float = with(receiver = LocalDensity.current) { diceSpacing.toPx() },
 ): Float {
-    val diePositionNumber = if (isFirstDie) -0 else 1
+    val diePositionNumber =
+        when (diePosition) {
+            DiePosition.First -> 0
+            DiePosition.Second -> -1
+        }
 
     return homeCenterX + (diePositionNumber / 2f) * spacingPx
 }
@@ -62,14 +61,14 @@ internal fun DiceOverlay(
         SingleDie(
             dieState = diceStateHolder.firstDieState,
             isRolling = isRolling,
-            isFirstDie = true,
+            diePosition = DiePosition.First,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
         )
         SingleDie(
             dieState = diceStateHolder.secondDieState,
             isRolling = isRolling,
-            isFirstDie = false,
+            diePosition = DiePosition.Second,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
         )
@@ -80,14 +79,14 @@ internal fun DiceOverlay(
 private fun BoxWithConstraintsScope.SingleDie(
     dieState: DieState,
     isRolling: Boolean,
-    isFirstDie: Boolean,
+    diePosition: DiePosition,
     homeCenter: Offset,
     shakeTick: Int,
     modifier: Modifier = Modifier,
 ) {
     val restCenter =
         Offset(
-            x = dieRestCenterX(homeCenterX = homeCenter.x, isFirstDie = isFirstDie),
+            x = dieRestCenterX(homeCenterX = homeCenter.x, diePosition = diePosition),
             y = homeCenter.y,
         )
 

@@ -39,7 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiePosition
 import kotlin.math.roundToInt
 
 private const val BADGE_WOBBLE_TRANSITION_LABEL = "diceBadgeWobble"
@@ -61,24 +62,17 @@ private val badgeUpOffset = 34.dp
 
 private val doublesGold = Color(color = 0xFFFFC947)
 
-/**
- * The +1 / -1 modifier chip floating above the resting dice, wobbling in a lively 3D loop while it
- * is shown. The banked doubles +1 rides at the upper-right of the pair and folds away as the next
- * roll consumes it; the Mirror Image -1 anchors above the specific die it penalized ([dieSlot]) and
- * rides along while that reroll is the dice' last roll. Drawn in a screen-spanning overlay so it
- * can be anchored to the shared [homeBounds] dice slot.
- */
+/** The +1 / -1 chip floating above the resting dice. */
 @Composable
-internal fun DiceModifierBadgeOverlay(
-    badge: DiceBadge?,
-    dieSlot: Int?,
+internal fun DiceBadgeOverlay(
+    diceBadgeState: DiceBadgeState?,
     homeBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
     var badgeSize by remember { mutableStateOf(value = IntSize.Zero) }
-    var shownBadge by remember { mutableStateOf<DiceBadge?>(value = null) }
-    if (badge != null) shownBadge = badge
+    var shownBadge by remember { mutableStateOf<DiceBadgeState?>(value = null) }
+    if (diceBadgeState != null) shownBadge = diceBadgeState
 
     Box(
         modifier =
@@ -91,15 +85,19 @@ internal fun DiceModifierBadgeOverlay(
         val spacingPx = with(receiver = LocalDensity.current) { diceSpacing.toPx() }
         val homeCenter = homeBounds.center - overlayOrigin
         val targetX =
-            if (dieSlot != null) {
-                dieRestCenterX(homeCenterX = homeCenter.x, slot = dieSlot, spacingPx = spacingPx)
+            if (diceBadgeState != null) {
+                dieRestCenterX(
+                    homeCenterX = homeCenter.x,
+                    diePosition = diceBadgeState.diePosition,
+                    spacingPx = spacingPx,
+                )
             } else {
                 homeCenter.x + rightPx
             }
         val targetY = homeCenter.y - upPx
 
         AnimatedVisibility(
-            visible = badge != null,
+            visible = diceBadgeState != null,
             enter = fadeIn() + scaleIn(initialScale = BADGE_ENTER_SCALE),
             exit = fadeOut() + scaleOut(targetScale = BADGE_ENTER_SCALE),
             modifier =
@@ -112,14 +110,14 @@ internal fun DiceModifierBadgeOverlay(
                     .onGloballyPositioned { badgeSize = it.size },
         ) {
             val renderedBadge = shownBadge
-            if (renderedBadge != null) DiceModifierChip(badge = renderedBadge)
+            if (renderedBadge != null) DiceChip(badge = renderedBadge)
         }
     }
 }
 
 @Composable
-private fun DiceModifierChip(badge: DiceBadge, modifier: Modifier = Modifier) {
-    val isBonus = badge is DiceBadge.DoublesBonus
+private fun DiceChip(badge: DiceBadgeState, modifier: Modifier = Modifier) {
+    val isBonus = badge is DiceBadgeState.DoublesBonus
     val chipColor = if (isBonus) doublesGold else CharacterClassType.Illusionist.toColor()
     val label = if (isBonus) "+1" else "−1"
 
@@ -179,7 +177,7 @@ private fun wobbleSpec(periodMillis: Int) =
 @Composable
 private fun DiceModifierChipDoublesPreview() {
     Box(modifier = Modifier.background(color = Color(color = 0xFF1A1A1A)).padding(all = 24.dp)) {
-        DiceModifierChip(badge = DiceBadge.DoublesBonus)
+        DiceChip(badge = DiceBadgeState.DoublesBonus())
     }
 }
 
@@ -187,6 +185,6 @@ private fun DiceModifierChipDoublesPreview() {
 @Composable
 private fun DiceModifierChipMirrorPreview() {
     Box(modifier = Modifier.background(color = Color(color = 0xFF1A1A1A)).padding(all = 24.dp)) {
-        DiceModifierChip(badge = DiceBadge.MirrorPenalty)
+        DiceChip(badge = DiceBadgeState.MirrorPenalty(diePosition = DiePosition.First))
     }
 }

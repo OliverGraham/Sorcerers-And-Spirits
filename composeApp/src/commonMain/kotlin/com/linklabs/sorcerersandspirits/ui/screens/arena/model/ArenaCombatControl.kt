@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.RerollSelection as MirrorImageReroll
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
@@ -16,9 +17,13 @@ sealed interface ArenaCombatControl {
     val label: String
     val requiresTarget: Boolean
     val enabled: Boolean
+    val numberOfDice: NumberOfDice
 
     @Immutable
-    data class NormalAttack(override val requiresTarget: Boolean) : ArenaCombatControl {
+    data class NormalAttack(
+        override val requiresTarget: Boolean,
+        override val numberOfDice: NumberOfDice = NumberOfDice.Two,
+    ) : ArenaCombatControl {
         override val label: String = "Attack"
         override val enabled: Boolean = true
     }
@@ -29,7 +34,9 @@ sealed interface ArenaCombatControl {
         override val label: String,
         override val requiresTarget: Boolean,
         override val enabled: Boolean,
-    ) : ArenaCombatControl
+    ) : ArenaCombatControl {
+        override val numberOfDice = action.getNumberOfDice()
+    }
 
     @Immutable
     data class AbilityRoll(
@@ -37,8 +44,50 @@ sealed interface ArenaCombatControl {
         override val label: String,
         override val requiresTarget: Boolean,
         override val enabled: Boolean = true,
-    ) : ArenaCombatControl
+    ) : ArenaCombatControl {
+        override val numberOfDice: NumberOfDice = action.getNumberOfDice()
+    }
 }
+
+enum class NumberOfDice {
+    One,
+    Two,
+    None,
+}
+
+private fun AbilityActionState.getNumberOfDice() =
+    when (this) {
+        is AbilityActionState.Activated.AllIn -> NumberOfDice.One
+
+        is AbilityActionState.Activated.SummonMinion -> NumberOfDice.One
+
+        is AbilityActionState.Activated.PrepareAttack -> NumberOfDice.Two
+
+        is AbilityActionState.Activated.Impersonate -> NumberOfDice.None
+
+        is AbilityActionState.Passive.LuckyCoin -> NumberOfDice.One
+
+        is AbilityActionState.Passive.Riposte -> NumberOfDice.Two
+
+        is AbilityActionState.Passive.Persuade.StrumLute -> NumberOfDice.One
+
+        is AbilityActionState.Passive.Persuade.Charm -> NumberOfDice.None
+
+        is AbilityActionState.Passive.Encore -> NumberOfDice.One
+
+        is AbilityActionState.Passive.Teleport -> NumberOfDice.One
+
+        is AbilityActionState.Passive.MirrorImage ->
+            if (rerollSelection == AbilityAction.Passive.MirrorImage.RerollSelection.None) {
+                NumberOfDice.None
+            } else {
+                NumberOfDice.One
+            }
+
+        is AbilityActionState.Passive.HolyShield.Prayer -> NumberOfDice.Two
+
+        is AbilityActionState.Passive.HolyShield.Wrath -> NumberOfDice.One
+    }
 
 /**
  * Determines which combat controls the user can act on right now. An empty list means the user
@@ -75,31 +124,6 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
                 emptyList()
             }
     }
-
-internal fun ArenaState.Combat.isImpersonateRedundant(
-    control: ArenaCombatControl,
-    targetedOpponentUserId: String,
-): Boolean {
-    val isImpersonateControl =
-        control is ArenaCombatControl.ActivatedAbility &&
-            control.action is AbilityActionState.Activated.Impersonate
-    if (!isImpersonateControl) return false
-
-    val target = playerMap[targetedOpponentUserId] ?: return false
-    val targetOffensiveAbility = target.characterClass.offensiveAbility
-    if (targetOffensiveAbility is OffensiveAbilityState.None) return true
-
-    val impersonateAbility = userPlayer.characterClass.offensiveAbility
-    val copiedAbility =
-        if (impersonateAbility is OffensiveAbilityState.Impersonate) {
-            impersonateAbility.impersonatedAbility
-        } else {
-            OffensiveAbilityState.None
-        }
-    if (copiedAbility is OffensiveAbilityState.None) return false
-
-    return targetOffensiveAbility::class == copiedAbility::class
-}
 
 private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl> =
     when (this) {

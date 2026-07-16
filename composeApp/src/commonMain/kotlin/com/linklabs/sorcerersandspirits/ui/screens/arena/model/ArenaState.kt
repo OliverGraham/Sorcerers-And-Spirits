@@ -47,6 +47,11 @@ sealed interface ArenaState {
 
         // TODO: Obviously, this was supposed to simply come from the domain
         val combatControls = deriveCombatControls()
+        val arenaCombatControl =
+            combatControls.firstOrNull { it is ArenaCombatControl.NormalAttack }
+        val impersonateControl = combatControls.firstOrNull { it.isImpersonate() }
+        val abilityControls =
+            combatControls.filter { it != arenaCombatControl && it != impersonateControl }
 
         val diceBadge = deriveDiceBadge()
     }
@@ -74,3 +79,7 @@ private fun ArenaState.Combat.deriveDiceBadge() =
         isMirrorImagePenaltyActive -> DiceBadge.MirrorPenalty
         else -> null
     }
+
+private fun ArenaCombatControl.isImpersonate(): Boolean =
+    this is ArenaCombatControl.ActivatedAbility &&
+        action is AbilityActionState.Activated.Impersonate

@@ -117,6 +117,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             isMirrorImagePenaltyActive = false,
             turnOwnerUserId = userPlayerId,
             lockedTargetUserId = null,
+            myDiceRollState = null,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

@@ -34,17 +34,6 @@ sealed interface CombatActionState {
     ) : CombatActionState
 }
 
-/**
- * The player being targeted by the in-flight action, or null on an idle turn with no target yet.
- */
-val CombatActionState.targetedDefenderUserId: String?
-    get() =
-        when (this) {
-            is CombatActionState.Idle -> null
-            is CombatActionState.NormalAttack -> defenderUserId
-            is CombatActionState.AbilityRoll -> defenderUserId
-        }
-
 @Immutable
 sealed interface AbilityActionState {
 
@@ -119,15 +108,6 @@ sealed interface AbilityActionState {
     }
 }
 
-/**
- * Maps the user's attack input to its domain counterpart against the live [combatActionState]
- * (never a value captured when the control was built, so a held button always continues the current
- * step rather than restarting the attack). Null when the input is stale: an attack can only be
- * started on the user's own idle turn, and an in-flight attack can only be continued by its
- * attacker. A tap that lands after the state has already moved past its step — the shared state
- * takes a network round trip to advance, so the buttons outlive the action they belonged to — is
- * dropped rather than resolved against the wrong step (SS-181).
- */
 internal fun AttackArguments.toDomain(
     combatActionState: CombatActionState
 ): CurrentCombatAction.NormalAttack? =
@@ -159,18 +139,6 @@ internal fun AttackArguments.toDomain(
             }
     }
 
-/**
- * Maps the user's ability input to its domain counterpart. The combatant ids come from the
- * in-flight [combatActionState] when responding to an ability roll already in progress, or from the
- * user and their selected target when activating an ability on their own idle turn.
- *
- * Null when the input is stale. A passive ability roll only exists as a response to the in-flight
- * ability step, so its payload must match the action the state currently owes; an activated ability
- * can only be started on the user's own idle turn. Anything else is a tap that landed after the
- * state had already moved on — the previous fallback fabricated an action from the user's own ids
- * instead, turning a defender's late Mirror Image tap into the defender attacking themselves, which
- * corrupted the match for everyone (SS-181).
- */
 internal fun UseAbilityArguments.toDomain(
     combatActionState: CombatActionState
 ): CurrentCombatAction.AbilityRoll? {

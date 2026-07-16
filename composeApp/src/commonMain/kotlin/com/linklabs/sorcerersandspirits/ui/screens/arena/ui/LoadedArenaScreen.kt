@@ -26,7 +26,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.ArenaCombat
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalLatestRoll
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -41,10 +40,7 @@ internal fun LoadedArenaScreen(
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
-    CompositionLocalProvider(
-        LocalLatestRoll provides screenState.latestRoll,
-        LocalCharacterClassCopy provides screenState.classCopy,
-    ) {
+    CompositionLocalProvider(LocalCharacterClassCopy provides screenState.classCopy) {
         Scaffold(
             modifier =
                 modifier

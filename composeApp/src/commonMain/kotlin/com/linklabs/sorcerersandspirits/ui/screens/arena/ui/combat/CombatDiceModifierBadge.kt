@@ -88,7 +88,7 @@ internal fun DiceModifierBadgeOverlay(
     ) {
         val rightPx = with(receiver = LocalDensity.current) { badgeRightOffset.toPx() }
         val upPx = with(receiver = LocalDensity.current) { badgeUpOffset.toPx() }
-        val spacingPx = with(receiver = LocalDensity.current) { diceRestSpacing.toPx() }
+        val spacingPx = with(receiver = LocalDensity.current) { diceSpacing.toPx() }
         val homeCenter = homeBounds.center - overlayOrigin
         val targetX =
             if (dieSlot != null) {
@@ -135,11 +135,6 @@ private fun DiceModifierChip(badge: DiceBadge, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * The looping 3D wobble kept up the whole time a badge is shown: a pendulum rock about the z-axis,
- * a gentle tilt about the y-axis for depth, and a slow grow-and-return, each on its own period so
- * the motion never settles into a mechanical beat.
- */
 @Composable
 private fun Modifier.badgeWobble(): Modifier {
     val transition = rememberInfiniteTransition(label = BADGE_WOBBLE_TRANSITION_LABEL)
@@ -164,6 +159,7 @@ private fun Modifier.badgeWobble(): Modifier {
             animationSpec = wobbleSpec(periodMillis = BADGE_GROW_PERIOD_MILLIS),
             label = BADGE_GROW_LABEL,
         )
+
     return graphicsLayer {
         rotationZ = rock
         rotationY = tilt

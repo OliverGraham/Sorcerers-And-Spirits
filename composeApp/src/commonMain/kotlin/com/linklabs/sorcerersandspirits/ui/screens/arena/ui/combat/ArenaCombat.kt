@@ -28,12 +28,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetedDefenderUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
 
@@ -79,6 +78,7 @@ internal fun ArenaCombat(
             if (isMessagesExpanded) 0 else unreadMessageCount + screenState.numberOfNewMessages
     }
 
+    // TODO: Needs to cover bottom and top system UI
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -147,7 +147,7 @@ internal fun ArenaCombat(
                 state = state,
                 targetedOpponentUserId = targetedOpponentUserId,
                 lockTarget = { isTargetLockedOptimistically = true },
-                diceRoll = diceRoll,
+                diceStateHolder = diceStateHolder,
                 areControlsVisible = !screenState.isFinishPending,
                 isActionInFlight = isActionInFlight,
                 isSequencing = flashPlayback.isSequencing,
@@ -172,7 +172,7 @@ internal fun ArenaCombat(
             //                Should be elsewhere
             val homeBounds = diceHomeBounds
             if (homeBounds != null) {
-                DiceOverlay(diceRoll = diceRoll, homeBounds = homeBounds)
+                DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
                 val badgeDieSlot =
                     if (screenState.diceBadge is DiceBadge.MirrorPenalty) {
                         diceRoll.restingSlots.singleOrNull()
@@ -180,7 +180,7 @@ internal fun ArenaCombat(
                         null
                     }
                 DiceModifierBadgeOverlay(
-                    badge = screenState.diceBadge,
+                    badge = state.diceBadge,
                     dieSlot = badgeDieSlot,
                     homeBounds = homeBounds,
                 )
@@ -260,22 +260,18 @@ private fun CombatStage(
     }
 }
 
+// TODO: This logic needs to be simplified and made correct, without confusing fallbacks that should
+//       never happen
 internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
     val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
     val userChosenTarget =
         if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""
 
-    return userChosenTarget
-        .ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
-        .ifEmpty { getTurnOwnerLoneOpponentUserId() }
+    return userChosenTarget.ifEmpty { defaultTargetedOpponentUserId() }
 }
 
-/**
- * The single conscious opponent of the current turn owner, or null when they have none or more than
- * one. With only one possible target there is no choice to make, so it is the implicit target every
- * device shows before the turn owner commits a roll.
- */
-private fun ArenaState.Combat.getTurnOwnerLoneOpponentUserId(): String =
+/** Finds opponent user id if there is only a single conscious opponent. */
+private fun ArenaState.Combat.defaultTargetedOpponentUserId(): String =
     playerMap.values
         .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
         ?.userId

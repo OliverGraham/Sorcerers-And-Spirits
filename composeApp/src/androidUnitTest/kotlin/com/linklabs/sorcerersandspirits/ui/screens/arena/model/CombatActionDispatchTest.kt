@@ -183,7 +183,8 @@ class CombatActionDispatchTest {
             attackType = NormalAttackType.ArmorClass,
             attackerDoublesBonus = 0,
             mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-            rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.None,
+            mirrorImageRerollSelection =
+                AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.None,
         )
 
     private fun AbilityActionState.asUseAbilityArguments() =

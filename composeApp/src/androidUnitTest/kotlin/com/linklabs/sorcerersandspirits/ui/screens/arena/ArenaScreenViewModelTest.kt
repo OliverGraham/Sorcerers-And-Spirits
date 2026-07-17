@@ -1176,14 +1176,14 @@ class ArenaScreenViewModelTest {
 
             val selections =
                 controls.map {
-                    (it.action as AbilityActionState.Passive.MirrorImage).rerollSelection
+                    (it.action as AbilityActionState.Passive.MirrorImage).mirrorImageRerollSelection
                 }
             assertEquals(
                 expected =
                     listOf(
-                        AbilityAction.Passive.MirrorImage.RerollSelection.First,
-                        AbilityAction.Passive.MirrorImage.RerollSelection.Second,
-                        AbilityAction.Passive.MirrorImage.RerollSelection.None,
+                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.First,
+                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.Second,
+                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.None,
                     ),
                 actual = selections,
             )

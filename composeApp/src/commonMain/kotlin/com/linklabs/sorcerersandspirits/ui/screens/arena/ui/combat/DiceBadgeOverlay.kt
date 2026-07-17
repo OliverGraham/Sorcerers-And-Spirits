@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import kotlin.math.roundToInt
@@ -60,19 +61,6 @@ internal fun DiceBadgeOverlay(
     homeCenter: Offset,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedContent(targetState = diceBadgeState, modifier = modifier) {
-        if (diceBadgeState != null) {
-            DiceChip(diceBadgeState = diceBadgeState, homeCenter = homeCenter)
-        }
-    }
-}
-
-@Composable
-private fun DiceChip(
-    diceBadgeState: DiceBadgeState,
-    homeCenter: Offset,
-    modifier: Modifier = Modifier,
-) {
     var badgeSize by remember { mutableStateOf(value = IntSize.Zero) }
 
     val upPx = with(receiver = LocalDensity.current) { badgeUpOffset.toPx() }
@@ -80,12 +68,32 @@ private fun DiceChip(
     val targetX =
         dieRestCenterX(
             homeCenterX = homeCenter.x,
-            diePosition = diceBadgeState.diePosition,
+            diePosition = diceBadgeState?.diePosition ?: DiePosition.First,
             spacingPx = spacingPx,
         )
 
     val targetY = homeCenter.y - upPx
 
+    AnimatedContent(
+        targetState = diceBadgeState,
+        modifier =
+            modifier
+                .offset {
+                    IntOffset(
+                        x = (targetX - badgeSize.width / 2f).roundToInt(),
+                        y = (targetY - badgeSize.height / 2f).roundToInt(),
+                    )
+                }
+                .onGloballyPositioned { badgeSize = it.size },
+    ) {
+        if (diceBadgeState != null) {
+            DiceChip(diceBadgeState = diceBadgeState)
+        }
+    }
+}
+
+@Composable
+private fun DiceChip(diceBadgeState: DiceBadgeState, modifier: Modifier = Modifier) {
     val isBonus = diceBadgeState is DiceBadgeState.DoublesBonus
     val chipColor = if (isBonus) doublesGold else CharacterClassType.Illusionist.toColor()
     val label = if (isBonus) "+1" else "−1"
@@ -97,13 +105,6 @@ private fun DiceChip(
                 .background(color = chipColor, shape = CircleShape)
                 .border(width = 1.5.dp, color = Color.White, shape = CircleShape)
                 .padding(horizontal = 10.dp, vertical = 3.dp)
-                .offset {
-                    IntOffset(
-                        x = (targetX - badgeSize.width / 2f).roundToInt(),
-                        y = (targetY - badgeSize.height / 2f).roundToInt(),
-                    )
-                }
-                .onGloballyPositioned { badgeSize = it.size }
     ) {
         Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
     }

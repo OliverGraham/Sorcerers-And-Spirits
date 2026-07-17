@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 sealed interface AbilityAction {
@@ -54,18 +55,10 @@ sealed interface AbilityAction {
             val attackType: NormalAttackType,
             val attackerDoublesBonus: Int,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
-            val rerollSelection: RerollSelection = RerollSelection.None,
+            val mirrorImageRerollSelection: MirrorImageRerollSelection =
+                MirrorImageRerollSelection.None,
         ) : Passive {
-            val isReroll = rerollSelection != RerollSelection.None
-
-            enum class RerollSelection {
-                None,
-                First,
-                Second,
-            }
-
             data class MirrorImageDie(val originalRoll: Int, val reroll: Int? = null) {
-                val isRerolled = reroll != null
                 val finalValue = if (reroll == null) originalRoll else reroll - 1
             }
         }

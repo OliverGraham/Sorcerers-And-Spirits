@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
@@ -86,30 +87,21 @@ internal class DiceStateHolder {
         when (myDiceRollState) {
             is MyDiceRollState.OneDie -> myDiceRollState.commitRoll()
             is MyDiceRollState.TwoDice -> myDiceRollState.commitRoll()
-            is MyDiceRollState.Reroll -> myDiceRollState.commitRoll()
         }
 
         isUserRolling = false
     }
 
     private fun MyDiceRollState.OneDie.commitRoll() {
-        firstDieState = DieState(value = value, isActive = true)
-        secondDieState = secondDieState.copy(isActive = false)
+        when (diePosition) {
+            DiePosition.First -> firstDieState = DieState(value = value, isActive = true)
+            DiePosition.Second -> secondDieState = DieState(value = value, isActive = true)
+        }
     }
 
     private fun MyDiceRollState.TwoDice.commitRoll() {
         firstDieState = DieState(value = firstDie, isActive = true)
         secondDieState = DieState(value = secondDie, isActive = true)
-    }
-
-    // TODO: Make work with reroll
-    private fun MyDiceRollState.Reroll.commitRoll() {
-        when {
-            rerolledFirstDie != null -> firstDieState = firstDieState.copy(value = rerolledFirstDie)
-
-            rerolledSecondDie != null ->
-                secondDieState = secondDieState.copy(value = rerolledSecondDie)
-        }
     }
 }
 

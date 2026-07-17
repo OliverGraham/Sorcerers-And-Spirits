@@ -12,7 +12,7 @@ import kotlin.test.assertIs
 class NextCombatActionEntityTest {
 
     private fun mirrorImageAction(
-        rerollSelection: AbilityAction.Passive.MirrorImage.RerollSelection
+        mirrorImageRerollSelection: AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection
     ) =
         NextCombatAction.AbilityRoll(
             purpose =
@@ -22,7 +22,7 @@ class NextCombatActionEntityTest {
                     attackType = NormalAttackType.ArmorClass,
                     attackerDoublesBonus = 0,
                     mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                    rerollSelection = rerollSelection,
+                    mirrorImageRerollSelection = mirrorImageRerollSelection,
                 ),
             attackTurn = AttackTurn.Standard(attackerUserId = "attacker"),
             defenderUserId = "defender",
@@ -33,7 +33,8 @@ class NextCombatActionEntityTest {
     fun `Mirror Image rerollSelection survives the entity round-trip`() {
         val roundTripped =
             mirrorImageAction(
-                    rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.Second
+                    mirrorImageRerollSelection =
+                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.Second
                 )
                 .toEntity()
                 .toDomain()
@@ -41,8 +42,8 @@ class NextCombatActionEntityTest {
         val abilityRoll = assertIs<NextCombatAction.AbilityRoll>(roundTripped)
         val mirrorImage = assertIs<AbilityAction.Passive.MirrorImage>(abilityRoll.purpose)
         assertEquals(
-            AbilityAction.Passive.MirrorImage.RerollSelection.Second,
-            mirrorImage.rerollSelection,
+            AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.Second,
+            mirrorImage.mirrorImageRerollSelection,
         )
     }
 }

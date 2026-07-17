@@ -2,18 +2,20 @@ package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.MyDiceRoll
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlin.random.Random
 
 interface DiceRoller {
     fun getDiceRoll(): MyDiceRoll?
 
-    fun roll1D6(userId: String): RollResult.OneDie
+    fun roll1D6(
+        userId: String,
+        diePosition: DiePosition = DiePosition.getRandomPosition(),
+    ): RollResult.OneDie
 
     fun roll2D6(userId: String): RollResult.TwoDice
 
     fun getDoublesBonus(): DoublesBonus?
-
-    fun setDoublesBonus(userId: String)
 }
 
 // TODO(SS-048) Enums for values 1 through 6?
@@ -35,28 +37,36 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
 
     private var doublesBonus: DoublesBonus? = initialBonus
 
-    override fun roll1D6(userId: String): RollResult.OneDie {
-        val roll = Random.nextInt(from = 1, until = 7)
-        diceRoll = MyDiceRoll.OneDie(value = roll)
+    override fun roll1D6(userId: String, diePosition: DiePosition): RollResult.OneDie {
+        val roll = getRandom1D6Value()
+        val result = RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
+        diceRoll =
+            MyDiceRoll.OneDie(value = roll, diePosition = diePosition, doublesBonus = doublesBonus)
 
-        return RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
+        return result
     }
 
     override fun roll2D6(userId: String): RollResult.TwoDice {
-        val firstDie = Random.nextInt(from = 1, until = 7)
-        val secondDie = Random.nextInt(from = 1, until = 7)
-        diceRoll = MyDiceRoll.TwoDice(firstDie = firstDie, secondDie = secondDie)
-
-        return RollResult.TwoDice(
+        val firstDie = getRandom1D6Value()
+        val secondDie = getRandom1D6Value()
+        val result =
+            RollResult.TwoDice(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = consumeBonus(userId = userId),
             )
-            .also { result ->
-                if (result.isDoubles) {
-                    setDoublesBonus(userId = userId)
-                }
-            }
+
+        if (result.isDoubles) {
+            setDoublesBonus(userId = userId)
+        }
+        diceRoll =
+            MyDiceRoll.TwoDice(
+                firstDie = firstDie,
+                secondDie = secondDie,
+                doublesBonus = doublesBonus,
+            )
+
+        return result
     }
 
     override fun getDiceRoll() = diceRoll
@@ -69,7 +79,9 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
         return bonus
     }
 
-    override fun setDoublesBonus(userId: String) {
-        doublesBonus = DoublesBonus(userId)
+    private fun setDoublesBonus(userId: String) {
+        doublesBonus = DoublesBonus(userId = userId)
     }
+
+    private fun getRandom1D6Value() = Random.nextInt(from = 1, until = 7)
 }

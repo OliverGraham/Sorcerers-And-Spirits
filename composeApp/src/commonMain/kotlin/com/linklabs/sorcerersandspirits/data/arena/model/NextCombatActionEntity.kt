@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.Serializable
 
@@ -115,8 +116,8 @@ sealed interface AbilityActionEntity {
             val attackType: NormalAttackType,
             val attackerDoublesBonus: Int = 0,
             val mirrorImageDefensiveAbility: DefensiveAbilityEntity.MirrorImage,
-            val rerollSelection: AbilityAction.Passive.MirrorImage.RerollSelection =
-                AbilityAction.Passive.MirrorImage.RerollSelection.None,
+            val mirrorImageRerollSelection: MirrorImageRerollSelection =
+                MirrorImageRerollSelection.None,
         ) : PassiveEntity
 
         @Serializable
@@ -293,7 +294,7 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity =
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toEntity()
                                 as DefensiveAbilityEntity.MirrorImage,
-                        rerollSelection = rerollSelection,
+                        mirrorImageRerollSelection = mirrorImageRerollSelection,
                     )
 
                 is AbilityAction.Passive.HolyShield ->
@@ -395,7 +396,7 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                         attackerDoublesBonus = attackerDoublesBonus,
                         mirrorImageDefensiveAbility =
                             mirrorImageDefensiveAbility.toDomain() as DefensiveAbility.MirrorImage,
-                        rerollSelection = rerollSelection,
+                        mirrorImageRerollSelection = mirrorImageRerollSelection,
                     )
 
                 is AbilityActionEntity.PassiveEntity.HolyShieldEntity ->

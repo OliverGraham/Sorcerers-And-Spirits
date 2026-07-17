@@ -1,8 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.MirrorImage.RerollSelection as MirrorImageReroll
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttackInProgress
@@ -78,7 +77,7 @@ private fun AbilityActionState.getNumberOfDice() =
         is AbilityActionState.Passive.Teleport -> NumberOfDice.One
 
         is AbilityActionState.Passive.MirrorImage ->
-            if (rerollSelection == AbilityAction.Passive.MirrorImage.RerollSelection.None) {
+            if (mirrorImageRerollSelection == MirrorImageRerollSelection.None) {
                 NumberOfDice.None
             } else {
                 NumberOfDice.One
@@ -143,17 +142,17 @@ private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl>
 private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<ArenaCombatControl> =
     listOf(
         ArenaCombatControl.AbilityRoll(
-            action = copy(rerollSelection = MirrorImageReroll.First),
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.First),
             label = "Reroll the ${firstDie.originalRoll}",
             requiresTarget = false,
         ),
         ArenaCombatControl.AbilityRoll(
-            action = copy(rerollSelection = MirrorImageReroll.Second),
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.Second),
             label = "Reroll the ${secondDie.originalRoll}",
             requiresTarget = false,
         ),
         ArenaCombatControl.AbilityRoll(
-            action = copy(rerollSelection = MirrorImageReroll.None),
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.None),
             label = "Keep roll",
             requiresTarget = false,
         ),

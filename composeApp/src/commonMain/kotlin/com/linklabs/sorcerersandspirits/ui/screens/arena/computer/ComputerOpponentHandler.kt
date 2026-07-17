@@ -183,7 +183,7 @@ internal class ComputerOpponentHandler(
                 arenaId = arenaId,
                 playerMap = playerMap.mapValues { it.value.toDomain() },
                 roundNumber = roundNumber,
-                doublesBonus = doublesBonus,
+                doublesBonus = myDiceRollState?.doublesBonus,
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)

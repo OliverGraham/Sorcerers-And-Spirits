@@ -226,8 +226,8 @@ class MirrorImageKeepFlowTest {
                 .single { control ->
                     val mirrorImage = control.action
                     mirrorImage is AbilityActionState.Passive.MirrorImage &&
-                        mirrorImage.rerollSelection ==
-                            AbilityAction.Passive.MirrorImage.RerollSelection.None
+                        mirrorImage.mirrorImageRerollSelection ==
+                            AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.None
                 }
 
         val targetedOpponentUserId =

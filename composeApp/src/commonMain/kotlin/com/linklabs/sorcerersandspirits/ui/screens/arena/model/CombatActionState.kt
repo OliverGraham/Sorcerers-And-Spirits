@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
@@ -93,8 +94,8 @@ sealed interface AbilityActionState {
             val attackType: NormalAttackType,
             val attackerDoublesBonus: Int,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
-            val rerollSelection: AbilityAction.Passive.MirrorImage.RerollSelection =
-                AbilityAction.Passive.MirrorImage.RerollSelection.None,
+            val mirrorImageRerollSelection: MirrorImageRerollSelection =
+                MirrorImageRerollSelection.None,
         ) : Passive
 
         @Immutable data class MirrorImageDieState(val originalRoll: Int, val reroll: Int? = null)
@@ -271,7 +272,7 @@ internal fun AbilityActionState.toDomain(): AbilityAction =
                         attackType = attackType,
                         attackerDoublesBonus = attackerDoublesBonus,
                         mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
-                        rerollSelection = rerollSelection,
+                        mirrorImageRerollSelection = mirrorImageRerollSelection,
                     )
 
                 is AbilityActionState.Passive.HolyShield ->
@@ -388,7 +389,7 @@ internal fun AbilityAction.toState(): AbilityActionState =
                         attackType = attackType,
                         attackerDoublesBonus = attackerDoublesBonus,
                         mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
-                        rerollSelection = rerollSelection,
+                        mirrorImageRerollSelection = mirrorImageRerollSelection,
                     )
 
                 is AbilityAction.Passive.HolyShield ->

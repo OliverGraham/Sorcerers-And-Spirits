@@ -359,7 +359,8 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                mirrorImageRerollSelection =
+                    AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.First,
             )
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -1913,7 +1914,8 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                mirrorImageRerollSelection =
+                    AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.First,
             )
 
         // Reroll of 2 becomes a final value of 1, so the total of 4 misses the Illusionist's armor.
@@ -1952,7 +1954,8 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                mirrorImageRerollSelection =
+                    AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.First,
             )
 
         // Reroll of 6 becomes a final value of 5, so the total of 8 breaks the Illusionist's armor.
@@ -1991,7 +1994,8 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 1,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.Second,
+                mirrorImageRerollSelection =
+                    AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.Second,
             )
 
         mirrorImageTest(

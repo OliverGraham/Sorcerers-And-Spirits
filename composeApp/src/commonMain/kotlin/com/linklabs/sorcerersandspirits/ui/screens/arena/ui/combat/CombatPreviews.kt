@@ -264,8 +264,6 @@ private fun previewCombatState(
                 ),
         roundNumber = 1,
         isNewRound = true,
-        doublesBonus = null,
-        isMirrorImagePenaltyActive = false,
         turnOwnerUserId = userId,
         lockedTargetUserId = null,
         myDiceRollState = null,

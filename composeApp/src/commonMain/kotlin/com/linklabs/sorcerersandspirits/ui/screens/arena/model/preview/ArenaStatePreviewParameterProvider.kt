@@ -113,8 +113,6 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = true,
-            doublesBonus = null,
-            isMirrorImagePenaltyActive = false,
             turnOwnerUserId = userPlayerId,
             lockedTargetUserId = null,
             myDiceRollState = null,

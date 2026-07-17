@@ -56,8 +56,6 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
             nextCombatActionEntity = result.nextCombatAction.toEntity(),
             roundNumber = result.roundNumber,
             isNewRound = result.isNewRound,
-            doublesBonusEntity = result.doublesBonus?.toEntity(),
-            isMirrorImagePenaltyActive = result.isMirrorImagePenaltyActive,
             matchNumberInGauntlet = matchNumberInGauntlet,
             myDiceRoll = result.myDiceRoll?.toEntity(),
             participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },

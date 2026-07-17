@@ -10,6 +10,7 @@ interface DodgeAbility {
 
 interface MirrorImageAbility {
     val usedThisAttack: Boolean
+    val rerolledDiePosition: DiePosition?
 }
 
 interface HolyShieldAbility {
@@ -25,8 +26,10 @@ sealed interface DefensiveAbility : Ability {
 
     data object Persuade : DefensiveAbility
 
-    data class MirrorImage(override val usedThisAttack: Boolean = false) :
-        DefensiveAbility, MirrorImageAbility
+    data class MirrorImage(
+        override val usedThisAttack: Boolean = false,
+        override val rerolledDiePosition: DiePosition? = null,
+    ) : DefensiveAbility, MirrorImageAbility
 
     data object Teleport : DefensiveAbility
 

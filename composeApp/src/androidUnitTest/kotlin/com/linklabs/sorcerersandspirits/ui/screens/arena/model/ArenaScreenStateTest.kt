@@ -389,7 +389,7 @@ class ArenaScreenStateTest {
                     )
             )
 
-        assertEquals(expected = DiceBadge.MirrorPenalty, actual = state.diceBadge)
+        assertEquals(expected = DiceBadgeState.MirrorImageBonus, actual = state.diceBadge)
     }
 
     private fun combatState(

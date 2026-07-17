@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiePosition
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 
 @Immutable
 sealed interface DiceBadgeState {
@@ -11,5 +11,5 @@ sealed interface DiceBadgeState {
     data class DoublesBonus(override val diePosition: DiePosition = DiePosition.Second) :
         DiceBadgeState
 
-    @Immutable data class MirrorPenalty(override val diePosition: DiePosition) : DiceBadgeState
+    @Immutable data class MirrorImageBonus(override val diePosition: DiePosition) : DiceBadgeState
 }

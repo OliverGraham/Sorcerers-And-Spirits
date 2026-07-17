@@ -41,8 +41,6 @@ sealed interface ArenaMatchEntity {
         val nextCombatActionEntity: NextCombatActionEntity,
         val roundNumber: Int,
         val isNewRound: Boolean,
-        val doublesBonusEntity: DoublesBonusEntity? = null,
-        val isMirrorImagePenaltyActive: Boolean = false,
         val myDiceRoll: MyDiceRollEntity? = null,
         val participants: Map<String, CharacterClassType> = emptyMap(),
     ) : ArenaMatchEntity
@@ -107,8 +105,6 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 nextCombatAction = nextCombatActionEntity.toDomain(),
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
-                doublesBonus = doublesBonusEntity?.toDomain(),
-                isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
                 matchNumberInGauntlet = matchNumberInGauntlet,
                 myDiceRoll = myDiceRoll?.toDomain(),
                 participants = participants,

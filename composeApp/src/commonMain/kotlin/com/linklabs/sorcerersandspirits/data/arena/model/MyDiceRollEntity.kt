@@ -6,12 +6,20 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface MyDiceRollEntity {
+    val doublesBonusEntity: DoublesBonusEntity?
 
-    @Serializable @SerialName(value = ONE_DIE) data class OneDie(val value: Int) : MyDiceRollEntity
+    @Serializable
+    @SerialName(value = ONE_DIE)
+    data class OneDie(val value: Int, override val doublesBonusEntity: DoublesBonusEntity? = null) :
+        MyDiceRollEntity
 
     @Serializable
     @SerialName(value = TWO_DICE)
-    data class TwoDice(val firstDie: Int, val secondDie: Int) : MyDiceRollEntity
+    data class TwoDice(
+        val firstDie: Int,
+        val secondDie: Int,
+        override val doublesBonusEntity: DoublesBonusEntity? = null,
+    ) : MyDiceRollEntity
 
     @Serializable
     @SerialName(value = REROLL)
@@ -20,6 +28,7 @@ sealed interface MyDiceRollEntity {
         val originalSecondDie: Int,
         val rerolledFirstDie: Int? = null,
         val rerolledSecondDie: Int? = null,
+        override val doublesBonusEntity: DoublesBonusEntity? = null,
     ) : MyDiceRollEntity
 
     companion object {
@@ -31,10 +40,15 @@ sealed interface MyDiceRollEntity {
 
 internal fun MyDiceRollEntity.toDomain(): MyDiceRoll =
     when (this) {
-        is MyDiceRollEntity.OneDie -> MyDiceRoll.OneDie(value = value)
+        is MyDiceRollEntity.OneDie ->
+            MyDiceRoll.OneDie(value = value, doublesBonus = doublesBonusEntity?.toDomain())
 
         is MyDiceRollEntity.TwoDice ->
-            MyDiceRoll.TwoDice(firstDie = firstDie, secondDie = secondDie)
+            MyDiceRoll.TwoDice(
+                firstDie = firstDie,
+                secondDie = secondDie,
+                doublesBonus = doublesBonusEntity?.toDomain(),
+            )
 
         is MyDiceRollEntity.Reroll ->
             MyDiceRoll.Reroll(
@@ -42,15 +56,21 @@ internal fun MyDiceRollEntity.toDomain(): MyDiceRoll =
                 originalSecondDie = originalSecondDie,
                 rerolledFirstDie = rerolledFirstDie,
                 rerolledSecondDie = rerolledSecondDie,
+                doublesBonus = doublesBonusEntity?.toDomain(),
             )
     }
 
 internal fun MyDiceRoll.toEntity(): MyDiceRollEntity =
     when (this) {
-        is MyDiceRoll.OneDie -> MyDiceRollEntity.OneDie(value = value)
+        is MyDiceRoll.OneDie ->
+            MyDiceRollEntity.OneDie(value = value, doublesBonusEntity = doublesBonus?.toEntity())
 
         is MyDiceRoll.TwoDice ->
-            MyDiceRollEntity.TwoDice(firstDie = firstDie, secondDie = secondDie)
+            MyDiceRollEntity.TwoDice(
+                firstDie = firstDie,
+                secondDie = secondDie,
+                doublesBonusEntity = doublesBonus?.toEntity(),
+            )
 
         is MyDiceRoll.Reroll ->
             MyDiceRollEntity.Reroll(
@@ -58,5 +78,6 @@ internal fun MyDiceRoll.toEntity(): MyDiceRollEntity =
                 originalSecondDie = originalSecondDie,
                 rerolledFirstDie = rerolledFirstDie,
                 rerolledSecondDie = rerolledSecondDie,
+                doublesBonusEntity = doublesBonus?.toEntity(),
             )
     }

@@ -33,7 +33,6 @@ internal class CombatMutator(
 ) {
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
-    private var isMirrorImagePenaltyActive = false
 
     val attacker
         get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
@@ -45,8 +44,6 @@ internal class CombatMutator(
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
-        nextAction.resetMirrorImageIfApplicable()
-
         nextCombatAction = nextAction
     }
 
@@ -100,8 +97,6 @@ internal class CombatMutator(
             nextCombatAction = nextCombatAction,
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
-            doublesBonus = diceRoller.getDoublesBonus(),
-            isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
             isMatchFinished = getIsMatchFinished(),
             myDiceRoll = diceRoller.getDiceRoll(),
         )
@@ -152,15 +147,13 @@ internal class CombatMutator(
         messages.add(element = message)
     }
 
-    fun markMirrorImagePenalty() {
-        isMirrorImagePenaltyActive = true
-    }
-
     fun resolveTurnEnd() {
         if (consciousPlayers.size <= 1) {
             setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserIds = emptySet()))
             return
         }
+
+        resetMirrorImageIfApplicable()
 
         val wasSecondAttackGranted = grantAllInSecondAttackIfApplicable()
         if (wasSecondAttackGranted) return
@@ -315,18 +308,7 @@ internal class CombatMutator(
         return withEffective(allIn.copy(usedThisTurn = false))
     }
 
-    /**
-     * Resets Mirror Image unless the next action is the Health roll of the same attack.
-     *
-     * Mirror Image can be used once across the full attack attempt against Illusionist: Armor roll
-     * first, then Health roll only if armor passes.
-     *
-     * So AC -> Health must preserve `usedThisAttack`. Any other transition means that attack
-     * attempt ended or a new one is starting, so Mirror Image becomes available again.
-     */
-    private fun NextCombatAction.resetMirrorImageIfApplicable() {
-        if (this is NextCombatAction.NormalAttack && this.roll == NormalAttackType.Health) return
-
+    private fun resetMirrorImageIfApplicable() {
         val illusionistPlayer =
             consciousPlayers.firstOrNull {
                 it.characterClass.type == CharacterClassType.Illusionist
@@ -337,7 +319,10 @@ internal class CombatMutator(
                 ?: return
 
         updatePlayerClass(userId = illusionistPlayer.userId) { illusionist ->
-            illusionist.copy(defensiveAbility = mirrorImage.copy(usedThisAttack = false))
+            illusionist.copy(
+                defensiveAbility =
+                    mirrorImage.copy(usedThisAttack = false, rerolledDiePosition = null)
+            )
         }
     }
 

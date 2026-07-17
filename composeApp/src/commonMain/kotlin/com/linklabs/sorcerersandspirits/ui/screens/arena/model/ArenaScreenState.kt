@@ -152,8 +152,6 @@ private fun ArenaMatch.toState(
                 combatActionState = nextCombatAction.toCombatActionState(),
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
-                doublesBonus = doublesBonus,
-                isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
                 turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
                 lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
                 myDiceRollState = myDiceRoll?.toState(),

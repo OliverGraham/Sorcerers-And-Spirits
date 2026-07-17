@@ -32,8 +32,6 @@ sealed interface ArenaMatch {
         val nextCombatAction: NextCombatAction,
         val roundNumber: Int,
         val isNewRound: Boolean,
-        val doublesBonus: DoublesBonus?,
-        val isMirrorImagePenaltyActive: Boolean,
         val myDiceRoll: MyDiceRoll?,
         val participants: Map<String, CharacterClassType>,
     ) : ArenaMatch

@@ -100,8 +100,12 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 rerolledDiePosition = rerolledDiePosition,
             )
 
+        val totalRoll =
+            mirrorImageAction.firstDie.finalValue + mirrorImageAction.secondDie.finalValue
+
         resolveModifiedRoll(
             mirrorImageAction = rerolledMirrorImageAction,
+            totalRoll = totalRoll,
             isKeptRollDoubles = false,
         ) { messageType ->
             ArenaMessage.MirrorImage.TemptFate(
@@ -142,8 +146,14 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handlePass(mirrorImageAction: AbilityAction.Passive.MirrorImage) {
+        val totalRoll =
+            mirrorImageAction.firstDie.finalValue +
+                mirrorImageAction.secondDie.finalValue +
+                mirrorImageAction.attackerDoublesBonus
+
         resolveModifiedRoll(
             mirrorImageAction = mirrorImageAction,
+            totalRoll = totalRoll,
             isKeptRollDoubles = mirrorImageAction.attackerDoublesBonus > 0,
         ) { messageType ->
             ArenaMessage.MirrorImage.Pass(
@@ -154,16 +164,13 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
+    // TODO: More refactoring. This function, resolveModifiedRoll, is too abstract
     private fun CombatMutator.resolveModifiedRoll(
         mirrorImageAction: AbilityAction.Passive.MirrorImage,
+        totalRoll: Int,
         isKeptRollDoubles: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
-        val totalRoll =
-            mirrorImageAction.firstDie.finalValue +
-                mirrorImageAction.secondDie.finalValue +
-                mirrorImageAction.attackerDoublesBonus
-
         when (mirrorImageAction.attackType) {
             NormalAttackType.ArmorClass ->
                 resolveArmorClass(

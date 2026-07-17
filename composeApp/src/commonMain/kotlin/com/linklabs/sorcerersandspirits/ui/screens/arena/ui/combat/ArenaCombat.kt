@@ -24,7 +24,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
@@ -173,16 +172,9 @@ internal fun ArenaCombat(
             //                Should be elsewhere
             val homeBounds = diceHomeBounds
             if (homeBounds != null) {
-                DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
-                val badgeDieSlot =
-                    if (screenState.diceBadge is DiceBadge.MirrorPenalty) {
-                        diceRoll.restingSlots.singleOrNull()
-                    } else {
-                        null
-                    }
-                DiceModifierBadgeOverlay(
-                    badge = state.diceBadge,
-                    dieSlot = badgeDieSlot,
+                DiceOverlay(
+                    diceStateHolder = diceStateHolder,
+                    diceBadgeState = state.diceBadgeState,
                     homeBounds = homeBounds,
                 )
             }

@@ -289,12 +289,13 @@ class ArenaScreenViewModel(
         _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.Combat
 
     private suspend fun ArenaState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
+        // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
                 playerMap = playerMap.mapValues { it.value.toDomain() },
                 roundNumber = roundNumber,
-                doublesBonus = doublesBonus,
+                doublesBonus = myDiceRollState?.doublesBonus,
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)

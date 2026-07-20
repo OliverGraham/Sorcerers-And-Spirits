@@ -44,7 +44,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
             isNewRound = result.isNewRound,
             isMatchOver = result.isMatchFinished,
             matchNumberInGauntlet = matchNumberInGauntlet,
-            myDiceRoll = result.myDiceRoll?.toEntity(),
+            diceRoll = result.diceRoll?.toEntity(),
             participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
         )
 }

@@ -146,7 +146,7 @@ private fun ArenaMatch.toState(
                 isMatchOver = isMatchOver,
                 turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
                 lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
-                myDiceRollState = myDiceRoll?.toState(),
+                diceRollState = diceRoll?.toState(),
             )
         }
 

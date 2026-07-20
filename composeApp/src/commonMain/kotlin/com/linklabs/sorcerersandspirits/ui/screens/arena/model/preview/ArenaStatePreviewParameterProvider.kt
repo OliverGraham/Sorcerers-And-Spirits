@@ -116,7 +116,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             isMatchOver = false,
             turnOwnerUserId = userPlayerId,
             lockedTargetUserId = null,
-            myDiceRollState = null,
+            diceRollState = null,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

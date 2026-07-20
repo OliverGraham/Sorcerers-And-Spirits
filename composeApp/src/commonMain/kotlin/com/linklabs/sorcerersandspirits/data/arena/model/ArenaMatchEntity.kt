@@ -42,7 +42,7 @@ sealed interface ArenaMatchEntity {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val isMatchOver: Boolean = false,
-        val myDiceRoll: MyDiceRollEntity? = null,
+        val diceRoll: DiceRollEntity? = null,
         val participants: Map<String, CharacterClassType> = emptyMap(),
     ) : ArenaMatchEntity
 
@@ -108,7 +108,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 isNewRound = isNewRound,
                 isMatchOver = isMatchOver,
                 matchNumberInGauntlet = matchNumberInGauntlet,
-                myDiceRoll = myDiceRoll?.toDomain(),
+                diceRoll = diceRoll?.toDomain(),
                 participants = participants,
             )
 

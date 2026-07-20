@@ -269,7 +269,7 @@ class ArenaScreenViewModel(
                 arenaId = arguments.arenaId,
                 playerMap = playerMap.mapValues { it.value.toDomain() },
                 roundNumber = roundNumber,
-                doublesBonus = myDiceRollState?.doublesBonus?.toDomain(),
+                doublesBonus = diceRollState?.doublesBonus?.toDomain(),
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)

@@ -73,7 +73,7 @@ internal class DiceStateHolder {
         isUserRolling = false
     }
 
-    // TODO: Likely not necessary - maybe call if myDiceRollState is null???
+    // TODO: Likely not necessary - maybe call if diceRollState is null???
 
     /**
      * Stop awaiting a committed roll whose turn already resolved without a roll-bearing result:
@@ -86,16 +86,16 @@ internal class DiceStateHolder {
         if (hasTurnResolvedWithoutRoll) finishAwaiting()
     }
 
-    internal fun commitRoll(myDiceRollState: MyDiceRollState) {
-        when (myDiceRollState) {
-            is MyDiceRollState.OneDie -> myDiceRollState.commitRoll()
-            is MyDiceRollState.TwoDice -> myDiceRollState.commitRoll()
+    internal fun commitRoll(diceRollState: DiceRollState) {
+        when (diceRollState) {
+            is DiceRollState.OneDie -> diceRollState.commitRoll()
+            is DiceRollState.TwoDice -> diceRollState.commitRoll()
         }
 
         isUserRolling = false
     }
 
-    private fun MyDiceRollState.OneDie.commitRoll() {
+    private fun DiceRollState.OneDie.commitRoll() {
         when (diePosition) {
             DiePosition.First -> {
                 firstDieState = DieState(value = value, isActive = true)
@@ -109,7 +109,7 @@ internal class DiceStateHolder {
         }
     }
 
-    private fun MyDiceRollState.TwoDice.commitRoll() {
+    private fun DiceRollState.TwoDice.commitRoll() {
         firstDieState = DieState(value = firstDie, isActive = true)
         secondDieState = DieState(value = secondDie, isActive = true)
     }
@@ -122,12 +122,12 @@ internal class DiceStateHolder {
  * settle only once the result lands.
  */
 @Composable
-internal fun rememberDiceStateHolder(myDiceRollState: MyDiceRollState?): DiceStateHolder {
+internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
 
-    LaunchedEffect(key1 = myDiceRollState) {
-        if (myDiceRollState != null) {
-            diceStateHolder.commitRoll(myDiceRollState = myDiceRollState)
+    LaunchedEffect(key1 = diceRollState) {
+        if (diceRollState != null) {
+            diceStateHolder.commitRoll(diceRollState = diceRollState)
         }
     }
 

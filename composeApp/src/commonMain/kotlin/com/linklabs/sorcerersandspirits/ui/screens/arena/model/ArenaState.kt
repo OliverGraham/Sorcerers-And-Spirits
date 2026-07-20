@@ -5,7 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.DefensiveAbilityState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.MyDiceRollState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
@@ -37,7 +37,7 @@ sealed interface ArenaState {
         val isMatchOver: Boolean,
         val turnOwnerUserId: String,
         val lockedTargetUserId: String?,
-        val myDiceRollState: MyDiceRollState?,
+        val diceRollState: DiceRollState?,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
@@ -74,7 +74,7 @@ sealed interface ActiveState : ArenaState {
 private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     if (isMatchOver) return null
 
-    val doublesBonus = myDiceRollState?.doublesBonus
+    val doublesBonus = diceRollState?.doublesBonus
     val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
     if (isDoublesBonusLive) return DiceBadgeState.DoublesBonus()
 
@@ -84,9 +84,9 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
                 ?.rerolledDiePosition
         } ?: return null
 
-    val currentRoll = myDiceRollState
+    val currentRoll = diceRollState
     val isRerollStillShowing =
-        currentRoll is MyDiceRollState.OneDie && currentRoll.diePosition == rerolledDiePosition
+        currentRoll is DiceRollState.OneDie && currentRoll.diePosition == rerolledDiePosition
     if (!isRerollStillShowing) return null
 
     return DiceBadgeState.MirrorImageBonus(diePosition = rerolledDiePosition)

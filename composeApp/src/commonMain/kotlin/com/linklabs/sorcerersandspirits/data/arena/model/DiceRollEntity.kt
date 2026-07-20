@@ -1,12 +1,12 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.MyDiceRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-sealed interface MyDiceRollEntity {
+sealed interface DiceRollEntity {
     val doublesBonusEntity: DoublesBonusEntity?
 
     @Serializable
@@ -15,7 +15,7 @@ sealed interface MyDiceRollEntity {
         val value: Int,
         val diePosition: DiePosition,
         override val doublesBonusEntity: DoublesBonusEntity? = null,
-    ) : MyDiceRollEntity
+    ) : DiceRollEntity
 
     @Serializable
     @SerialName(value = TWO_DICE)
@@ -23,7 +23,7 @@ sealed interface MyDiceRollEntity {
         val firstDie: Int,
         val secondDie: Int,
         override val doublesBonusEntity: DoublesBonusEntity? = null,
-    ) : MyDiceRollEntity
+    ) : DiceRollEntity
 
     companion object {
         private const val ONE_DIE = "OneDie"
@@ -31,34 +31,34 @@ sealed interface MyDiceRollEntity {
     }
 }
 
-internal fun MyDiceRollEntity.toDomain(): MyDiceRoll =
+internal fun DiceRollEntity.toDomain(): DiceRoll =
     when (this) {
-        is MyDiceRollEntity.OneDie ->
-            MyDiceRoll.OneDie(
+        is DiceRollEntity.OneDie ->
+            DiceRoll.OneDie(
                 value = value,
                 diePosition = diePosition,
                 doublesBonus = doublesBonusEntity?.toDomain(),
             )
 
-        is MyDiceRollEntity.TwoDice ->
-            MyDiceRoll.TwoDice(
+        is DiceRollEntity.TwoDice ->
+            DiceRoll.TwoDice(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonus = doublesBonusEntity?.toDomain(),
             )
     }
 
-internal fun MyDiceRoll.toEntity(): MyDiceRollEntity =
+internal fun DiceRoll.toEntity(): DiceRollEntity =
     when (this) {
-        is MyDiceRoll.OneDie ->
-            MyDiceRollEntity.OneDie(
+        is DiceRoll.OneDie ->
+            DiceRollEntity.OneDie(
                 value = value,
                 diePosition = diePosition,
                 doublesBonusEntity = doublesBonus?.toEntity(),
             )
 
-        is MyDiceRoll.TwoDice ->
-            MyDiceRollEntity.TwoDice(
+        is DiceRoll.TwoDice ->
+            DiceRollEntity.TwoDice(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonusEntity = doublesBonus?.toEntity(),

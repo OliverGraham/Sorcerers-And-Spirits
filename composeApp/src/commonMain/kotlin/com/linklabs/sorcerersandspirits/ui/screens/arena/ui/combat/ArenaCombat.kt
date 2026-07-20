@@ -44,7 +44,7 @@ internal fun ArenaCombat(
     modifier: Modifier = Modifier,
 ) {
     // TODO: Encapsulate all dice-rolling state DiceStateHolder
-    val diceStateHolder = rememberDiceStateHolder(myDiceRollState = state.myDiceRollState)
+    val diceStateHolder = rememberDiceStateHolder(diceRollState = state.diceRollState)
 
     val flashPlayback = rememberFlashPlayback(messages = screenState.playbackMessages)
 

@@ -1,12 +1,12 @@
 package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
-import com.linklabs.sorcerersandspirits.domain.arena.model.MyDiceRoll
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlin.random.Random
 
 interface DiceRoller {
-    fun getDiceRoll(): MyDiceRoll?
+    fun getDiceRoll(): DiceRoll?
 
     fun roll1D6(
         userId: String,
@@ -34,7 +34,7 @@ sealed interface RollResult {
 }
 
 class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
-    private var diceRoll: MyDiceRoll? = null
+    private var diceRoll: DiceRoll? = null
 
     private var doublesBonus: DoublesBonus? = initialBonus
 
@@ -42,7 +42,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
         val roll = getRandom1D6Value()
         val result = RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
         diceRoll =
-            MyDiceRoll.OneDie(value = roll, diePosition = diePosition, doublesBonus = doublesBonus)
+            DiceRoll.OneDie(value = roll, diePosition = diePosition, doublesBonus = doublesBonus)
 
         return result
     }
@@ -61,7 +61,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
             setDoublesBonus(userId = userId)
         }
         diceRoll =
-            MyDiceRoll.TwoDice(
+            DiceRoll.TwoDice(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonus = doublesBonus,

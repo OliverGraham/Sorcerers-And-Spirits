@@ -98,7 +98,7 @@ internal class CombatMutator(
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
             isMatchFinished = getIsMatchFinished(),
-            myDiceRoll = diceRoller.getDiceRoll(),
+            diceRoll = diceRoller.getDiceRoll(),
         )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {

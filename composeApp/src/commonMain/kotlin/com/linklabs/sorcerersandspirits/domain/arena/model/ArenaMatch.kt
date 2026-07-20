@@ -33,7 +33,7 @@ sealed interface ArenaMatch {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val isMatchOver: Boolean,
-        val myDiceRoll: MyDiceRoll?,
+        val diceRoll: DiceRoll?,
         val participants: Map<String, CharacterClassType>,
     ) : ArenaMatch
 

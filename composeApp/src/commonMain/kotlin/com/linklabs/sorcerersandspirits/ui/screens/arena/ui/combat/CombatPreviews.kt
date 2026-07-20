@@ -267,7 +267,7 @@ private fun previewCombatState(
         isMatchOver = false,
         turnOwnerUserId = userId,
         lockedTargetUserId = null,
-        myDiceRollState = null,
+        diceRollState = null,
     )
 }
 

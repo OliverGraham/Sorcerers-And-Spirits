@@ -18,6 +18,7 @@ interface DiceRoller {
     fun getDoublesBonus(): DoublesBonus?
 }
 
+// TODO: RollResult isn't really being used anymore - it can be refactored out
 // TODO(SS-048) Enums for values 1 through 6?
 sealed interface RollResult {
     val total: Int

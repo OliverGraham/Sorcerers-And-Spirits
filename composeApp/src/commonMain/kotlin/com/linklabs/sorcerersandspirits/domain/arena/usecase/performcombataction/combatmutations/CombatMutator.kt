@@ -301,6 +301,8 @@ internal class CombatMutator(
         }
     }
 
+    // TODO: What the hell is up with this?
+
     /**
      * Clears per-turn ability state so a new turn starts clean. All-In's [usedThisTurn] guards it
      * to once per turn, so it must be released when the owner's next turn begins — including when

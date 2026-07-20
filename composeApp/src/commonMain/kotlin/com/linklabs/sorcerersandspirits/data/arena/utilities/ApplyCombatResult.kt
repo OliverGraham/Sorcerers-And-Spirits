@@ -22,29 +22,15 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
     ): ArenaMatchEntity {
         if (this !is ArenaMatchEntity.Combat) return this
 
+        // TODO: return updatedMessages from a function. FFS
         val newMessages =
             result.messages.map { outgoingArenaMessage ->
                 outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
             }
 
         val updatedMessages = messages.appendCapped(newMessages = newMessages)
-        return if (result.isMatchFinished) {
-            toFinished(updatedMessages = updatedMessages)
-        } else {
-            toUpdatedCombat(updatedMessages = updatedMessages)
-        }
+        return toUpdatedCombat(updatedMessages = updatedMessages)
     }
-
-    private fun ArenaMatchEntity.Combat.toFinished(
-        updatedMessages: List<ArenaMessageEntity>
-    ): ArenaMatchEntity.Finished =
-        ArenaMatchEntity.Finished(
-            messages = updatedMessages,
-            numberOfNewMessages = result.messages.size,
-            playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toEntity() },
-            matchNumberInGauntlet = matchNumberInGauntlet,
-            participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
-        )
 
     private fun ArenaMatchEntity.Combat.toUpdatedCombat(
         updatedMessages: List<ArenaMessageEntity>
@@ -56,6 +42,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
             nextCombatActionEntity = result.nextCombatAction.toEntity(),
             roundNumber = result.roundNumber,
             isNewRound = result.isNewRound,
+            isMatchOver = result.isMatchFinished,
             matchNumberInGauntlet = matchNumberInGauntlet,
             myDiceRoll = result.myDiceRoll?.toEntity(),
             participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },

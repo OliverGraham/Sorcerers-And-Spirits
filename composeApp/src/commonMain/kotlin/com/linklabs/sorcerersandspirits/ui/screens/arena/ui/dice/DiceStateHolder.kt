@@ -43,8 +43,11 @@ internal class DiceStateHolder {
     val isRolling: Boolean
         get() = isHolding || isUserRolling
 
-    fun startHold() {
+    // TODO: Refactor rollingDiePositions
+    fun startHold(rollingPositions: Set<DiePosition>) {
         isArmed = false
+        firstDieState = firstDieState.copy(isActive = DiePosition.First in rollingPositions)
+        secondDieState = secondDieState.copy(isActive = DiePosition.Second in rollingPositions)
         isHolding = true
     }
 
@@ -94,8 +97,15 @@ internal class DiceStateHolder {
 
     private fun MyDiceRollState.OneDie.commitRoll() {
         when (diePosition) {
-            DiePosition.First -> firstDieState = DieState(value = value, isActive = true)
-            DiePosition.Second -> secondDieState = DieState(value = value, isActive = true)
+            DiePosition.First -> {
+                firstDieState = DieState(value = value, isActive = true)
+                secondDieState = secondDieState.copy(isActive = false)
+            }
+
+            DiePosition.Second -> {
+                firstDieState = firstDieState.copy(isActive = false)
+                secondDieState = DieState(value = value, isActive = true)
+            }
         }
     }
 
@@ -115,8 +125,10 @@ internal class DiceStateHolder {
 internal fun rememberDiceStateHolder(myDiceRollState: MyDiceRollState?): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
 
-    if (myDiceRollState != null) {
-        diceStateHolder.commitRoll(myDiceRollState = myDiceRollState)
+    LaunchedEffect(key1 = myDiceRollState) {
+        if (myDiceRollState != null) {
+            diceStateHolder.commitRoll(myDiceRollState = myDiceRollState)
+        }
     }
 
     diceStateHolder.settleIfResolvedWithoutResult()

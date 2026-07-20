@@ -31,13 +31,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.NumberOfDice
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.rollingDiePositions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.rollActionFor
@@ -139,6 +140,7 @@ internal fun BottomControls(
     }
 }
 
+// TODO: refactor rollingDiePositions
 @Composable
 private fun AttackButton(
     isEnabled: Boolean,
@@ -154,7 +156,7 @@ private fun AttackButton(
         classColor = classColor,
         showClassBorder = false,
         diceStateHolder = diceStateHolder,
-        shouldRollDice = true,
+        rollingDiePositions = setOf(DiePosition.First, DiePosition.Second),
         onRoll = onRoll,
         modifier = modifier,
     )
@@ -177,7 +179,7 @@ private fun AbilityButton(
         classColor = classColor,
         showClassBorder = true,
         diceStateHolder = diceStateHolder,
-        shouldRollDice = control.numberOfDice != NumberOfDice.None,
+        rollingDiePositions = control.rollingDiePositions(),
         onRoll = onRoll,
         label = label,
         modifier = modifier,
@@ -200,7 +202,7 @@ private fun ImpersonateButton(
         classColor = classColor,
         showClassBorder = true,
         diceStateHolder = diceStateHolder,
-        shouldRollDice = false,
+        rollingDiePositions = emptySet(),
         onRoll = onRoll,
         label = label,
         modifier = modifier,
@@ -215,7 +217,7 @@ private fun ArenaButton(
     classColor: Color,
     showClassBorder: Boolean,
     diceStateHolder: DiceStateHolder,
-    shouldRollDice: Boolean,
+    rollingDiePositions: Set<DiePosition>,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
     label: String? = null,
@@ -259,11 +261,15 @@ private fun ArenaButton(
                             enabled = isEnabled,
                             onHoldStart = {
                                 isPressed.value = true
-                                if (shouldRollDice) diceStateHolder.startHold()
+                                if (rollingDiePositions.isNotEmpty()) {
+                                    diceStateHolder.startHold(
+                                        rollingPositions = rollingDiePositions
+                                    )
+                                }
                             },
                             onRelease = { isDoubleTap ->
                                 isPressed.value = false
-                                if (shouldRollDice) {
+                                if (rollingDiePositions.isNotEmpty()) {
                                     diceStateHolder.release(isDoubleTap = isDoubleTap) { onRoll() }
                                 } else {
                                     onRoll()

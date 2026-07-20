@@ -34,6 +34,7 @@ sealed interface ArenaState {
         val combatActionState: CombatActionState,
         val roundNumber: Int,
         val isNewRound: Boolean,
+        val isMatchOver: Boolean,
         val turnOwnerUserId: String,
         val lockedTargetUserId: String?,
         val myDiceRollState: MyDiceRollState?,
@@ -71,6 +72,8 @@ sealed interface ActiveState : ArenaState {
 }
 
 private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
+    if (isMatchOver) return null
+
     val doublesBonus = myDiceRollState?.doublesBonus
     val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
     if (isDoublesBonusLive) return DiceBadgeState.DoublesBonus()
@@ -80,6 +83,11 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
             (it.characterClass.defensiveAbility as? DefensiveAbilityState.MirrorImage)
                 ?.rerolledDiePosition
         } ?: return null
+
+    val currentRoll = myDiceRollState
+    val isRerollStillShowing =
+        currentRoll is MyDiceRollState.OneDie && currentRoll.diePosition == rerolledDiePosition
+    if (!isRerollStillShowing) return null
 
     return DiceBadgeState.MirrorImageBonus(diePosition = rerolledDiePosition)
 }

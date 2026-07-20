@@ -149,7 +149,10 @@ internal class CombatMutator(
 
     fun resolveTurnEnd() {
         if (consciousPlayers.size <= 1) {
-            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserIds = emptySet()))
+            setNextCombatAction(
+                nextAction =
+                    NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId))
+            )
             return
         }
 
@@ -334,6 +337,7 @@ internal class CombatMutator(
     private fun getIsMatchFinished(): Boolean {
         if (consciousPlayers.size > 1) return false
         if (!::nextCombatAction.isInitialized) return false
+        if (nextCombatAction is NextCombatAction.Idle) return true
 
         val anyActiveUnconsciousPlayers =
             nextCombatAction.activeUserIds.any { userId ->

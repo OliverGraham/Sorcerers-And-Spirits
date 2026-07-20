@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
+import com.linklabs.sorcerersandspirits.data.arena.utilities.FinishMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
@@ -80,5 +81,9 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
     override suspend fun stayForAnotherMatch(arenaId: String, userId: String) {
         StayForAnotherMatch(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    }
+
+    override suspend fun finishMatch(arenaId: String) {
+        FinishMatch().invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 }

@@ -264,6 +264,7 @@ private fun previewCombatState(
                 ),
         roundNumber = 1,
         isNewRound = true,
+        isMatchOver = false,
         turnOwnerUserId = userId,
         lockedTargetUserId = null,
         myDiceRollState = null,

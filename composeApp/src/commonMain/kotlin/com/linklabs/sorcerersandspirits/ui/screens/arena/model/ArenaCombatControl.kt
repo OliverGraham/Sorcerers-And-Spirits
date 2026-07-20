@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
@@ -54,6 +55,28 @@ enum class NumberOfDice {
     None,
 }
 
+// TODO: Refactor these to be in the correct coding style as per my requirements.
+internal fun ArenaCombatControl.rollingDiePositions(): Set<DiePosition> =
+    when (numberOfDice) {
+        NumberOfDice.None -> emptySet()
+        NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
+        NumberOfDice.One -> setOf(singleRollDiePosition())
+    }
+
+private fun ArenaCombatControl.singleRollDiePosition(): DiePosition =
+    when (this) {
+        is ArenaCombatControl.AbilityRoll -> action.singleRollDiePosition()
+        else -> DiePosition.First
+    }
+
+private fun AbilityActionState.singleRollDiePosition(): DiePosition {
+    val isRerollingSecondDie =
+        this is AbilityActionState.Passive.MirrorImage &&
+            mirrorImageRerollSelection == MirrorImageRerollSelection.Second
+
+    return if (isRerollingSecondDie) DiePosition.Second else DiePosition.First
+}
+
 private fun AbilityActionState.getNumberOfDice() =
     when (this) {
         is AbilityActionState.Activated.AllIn -> NumberOfDice.One
@@ -92,8 +115,10 @@ private fun AbilityActionState.getNumberOfDice() =
  * Determines which combat controls the user can act on right now. An empty list means the user
  * cannot act and no action buttons should be shown.
  */
-internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> =
-    when (val actionState = combatActionState) {
+internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> {
+    if (isMatchOver) return emptyList()
+
+    return when (val actionState = combatActionState) {
         is CombatActionState.Idle ->
             if (isItThisUsersTurn) {
                 val offensiveAbility = userPlayer.characterClass.offensiveAbility
@@ -123,6 +148,7 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
                 emptyList()
             }
     }
+}
 
 private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl> =
     when (this) {
@@ -139,16 +165,17 @@ private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl>
             )
     }
 
+// TODO: Fix positioning of dice perhaps. Leftmost die should be "first"
 private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<ArenaCombatControl> =
     listOf(
         ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.First),
-            label = "Reroll the ${firstDie.originalRoll}",
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.Second),
+            label = "Reroll the ${secondDie.originalRoll}",
             requiresTarget = false,
         ),
         ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.Second),
-            label = "Reroll the ${secondDie.originalRoll}",
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.First),
+            label = "Reroll the ${firstDie.originalRoll}",
             requiresTarget = false,
         ),
         ArenaCombatControl.AbilityRoll(

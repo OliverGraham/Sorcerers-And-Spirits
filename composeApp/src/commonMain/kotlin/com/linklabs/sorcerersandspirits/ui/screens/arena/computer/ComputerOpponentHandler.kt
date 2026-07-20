@@ -18,6 +18,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -127,6 +128,7 @@ internal class ComputerOpponentHandler(
     }
 
     private suspend fun resolveCombat(arenaState: ArenaState.Combat, computerId: String) {
+        if (arenaState.isMatchOver) return
         if (computerId !in arenaState.combatActionState.activeUserIds) return
 
         val currentAction =
@@ -183,7 +185,7 @@ internal class ComputerOpponentHandler(
                 arenaId = arenaId,
                 playerMap = playerMap.mapValues { it.value.toDomain() },
                 roundNumber = roundNumber,
-                doublesBonus = myDiceRollState?.doublesBonus,
+                doublesBonus = myDiceRollState?.doublesBonus?.toDomain(),
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)

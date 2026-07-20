@@ -33,12 +33,11 @@ data class ArenaScreenState(
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-    val pendingFinishedState: ArenaState.Finished? = null,
     val playbackMessages: List<PlayableMessage> = messages.map { it.toPlayable() },
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
-    val isFinishPending: Boolean = pendingFinishedState != null
+    val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
 }
 
 // TODO(SS-031): Need to refactor this badly
@@ -70,26 +69,19 @@ internal fun ArenaMatch.toUpdatedState(
             characterClasses = characterClasses,
         )
 
-    val (displayedArenaState, pendingFinishedState) =
-        holdCombatForClosingFlash(
-            computedState = computedArenaState,
-            previousState = previousState?.arenaState,
-        )
-
     val gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet)
 
     val userPlayer = playerMap.getValue(key = userId)
 
     // TODO: CLAUDE YOU ASSHOLE!!!!! MAKE FUNCTIONS FOR TIMER-LOGIC
-    // While the Finished transition is held, the match is over, so the combat clock is stopped
-    // rather than left running against the held combat view.
+    val isMatchOver = (computedArenaState as? ArenaState.Combat)?.isMatchOver == true
     val timerAction =
-        if (pendingFinishedState != null) {
+        if (isMatchOver) {
             TimerAction.Stop
         } else {
             determineTimerAction(
                 previous = previousState?.arenaState,
-                next = displayedArenaState,
+                next = computedArenaState,
                 isFinalMatch = gauntletProgress.isFinalMatch,
             )
         }
@@ -108,12 +100,11 @@ internal fun ArenaMatch.toUpdatedState(
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
             hasReadiedForNextMatch = userPlayer.isReadyForNextMatch,
-            arenaState = displayedArenaState,
+            arenaState = computedArenaState,
             participants = participants,
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
-            pendingFinishedState = pendingFinishedState,
             numberOfNewMessages = numberOfNewMessages,
         )
 
@@ -152,6 +143,7 @@ private fun ArenaMatch.toState(
                 combatActionState = nextCombatAction.toCombatActionState(),
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
+                isMatchOver = isMatchOver,
                 turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
                 lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
                 myDiceRollState = myDiceRoll?.toState(),
@@ -165,37 +157,6 @@ private fun ArenaMatch.toState(
                 hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
             )
     }
-
-/**
- * Briefly holds the combat view on the Combat→Finished transition so the closing flash callout
- * (SS-148) can play before the Finished screen replaces it (SS-154). When the match has just
- * finished, the combat view is held in place—updated to show the final knockout—and the finished
- * state is returned as pending, for the ViewModel to advance to after a fixed hold. Otherwise the
- * computed state is shown as is.
- */
-private fun holdCombatForClosingFlash(
-    computedState: ArenaState,
-    previousState: ArenaState?,
-): Pair<ArenaState, ArenaState.Finished?> {
-    if (computedState !is ArenaState.Finished) return computedState to null
-    if (previousState !is ArenaState.Combat) return computedState to null
-
-    val heldCombatState = previousState.withFinalPlayers(finishedPlayers = computedState.players)
-    return heldCombatState to computedState
-}
-
-/**
- * Returns this combat view with each player replaced by their final, match-end state, so the held
- * view reflects the closing knockout while the Finished transition is held (SS-154).
- */
-private fun ArenaState.Combat.withFinalPlayers(
-    finishedPlayers: List<PlayerState.Selected>
-): ArenaState.Combat {
-    val finalPlayersById = finishedPlayers.associateBy { it.userId }
-    val updatedPlayerMap =
-        playerMap.mapValues { (userId, player) -> finalPlayersById[userId] ?: player }
-    return copy(playerMap = updatedPlayerMap)
-}
 
 private fun List<CharacterClassState>.defaultSelectedClass(
     unavailableClasses: Set<CharacterClassType>

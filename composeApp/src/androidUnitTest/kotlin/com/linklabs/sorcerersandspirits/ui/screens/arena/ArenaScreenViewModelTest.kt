@@ -12,6 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
@@ -66,6 +67,7 @@ class ArenaScreenViewModelTest {
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase = mockk()
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase = mockk()
     private val exitArenaUseCase: ExitArenaUseCase = mockk(relaxed = true)
+    private val finishMatchUseCase: FinishMatchUseCase = mockk(relaxed = true)
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase = mockk()
     private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase = mockk()
     private val getUserIdUseCase: GetUserIdUseCase = mockk()
@@ -109,6 +111,7 @@ class ArenaScreenViewModelTest {
             chooseCharacterClassUseCase = chooseCharacterClassUseCase,
             coordinateArenaMatchUseCase = coordinateArenaMatchUseCase,
             exitArenaUseCase = exitArenaUseCase,
+            finishMatchUseCase = finishMatchUseCase,
             getCharacterClassesUseCase = getCharacterClassesUseCase,
             getCharacterClassCopyUseCase = getCharacterClassCopyUseCase,
             getUserIdUseCase = getUserIdUseCase,

@@ -18,6 +18,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
@@ -119,6 +120,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::CreateProfileUseCase)
     factoryOf(::DeleteProfileUseCase)
     factoryOf(::ExitArenaUseCase)
+    factoryOf(::FinishMatchUseCase)
     factoryOf(::FlushPendingStatsUseCase)
     factoryOf(::GetCharacterClassCopyUseCase)
     factoryOf(::GetCharacterClassesUseCase)

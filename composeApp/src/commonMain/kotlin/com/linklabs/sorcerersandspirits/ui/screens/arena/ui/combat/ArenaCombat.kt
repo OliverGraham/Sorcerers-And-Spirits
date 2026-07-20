@@ -101,7 +101,7 @@ internal fun ArenaCombat(
                         targetState =
                             state.seatingFor(
                                 targetUserId = targetedOpponentUserId,
-                                isMatchEnding = screenState.isFinishPending,
+                                isMatchEnding = screenState.isMatchEnding,
                                 collapsingTargetUserId =
                                     screenState.collapsingSeatUserId(playback = flashPlayback),
                             ),
@@ -120,6 +120,7 @@ internal fun ArenaCombat(
                                 onInspect = { inspectedUserId = it },
                                 isTargetable =
                                     state.isItThisUsersTurn &&
+                                        !state.isMatchOver &&
                                         state.lockedTargetUserId == null &&
                                         !isTargetLockedOptimistically,
                                 onAvatarBoundsChanged = avatarBounds::reportAvatarBounds,
@@ -148,7 +149,7 @@ internal fun ArenaCombat(
                 targetedOpponentUserId = targetedOpponentUserId,
                 lockTarget = { isTargetLockedOptimistically = true },
                 diceStateHolder = diceStateHolder,
-                areControlsVisible = !screenState.isFinishPending,
+                areControlsVisible = !screenState.isMatchEnding,
                 isActionInFlight = isActionInFlight,
                 isSequencing = flashPlayback.isSequencing,
                 onActionDispatched = { isActionInFlight = true },
@@ -194,7 +195,7 @@ private fun ArenaScreenState.collapsingSeatUserId(playback: FlashPlaybackState):
         playbackMessages.lastOrNull { it.cue?.collapsingUserId != null } ?: return null
 
     val isCollapseFinished = latestCollapse.id == playback.finishedCollapseMessageId
-    val shouldHoldSeat = isFinishPending || !isCollapseFinished
+    val shouldHoldSeat = isMatchEnding || !isCollapseFinished
 
     return if (shouldHoldSeat) latestCollapse.cue?.collapsingUserId else null
 }

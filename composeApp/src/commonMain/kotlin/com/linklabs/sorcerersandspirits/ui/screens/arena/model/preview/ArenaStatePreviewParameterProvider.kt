@@ -113,10 +113,10 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = true,
-            doublesBonus = null,
-            isMirrorImagePenaltyActive = false,
+            isMatchOver = false,
             turnOwnerUserId = userPlayerId,
             lockedTargetUserId = null,
+            diceRollState = null,
         )
 
     private fun createExampleCharacterClassStates(): List<CharacterClassState> =

@@ -7,7 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
-import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
+import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
@@ -19,18 +19,16 @@ import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.RollResult
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollResult as RollResultState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.latestRoll
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import io.mockk.every
 import io.mockk.mockk
@@ -52,7 +50,7 @@ class MirrorImageKeepFlowTest {
     private val diceRoller =
         mockk<DiceRoller> {
             every { getDoublesBonus() } returns null
-            every { setDoublesBonus(userId = any()) } returns Unit
+            every { getDiceRoll() } returns null
             every { roll2D6(userId = ROGUE_ID) } returns
                 RollResult.TwoDice(firstDie = 3, secondDie = 4, bonus = 0)
         }
@@ -171,6 +169,8 @@ class MirrorImageKeepFlowTest {
     fun `Given Mirror Image interrupts the Health roll, then the trigger carries the new dice so the table matches the reroll labels`() {
         every { diceRoller.roll2D6(userId = ROGUE_ID) } returns
             RollResult.TwoDice(firstDie = 2, secondDie = 5, bonus = 0)
+        every { diceRoller.getDiceRoll() } returns
+            DiceRoll.TwoDice(firstDie = 2, secondDie = 5, doublesBonus = null)
 
         val healthRollAction =
             CurrentCombatAction.NormalAttack(
@@ -208,14 +208,9 @@ class MirrorImageKeepFlowTest {
         assertEquals(expected = 2, actual = trigger.firstDie)
         assertEquals(expected = 5, actual = trigger.secondDie)
 
-        val latestRoll =
-            outcome.messages
-                .map { IncomingArenaMessage(id = it.hashCode().toString(), message = it) }
-                .toStates(participants = emptyMap())
-                .latestRoll()
         assertEquals(
-            expected = RollResultState.Faces(slotFaces = mapOf(0 to 2, 1 to 5)),
-            actual = latestRoll.result,
+            expected = DiceRoll.TwoDice(firstDie = 2, secondDie = 5, doublesBonus = null),
+            actual = outcome.diceRoll,
         )
     }
 
@@ -233,8 +228,7 @@ class MirrorImageKeepFlowTest {
                 .single { control ->
                     val mirrorImage = control.action
                     mirrorImage is AbilityActionState.Passive.MirrorImage &&
-                        mirrorImage.rerollSelection ==
-                            AbilityAction.Passive.MirrorImage.RerollSelection.None
+                        mirrorImage.mirrorImageRerollSelection == MirrorImageRerollSelection.None
                 }
 
         val targetedOpponentUserId =
@@ -301,10 +295,10 @@ class MirrorImageKeepFlowTest {
             combatActionState = roundTrippedAction.toCombatActionState(),
             roundNumber = 1,
             isNewRound = false,
-            doublesBonus = null,
-            isMirrorImagePenaltyActive = false,
+            isMatchOver = false,
             turnOwnerUserId = roundTrippedAction.turnOwnerUserId(),
             lockedTargetUserId = roundTrippedAction.lockedTargetUserId(userId = userPlayerId),
+            diceRollState = null,
         )
     }
 

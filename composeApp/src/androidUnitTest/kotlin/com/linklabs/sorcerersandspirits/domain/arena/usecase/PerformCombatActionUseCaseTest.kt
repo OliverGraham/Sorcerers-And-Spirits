@@ -19,6 +19,7 @@ import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import io.mockk.every
@@ -34,7 +35,7 @@ class PerformCombatActionUseCaseTest {
     private val diceRoller =
         mockk<DiceRoller> {
             every { getDoublesBonus() } returns null
-            every { setDoublesBonus(userId = any()) } returns Unit
+            every { getDiceRoll() } returns null
         }
 
     private fun setupTwoDiceRoll(
@@ -48,7 +49,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     private fun setupOneDiceRoll(userId: String, die: Int = 3, bonus: Int = 0) {
-        every { diceRoller.roll1D6(userId = userId) } returns
+        every { diceRoller.roll1D6(userId = userId, diePosition = any()) } returns
             RollResult.OneDie(die = die, bonus = bonus)
     }
 
@@ -324,14 +325,14 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given an Illusionist keeping a doubles armor roll, when the armor stays broken, then the Doubles message is emitted`() {
+    fun `Given an Illusionist keeping a roll where the attacker carried a doubles bonus, when the armor stays broken, then the Doubles message is emitted`() {
         // Arrange
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
-                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 0,
+                attackerDoublesBonus = 1,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
@@ -359,7 +360,7 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                mirrorImageRerollSelection = MirrorImageRerollSelection.First,
             )
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -1913,7 +1914,7 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                mirrorImageRerollSelection = MirrorImageRerollSelection.First,
             )
 
         // Reroll of 2 becomes a final value of 1, so the total of 4 misses the Illusionist's armor.
@@ -1952,7 +1953,7 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.First,
+                mirrorImageRerollSelection = MirrorImageRerollSelection.First,
             )
 
         // Reroll of 6 becomes a final value of 5, so the total of 8 breaks the Illusionist's armor.
@@ -1983,7 +1984,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `When an Illusionist rerolls a Mirror Image ArmorClass roll, the attacker's carried doubles bonus still breaks armor`() {
+    fun `When an Illusionist rerolls a Mirror Image ArmorClass roll, the attacker's carried doubles bonus is nullified`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
@@ -1991,14 +1992,14 @@ class PerformCombatActionUseCaseTest {
                 attackType = NormalAttackType.ArmorClass,
                 attackerDoublesBonus = 1,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-                rerollSelection = AbilityAction.Passive.MirrorImage.RerollSelection.Second,
+                mirrorImageRerollSelection = MirrorImageRerollSelection.Second,
             )
 
         mirrorImageTest(
             mirrorImagePurpose = mirrorImagePurpose,
             rerollDie = 3,
-            expectedUsedThisAttack = true,
-            expectedIsNextActionNormalAttack = true,
+            expectedUsedThisAttack = false,
+            expectedIsNextActionIdle = true,
         )
     }
 
@@ -2340,7 +2341,7 @@ class PerformCombatActionUseCaseTest {
                 attackerUserId = attackerUserId,
                 defenderUserId = mageUserId,
                 defenderClass = TestCharacterClasses.mage(),
-                doublesBonus = mageOutcome.doublesBonus,
+                doublesBonus = mageOutcome.diceRoll?.doublesBonus,
             )
         val attackerRollAction =
             getAbilityRollAction(purpose = afterMageTeleport, rollingUserId = attackerUserId)
@@ -2837,38 +2838,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `When an attacker rolls doubles but the turn ends, the next player's roll does NOT include the bonus`() {
-        // Arrange
-        val attackerUserId = DEFAULT_ATTACKER_ID
-        val arguments =
-            createTwoPlayerArguments(
-                attackerUserId = attackerUserId,
-                doublesBonus = DoublesBonus(userId = attackerUserId),
-            )
-        val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = getNormalAttackAction() // Attack that misses
-        val nextPlayerId = currentAction.defenderUserId
-
-        // Set up a miss
-        setupTwoDiceRoll(
-            userId = currentAction.attackTurn.attackerUserId,
-            firstDie = 1,
-            secondDie = 1,
-            bonus = 1,
-        )
-
-        // Act
-        val outcome = performCombatAction.invoke(currentAction = currentAction)
-
-        // Assert
-        // Bonus should be null in the outcome since it was "consumed" by the attacker's roll
-        // and it won't be passed to the next player.
-        assertEquals(expected = null, actual = outcome.doublesBonus)
-        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = nextPlayerId))
-    }
-
-    @Test
-    fun `When a Rogue rolls doubles to knockout a defender, Killing Momentum triggers and the doubles bonus is preserved in the outcome`() {
+    fun `When a Rogue rolls doubles to knockout a defender, Killing Momentum triggers so the Rogue attacks again`() {
         // Arrange
         val arguments = createThreePlayerArguments(attackerClass = TestCharacterClasses.rogue())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -2882,13 +2852,11 @@ class PerformCombatActionUseCaseTest {
         val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
-        val nextAction = outcome.nextCombatAction
-        assertTrue(actual = nextAction.isThisUserNext(userId = rogueUserId))
-        assertEquals(expected = DoublesBonus(userId = rogueUserId), actual = outcome.doublesBonus)
+        assertTrue(actual = outcome.nextCombatAction.isThisUserNext(userId = rogueUserId))
     }
 
     @Test
-    fun `When a Paladin rolls 10 (doubles) for Holy Shield Prayer, the doubles bonus is preserved for the subsequent Wrath roll`() {
+    fun `When a Paladin rolls 10 (doubles) for Holy Shield Prayer, the subsequent Wrath roll follows`() {
         // Arrange
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.paladin())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
@@ -2905,31 +2873,6 @@ class PerformCombatActionUseCaseTest {
         val nextAction = assertIs<NextCombatAction.AbilityRoll>(value = outcome.nextCombatAction)
         assertTrue(actual = nextAction.purpose is AbilityAction.Passive.HolyShield.Wrath)
         assertTrue(actual = nextAction.isThisUserNext(userId = paladinUserId))
-        assertEquals(expected = DoublesBonus(userId = paladinUserId), actual = outcome.doublesBonus)
-    }
-
-    @Test
-    fun `When a Gambler with two attacks rolls doubles on their first attack's Health roll, the doubles bonus is preserved in the outcome`() {
-        // Arrange
-        val gambler =
-            TestCharacterClasses.gambler()
-                .copy(
-                    offensiveAbility =
-                        OffensiveAbility.AllIn(hasAnotherAttack = true, usedThisTurn = true)
-                )
-        val arguments = createTwoPlayerArguments(attackerClass = gambler)
-        val performCombatAction = getPerformCombatAction(arguments = arguments)
-        val currentAction = getHealthAttackAction()
-        val gamblerUserId = currentAction.attackTurn.attackerUserId
-
-        setupTwoDiceRoll(userId = gamblerUserId, firstDie = 3, secondDie = 3)
-        every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = gamblerUserId)
-
-        // Act
-        val outcome = performCombatAction.invoke(currentAction = currentAction)
-
-        // Assert
-        assertEquals(expected = DoublesBonus(userId = gamblerUserId), actual = outcome.doublesBonus)
     }
 
     @Test

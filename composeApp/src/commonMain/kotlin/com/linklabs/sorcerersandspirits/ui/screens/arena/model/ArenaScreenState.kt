@@ -3,13 +3,13 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
+import com.linklabs.sorcerersandspirits.domain.arena.model.isKnockedOut
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.toState
 
 private const val TIMER_VISIBLE_THRESHOLD_SECONDS = 15
 private const val TIMER_URGENT_THRESHOLD_SECONDS = 10
@@ -18,7 +18,6 @@ private const val CHOOSING_CLASSES_TIMER_DURATION_SECONDS = 30
 private const val COMBAT_TIMER_DURATION_SECONDS = 45
 private const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
 private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
-private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
 // TODO: Can this massive data class be reduced in some way?
 @Immutable
@@ -34,82 +33,11 @@ data class ArenaScreenState(
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-    val pendingFinishedState: ArenaState.Finished? = null,
     val playbackMessages: List<PlayableMessage> = messages.map { it.toPlayable() },
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
-
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
-    val isFinishPending: Boolean = pendingFinishedState != null
-
-    internal val latestRoll: LatestRoll = messages.latestRoll()
-    val diceBadge: DiceBadge? = deriveDiceBadge()
-
-    private fun deriveDiceBadge(): DiceBadge? {
-        val combatArenaState = arenaState as? ArenaState.Combat ?: return null
-
-        return when {
-            combatArenaState.isDoublesBonusLive -> DiceBadge.DoublesBonus
-            combatArenaState.isMirrorImagePenaltyActive -> DiceBadge.MirrorPenalty
-            else -> null
-        }
-    }
-}
-
-@Immutable
-sealed interface ArenaState {
-
-    @Immutable data object WaitingForAllPlayers : ArenaState
-
-    @Immutable
-    data class ChoosingClasses(
-        override val playerMap: Map<UserId, PlayerState>,
-        override val userPlayerId: String,
-        val activePlayerUserId: String,
-        val selectedClass: CharacterClassState?,
-        val unavailableClasses: Set<CharacterClassType>,
-        val classSelections: Map<CharacterClassType, String>,
-    ) : ActiveState {
-        val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
-        val isItThisUsersTurn = activePlayerUserId == userPlayerId
-    }
-
-    @Immutable
-    data class Combat(
-        override val playerMap: Map<UserId, PlayerState.Selected>,
-        override val userPlayerId: String,
-        val combatActionState: CombatActionState,
-        val roundNumber: Int,
-        val isNewRound: Boolean,
-        val doublesBonus: DoublesBonus?,
-        val isMirrorImagePenaltyActive: Boolean,
-        val turnOwnerUserId: String,
-        val lockedTargetUserId: String?,
-    ) : ActiveState {
-        val userPlayer = playerMap.getValue(key = userPlayerId)
-        val activeUserIds = combatActionState.activeUserIds
-        val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
-        val isItThisUsersTurn = userPlayerId in activeUserIds
-
-        // TODO: Obviously, this was supposed to simply come from the domain
-        val combatControls = deriveCombatControls()
-    }
-
-    @Immutable
-    data class Finished(
-        val players: List<PlayerState.Selected>,
-        val hasAnyPlayerReadied: Boolean = false,
-    ) : ArenaState {
-        val survivors = players.filter { it.characterClass.isConscious }
-        val winner = survivors.singleOrNull()
-        val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
-    }
-}
-
-@Immutable
-sealed interface ActiveState : ArenaState {
-    val playerMap: Map<UserId, PlayerState>
-    val userPlayerId: String
+    val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
 }
 
 // TODO(SS-031): Need to refactor this badly
@@ -120,171 +48,122 @@ internal fun ArenaMatch.toUpdatedState(
     characterClasses: List<CharacterClassState> = emptyList(),
     classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
 ): ArenaStateUpdate {
-    val userPlayer = playerMap.getValue(key = userId)
-
-    // ArenaMessages refer to players by class name (SS-097), so the resolution map is keyed on the
-    // class each player selected. Players who have left the arena are retained so their earlier
-    // messages still resolve.
-    val currentParticipants =
-        playerMap.values.filterIsInstance<ArenaPlayer.Selected>().associate {
-            it.userId to
-                ParticipantClass(
-                    className = it.characterClass.className,
-                    type = it.characterClass.type,
-                )
-        }
-    val participants = (previousState?.participants ?: emptyMap()) + currentParticipants
+    // TODO: Make function - do this later, Claude
+    val participants =
+        when (this) {
+            is ArenaMatch.Combat -> this.participants
+            is ArenaMatch.Finished -> this.participants
+            else -> emptyMap()
+        }.mapValues { ParticipantClass(className = it.value.name, type = it.value) }
 
     val messages = messages.toStates(participants = participants)
+
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 
-    val isUserPlayerKnockedOut =
-        (userPlayer as? ArenaPlayer.Selected)?.characterClass?.isConscious()?.not() ?: false
-
-    // Readiness comes from the shared match state, the same flag the data layer uses to start the
-    // next match, rather than being tracked locally per client. This keeps every player's Finished
-    // screen in step with that decision and resets automatically when a new match begins.
-    val hasReadiedForNextMatch = userPlayer.isReadyForNextMatch
-
     val computedArenaState =
-        when (this) {
-            is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
-
-            is ArenaMatch.ChoosingClasses -> {
-                val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
-                val previousSelection =
-                    (previousState?.arenaState as? ArenaState.ChoosingClasses)?.selectedClass
-
-                ArenaState.ChoosingClasses(
-                    playerMap = playerMap.mapValues { it.value.toState() },
-                    activePlayerUserId = activePlayer.userId,
-                    userPlayerId = userId,
-                    unavailableClasses = unavailable,
-                    classSelections = selections,
-                    selectedClass =
-                        characterClasses.resolveSelectedClass(
-                            previousSelection = previousSelection,
-                            unavailableClasses = unavailable,
-                        ),
-                )
-            }
-
-            is ArenaMatch.Combat -> {
-                ArenaState.Combat(
-                    playerMap = playerMap.mapValues { it.value.toSelectedState() },
-                    userPlayerId = userId,
-                    combatActionState = nextCombatAction.toCombatActionState(),
-                    roundNumber = roundNumber,
-                    isNewRound = isNewRound,
-                    doublesBonus = doublesBonus,
-                    isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
-                    turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
-                    lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
-                )
-            }
-
-            is ArenaMatch.Finished ->
-                ArenaState.Finished(
-                    players =
-                        playerMap.values
-                            .map { it.toState() }
-                            .filterIsInstance<PlayerState.Selected>(),
-                    hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
-                )
-        }
-
-    val (displayedArenaState, pendingFinishedState) =
-        holdCombatForClosingFlash(
-            computedState = computedArenaState,
-            previousState = previousState?.arenaState,
+        toState(
+            userId = userId,
+            previousClassSelection =
+                (previousState?.arenaState as? ArenaState.ChoosingClasses)?.selectedClass,
+            characterClasses = characterClasses,
         )
 
     val gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet)
 
-    val nextScreenState =
-        ArenaScreenState(
-            messages = messages,
-            secondsRemaining = previousSeconds,
-            showForfeitDialog = previousShowForfeitDialog,
-            isUserPlayerKnockedOut = isUserPlayerKnockedOut,
-            hasReadiedForNextMatch = hasReadiedForNextMatch,
-            arenaState = displayedArenaState,
-            participants = participants,
-            gauntletProgress = gauntletProgress,
-            characterClasses = characterClasses,
-            classCopy = classCopy,
-            pendingFinishedState = pendingFinishedState,
-            numberOfNewMessages = numberOfNewMessages,
-        )
+    val userPlayer = playerMap.getValue(key = userId)
 
-    // While the Finished transition is held, the match is over, so the combat clock is stopped
-    // rather than left running against the held combat view.
+    // TODO: CLAUDE YOU ASSHOLE!!!!! MAKE FUNCTIONS FOR TIMER-LOGIC
+    val isMatchOver = (computedArenaState as? ArenaState.Combat)?.isMatchOver == true
     val timerAction =
-        if (pendingFinishedState != null) {
+        if (isMatchOver) {
             TimerAction.Stop
         } else {
             determineTimerAction(
                 previous = previousState?.arenaState,
-                next = displayedArenaState,
+                next = computedArenaState,
                 isFinalMatch = gauntletProgress.isFinalMatch,
             )
         }
 
-    val finalState =
+    val secondsRemaining =
         when (timerAction) {
-            is TimerAction.Start ->
-                nextScreenState.copy(secondsRemaining = timerAction.timerDuration)
-
-            TimerAction.Stop -> nextScreenState.copy(secondsRemaining = 0)
-
-            TimerAction.None -> nextScreenState
+            is TimerAction.Start -> timerAction.timerDuration
+            TimerAction.Stop -> 0
+            TimerAction.None -> previousSeconds
         }
+
+    val finalState =
+        ArenaScreenState(
+            messages = messages,
+            secondsRemaining = secondsRemaining,
+            showForfeitDialog = previousShowForfeitDialog,
+            isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
+            hasReadiedForNextMatch = userPlayer.isReadyForNextMatch,
+            arenaState = computedArenaState,
+            participants = participants,
+            gauntletProgress = gauntletProgress,
+            characterClasses = characterClasses,
+            classCopy = classCopy,
+            numberOfNewMessages = numberOfNewMessages,
+        )
 
     return ArenaStateUpdate(nextState = finalState, timerAction = timerAction)
 }
 
-/**
- * Briefly holds the combat view on the Combat→Finished transition so the closing flash callout
- * (SS-148) can play before the Finished screen replaces it (SS-154). When the match has just
- * finished, the combat view is held in place—updated to show the final knockout—and the finished
- * state is returned as pending, for the ViewModel to advance to after a fixed hold. Otherwise the
- * computed state is shown as is.
- */
-private fun holdCombatForClosingFlash(
-    computedState: ArenaState,
-    previousState: ArenaState?,
-): Pair<ArenaState, ArenaState.Finished?> {
-    if (computedState !is ArenaState.Finished) return computedState to null
-    if (previousState !is ArenaState.Combat) return computedState to null
+private fun ArenaMatch.toState(
+    userId: String,
+    previousClassSelection: CharacterClassState?,
+    characterClasses: List<CharacterClassState>,
+) =
+    when (this) {
+        is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
 
-    val heldCombatState = previousState.withFinalPlayers(finishedPlayers = computedState.players)
-    return heldCombatState to computedState
-}
+        is ArenaMatch.ChoosingClasses -> {
+            val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
 
-/**
- * Returns this combat view with each player replaced by their final, match-end state, so the held
- * view reflects the closing knockout while the Finished transition is held (SS-154).
- */
-private fun ArenaState.Combat.withFinalPlayers(
-    finishedPlayers: List<PlayerState.Selected>
-): ArenaState.Combat {
-    val finalPlayersById = finishedPlayers.associateBy { it.userId }
-    val updatedPlayerMap =
-        playerMap.mapValues { (userId, player) -> finalPlayersById[userId] ?: player }
-    return copy(playerMap = updatedPlayerMap)
-}
+            ArenaState.ChoosingClasses(
+                playerMap = playerMap.mapValues { it.value.toState() },
+                activePlayerUserId = activePlayer.userId,
+                userPlayerId = userId,
+                unavailableClasses = unavailable,
+                classSelections = selections,
+                selectedClass =
+                    characterClasses.resolveSelectedClass(
+                        previousSelection = previousClassSelection,
+                        unavailableClasses = unavailable,
+                    ),
+            )
+        }
 
-/**
- * The class to pre-select when the Choosing Classes screen is first entered, so the confirm button
- * is enabled immediately (SS-176). Rogue is the default; if it is already taken by another player,
- * the first still-available class is used instead.
- */
+        is ArenaMatch.Combat -> {
+            ArenaState.Combat(
+                playerMap = playerMap.mapValues { it.value.toSelectedState() },
+                userPlayerId = userId,
+                combatActionState = nextCombatAction.toCombatActionState(),
+                roundNumber = roundNumber,
+                isNewRound = isNewRound,
+                isMatchOver = isMatchOver,
+                turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
+                lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
+                diceRollState = diceRoll?.toState(),
+            )
+        }
+
+        is ArenaMatch.Finished ->
+            ArenaState.Finished(
+                players =
+                    playerMap.values.map { it.toState() }.filterIsInstance<PlayerState.Selected>(),
+                hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
+            )
+    }
+
 private fun List<CharacterClassState>.defaultSelectedClass(
     unavailableClasses: Set<CharacterClassType>
 ): CharacterClassState? {
     val rogue = firstOrNull { it.type == CharacterClassType.Rogue }
     val isRogueAvailable = rogue != null && rogue.type !in unavailableClasses
+
     return if (isRogueAvailable) rogue else firstOrNull { it.type !in unavailableClasses }
 }
 

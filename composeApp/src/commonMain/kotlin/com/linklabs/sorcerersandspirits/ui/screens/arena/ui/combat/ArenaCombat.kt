@@ -22,20 +22,21 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.targetedDefenderUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceRoll
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
+
+// TODO: ArenaScreenState is causing a recomposition for the entire screen from the timer. Why?
 
 @Composable
 internal fun ArenaCombat(
@@ -43,7 +44,8 @@ internal fun ArenaCombat(
     state: ArenaState.Combat,
     modifier: Modifier = Modifier,
 ) {
-    val diceRoll = rememberDiceRoll()
+    // TODO: Encapsulate all dice-rolling state DiceStateHolder
+    val diceStateHolder = rememberDiceStateHolder(diceRollState = state.diceRollState)
 
     val flashPlayback = rememberFlashPlayback(messages = screenState.playbackMessages)
 
@@ -56,6 +58,7 @@ internal fun ArenaCombat(
     var isTargetLockedOptimistically by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
 
+    // TODO: Don't use messages for logic - do this later, Claude
     var isActionInFlight by
         remember(key1 = state.combatActionState, key2 = screenState.messages.lastOrNull()?.id) {
             mutableStateOf(value = false)
@@ -79,6 +82,7 @@ internal fun ArenaCombat(
             if (isMessagesExpanded) 0 else unreadMessageCount + screenState.numberOfNewMessages
     }
 
+    // TODO: Needs to cover bottom and top system UI
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -101,7 +105,7 @@ internal fun ArenaCombat(
                         targetState =
                             state.seatingFor(
                                 targetUserId = targetedOpponentUserId,
-                                isMatchEnding = screenState.isFinishPending,
+                                isMatchEnding = screenState.isMatchEnding,
                                 collapsingTargetUserId =
                                     screenState.collapsingSeatUserId(playback = flashPlayback),
                             ),
@@ -120,6 +124,7 @@ internal fun ArenaCombat(
                                 onInspect = { inspectedUserId = it },
                                 isTargetable =
                                     state.isItThisUsersTurn &&
+                                        !state.isMatchOver &&
                                         state.lockedTargetUserId == null &&
                                         !isTargetLockedOptimistically,
                                 onAvatarBoundsChanged = avatarBounds::reportAvatarBounds,
@@ -147,8 +152,8 @@ internal fun ArenaCombat(
                 state = state,
                 targetedOpponentUserId = targetedOpponentUserId,
                 lockTarget = { isTargetLockedOptimistically = true },
-                diceRoll = diceRoll,
-                areControlsVisible = !screenState.isFinishPending,
+                diceStateHolder = diceStateHolder,
+                areControlsVisible = !screenState.isMatchEnding,
                 isActionInFlight = isActionInFlight,
                 isSequencing = flashPlayback.isSequencing,
                 onActionDispatched = { isActionInFlight = true },
@@ -172,16 +177,9 @@ internal fun ArenaCombat(
             //                Should be elsewhere
             val homeBounds = diceHomeBounds
             if (homeBounds != null) {
-                DiceOverlay(diceRoll = diceRoll, homeBounds = homeBounds)
-                val badgeDieSlot =
-                    if (screenState.diceBadge is DiceBadge.MirrorPenalty) {
-                        diceRoll.restingSlots.singleOrNull()
-                    } else {
-                        null
-                    }
-                DiceModifierBadgeOverlay(
-                    badge = screenState.diceBadge,
-                    dieSlot = badgeDieSlot,
+                DiceOverlay(
+                    diceStateHolder = diceStateHolder,
+                    diceBadgeState = state.diceBadgeState,
                     homeBounds = homeBounds,
                 )
             }
@@ -201,7 +199,7 @@ private fun ArenaScreenState.collapsingSeatUserId(playback: FlashPlaybackState):
         playbackMessages.lastOrNull { it.cue?.collapsingUserId != null } ?: return null
 
     val isCollapseFinished = latestCollapse.id == playback.finishedCollapseMessageId
-    val shouldHoldSeat = isFinishPending || !isCollapseFinished
+    val shouldHoldSeat = isMatchEnding || !isCollapseFinished
 
     return if (shouldHoldSeat) latestCollapse.cue?.collapsingUserId else null
 }
@@ -260,22 +258,28 @@ private fun CombatStage(
     }
 }
 
-internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
+// TODO: This logic needs to be simplified and made correct, without confusing fallbacks that should
+//       never happen
+internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String =
+    when (val action = combatActionState) {
+        is CombatActionState.NormalAttack -> action.defenderUserId
+
+        is CombatActionState.AbilityRoll -> action.defenderUserId
+
+        is CombatActionState.Idle ->
+            idleTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
+    }
+
+private fun ArenaState.Combat.idleTargetUserId(selectedOpponentUserId: String): String {
     val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
     val userChosenTarget =
         if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""
 
-    return userChosenTarget
-        .ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }
-        .ifEmpty { getTurnOwnerLoneOpponentUserId() }
+    return userChosenTarget.ifEmpty { defaultTargetedOpponentUserId() }
 }
 
-/**
- * The single conscious opponent of the current turn owner, or null when they have none or more than
- * one. With only one possible target there is no choice to make, so it is the implicit target every
- * device shows before the turn owner commits a roll.
- */
-private fun ArenaState.Combat.getTurnOwnerLoneOpponentUserId(): String =
+/** Finds opponent user id if there is only a single conscious opponent. */
+private fun ArenaState.Combat.defaultTargetedOpponentUserId(): String =
     playerMap.values
         .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
         ?.userId

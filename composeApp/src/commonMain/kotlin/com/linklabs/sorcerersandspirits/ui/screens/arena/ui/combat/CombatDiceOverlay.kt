@@ -1,10 +1,8 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -13,46 +11,43 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DIE_RESTING_FACE
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRoll
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DieState
 
-private const val DICE_HOME_DIE_COUNT = 2
-private val diceHomeHeight = 56.dp
-internal val diceRestSpacing = 76.dp
+internal val diceSpacing = 152.dp
 
-/** The x-center a die rests at for its [slot], shared so overlays can anchor to a specific die. */
-internal fun dieRestCenterX(homeCenterX: Float, slot: Int, spacingPx: Float): Float =
-    homeCenterX + (slot - (DICE_HOME_DIE_COUNT - 1) / 2f) * spacingPx
-
-/**
- * The empty resting slot below the avatars that reserves space for the dice and reports its bounds.
- * The dice themselves are drawn in the screen-spanning [DiceOverlay] so they can roll over all the
- * content; at rest they sit centered in this slot (SS-149).
- */
+// TODO: The dice are nice and centered in multiplayer (there's the classHeadIcons on the side)
+//       Otherwise, for two player, they're skewed - needs to always be centered. Should NOT
+//       use a method of changing values based on the 2 player vs multiplayer - do this later,
+// Claude
 @Composable
-internal fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = Modifier) {
-    Box(
-        modifier =
-            modifier.fillMaxWidth().height(height = diceHomeHeight).onGloballyPositioned {
-                onBoundsChanged(it.boundsInRoot())
-            }
-    )
+internal fun dieRestCenterX(
+    homeCenterX: Float,
+    diePosition: DiePosition,
+    spacingPx: Float = with(receiver = LocalDensity.current) { diceSpacing.toPx() },
+): Float {
+    val diePositionNumber =
+        when (diePosition) {
+            DiePosition.First -> 0
+            DiePosition.Second -> -1
+        }
+
+    return homeCenterX + (diePositionNumber / 2f) * spacingPx
 }
 
-/**
- * The dice, drawn in a screen-spanning overlay above all other content so a roll tumbles over
- * everything (SS-149). Each die's tray is the whole overlay, so it bounces across the screen while
- * rolling, then glides back to its resting spot in the [homeBounds] slot. Always shows both dice
- * for a steady footprint; on a single-die roll the second die is dimmed and still. The overlay is
- * non-interactive, so taps fall through to the content (the buttons) beneath it.
- */
 @Composable
-internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect, modifier: Modifier = Modifier) {
+internal fun DiceOverlay(
+    diceStateHolder: DiceStateHolder,
+    diceBadgeState: DiceBadgeState?,
+    homeBounds: Rect,
+    modifier: Modifier = Modifier,
+) {
     var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
 
     BoxWithConstraints(
@@ -61,30 +56,55 @@ internal fun DiceOverlay(diceRoll: DiceRoll, homeBounds: Rect, modifier: Modifie
                 overlayOrigin = it.localToRoot(relativeToLocal = Offset.Zero)
             }
     ) {
-        val spacingPx = with(receiver = LocalDensity.current) { diceRestSpacing.toPx() }
         val homeCenter = homeBounds.center - overlayOrigin
+        val shakeTick = diceStateHolder.shakeTick
+        val isRolling = diceStateHolder.isRolling
 
-        repeat(times = DICE_HOME_DIE_COUNT) { index ->
-            val isActive = index in diceRoll.activeSlots
-            val restCenter =
-                Offset(
-                    x =
-                        dieRestCenterX(
-                            homeCenterX = homeCenter.x,
-                            slot = index,
-                            spacingPx = spacingPx,
-                        ),
-                    y = homeCenter.y,
-                )
-            Die3d(
-                value = diceRoll.dieFaces.getOrNull(index = index) ?: DIE_RESTING_FACE,
-                isRolling = isActive && diceRoll.isRolling,
-                enabled = isActive,
-                shakeTick = diceRoll.shakeTick,
-                trayWidth = maxWidth,
-                trayHeight = maxHeight,
-                restCenter = restCenter,
-            )
-        }
+        SingleDie(
+            dieState = diceStateHolder.firstDieState,
+            isRolling = isRolling,
+            diePosition = DiePosition.First,
+            homeCenter = homeCenter,
+            shakeTick = shakeTick,
+        )
+        SingleDie(
+            dieState = diceStateHolder.secondDieState,
+            isRolling = isRolling,
+            diePosition = DiePosition.Second,
+            homeCenter = homeCenter,
+            shakeTick = shakeTick,
+        )
+
+        DiceBadgeOverlay(diceBadgeState = diceBadgeState, homeCenter = homeCenter)
     }
 }
+
+@Composable
+private fun BoxWithConstraintsScope.SingleDie(
+    dieState: DieState,
+    isRolling: Boolean,
+    diePosition: DiePosition,
+    homeCenter: Offset,
+    shakeTick: Int,
+    modifier: Modifier = Modifier,
+) {
+    val restCenter =
+        Offset(
+            x = dieRestCenterX(homeCenterX = homeCenter.x, diePosition = diePosition),
+            y = homeCenter.y,
+        )
+
+    val isActive = dieState.isActive
+    Die3d(
+        value = dieState.value,
+        isRolling = isActive && isRolling,
+        enabled = isActive,
+        shakeTick = shakeTick,
+        trayWidth = maxWidth,
+        trayHeight = maxHeight,
+        restCenter = restCenter,
+        modifier = modifier,
+    )
+}
+
+// TODO: Possible to get a preview?

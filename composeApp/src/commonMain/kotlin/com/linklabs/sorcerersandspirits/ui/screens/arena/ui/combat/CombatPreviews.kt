@@ -213,6 +213,7 @@ private fun PreviewArenaCombat(
             participants = emptyMap(),
             numberOfNewMessages = 2,
         )
+
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
             ArenaCombat(
@@ -244,16 +245,12 @@ private fun previewCombatPlayer(
     )
 }
 
-/**
- * Builds a combat state for previews. Defaults to the user (first player) mid-attack against the
- * second player, so the rest become head icons; pass [combatActionState] for other contexts (e.g.
- * an idle turn that surfaces the ability buttons).
- */
 private fun previewCombatState(
     players: List<PlayerState.Selected>,
     combatActionState: CombatActionState? = null,
 ): ArenaState.Combat {
     val userId = players.first().userId
+
     return ArenaState.Combat(
         playerMap = players.associateBy { it.userId },
         userPlayerId = userId,
@@ -267,10 +264,10 @@ private fun previewCombatState(
                 ),
         roundNumber = 1,
         isNewRound = true,
-        doublesBonus = null,
-        isMirrorImagePenaltyActive = false,
+        isMatchOver = false,
         turnOwnerUserId = userId,
         lockedTargetUserId = null,
+        diceRollState = null,
     )
 }
 

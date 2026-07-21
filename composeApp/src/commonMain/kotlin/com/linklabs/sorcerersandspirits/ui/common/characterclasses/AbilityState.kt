@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.AllInAbility
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
 import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
 import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
@@ -25,8 +26,10 @@ sealed interface DefensiveAbilityState : AbilityState {
     @Immutable data object Persuade : DefensiveAbilityState
 
     @Immutable
-    data class MirrorImage(override val usedThisAttack: Boolean) :
-        DefensiveAbilityState, MirrorImageAbility
+    data class MirrorImage(
+        override val usedThisAttack: Boolean,
+        override val rerolledDiePosition: DiePosition?,
+    ) : DefensiveAbilityState, MirrorImageAbility
 
     @Immutable data object Teleport : DefensiveAbilityState
 
@@ -85,7 +88,10 @@ internal fun DefensiveAbility.toState(): DefensiveAbilityState =
         is DefensiveAbility.Persuade -> DefensiveAbilityState.Persuade
 
         is DefensiveAbility.MirrorImage ->
-            DefensiveAbilityState.MirrorImage(usedThisAttack = usedThisAttack)
+            DefensiveAbilityState.MirrorImage(
+                usedThisAttack = usedThisAttack,
+                rerolledDiePosition = rerolledDiePosition,
+            )
 
         is DefensiveAbility.Teleport -> DefensiveAbilityState.Teleport
 
@@ -135,7 +141,10 @@ internal fun DefensiveAbilityState.toDomain(): DefensiveAbility =
         is DefensiveAbilityState.Persuade -> DefensiveAbility.Persuade
 
         is DefensiveAbilityState.MirrorImage ->
-            DefensiveAbility.MirrorImage(usedThisAttack = usedThisAttack)
+            DefensiveAbility.MirrorImage(
+                usedThisAttack = usedThisAttack,
+                rerolledDiePosition = rerolledDiePosition,
+            )
 
         is DefensiveAbilityState.Teleport -> DefensiveAbility.Teleport
 

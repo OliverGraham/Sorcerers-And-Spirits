@@ -1,20 +1,15 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -26,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -38,8 +32,9 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadge
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import kotlin.math.roundToInt
 
 private const val BADGE_WOBBLE_TRANSITION_LABEL = "diceBadgeWobble"
@@ -54,72 +49,52 @@ private const val BADGE_ROCK_PERIOD_MILLIS = 700
 private const val BADGE_TILT_PERIOD_MILLIS = 1300
 private const val BADGE_GROW_PERIOD_MILLIS = 950
 private const val BADGE_CAMERA_DISTANCE = 10f
-private const val BADGE_ENTER_SCALE = 0.4f
 
-private val badgeRightOffset = 46.dp
 private val badgeUpOffset = 34.dp
 
 private val doublesGold = Color(color = 0xFFFFC947)
 
-/**
- * The +1 / -1 modifier chip floating above the resting dice, wobbling in a lively 3D loop while it
- * is shown. The banked doubles +1 rides at the upper-right of the pair and folds away as the next
- * roll consumes it; the Mirror Image -1 anchors above the specific die it penalized ([dieSlot]) and
- * rides along while that reroll is the dice' last roll. Drawn in a screen-spanning overlay so it
- * can be anchored to the shared [homeBounds] dice slot.
- */
+/** The +1 / -1 chip floating above the resting dice. */
 @Composable
-internal fun DiceModifierBadgeOverlay(
-    badge: DiceBadge?,
-    dieSlot: Int?,
-    homeBounds: Rect,
+internal fun DiceBadgeOverlay(
+    diceBadgeState: DiceBadgeState?,
+    homeCenter: Offset,
     modifier: Modifier = Modifier,
 ) {
-    var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
     var badgeSize by remember { mutableStateOf(value = IntSize.Zero) }
-    var shownBadge by remember { mutableStateOf<DiceBadge?>(value = null) }
-    if (badge != null) shownBadge = badge
 
-    Box(
+    val upPx = with(receiver = LocalDensity.current) { badgeUpOffset.toPx() }
+    val spacingPx = with(receiver = LocalDensity.current) { diceSpacing.toPx() }
+    val targetX =
+        dieRestCenterX(
+            homeCenterX = homeCenter.x,
+            diePosition = diceBadgeState?.diePosition ?: DiePosition.First,
+            spacingPx = spacingPx,
+        )
+
+    val targetY = homeCenter.y - upPx
+
+    AnimatedContent(
+        targetState = diceBadgeState,
         modifier =
-            modifier.fillMaxSize().onGloballyPositioned {
-                overlayOrigin = it.localToRoot(relativeToLocal = Offset.Zero)
-            }
+            modifier
+                .offset {
+                    IntOffset(
+                        x = (targetX - badgeSize.width / 2f).roundToInt(),
+                        y = (targetY - badgeSize.height / 2f).roundToInt(),
+                    )
+                }
+                .onGloballyPositioned { badgeSize = it.size },
     ) {
-        val rightPx = with(receiver = LocalDensity.current) { badgeRightOffset.toPx() }
-        val upPx = with(receiver = LocalDensity.current) { badgeUpOffset.toPx() }
-        val spacingPx = with(receiver = LocalDensity.current) { diceRestSpacing.toPx() }
-        val homeCenter = homeBounds.center - overlayOrigin
-        val targetX =
-            if (dieSlot != null) {
-                dieRestCenterX(homeCenterX = homeCenter.x, slot = dieSlot, spacingPx = spacingPx)
-            } else {
-                homeCenter.x + rightPx
-            }
-        val targetY = homeCenter.y - upPx
-
-        AnimatedVisibility(
-            visible = badge != null,
-            enter = fadeIn() + scaleIn(initialScale = BADGE_ENTER_SCALE),
-            exit = fadeOut() + scaleOut(targetScale = BADGE_ENTER_SCALE),
-            modifier =
-                Modifier.offset {
-                        IntOffset(
-                            x = (targetX - badgeSize.width / 2f).roundToInt(),
-                            y = (targetY - badgeSize.height / 2f).roundToInt(),
-                        )
-                    }
-                    .onGloballyPositioned { badgeSize = it.size },
-        ) {
-            val renderedBadge = shownBadge
-            if (renderedBadge != null) DiceModifierChip(badge = renderedBadge)
+        if (diceBadgeState != null) {
+            DiceChip(diceBadgeState = diceBadgeState)
         }
     }
 }
 
 @Composable
-private fun DiceModifierChip(badge: DiceBadge, modifier: Modifier = Modifier) {
-    val isBonus = badge is DiceBadge.DoublesBonus
+private fun DiceChip(diceBadgeState: DiceBadgeState, modifier: Modifier = Modifier) {
+    val isBonus = diceBadgeState is DiceBadgeState.DoublesBonus
     val chipColor = if (isBonus) doublesGold else CharacterClassType.Illusionist.toColor()
     val label = if (isBonus) "+1" else "−1"
 
@@ -135,11 +110,6 @@ private fun DiceModifierChip(badge: DiceBadge, modifier: Modifier = Modifier) {
     }
 }
 
-/**
- * The looping 3D wobble kept up the whole time a badge is shown: a pendulum rock about the z-axis,
- * a gentle tilt about the y-axis for depth, and a slow grow-and-return, each on its own period so
- * the motion never settles into a mechanical beat.
- */
 @Composable
 private fun Modifier.badgeWobble(): Modifier {
     val transition = rememberInfiniteTransition(label = BADGE_WOBBLE_TRANSITION_LABEL)
@@ -164,6 +134,7 @@ private fun Modifier.badgeWobble(): Modifier {
             animationSpec = wobbleSpec(periodMillis = BADGE_GROW_PERIOD_MILLIS),
             label = BADGE_GROW_LABEL,
         )
+
     return graphicsLayer {
         rotationZ = rock
         rotationY = tilt
@@ -179,18 +150,6 @@ private fun wobbleSpec(periodMillis: Int) =
         repeatMode = RepeatMode.Reverse,
     )
 
-@Preview
-@Composable
-private fun DiceModifierChipDoublesPreview() {
-    Box(modifier = Modifier.background(color = Color(color = 0xFF1A1A1A)).padding(all = 24.dp)) {
-        DiceModifierChip(badge = DiceBadge.DoublesBonus)
-    }
-}
+@Preview @Composable private fun DiceModifierChipDoublesPreview() {}
 
-@Preview
-@Composable
-private fun DiceModifierChipMirrorPreview() {
-    Box(modifier = Modifier.background(color = Color(color = 0xFF1A1A1A)).padding(all = 24.dp)) {
-        DiceModifierChip(badge = DiceBadge.MirrorPenalty)
-    }
-}
+@Preview @Composable private fun DiceModifierChipMirrorPreview() {}

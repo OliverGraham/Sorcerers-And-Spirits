@@ -10,6 +10,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterDamage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterKnockout
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
 
@@ -30,11 +32,16 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
         )
 
-    fun temptFate(mirrorImage: AbilityAction.Passive.MirrorImage) {
-        if (mirrorImage.isReroll) {
-            combatMutator.handleReroll(mirrorImage = mirrorImage)
+    fun temptFate(mirrorImageAction: AbilityAction.Passive.MirrorImage) {
+        val rerolledDiePosition = mirrorImageAction.mirrorImageRerollSelection.toDiePosition()
+
+        if (rerolledDiePosition != null) {
+            combatMutator.handleReroll(
+                mirrorImageAction = mirrorImageAction,
+                rerolledDiePosition = rerolledDiePosition,
+            )
         } else {
-            combatMutator.handlePass(mirrorImage = mirrorImage)
+            combatMutator.handlePass(mirrorImageAction = mirrorImageAction)
         }
     }
 
@@ -66,26 +73,34 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         setNextAbilityRoll(purpose = purpose, activeUserIds = setOf(element = defenderUserId))
     }
 
-    private fun CombatMutator.handleReroll(mirrorImage: AbilityAction.Passive.MirrorImage) {
-        markMirrorImagePenalty()
+    private fun MirrorImageRerollSelection.toDiePosition() =
+        when (this) {
+            MirrorImageRerollSelection.First -> DiePosition.First
+            MirrorImageRerollSelection.Second -> DiePosition.Second
+            MirrorImageRerollSelection.None -> null
+        }
 
+    private fun CombatMutator.handleReroll(
+        mirrorImageAction: AbilityAction.Passive.MirrorImage,
+        rerolledDiePosition: DiePosition,
+    ) {
         updateDefenderClass { defender ->
             defender.copy(
                 defensiveAbility =
-                    mirrorImage.mirrorImageDefensiveAbility.copy(usedThisAttack = true)
+                    mirrorImageAction.mirrorImageDefensiveAbility.copy(
+                        usedThisAttack = true,
+                        rerolledDiePosition = rerolledDiePosition,
+                    )
             )
         }
 
-        val rolledMirrorImage = rollSelectedDie(mirrorImage = mirrorImage)
-        val rerolledDie =
-            if (rolledMirrorImage.firstDie.isRerolled) {
-                rolledMirrorImage.firstDie
-            } else {
-                rolledMirrorImage.secondDie
-            }
+        val (rerolledMirrorImageAction, rerolledDie) =
+            getRerolledMirrorImageAction(
+                mirrorImageAction = mirrorImageAction,
+                rerolledDiePosition = rerolledDiePosition,
+            )
 
-        resolveModifiedRoll(mirrorImage = rolledMirrorImage, isKeptRollDoubles = false) {
-            messageType ->
+        resolveModifiedRoll(mirrorImageAction = rerolledMirrorImageAction) { messageType ->
             ArenaMessage.MirrorImage.TemptFate(
                 illusionistUserId = defenderUserId,
                 rerolledMirrorImageDie = rerolledDie,
@@ -95,28 +110,44 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    private fun CombatMutator.rollSelectedDie(
-        mirrorImage: AbilityAction.Passive.MirrorImage
-    ): AbilityAction.Passive.MirrorImage {
-        val rolledDie = diceRoller.roll1D6(userId = defenderUserId).total
+    private fun CombatMutator.getRerolledMirrorImageAction(
+        mirrorImageAction: AbilityAction.Passive.MirrorImage,
+        rerolledDiePosition: DiePosition,
+    ): Pair<AbilityAction.Passive.MirrorImage, MirrorImageDie> {
+        val rolledDie =
+            diceRoller.roll1D6(userId = defenderUserId, diePosition = rerolledDiePosition).die
 
-        return when (mirrorImage.rerollSelection) {
-            AbilityAction.Passive.MirrorImage.RerollSelection.First ->
-                mirrorImage.copy(firstDie = mirrorImage.firstDie.copy(reroll = rolledDie))
+        return when (rerolledDiePosition) {
+            DiePosition.First -> {
+                val updatedFirstDie = mirrorImageAction.firstDie.copy(reroll = rolledDie)
 
-            AbilityAction.Passive.MirrorImage.RerollSelection.Second ->
-                mirrorImage.copy(secondDie = mirrorImage.secondDie.copy(reroll = rolledDie))
+                Pair(
+                    first =
+                        mirrorImageAction.copy(
+                            firstDie = updatedFirstDie,
+                            attackerDoublesBonus = 0,
+                        ),
+                    second = updatedFirstDie,
+                )
+            }
 
-            AbilityAction.Passive.MirrorImage.RerollSelection.None -> mirrorImage
+            DiePosition.Second -> {
+                val updatedSecondDie = mirrorImageAction.secondDie.copy(reroll = rolledDie)
+
+                Pair(
+                    first =
+                        mirrorImageAction.copy(
+                            secondDie = updatedSecondDie,
+                            attackerDoublesBonus = 0,
+                        ),
+                    second = updatedSecondDie,
+                )
+            }
         }
     }
 
-    private fun CombatMutator.handlePass(mirrorImage: AbilityAction.Passive.MirrorImage) {
-        val isKeptRollDoubles =
-            mirrorImage.firstDie.originalRoll == mirrorImage.secondDie.originalRoll
-
-        resolveModifiedRoll(mirrorImage = mirrorImage, isKeptRollDoubles = isKeptRollDoubles) {
-            messageType ->
+    private fun CombatMutator.handlePass(mirrorImageAction: AbilityAction.Passive.MirrorImage) {
+        resolveModifiedRoll(mirrorImageAction = mirrorImageAction) { messageType ->
             ArenaMessage.MirrorImage.Pass(
                 illusionistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
@@ -125,17 +156,18 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
+    // TODO: More refactoring. This function, resolveModifiedRoll, is too abstract
     private fun CombatMutator.resolveModifiedRoll(
-        mirrorImage: AbilityAction.Passive.MirrorImage,
-        isKeptRollDoubles: Boolean,
+        mirrorImageAction: AbilityAction.Passive.MirrorImage,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
         val totalRoll =
-            mirrorImage.firstDie.finalValue +
-                mirrorImage.secondDie.finalValue +
-                mirrorImage.attackerDoublesBonus
+            mirrorImageAction.firstDie.finalValue +
+                mirrorImageAction.secondDie.finalValue +
+                mirrorImageAction.attackerDoublesBonus
+        val isKeptRollDoubles = mirrorImageAction.attackerDoublesBonus > 0
 
-        when (mirrorImage.attackType) {
+        when (mirrorImageAction.attackType) {
             NormalAttackType.ArmorClass ->
                 resolveArmorClass(
                     totalRoll = totalRoll,
@@ -157,26 +189,38 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         isKeptRollDoubles: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
-        val brokeArmor = totalRoll >= defender.armorClass
-
-        if (brokeArmor) {
-            addMessage(message = message(NormalRollMessageType.ArmorClassHit))
-
-            if (isKeptRollDoubles) {
-                addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
-            }
-
-            continueAttackWithHealthRoll()
+        if (totalRoll >= defender.armorClass) {
+            resolveArmorClassHit(isKeptRollDoubles = isKeptRollDoubles, message = message)
         } else {
-            addMessage(message = message(NormalRollMessageType.ArmorClassMiss))
-
-            val shouldMessageDoubles = isKeptRollDoubles && hasPendingExtraAttack()
-            if (shouldMessageDoubles) {
-                addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
-            }
-
-            resolveTurnEnd()
+            resolveArmorClassMiss(isKeptRollDoubles = isKeptRollDoubles, message = message)
         }
+    }
+
+    private fun CombatMutator.resolveArmorClassHit(
+        isKeptRollDoubles: Boolean,
+        message: (NormalRollMessageType) -> ArenaMessage,
+    ) {
+        addMessage(message = message(NormalRollMessageType.ArmorClassHit))
+
+        if (isKeptRollDoubles) {
+            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+        }
+
+        continueAttackWithHealthRoll()
+    }
+
+    private fun CombatMutator.resolveArmorClassMiss(
+        isKeptRollDoubles: Boolean,
+        message: (NormalRollMessageType) -> ArenaMessage,
+    ) {
+        addMessage(message = message(NormalRollMessageType.ArmorClassMiss))
+
+        val shouldMessageDoubles = isKeptRollDoubles && hasPendingExtraAttack()
+        if (shouldMessageDoubles) {
+            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+        }
+
+        resolveTurnEnd()
     }
 
     private fun CombatMutator.resolveHealth(

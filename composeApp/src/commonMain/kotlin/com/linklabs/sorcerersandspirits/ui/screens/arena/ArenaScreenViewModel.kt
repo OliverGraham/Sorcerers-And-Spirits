@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
@@ -29,11 +30,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.determineTimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.FLASH_MESSAGE_DURATION_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.playbackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -48,7 +49,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
-private const val FINISH_HOLD_TAIL_MILLIS = 2000L
+private const val CLOSING_FLASH_TAIL_MILLIS = 2000L
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -56,6 +57,7 @@ class ArenaScreenViewModel(
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val exitArenaUseCase: ExitArenaUseCase,
+    private val finishMatchUseCase: FinishMatchUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
     private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
@@ -96,7 +98,7 @@ class ArenaScreenViewModel(
 
     private var screenStateFlowJob: Job? = null
 
-    private var finishHoldJob: Job? = null
+    private var finishWriteJob: Job? = null
 
     private var previousPlayerNames: Map<String, String> = emptyMap()
 
@@ -111,7 +113,7 @@ class ArenaScreenViewModel(
 
     private fun loadArenaMatch() {
         screenStateFlowJob?.cancel()
-        finishHoldJob?.cancel()
+        finishWriteJob?.cancel()
         screenStateFlowJob =
             viewModelScope.launch {
                 val userId = getUserIdUseCase()
@@ -178,28 +180,22 @@ class ArenaScreenViewModel(
         }
     }
 
-    /**
-     * Holds the combat view on the Combat→Finished transition until the closing flash queue
-     * (SS-164) has fully drained, plus a [FINISH_HOLD_TAIL_MILLIS] tail, then advances to the
-     * Finished screen (SS-171). The hold is clocked entirely by the ViewModel, so the transition
-     * never depends on a combat composable being mounted to drive it. A single hold runs; the held
-     * state survives later match updates (e.g. another player readying), so a running hold is left
-     * to finish.
-     */
-    private fun startFinishHoldIfPending(previousState: ArenaScreenState?) {
+    private fun startFinishWriteIfMatchOver(previousState: ArenaScreenState?) {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        if (loadedState.pendingFinishedState == null) return
-        if (finishHoldJob?.isActive == true) return
+        val combatState = loadedState.arenaState as? ArenaState.Combat ?: return
+        if (!combatState.isMatchOver) return
+        if (finishWriteJob?.isActive == true) return
 
-        val holdMillis = finishHoldMillis(previousState = previousState, nextState = loadedState)
-        finishHoldJob =
+        val closingMillis =
+            closingFlashMillis(previousState = previousState, nextState = loadedState)
+        finishWriteJob =
             viewModelScope.launch {
-                delay(timeMillis = holdMillis)
-                advanceToFinished()
+                delay(timeMillis = closingMillis)
+                finishMatchUseCase(arenaId = arguments.arenaId)
             }
     }
 
-    private fun finishHoldMillis(
+    private fun closingFlashMillis(
         previousState: ArenaScreenState?,
         nextState: ArenaScreenState,
     ): Long {
@@ -214,29 +210,7 @@ class ArenaScreenViewModel(
                 animationMillis + flashMillis
             }
 
-        return playbackMillis + FINISH_HOLD_TAIL_MILLIS
-    }
-
-    private fun advanceToFinished() {
-        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        val pendingFinishedState = loadedState.pendingFinishedState ?: return
-
-        _uiStateFlow.updateLoaded { screenState ->
-            screenState.copy(arenaState = pendingFinishedState, pendingFinishedState = null)
-        }
-
-        // The held advance bypasses the normal state-update timer logic, so the Finished countdown
-        // is
-        // (re)evaluated here. This matters when another player readied during this client's hold:
-        // the
-        // countdown must start as soon as the screen is reached.
-        val timerAction =
-            determineTimerAction(
-                previous = loadedState.arenaState,
-                next = pendingFinishedState,
-                isFinalMatch = loadedState.gauntletProgress.isFinalMatch,
-            )
-        handleTimerAction(timerAction = timerAction)
+        return playbackMillis + CLOSING_FLASH_TAIL_MILLIS
     }
 
     fun onAttack(attackArguments: AttackArguments) {
@@ -289,12 +263,13 @@ class ArenaScreenViewModel(
         _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.Combat
 
     private suspend fun ArenaState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
+        // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arguments.arenaId,
                 playerMap = playerMap.mapValues { it.value.toDomain() },
                 roundNumber = roundNumber,
-                doublesBonus = doublesBonus,
+                doublesBonus = diceRollState?.doublesBonus?.toDomain(),
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
@@ -306,7 +281,7 @@ class ArenaScreenViewModel(
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
-        finishHoldJob?.cancel()
+        finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
@@ -321,11 +296,6 @@ class ArenaScreenViewModel(
         }
     }
 
-    /**
-     * Hands the session's accumulated delta to the profile store and reconciles the durable local
-     * copy: cleared once the write is made, otherwise kept (e.g. signed out) so it can be replayed
-     * on a later launch (SS-076).
-     */
     private suspend fun flushSessionStats() {
         val delta = sessionStats.consumeDelta()
         val wasWritten = updateProfileStatsUseCase(delta = delta)
@@ -364,7 +334,7 @@ class ArenaScreenViewModel(
     private suspend fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
             screenStateFlowJob?.cancel()
-            finishHoldJob?.cancel()
+            finishWriteJob?.cancel()
 
             viewModelScope.launch {
                 setCurrentTravelerAvailableUseCase()
@@ -393,7 +363,7 @@ class ArenaScreenViewModel(
         val nextState = updatedArenaStateUpdate.nextState
         _uiStateFlow.value = UiState.Loaded(data = nextState)
 
-        startFinishHoldIfPending(previousState = previousState)
+        startFinishWriteIfMatchOver(previousState = previousState)
 
         computerOpponentHandler.onArenaState(
             arenaState = nextState.arenaState,
@@ -464,7 +434,7 @@ class ArenaScreenViewModel(
 
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
-        finishHoldJob?.cancel()
+        finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)

@@ -33,7 +33,6 @@ internal class CombatMutator(
 ) {
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
-    private var isMirrorImagePenaltyActive = false
 
     val attacker
         get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
@@ -45,8 +44,6 @@ internal class CombatMutator(
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
-        nextAction.resetMirrorImageIfApplicable()
-
         nextCombatAction = nextAction
     }
 
@@ -100,9 +97,8 @@ internal class CombatMutator(
             nextCombatAction = nextCombatAction,
             roundNumber = updatedRoundNumber ?: roundNumber,
             isNewRound = updatedRoundNumber != null,
-            doublesBonus = diceRoller.getDoublesBonus(),
-            isMirrorImagePenaltyActive = isMirrorImagePenaltyActive,
             isMatchFinished = getIsMatchFinished(),
+            diceRoll = diceRoller.getDiceRoll(),
         )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
@@ -151,15 +147,16 @@ internal class CombatMutator(
         messages.add(element = message)
     }
 
-    fun markMirrorImagePenalty() {
-        isMirrorImagePenaltyActive = true
-    }
-
     fun resolveTurnEnd() {
         if (consciousPlayers.size <= 1) {
-            setNextCombatAction(nextAction = NextCombatAction.Idle(activeUserIds = emptySet()))
+            setNextCombatAction(
+                nextAction =
+                    NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId))
+            )
             return
         }
+
+        resetMirrorImageIfApplicable()
 
         val wasSecondAttackGranted = grantAllInSecondAttackIfApplicable()
         if (wasSecondAttackGranted) return
@@ -304,6 +301,8 @@ internal class CombatMutator(
         }
     }
 
+    // TODO: What the hell is up with this?
+
     /**
      * Clears per-turn ability state so a new turn starts clean. All-In's [usedThisTurn] guards it
      * to once per turn, so it must be released when the owner's next turn begins — including when
@@ -314,18 +313,7 @@ internal class CombatMutator(
         return withEffective(allIn.copy(usedThisTurn = false))
     }
 
-    /**
-     * Resets Mirror Image unless the next action is the Health roll of the same attack.
-     *
-     * Mirror Image can be used once across the full attack attempt against Illusionist: Armor roll
-     * first, then Health roll only if armor passes.
-     *
-     * So AC -> Health must preserve `usedThisAttack`. Any other transition means that attack
-     * attempt ended or a new one is starting, so Mirror Image becomes available again.
-     */
-    private fun NextCombatAction.resetMirrorImageIfApplicable() {
-        if (this is NextCombatAction.NormalAttack && this.roll == NormalAttackType.Health) return
-
+    private fun resetMirrorImageIfApplicable() {
         val illusionistPlayer =
             consciousPlayers.firstOrNull {
                 it.characterClass.type == CharacterClassType.Illusionist
@@ -336,7 +324,10 @@ internal class CombatMutator(
                 ?: return
 
         updatePlayerClass(userId = illusionistPlayer.userId) { illusionist ->
-            illusionist.copy(defensiveAbility = mirrorImage.copy(usedThisAttack = false))
+            illusionist.copy(
+                defensiveAbility =
+                    mirrorImage.copy(usedThisAttack = false, rerolledDiePosition = null)
+            )
         }
     }
 
@@ -348,6 +339,7 @@ internal class CombatMutator(
     private fun getIsMatchFinished(): Boolean {
         if (consciousPlayers.size > 1) return false
         if (!::nextCombatAction.isInitialized) return false
+        if (nextCombatAction is NextCombatAction.Idle) return true
 
         val anyActiveUnconsciousPlayers =
             nextCombatAction.activeUserIds.any { userId ->

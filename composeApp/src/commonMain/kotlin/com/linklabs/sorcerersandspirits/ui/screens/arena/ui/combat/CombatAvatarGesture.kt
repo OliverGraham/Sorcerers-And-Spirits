@@ -64,6 +64,9 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+// TODO: Break out into separate package and files. One new package with utilities file and
+//       per-class files - do this later, Claude
+
 private const val REACTION_DELAY_MILLIS = 170L
 private const val SHAKE_SEGMENT_MILLIS = 55
 private const val SLASH_LEAN_MILLIS = 130
@@ -134,21 +137,10 @@ internal class AvatarGestureState {
     val armorTint = Animatable(initialValue = 0f)
     val saturation = Animatable(initialValue = 1f)
 
-    /**
-     * The Mirror Image split (SS-209): [mirrorSplit] fans the avatar into two translucent copies of
-     * itself, [mirrorReturn] slides the surviving real copy back to center and re-solidifies it,
-     * and [mirrorFakeVanish] dissolves the struck copy away. At rest (all 0) the seat draws its
-     * single solid avatar; any non-zero [mirrorSplit] switches it to the two-copy render.
-     */
     val mirrorSplit = Animatable(initialValue = 0f)
     val mirrorReturn = Animatable(initialValue = 0f)
     val mirrorFakeVanish = Animatable(initialValue = 0f)
 
-    /**
-     * The Mage's Teleport escape (SS-211): [teleportVanish] dissolves the avatar away as it slips
-     * through the overhead portal and fades it back in when it reappears. At rest (0) the seat
-     * draws the avatar solid.
-     */
     val teleportVanish = Animatable(initialValue = 0f)
 
     val colorFilter: ColorFilter?
@@ -163,11 +155,7 @@ internal class AvatarGestureState {
         }
 }
 
-/**
- * The seated avatar art with its gesture transforms applied, pivoting at the feet so lunges read as
- * a push off the ground and a collapse tips over from the ankles. Kept as its own composable so the
- * per-frame color-filter reads recompose only the art.
- */
+/** The seated avatar art with its gesture transforms applied. */
 @Composable
 internal fun GestureClassAvatar(
     characterClass: CharacterClassState,
@@ -191,12 +179,6 @@ internal fun GestureClassAvatar(
     )
 }
 
-/**
- * The Mirror Image render (SS-209): the same seated avatar art drawn twice — a fading fake copy the
- * attack strikes and poofs, and the real copy that carries the gesture reaction and slides back to
- * center — so the Illusionist itself splits and reforms rather than a separate overlay standing in
- * for it.
- */
 @Composable
 private fun MirrorSplitClassAvatar(
     characterClass: CharacterClassState,
@@ -222,9 +204,6 @@ private fun MirrorSplitClassAvatar(
     }
 }
 
-/**
- * The struck copy: held at its split offset, dissolving upward in a puff as the illusion breaks.
- */
 private fun GraphicsLayerScope.applyMirrorFake(gestureState: AvatarGestureState) {
     val split = gestureState.mirrorSplit.value
     val vanish = gestureState.mirrorFakeVanish.value
@@ -237,10 +216,6 @@ private fun GraphicsLayerScope.applyMirrorFake(gestureState: AvatarGestureState)
     alpha = MIRROR_COPY_ALPHA * (1f - vanish)
 }
 
-/**
- * The real copy: the full gesture transform plus a return that slides it from its split offset back
- * to center and re-solidifies it from translucent to opaque as the illusion collapses.
- */
 private fun GraphicsLayerScope.applyMirrorReal(gestureState: AvatarGestureState) {
     applyGesture(gestureState = gestureState)
     val split = gestureState.mirrorSplit.value
@@ -249,13 +224,6 @@ private fun GraphicsLayerScope.applyMirrorReal(gestureState: AvatarGestureState)
     alpha = MIRROR_COPY_ALPHA + (1f - MIRROR_COPY_ALPHA) * returnFraction
 }
 
-/**
- * The collapse pose is computed here rather than in the choreography because only the layer knows
- * the seat's size: a body tipped a full [COLLAPSE_ROTATION_DEGREES] about the feet sweeps out its
- * own height sideways, which pushed half the avatar off screen. Instead the downed body shrinks
- * toward the width the seat can hold and its feet slide toward the seat edge, so the avatar lies
- * down inside its own seat and stays fully visible through the finish hold (SS-184).
- */
 private fun GraphicsLayerScope.applyGesture(gestureState: AvatarGestureState) {
     val collapse = gestureState.collapseFraction.value
     val lyingScale = (size.width / size.height).coerceAtMost(maximumValue = 1f)
@@ -270,11 +238,6 @@ private fun GraphicsLayerScope.applyGesture(gestureState: AvatarGestureState) {
     alpha = 1f - gestureState.teleportVanish.value
 }
 
-/**
- * Plays this seat's role in each newly-arrived [animationCue]: the cue resolves the player's
- * gesture, the top seat strikes downward and the bottom seat upward, and a cue already present on
- * first composition is skipped so a seating change never replays an old gesture.
- */
 @Composable
 internal fun rememberAvatarGesture(
     animationCue: CombatAnimationCue?,
@@ -322,12 +285,6 @@ private fun CombatAnimationCue.mirrorImageActingFor(
 private fun CombatAnimationCue.teleportActingFor(userId: String): CombatAnimationCue.Teleport? =
     (this as? CombatAnimationCue.Teleport)?.takeIf { it.mageUserId == userId }
 
-/**
- * The Mage's own body during Teleport (SS-211): it sits still while the portal opens and churns
- * through the roll-off, and only on the resolving roll does it act — rising up through the overhead
- * portal and vanishing before reappearing on a successful escape, or lunging for a portal that
- * snaps shut too soon and graying out when the escape fails.
- */
 private suspend fun AvatarGestureState.playTeleport(
     cue: CombatAnimationCue.Teleport,
     density: Density,
@@ -339,7 +296,6 @@ private suspend fun AvatarGestureState.playTeleport(
     if (didEscape) teleportEscape(density = density) else teleportFail(density = density)
 }
 
-/** The escape: the Mage rises into the portal, dissolves away, then fades back in at its seat. */
 private suspend fun AvatarGestureState.teleportEscape(density: Density) =
     with(density) {
         delay(timeMillis = TELEPORT_REACT_MILLIS)
@@ -387,7 +343,6 @@ private suspend fun AvatarGestureState.teleportEscape(density: Density) =
         }
     }
 
-/** The failed escape: the Mage lunges for the portal, is thrown back as it shuts, and grays out. */
 private suspend fun AvatarGestureState.teleportFail(density: Density) =
     with(density) {
         delay(timeMillis = TELEPORT_REACT_MILLIS)
@@ -416,11 +371,6 @@ private suspend fun AvatarGestureState.teleportFail(density: Density) =
         }
     }
 
-/**
- * The Illusionist's own body during Mirror Image (SS-209): the split fans two translucent copies
- * apart and holds while the reroll is chosen; the resolve poofs the struck copy, slides the real
- * one home and re-solidifies it, and plays the real copy's reaction to how the roll landed.
- */
 private suspend fun AvatarGestureState.playMirrorImage(
     cue: CombatAnimationCue.MirrorImage,
     density: Density,

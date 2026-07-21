@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -147,6 +148,16 @@ private fun ColumnScope.SeatedAvatar(
     } else {
         Spacer(modifier = Modifier.weight(weight = 1f))
     }
+}
+
+@Composable
+private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier =
+            modifier.fillMaxWidth().height(height = 56.dp).onGloballyPositioned {
+                onBoundsChanged(it.boundsInRoot())
+            }
+    )
 }
 
 @Composable

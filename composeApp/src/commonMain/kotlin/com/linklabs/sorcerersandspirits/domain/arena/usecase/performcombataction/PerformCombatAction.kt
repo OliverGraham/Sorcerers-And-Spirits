@@ -107,7 +107,8 @@ internal class PerformCombatAction(
                 EncoreHandler(combatMutator = combatMutator).rollEncore()
 
             is AbilityAction.Passive.MirrorImage ->
-                MirrorImageHandler(combatMutator = combatMutator).temptFate(mirrorImage = this)
+                MirrorImageHandler(combatMutator = combatMutator)
+                    .temptFate(mirrorImageAction = this)
         }
     }
 

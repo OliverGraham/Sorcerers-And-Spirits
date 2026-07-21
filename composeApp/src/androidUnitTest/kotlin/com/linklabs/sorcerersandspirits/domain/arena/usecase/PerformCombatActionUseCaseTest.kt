@@ -325,14 +325,14 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given an Illusionist keeping a doubles armor roll, when the armor stays broken, then the Doubles message is emitted`() {
+    fun `Given an Illusionist keeping a roll where the attacker carried a doubles bonus, when the armor stays broken, then the Doubles message is emitted`() {
         // Arrange
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
-                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 0,
+                attackerDoublesBonus = 1,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
@@ -1984,7 +1984,7 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `When an Illusionist rerolls a Mirror Image ArmorClass roll, the attacker's carried doubles bonus still breaks armor`() {
+    fun `When an Illusionist rerolls a Mirror Image ArmorClass roll, the attacker's carried doubles bonus is nullified`() {
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
@@ -1998,8 +1998,8 @@ class PerformCombatActionUseCaseTest {
         mirrorImageTest(
             mirrorImagePurpose = mirrorImagePurpose,
             rerollDie = 3,
-            expectedUsedThisAttack = true,
-            expectedIsNextActionNormalAttack = true,
+            expectedUsedThisAttack = false,
+            expectedIsNextActionIdle = true,
         )
     }
 

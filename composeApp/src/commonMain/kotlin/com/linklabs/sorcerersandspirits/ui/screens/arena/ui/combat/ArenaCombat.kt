@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
@@ -259,7 +260,17 @@ private fun CombatStage(
 
 // TODO: This logic needs to be simplified and made correct, without confusing fallbacks that should
 //       never happen
-internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String {
+internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String =
+    when (val action = combatActionState) {
+        is CombatActionState.NormalAttack -> action.defenderUserId
+
+        is CombatActionState.AbilityRoll -> action.defenderUserId
+
+        is CombatActionState.Idle ->
+            idleTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
+    }
+
+private fun ArenaState.Combat.idleTargetUserId(selectedOpponentUserId: String): String {
     val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
     val userChosenTarget =
         if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""

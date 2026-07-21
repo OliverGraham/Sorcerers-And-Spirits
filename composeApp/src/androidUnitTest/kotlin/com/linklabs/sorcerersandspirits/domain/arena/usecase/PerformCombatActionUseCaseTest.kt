@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
@@ -36,6 +37,10 @@ class PerformCombatActionUseCaseTest {
         mockk<DiceRoller> {
             every { getDoublesBonus() } returns null
             every { getDiceRoll() } returns null
+            every { mirrorImagePass(firstDie = any(), secondDie = any()) } answers
+                {
+                    DiceRoll.TwoDice(firstDie = firstArg(), secondDie = secondArg())
+                }
         }
 
     private fun setupTwoDiceRoll(
@@ -49,8 +54,9 @@ class PerformCombatActionUseCaseTest {
     }
 
     private fun setupOneDiceRoll(userId: String, die: Int = 3, bonus: Int = 0) {
-        every { diceRoller.roll1D6(userId = userId, diePosition = any()) } returns
-            RollResult.OneDie(die = die, bonus = bonus)
+        every {
+            diceRoller.roll1D6(userId = userId, diePosition = any(), isMirrorImageReroll = any())
+        } returns RollResult.OneDie(die = die, bonus = bonus)
     }
 
     @Test
@@ -325,20 +331,22 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `Given an Illusionist keeping a roll where the attacker carried a doubles bonus, when the armor stays broken, then the Doubles message is emitted`() {
+    fun `Given an Illusionist keeping a doubles armor roll, when the armor stays broken, then the deferred Doubles message is emitted`() {
         // Arrange
+        val attackerUserId = DEFAULT_ATTACKER_ID
         val mirrorImagePurpose =
             AbilityAction.Passive.MirrorImage(
-                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
-                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 4),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 4),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 1,
+                existingDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
         val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
         val performCombatAction = getPerformCombatAction(arguments = arguments)
         val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
-        val attackerUserId = currentAction.attackTurn.attackerUserId
+
+        every { diceRoller.getDoublesBonus() } returns DoublesBonus(userId = attackerUserId)
 
         // Act
         val outcome = performCombatAction.invoke(currentAction = currentAction)
@@ -351,6 +359,28 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `Given an Illusionist keeping a non-doubles roll that carried a bonus, when the armor stays broken, then no Doubles message is emitted`() {
+        // Arrange
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
+                attackType = NormalAttackType.ArmorClass,
+                existingDoublesBonus = 1,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+            )
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.illusionist())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
     fun `Given an Illusionist rerolling a doubles armor roll, when the armor stays broken, then no Doubles message is emitted`() {
         // Arrange
         val mirrorImagePurpose =
@@ -358,7 +388,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 0,
+                existingDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 mirrorImageRerollSelection = MirrorImageRerollSelection.First,
             )
@@ -373,6 +403,49 @@ class PerformCombatActionUseCaseTest {
 
         // Assert
         assertFalse(actual = outcome.messages.any { it is ArenaMessage.Doubles })
+    }
+
+    @Test
+    fun `Given an Illusionist with a golem shield, when Mirror Image resolves a health roll, then the shield absorbs damage and the Illusionist survives`() {
+        // Arrange
+        val illusionistWithGolem =
+            TestCharacterClasses.illusionist()
+                .copy(
+                    hitPoints = 5,
+                    offensiveAbility =
+                        OffensiveAbility.Impersonate(
+                            impersonatedAbility = OffensiveAbility.SummonMinion(golemCount = 1)
+                        ),
+                    defensiveAbility = DefensiveAbility.MirrorImage(),
+                )
+        val mirrorImagePurpose =
+            AbilityAction.Passive.MirrorImage(
+                firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6),
+                secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 1),
+                attackType = NormalAttackType.Health,
+                existingDoublesBonus = 0,
+                mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+                mirrorImageRerollSelection = MirrorImageRerollSelection.First,
+            )
+        val arguments = createTwoPlayerArguments(defenderClass = illusionistWithGolem)
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = mirrorImagePurpose)
+
+        setupOneDiceRoll(userId = currentAction.defenderUserId, die = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val updatedDefender =
+            outcome.getPlayerById(userId = currentAction.defenderUserId).characterClass
+        assertTrue(actual = updatedDefender.isConscious())
+        assertEquals(expected = 2, actual = updatedDefender.hitPoints)
+        assertFalse(actual = outcome.isMatchFinished)
+
+        val temptFate =
+            outcome.messages.filterIsInstance<ArenaMessage.MirrorImage.TemptFate>().single()
+        assertEquals(expected = NormalRollMessageType.Damage, actual = temptFate.messageType)
     }
 
     @Test
@@ -1912,7 +1985,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 0,
+                existingDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 mirrorImageRerollSelection = MirrorImageRerollSelection.First,
             )
@@ -1933,7 +2006,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 0,
+                existingDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
 
@@ -1951,7 +2024,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 0,
+                existingDoublesBonus = 0,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 mirrorImageRerollSelection = MirrorImageRerollSelection.First,
             )
@@ -1972,7 +2045,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 1),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 3),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 1,
+                existingDoublesBonus = 1,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
             )
 
@@ -1990,7 +2063,7 @@ class PerformCombatActionUseCaseTest {
                 firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
                 secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 2),
                 attackType = NormalAttackType.ArmorClass,
-                attackerDoublesBonus = 1,
+                existingDoublesBonus = 1,
                 mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                 mirrorImageRerollSelection = MirrorImageRerollSelection.Second,
             )

@@ -92,7 +92,7 @@ sealed interface AbilityActionState {
             val firstDie: MirrorImageDieState,
             val secondDie: MirrorImageDieState,
             val attackType: NormalAttackType,
-            val attackerDoublesBonus: Int,
+            val existingDoublesBonus: Int,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
             val mirrorImageRerollSelection: MirrorImageRerollSelection =
                 MirrorImageRerollSelection.None,
@@ -270,7 +270,7 @@ internal fun AbilityActionState.toDomain(): AbilityAction =
                                 reroll = secondDie.reroll,
                             ),
                         attackType = attackType,
-                        attackerDoublesBonus = attackerDoublesBonus,
+                        existingDoublesBonus = existingDoublesBonus,
                         mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
                         mirrorImageRerollSelection = mirrorImageRerollSelection,
                     )
@@ -387,7 +387,7 @@ internal fun AbilityAction.toState(): AbilityActionState =
                                 reroll = secondDie.reroll,
                             ),
                         attackType = attackType,
-                        attackerDoublesBonus = attackerDoublesBonus,
+                        existingDoublesBonus = existingDoublesBonus,
                         mirrorImageDefensiveAbility = mirrorImageDefensiveAbility,
                         mirrorImageRerollSelection = mirrorImageRerollSelection,
                     )

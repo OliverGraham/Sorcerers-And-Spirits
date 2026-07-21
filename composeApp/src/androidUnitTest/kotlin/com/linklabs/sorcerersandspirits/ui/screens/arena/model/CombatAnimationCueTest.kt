@@ -413,7 +413,10 @@ class CombatAnimationCueTest {
                 id = MESSAGE_ID,
                 illusionistUserId = DEFENDER_ID,
                 attackerName = "Mage",
+                attackerClassType = CharacterClassType.Mage,
                 messageType = outcome,
+                total = 8,
+                doublesBonus = 0,
             )
             .combatAnimationCue
 

@@ -102,7 +102,11 @@ internal class NormalAttackRollHandler(
     }
 
     private fun CombatMutator.knockoutMessageType(): NormalRollMessageType =
-        if (HolyShieldHandler.isHolyShieldAvailable(defender.defensiveAbility)) {
+        if (
+            HolyShieldHandler.isHolyShieldAvailable(
+                defenderDefensiveAbility = defender.defensiveAbility
+            )
+        ) {
             NormalRollMessageType.Damage
         } else {
             NormalRollMessageType.Knockout
@@ -233,7 +237,7 @@ internal class NormalAttackRollHandler(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 attackType = attackType,
-                attackerDoublesBonus = bonus,
+                existingDoublesBonus = bonus,
                 mirrorImageDefensiveAbility = mirrorImage,
             )
 

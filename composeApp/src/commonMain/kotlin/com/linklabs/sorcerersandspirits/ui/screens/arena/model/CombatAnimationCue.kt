@@ -4,29 +4,12 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
-/**
- * The Lucky Coin roll that triggers High Roller. A defensive flip only ever surfaces 1–5, since a 6
- * routes to High Roller instead, so a [ArenaMessageState.LuckyCoin.Flip] showing this value is the
- * armor-bonus resolution that follows the High Roller throw — the coin has already been thrown, so
- * that flip plays no fresh coin animation.
- */
 private const val HIGH_ROLLER_ROLL = 6
 
-/**
- * A combat event the seated avatars act out (SS-191): one cue per flash-worthy message, played in
- * step with that message's flash callout. Each cue carries the userIds of the players it involves,
- * so a seat resolves its own role — striking, reacting, or holding still — via [gestureFor]. New
- * ability animations (SS-193…SS-199) become new cue variants.
- */
 @Immutable
 sealed interface CombatAnimationCue {
     val id: String
 
-    /**
-     * [impersonatedClassType] is set only when the attacker is an Illusionist that has copied an
-     * offensive ability, naming the class whose weapon its borrowed normal attack renders (SS-197);
-     * null for every real class and for an Illusionist that has not impersonated anyone.
-     */
     @Immutable
     data class NormalAttack(
         override val id: String,
@@ -107,12 +90,6 @@ sealed interface CombatAnimationCue {
     data class Encore(override val id: String, val bardUserId: String, val phase: EncorePhase) :
         CombatAnimationCue
 
-    /**
-     * The Illusionist copies a living opponent's offensive ability (SS-208): a personal hand mirror
-     * is pulled out showing the Illusionist's own face, which then crossfades through a blur into
-     * the [impersonatedClassType]'s face under an Illusionist-blue tint. [impersonatedClassType] is
-     * the Illusionist's own class only in the degenerate case where nothing was copied.
-     */
     @Immutable
     data class Impersonate(
         override val id: String,
@@ -120,14 +97,6 @@ sealed interface CombatAnimationCue {
         val impersonatedClassType: CharacterClassType,
     ) : CombatAnimationCue
 
-    /**
-     * The Illusionist's Mirror Image (SS-209): when struck, the Illusionist splits into two blurry,
-     * translucent copies of itself ([MirrorImagePhase.Split]); when the reroll resolves
-     * ([MirrorImagePhase.Resolve]), one copy is struck and poofs while the other slides back to
-     * reveal the real Illusionist, which reacts to [messageType] — dodging a miss, or flinching and
-     * collapsing under a hit. [messageType] is null for the opening split, before the roll
-     * resolves.
-     */
     @Immutable
     data class MirrorImage(
         override val id: String,
@@ -136,15 +105,6 @@ sealed interface CombatAnimationCue {
         val messageType: NormalRollMessageType?,
     ) : CombatAnimationCue
 
-    /**
-     * The Mage's Spell Potency (SS-210): the amplified form of its normal-attack projectile
-     * (SS-198). A doubles roll fires the singular bolt [mainDamage] times at the main target and
-     * wraps it in a large area-of-effect (a Blizzard for Ice, etc.), while the players in
-     * [splashTargetUserIds] each take the [splashDamage] off-stage on their class-head icon
-     * (SS-214) — the opponents that were conscious when the cast resolved, so a player knocked out
-     * by the splash still shows the decrement. The element renders from [id] the same way the
-     * normal attack picks it, so the amplified cast reads as the same spell, scaled up.
-     */
     @Immutable
     data class SpellPotency(
         override val id: String,
@@ -156,16 +116,6 @@ sealed interface CombatAnimationCue {
         val isMainTargetKnockedOut: Boolean,
     ) : CombatAnimationCue
 
-    /**
-     * The Mage's Teleport (SS-211): the instant the Mage's armor is passed a swirling blue portal
-     * opens beside them ([TeleportPhase.Open]) and churns while the roll-off is made
-     * ([TeleportPhase.Hold]); on the resolving roll ([TeleportPhase.Resolve]) the Mage either slips
-     * through the portal and vanishes before reappearing when [didEscape] is true, or lunges for a
-     * portal that snaps shut too soon and the scene grays out when it is false. [didEscape] is null
-     * until the roll resolves. [mageUserId] is the defender of the armor-break roll that preceded
-     * this, read the same way Mirror Image finds its Illusionist; null only when no such roll is on
-     * record, in which case no cue is emitted.
-     */
     @Immutable
     data class Teleport(
         override val id: String,
@@ -174,17 +124,6 @@ sealed interface CombatAnimationCue {
         val didEscape: Boolean?,
     ) : CombatAnimationCue
 
-    /**
-     * The Paladin's Holy Shield (SS-212): the instant a knockout would land, the Paladin grays to
-     * stone and an ornate mace-gold shield rises to cover them ([HolyShieldPhase.Raise]); on the
-     * survival roll the shield glows with green-gold holy light ([HolyShieldPhase.Pray]) and either
-     * — when [didSurvive] is true — the Paladin returns to colour under a living beam of light with
-     * a +1 heart floating up, or the shield topples and grays as the Paladin falls to the normal
-     * knockout. A survived shield then rolls its light up to the heavens and blasts it back down on
-     * the attacker ([HolyShieldPhase.Wrath]), the blast's force scaled by [wrathIntensity] (the 1–6
-     * damage die). [attackerUserId] and [wrathIntensity] are set only on Wrath; [didSurvive] is
-     * null until the prayer resolves.
-     */
     @Immutable
     data class HolyShield(
         override val id: String,
@@ -197,61 +136,29 @@ sealed interface CombatAnimationCue {
     ) : CombatAnimationCue
 }
 
-/**
- * The stage a Holy Shield is in (SS-212): [Raise] is the shield rising over the grayed Paladin the
- * moment the knockout would land; [Pray] is the survival roll — the shield glowing before it either
- * saves the Paladin or topples; [Wrath] is the saved Paladin's light rolling up to the heavens and
- * blasting back down on the attacker.
- */
 enum class HolyShieldPhase {
     Raise,
     Pray,
     Wrath,
 }
 
-/**
- * The stage a Teleport is in (SS-211): [Open] is the portal tearing open the moment the Mage's
- * armor is passed; [Hold] keeps it swirling through each roll-off die without re-opening it;
- * [Resolve] is the roll landing — the Mage escaping through the portal, or the portal closing on a
- * failed escape.
- */
 enum class TeleportPhase {
     Open,
     Hold,
     Resolve,
 }
 
-/**
- * The stage a Mirror Image is in (SS-209): [Split] is the Illusionist fracturing into two copies
- * the moment it is struck, held while the reroll choice is made; [Resolve] is the attack landing on
- * a copy and the illusion collapsing back to the real Illusionist once the roll resolves.
- */
 enum class MirrorImagePhase {
     Split,
     Resolve,
 }
 
-/**
- * The stage a Bard's Encore is in (SS-206): [SetStage] is the concert scene rising the moment
- * Encore triggers — the arena darkens to a spotlit stage with a standing microphone and a restless
- * crowd of the class avatars, held alive while the roll is made; [Success] and [Failure] are the
- * resolved 1d6 — the mic throws off music as the crowd roars for the encore, or the notes drain to
- * gray as the crowd boos, before the house lights come back up and the darkness lifts either way.
- */
 enum class EncorePhase {
     SetStage,
     Success,
     Failure,
 }
 
-/**
- * The stage a Persuade is in (SS-207): [Summon] is the Bard's lute conjured the moment their armor
- * is passed, held while the roll is made; [StrumFailed] and [StrumStopped] are the resolved roll —
- * the strings ring and notes bloom, then either drain to gray as the attack presses on, or hold
- * their colour in a flourish as the attack is lulled to a stop. [CharmSummon] is the same stopping
- * flourish followed by the lute crossfading into a flute, and [CharmComplete] is that flute played,
- * air breathing through it, wreathed in the slow hypnotic swirl that redirects the attacker.
- */
 enum class PersuadePhase {
     Summon,
     StrumFailed,
@@ -260,22 +167,12 @@ enum class PersuadePhase {
     CharmComplete,
 }
 
-/**
- * The stage a Riposte is in (SS-204): [Ready] is the paired blades rising into a parry stance the
- * moment the Duelist's armor is passed, held while the roll-off is made; [Landed] and [Missed] are
- * the resolved roll — the parry beat followed by the counter-stab either reaching the attacker or
- * sailing past.
- */
 enum class RipostePhase {
     Ready,
     Landed,
     Missed,
 }
 
-/**
- * The motion vocabulary a single avatar can perform. Cues pick a gesture per role; the choreography
- * lives with the avatar composables, so adding a gesture here means giving it a choreography there.
- */
 enum class AvatarGesture {
     Lunge,
     LungeStrong,
@@ -303,12 +200,6 @@ enum class AvatarGesture {
     Collapse,
 }
 
-/**
- * The animation cue for a message, mirroring [flashCallout]: derived from the same message both
- * displays share, with the exhaustive when making a new message type a compile error until its cue
- * is chosen. Null means the avatars sit the event out — the branch each ability-animation ticket
- * later replaces with its cue.
- */
 val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
     get() =
         when (this) {
@@ -544,12 +435,6 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.Doubles -> null
         }
 
-/**
- * The player who folds into a [Collapse][AvatarGesture] for this cue — the one knocked out — or
- * null when the cue knocks no one out. Mirrors the Collapse assignments in [gestureFor]. Used to
- * keep the downed player in their large seat while the collapse plays out, and through the
- * match-ending finish hold, instead of snapping them to a head icon the instant they fall (SS-213).
- */
 val CombatAnimationCue.collapsingUserId: String?
     get() =
         when (this) {
@@ -598,10 +483,6 @@ val CombatAnimationCue.collapsingUserId: String?
                 }
         }
 
-/**
- * The gesture the player with [userId] performs for this cue, or null when the cue is not theirs to
- * act — a spectator seat holds still.
- */
 fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
     when (this) {
         is CombatAnimationCue.NormalAttack -> normalAttackGestureFor(userId = userId)
@@ -641,12 +522,6 @@ fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
         is CombatAnimationCue.HolyShield -> holyShieldGestureFor(userId = userId)
     }
 
-/**
- * The Paladin's Holy Shield (SS-212): the shield and its light are drawn entirely by the effect
- * overlay, so the Paladin holds still behind them through the raise and the prayer roll. Only a
- * failed prayer moves the body — the Paladin folds into the normal knockout collapse as the shield
- * topples. On Wrath the struck attacker takes a heavy shake as the divine blast lands on them.
- */
 private fun CombatAnimationCue.HolyShield.holyShieldGestureFor(userId: String): AvatarGesture? {
     val isSmoteAttacker = phase == HolyShieldPhase.Wrath && userId == attackerUserId
     if (isSmoteAttacker) {
@@ -658,12 +533,6 @@ private fun CombatAnimationCue.HolyShield.holyShieldGestureFor(userId: String): 
     return if (didFailPrayer) AvatarGesture.Collapse else null
 }
 
-/**
- * The Mage's Spell Potency (SS-210): the amplified projectiles and the area-of-effect are drawn by
- * the effect overlay, so the Mage only casts behind them while the seated main target takes the
- * barrage with a heavy flinch. The splashed opponents are off-stage head icons, animated separately
- * (SS-214).
- */
 private fun CombatAnimationCue.SpellPotency.spellPotencyGestureFor(userId: String): AvatarGesture? =
     when (userId) {
         mageUserId -> AvatarGesture.Cast
@@ -674,11 +543,6 @@ private fun CombatAnimationCue.SpellPotency.spellPotencyGestureFor(userId: Strin
         else -> null
     }
 
-/**
- * The Illusionist's Mirror Image (SS-209): the split itself is drawn entirely by the effect
- * overlay, so the seat holds still through it; only on the resolving roll does the real Illusionist
- * react — dodging a foiled attack or flinching and collapsing under one that lands.
- */
 private fun CombatAnimationCue.MirrorImage.mirrorImageGestureFor(userId: String): AvatarGesture? {
     if (phase != MirrorImagePhase.Resolve) return null
     if (userId != illusionistUserId) return null
@@ -686,24 +550,12 @@ private fun CombatAnimationCue.MirrorImage.mirrorImageGestureFor(userId: String)
     return defenderReactionGesture(outcome = resolvedOutcome)
 }
 
-/**
- * The Duelist's Riposte (SS-204): the paired blades of the effect overlay carry the whole reversal
- * — the forward blade's disarming swirl and the rear blade's counter-stab — so the Duelist holds
- * their ground behind them, and only the countered attacker reacts, flinching as a landed reversal
- * turns their own attack around. A failed counter leaves the attacker untouched here; their
- * original attack simply resumes into its own health roll.
- */
 private fun CombatAnimationCue.Riposte.riposteGestureFor(userId: String): AvatarGesture? =
     when {
         userId == attackerUserId && phase == RipostePhase.Landed -> AvatarGesture.Flinch
         else -> null
     }
 
-/**
- * The Duelist's Prepare Attack (SS-203): the paired rapiers of the effect overlay carry the show —
- * wind up, gleam, and thrust — so the Duelist only coils and springs behind them, while the target
- * collapses under a landed strike or sidesteps a whiffed one.
- */
 private fun CombatAnimationCue.PrepareAttack.prepareAttackGestureFor(
     userId: String
 ): AvatarGesture? =
@@ -716,11 +568,6 @@ private fun CombatAnimationCue.PrepareAttack.prepareAttackGestureFor(
         else -> null
     }
 
-/**
- * The High Roller payback (SS-193): the Gambler flings the lucky coin at the attacker — the coin
- * itself is drawn by the effect overlay, so the Gambler only throws and the struck attacker reacts,
- * folding into a collapse when the coin knocks them out.
- */
 private fun CombatAnimationCue.LuckyCoinHighRollerThrow.luckyCoinThrowGestureFor(
     userId: String
 ): AvatarGesture? =
@@ -730,11 +577,6 @@ private fun CombatAnimationCue.LuckyCoinHighRollerThrow.luckyCoinThrowGestureFor
         else -> null
     }
 
-/**
- * The Gambler's own body during All-In (SS-193): the coins are the show — drawn by the effect
- * overlay — so the avatar only tosses its winnings up, then rides out the result. A self-knockout
- * folds the toss into a collapse; the other outcomes just settle back.
- */
 private fun CombatAnimationCue.AllIn.allInGestureFor(userId: String): AvatarGesture? {
     if (userId != gamblerUserId) return null
     return when (outcome) {
@@ -755,11 +597,6 @@ private fun CombatAnimationCue.NormalAttack.normalAttackGestureFor(userId: Strin
     }
 }
 
-/**
- * The classes whose normal-attack weapon has a built renderer (SS-192…SS-199). The Illusionist
- * borrows from this set: impersonating one of them shows its weapon, and impersonating a class
- * outside it — or no one — falls back to a random pick from it (SS-197).
- */
 internal val builtWeaponClassTypes =
     listOf(
         CharacterClassType.Rogue,
@@ -771,13 +608,6 @@ internal val builtWeaponClassTypes =
         CharacterClassType.Paladin,
     )
 
-/**
- * The class whose weapon renders for this normal attack. Every real class renders its own; the
- * Illusionist borrows the weapon of the class it impersonated (recolored to Illusionist blue by its
- * overlay), or — with no built weapon to borrow — a per-attack random pick from
- * [builtWeaponClassTypes], keyed on the cue id so every timing and draw site resolves the same
- * weapon for a given attack (SS-197).
- */
 internal val CombatAnimationCue.NormalAttack.weaponClassType: CharacterClassType
     get() {
         if (attackerClassType != CharacterClassType.Illusionist) return attackerClassType
@@ -791,11 +621,6 @@ private fun randomBuiltWeaponFor(cueId: String): CharacterClassType {
     return builtWeaponClassTypes[index]
 }
 
-/**
- * Every class gets its own attacker-side strike set (SS-192…SS-199); the generic lunges are the
- * fallback for classes whose set has not landed yet. An Illusionist mirrors the body motion of the
- * weapon it borrows via [weaponClassType]. The defender-side reactions stay shared.
- */
 private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
     when (weaponClassType) {
         CharacterClassType.Rogue -> rogueStrike()
@@ -808,11 +633,6 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
         else -> genericStrike()
     }
 
-/**
- * The Paladin's mace work (SS-199): the swung mace of the weapon overlay carries the attack, and
- * these gestures are the two-handed swinging footwork behind the blow — a committed swing that ends
- * heavier on a knockout.
- */
 private fun CombatAnimationCue.NormalAttack.paladinStrike(): AvatarGesture =
     when (outcome) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
@@ -821,10 +641,6 @@ private fun CombatAnimationCue.NormalAttack.paladinStrike(): AvatarGesture =
         NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
     }
 
-/**
- * The Rogue's dagger work (SS-192): the flying dagger of the weapon overlay carries the attack, and
- * these gestures are the planted body motion behind each throw.
- */
 private fun CombatAnimationCue.NormalAttack.rogueStrike(): AvatarGesture =
     when (outcome) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Stab
@@ -833,10 +649,6 @@ private fun CombatAnimationCue.NormalAttack.rogueStrike(): AvatarGesture =
         NormalRollMessageType.Knockout -> AvatarGesture.StabFlurry
     }
 
-/**
- * The Gambler's card throw (SS-193): the spinning playing card of the weapon overlay carries the
- * attack across the gap, and these gestures are the planted throwing flick behind each toss.
- */
 private fun CombatAnimationCue.NormalAttack.gamblerStrike(): AvatarGesture =
     when (outcome) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Throw
@@ -845,11 +657,6 @@ private fun CombatAnimationCue.NormalAttack.gamblerStrike(): AvatarGesture =
         NormalRollMessageType.Knockout -> AvatarGesture.ThrowStrong
     }
 
-/**
- * The Duelist's paired blades (SS-194): the twin swords of the weapon overlay slash the defender
- * one after the other, and these gestures are the two-beat fencing footwork behind the cuts — a
- * lighter commit than a lunge, since the blades carry the attack.
- */
 private fun CombatAnimationCue.NormalAttack.duelistStrike(): AvatarGesture =
     when (outcome) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
@@ -869,8 +676,7 @@ private fun CombatAnimationCue.NormalAttack.genericStrike(): AvatarGesture =
 private fun CombatAnimationCue.NormalAttack.defenderReaction(): AvatarGesture =
     defenderReactionGesture(outcome = outcome)
 
-/** The shared defender reaction to a resolved attack roll, reused wherever a struck seat reacts. */
-internal fun defenderReactionGesture(outcome: NormalRollMessageType): AvatarGesture =
+private fun defenderReactionGesture(outcome: NormalRollMessageType): AvatarGesture =
     when (outcome) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep

@@ -16,6 +16,7 @@ sealed interface DiceRollState {
         val value: Int,
         val diePosition: DiePosition,
         override val doublesBonus: DoublesBonusState?,
+        val isMirrorImageReroll: Boolean = false,
     ) : DiceRollState
 
     @Immutable
@@ -33,6 +34,7 @@ internal fun DiceRoll.toState() =
                 value = value,
                 diePosition = diePosition,
                 doublesBonus = doublesBonus?.toState(),
+                isMirrorImageReroll = isMirrorImageReroll,
             )
 
         is DiceRoll.TwoDice ->
@@ -50,6 +52,7 @@ internal fun DiceRollState.toDomain() =
                 value = value,
                 diePosition = diePosition,
                 doublesBonus = doublesBonus?.toDomain(),
+                isMirrorImageReroll = isMirrorImageReroll,
             )
 
         is DiceRollState.TwoDice ->

@@ -211,7 +211,10 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val illusionistUserId: String,
             val attackerName: String,
+            val attackerClassType: CharacterClassType,
             val messageType: NormalRollMessageType,
+            val total: Int,
+            val doublesBonus: Int,
         ) : MirrorImage
 
         @Immutable
@@ -460,7 +463,10 @@ private fun ArenaMessage.toState(
                 id = id,
                 illusionistUserId = illusionistUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
+                attackerClassType = participants.resolveClassType(userId = attackerUserId),
                 messageType = messageType,
+                total = total,
+                doublesBonus = doublesBonus,
             )
 
         is ArenaMessage.MirrorImage.Trigger ->

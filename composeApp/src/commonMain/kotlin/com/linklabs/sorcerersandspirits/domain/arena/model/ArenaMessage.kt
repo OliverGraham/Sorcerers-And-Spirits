@@ -130,6 +130,8 @@ sealed interface ArenaMessage {
             override val illusionistUserId: String,
             val attackerUserId: String,
             val messageType: NormalRollMessageType,
+            val total: Int,
+            val doublesBonus: Int,
         ) : MirrorImage
 
         data class TemptFate(

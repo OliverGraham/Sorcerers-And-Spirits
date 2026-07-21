@@ -21,6 +21,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
@@ -32,7 +33,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -45,7 +46,6 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
-import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlinx.coroutines.Dispatchers
@@ -564,32 +564,47 @@ class ArenaScreenViewModelTest {
     // ---------- Held Finished transition (SS-154) ----------
 
     @Test
-    fun `Given a match finishes from combat, then the Finished transition is held briefly then advances on the ViewModel's clock`() =
+    fun `Given the match-ending roll lands, then combat is held for the flash before the finish is written and the Finished screen follows`() =
         runTest {
             val playerMap = twoPlayerMap(userClass = TestCharacterClasses.rogue())
             val viewModel =
                 combatViewModel(nextCombatAction = idleTurn(OPPONENT_ID), playerMap = playerMap)
 
+            // The domain persists a terminal Combat (isMatchOver) so the killing roll animates
+            // before
+            // the match resolves; the combat view is held with isMatchEnding until the finish
+            // writes.
             arenaMatchFlow.value =
-                ArenaMatch.Finished(
-                    messages = emptyList(),
-                    numberOfNewMessages = 0,
+                createCombatMatch(
+                    nextCombatAction = idleTurn(OPPONENT_ID),
                     playerMap = playerMap,
+                    isMatchOver = true,
                 )
             runCurrent()
 
             val heldState = (viewModel.uiStateFlow.value as UiState.Loaded).data
             assertIs<ArenaState.Combat>(heldState.arenaState)
-            assertNotNull(heldState.pendingFinishedState)
+            assertTrue(heldState.isMatchEnding)
 
-            // The hold is clocked entirely by the ViewModel (SS-154), so advancing virtual time
-            // past
-            // the fixed hold advances to the Finished screen without any UI involvement.
+            // The hold is clocked entirely by the ViewModel (SS-154): once the flash has played
+            // out,
+            // the ViewModel writes the finished match to the shared state.
             advanceUntilIdle()
+
+            coVerify { finishMatchUseCase(arenaId = arguments.arenaId) }
+
+            // The written finish then flows back and advances the UI off the held combat view.
+            arenaMatchFlow.value =
+                ArenaMatch.Finished(
+                    messages = emptyList(),
+                    numberOfNewMessages = 0,
+                    playerMap = playerMap,
+                    participants = playerMap.mapValues { it.value.characterClass.type },
+                )
+            runCurrent()
 
             val finishedState = (viewModel.uiStateFlow.value as UiState.Loaded).data
             assertIs<ArenaState.Finished>(finishedState.arenaState)
-            assertNull(finishedState.pendingFinishedState)
         }
 
     @Test
@@ -604,6 +619,7 @@ class ArenaScreenViewModelTest {
                     messages = emptyList(),
                     numberOfNewMessages = 0,
                     playerMap = playerMap,
+                    participants = playerMap.mapValues { it.value.characterClass.type },
                 )
             runCurrent()
 
@@ -625,6 +641,7 @@ class ArenaScreenViewModelTest {
                     numberOfNewMessages = 0,
                     matchNumberInGauntlet = Gauntlet.MATCHES_PER_GAUNTLET,
                     playerMap = playerMap,
+                    participants = playerMap.mapValues { it.value.characterClass.type },
                 )
             runCurrent()
 
@@ -725,7 +742,10 @@ class ArenaScreenViewModelTest {
                 messages = emptyList(),
                 numberOfNewMessages = 0,
                 playerMap =
-                    mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
+                    mapOf(
+                        USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")
+                    ),
+                participants = emptyMap(),
             )
         val viewModel = createViewModel()
 
@@ -1184,9 +1204,9 @@ class ArenaScreenViewModelTest {
             assertEquals(
                 expected =
                     listOf(
-                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.First,
-                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.Second,
-                        AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.None,
+                        MirrorImageRerollSelection.First,
+                        MirrorImageRerollSelection.Second,
+                        MirrorImageRerollSelection.None,
                     ),
                 actual = selections,
             )
@@ -1580,6 +1600,7 @@ class ArenaScreenViewModelTest {
             nextCombatAction: NextCombatAction,
             playerMap: Map<String, ArenaPlayer.Selected>,
             roundNumber: Int = 1,
+            isMatchOver: Boolean = false,
             participants: Map<String, CharacterClassType> =
                 playerMap.mapValues { it.value.characterClass.type },
         ) =
@@ -1590,8 +1611,8 @@ class ArenaScreenViewModelTest {
                 nextCombatAction = nextCombatAction,
                 roundNumber = roundNumber,
                 isNewRound = false,
-                doublesBonus = null,
-                isMirrorImagePenaltyActive = false,
+                isMatchOver = isMatchOver,
+                diceRoll = null,
                 participants = participants,
             )
 

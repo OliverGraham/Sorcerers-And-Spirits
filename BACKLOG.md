@@ -282,6 +282,27 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
+### SS-222 — Behavioral regressions surfaced by the dice-architecture refactor (8 failing tests)
+
+- [ ] Not completed
+- **Context:** After the DiceRoll refactor the test suite was fixed for the rename/elimination
+  breakage (0 compiling → 392/400 passing). The remaining 8 failures are genuine behavioral changes
+  vs `main` (they passed there), not test rot. Decide per-case whether each is an intended change
+  (update/delete the test) or a regression to fix in production, then get the suite back to green.
+- **Seating (4 tests, `CombatSeatingTest`):** `resolveTargetUserId`
+  (`ui/screens/arena/ui/combat/ArenaCombat.kt`) dropped the
+  `.ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }` fallback (that property was
+  deleted). It now goes straight to the lone-opponent heuristic, so the action's real defender is
+  no longer seated — e.g. a Riposte reversal drops the defender to a head icon, violating the
+  documented "Riposte keeps the same seats" invariant. Looks accidental.
+- **Reroll button order (1 test, `ArenaScreenViewModelTest`):** `mirrorImageControls()` in
+  `ArenaCombatControl.kt` swapped the two "Reroll the N" buttons to secondDie-first; `main` was
+  firstDie-first. Production has a TODO "Leftmost die should be first" — the test expects
+  firstDie-first.
+- **Mirror Image domain (3 tests, `PerformCombatActionUseCaseTest`):** e.g. keeping a doubles armor
+  Mirror Image roll no longer emits the Doubles message. Check `MirrorImageHandler` diff vs `main`.
+- **Related:** SS-216 (Riposte turn-owner AttackTurn), SS-181 (seating identity).
+
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

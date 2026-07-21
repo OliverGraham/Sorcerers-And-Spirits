@@ -350,10 +350,10 @@ class CombatSeatingTest {
             combatActionState = combatActionState,
             roundNumber = 1,
             isNewRound = false,
-            doublesBonus = null,
-            isMirrorImagePenaltyActive = false,
+            isMatchOver = false,
             turnOwnerUserId = turnOwner(combatActionState = combatActionState),
             lockedTargetUserId = lockedTarget(combatActionState = combatActionState),
+            diceRollState = null,
         )
 
     private fun turnOwner(combatActionState: CombatActionState): String =

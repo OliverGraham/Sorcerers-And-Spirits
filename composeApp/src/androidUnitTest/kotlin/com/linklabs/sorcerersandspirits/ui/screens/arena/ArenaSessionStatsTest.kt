@@ -208,6 +208,11 @@ class ArenaSessionStatsTest {
                         ),
                 ),
             matchNumberInGauntlet = matchNumber,
+            participants =
+                mapOf(
+                    USER_ID to survivingClass.type,
+                    OPPONENT_ID to TestCharacterClasses.mage().type,
+                ),
         )
     }
 

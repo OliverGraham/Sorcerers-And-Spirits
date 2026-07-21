@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertNull
 
 class CombatControlDiceCountTest {
 
@@ -11,35 +10,35 @@ class CombatControlDiceCountTest {
     fun `normal attack rolls two dice`() {
         val control = ArenaCombatControl.NormalAttack(requiresTarget = true)
 
-        assertEquals(expected = 2, actual = control.diceCount)
+        assertEquals(expected = NumberOfDice.Two, actual = control.numberOfDice)
     }
 
     @Test
     fun `single-die ability rolls report one die`() {
         assertEquals(
-            expected = 1,
-            actual = abilityRoll(AbilityActionState.Passive.Encore).diceCount,
+            expected = NumberOfDice.One,
+            actual = abilityRoll(AbilityActionState.Passive.Encore).numberOfDice,
         )
         assertEquals(
-            expected = 1,
-            actual = abilityRoll(AbilityActionState.Passive.Persuade.StrumLute).diceCount,
+            expected = NumberOfDice.One,
+            actual = abilityRoll(AbilityActionState.Passive.Persuade.StrumLute).numberOfDice,
         )
         assertEquals(
-            expected = 1,
-            actual = abilityRoll(AbilityActionState.Passive.HolyShield.Wrath).diceCount,
+            expected = NumberOfDice.One,
+            actual = abilityRoll(AbilityActionState.Passive.HolyShield.Wrath).numberOfDice,
         )
     }
 
     @Test
     fun `two-die ability rolls report two dice`() {
         assertEquals(
-            expected = 2,
+            expected = NumberOfDice.Two,
             actual =
-                abilityRoll(AbilityActionState.Passive.Riposte(attackerRollTotal = 7)).diceCount,
+                abilityRoll(AbilityActionState.Passive.Riposte(attackerRollTotal = 7)).numberOfDice,
         )
         assertEquals(
-            expected = 2,
-            actual = abilityRoll(AbilityActionState.Passive.HolyShield.Prayer).diceCount,
+            expected = NumberOfDice.Two,
+            actual = abilityRoll(AbilityActionState.Passive.HolyShield.Prayer).numberOfDice,
         )
     }
 
@@ -51,10 +50,10 @@ class CombatControlDiceCountTest {
                     OffensiveAbility.AllIn(hasAnotherAttack = false, usedThisTurn = false)
             )
 
-        assertEquals(expected = 1, actual = activatedAbility(allIn).diceCount)
+        assertEquals(expected = NumberOfDice.One, actual = activatedAbility(allIn).numberOfDice)
         assertEquals(
-            expected = 2,
-            actual = activatedAbility(AbilityActionState.Activated.PrepareAttack).diceCount,
+            expected = NumberOfDice.Two,
+            actual = activatedAbility(AbilityActionState.Activated.PrepareAttack).numberOfDice,
         )
     }
 
@@ -71,8 +70,11 @@ class CombatControlDiceCountTest {
                     OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.Encore)
             )
 
-        assertNull(actual = abilityRoll(charm).diceCount)
-        assertNull(actual = activatedAbility(impersonate).diceCount)
+        assertEquals(expected = NumberOfDice.None, actual = abilityRoll(charm).numberOfDice)
+        assertEquals(
+            expected = NumberOfDice.None,
+            actual = activatedAbility(impersonate).numberOfDice,
+        )
     }
 
     private fun abilityRoll(action: AbilityActionState) =

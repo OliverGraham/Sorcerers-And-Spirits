@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice
 
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RollResult
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -9,60 +9,54 @@ import kotlin.test.assertTrue
 class DiceRollTest {
 
     @Test
-    fun `own roll result settles the dice on its faces`() {
-        val roll = releasedRoll()
+    fun `committing a two-dice roll settles both dice on their faces`() {
+        val holder = releasedRoll()
 
-        roll.receiveRoll(rollMessageId = "r1", faces = mapOf(0 to 5, 1 to 3))
+        holder.commitRoll(
+            diceRollState = DiceRollState.TwoDice(firstDie = 5, secondDie = 3, doublesBonus = null)
+        )
 
-        assertFalse(actual = roll.isRollPending)
-        assertFalse(actual = roll.isRolling)
-        assertEquals(expected = listOf(5, 3), actual = roll.dieFaces)
+        assertFalse(actual = holder.isRolling)
+        assertEquals(expected = 5, actual = holder.firstDieState.value)
+        assertEquals(expected = 3, actual = holder.secondDieState.value)
+        assertTrue(actual = holder.firstDieState.isActive)
+        assertTrue(actual = holder.secondDieState.isActive)
+    }
+
+    @Test
+    fun `committing a one-die roll activates only the rolled die`() {
+        val holder = releasedRoll()
+
+        holder.commitRoll(
+            diceRollState =
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    doublesBonus = null,
+                )
+        )
+
+        assertFalse(actual = holder.isRolling)
+        assertEquals(expected = 4, actual = holder.firstDieState.value)
+        assertTrue(actual = holder.firstDieState.isActive)
+        assertFalse(actual = holder.secondDieState.isActive)
     }
 
     @Test
     fun `a turn that resolves without a roll settles instead of stalling`() {
-        val roll = releasedRoll()
+        val holder = releasedRoll()
 
-        roll.receiveNonRollMessage(messageId = "m1")
+        holder.settleIfResolvedWithoutResult()
 
-        assertFalse(actual = roll.isRollPending)
-        assertFalse(actual = roll.isRolling)
-    }
-
-    @Test
-    fun `the guard keeps tumbling while the result has not arrived`() {
-        val roll = releasedRoll()
-
-        roll.settleIfResolvedWithoutResult()
-
-        assertTrue(actual = roll.isRollPending)
-        assertTrue(actual = roll.isRolling)
+        assertFalse(actual = holder.isRolling)
     }
 
     /** A roll committed from the resting state, now tumbling while it awaits its result. */
-    private fun releasedRoll(): DiceRoll {
-        val roll = DiceRoll()
-        roll.latestRollId = "r0"
-        roll.latestMessageId = "r0"
-        roll.startHold(slots = setOf(0, 1))
-        roll.release(isDoubleTap = true) {}
-        assertTrue(actual = roll.isRolling)
-        return roll
-    }
-
-    /** A batch that carries this device's roll result, mirroring [rememberDiceRoll]. */
-    private fun DiceRoll.receiveRoll(rollMessageId: String, faces: Map<Int, Int>) {
-        val previousRollId = latestRollId
-        latestRollId = rollMessageId
-        latestMessageId = rollMessageId
-        val isOwnRoll = isResultOfOwnRoll(previousRollId = previousRollId)
-        commitRoll(result = RollResult.Faces(slotFaces = faces), isOwnRoll = isOwnRoll)
-        settleIfResolvedWithoutResult()
-    }
-
-    /** A batch whose only message rolled no dice, so the roll-bearing id does not advance. */
-    private fun DiceRoll.receiveNonRollMessage(messageId: String) {
-        latestMessageId = messageId
-        settleIfResolvedWithoutResult()
+    private fun releasedRoll(): DiceStateHolder {
+        val holder = DiceStateHolder()
+        holder.startHold(rollingPositions = setOf(DiePosition.First, DiePosition.Second))
+        holder.release(isDoubleTap = true) {}
+        assertTrue(actual = holder.isRolling)
+        return holder
     }
 }

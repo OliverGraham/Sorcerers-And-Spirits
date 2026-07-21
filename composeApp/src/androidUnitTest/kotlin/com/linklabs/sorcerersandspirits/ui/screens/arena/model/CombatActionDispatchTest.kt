@@ -1,9 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
@@ -183,8 +183,7 @@ class CombatActionDispatchTest {
             attackType = NormalAttackType.ArmorClass,
             attackerDoublesBonus = 0,
             mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-            mirrorImageRerollSelection =
-                AbilityAction.Passive.MirrorImage.MirrorImageRerollSelection.None,
+            mirrorImageRerollSelection = MirrorImageRerollSelection.None,
         )
 
     private fun AbilityActionState.asUseAbilityArguments() =

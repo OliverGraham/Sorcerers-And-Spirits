@@ -165,17 +165,16 @@ private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl>
             )
     }
 
-// TODO: Fix positioning of dice perhaps. Leftmost die should be "first"
 private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<ArenaCombatControl> =
     listOf(
         ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.Second),
-            label = "Reroll the ${secondDie.originalRoll}",
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.First),
+            label = "Reroll the ${firstDie.originalRoll}",
             requiresTarget = false,
         ),
         ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.First),
-            label = "Reroll the ${firstDie.originalRoll}",
+            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.Second),
+            label = "Reroll the ${secondDie.originalRoll}",
             requiresTarget = false,
         ),
         ArenaCombatControl.AbilityRoll(

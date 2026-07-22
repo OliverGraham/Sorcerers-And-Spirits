@@ -222,18 +222,17 @@ internal fun determineTimerAction(
                 TimerAction.None
             }
 
-        // The combat clock belongs to the action a player currently owes, so it (re)starts only
-        // when that action changes (a new turn or roll) and keeps running across unrelated updates
-        // such as incoming messages.
-        is ArenaState.Combat ->
-            if (
+        is ArenaState.Combat -> {
+            val isNewCombatInteraction =
                 previous !is ArenaState.Combat ||
-                    previous.combatActionState != next.combatActionState
-            ) {
+                    previous.combatActionState != next.combatActionState ||
+                    previous.hasActivePlayerActedWhileStillActive(next = next)
+            if (isNewCombatInteraction) {
                 TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS)
             } else {
                 TimerAction.None
             }
+        }
 
         is ArenaState.Finished ->
             if (isFinalMatch) {
@@ -242,6 +241,16 @@ internal fun determineTimerAction(
                 determineMatchFinishedTimerAction(previous = previous, next = next)
             }
     }
+
+private fun ArenaState.Combat.hasActivePlayerActedWhileStillActive(
+    next: ArenaState.Combat
+): Boolean {
+    val previousIdle = combatActionState as? CombatActionState.Idle ?: return false
+    val nextIdle = next.combatActionState as? CombatActionState.Idle ?: return false
+    if (previousIdle.activeUserIds != nextIdle.activeUserIds) return false
+
+    return nextIdle.activeUserIds.any { userId -> playerMap[userId] != next.playerMap[userId] }
+}
 
 private fun determineMatchFinishedTimerAction(
     previous: ArenaState?,

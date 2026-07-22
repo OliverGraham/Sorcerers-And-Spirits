@@ -374,19 +374,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
 
-### SS-243 — Teleport tie re-rolls until a winner
-
-- [ ] Not completed
-- **Rule:** The Teleport roll-off is a roll between the attacker and the Mage; the higher roll wins.
-  On a **tie**, both should roll again, repeating until one side rolls higher — a tie never resolves
-  the attack on its own.
-- **Current behavior:** a tie is treated as the Mage losing (`defenderRoll > attackerRoll` → escape,
-  otherwise continue the attack), so a tie ends the roll-off in the attacker's favor instead of
-  re-rolling.
-- **Source:** `domain/.../ability/passive/TeleportHandler.kt` (`handleUpdatedTeleport` — on a tie,
-  reset both dice and re-run the roll-off instead of calling `handleTeleportFailure`).
-- **Related:** SS-224 (roll-off), SS-242 (simultaneous roll-off dice).
-
 ### SS-228 — Using an activated ability must restart the turn timer
 
 - [ ] Not completed

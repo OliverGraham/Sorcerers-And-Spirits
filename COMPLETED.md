@@ -501,6 +501,9 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   combatant whose die is already rolled (`isUserTheRoller`); and the pending roll-off button stays
   visible through sequencing (`ArenaState.Combat.isAwaitingTeleportRoll`). Simultaneous-dice tray
   rendering split to SS-242; tie re-roll to SS-243.
+- **SS-243** — Teleport tie re-rolls until a winner: a tied roll-off no longer resolves in the
+  attacker's favor; `TeleportHandler.handleUpdatedTeleport` now detects an equal roll and resets both
+  dice (clearing the spent attacker doubles bonus) to re-run the roll-off until one side rolls higher.
 - **SS-222** — Behavioral regressions surfaced by the dice-architecture refactor: resolved the 8
   post-refactor test failures (seating `resolveTargetUserId`, Mirror Image reroll button order, and
   Mirror Image domain Doubles-message emission), deciding per-case between production fix and test

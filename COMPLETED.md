@@ -504,6 +504,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-243** — Teleport tie re-rolls until a winner: a tied roll-off no longer resolves in the
   attacker's favor; `TeleportHandler.handleUpdatedTeleport` now detects an equal roll and resets both
   dice (clearing the spent attacker doubles bonus) to re-run the roll-off until one side rolls higher.
+- **SS-228** — Using an activated ability must restart the turn timer: All-In and Impersonate keep
+  the turn with the same Idle player, so `combatActionState` was unchanged and `determineTimerAction`
+  left the pre-ability countdown running. It now also restarts the combat clock when the active
+  player's own state changed while their Idle turn held (`hasActivePlayerActedWhileStillActive`).
 - **SS-222** — Behavioral regressions surfaced by the dice-architecture refactor: resolved the 8
   post-refactor test failures (seating `resolveTargetUserId`, Mirror Image reroll button order, and
   Mirror Image domain Doubles-message emission), deciding per-case between production fix and test

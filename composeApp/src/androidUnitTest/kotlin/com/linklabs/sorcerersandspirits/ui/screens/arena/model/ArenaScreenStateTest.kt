@@ -233,6 +233,31 @@ class ArenaScreenStateTest {
     }
 
     @Test
+    fun `Given the active player used an activated ability that kept the turn, then the combat timer restarts`() {
+        val idleTurn = CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+        val previous = combatState(combatActionState = idleTurn)
+        val next =
+            combatState(combatActionState = idleTurn, playerMap = playersAfterActivatedAbility())
+
+        val timerAction =
+            determineTimerAction(previous = previous, next = next, isFinalMatch = false)
+
+        assertEquals(expected = TimerAction.Start(timerDuration = 45), actual = timerAction)
+    }
+
+    @Test
+    fun `Given an unrelated update leaves the active player's turn untouched, then the combat timer keeps running`() {
+        val idleTurn = CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+        val previous = combatState(combatActionState = idleTurn)
+        val next = combatState(combatActionState = idleTurn)
+
+        val timerAction =
+            determineTimerAction(previous = previous, next = next, isFinalMatch = false)
+
+        assertEquals(expected = TimerAction.None, actual = timerAction)
+    }
+
+    @Test
     fun `Given an opponent selected a class whose stats diverge from the template, then that class type is still unavailable to the user`() {
         // A selected player's class carries live, mutated stats (here reduced HP), so it is not
         // value-equal to the master template. The no-duplicate rule keys on class type, so the
@@ -473,6 +498,15 @@ class ArenaScreenStateTest {
                     characterClass = TestCharacterClasses.rogue().toState(),
                 ),
         )
+
+    private fun playersAfterActivatedAbility(): Map<String, PlayerState.Selected> {
+        val actingPlayer = players().getValue(USER_ID)
+        val actedClass =
+            actingPlayer.characterClass.copy(
+                attacksRemaining = actingPlayer.characterClass.attacksRemaining + 1
+            )
+        return players() + (USER_ID to actingPlayer.copy(characterClass = actedClass))
+    }
 
     private val matchParticipants =
         mapOf(USER_ID to CharacterClassType.Paladin, OPPONENT_ID to CharacterClassType.Rogue)

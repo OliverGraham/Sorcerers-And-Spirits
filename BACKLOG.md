@@ -374,20 +374,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
 
-### SS-228 — Using an activated ability must restart the turn timer
-
-- [ ] Not completed
-- **Symptom:** When a player uses an ability the turn timer is **not** restarted — e.g. Gambler's
-  All-In or Illusionist's Impersonate consume the interaction but the countdown keeps running from
-  the pre-ability value.
-- **Goal:** Any ability use that starts a fresh interaction restarts the turn timer, the same as a
-  normal action does. Covers activated abilities that don't use the normal attack roll (All-In,
-  Impersonate) and any ability that opens a follow-up roll prompt.
-- **Source:** `ui/screens/arena/model/TimerAction.kt`, `ui/screens/arena/ui/combat/CombatTurnTimer.kt`,
-  and the timer-reset wiring in `ArenaScreenViewModel.kt`. Confirm which combat events trigger a
-  timer reset and add ability use to that set.
-- **Related:** SS-180 (timeout auto-pick uses the same timer).
-
 ### SS-229 — Die face shows wrong value for HighRoller (Lucky Coin) damage
 
 - [ ] Not completed — **Priority: dice must always match the roll.**

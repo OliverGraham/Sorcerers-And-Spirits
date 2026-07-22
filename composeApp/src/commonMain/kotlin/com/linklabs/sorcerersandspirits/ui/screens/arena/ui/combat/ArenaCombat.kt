@@ -167,7 +167,7 @@ internal fun ArenaCombat(
             )
 
             MessageLogOverlay(
-                messages = screenState.messages,
+                messages = screenState.logMessages,
                 isExpanded = isMessagesExpanded,
                 diceHomeBounds = diceHomeBounds,
                 onDismiss = { isMessagesExpanded = false },

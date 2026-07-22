@@ -72,7 +72,6 @@ private const val SHAKE_SEGMENT_MILLIS = 55
 private const val SLASH_LEAN_MILLIS = 130
 private const val SLASH_RECOVER_MILLIS = 240
 
-/** Total wall-clock time of [allInToss]'s three phases; kept in step with their tween durations. */
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 private const val COLLAPSE_ROTATION_DEGREES = 80f
 private const val COLLAPSE_FEET_SLIDE_FRACTION = 0.4f
@@ -101,11 +100,6 @@ private const val HURT_TINT_CHANNEL_DAMP = 0.45f
 private const val ARMOR_TINT_MAX_BLUE_OFFSET = 110f
 private const val ARMOR_TINT_CHANNEL_DAMP = 0.3f
 
-/**
- * Wall-clock length of each seated-avatar gesture's own body — the animation after any injected
- * reaction delay — so the sequencer can hold a message until the bodies come to rest (SS-201). Kept
- * in step with the choreography in [play], the same way the weapon overlays report their own runs.
- */
 private const val FLINCH_BODY_MILLIS = 380L
 private const val FLINCH_HEAVY_BODY_MILLIS = 470L
 private const val SIDESTEP_BODY_MILLIS = 520L
@@ -118,13 +112,6 @@ private const val ALL_IN_BUST_JOLT_MILLIS = 160L
 
 private val feetPivot = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1f)
 
-/**
- * The transforms one seated avatar animates through while acting out a gesture (SS-191). The
- * choreography drives these Animatables; the avatar art reads them in its graphics layer and color
- * filter, so playback never recomposes anything but the art itself. A [Collapse][AvatarGesture]
- * deliberately never resets: the downed, drained avatar is the resting state a knocked-out player
- * holds through the match-ending finish hold (SS-184).
- */
 @Stable
 internal class AvatarGestureState {
     val offsetX = Animatable(initialValue = 0f)
@@ -421,11 +408,6 @@ private suspend fun AvatarGestureState.mirrorResolve(
     mirrorFakeVanish.snapTo(targetValue = 0f)
 }
 
-/**
- * The shared defender reaction body, driven straight from the outcome so Mirror Image's real copy
- * can flinch, dodge, or collapse without the [snapToRest] a full gesture play runs first — which
- * would drop the split mid-resolve.
- */
 private suspend fun AvatarGestureState.playDefenderReaction(
     outcome: NormalRollMessageType,
     density: Density,
@@ -449,12 +431,6 @@ private suspend fun AvatarGestureState.playDefenderReaction(
         }
     }
 
-/**
- * How long a defender holds still before reacting, so the shared reactions land in step with the
- * attacker's strike: a melee weapon (SS-192) spends its dash closing in before the blade lands, a
- * thrown weapon (SS-193) spends its flight time spinning across the gap, a Prepare Attack (SS-203)
- * spends its whole windup cocking the rapiers, and the generic lunges hit almost immediately.
- */
 private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
@@ -487,23 +463,14 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
         else -> REACTION_DELAY_MILLIS
     }
 
-/**
- * A landed Prepare Attack collapses the target only as the blades arrive at the end of the long
- * windup; a whiffed one has the target sidestep as the thrust launches, clearing before it passes.
- */
 private fun CombatAnimationCue.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
-/**
- * The longest a seated avatar animates for this cue — the striker's own gesture or a reactor's
- * delayed reaction, whichever comes to rest last — so the sequencer holds the flash callout until
- * the bodies stop moving (SS-201). Maxed with the weapon and effect overlays' own runs; a cue with
- * no seated motion beyond those overlays reports 0.
- */
 internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
-            normalAttackReactionDelayMillis() + defenderReactionBodyMillis(outcome = outcome)
+            normalAttackReactionDelayMillis() +
+                defenderReactionBodyMillis(normalRollMessageType = normalRollMessageType)
 
         is CombatAnimationCue.KillingMomentum -> REARM_BODY_MILLIS
 
@@ -553,10 +520,6 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         }
     }
 
-/**
- * The Mage's own body during Teleport (SS-211): still while the portal opens and holds, and on the
- * resolve as long as the escape's rise-vanish-reappear, or the failed lunge, recoil, and gray-out.
- */
 private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
     when (phase) {
         TeleportPhase.Open,
@@ -575,20 +538,16 @@ private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
             }
     }
 
-/**
- * The Illusionist's own body during Mirror Image (SS-209): the split fans out and holds, while the
- * resolve runs the poof, the real copy's return, and its reaction in parallel — held for the
- * longest of the three.
- */
 private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
     when (phase) {
         MirrorImagePhase.Split -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
 
         MirrorImagePhase.Resolve -> {
-            val resolvedOutcome = messageType
+            val resolvedMessageType = messageType
             val reactionMillis =
-                if (resolvedOutcome != null) {
-                    REACTION_DELAY_MILLIS + defenderReactionBodyMillis(outcome = resolvedOutcome)
+                if (resolvedMessageType != null) {
+                    REACTION_DELAY_MILLIS +
+                        defenderReactionBodyMillis(normalRollMessageType = resolvedMessageType)
                 } else {
                     0L
                 }
@@ -596,22 +555,14 @@ private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
         }
     }
 
-/**
- * The shared defender reaction's body length per outcome, matching its flinch/sidestep/collapse.
- */
-private fun defenderReactionBodyMillis(outcome: NormalRollMessageType): Long =
-    when (outcome) {
+private fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> FLINCH_BODY_MILLIS
         NormalRollMessageType.ArmorClassMiss -> SIDESTEP_BODY_MILLIS
         NormalRollMessageType.Damage -> FLINCH_HEAVY_BODY_MILLIS
         NormalRollMessageType.Knockout -> COLLAPSE_BODY_MILLIS
     }
 
-/**
- * The Gambler's own body during All-In: a self-knockout folds the toss into a collapse and runs the
- * longest, while the other outcomes settle back after the toss and the coin effect carries the
- * rest.
- */
 private fun allInBodyMillis(outcome: AllInOutcome): Long =
     when (outcome) {
         AllInOutcome.SelfKnockout ->
@@ -700,10 +651,6 @@ private suspend fun AvatarGestureState.play(
     }
 }
 
-/**
- * The Necromancer's cast (SS-195): the summoned scythe does all the reaping, so the caster only
- * leans a little toward the defender and settles — no lunge, since the body never carries the blow.
- */
 private suspend fun AvatarGestureState.cast(reachPx: Float) {
     offsetY.animateTo(targetValue = reachPx, animationSpec = tween(durationMillis = 180))
     offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
@@ -736,12 +683,6 @@ private suspend fun AvatarGestureState.lungeOvershoot(distancePx: Float) {
     }
 }
 
-/**
- * The Rogue's close-combat pierce (SS-192): the avatar dashes into melee range of the defender —
- * the dagger of the weapon overlay riding in front — thrusts as the blade lands, holds the extended
- * pose while it sits embedded, and settles back to its seat. Timings mirror the overlay's
- * choreography so the body and the blade move as one.
- */
 private suspend fun AvatarGestureState.stab(dashPx: Float) {
     dashIn(dashPx = dashPx)
     offsetY.animateTo(
@@ -752,7 +693,6 @@ private suspend fun AvatarGestureState.stab(dashPx: Float) {
     settleBack()
 }
 
-/** The knockout: the pierce, then the body driving the blade deeper before settling back. */
 private suspend fun AvatarGestureState.stabFlurry(dashPx: Float) {
     dashIn(dashPx = dashPx)
     offsetY.animateTo(
@@ -773,10 +713,6 @@ private suspend fun AvatarGestureState.stabFlurry(dashPx: Float) {
     settleBack()
 }
 
-/**
- * The whiffed pierce: the dash carries in, but the thrust overextends past the sidestepping target
- * and the body tips off balance before recovering back to its seat.
- */
 private suspend fun AvatarGestureState.stabOvershoot(dashPx: Float) {
     dashIn(dashPx = dashPx)
     coroutineScope {
@@ -792,7 +728,6 @@ private suspend fun AvatarGestureState.stabOvershoot(dashPx: Float) {
     settleBack()
 }
 
-/** The dash into melee range: a crouch that springs the body toward the defender's seat. */
 private suspend fun AvatarGestureState.dashIn(dashPx: Float) {
     coroutineScope {
         launch {
@@ -816,12 +751,6 @@ private suspend fun AvatarGestureState.settleBack() {
     }
 }
 
-/**
- * The Duelist's two-beat fence (SS-194): the body commits into the lead cut, then roughly half a
- * second later crosses the other way into the follow cut — the footwork behind the twin blades of
- * the weapon overlay. A finisher drives the second cut deeper. The beats are launched together so
- * the stagger matches the blades' one-two.
- */
 private suspend fun AvatarGestureState.slashCombo(reachPx: Float, isFinisher: Boolean) {
     delay(timeMillis = twinSlashPreambleMillis())
     coroutineScope {
@@ -834,11 +763,9 @@ private suspend fun AvatarGestureState.slashCombo(reachPx: Float, isFinisher: Bo
     }
 }
 
-/** The time both blades spend rising into their erect ready pose before the lead cut begins. */
 private fun twinSlashPreambleMillis(): Long =
     (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS).toLong()
 
-/** One fencing beat: a smooth commit toward the defender with a finesse tilt, then a recover. */
 private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Float) {
     coroutineScope {
         launch {
@@ -869,10 +796,6 @@ private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Fl
     }
 }
 
-/**
- * The parried combo: the lead cut lands as usual, but the follow cut overcommits past the
- * sidestepping defender and tips the body off balance before it recovers to its seat.
- */
 private suspend fun AvatarGestureState.slashWhiff(reachPx: Float) {
     delay(timeMillis = twinSlashPreambleMillis())
     coroutineScope {
@@ -901,11 +824,6 @@ private suspend fun AvatarGestureState.slashOvershoot(reachPx: Float) {
     }
 }
 
-/**
- * The Duelist's Prepare Attack (SS-203): the body coils back while the paired rapiers of the effect
- * overlay twirl and gleam, then springs forward in step with their thrust and settles once the
- * strike lands.
- */
 private suspend fun AvatarGestureState.preparedThrust(reachPx: Float) {
     prepareCoil(reachPx = reachPx)
     coroutineScope {
@@ -923,10 +841,6 @@ private suspend fun AvatarGestureState.preparedThrust(reachPx: Float) {
     settleBack()
 }
 
-/**
- * The whiffed Prepare Attack: the same coil and spring, but the thrust overcommits past the
- * sidestepping target and tips the body off balance before it recovers to its seat.
- */
 private suspend fun AvatarGestureState.preparedThrustWhiff(reachPx: Float) {
     prepareCoil(reachPx = reachPx)
     coroutineScope {
@@ -950,10 +864,6 @@ private suspend fun AvatarGestureState.preparedThrustWhiff(reachPx: Float) {
     }
 }
 
-/**
- * The Prepare Attack windup: the body sinks into a coiled crouch away from the target while the
- * blades appear, twirl their full revolution, and pull back, then holds while the gleam runs.
- */
 private suspend fun AvatarGestureState.prepareCoil(reachPx: Float) {
     val coilMillis = PREPARE_APPEAR_MILLIS + PREPARE_TWIRL_MILLIS + PREPARE_PULL_BACK_MILLIS
     coroutineScope {
@@ -968,11 +878,6 @@ private suspend fun AvatarGestureState.prepareCoil(reachPx: Float) {
     delay(timeMillis = PREPARE_GLEAM_MILLIS.toLong())
 }
 
-/**
- * The Gambler's card throw (SS-193): a planted flick — the body leans back into a wind-up, then
- * snaps forward as the card is loosed, and settles. Smaller and quicker than a lunge, since the
- * thrown card of the weapon overlay does the travelling, not the body.
- */
 private suspend fun AvatarGestureState.throwFlick(flickPx: Float, peakScale: Float) {
     val leanDirection = if (flickPx >= 0f) 1f else -1f
     coroutineScope {
@@ -1008,10 +913,6 @@ private suspend fun AvatarGestureState.throwFlick(flickPx: Float, peakScale: Flo
     }
 }
 
-/**
- * The whiffed throw: the flick overcommits past the sidestepping target, tipping the body off
- * balance before it recovers back to its seat.
- */
 private suspend fun AvatarGestureState.throwOvershoot(flickPx: Float) {
     val leanDirection = if (flickPx >= 0f) 1f else -1f
     coroutineScope {
@@ -1050,10 +951,6 @@ private suspend fun AvatarGestureState.throwOvershoot(flickPx: Float) {
     }
 }
 
-/**
- * The All-In toss (SS-193): the Gambler dips to gather their winnings, then flings them skyward —
- * the coins the effect overlay throws — and settles back to watch how they land.
- */
 private suspend fun AvatarGestureState.allInToss(liftPx: Float) {
     coroutineScope {
         launch {
@@ -1076,11 +973,6 @@ private suspend fun AvatarGestureState.allInToss(liftPx: Float) {
     }
 }
 
-/**
- * The All-In bust (SS-193): the toss, a beat while the pile gathers, then the blast jolts the
- * Gambler off balance before they fold into the same collapse a knockout leaves behind. The wait
- * lines the jolt up with the overlay's detonation — the pile finishes landing and settling first.
- */
 private suspend fun AvatarGestureState.allInBust(liftPx: Float) {
     allInToss(liftPx = liftPx)
     delay(
@@ -1103,11 +995,6 @@ private suspend fun AvatarGestureState.allInBust(liftPx: Float) {
     collapse(reactionDelayMillis = 0L)
 }
 
-/**
- * The Killing Momentum re-arm (SS-192): the attacker springs back off the downed target into a low
- * crouch, holds poised for a beat, then pops back up ready for the follow-up attack — reading as
- * one continuous assault while the collapsed target stays down.
- */
 private suspend fun AvatarGestureState.reArm(retreatPx: Float) {
     coroutineScope {
         launch {
@@ -1125,10 +1012,6 @@ private suspend fun AvatarGestureState.reArm(retreatPx: Float) {
     }
 }
 
-/**
- * The Dodge flourish (SS-192): a taunting weave — the Rogue whips out wide, crosses back through
- * center, and settles — sharper and showier than the plain sidestep that answered the miss itself.
- */
 private suspend fun AvatarGestureState.dodgeFlourish(distancePx: Float) {
     coroutineScope {
         launch {
@@ -1147,10 +1030,6 @@ private suspend fun AvatarGestureState.dodgeFlourish(distancePx: Float) {
     }
 }
 
-/**
- * The armor-gaining Dodge: the flourish, then a hardening accent — a steel-blue glint with a
- * momentary swell — for the +1 Armor the dodge just banked.
- */
 private suspend fun AvatarGestureState.dodgeBrace(distancePx: Float) {
     dodgeFlourish(distancePx = distancePx)
     coroutineScope {

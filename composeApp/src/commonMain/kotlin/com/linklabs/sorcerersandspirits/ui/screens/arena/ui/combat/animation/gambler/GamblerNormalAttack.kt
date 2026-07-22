@@ -101,7 +101,7 @@ internal fun GamblerNormalAttackOverlay(
                         accentColor = cue.attackerClassType.toColor(),
                         density = density,
                     ),
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -117,7 +117,7 @@ internal fun gamblerNormalAttackDurationMillis(): Long = THROW_FLIGHT_MILLIS + 2
 
 internal suspend fun GamblerStrikeState.play(
     geometry: WeaponStrikeGeometry,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     travel.snapTo(targetValue = 0f)
     weaponAlpha.snapTo(targetValue = 0f)
@@ -126,7 +126,7 @@ internal suspend fun GamblerStrikeState.play(
     impactScale.snapTo(targetValue = 0f)
     this.scene = geometry
 
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> throwAcross(burstScale = 0.8f)
         NormalRollMessageType.ArmorClassMiss -> throwPast()
         NormalRollMessageType.Damage -> throwAcross(burstScale = 1f)
@@ -332,38 +332,38 @@ private fun spadePath(halfWidth: Float, halfHeight: Float): Path =
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun GamblerNormalAttackKnockoutPreview() {
-    GamblerNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+    GamblerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Knockout)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun GamblerNormalAttackDamagePreview() {
-    GamblerNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+    GamblerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Damage)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun GamblerNormalAttackArmorClassHitPreview() {
-    GamblerNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+    GamblerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassHit)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun GamblerNormalAttackArmorClassMissPreview() {
-    GamblerNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+    GamblerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassMiss)
 }
 
 @Composable
-private fun GamblerNormalAttackPreview(outcome: NormalRollMessageType) {
+private fun GamblerNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
+        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = "gambler-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Gambler,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

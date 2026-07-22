@@ -324,10 +324,7 @@ internal class CombatMutator(
                 ?: return
 
         updatePlayerClass(userId = illusionistPlayer.userId) { illusionist ->
-            illusionist.copy(
-                defensiveAbility =
-                    mirrorImage.copy(usedThisAttack = false, rerolledDiePosition = null)
-            )
+            illusionist.copy(defensiveAbility = mirrorImage.copy(usedThisAttack = false))
         }
     }
 

@@ -125,7 +125,7 @@ internal fun DuelistNormalAttackOverlay(
                         accentColor = cue.attackerClassType.toColor(),
                         density = density,
                     ),
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -145,17 +145,9 @@ internal fun duelistNormalAttackDurationMillis(): Long {
         .toLong() + followSweepMillis + SLASH_END_HOLD_MILLIS + SLASH_FADE_MILLIS
 }
 
-/**
- * The Duelist's twin-sword slash (SS-194): both blades rise into an erect ready pose at the
- * Duelist's sides and hold, then the lead blade slashes across to the defender and roughly half a
- * second later the follow blade cuts from the other side — one-two, both on screen the whole time.
- * A landed cut flares a burst as each blade reaches the defender; a parried one (armor holds)
- * sweeps in cleanly with no flare while the defender sidesteps. Both blades fade out together once
- * the combo lands.
- */
 internal suspend fun DuelistStrikeState.play(
     geometry: WeaponStrikeGeometry,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     leadSlash.sweep.snapTo(targetValue = 0f)
     leadSlash.alpha.snapTo(targetValue = 0f)
@@ -165,9 +157,9 @@ internal suspend fun DuelistStrikeState.play(
     impactScale.snapTo(targetValue = 0f)
     this.scene = geometry
 
-    val connects = outcome != NormalRollMessageType.ArmorClassMiss
+    val connects = normalRollMessageType != NormalRollMessageType.ArmorClassMiss
     val followBurst =
-        when (outcome) {
+        when (normalRollMessageType) {
             NormalRollMessageType.Knockout -> 1.3f
             NormalRollMessageType.Damage -> 1f
             NormalRollMessageType.ArmorClassHit -> 0.8f
@@ -340,38 +332,38 @@ private fun DrawScope.drawBladeSlash(
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun DuelistNormalAttackKnockoutPreview() {
-    DuelistNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+    DuelistNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Knockout)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun DuelistNormalAttackDamagePreview() {
-    DuelistNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+    DuelistNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Damage)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun DuelistNormalAttackArmorClassHitPreview() {
-    DuelistNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+    DuelistNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassHit)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun DuelistNormalAttackArmorClassMissPreview() {
-    DuelistNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+    DuelistNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassMiss)
 }
 
 @Composable
-private fun DuelistNormalAttackPreview(outcome: NormalRollMessageType) {
+private fun DuelistNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
+        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = "duelist-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Duelist,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

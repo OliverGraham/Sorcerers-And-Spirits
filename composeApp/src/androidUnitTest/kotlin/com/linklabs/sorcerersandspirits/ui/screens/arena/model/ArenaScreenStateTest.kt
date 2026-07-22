@@ -11,7 +11,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.DefensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.DoublesBonusState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
@@ -372,22 +371,17 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given a mirror image reroll is still showing on the rerolled die, then the mirror badge shows`() {
+    fun `Given a mirror image reroll die is showing, then the mirror badge shows even after the turn passes`() {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.NormalAttack(
-                        roll = NormalAttackType.Health,
-                        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
-                        defenderUserId = USER_ID,
-                        activeUserIds = setOf(element = OPPONENT_ID),
-                    ),
-                playerMap = mirrorImagePlayers(rerolledDiePosition = DiePosition.First),
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 diceRollState =
                     DiceRollState.OneDie(
                         value = 4,
                         diePosition = DiePosition.First,
                         doublesBonus = null,
+                        isMirrorImageReroll = true,
                     ),
             )
 
@@ -395,6 +389,24 @@ class ArenaScreenStateTest {
             expected = DiceBadgeState.MirrorImageBonus(diePosition = DiePosition.First),
             actual = state.diceBadgeState,
         )
+    }
+
+    @Test
+    fun `Given a single die roll that is not a mirror image reroll, then no mirror badge shows`() {
+        val state =
+            combatState(
+                combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                diceRollState =
+                    DiceRollState.OneDie(
+                        value = 4,
+                        diePosition = DiePosition.First,
+                        doublesBonus = null,
+                        isMirrorImageReroll = false,
+                    ),
+            )
+
+        assertNull(actual = state.diceBadgeState)
     }
 
     private fun combatState(
@@ -413,33 +425,6 @@ class ArenaScreenStateTest {
             lockedTargetUserId = lockedTarget(combatActionState = combatActionState),
             diceRollState = diceRollState,
         )
-
-    private fun mirrorImagePlayers(
-        rerolledDiePosition: DiePosition
-    ): Map<String, PlayerState.Selected> {
-        val illusionist = TestCharacterClasses.illusionist().toState()
-        return mapOf(
-            USER_ID to
-                PlayerState.Selected(
-                    userId = USER_ID,
-                    displayName = "Illusionist",
-                    characterClass =
-                        illusionist.copy(
-                            defensiveAbility =
-                                DefensiveAbilityState.MirrorImage(
-                                    usedThisAttack = false,
-                                    rerolledDiePosition = rerolledDiePosition,
-                                )
-                        ),
-                ),
-            OPPONENT_ID to
-                PlayerState.Selected(
-                    userId = OPPONENT_ID,
-                    displayName = "Rogue",
-                    characterClass = TestCharacterClasses.rogue().toState(),
-                ),
-        )
-    }
 
     private fun lockedTarget(combatActionState: CombatActionState): String? {
         val attack = combatActionState as? CombatActionState.NormalAttack ?: return null

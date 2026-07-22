@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.data.arena.model
 import com.linklabs.sorcerersandspirits.domain.game.Ability
 import com.linklabs.sorcerersandspirits.domain.game.AllInAbility
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
 import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
 import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
@@ -28,10 +27,8 @@ sealed interface DefensiveAbilityEntity : AbilityEntity {
     @Serializable data object Persuade : DefensiveAbilityEntity
 
     @Serializable
-    data class MirrorImage(
-        override val usedThisAttack: Boolean = false,
-        override val rerolledDiePosition: DiePosition? = null,
-    ) : DefensiveAbilityEntity, MirrorImageAbility
+    data class MirrorImage(override val usedThisAttack: Boolean = false) :
+        DefensiveAbilityEntity, MirrorImageAbility
 
     @Serializable data object Teleport : DefensiveAbilityEntity
 
@@ -125,10 +122,7 @@ internal fun DefensiveAbility.toEntity(): DefensiveAbilityEntity =
         is DefensiveAbility.Persuade -> DefensiveAbilityEntity.Persuade
 
         is DefensiveAbility.MirrorImage ->
-            DefensiveAbilityEntity.MirrorImage(
-                usedThisAttack = usedThisAttack,
-                rerolledDiePosition = rerolledDiePosition,
-            )
+            DefensiveAbilityEntity.MirrorImage(usedThisAttack = usedThisAttack)
 
         is DefensiveAbility.Teleport -> DefensiveAbilityEntity.Teleport
 
@@ -178,10 +172,7 @@ internal fun DefensiveAbilityEntity.toDomain(): DefensiveAbility =
         is DefensiveAbilityEntity.Persuade -> DefensiveAbility.Persuade
 
         is DefensiveAbilityEntity.MirrorImage ->
-            DefensiveAbility.MirrorImage(
-                usedThisAttack = usedThisAttack,
-                rerolledDiePosition = rerolledDiePosition,
-            )
+            DefensiveAbility.MirrorImage(usedThisAttack = usedThisAttack)
 
         is DefensiveAbilityEntity.Teleport -> DefensiveAbility.Teleport
 

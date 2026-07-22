@@ -160,7 +160,7 @@ private fun ArenaCombatFlashPreview() {
                     )
             ),
         flashMessage =
-            ArenaMessageState.NormalRoll(
+            ArenaMessageState.NormalRoll.Outcome(
                 id = "ko",
                 attackerUserId = "player1",
                 attackerName = "Mage",
@@ -171,7 +171,6 @@ private fun ArenaCombatFlashPreview() {
                 secondDie = 6,
                 bonus = 0,
                 type = NormalRollMessageType.Knockout,
-                impersonatedClassType = CharacterClassType.None,
             ),
     )
 }

@@ -51,6 +51,10 @@ class MirrorImageKeepFlowTest {
         mockk<DiceRoller> {
             every { getDoublesBonus() } returns null
             every { getDiceRoll() } returns null
+            every { mirrorImagePass(firstDie = any(), secondDie = any()) } answers
+                {
+                    DiceRoll.TwoDice(firstDie = firstArg(), secondDie = secondArg())
+                }
             every { roll2D6(userId = ROGUE_ID) } returns
                 RollResult.TwoDice(firstDie = 3, secondDie = 4, bonus = 0)
         }
@@ -161,7 +165,7 @@ class MirrorImageKeepFlowTest {
             firstDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 3),
             secondDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 4),
             attackType = NormalAttackType.ArmorClass,
-            attackerDoublesBonus = 0,
+            existingDoublesBonus = 0,
             mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
         )
 

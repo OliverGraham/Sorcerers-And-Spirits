@@ -102,7 +102,7 @@ internal fun RogueNormalAttackOverlay(
                         accentColor = cue.attackerClassType.toColor(),
                         density = density,
                     ),
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -110,21 +110,16 @@ internal fun RogueNormalAttackOverlay(
     )
 }
 
-/**
- * How long the Rogue's dagger strike runs, so the message sequencer can hold the event until its
- * strike finishes instead of cutting it off (SS-201). A strike that fits inside the flash window
- * does not change pacing; a knockout drives the blade a touch deeper and runs slightly longer.
- */
-internal fun rogueNormalAttackDurationMillis(outcome: NormalRollMessageType): Long =
+internal fun rogueNormalAttackDurationMillis(normalRollMessageType: NormalRollMessageType): Long =
     MELEE_DASH_MILLIS +
         MELEE_THRUST_MILLIS +
         MELEE_EMBED_MILLIS +
         WITHDRAW_MILLIS +
-        if (outcome == NormalRollMessageType.Knockout) 120L else 0L
+        if (normalRollMessageType == NormalRollMessageType.Knockout) 120L else 0L
 
 internal suspend fun RogueStrikeState.play(
     geometry: WeaponStrikeGeometry,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     travel.snapTo(targetValue = 0f)
     weaponAlpha.snapTo(targetValue = 0f)
@@ -132,7 +127,7 @@ internal suspend fun RogueStrikeState.play(
     impactScale.snapTo(targetValue = 0f)
     this.scene = geometry
 
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit ->
             pierce(dashFraction = geometry.dashFraction, burstScale = 0.8f)
 
@@ -377,38 +372,38 @@ private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun RogueNormalAttackKnockoutPreview() {
-    RogueNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+    RogueNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Knockout)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun RogueNormalAttackDamagePreview() {
-    RogueNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+    RogueNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Damage)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun RogueNormalAttackArmorClassHitPreview() {
-    RogueNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+    RogueNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassHit)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun RogueNormalAttackArmorClassMissPreview() {
-    RogueNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+    RogueNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassMiss)
 }
 
 @Composable
-private fun RogueNormalAttackPreview(outcome: NormalRollMessageType) {
+private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
+        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = "rogue-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

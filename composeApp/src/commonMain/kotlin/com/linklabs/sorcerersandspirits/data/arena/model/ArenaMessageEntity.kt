@@ -41,8 +41,18 @@ sealed interface ArenaMessageEntity {
     ) : ArenaMessageEntity
 
     @Serializable
-    @SerialName(value = NORMAL_ROLL)
-    data class NormalRoll(
+    @SerialName(value = NORMAL_ROLL_ATTACK)
+    data class NormalRollAttack(
+        override val id: String,
+        val attackerUserId: String,
+        val defenderUserId: String,
+        val impersonatedCharacterType: CharacterClassType,
+        val normalRollMessageType: NormalRollMessageType,
+    ) : ArenaMessageEntity
+
+    @Serializable
+    @SerialName(value = NORMAL_ROLL_OUTCOME)
+    data class NormalRollOutcome(
         override val id: String,
         val attackerUserId: String,
         val defenderUserId: String,
@@ -50,7 +60,6 @@ sealed interface ArenaMessageEntity {
         val secondDie: Int,
         val bonus: Int = 0,
         val messageType: NormalRollMessageType,
-        val impersonatedCharacterType: CharacterClassType,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -240,6 +249,8 @@ sealed interface ArenaMessageEntity {
             override val illusionistUserId: String,
             val attackerUserId: String,
             val messageType: NormalRollMessageType,
+            val total: Int = 0,
+            val doublesBonus: Int = 0,
         ) : MirrorImage
 
         @Serializable
@@ -323,7 +334,8 @@ sealed interface ArenaMessageEntity {
         private const val CONNECTED_TO_ARENA = "ConnectedToArena"
         private const val NEW_ROUND = "NewRound"
         private const val NEW_TURN = "NewTurn"
-        private const val NORMAL_ROLL = "NormalRoll"
+        private const val NORMAL_ROLL_ATTACK = "NormalRollAttack"
+        private const val NORMAL_ROLL_OUTCOME = "NormalRollOutcome"
         private const val DODGE = "Dodge"
         private const val TELEPORT = "Teleport"
         private const val TELEPORT_TRIGGER = "TeleportTrigger"
@@ -384,15 +396,22 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
             is ArenaMessageEntity.NewTurn ->
                 ArenaMessage.NewTurn(characterClassInfo = characterClassInfo.toDomain())
 
-            is ArenaMessageEntity.NormalRoll ->
-                ArenaMessage.NormalRoll(
+            is ArenaMessageEntity.NormalRollAttack ->
+                ArenaMessage.NormalRoll.Attack(
+                    attackerUserId = attackerUserId,
+                    defenderUserId = defenderUserId,
+                    impersonatedCharacterType = impersonatedCharacterType,
+                    normalRollMessageType = normalRollMessageType,
+                )
+
+            is ArenaMessageEntity.NormalRollOutcome ->
+                ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     bonus = bonus,
                     type = messageType,
-                    impersonatedCharacterType = impersonatedCharacterType,
                 )
 
             is ArenaMessageEntity.KillingMomentum ->
@@ -510,6 +529,8 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     illusionistUserId = illusionistUserId,
                     attackerUserId = attackerUserId,
                     messageType = messageType,
+                    total = total,
+                    doublesBonus = doublesBonus,
                 )
 
             is ArenaMessageEntity.MirrorImage.TemptFate ->
@@ -593,8 +614,17 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
         is ArenaMessage.NewTurn ->
             ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
 
-        is ArenaMessage.NormalRoll ->
-            ArenaMessageEntity.NormalRoll(
+        is ArenaMessage.NormalRoll.Attack ->
+            ArenaMessageEntity.NormalRollAttack(
+                id = id,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                impersonatedCharacterType = impersonatedCharacterType,
+                normalRollMessageType = normalRollMessageType,
+            )
+
+        is ArenaMessage.NormalRoll.Outcome ->
+            ArenaMessageEntity.NormalRollOutcome(
                 id = id,
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
@@ -602,7 +632,6 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 secondDie = secondDie,
                 bonus = bonus,
                 messageType = type,
-                impersonatedCharacterType = impersonatedCharacterType,
             )
 
         is ArenaMessage.KillingMomentum ->
@@ -741,6 +770,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 attackerUserId = attackerUserId,
                 messageType = messageType,
+                total = total,
+                doublesBonus = doublesBonus,
             )
 
         is ArenaMessage.MirrorImage.TemptFate ->

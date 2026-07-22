@@ -91,11 +91,6 @@ private val maceSwingBow = 54.dp
 internal val PALADIN_SWING_REACTION_DELAY_MILLIS: Long =
     MACE_RAISE_MILLIS.toLong() + MACE_READY_HOLD_MILLIS + MACE_SWING_CONTACT_MILLIS
 
-/**
- * The flight of the Paladin's mace swing. The choreography drives these Animatables and the draw
- * layer reads them, so a strike redraws the canvas without recomposing anything. [essence] is the
- * green-force strength this swing trails, set from the outcome tier so a harder hit glows brighter.
- */
 @Stable
 internal class PaladinStrikeState {
     val swing = Animatable(initialValue = 0f)
@@ -138,7 +133,7 @@ internal fun PaladinNormalAttackOverlay(
                         accentColor = paladinEssenceGreen,
                         density = density,
                     ),
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -157,41 +152,36 @@ internal fun paladinNormalAttackDurationMillis(): Long =
         MACE_END_HOLD_MILLIS +
         MACE_FADE_MILLIS.toLong()
 
-/** The green-force strength the swing trails per outcome: a harder landed hit glows brighter. */
-private fun essenceFor(outcome: NormalRollMessageType): Float =
-    when (outcome) {
+// TODO: I had meant this to be related to the actual dice total value
+private fun essenceFor(normalRollMessageType: NormalRollMessageType): Float =
+    when (normalRollMessageType) {
         NormalRollMessageType.Knockout -> 1f
         NormalRollMessageType.Damage -> 0.72f
         NormalRollMessageType.ArmorClassHit -> 0.48f
         NormalRollMessageType.ArmorClassMiss -> 0.28f
     }
 
-/** The impact flare's peak scale per outcome, matched to the green force behind the blow. */
-private fun burstScaleFor(outcome: NormalRollMessageType): Float =
-    when (outcome) {
+// TODO: I had meant this to be related to the actual dice total value
+private fun burstScaleFor(normalRollMessageType: NormalRollMessageType): Float =
+    when (normalRollMessageType) {
         NormalRollMessageType.Knockout -> 1.3f
         NormalRollMessageType.Damage -> 1f
         NormalRollMessageType.ArmorClassHit -> 0.8f
         NormalRollMessageType.ArmorClassMiss -> 0f
     }
 
-/**
- * The mace fades in raised overhead, holds its ready pose, then swings down and across the
- * defender. A landed swing flares a burst as the head bites; a parried one carries across cleanly.
- * The mace fades out once the swing lands.
- */
 internal suspend fun PaladinStrikeState.play(
     geometry: WeaponStrikeGeometry,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     swing.snapTo(targetValue = 0f)
     alpha.snapTo(targetValue = 0f)
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
     this.scene = geometry
-    this.essence = essenceFor(outcome = outcome)
+    this.essence = essenceFor(normalRollMessageType = normalRollMessageType)
 
-    val connects = outcome != NormalRollMessageType.ArmorClassMiss
+    val connects = normalRollMessageType != NormalRollMessageType.ArmorClassMiss
 
     alpha.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = MACE_RAISE_MILLIS))
     delay(timeMillis = MACE_READY_HOLD_MILLIS)
@@ -210,7 +200,7 @@ internal suspend fun PaladinStrikeState.play(
                 impactBurst(
                     impactAlpha = impactAlpha,
                     impactScale = impactScale,
-                    peakScale = burstScaleFor(outcome = outcome),
+                    peakScale = burstScaleFor(normalRollMessageType = normalRollMessageType),
                 )
             }
         }
@@ -375,38 +365,38 @@ private fun DrawScope.drawEssenceTrail(
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun PaladinNormalAttackKnockoutPreview() {
-    PaladinNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+    PaladinNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Knockout)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun PaladinNormalAttackDamagePreview() {
-    PaladinNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+    PaladinNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Damage)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun PaladinNormalAttackArmorClassHitPreview() {
-    PaladinNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+    PaladinNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassHit)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun PaladinNormalAttackArmorClassMissPreview() {
-    PaladinNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+    PaladinNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassMiss)
 }
 
 @Composable
-private fun PaladinNormalAttackPreview(outcome: NormalRollMessageType) {
+private fun PaladinNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
+        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = "paladin-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Paladin,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

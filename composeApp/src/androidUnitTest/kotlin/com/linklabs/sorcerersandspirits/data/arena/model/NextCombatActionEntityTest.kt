@@ -19,7 +19,7 @@ class NextCombatActionEntityTest {
                     firstDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 4),
                     secondDie = AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6),
                     attackType = NormalAttackType.ArmorClass,
-                    attackerDoublesBonus = 0,
+                    existingDoublesBonus = 0,
                     mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
                     mirrorImageRerollSelection = mirrorImageRerollSelection,
                 ),

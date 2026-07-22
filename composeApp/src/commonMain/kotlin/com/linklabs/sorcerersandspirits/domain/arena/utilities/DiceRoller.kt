@@ -11,9 +11,12 @@ interface DiceRoller {
     fun roll1D6(
         userId: String,
         diePosition: DiePosition = DiePosition.getRandomPosition(),
+        isMirrorImageReroll: Boolean = false,
     ): RollResult.OneDie
 
     fun roll2D6(userId: String): RollResult.TwoDice
+
+    fun mirrorImagePass(firstDie: Int, secondDie: Int): DiceRoll.TwoDice
 
     fun getDoublesBonus(): DoublesBonus?
 }
@@ -38,13 +41,34 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
 
     private var doublesBonus: DoublesBonus? = initialBonus
 
-    override fun roll1D6(userId: String, diePosition: DiePosition): RollResult.OneDie {
+    override fun roll1D6(
+        userId: String,
+        diePosition: DiePosition,
+        isMirrorImageReroll: Boolean,
+    ): RollResult.OneDie {
         val roll = getRandom1D6Value()
         val result = RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
         diceRoll =
-            DiceRoll.OneDie(value = roll, diePosition = diePosition, doublesBonus = doublesBonus)
+            DiceRoll.OneDie(
+                value = roll,
+                diePosition = diePosition,
+                doublesBonus = doublesBonus,
+                isMirrorImageReroll = isMirrorImageReroll,
+            )
 
         return result
+    }
+
+    override fun mirrorImagePass(firstDie: Int, secondDie: Int): DiceRoll.TwoDice {
+        val untouchedDiceRoll =
+            DiceRoll.TwoDice(
+                firstDie = firstDie,
+                secondDie = secondDie,
+                doublesBonus = doublesBonus,
+            )
+        diceRoll = untouchedDiceRoll
+
+        return untouchedDiceRoll
     }
 
     override fun roll2D6(userId: String): RollResult.TwoDice {

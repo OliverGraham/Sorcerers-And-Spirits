@@ -50,6 +50,30 @@ class ArenaMessageStateTest {
     }
 
     @Test
+    fun `Given a kept Mirror Image health roll, then its flash callout shows the attack outcome like a normal hit`() {
+        val message =
+            ArenaMessage.MirrorImage.Pass(
+                illusionistUserId = DEFENDER_ID,
+                attackerUserId = ATTACKER_ID,
+                messageType = NormalRollMessageType.Damage,
+                total = 8,
+                doublesBonus = 1,
+            )
+
+        val callout = message.toSingleState().toFlashCallout()
+
+        assertEquals(
+            expected =
+                FlashCallout.Damage(
+                    amount = 8,
+                    actingClassType = CharacterClassType.Mage,
+                    doublesBonus = 1,
+                ),
+            actual = callout,
+        )
+    }
+
+    @Test
     fun `Given a Killing Momentum trigger, then it carries the attacker of the knockout roll`() {
         val states =
             listOf(
@@ -101,14 +125,13 @@ class ArenaMessageStateTest {
         IncomingArenaMessage(
             id = id,
             message =
-                ArenaMessage.NormalRoll(
+                ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = ATTACKER_ID,
                     defenderUserId = DEFENDER_ID,
                     firstDie = 2,
                     secondDie = 3,
                     bonus = 0,
                     type = type,
-                    impersonatedCharacterType = CharacterClassType.None,
                 ),
         )
 

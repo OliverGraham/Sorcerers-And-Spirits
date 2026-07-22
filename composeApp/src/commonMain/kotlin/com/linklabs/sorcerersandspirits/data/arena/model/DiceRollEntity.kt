@@ -15,6 +15,7 @@ sealed interface DiceRollEntity {
         val value: Int,
         val diePosition: DiePosition,
         override val doublesBonusEntity: DoublesBonusEntity? = null,
+        val isMirrorImageReroll: Boolean = false,
     ) : DiceRollEntity
 
     @Serializable
@@ -38,6 +39,7 @@ internal fun DiceRollEntity.toDomain(): DiceRoll =
                 value = value,
                 diePosition = diePosition,
                 doublesBonus = doublesBonusEntity?.toDomain(),
+                isMirrorImageReroll = isMirrorImageReroll,
             )
 
         is DiceRollEntity.TwoDice ->
@@ -55,6 +57,7 @@ internal fun DiceRoll.toEntity(): DiceRollEntity =
                 value = value,
                 diePosition = diePosition,
                 doublesBonusEntity = doublesBonus?.toEntity(),
+                isMirrorImageReroll = isMirrorImageReroll,
             )
 
         is DiceRoll.TwoDice ->

@@ -132,7 +132,9 @@ fun ArenaMessageState.toFlashCallout() =
         is ArenaMessageState.ConnectedToArena,
         is ArenaMessageState.NewTurn -> null
 
-        is ArenaMessageState.NormalRoll ->
+        is ArenaMessageState.NormalRoll.Attack -> null
+
+        is ArenaMessageState.NormalRoll.Outcome ->
             when (type) {
                 NormalRollMessageType.ArmorClassHit ->
                     FlashCallout.Hit(
@@ -215,8 +217,29 @@ fun ArenaMessageState.toFlashCallout() =
 
         is ArenaMessageState.Impersonate -> null
 
-        is ArenaMessageState.MirrorImage.Trigger,
-        is ArenaMessageState.MirrorImage.Pass -> null
+        is ArenaMessageState.MirrorImage.Trigger -> null
+
+        is ArenaMessageState.MirrorImage.Pass ->
+            when (messageType) {
+                NormalRollMessageType.ArmorClassHit ->
+                    FlashCallout.Hit(
+                        actingClassType = attackerClassType,
+                        total = total,
+                        doublesBonus = doublesBonus,
+                    )
+
+                NormalRollMessageType.ArmorClassMiss -> FlashCallout.Miss
+
+                NormalRollMessageType.Damage ->
+                    FlashCallout.Damage(
+                        amount = total,
+                        actingClassType = attackerClassType,
+                        doublesBonus = doublesBonus,
+                    )
+
+                NormalRollMessageType.Knockout ->
+                    FlashCallout.Knockout(actingClassType = attackerClassType)
+            }
 
         is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(finalRoll = finalRoll)
 

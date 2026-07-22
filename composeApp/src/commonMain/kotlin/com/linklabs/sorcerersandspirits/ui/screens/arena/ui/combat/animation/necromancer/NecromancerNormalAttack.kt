@@ -142,7 +142,7 @@ internal fun NecromancerNormalAttackOverlay(
                         density = density,
                     ),
                 palette = necroScythePalette,
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -170,7 +170,7 @@ internal fun necromancerNormalAttackDurationMillis(): Long =
 internal suspend fun NecromancerStrikeState.play(
     geometry: WeaponStrikeGeometry,
     palette: ScythePalette,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     bodyAlpha.snapTo(targetValue = 0f)
     glow.snapTo(targetValue = 0f)
@@ -181,9 +181,9 @@ internal suspend fun NecromancerStrikeState.play(
     this.scene = geometry
     this.palette = palette
 
-    val connects = outcome != NormalRollMessageType.ArmorClassMiss
+    val connects = normalRollMessageType != NormalRollMessageType.ArmorClassMiss
     val burstScale =
-        when (outcome) {
+        when (normalRollMessageType) {
             NormalRollMessageType.Knockout -> 1.3f
             NormalRollMessageType.Damage -> 1f
             NormalRollMessageType.ArmorClassHit -> 0.8f
@@ -409,38 +409,38 @@ private fun bladeTip(pivot: Offset, uprightDegrees: Float, grip: Offset, reap: F
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun NecromancerNormalAttackKnockoutPreview() {
-    NecromancerNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+    NecromancerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Knockout)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun NecromancerNormalAttackDamagePreview() {
-    NecromancerNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+    NecromancerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Damage)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun NecromancerNormalAttackArmorClassHitPreview() {
-    NecromancerNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+    NecromancerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassHit)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun NecromancerNormalAttackArmorClassMissPreview() {
-    NecromancerNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+    NecromancerNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassMiss)
 }
 
 @Composable
-private fun NecromancerNormalAttackPreview(outcome: NormalRollMessageType) {
+private fun NecromancerNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
+        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = "necromancer-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Necromancer,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

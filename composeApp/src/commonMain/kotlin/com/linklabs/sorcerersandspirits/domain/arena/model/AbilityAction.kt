@@ -53,7 +53,7 @@ sealed interface AbilityAction {
             val firstDie: MirrorImageDie,
             val secondDie: MirrorImageDie,
             val attackType: NormalAttackType,
-            val attackerDoublesBonus: Int,
+            val existingDoublesBonus: Int,
             val mirrorImageDefensiveAbility: DefensiveAbility.MirrorImage,
             val mirrorImageRerollSelection: MirrorImageRerollSelection =
                 MirrorImageRerollSelection.None,

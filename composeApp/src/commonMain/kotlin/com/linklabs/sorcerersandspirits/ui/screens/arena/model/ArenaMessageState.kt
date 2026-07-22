@@ -32,20 +32,35 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState
 
     @Immutable
-    data class NormalRoll(
-        override val id: String,
-        val attackerUserId: String,
-        val attackerName: String,
-        val attackerClassType: CharacterClassType,
-        val defenderUserId: String,
-        val defenderName: String,
-        val firstDie: Int,
-        val secondDie: Int,
-        val bonus: Int,
-        val type: NormalRollMessageType,
-        val impersonatedClassType: CharacterClassType,
-    ) : ArenaMessageState {
-        val total: Int = firstDie + secondDie + bonus
+    sealed interface NormalRoll : ArenaMessageState {
+        val attackerUserId: String
+        val defenderUserId: String
+
+        @Immutable
+        data class Attack(
+            override val id: String,
+            override val attackerUserId: String,
+            override val defenderUserId: String,
+            val attackerClassType: CharacterClassType,
+            val impersonatedClassType: CharacterClassType,
+            val normalRollMessageType: NormalRollMessageType,
+        ) : NormalRoll
+
+        @Immutable
+        data class Outcome(
+            override val id: String,
+            override val attackerUserId: String,
+            override val defenderUserId: String,
+            val attackerClassType: CharacterClassType,
+            val attackerName: String,
+            val defenderName: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val bonus: Int,
+            val type: NormalRollMessageType,
+        ) : NormalRoll {
+            val total: Int = firstDie + secondDie + bonus
+        }
     }
 
     @Immutable
@@ -211,7 +226,10 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val illusionistUserId: String,
             val attackerName: String,
+            val attackerClassType: CharacterClassType,
             val messageType: NormalRollMessageType,
+            val total: Int,
+            val doublesBonus: Int,
         ) : MirrorImage
 
         @Immutable
@@ -460,7 +478,10 @@ private fun ArenaMessage.toState(
                 id = id,
                 illusionistUserId = illusionistUserId,
                 attackerName = participants.resolveClassName(userId = attackerUserId),
+                attackerClassType = participants.resolveClassType(userId = attackerUserId),
                 messageType = messageType,
+                total = total,
+                doublesBonus = doublesBonus,
             )
 
         is ArenaMessage.MirrorImage.Trigger ->
@@ -482,19 +503,28 @@ private fun ArenaMessage.toState(
                 messageType = messageType,
             )
 
-        is ArenaMessage.NormalRoll ->
-            ArenaMessageState.NormalRoll(
+        is ArenaMessage.NormalRoll.Attack ->
+            ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = attackerUserId,
-                attackerName = participants.resolveClassName(userId = attackerUserId),
-                attackerClassType = participants.resolveClassType(userId = attackerUserId),
                 defenderUserId = defenderUserId,
+                attackerClassType = participants.resolveClassType(userId = attackerUserId),
+                impersonatedClassType = impersonatedCharacterType,
+                normalRollMessageType = normalRollMessageType,
+            )
+
+        is ArenaMessage.NormalRoll.Outcome ->
+            ArenaMessageState.NormalRoll.Outcome(
+                id = id,
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                attackerClassType = participants.resolveClassType(userId = attackerUserId),
+                attackerName = participants.resolveClassName(userId = attackerUserId),
                 defenderName = participants.resolveClassName(userId = defenderUserId),
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = bonus,
                 type = type,
-                impersonatedClassType = impersonatedCharacterType,
             )
 
         is ArenaMessage.Persuade.Charm ->

@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 
+// TODO: Why are there so many different types here? Can't the ArenaMessageState simply be used?
 @Immutable
 data class PlayableMessage(
     val message: ArenaMessageState,

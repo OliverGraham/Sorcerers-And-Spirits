@@ -89,7 +89,10 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 characterClassInfo.className,
             )
 
-        is ArenaMessageState.NormalRoll ->
+        // TODO: Hmmm
+        is ArenaMessageState.NormalRoll.Attack -> ""
+
+        is ArenaMessageState.NormalRoll.Outcome ->
             when (type) {
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(

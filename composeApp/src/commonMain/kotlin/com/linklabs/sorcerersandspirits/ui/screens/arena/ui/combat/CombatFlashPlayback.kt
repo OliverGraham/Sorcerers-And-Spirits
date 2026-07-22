@@ -154,7 +154,10 @@ internal fun CombatAnimationCue.playbackDurationMillis(): Long =
 private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
-            normalAttackOverlayDurationMillis(weaponClassType = weaponClassType, outcome = outcome)
+            normalAttackOverlayDurationMillis(
+                weaponClassType = weaponClassType,
+                normalRollMessageType = normalRollMessageType,
+            )
 
         is CombatAnimationCue.KillingMomentum -> 0L
 
@@ -202,16 +205,25 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
 
 private fun normalAttackOverlayDurationMillis(
     weaponClassType: CharacterClassType,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ): Long =
     when (weaponClassType) {
-        CharacterClassType.Rogue -> rogueNormalAttackDurationMillis(outcome = outcome)
+        CharacterClassType.Rogue ->
+            rogueNormalAttackDurationMillis(normalRollMessageType = normalRollMessageType)
+
         CharacterClassType.Gambler -> gamblerNormalAttackDurationMillis()
+
         CharacterClassType.Duelist -> duelistNormalAttackDurationMillis()
+
         CharacterClassType.Necromancer -> necromancerNormalAttackDurationMillis()
+
         CharacterClassType.Bard -> bardNormalAttackDurationMillis()
-        CharacterClassType.Mage -> mageNormalAttackDurationMillis(outcome = outcome)
+
+        CharacterClassType.Mage ->
+            mageNormalAttackDurationMillis(normalRollMessageType = normalRollMessageType)
+
         CharacterClassType.Paladin -> paladinNormalAttackDurationMillis()
+
         else -> 0L
     }
 

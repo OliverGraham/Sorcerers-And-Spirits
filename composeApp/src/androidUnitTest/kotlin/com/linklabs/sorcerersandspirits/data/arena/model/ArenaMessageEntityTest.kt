@@ -51,14 +51,25 @@ class ArenaMessageEntityTest {
                 ArenaMessage.ConnectedToArena(displayName = "Alice"),
                 ArenaMessage.NewRound(roundNumber = 3),
                 ArenaMessage.NewTurn(characterClassInfo = characterClassInfo),
-                ArenaMessage.NormalRoll(
+                ArenaMessage.NormalRoll.Attack(
+                    attackerUserId = "attacker",
+                    defenderUserId = "defender",
+                    impersonatedCharacterType = CharacterClassType.None,
+                    normalRollMessageType = NormalRollMessageType.Knockout,
+                ),
+                ArenaMessage.NormalRoll.Attack(
+                    attackerUserId = "attacker",
+                    defenderUserId = "defender",
+                    impersonatedCharacterType = CharacterClassType.Mage,
+                    normalRollMessageType = NormalRollMessageType.Damage,
+                ),
+                ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = "attacker",
                     defenderUserId = "defender",
                     firstDie = 4,
                     secondDie = 5,
                     bonus = 1,
                     type = NormalRollMessageType.Knockout,
-                    impersonatedCharacterType = CharacterClassType.None,
                 ),
                 ArenaMessage.KillingMomentum(attackerUserId = "rogue"),
                 ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = "rogue"),
@@ -123,6 +134,8 @@ class ArenaMessageEntityTest {
                     illusionistUserId = "illusionist",
                     attackerUserId = "attacker",
                     messageType = NormalRollMessageType.ArmorClassMiss,
+                    total = 4,
+                    doublesBonus = 0,
                 ),
                 ArenaMessage.MirrorImage.TemptFate(
                     illusionistUserId = "illusionist",

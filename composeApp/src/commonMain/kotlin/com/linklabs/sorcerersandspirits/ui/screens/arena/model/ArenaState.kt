@@ -4,7 +4,6 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.DefensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
@@ -78,18 +77,10 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
     if (isDoublesBonusLive) return DiceBadgeState.DoublesBonus()
 
-    val rerolledDiePosition =
-        playerMap.values.firstNotNullOfOrNull {
-            (it.characterClass.defensiveAbility as? DefensiveAbilityState.MirrorImage)
-                ?.rerolledDiePosition
-        } ?: return null
+    val currentRoll = diceRollState as? DiceRollState.OneDie ?: return null
+    if (!currentRoll.isMirrorImageReroll) return null
 
-    val currentRoll = diceRollState
-    val isRerollStillShowing =
-        currentRoll is DiceRollState.OneDie && currentRoll.diePosition == rerolledDiePosition
-    if (!isRerollStillShowing) return null
-
-    return DiceBadgeState.MirrorImageBonus(diePosition = rerolledDiePosition)
+    return DiceBadgeState.MirrorImageBonus(diePosition = currentRoll.diePosition)
 }
 
 private fun ArenaCombatControl.isImpersonate(): Boolean =

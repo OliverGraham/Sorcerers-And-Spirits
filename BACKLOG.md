@@ -979,3 +979,71 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   ([[remoteconfig-optional-override-not-required-map]]). Degrade gracefully to the bundled track on
   fetch failure/offline ([[connectivity-resilience-priority]]).
 - **Related:** SS-134 (foundation), SS-217 (bundled track is the fallback).
+
+---
+
+## Tavern UI
+
+### SS-238 — Animate search-result filtering in TheBar (fade + content swap)
+
+- [ ] Not completed
+- **Goal:** When the traveler list is filtered by the name search in `TheBar`, transition the
+  results with a smooth **fade + content-swap** rather than an instant hard cut, so the list
+  reads as smoothly re-populating as the query changes.
+- **Source:** The filtered-list rendering in
+  `ui/screens/tavern/ui/TheBar.kt` — `BarFolk` renders `visibleTravelers`, which is derived from
+  `searchQuery`/`trimmedQuery`. Wrap the results in an `AnimatedContent` (or crossfade) keyed on
+  the query/visible set so filtering fades the outgoing content out and the new matches in.
+- **Notes:** Keep selection behavior intact — a picked traveler filtered out of view stays in the
+  outgoing challenge (existing comment in `TheBar`). Extract the animation label to a private
+  `const val` per [[animation-labels-as-const-vals]]. Related: SS-239 (ChallengeButton animation),
+  SS-240 (full Tavern overhaul).
+
+### SS-239 — ChallengeButton slides up from off-screen, then back down to dismiss
+
+- [ ] Not completed
+- **Goal:** The `ChallengeButton` in `TheBar` should **animate in from below the bottom of the
+  screen up into view** when it becomes available, and **slide back down off-screen** (then
+  disappear) when dismissed, instead of appearing/vanishing in place.
+- **Source:** `ChallengeButton` in `ui/screens/tavern/ui/TheBar.kt`. Drive an
+  `AnimatedVisibility` with vertical slide-in/slide-out (enter from below, exit downward) tied to
+  the button's visibility condition.
+- **Notes:** Extract animation labels to private `const val`s ([[animation-labels-as-const-vals]]).
+  Related: SS-238, SS-240 (the overhaul may relocate/restyle this button).
+
+### SS-240 — Complete UI overhaul of TavernScreen (owner to spec before work)
+
+- [ ] Not completed
+- **Goal:** Full visual/structural overhaul of `TavernScreen`. Known direction so far: the
+  **class wheel (`CharacterClassWheel`) will no longer be used here**, and **`TheBar` will likely
+  be modified substantially**. The rest of the new design is to be described by the owner **at the
+  start of the work** — do not begin building until the spec is given.
+- **Source:** `ui/screens/tavern/ui/TavernScreen.kt` (`LoadedTavernScreen`, `ScreenContent` — which
+  currently hosts `CharacterClassWheel`) and `ui/screens/tavern/ui/TheBar.kt`.
+- **Notes:** This is an epic; carve child tickets once the design is specified. Don't remove
+  existing functionality without an explicit instruction in the spec ([[never-remove-without-instruction]]).
+  Related: SS-238, SS-239 (fold in or supersede as the new design dictates).
+
+---
+
+## Arena UI — Doubles
+
+### SS-241 — Doubles total double-counts the bonus in message + flash ("8 (+1)" should read "7 (+1)")
+
+- [ ] Not completed
+- **Symptom:** On a doubles roll, the dice badge shows the bonus correctly, but the **message log
+  line and the flash call-out** display the already-bonused total *plus* the "(+1)" suffix, so the
+  bonus is counted twice. Worked example: attacker rolls doubles on an AC break, then rolls toward
+  health for **7**; the +1 bonus makes the effective roll 8. The messages read **"8 (+1)"** when they
+  should read **"7 (+1)"** — the base (pre-bonus) roll, then the "(+1)" indicating the bonus.
+- **Source:**
+    - Message log: `rolledTotalDisplay(total, doublesBonus)` in
+      `ui/screens/arena/ui/message/ArenaMessageDisplay.kt:435` — `total` already includes the bonus,
+      so it should render `total - doublesBonus` (the base roll) before the `(+N)`.
+    - Flash: `arena_flash_hit_doubles` / `arena_flash_damage_doubles` fed from `CombatFlashText.kt`
+      (~lines 61–71), which pass the bonused `total`/`amount` alongside `doublesBonus`.
+- **Fix direction:** Show the **base roll** (total minus the doubles bonus) next to the `(+N)` suffix
+  in both the message and the flash, so the two numbers add up to the effective roll rather than
+  restating it. Keep the dice badge unchanged (it's already correct, [[doubles-visibility-message-gated]]).
+- **Notes:** Compute the base once and carry it rather than re-deriving per access
+  ([[message-derivations-compute-once]]). Related: SS-164 (one message → flash + log).

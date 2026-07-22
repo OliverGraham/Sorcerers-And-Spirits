@@ -493,6 +493,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-224** — Teleport roll-off crash / stuck roll-off / button hidden: the domain kept both
+  combatants active for simultaneous rolling but the computer re-selected an already-rolled Mage
+  (crashing on the uninitialized `nextCombatAction`), and `isSequencing` hid the second combatant's
+  still-owed Teleport button while the first's roll animated. Fixes: `TeleportHandler` re-asserts the
+  roll-off instead of crashing on a stale/duplicate dispatch; `ComputerOpponentHandler` skips a
+  combatant whose die is already rolled (`isUserTheRoller`); and the pending roll-off button stays
+  visible through sequencing (`ArenaState.Combat.isAwaitingTeleportRoll`). Simultaneous-dice tray
+  rendering split to SS-242; tie re-roll to SS-243.
 - **SS-222** — Behavioral regressions surfaced by the dice-architecture refactor: resolved the 8
   post-refactor test failures (seating `resolveTargetUserId`, Mirror Image reroll button order, and
   Mirror Image domain Doubles-message emission), deciding per-case between production fix and test

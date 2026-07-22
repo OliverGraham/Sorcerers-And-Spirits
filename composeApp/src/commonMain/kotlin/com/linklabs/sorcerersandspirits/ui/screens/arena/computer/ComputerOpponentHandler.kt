@@ -17,6 +17,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isUserTheRoller
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import kotlin.random.Random
@@ -242,7 +243,13 @@ internal class ComputerOpponentHandler(
             is ArenaState.ChoosingClasses -> activePlayerUserId.takeIf { it in computerOpponentIds }
 
             is ArenaState.Combat ->
-                combatActionState.activeUserIds.firstOrNull { it in computerOpponentIds }
+                combatActionState.activeUserIds.firstOrNull { userId ->
+                    val isComputer = userId in computerOpponentIds
+                    val isAwaitingRoll =
+                        combatActionState !is CombatActionState.AbilityRoll ||
+                            combatActionState.action.isUserTheRoller(userPlayerId = userId)
+                    isComputer && isAwaitingRoll
+                }
 
             is ArenaState.WaitingForAllPlayers,
             is ArenaState.Finished -> null

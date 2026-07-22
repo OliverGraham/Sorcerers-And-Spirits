@@ -184,7 +184,7 @@ private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<A
         ),
     )
 
-private fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
+internal fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
     when (this) {
         is AbilityActionState.Passive.Teleport ->
             (attackerRoll.userId == userPlayerId && attackerRoll.roll == null) ||

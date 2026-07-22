@@ -355,29 +355,37 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-224 — Teleport roll-off: both dice must roll simultaneously; roll-off never resolves
+### SS-242 — Roll-off dice: each client rolls its own die simultaneously on the shared tray
 
 - [ ] Not completed
-- **Symptom 1 (button disappears):** In the Teleport roll-off (Mage vs attacker, each rolls 1d6),
-  the two dice cannot be rolled **simultaneously** — one button disappears, so the player can't
-  fire both rolls at once as intended.
-- **Symptom 2 (roll-off doesn't go through, likely same root):** Rogue vs Mage — the Rogue broke
-  the Mage's armor with a **doubles** roll, and then the Teleport roll-off "didn't go through."
-  The owner flagged this as related to Symptom 1.
-- **Symptom 3 (computer opponent crash):** playing against the computer opponent, a Teleport
-  interaction **crashed the app**. Reproduce with a computer Mage (or computer attacker into a
-  Mage) and capture the stack; likely the roll-off / auto-play path (`ComputerOpponentHandler`)
-  doesn't drive both roll-off dice the way the human flow expects (ties into Symptom 1).
-- **Doubles interaction to verify:** per the game rules, a doubles roll that breaks armor grants the
-  attacker a +1 on the **next consecutive** roll; Teleport's 1d6 roll-off is a roll between attacker
-  and Mage. Confirm whose die (if any) the +1 applies to and that the consecutive-roll rule is
-  honored, and that resolving the roll-off correctly either escapes or continues the attack. This
-  may intersect the doubles handling touched by SS-222.
-- **Source:** `domain/.../ability/passive/TeleportHandler.kt`, the Teleport roll-off combat controls
-  in `ArenaCombatControl.kt` (two-button simultaneous roll), and `mage/MageTeleport.kt` for the
-  animation. Ensure both die buttons are shown/enabled together and the roll-off resolves.
-- **Related:** SS-222 (doubles/Mirror Image domain regressions), SS-211 (Teleport portal animation),
-  dice must be roll-bearing ([[dice-roll-must-be-roll-bearing]]).
+- **Context:** SS-224 made the two roll-off Teleport buttons stay visible so both combatants can
+  hold and roll at the same time. The remaining gap is the **dice tray**: both roll-off dice map to
+  `DiePosition.First` on a single shared per-device tray, so if one player rolls while the other's
+  roll is still animating the two rolls visually contend on the same die.
+- **Goal:** In a two-combatant roll-off, present the two dice as **separate** dice (attacker's and
+  the opponent's), each driven by its own client, so both can be rolled simultaneously without
+  clashing. Whoever rolls first settles their die; the other die keeps tumbling until its owner
+  rolls.
+- **Nice-to-have:** consider tinting each roll-off die in its owner's **class color** so it's clear
+  which die belongs to whom.
+- **Source:** `ui/screens/arena/ui/dice/DiceStateHolder.kt`, `DiceRollState.kt`, the dice overlay,
+  and `ArenaCombatControl.rollingDiePositions()` (Teleport currently `NumberOfDice.One` → First for
+  both sides).
+- **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
+  ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
+
+### SS-243 — Teleport tie re-rolls until a winner
+
+- [ ] Not completed
+- **Rule:** The Teleport roll-off is a roll between the attacker and the Mage; the higher roll wins.
+  On a **tie**, both should roll again, repeating until one side rolls higher — a tie never resolves
+  the attack on its own.
+- **Current behavior:** a tie is treated as the Mage losing (`defenderRoll > attackerRoll` → escape,
+  otherwise continue the attack), so a tie ends the roll-off in the attacker's favor instead of
+  re-rolling.
+- **Source:** `domain/.../ability/passive/TeleportHandler.kt` (`handleUpdatedTeleport` — on a tie,
+  reset both dice and re-run the roll-off instead of calling `handleTeleportFailure`).
+- **Related:** SS-224 (roll-off), SS-242 (simultaneous roll-off dice).
 
 ### SS-228 — Using an activated ability must restart the turn timer
 

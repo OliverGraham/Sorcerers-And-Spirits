@@ -443,11 +443,6 @@ class ArenaScreenViewModel(
         _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
     }
 
-    /**
-     * Auto-resolves the action the user owes when their turn timer expires: a random attack on
-     * their own turn, or the owed attack/ability roll. (The computer opponents are driven
-     * separately by [ComputerOpponentHandler].)
-     */
     private fun autoResolveCombatForUser(arenaState: ArenaState.Combat) {
         val userPlayerId = arenaState.userPlayerId
         if (userPlayerId !in arenaState.combatActionState.activeUserIds) return

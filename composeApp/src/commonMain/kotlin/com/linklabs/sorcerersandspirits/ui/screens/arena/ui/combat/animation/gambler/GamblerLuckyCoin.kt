@@ -223,6 +223,7 @@ private fun luckyCoinScene(
             throwScene(
                 gamblerBounds = gamblerBounds,
                 attackerBounds = attackerBounds,
+                damage = cue.damage,
                 isKnockout = cue.isKnockout,
                 density = density,
             )
@@ -256,13 +257,14 @@ private fun flipScene(
 private fun throwScene(
     gamblerBounds: Rect,
     attackerBounds: Rect,
+    damage: Int,
     isKnockout: Boolean,
     density: Density,
 ): LuckyCoinScene {
     val radius = coinRadiusFor(bounds = gamblerBounds) * 0.85f
     return LuckyCoinScene(
         mode = LuckyCoinMode.Throw,
-        faceValue = LUCKY_FACE,
+        faceValue = damage,
         didStopAttack = false,
         isKnockout = isKnockout,
         radiusPx = radius,
@@ -776,6 +778,7 @@ private fun DrawScope.drawImpactBurst(
 }
 
 private const val PREVIEW_FLIP_FACE = 4
+private const val PREVIEW_THROW_DAMAGE = 3
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -825,7 +828,7 @@ private fun LuckyCoinHighRollerPaybackPreview() {
                     id = "high-roller-throw-$iteration",
                     gamblerUserId = PREVIEW_ACTOR_ID,
                     attackerUserId = PREVIEW_TARGET_ID,
-                    damage = LUCKY_FACE,
+                    damage = PREVIEW_THROW_DAMAGE,
                     isKnockout = true,
                 ),
             )

@@ -374,22 +374,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
 
-### SS-229 — Die face shows wrong value for HighRoller (Lucky Coin) damage
-
-- [ ] Not completed — **Priority: dice must always match the roll.**
-- **Symptom:** Gambler's Lucky Coin rolled a **6**, which triggered the HighRoller effect (deal 1d6
-  damage to the attacker). The damage roll came up **3** and dealt 3, but the die **kept showing 6**
-  instead of the 3 it should have displayed. The face must reflect the roll that is actually
-  resolving (the 3), not the prior trigger roll.
-- **Root pattern:** recurring dice-fidelity bug — the resolving roll must be **roll-bearing** on its
-  message and mapped in `rolledDice()`, or the tray shows a stale face
-  ([[dice-roll-must-be-roll-bearing]], [[dice-show-last-roll]]).
-- **Source:** `domain/.../ability/passive/LuckyCoinHandler.kt` (the 6 → HighRoller damage roll must
-  carry its own die value) and the dice-tray mapping that feeds the face; `gambler/GamblerLuckyCoin.kt`
-  for the animation cue.
-- **Related:** Priority mandate (dice = roll), SS-193 (Gambler ability animations), SS-237 (the
-  sibling dice-fidelity bug on Illusionist).
-
 ### SS-230 — Finished-arena Leave button pops the whole back stack and exits the app
 
 - [ ] Not completed

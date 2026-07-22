@@ -508,6 +508,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   the turn with the same Idle player, so `combatActionState` was unchanged and `determineTimerAction`
   left the pre-ability countdown running. It now also restarts the combat clock when the active
   player's own state changed while their Idle turn held (`hasActivePlayerActedWhileStillActive`).
+- **SS-229** — Lucky Coin HighRoller payback coin showed 6 instead of the damage rolled: the dice
+  tray was already correct; the thrown payback coin in `GamblerLuckyCoin.kt` drew a hardcoded
+  `LUCKY_FACE` (6) while the actual damage was carried unused on the cue. `throwScene` now uses
+  `cue.damage`, so the flung coin reads the resolving roll.
 - **SS-222** — Behavioral regressions surfaced by the dice-architecture refactor: resolved the 8
   post-refactor test failures (seating `resolveTargetUserId`, Mirror Image reroll button order, and
   Mirror Image domain Doubles-message emission), deciding per-case between production fix and test

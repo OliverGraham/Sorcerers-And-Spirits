@@ -45,17 +45,40 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     ) {
         val attackerRoll = updatedTeleport.attackerRoll.roll
         val defenderRoll = updatedTeleport.defenderRoll.roll
-
         if (attackerRoll != null && defenderRoll != null) {
-            val mageUserId = updatedTeleport.defenderRoll.userId
-            if (defenderRoll > attackerRoll) {
-                handleTeleportSuccess(mageUserId = mageUserId)
-            } else {
-                handleTeleportFailure(mageUserId = mageUserId)
-            }
+            handleTeleportOutcome(
+                updatedTeleport = updatedTeleport,
+                attackerRoll = attackerRoll,
+                defenderRoll = defenderRoll,
+            )
         } else {
             setBothCombatantsRolling(teleport = updatedTeleport)
         }
+    }
+
+    private fun CombatMutator.handleTeleportOutcome(
+        updatedTeleport: AbilityAction.Passive.Teleport,
+        attackerRoll: Int,
+        defenderRoll: Int,
+    ) {
+        val mageUserId = updatedTeleport.defenderRoll.userId
+
+        when {
+            defenderRoll > attackerRoll -> handleTeleportSuccess(mageUserId = mageUserId)
+            defenderRoll < attackerRoll -> handleTeleportFailure(mageUserId = mageUserId)
+            else -> rerollTeleport(teleport = updatedTeleport)
+        }
+    }
+
+    private fun CombatMutator.rerollTeleport(teleport: AbilityAction.Passive.Teleport) {
+        val resetTeleport =
+            teleport.copy(
+                attackerRoll = teleport.attackerRoll.copy(roll = null),
+                defenderRoll = teleport.defenderRoll.copy(roll = null),
+                attackerDoublesBonus = 0,
+            )
+
+        setBothCombatantsRolling(teleport = resetTeleport)
     }
 
     private fun CombatMutator.setBothCombatantsRolling(teleport: AbilityAction.Passive.Teleport) {

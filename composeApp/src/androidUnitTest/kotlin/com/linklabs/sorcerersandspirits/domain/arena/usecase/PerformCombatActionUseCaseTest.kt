@@ -2297,8 +2297,34 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
-    fun `When a Mage rolls for Teleport and ties the roll-off, then the attacker rolls against the Mage's health`() {
-        teleportRollOffTest(attackerRoll = 4, mageRoll = 4, isMageExpectedToWin = false)
+    fun `When a Mage rolls for Teleport and ties the roll-off, then both combatants roll again`() {
+        // Arrange
+        val arguments = createTwoPlayerArguments(defenderClass = TestCharacterClasses.mage())
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+
+        val tiedRoll = 4
+        val purpose =
+            AbilityAction.Passive.Teleport(
+                attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID, roll = tiedRoll),
+                defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
+                attackerDoublesBonus = 0,
+            )
+        val mageUserId = DEFAULT_DEFENDER_ID
+        val currentAction = getAbilityRollAction(purpose = purpose, rollingUserId = mageUserId)
+
+        setupOneDiceRoll(userId = mageUserId, die = tiedRoll)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        val nextAction = outcome.nextCombatAction
+        assertTrue(actual = nextAction is NextCombatAction.AbilityRoll)
+
+        val teleport = assertIs<AbilityAction.Passive.Teleport>(value = nextAction.purpose)
+        assertEquals(expected = null, actual = teleport.attackerRoll.roll)
+        assertEquals(expected = null, actual = teleport.defenderRoll.roll)
+        assertTrue(actual = !outcome.isMatchFinished)
     }
 
     private fun teleportRollOffTest(

@@ -50,6 +50,12 @@ sealed interface ArenaState {
         val abilityControls =
             combatControls.filter { it != arenaCombatControl && it != impersonateControl }
 
+        val isAwaitingTeleportRoll =
+            combatControls.any {
+                it is ArenaCombatControl.AbilityRoll &&
+                    it.action is AbilityActionState.Passive.Teleport
+            }
+
         val diceBadgeState = deriveDiceBadge()
     }
 

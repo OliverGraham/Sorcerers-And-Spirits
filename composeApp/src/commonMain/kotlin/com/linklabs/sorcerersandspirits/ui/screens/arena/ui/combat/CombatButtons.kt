@@ -95,7 +95,8 @@ internal fun BottomControls(
             onActionDispatched = onActionDispatched,
         )
 
-    val areButtonsShown = areControlsVisible && !isSequencing && controls.isNotEmpty()
+    val isHiddenBySequencing = isSequencing && !state.isAwaitingTeleportRoll
+    val areButtonsShown = areControlsVisible && !isHiddenBySequencing && controls.isNotEmpty()
     Box(modifier = modifier.fillMaxWidth().height(height = BOTTOM_CONTROLS_HEIGHT)) {
         AnimatedVisibility(visible = areButtonsShown, enter = fadeIn(), exit = fadeOut()) {
             Row(

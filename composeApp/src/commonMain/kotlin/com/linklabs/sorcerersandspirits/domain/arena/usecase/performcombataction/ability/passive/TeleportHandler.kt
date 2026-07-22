@@ -31,7 +31,11 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleTeleport(teleport: AbilityAction.Passive.Teleport) {
-        val updatedTeleport = rollActingUserDieOrNull(teleport = teleport) ?: return
+        val updatedTeleport = rollActingUserDieOrNull(teleport = teleport)
+        if (updatedTeleport == null) {
+            setBothCombatantsRolling(teleport = teleport)
+            return
+        }
 
         handleUpdatedTeleport(updatedTeleport = updatedTeleport)
     }
@@ -54,11 +58,6 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    /**
-     * Both combatants hold the roll button at once and roll simultaneously; each dispatch rolls
-     * only the acting player's own die (see [rollActingUserDieOrNull]), so neither side can roll
-     * the other's. A computer combatant acts on its own thinking delay, exactly as a human would.
-     */
     private fun CombatMutator.setBothCombatantsRolling(teleport: AbilityAction.Passive.Teleport) {
         setNextAbilityRoll(
             purpose = teleport,

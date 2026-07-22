@@ -113,7 +113,7 @@ internal fun BardNormalAttackOverlay(
                         accentColor = CharacterClassType.Bard.toColor(),
                         density = density,
                     ),
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -135,7 +135,7 @@ internal fun bardNormalAttackDurationMillis(): Long =
  */
 internal suspend fun BardStrikeState.play(
     geometry: WeaponStrikeGeometry,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     drumAlpha.snapTo(targetValue = 0f)
     drumScale.snapTo(targetValue = DRUM_POP_SCALE)
@@ -146,7 +146,7 @@ internal suspend fun BardStrikeState.play(
     waveAlpha.snapTo(targetValue = 0f)
     notes.snapTo(targetValue = 0f)
 
-    val connects = outcome != NormalRollMessageType.ArmorClassMiss
+    val connects = normalRollMessageType != NormalRollMessageType.ArmorClassMiss
     this.scene = geometry
     this.showNotes = connects
 
@@ -295,38 +295,38 @@ private fun drumstickAngle(swing: Float, depress: Float): Float =
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardNormalAttackKnockoutPreview() {
-    BardNormalAttackPreview(outcome = NormalRollMessageType.Knockout)
+    BardNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Knockout)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardNormalAttackDamagePreview() {
-    BardNormalAttackPreview(outcome = NormalRollMessageType.Damage)
+    BardNormalAttackPreview(normalRollMessageType = NormalRollMessageType.Damage)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardNormalAttackArmorClassHitPreview() {
-    BardNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassHit)
+    BardNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassHit)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardNormalAttackArmorClassMissPreview() {
-    BardNormalAttackPreview(outcome = NormalRollMessageType.ArmorClassMiss)
+    BardNormalAttackPreview(normalRollMessageType = NormalRollMessageType.ArmorClassMiss)
 }
 
 @Composable
-private fun BardNormalAttackPreview(outcome: NormalRollMessageType) {
+private fun BardNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
+        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = "bard-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Bard,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

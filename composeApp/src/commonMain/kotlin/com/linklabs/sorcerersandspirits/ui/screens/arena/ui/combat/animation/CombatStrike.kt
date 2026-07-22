@@ -67,7 +67,7 @@ internal fun projectileStrikeGeometry(
     density: Density,
 ): WeaponStrikeGeometry {
     val target =
-        if (cue.outcome == NormalRollMessageType.ArmorClassMiss) {
+        if (cue.normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {
             missThrustTarget(defenderBounds = defenderBounds, origin = attackerBounds.center)
         } else {
             defenderBounds.center

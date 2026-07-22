@@ -117,7 +117,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 accentColor = accentColor,
                                 density = density,
                             ),
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
 
                 CharacterClassType.Gambler ->
@@ -130,7 +130,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 accentColor = accentColor,
                                 density = density,
                             ),
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
 
                 CharacterClassType.Duelist ->
@@ -142,7 +142,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 accentColor = accentColor,
                                 density = density,
                             ),
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
 
                 CharacterClassType.Necromancer ->
@@ -155,7 +155,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 density = density,
                             ),
                         palette = illusionistScythePalette,
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
 
                 CharacterClassType.Bard ->
@@ -167,7 +167,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 accentColor = accentColor,
                                 density = density,
                             ),
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
 
                 CharacterClassType.Mage -> {
@@ -182,7 +182,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 density = density,
                             ),
                         element = element,
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
                 }
 
@@ -195,7 +195,7 @@ internal fun IllusionistNormalAttackOverlay(
                                 accentColor = accentColor,
                                 density = density,
                             ),
-                        outcome = cue.outcome,
+                        normalRollMessageType = cue.normalRollMessageType,
                     )
 
                 else -> activeWeapon = null
@@ -222,7 +222,7 @@ internal fun IllusionistNormalAttackOverlay(
 private fun IllusionistBorrowsRoguePreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Rogue,
-        outcome = NormalRollMessageType.Damage,
+        normalRollMessageType = NormalRollMessageType.Damage,
     )
 }
 
@@ -231,7 +231,7 @@ private fun IllusionistBorrowsRoguePreview() {
 private fun IllusionistBorrowsGamblerPreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Gambler,
-        outcome = NormalRollMessageType.Damage,
+        normalRollMessageType = NormalRollMessageType.Damage,
     )
 }
 
@@ -240,7 +240,7 @@ private fun IllusionistBorrowsGamblerPreview() {
 private fun IllusionistBorrowsDuelistPreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Duelist,
-        outcome = NormalRollMessageType.Knockout,
+        normalRollMessageType = NormalRollMessageType.Knockout,
     )
 }
 
@@ -249,7 +249,7 @@ private fun IllusionistBorrowsDuelistPreview() {
 private fun IllusionistBorrowsNecromancerPreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Necromancer,
-        outcome = NormalRollMessageType.Damage,
+        normalRollMessageType = NormalRollMessageType.Damage,
     )
 }
 
@@ -258,7 +258,7 @@ private fun IllusionistBorrowsNecromancerPreview() {
 private fun IllusionistBorrowsBardPreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Bard,
-        outcome = NormalRollMessageType.Damage,
+        normalRollMessageType = NormalRollMessageType.Damage,
     )
 }
 
@@ -267,7 +267,7 @@ private fun IllusionistBorrowsBardPreview() {
 private fun IllusionistBorrowsMagePreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Mage,
-        outcome = NormalRollMessageType.Damage,
+        normalRollMessageType = NormalRollMessageType.Damage,
     )
 }
 
@@ -276,7 +276,7 @@ private fun IllusionistBorrowsMagePreview() {
 private fun IllusionistBorrowsPaladinPreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.Paladin,
-        outcome = NormalRollMessageType.Knockout,
+        normalRollMessageType = NormalRollMessageType.Knockout,
     )
 }
 
@@ -285,24 +285,25 @@ private fun IllusionistBorrowsPaladinPreview() {
 private fun IllusionistRandomWeaponPreview() {
     IllusionistNormalAttackPreview(
         impersonatedClassType = CharacterClassType.None,
-        outcome = NormalRollMessageType.Knockout,
+        normalRollMessageType = NormalRollMessageType.Knockout,
     )
 }
 
 @Composable
 private fun IllusionistNormalAttackPreview(
     impersonatedClassType: CharacterClassType,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = impersonatedClassType to outcome) { iteration ->
+        rememberReplayingCue(replayKey = impersonatedClassType to normalRollMessageType) { iteration
+            ->
             CombatAnimationCue.NormalAttack(
                 id = "illusionist-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Illusionist,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = impersonatedClassType,
             )
         }

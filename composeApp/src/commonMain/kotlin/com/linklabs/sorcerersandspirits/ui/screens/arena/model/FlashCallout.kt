@@ -132,7 +132,9 @@ fun ArenaMessageState.toFlashCallout() =
         is ArenaMessageState.ConnectedToArena,
         is ArenaMessageState.NewTurn -> null
 
-        is ArenaMessageState.NormalRoll ->
+        is ArenaMessageState.NormalRoll.Attack -> null
+
+        is ArenaMessageState.NormalRoll.Outcome ->
             when (type) {
                 NormalRollMessageType.ArmorClassHit ->
                     FlashCallout.Hit(

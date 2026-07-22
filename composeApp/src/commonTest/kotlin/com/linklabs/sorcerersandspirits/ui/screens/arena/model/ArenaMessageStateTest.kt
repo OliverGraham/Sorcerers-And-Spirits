@@ -125,14 +125,13 @@ class ArenaMessageStateTest {
         IncomingArenaMessage(
             id = id,
             message =
-                ArenaMessage.NormalRoll(
+                ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = ATTACKER_ID,
                     defenderUserId = DEFENDER_ID,
                     firstDie = 2,
                     secondDie = 3,
                     bonus = 0,
                     type = type,
-                    impersonatedCharacterType = CharacterClassType.None,
                 ),
         )
 

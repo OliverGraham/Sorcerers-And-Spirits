@@ -469,7 +469,8 @@ private fun CombatAnimationCue.PrepareAttack.prepareAttackReactionDelayMillis():
 internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
-            normalAttackReactionDelayMillis() + defenderReactionBodyMillis(outcome = outcome)
+            normalAttackReactionDelayMillis() +
+                defenderReactionBodyMillis(normalRollMessageType = normalRollMessageType)
 
         is CombatAnimationCue.KillingMomentum -> REARM_BODY_MILLIS
 
@@ -542,10 +543,11 @@ private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
         MirrorImagePhase.Split -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
 
         MirrorImagePhase.Resolve -> {
-            val resolvedOutcome = messageType
+            val resolvedMessageType = messageType
             val reactionMillis =
-                if (resolvedOutcome != null) {
-                    REACTION_DELAY_MILLIS + defenderReactionBodyMillis(outcome = resolvedOutcome)
+                if (resolvedMessageType != null) {
+                    REACTION_DELAY_MILLIS +
+                        defenderReactionBodyMillis(normalRollMessageType = resolvedMessageType)
                 } else {
                     0L
                 }
@@ -553,8 +555,8 @@ private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
         }
     }
 
-private fun defenderReactionBodyMillis(outcome: NormalRollMessageType): Long =
-    when (outcome) {
+private fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> FLINCH_BODY_MILLIS
         NormalRollMessageType.ArmorClassMiss -> SIDESTEP_BODY_MILLIS
         NormalRollMessageType.Damage -> FLINCH_HEAVY_BODY_MILLIS

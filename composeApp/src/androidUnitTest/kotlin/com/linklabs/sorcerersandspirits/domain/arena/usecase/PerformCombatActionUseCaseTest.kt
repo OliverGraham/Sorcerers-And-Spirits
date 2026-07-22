@@ -735,7 +735,7 @@ class PerformCombatActionUseCaseTest {
         val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
-        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll>().first()
+        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll.Attack>().first()
         assertEquals(
             actual = normalRoll.impersonatedCharacterType,
             expected = CharacterClassType.Mage,
@@ -756,7 +756,7 @@ class PerformCombatActionUseCaseTest {
 
         // Assert: no opponent class copied resolves to the Illusionist's own class, which borrows a
         // random weapon rather than an impersonated one.
-        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll>().first()
+        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll.Attack>().first()
         assertEquals(
             actual = normalRoll.impersonatedCharacterType,
             expected = CharacterClassType.Illusionist,
@@ -776,7 +776,7 @@ class PerformCombatActionUseCaseTest {
         val outcome = performCombatAction.invoke(currentAction = currentAction)
 
         // Assert
-        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll>().first()
+        val normalRoll = outcome.messages.filterIsInstance<ArenaMessage.NormalRoll.Attack>().first()
         assertEquals(
             actual = normalRoll.impersonatedCharacterType,
             expected = CharacterClassType.None,
@@ -2463,8 +2463,8 @@ class PerformCombatActionUseCaseTest {
         // The triggering hit reads as damage, not a knockout, while the survival roll is pending
         // (SS-100)
         val normalRoll =
-            assertIs<ArenaMessage.NormalRoll>(
-                value = outcome.messages.single { it is ArenaMessage.NormalRoll }
+            assertIs<ArenaMessage.NormalRoll.Outcome>(
+                value = outcome.messages.single { it is ArenaMessage.NormalRoll.Outcome }
             )
         assertEquals(expected = NormalRollMessageType.Damage, actual = normalRoll.type)
     }

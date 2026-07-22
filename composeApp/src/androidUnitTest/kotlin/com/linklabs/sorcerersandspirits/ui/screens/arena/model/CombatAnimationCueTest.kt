@@ -19,7 +19,7 @@ class CombatAnimationCueTest {
                     attackerUserId = ATTACKER_ID,
                     attackerClassType = CharacterClassType.Mage,
                     defenderUserId = DEFENDER_ID,
-                    outcome = NormalRollMessageType.ArmorClassHit,
+                    normalRollMessageType = NormalRollMessageType.ArmorClassHit,
                     impersonatedClassType = CharacterClassType.None,
                 ),
             actual = message.combatAnimationCue,
@@ -483,18 +483,13 @@ class CombatAnimationCueTest {
             .combatAnimationCue
 
     private fun normalRollMessage(type: NormalRollMessageType) =
-        ArenaMessageState.NormalRoll(
+        ArenaMessageState.NormalRoll.Attack(
             id = MESSAGE_ID,
             attackerUserId = ATTACKER_ID,
-            attackerName = "Mage",
-            attackerClassType = CharacterClassType.Mage,
             defenderUserId = DEFENDER_ID,
-            defenderName = "Bard",
-            firstDie = 4,
-            secondDie = 5,
-            bonus = 0,
-            type = type,
+            attackerClassType = CharacterClassType.Mage,
             impersonatedClassType = CharacterClassType.None,
+            normalRollMessageType = type,
         )
 
     private fun normalAttackCue(outcome: NormalRollMessageType) =
@@ -503,7 +498,7 @@ class CombatAnimationCueTest {
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.None,
             defenderUserId = DEFENDER_ID,
-            outcome = outcome,
+            normalRollMessageType = outcome,
             impersonatedClassType = CharacterClassType.None,
         )
 
@@ -513,7 +508,7 @@ class CombatAnimationCueTest {
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.Mage,
             defenderUserId = DEFENDER_ID,
-            outcome = outcome,
+            normalRollMessageType = outcome,
             impersonatedClassType = CharacterClassType.None,
         )
 
@@ -523,7 +518,7 @@ class CombatAnimationCueTest {
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.Rogue,
             defenderUserId = DEFENDER_ID,
-            outcome = outcome,
+            normalRollMessageType = outcome,
             impersonatedClassType = CharacterClassType.None,
         )
 
@@ -533,7 +528,7 @@ class CombatAnimationCueTest {
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.Duelist,
             defenderUserId = DEFENDER_ID,
-            outcome = outcome,
+            normalRollMessageType = outcome,
             impersonatedClassType = CharacterClassType.None,
         )
 
@@ -543,7 +538,7 @@ class CombatAnimationCueTest {
             attackerUserId = ATTACKER_ID,
             attackerClassType = CharacterClassType.Paladin,
             defenderUserId = DEFENDER_ID,
-            outcome = outcome,
+            normalRollMessageType = outcome,
             impersonatedClassType = CharacterClassType.None,
         )
 

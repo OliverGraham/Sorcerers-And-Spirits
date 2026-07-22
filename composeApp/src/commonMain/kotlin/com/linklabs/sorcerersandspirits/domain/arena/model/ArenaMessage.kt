@@ -18,15 +18,26 @@ sealed interface ArenaMessage {
 
     data class Doubles(val userId: String) : ArenaMessage
 
-    data class NormalRoll(
-        val attackerUserId: String,
-        val defenderUserId: String,
-        val firstDie: Int,
-        val secondDie: Int,
-        val bonus: Int,
-        val type: NormalRollMessageType,
-        val impersonatedCharacterType: CharacterClassType,
-    ) : ArenaMessage
+    sealed interface NormalRoll : ArenaMessage {
+        val attackerUserId: String
+        val defenderUserId: String
+
+        data class Attack(
+            override val attackerUserId: String,
+            override val defenderUserId: String,
+            val impersonatedCharacterType: CharacterClassType,
+            val normalRollMessageType: NormalRollMessageType,
+        ) : NormalRoll
+
+        data class Outcome(
+            override val attackerUserId: String,
+            override val defenderUserId: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            val bonus: Int,
+            val type: NormalRollMessageType,
+        ) : NormalRoll
+    }
 
     data class KillingMomentum(val attackerUserId: String) : ArenaMessage
 

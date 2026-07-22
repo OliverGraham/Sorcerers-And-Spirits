@@ -98,7 +98,7 @@ internal fun MageNormalAttackOverlay(
                         density = density,
                     ),
                 element = element,
-                outcome = cue.outcome,
+                normalRollMessageType = cue.normalRollMessageType,
             )
         },
         modifier = modifier,
@@ -111,17 +111,21 @@ internal fun MageNormalAttackOverlay(
  * charges, flies, and shatters instead of cutting it off (SS-201). A knockout holds the shatter a
  * touch longer.
  */
-internal fun mageNormalAttackDurationMillis(outcome: NormalRollMessageType): Long =
+internal fun mageNormalAttackDurationMillis(normalRollMessageType: NormalRollMessageType): Long =
     ICE_CHARGE_MILLIS +
         ICE_FLIGHT_MILLIS +
         IMPACT_BURST_TAIL_MILLIS +
         ICE_FADE_MILLIS +
-        if (outcome == NormalRollMessageType.Knockout) ICE_KNOCKOUT_EXTRA_MILLIS else 0L
+        if (normalRollMessageType == NormalRollMessageType.Knockout) {
+            ICE_KNOCKOUT_EXTRA_MILLIS
+        } else {
+            0L
+        }
 
 internal suspend fun MageBoltState.play(
     geometry: WeaponStrikeGeometry,
     element: MageSpellElement,
-    outcome: NormalRollMessageType,
+    normalRollMessageType: NormalRollMessageType,
 ) {
     travel.snapTo(targetValue = 0f)
     boltAlpha.snapTo(targetValue = 0f)
@@ -137,7 +141,7 @@ internal suspend fun MageBoltState.play(
             tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
     )
 
-    if (outcome == NormalRollMessageType.ArmorClassMiss) {
+    if (normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {
         boltAlpha.animateTo(
             targetValue = 0f,
             animationSpec = tween(durationMillis = ICE_FADE_MILLIS),
@@ -148,7 +152,7 @@ internal suspend fun MageBoltState.play(
                 impactBurst(
                     impactAlpha = impactAlpha,
                     impactScale = impactScale,
-                    peakScale = shatterPeakScale(outcome = outcome),
+                    peakScale = shatterPeakScale(normalRollMessageType = normalRollMessageType),
                 )
             }
             launch {
@@ -160,12 +164,14 @@ internal suspend fun MageBoltState.play(
         }
     }
 
-    if (outcome == NormalRollMessageType.Knockout) delay(timeMillis = ICE_KNOCKOUT_EXTRA_MILLIS)
+    if (normalRollMessageType == NormalRollMessageType.Knockout) {
+        delay(timeMillis = ICE_KNOCKOUT_EXTRA_MILLIS)
+    }
     this.scene = null
 }
 
-private fun shatterPeakScale(outcome: NormalRollMessageType): Float =
-    when (outcome) {
+private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float =
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> 0.8f
         NormalRollMessageType.Damage -> 1f
         NormalRollMessageType.Knockout -> 1.35f
@@ -204,14 +210,17 @@ internal fun DrawScope.drawMageCast(state: MageBoltState) {
 private fun MageIceboltKnockoutPreview() {
     MageNormalAttackPreview(
         element = MageSpellElement.Ice,
-        outcome = NormalRollMessageType.Knockout,
+        normalRollMessageType = NormalRollMessageType.Knockout,
     )
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun MageIceboltDamagePreview() {
-    MageNormalAttackPreview(element = MageSpellElement.Ice, outcome = NormalRollMessageType.Damage)
+    MageNormalAttackPreview(
+        element = MageSpellElement.Ice,
+        normalRollMessageType = NormalRollMessageType.Damage,
+    )
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
@@ -219,7 +228,7 @@ private fun MageIceboltDamagePreview() {
 private fun MageIceboltArmorClassMissPreview() {
     MageNormalAttackPreview(
         element = MageSpellElement.Ice,
-        outcome = NormalRollMessageType.ArmorClassMiss,
+        normalRollMessageType = NormalRollMessageType.ArmorClassMiss,
     )
 }
 
@@ -228,7 +237,7 @@ private fun MageIceboltArmorClassMissPreview() {
 private fun MageLightningboltDamagePreview() {
     MageNormalAttackPreview(
         element = MageSpellElement.Lightning,
-        outcome = NormalRollMessageType.Damage,
+        normalRollMessageType = NormalRollMessageType.Damage,
     )
 }
 
@@ -237,14 +246,17 @@ private fun MageLightningboltDamagePreview() {
 private fun MageLightningboltKnockoutPreview() {
     MageNormalAttackPreview(
         element = MageSpellElement.Lightning,
-        outcome = NormalRollMessageType.Knockout,
+        normalRollMessageType = NormalRollMessageType.Knockout,
     )
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun MageFireballDamagePreview() {
-    MageNormalAttackPreview(element = MageSpellElement.Fire, outcome = NormalRollMessageType.Damage)
+    MageNormalAttackPreview(
+        element = MageSpellElement.Fire,
+        normalRollMessageType = NormalRollMessageType.Damage,
+    )
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
@@ -252,21 +264,24 @@ private fun MageFireballDamagePreview() {
 private fun MageFireballKnockoutPreview() {
     MageNormalAttackPreview(
         element = MageSpellElement.Fire,
-        outcome = NormalRollMessageType.Knockout,
+        normalRollMessageType = NormalRollMessageType.Knockout,
     )
 }
 
 @Composable
-private fun MageNormalAttackPreview(element: MageSpellElement, outcome: NormalRollMessageType) {
+private fun MageNormalAttackPreview(
+    element: MageSpellElement,
+    normalRollMessageType: NormalRollMessageType,
+) {
     val seats = rememberDuoSeats()
     val cue =
-        rememberReplayingCue(replayKey = element to outcome) { iteration ->
+        rememberReplayingCue(replayKey = element to normalRollMessageType) { iteration ->
             CombatAnimationCue.NormalAttack(
                 id = mageElementPreviewCueId(element = element, iteration = iteration),
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Mage,
                 defenderUserId = PREVIEW_TARGET_ID,
-                outcome = outcome,
+                normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
             )
         }

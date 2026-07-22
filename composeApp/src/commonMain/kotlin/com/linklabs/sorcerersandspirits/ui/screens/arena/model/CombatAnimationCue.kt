@@ -16,7 +16,7 @@ sealed interface CombatAnimationCue {
         val attackerUserId: String,
         val attackerClassType: CharacterClassType,
         val defenderUserId: String,
-        val outcome: NormalRollMessageType,
+        val normalRollMessageType: NormalRollMessageType,
         val impersonatedClassType: CharacterClassType,
     ) : CombatAnimationCue
 
@@ -203,15 +203,17 @@ enum class AvatarGesture {
 val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
     get() =
         when (this) {
-            is ArenaMessageState.NormalRoll ->
+            is ArenaMessageState.NormalRoll.Attack ->
                 CombatAnimationCue.NormalAttack(
                     id = id,
                     attackerUserId = attackerUserId,
                     attackerClassType = attackerClassType,
                     defenderUserId = defenderUserId,
-                    outcome = type,
+                    normalRollMessageType = normalRollMessageType,
                     impersonatedClassType = impersonatedClassType,
                 )
+
+            is ArenaMessageState.NormalRoll.Outcome -> null
 
             is ArenaMessageState.KillingMomentum ->
                 CombatAnimationCue.KillingMomentum(id = id, attackerUserId = attackerUserId)
@@ -435,11 +437,16 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.Doubles -> null
         }
 
+// TODO: This should be data passed from Domain layer type
 val CombatAnimationCue.collapsingUserId: String?
     get() =
         when (this) {
             is CombatAnimationCue.NormalAttack ->
-                if (outcome == NormalRollMessageType.Knockout) defenderUserId else null
+                if (normalRollMessageType == NormalRollMessageType.Knockout) {
+                    defenderUserId
+                } else {
+                    null
+                }
 
             is CombatAnimationCue.PrepareAttack -> if (isSuccessful) targetUserId else null
 
@@ -546,8 +553,8 @@ private fun CombatAnimationCue.SpellPotency.spellPotencyGestureFor(userId: Strin
 private fun CombatAnimationCue.MirrorImage.mirrorImageGestureFor(userId: String): AvatarGesture? {
     if (phase != MirrorImagePhase.Resolve) return null
     if (userId != illusionistUserId) return null
-    val resolvedOutcome = messageType ?: return null
-    return defenderReactionGesture(outcome = resolvedOutcome)
+    val resolvedMessageType = messageType ?: return null
+    return defenderReactionGesture(normalRollMessageType = resolvedMessageType)
 }
 
 private fun CombatAnimationCue.Riposte.riposteGestureFor(userId: String): AvatarGesture? =
@@ -634,7 +641,7 @@ private fun CombatAnimationCue.NormalAttack.attackerStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.paladinStrike(): AvatarGesture =
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
         NormalRollMessageType.Damage -> AvatarGesture.Slash
@@ -642,7 +649,7 @@ private fun CombatAnimationCue.NormalAttack.paladinStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.rogueStrike(): AvatarGesture =
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Stab
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.StabOvershoot
         NormalRollMessageType.Damage -> AvatarGesture.Stab
@@ -650,7 +657,7 @@ private fun CombatAnimationCue.NormalAttack.rogueStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.gamblerStrike(): AvatarGesture =
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Throw
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.ThrowOvershoot
         NormalRollMessageType.Damage -> AvatarGesture.Throw
@@ -658,7 +665,7 @@ private fun CombatAnimationCue.NormalAttack.gamblerStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.duelistStrike(): AvatarGesture =
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
         NormalRollMessageType.Damage -> AvatarGesture.Slash
@@ -666,7 +673,7 @@ private fun CombatAnimationCue.NormalAttack.duelistStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.genericStrike(): AvatarGesture =
-    when (outcome) {
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Lunge
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.LungeOvershoot
         NormalRollMessageType.Damage -> AvatarGesture.Lunge
@@ -674,10 +681,10 @@ private fun CombatAnimationCue.NormalAttack.genericStrike(): AvatarGesture =
     }
 
 private fun CombatAnimationCue.NormalAttack.defenderReaction(): AvatarGesture =
-    defenderReactionGesture(outcome = outcome)
+    defenderReactionGesture(normalRollMessageType = normalRollMessageType)
 
-private fun defenderReactionGesture(outcome: NormalRollMessageType): AvatarGesture =
-    when (outcome) {
+private fun defenderReactionGesture(normalRollMessageType: NormalRollMessageType): AvatarGesture =
+    when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
         NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep
         NormalRollMessageType.Damage -> AvatarGesture.FlinchHeavy

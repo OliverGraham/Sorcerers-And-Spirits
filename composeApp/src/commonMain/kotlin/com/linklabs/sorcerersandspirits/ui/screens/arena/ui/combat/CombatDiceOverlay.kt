@@ -20,25 +20,21 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DieState
 
-internal val diceSpacing = 152.dp
+internal val diceSpacing = 76.dp
 
-// TODO: The dice are nice and centered in multiplayer (there's the classHeadIcons on the side)
-//       Otherwise, for two player, they're skewed - needs to always be centered. Should NOT
-//       use a method of changing values based on the 2 player vs multiplayer - do this later,
-// Claude
 @Composable
 internal fun dieRestCenterX(
     homeCenterX: Float,
     diePosition: DiePosition,
     spacingPx: Float = with(receiver = LocalDensity.current) { diceSpacing.toPx() },
 ): Float {
-    val diePositionNumber =
+    val dieOffsetFromCenter =
         when (diePosition) {
-            DiePosition.First -> 0
-            DiePosition.Second -> -1
+            DiePosition.First -> -0.5f
+            DiePosition.Second -> 0.5f
         }
 
-    return homeCenterX + (diePositionNumber / 2f) * spacingPx
+    return homeCenterX + dieOffsetFromCenter * spacingPx
 }
 
 @Composable
@@ -56,7 +52,8 @@ internal fun DiceOverlay(
                 overlayOrigin = it.localToRoot(relativeToLocal = Offset.Zero)
             }
     ) {
-        val homeCenter = homeBounds.center - overlayOrigin
+        val homeCenter =
+            Offset(x = constraints.maxWidth / 2f, y = homeBounds.center.y - overlayOrigin.y)
         val shakeTick = diceStateHolder.shakeTick
         val isRolling = diceStateHolder.isRolling
 

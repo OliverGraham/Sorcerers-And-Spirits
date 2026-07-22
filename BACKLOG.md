@@ -147,6 +147,79 @@ are archived in [COMPLETED.md](COMPLETED.md).
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
 > respectively — so the placeholder tickets were removed.
 
+### SS-225 — MessageLog auto-scrolls to newest line
+
+- [ ] Not completed
+- **Symptom:** As new combat lines arrive, the message log does not follow them — once content
+  reaches the bottom, the newest lines are out of view and the user has to scroll manually.
+- **Goal:** The message log keeps the **newest** line in view: when a new line is appended and the
+  user is at (or near) the bottom, scroll up so the latest entry is visible. Preserve the passive
+  role of the log ([[message-log-is-passive]]) — this is view-follow only, no logic.
+- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` — animate/scroll the list state to
+  the last index on append (respect the overlay behavior from SS-226 / [[message-log-overlays-not-pushes]]).
+- **Related:** SS-226 (log stops above DiceHome), SS-025 (message-log animation), SS-164.
+
+### SS-226 — MessageLog must stop above DiceHome, not be covered by it
+
+- [ ] Not completed
+- **Symptom:** The message log is partially covered by the DiceHome / dice tray at the bottom of the
+  arena, hiding the most recent lines behind the dice.
+- **Goal:** The log's lower bound sits **above** DiceHome so no line is ever occluded by the dice
+  tray. Keep the log as an overlay over the combat content ([[message-log-overlays-not-pushes]]) —
+  it must not push combat content up — but bottom-constrain it to end above DiceHome.
+- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` and its host in the arena layout
+  (`LoadedArenaScreen.kt` / bottom-controls / DiceHome). Anchor the log's max height/offset to the
+  DiceHome top.
+- **Related:** SS-225 (auto-scroll), SS-159 (raise DiceHome/buttons), SS-182 (top inset).
+
+### SS-227 — Finished state: show which players have readied up (like ChallengeDialog)
+
+- [ ] Not completed
+- **Goal:** In the Finished (match-over) state, once a player signals they are ready (e.g. "Go
+  Again" / rematch), surface **who is ready** to every client, the same way the ChallengeDialog
+  displays readiness. A player readying up should be reflected in real time for all participants.
+- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` for the display; mirror the readiness
+  presentation already used by the ChallengeDialog (find its ready-state rendering and reuse it).
+  Ready state flows through the shared arena state (Domain → Data → UI), not derived from the
+  message log ([[never-search-messages-for-decisions]]).
+- **Notes:** Gauntlet rule — after the final match, "Go Again" starts a new Gauntlet (back to class
+  selection); confirm the readiness display is correct for both between-match and end-of-Gauntlet
+  rematch. Related: SS-179 (Finished-state text styling).
+
+### SS-234 — Multiplayer no-target avatar: silhouette, "?" gray stats, slanted "Choose a target"
+
+- [ ] Not completed
+- **Goal:** In a multiplayer match, when the current player has **no opponent selected**, the target
+  seat renders a placeholder instead of a real avatar:
+    - A new PNG avatar art, `silhouette_avatar` (a plain silhouette).
+    - The stat numbers (speed / armor / hit points) shown as **question marks** in a **gray** color
+      (not the class colors).
+    - The text **"Choose a target"** written **across** the avatar, angled/slanted a bit.
+- **Source:** The target-seat rendering in `ui/screens/arena/ui/combat/ArenaCombat.kt` /
+  `AvatarStatsBar`; stat icons per SS-136/SS-138. Add a no-target branch that swaps the avatar art,
+  grays + "?"s the stats, and overlays the rotated "Choose a target" label.
+- **Notes:** The `silhouette_avatar` PNG **may not exist in the repo yet** at ticket-writing time —
+  when working this ticket, confirm the asset is present (downsample per
+  [[downsample-figma-raster-assets]]) or request/export it first. Related: SS-144 (target-selection
+  transition), SS-136 (head icon).
+
+### SS-236 — Flash messages must play in resolution order (sequenced, correctly colored)
+
+- [ ] Not completed
+- **Symptom / goal:** When one resolution produces multiple flash call-outs, they must play **in
+  order**, each colored by the class it belongs to. Worked example: Rogue hits Gambler for 7 →
+  first flash **"7 · Hit!"** in **Rogue-red** over the Gambler, then the next flash **"Lucky
+  Coin!"** in **Gambler-yellow** over the Gambler. The sequence and per-message color must be
+  correct and stable.
+- **Mechanism:** Flashes derive from `ArenaMessageState.flashCallout` and are played by the flash
+  sequencer; each `FlashCallout` variant already carries its color + data ([[message-derivations-compute-once]]).
+  Ensure the sequencer preserves message order and that each call-out's color comes from the
+  **acting/owning class** for that specific message (attacker's class for the hit, defender's class
+  for their triggered ability), and that the flash anchors over the correct player.
+- **Source:** `CombatFlashOverlay.kt` / flash sequencer + `FlashCallout.kt`.
+- **Related:** SS-164 (one message → flash + log), SS-185 (pare back flashes), SS-215 (sequencer
+  idle gating), SS-179 (class-color text), SS-177 (doubles flash suppression).
+
 ---
 
 ## Combat animations
@@ -282,28 +355,170 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-222 — Behavioral regressions surfaced by the dice-architecture refactor (8 failing tests)
+### SS-224 — Teleport roll-off: both dice must roll simultaneously; roll-off never resolves
 
 - [ ] Not completed
-- **Context:** After the DiceRoll refactor the test suite was fixed for the rename/elimination
-  breakage (0 compiling → 392/400 passing). The remaining 8 failures are genuine behavioral changes
-  vs `main` (they passed there), not test rot. Decide per-case whether each is an intended change
-  (update/delete the test) or a regression to fix in production, then get the suite back to green.
-- **Seating (4 tests, `CombatSeatingTest`):** `resolveTargetUserId`
-  (`ui/screens/arena/ui/combat/ArenaCombat.kt`) dropped the
-  `.ifEmpty { combatActionState.targetedDefenderUserId.orEmpty() }` fallback (that property was
-  deleted). It now goes straight to the lone-opponent heuristic, so the action's real defender is
-  no longer seated — e.g. a Riposte reversal drops the defender to a head icon, violating the
-  documented "Riposte keeps the same seats" invariant. Looks accidental.
-- **Reroll button order (1 test, `ArenaScreenViewModelTest`):** `mirrorImageControls()` in
-  `ArenaCombatControl.kt` swapped the two "Reroll the N" buttons to secondDie-first; `main` was
-  firstDie-first. Production has a TODO "Leftmost die should be first" — the test expects
-  firstDie-first.
-- **Mirror Image domain (3 tests, `PerformCombatActionUseCaseTest`):** e.g. keeping a doubles armor
-  Mirror Image roll no longer emits the Doubles message. Check `MirrorImageHandler` diff vs `main`.
-- **Related:** SS-216 (Riposte turn-owner AttackTurn), SS-181 (seating identity).
+- **Symptom 1 (button disappears):** In the Teleport roll-off (Mage vs attacker, each rolls 1d6),
+  the two dice cannot be rolled **simultaneously** — one button disappears, so the player can't
+  fire both rolls at once as intended.
+- **Symptom 2 (roll-off doesn't go through, likely same root):** Rogue vs Mage — the Rogue broke
+  the Mage's armor with a **doubles** roll, and then the Teleport roll-off "didn't go through."
+  The owner flagged this as related to Symptom 1.
+- **Symptom 3 (computer opponent crash):** playing against the computer opponent, a Teleport
+  interaction **crashed the app**. Reproduce with a computer Mage (or computer attacker into a
+  Mage) and capture the stack; likely the roll-off / auto-play path (`ComputerOpponentHandler`)
+  doesn't drive both roll-off dice the way the human flow expects (ties into Symptom 1).
+- **Doubles interaction to verify:** per the game rules, a doubles roll that breaks armor grants the
+  attacker a +1 on the **next consecutive** roll; Teleport's 1d6 roll-off is a roll between attacker
+  and Mage. Confirm whose die (if any) the +1 applies to and that the consecutive-roll rule is
+  honored, and that resolving the roll-off correctly either escapes or continues the attack. This
+  may intersect the doubles handling touched by SS-222.
+- **Source:** `domain/.../ability/passive/TeleportHandler.kt`, the Teleport roll-off combat controls
+  in `ArenaCombatControl.kt` (two-button simultaneous roll), and `mage/MageTeleport.kt` for the
+  animation. Ensure both die buttons are shown/enabled together and the roll-off resolves.
+- **Related:** SS-222 (doubles/Mirror Image domain regressions), SS-211 (Teleport portal animation),
+  dice must be roll-bearing ([[dice-roll-must-be-roll-bearing]]).
+
+### SS-228 — Using an activated ability must restart the turn timer
+
+- [ ] Not completed
+- **Symptom:** When a player uses an ability the turn timer is **not** restarted — e.g. Gambler's
+  All-In or Illusionist's Impersonate consume the interaction but the countdown keeps running from
+  the pre-ability value.
+- **Goal:** Any ability use that starts a fresh interaction restarts the turn timer, the same as a
+  normal action does. Covers activated abilities that don't use the normal attack roll (All-In,
+  Impersonate) and any ability that opens a follow-up roll prompt.
+- **Source:** `ui/screens/arena/model/TimerAction.kt`, `ui/screens/arena/ui/combat/CombatTurnTimer.kt`,
+  and the timer-reset wiring in `ArenaScreenViewModel.kt`. Confirm which combat events trigger a
+  timer reset and add ability use to that set.
+- **Related:** SS-180 (timeout auto-pick uses the same timer).
+
+### SS-229 — Die face shows wrong value for HighRoller (Lucky Coin) damage
+
+- [ ] Not completed — **Priority: dice must always match the roll.**
+- **Symptom:** Gambler's Lucky Coin rolled a **6**, which triggered the HighRoller effect (deal 1d6
+  damage to the attacker). The damage roll came up **3** and dealt 3, but the die **kept showing 6**
+  instead of the 3 it should have displayed. The face must reflect the roll that is actually
+  resolving (the 3), not the prior trigger roll.
+- **Root pattern:** recurring dice-fidelity bug — the resolving roll must be **roll-bearing** on its
+  message and mapped in `rolledDice()`, or the tray shows a stale face
+  ([[dice-roll-must-be-roll-bearing]], [[dice-show-last-roll]]).
+- **Source:** `domain/.../ability/passive/LuckyCoinHandler.kt` (the 6 → HighRoller damage roll must
+  carry its own die value) and the dice-tray mapping that feeds the face; `gambler/GamblerLuckyCoin.kt`
+  for the animation cue.
+- **Related:** Priority mandate (dice = roll), SS-193 (Gambler ability animations), SS-237 (the
+  sibling dice-fidelity bug on Illusionist).
+
+### SS-230 — Finished-arena Leave button pops the whole back stack and exits the app
+
+- [ ] Not completed
+- **Symptom:** The **Leave** button in the Finished arena state pops the navigation stack
+  repeatedly until the app exits, instead of returning to the expected previous screen (Tavern /
+  home).
+- **Suspected cause:** a pop loop — Leave triggers a repeated `popBackStack` rather than a single
+  targeted navigation. Likely in the arena-exit handling.
+- **Source:** the Leave action in `MatchFinishedContent.kt` / `ArenaScreen.kt` →
+  `ArenaScreenViewModel.kt`, resolved against `SorcerersAndSpiritsNavigationHost.kt` /
+  `NavigationRoutes.kt`. Navigate once to the intended destination (or pop to a specific route),
+  not in a loop.
+- **Related:** SS-133 (screen transitions).
+
+### SS-231 — Hold turn-order / seating changes until resolution animations finish (domain-owned)
+
+- [ ] Not completed — **Priority: animations must finish before turn order changes (multiplayer).**
+- **Goal:** Do this the right way, once, in the **domain**: the turn owner and the seated avatars
+  must not advance to the next player until the current resolution's animations have finished
+  playing. Define the rule + the properties in the domain and pass the data along (as was done for
+  gating **button visibility** in SS-215), so individual abilities don't each re-invent an ad-hoc
+  wait. The seated avatars and turn owner should reflect the just-resolved action for the duration of
+  its animations, then advance.
+- **Why:** SS-232 (Duelist) and SS-233 (Encore) are the two current symptoms of the **same**
+  underlying problem — the seat/turn advances while the effect is still animating, so the next
+  player appears with no target / the effect is cut off. This umbrella is the correct fix; the two
+  bug tickets are its acceptance cases.
+- **Mechanism:** extend the animation-gating seam that SS-215 introduced (flash sequencer
+  `isSequencing`) so it also gates the **seating/turn-owner** advance, driven by domain-declared
+  animation obligations on the resolution rather than UI guesswork
+  ([[domain-is-source-of-truth]], [[message-log-is-passive]]).
+- **Related:** SS-215 (lock controls until animations finish), SS-222 / SS-216 / SS-181 (seating
+  identity), SS-232, SS-233.
+
+### SS-232 — Duelist Prepare Attack miss drops Duelist to head icon; next player seated with no target
+
+- [ ] Not completed — symptom of SS-231.
+- **Symptom (3-player game):** Duelist used Prepare Attack and **missed**; their turn ended and the
+  Duelist reverted to a `ClassHeadIcon` (no seated avatar). The turn advanced to the next player,
+  who then had **no target**, leaving no seated avatar.
+- **Goal:** After a Prepare Attack miss the Duelist stays seated through the miss animation, and the
+  hand-off to the next player seats the correct avatars — no empty seat, no premature head-icon
+  reversion. Fix via the SS-231 domain-owned gating rather than a Duelist-local patch.
+- **Source:** `resolveTargetUserId` seating in `ui/screens/arena/ui/combat/ArenaCombat.kt` (the
+  same area implicated by the SS-222 seating regressions) and the Prepare Attack resolution.
+- **Related:** SS-231 (parent), SS-222 (seating regressions), SS-208/SS-209 (Duelist animations).
+
+### SS-233 — Encore animation must finish before Bard reverts to head icon; suppress Encore on final KO
+
+- [ ] Not completed — symptom of SS-231 (part 1); part 2 overlaps SS-206.
+- **Symptom 1:** The Encore animation is cut off — the Bard returns to a `ClassHeadIcon` before the
+  Encore animation has finished playing. It must play through fully first (fix via SS-231's
+  domain-owned gating).
+- **Symptom 2:** Encore should **not** play when the triggering hit **defeated the last opponent**
+  (match over). This is the same guard already noted as a follow-up on SS-206 — coordinate so it's
+  fixed once, not twice.
+- **Source:** `bard/BardEncore.kt` / `EncoreStage.kt` (`EncoreFullScreenOverlay`) and the Encore
+  trigger in the domain; `ArenaMessageState.Encore.*`.
+- **Related:** SS-231 (parent), SS-206 (Encore animation follow-up: suppress on final KO), SS-215.
+
+### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
+
+- [ ] Not completed — **do not start until the owner describes the intended UI.**
+- **Symptom:** Bard's Persuade is badly broken — multiple bugs plus a **crash**, to the point the
+  exact misbehavior can't be pinned down from observation alone. The owner's read is that the lack
+  of a clearly-defined intended UI is part of the problem.
+- **Action when picked up:** the **owner will first fully describe how the Persuade UI should
+  behave** (armor-passed prompt, the 1d6 roll, 5 = stop, 6 = stop + redirect to a legal non-Bard
+  target, and the multiplayer-only redirect constraint). Only then implement against that spec.
+  Reproduce and capture the crash stack as step one.
+- **Source:** `domain/.../ability/passive/` Persuade handler + Persuade combat controls +
+  `bard/BardLute.kt` / `bardUserId` plumbing (SS-207).
+- **Related:** SS-207 (Persuade animation), game rule: Persuade redirect needs ≥2 alive non-Bard
+  players.
+
+### SS-237 — Illusionist Mirror Image: keep the −1 die badge on the rerolled die until the next reroll
+
+- [ ] Not completed — **Priority: dice must always match the roll.**
+- **Symptom / requirement:** When the Illusionist rerolls a die against their **Health** (Mirror
+  Image: reroll 1d6, result −1, min 0), the die that was rerolled must show the **−1 badge**. The
+  badge must **stay** on that rerolled die until the **next action that rerolls dice** occurs — it
+  should not vanish early or attach to the wrong die. This has been repeatedly mis-implemented;
+  take the time to model it correctly rather than patching symptoms.
+- **Correct model:** the −1 badge is a property of the **specific die that Mirror Image rerolled**,
+  carried on the roll state through Domain → Data → UI ([[domain-is-source-of-truth]],
+  [[never-search-messages-for-decisions]]), and cleared only when a subsequent reroll replaces the
+  dice. Applies to both the ArmorClass reroll and the Damage (Health) reroll; not usable on SPC
+  damage.
+- **Source:** `domain/.../ability/passive/MirrorImageHandler.kt`, the dice-badge mapping in the
+  dice tray, and `mirrorImageControls()` in `ArenaCombatControl.kt` (SS-222 also touches this).
+- **Related:** SS-222 (Mirror Image domain regressions + reroll button order), SS-029 (Mirror Image
+  reroll label), SS-229 (sibling dice-fidelity bug), [[disabled-die-never-animates]].
 
 ## Profile & Auth
+
+### SS-223 — Google Sign-In no longer cached on a physical device (regression)
+
+- [ ] Not completed — **regression: worked previously, now broken.**
+- **Symptom:** On a physical Android device, Google Sign-In is **not cached** — the user is not kept
+  signed in across launches and must re-authenticate. This worked before and now does not, so it's a
+  regression (SS-088 marked Android Google "DONE & verified live").
+- **Investigate:** what changed the persistence — Firebase Auth session persistence / anonymous→
+  Google `linkWithCredential` upgrade, the Credential Manager flow, or a `google-services.json` /
+  signing-cert (SHA) mismatch on the installed build vs. the registered fingerprints. Confirm the
+  signed-in `FirebaseUser` survives process death on device (not just emulator). Bisect against the
+  last known-good commit where sign-in cached correctly.
+- **Source:** `AndroidSocialSignInProvider` and the auth/session persistence layer; the
+  `composeApp/src/google-services.json` config; the anonymous-account upgrade path noted in SS-088.
+- **Related:** SS-088 (Android Google enablement), SS-061/SS-086 (Google sign-in), the owner's
+  standing emphasis on session/connectivity resilience ([[connectivity-resilience-priority]]).
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers
 

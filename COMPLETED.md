@@ -493,6 +493,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-222** — Behavioral regressions surfaced by the dice-architecture refactor: resolved the 8
+  post-refactor test failures (seating `resolveTargetUserId`, Mirror Image reroll button order, and
+  Mirror Image domain Doubles-message emission), deciding per-case between production fix and test
+  update to get the suite back to green.
 - **SS-202** — All-In button stuck disabled because `hasActedThisRound` was dropped in the UI
   round-trip: `CharacterClassState` omitted `hasActedThisRound`, so `CharacterClassState.toDomain()`
   (used to build every dispatched action's `playerMap`) reset it to false via the domain default —

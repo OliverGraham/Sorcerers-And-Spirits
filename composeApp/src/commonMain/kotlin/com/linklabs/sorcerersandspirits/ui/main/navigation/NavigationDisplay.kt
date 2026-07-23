@@ -47,11 +47,22 @@ internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifi
         }
     }
 
+    val leaveArenaWithDust: () -> Unit = {
+        scope.launch {
+            dustSnapshot = screenLayer.toImageBitmap()
+            backStack.popToTavern()
+        }
+    }
+
     Box(modifier = modifier) {
         NavDisplay(
             backStack = backStack,
             entryProvider = { key ->
-                key.toScreen(backStack = backStack, popWithDust = popWithDust)
+                key.toScreen(
+                    backStack = backStack,
+                    popWithDust = popWithDust,
+                    leaveArenaWithDust = leaveArenaWithDust,
+                )
             },
             onBack = { popWithDust() },
             entryDecorators = getRouteScopedEntryDecorators(),
@@ -81,6 +92,7 @@ internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifi
 private fun NavKey.toScreen(
     backStack: NavBackStack<NavKey>,
     popWithDust: () -> Unit,
+    leaveArenaWithDust: () -> Unit,
 ): NavEntry<NavKey> =
     when (this) {
         Route.TavernScreen ->
@@ -99,7 +111,7 @@ private fun NavKey.toScreen(
 
         is Route.ArenaScreen ->
             NavEntry(key = this) {
-                ArenaScreen(arguments = arguments.toDomain(), onBack = popWithDust)
+                ArenaScreen(arguments = arguments.toDomain(), onBack = leaveArenaWithDust)
             }
 
         Route.ProfileScreen ->

@@ -512,6 +512,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   tray was already correct; the thrown payback coin in `GamblerLuckyCoin.kt` drew a hardcoded
   `LUCKY_FACE` (6) while the actual damage was carried unused on the cue. `throwScene` now uses
   `cue.damage`, so the flung coin reads the resolving roll.
+- **SS-230** — Finished-arena Leave button popped the whole back stack and exited the app: arena exit
+  routed through `popWithDust`'s non-idempotent single `removeLastOrNull()`, so a second `NavigateBack`
+  (the arena-deleted stream path racing the leave) popped past the Tavern root. Added an idempotent
+  `NavBackStack.popToTavern()` and route `ArenaScreen`'s `onBack` through `leaveArenaWithDust`, landing
+  deterministically on the Tavern so repeated leave events can't drain the stack.
 - **SS-222** — Behavioral regressions surfaced by the dice-architecture refactor: resolved the 8
   post-refactor test failures (seating `resolveTargetUserId`, Mirror Image reroll button order, and
   Mirror Image domain Doubles-message emission), deciding per-case between production fix and test

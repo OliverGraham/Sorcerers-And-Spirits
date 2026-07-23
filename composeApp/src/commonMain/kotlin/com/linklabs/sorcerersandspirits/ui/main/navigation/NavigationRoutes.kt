@@ -57,15 +57,17 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
     }
 }
 
-/**
- * Home screens are the destinations a player should land on when backing out of a drawer-opened
- * screen: the Tavern, or the Arena while a match is in progress.
- */
 internal fun NavKey.isHomeScreen(): Boolean =
     this is Route.TavernScreen || this is Route.ArenaScreen
 
 internal fun NavBackStack<NavKey>.popToNearestHomeScreen() {
     while (size > 1 && !last().isHomeScreen()) {
+        removeLastOrNull()
+    }
+}
+
+internal fun NavBackStack<NavKey>.popToTavern() {
+    while (size > 1 && last() !is Route.TavernScreen) {
         removeLastOrNull()
     }
 }

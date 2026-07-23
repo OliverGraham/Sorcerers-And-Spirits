@@ -374,20 +374,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
 
-### SS-230 — Finished-arena Leave button pops the whole back stack and exits the app
-
-- [ ] Not completed
-- **Symptom:** The **Leave** button in the Finished arena state pops the navigation stack
-  repeatedly until the app exits, instead of returning to the expected previous screen (Tavern /
-  home).
-- **Suspected cause:** a pop loop — Leave triggers a repeated `popBackStack` rather than a single
-  targeted navigation. Likely in the arena-exit handling.
-- **Source:** the Leave action in `MatchFinishedContent.kt` / `ArenaScreen.kt` →
-  `ArenaScreenViewModel.kt`, resolved against `SorcerersAndSpiritsNavigationHost.kt` /
-  `NavigationRoutes.kt`. Navigate once to the intended destination (or pop to a specific route),
-  not in a loop.
-- **Related:** SS-133 (screen transitions).
-
 ### SS-231 — Hold turn-order / seating changes until resolution animations finish (domain-owned)
 
 - [ ] Not completed — **Priority: animations must finish before turn order changes (multiplayer).**

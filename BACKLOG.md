@@ -374,42 +374,10 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
 
-### SS-231 — Hold turn-order / seating changes until resolution animations finish (domain-owned)
-
-- [ ] Not completed — **Priority: animations must finish before turn order changes (multiplayer).**
-- **Goal:** Do this the right way, once, in the **domain**: the turn owner and the seated avatars
-  must not advance to the next player until the current resolution's animations have finished
-  playing. Define the rule + the properties in the domain and pass the data along (as was done for
-  gating **button visibility** in SS-215), so individual abilities don't each re-invent an ad-hoc
-  wait. The seated avatars and turn owner should reflect the just-resolved action for the duration of
-  its animations, then advance.
-- **Why:** SS-232 (Duelist) and SS-233 (Encore) are the two current symptoms of the **same**
-  underlying problem — the seat/turn advances while the effect is still animating, so the next
-  player appears with no target / the effect is cut off. This umbrella is the correct fix; the two
-  bug tickets are its acceptance cases.
-- **Mechanism:** extend the animation-gating seam that SS-215 introduced (flash sequencer
-  `isSequencing`) so it also gates the **seating/turn-owner** advance, driven by domain-declared
-  animation obligations on the resolution rather than UI guesswork
-  ([[domain-is-source-of-truth]], [[message-log-is-passive]]).
-- **Related:** SS-215 (lock controls until animations finish), SS-222 / SS-216 / SS-181 (seating
-  identity), SS-232, SS-233.
-
-### SS-232 — Duelist Prepare Attack miss drops Duelist to head icon; next player seated with no target
-
-- [ ] Not completed — symptom of SS-231.
-- **Symptom (3-player game):** Duelist used Prepare Attack and **missed**; their turn ended and the
-  Duelist reverted to a `ClassHeadIcon` (no seated avatar). The turn advanced to the next player,
-  who then had **no target**, leaving no seated avatar.
-- **Goal:** After a Prepare Attack miss the Duelist stays seated through the miss animation, and the
-  hand-off to the next player seats the correct avatars — no empty seat, no premature head-icon
-  reversion. Fix via the SS-231 domain-owned gating rather than a Duelist-local patch.
-- **Source:** `resolveTargetUserId` seating in `ui/screens/arena/ui/combat/ArenaCombat.kt` (the
-  same area implicated by the SS-222 seating regressions) and the Prepare Attack resolution.
-- **Related:** SS-231 (parent), SS-222 (seating regressions), SS-208/SS-209 (Duelist animations).
-
 ### SS-233 — Encore animation must finish before Bard reverts to head icon; suppress Encore on final KO
 
-- [ ] Not completed — symptom of SS-231 (part 1); part 2 overlaps SS-206.
+- [ ] Not completed — part 1 (animation cut-off) resolved by SS-231's seat/turn hold; part 2
+  (suppress on final KO) remains and overlaps SS-206.
 - **Symptom 1:** The Encore animation is cut off — the Bard returns to a `ClassHeadIcon` before the
   Encore animation has finished playing. It must play through fully first (fix via SS-231's
   domain-owned gating).

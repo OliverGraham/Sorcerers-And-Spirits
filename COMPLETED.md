@@ -384,6 +384,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   `MELEE_REACTION_DELAY_MILLIS` (the dash spends time closing in). Cue sources:
   `ArenaMessageState.KillingMomentum`, `.Dodge`, `.NormalRoll` (attacker side). Tests expanded in
   `CombatAnimationCueTest`, `ArenaMessageStateTest`, `MirrorImageKeepFlowTest`. Parent: SS-191.
+- **SS-231** — Hold turn-order / seating changes until resolution animations finish: the seated
+  avatars, active-roller halo, and turn owner now stay on the just-resolved action until the flash
+  sequencer finishes, then advance as a unit — so an acting avatar (e.g. a Duelist Prepare Attack
+  miss) plays its animation through instead of reverting to a head icon while the next player's turn
+  appears. New `CombatMoment`/`CombatMomentHold` (pure, tested fold) held in `rememberHeldCombatMoment`
+  and fed into `ArenaCombat`'s seating/`CombatStage`. Absorbed former SS-232. Related: SS-215, SS-181,
+  SS-213, SS-233 (part 1).
 
 ## App / Main
 

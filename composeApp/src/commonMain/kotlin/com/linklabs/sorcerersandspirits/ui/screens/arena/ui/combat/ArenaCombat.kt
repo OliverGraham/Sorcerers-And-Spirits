@@ -24,6 +24,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
@@ -67,6 +68,25 @@ internal fun ArenaCombat(
     val targetedOpponentUserId =
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
 
+    val liveMoment =
+        CombatMoment(
+            seating =
+                state.seatingFor(
+                    targetUserId = targetedOpponentUserId,
+                    isMatchEnding = screenState.isMatchEnding,
+                    collapsingTargetUserId =
+                        screenState.collapsingSeatUserId(playback = flashPlayback),
+                ),
+            activeUserIds = state.activeUserIds,
+            turnOwnerUserId = state.turnOwnerUserId,
+        )
+    val heldMoment =
+        rememberHeldCombatMoment(
+            liveMoment = liveMoment,
+            latestAnimationMessageId = screenState.latestAnimationMessageId,
+            isSequencing = flashPlayback.isSequencing,
+        )
+
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
     val avatarBounds = remember { CombatAvatarBounds() }
 
@@ -102,13 +122,7 @@ internal fun ArenaCombat(
 
                 Box(modifier = Modifier.weight(weight = 1f)) {
                     AnimatedContent(
-                        targetState =
-                            state.seatingFor(
-                                targetUserId = targetedOpponentUserId,
-                                isMatchEnding = screenState.isMatchEnding,
-                                collapsingTargetUserId =
-                                    screenState.collapsingSeatUserId(playback = flashPlayback),
-                            ),
+                        targetState = heldMoment.seating,
                         label = AVATAR_SEATING_TRANSITION_LABEL,
                         modifier = Modifier.fillMaxSize(),
                     ) { seating ->
@@ -119,6 +133,8 @@ internal fun ArenaCombat(
                             CombatStage(
                                 state = state,
                                 seating = seating,
+                                activeUserIds = heldMoment.activeUserIds,
+                                turnOwnerUserId = heldMoment.turnOwnerUserId,
                                 animationCue = flashPlayback.combatAnimationCue,
                                 onSelectTarget = { selectedOpponentUserId = it },
                                 onInspect = { inspectedUserId = it },
@@ -219,6 +235,8 @@ private fun ArenaScreenState.collapsingSeatUserId(playback: FlashPlaybackState):
 private fun CombatStage(
     state: ArenaState.Combat,
     seating: CombatSeating,
+    activeUserIds: Set<String>,
+    turnOwnerUserId: String,
     animationCue: CombatAnimationCue?,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
@@ -236,8 +254,8 @@ private fun CombatStage(
             bottomPlayer = state.seatedPlayer(seatUserId = seating.bottomSeatUserId),
             animationCue = animationCue,
             userPlayerId = state.userPlayerId,
-            activeUserIds = state.activeUserIds,
-            turnOwnerUserId = state.turnOwnerUserId,
+            activeUserIds = activeUserIds,
+            turnOwnerUserId = turnOwnerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,

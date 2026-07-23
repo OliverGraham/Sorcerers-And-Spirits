@@ -39,6 +39,8 @@ data class ArenaScreenState(
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
     val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
 
+    val latestAnimationMessageId: String? = playbackMessages.lastOrNull { it.cue != null }?.id
+
     val logMessages: List<ArenaMessageState> =
         messages.filterNot { it is ArenaMessageState.NormalRoll.Attack }
 }

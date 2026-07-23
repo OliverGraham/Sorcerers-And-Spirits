@@ -2543,6 +2543,28 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `When a failed Holy Shield Prayer defeats the last opponent, then a Bard's Encore does not trigger`() {
+        // Arrange
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass = TestCharacterClasses.bard(),
+                defenderClass = TestCharacterClasses.paladin().copy(hitPoints = 0),
+            )
+        val performCombatAction = getPerformCombatAction(arguments = arguments)
+        val currentAction = getAbilityRollAction(purpose = AbilityAction.Passive.HolyShield.Prayer)
+        val paladinUserId = currentAction.defenderUserId
+
+        setupTwoDiceRoll(userId = paladinUserId, firstDie = 4, secondDie = 5)
+
+        // Act
+        val outcome = performCombatAction.invoke(currentAction = currentAction)
+
+        // Assert
+        assertTrue(actual = outcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = outcome.isMatchFinished)
+    }
+
+    @Test
     fun `When a Paladin performs Wrath, then the attacker takes damage and the turn ends`() {
         // Arrange
         val attackerStartingHitPoints = 10

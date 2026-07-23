@@ -391,6 +391,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   appears. New `CombatMoment`/`CombatMomentHold` (pure, tested fold) held in `rememberHeldCombatMoment`
   and fed into `ArenaCombat`'s seating/`CombatStage`. Absorbed former SS-232. Related: SS-215, SS-181,
   SS-213, SS-233 (part 1).
+- **SS-233** — Encore animation must finish before Bard reverts to head icon; suppress Encore on
+  final KO: part 1 (animation cut-off) resolved by SS-231's seat/turn hold; part 2 guards
+  `EncoreHandler.triggerEncore` so a Bard's Encore no longer triggers when the hit defeated the last
+  opponent (`consciousPlayers.size <= 1` → resolve turn end) — the leak was the Holy Shield failed-
+  Prayer path. Also closes the matching SS-206 follow-up. Related: SS-231, SS-206.
 
 ## App / Main
 

@@ -274,8 +274,7 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   the outer arena `Box` **below** `BottomControls`), so the darkness reaches the edges while the roll
   buttons float on top of it and stay visible/usable — the arena darkens to a smooth gradient behind
   the buttons rather than stopping at the stage region.
-- **Follow-up:** Make sure Encore is not triggered in incorrect scenarios (such as knocking out the
-  last opponent). Replace the hand-drawn microphone with an image asset for a truer 3D look (keep
+- **Follow-up:** Replace the hand-drawn microphone with an image asset for a truer 3D look (keep
   the
   glint, note behaviours, gray drain, and darkness fall/lift choreography); polish/tune the crowd
   density, proportions, colours, and timing once seen on-device; and consider a real crowd-noise
@@ -373,20 +372,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   both sides).
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
-
-### SS-233 — Encore animation must finish before Bard reverts to head icon; suppress Encore on final KO
-
-- [ ] Not completed — part 1 (animation cut-off) resolved by SS-231's seat/turn hold; part 2
-  (suppress on final KO) remains and overlaps SS-206.
-- **Symptom 1:** The Encore animation is cut off — the Bard returns to a `ClassHeadIcon` before the
-  Encore animation has finished playing. It must play through fully first (fix via SS-231's
-  domain-owned gating).
-- **Symptom 2:** Encore should **not** play when the triggering hit **defeated the last opponent**
-  (match over). This is the same guard already noted as a follow-up on SS-206 — coordinate so it's
-  fixed once, not twice.
-- **Source:** `bard/BardEncore.kt` / `EncoreStage.kt` (`EncoreFullScreenOverlay`) and the Encore
-  trigger in the domain; `ArenaMessageState.Encore.*`.
-- **Related:** SS-231 (parent), SS-206 (Encore animation follow-up: suppress on final KO), SS-215.
 
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 

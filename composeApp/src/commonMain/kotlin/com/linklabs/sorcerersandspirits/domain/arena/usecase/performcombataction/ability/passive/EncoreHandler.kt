@@ -13,6 +13,11 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     fun rollEncore() = combatMutator.rollEncore()
 
     private fun CombatMutator.triggerEncore() {
+        if (consciousPlayers.size <= 1) {
+            resolveTurnEnd()
+            return
+        }
+
         addMessage(message = ArenaMessage.Encore.Trigger(bardUserId = attackerUserId))
 
         setNextAbilityRoll(

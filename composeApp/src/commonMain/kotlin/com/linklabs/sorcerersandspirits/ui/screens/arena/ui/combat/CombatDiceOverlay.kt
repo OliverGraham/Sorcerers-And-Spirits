@@ -67,6 +67,8 @@ internal fun DiceOverlay(
             diePosition = DiePosition.First,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
+            settleKey = diceStateHolder.rollGeneration,
+            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.First) },
         )
         SingleDie(
             dieState = diceStateHolder.secondDieState,
@@ -75,6 +77,8 @@ internal fun DiceOverlay(
             diePosition = DiePosition.Second,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
+            settleKey = diceStateHolder.rollGeneration,
+            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.Second) },
         )
 
         DiceBadgeOverlay(diceBadgeState = diceBadgeState, homeCenter = homeCenter)
@@ -89,6 +93,8 @@ private fun BoxWithConstraintsScope.SingleDie(
     diePosition: DiePosition,
     homeCenter: Offset,
     shakeTick: Int,
+    settleKey: Int,
+    onSettled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val restCenter =
@@ -107,6 +113,8 @@ private fun BoxWithConstraintsScope.SingleDie(
         trayHeight = maxHeight,
         restCenter = restCenter,
         tint = tint,
+        settleKey = settleKey,
+        onSettled = onSettled,
         modifier = modifier,
     )
 }

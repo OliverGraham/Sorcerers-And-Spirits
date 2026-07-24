@@ -20,6 +20,7 @@ import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
@@ -2259,8 +2260,10 @@ class PerformCombatActionUseCaseTest {
 
         val purpose =
             AbilityAction.Passive.Teleport(
-                attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID),
-                defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
+                attackerRoll =
+                    TeleportDie(userId = DEFAULT_ATTACKER_ID, diePosition = DiePosition.First),
+                defenderRoll =
+                    TeleportDie(userId = DEFAULT_DEFENDER_ID, diePosition = DiePosition.Second),
                 attackerDoublesBonus = 0,
             )
         val currentAction = getAbilityRollAction(purpose = purpose)
@@ -2305,8 +2308,14 @@ class PerformCombatActionUseCaseTest {
         val tiedRoll = 4
         val purpose =
             AbilityAction.Passive.Teleport(
-                attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID, roll = tiedRoll),
-                defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
+                attackerRoll =
+                    TeleportDie(
+                        userId = DEFAULT_ATTACKER_ID,
+                        diePosition = DiePosition.First,
+                        roll = tiedRoll,
+                    ),
+                defenderRoll =
+                    TeleportDie(userId = DEFAULT_DEFENDER_ID, diePosition = DiePosition.Second),
                 attackerDoublesBonus = 0,
             )
         val mageUserId = DEFAULT_DEFENDER_ID
@@ -2338,8 +2347,14 @@ class PerformCombatActionUseCaseTest {
 
         val purpose =
             AbilityAction.Passive.Teleport(
-                attackerRoll = TeleportDie(userId = DEFAULT_ATTACKER_ID, roll = attackerRoll),
-                defenderRoll = TeleportDie(userId = DEFAULT_DEFENDER_ID),
+                attackerRoll =
+                    TeleportDie(
+                        userId = DEFAULT_ATTACKER_ID,
+                        diePosition = DiePosition.First,
+                        roll = attackerRoll,
+                    ),
+                defenderRoll =
+                    TeleportDie(userId = DEFAULT_DEFENDER_ID, diePosition = DiePosition.Second),
                 attackerDoublesBonus = 0,
             )
         val mageUserId = DEFAULT_DEFENDER_ID
@@ -2381,8 +2396,9 @@ class PerformCombatActionUseCaseTest {
         val bonus = 1
         val purpose =
             AbilityAction.Passive.Teleport(
-                attackerRoll = TeleportDie(userId = attackerUserId),
-                defenderRoll = TeleportDie(userId = mageUserId),
+                attackerRoll =
+                    TeleportDie(userId = attackerUserId, diePosition = DiePosition.First),
+                defenderRoll = TeleportDie(userId = mageUserId, diePosition = DiePosition.Second),
                 attackerDoublesBonus = bonus,
             )
         val currentAction = getAbilityRollAction(purpose = purpose)
@@ -2418,8 +2434,9 @@ class PerformCombatActionUseCaseTest {
         val mageDie = 5
         val purpose =
             AbilityAction.Passive.Teleport(
-                attackerRoll = TeleportDie(userId = attackerUserId),
-                defenderRoll = TeleportDie(userId = mageUserId),
+                attackerRoll =
+                    TeleportDie(userId = attackerUserId, diePosition = DiePosition.First),
+                defenderRoll = TeleportDie(userId = mageUserId, diePosition = DiePosition.Second),
                 attackerDoublesBonus = bonus,
             )
         val mageRollAction = getAbilityRollAction(purpose = purpose, rollingUserId = mageUserId)

@@ -196,6 +196,8 @@ internal fun ArenaCombat(
                 DiceOverlay(
                     diceStateHolder = diceStateHolder,
                     diceBadgeState = state.diceBadgeState,
+                    firstDieTint = state.firstDieTint,
+                    secondDieTint = state.secondDieTint,
                     homeBounds = homeBounds,
                 )
             }

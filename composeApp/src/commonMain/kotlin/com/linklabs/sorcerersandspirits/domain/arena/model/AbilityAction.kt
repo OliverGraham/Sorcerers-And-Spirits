@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
@@ -46,7 +47,11 @@ sealed interface AbilityAction {
             val attackerDoublesBonus: Int,
         ) : Passive {
 
-            data class TeleportDie(val userId: String, val roll: Int? = null)
+            data class TeleportDie(
+                val userId: String,
+                val diePosition: DiePosition,
+                val roll: Int? = null,
+            )
         }
 
         data class MirrorImage(

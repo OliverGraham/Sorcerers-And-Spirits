@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 
 internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
@@ -17,8 +18,10 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
         val purpose =
             AbilityAction.Passive.Teleport(
-                attackerRoll = TeleportDie(userId = attackerUserId),
-                defenderRoll = TeleportDie(userId = defenderUserId),
+                attackerRoll =
+                    TeleportDie(userId = attackerUserId, diePosition = DiePosition.First),
+                defenderRoll =
+                    TeleportDie(userId = defenderUserId, diePosition = DiePosition.Second),
                 attackerDoublesBonus = attackerDoublesBonus(),
             )
 
@@ -116,7 +119,9 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         mageUserId: String,
     ): TeleportDie {
         val userId = unrolledTeleportDie.userId
-        val result = diceRoller.roll1D6(userId = userId).die + bonus
+        val result =
+            diceRoller.roll1D6(userId = userId, diePosition = unrolledTeleportDie.diePosition).die +
+                bonus
 
         addMessage(
             message =

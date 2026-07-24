@@ -8,6 +8,8 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbil
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttackInProgress
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 
+// TODO: Refactor this file - move functions into the files they belong in
+
 /**
  * A combat action the user can currently take, derived from [ArenaState.Combat] by
  * [deriveCombatControls].
@@ -18,6 +20,7 @@ sealed interface ArenaCombatControl {
     val requiresTarget: Boolean
     val enabled: Boolean
     val numberOfDice: NumberOfDice
+    val rollingDiePositions: Set<DiePosition>
 
     @Immutable
     data class NormalAttack(
@@ -26,6 +29,7 @@ sealed interface ArenaCombatControl {
     ) : ArenaCombatControl {
         override val label: String = "Attack"
         override val enabled: Boolean = true
+        override val rollingDiePositions = numberOfDice.toDiePositions()
     }
 
     @Immutable
@@ -36,6 +40,7 @@ sealed interface ArenaCombatControl {
         override val enabled: Boolean,
     ) : ArenaCombatControl {
         override val numberOfDice = action.getNumberOfDice()
+        override val rollingDiePositions = numberOfDice.toDiePositions()
     }
 
     @Immutable
@@ -43,6 +48,7 @@ sealed interface ArenaCombatControl {
         val action: AbilityActionState,
         override val label: String,
         override val requiresTarget: Boolean,
+        override val rollingDiePositions: Set<DiePosition>,
         override val enabled: Boolean = true,
     ) : ArenaCombatControl {
         override val numberOfDice: NumberOfDice = action.getNumberOfDice()
@@ -55,27 +61,39 @@ enum class NumberOfDice {
     None,
 }
 
-// TODO: Refactor these to be in the correct coding style as per my requirements.
-internal fun ArenaCombatControl.rollingDiePositions(): Set<DiePosition> =
-    when (numberOfDice) {
+private fun NumberOfDice.toDiePositions(): Set<DiePosition> =
+    when (this) {
         NumberOfDice.None -> emptySet()
+        NumberOfDice.One -> setOf(DiePosition.First)
         NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
-        NumberOfDice.One -> setOf(singleRollDiePosition())
     }
 
-private fun ArenaCombatControl.singleRollDiePosition(): DiePosition =
+private fun AbilityActionState.resolveRollingDiePositions(userPlayerId: String): Set<DiePosition> =
+    when (getNumberOfDice()) {
+        NumberOfDice.None -> emptySet()
+        NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
+        NumberOfDice.One -> setOf(singleRollDiePosition(userPlayerId = userPlayerId))
+    }
+
+private fun AbilityActionState.singleRollDiePosition(userPlayerId: String): DiePosition =
     when (this) {
-        is ArenaCombatControl.AbilityRoll -> action.singleRollDiePosition()
+        is AbilityActionState.Passive.Teleport ->
+            localRollerDiePosition(userPlayerId = userPlayerId)
+
+        is AbilityActionState.Passive.MirrorImage ->
+            if (mirrorImageRerollSelection == MirrorImageRerollSelection.Second) {
+                DiePosition.Second
+            } else {
+                DiePosition.First
+            }
+
         else -> DiePosition.First
     }
 
-private fun AbilityActionState.singleRollDiePosition(): DiePosition {
-    val isRerollingSecondDie =
-        this is AbilityActionState.Passive.MirrorImage &&
-            mirrorImageRerollSelection == MirrorImageRerollSelection.Second
-
-    return if (isRerollingSecondDie) DiePosition.Second else DiePosition.First
-}
+private fun AbilityActionState.Passive.Teleport.localRollerDiePosition(
+    userPlayerId: String
+): DiePosition =
+    if (attackerRoll.userId == userPlayerId) attackerRoll.diePosition else defenderRoll.diePosition
 
 private fun AbilityActionState.getNumberOfDice() =
     when (this) {
@@ -143,16 +161,19 @@ internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> 
             if (
                 isItThisUsersTurn && actionState.action.isUserTheRoller(userPlayerId = userPlayerId)
             ) {
-                actionState.action.toAbilityRollControls()
+                actionState.action.toAbilityRollControls(userPlayerId = userPlayerId)
             } else {
                 emptyList()
             }
     }
 }
 
-private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl> =
+private fun AbilityActionState.toAbilityRollControls(
+    userPlayerId: String
+): List<ArenaCombatControl> =
     when (this) {
-        is AbilityActionState.Passive.MirrorImage -> mirrorImageControls()
+        is AbilityActionState.Passive.MirrorImage ->
+            mirrorImageControls(userPlayerId = userPlayerId)
 
         else ->
             listOf(
@@ -161,28 +182,36 @@ private fun AbilityActionState.toAbilityRollControls(): List<ArenaCombatControl>
                         action = this,
                         label = label,
                         requiresTarget = requiresTarget,
+                        rollingDiePositions =
+                            resolveRollingDiePositions(userPlayerId = userPlayerId),
                     )
             )
     }
 
-private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(): List<ArenaCombatControl> =
+private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(
+    userPlayerId: String
+): List<ArenaCombatControl> =
     listOf(
-        ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.First),
-            label = "Reroll the ${firstDie.originalRoll}",
-            requiresTarget = false,
-        ),
-        ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.Second),
-            label = "Reroll the ${secondDie.originalRoll}",
-            requiresTarget = false,
-        ),
-        ArenaCombatControl.AbilityRoll(
-            action = copy(mirrorImageRerollSelection = MirrorImageRerollSelection.None),
-            label = "Keep roll",
-            requiresTarget = false,
-        ),
-    )
+            MirrorImageRerollSelection.First,
+            MirrorImageRerollSelection.Second,
+            MirrorImageRerollSelection.None,
+        )
+        .map { selection -> copy(mirrorImageRerollSelection = selection) }
+        .map { action ->
+            ArenaCombatControl.AbilityRoll(
+                action = action,
+                label = action.mirrorImageControlLabel(),
+                requiresTarget = false,
+                rollingDiePositions = action.resolveRollingDiePositions(userPlayerId = userPlayerId),
+            )
+        }
+
+private fun AbilityActionState.Passive.MirrorImage.mirrorImageControlLabel(): String =
+    when (mirrorImageRerollSelection) {
+        MirrorImageRerollSelection.First -> "Reroll the ${firstDie.originalRoll}"
+        MirrorImageRerollSelection.Second -> "Reroll the ${secondDie.originalRoll}"
+        MirrorImageRerollSelection.None -> "Keep roll"
+    }
 
 internal fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
     when (this) {

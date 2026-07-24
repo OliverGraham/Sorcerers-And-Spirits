@@ -21,6 +21,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
@@ -1673,11 +1674,13 @@ class ArenaScreenViewModelTest {
                         attackerRoll =
                             AbilityAction.Passive.Teleport.TeleportDie(
                                 userId = OPPONENT_ID,
+                                diePosition = DiePosition.First,
                                 roll = attackerRoll,
                             ),
                         defenderRoll =
                             AbilityAction.Passive.Teleport.TeleportDie(
                                 userId = USER_ID,
+                                diePosition = DiePosition.Second,
                                 roll = defenderRoll,
                             ),
                         attackerDoublesBonus = 0,

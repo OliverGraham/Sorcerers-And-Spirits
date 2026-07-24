@@ -38,7 +38,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.rollingDiePositions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.rollActionFor
@@ -180,7 +179,7 @@ private fun AbilityButton(
         classColor = classColor,
         showClassBorder = true,
         diceStateHolder = diceStateHolder,
-        rollingDiePositions = control.rollingDiePositions(),
+        rollingDiePositions = control.rollingDiePositions,
         onRoll = onRoll,
         label = label,
         modifier = modifier,

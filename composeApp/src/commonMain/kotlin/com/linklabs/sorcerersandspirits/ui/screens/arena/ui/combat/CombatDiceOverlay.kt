@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -41,6 +42,8 @@ internal fun dieRestCenterX(
 internal fun DiceOverlay(
     diceStateHolder: DiceStateHolder,
     diceBadgeState: DiceBadgeState?,
+    firstDieTint: Color?,
+    secondDieTint: Color?,
     homeBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
@@ -60,6 +63,7 @@ internal fun DiceOverlay(
         SingleDie(
             dieState = diceStateHolder.firstDieState,
             isRolling = isRolling,
+            tint = firstDieTint,
             diePosition = DiePosition.First,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
@@ -67,6 +71,7 @@ internal fun DiceOverlay(
         SingleDie(
             dieState = diceStateHolder.secondDieState,
             isRolling = isRolling,
+            tint = secondDieTint,
             diePosition = DiePosition.Second,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
@@ -80,6 +85,7 @@ internal fun DiceOverlay(
 private fun BoxWithConstraintsScope.SingleDie(
     dieState: DieState,
     isRolling: Boolean,
+    tint: Color?,
     diePosition: DiePosition,
     homeCenter: Offset,
     shakeTick: Int,
@@ -100,6 +106,7 @@ private fun BoxWithConstraintsScope.SingleDie(
         trayWidth = maxWidth,
         trayHeight = maxHeight,
         restCenter = restCenter,
+        tint = tint,
         modifier = modifier,
     )
 }

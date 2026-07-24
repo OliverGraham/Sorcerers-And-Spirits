@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
@@ -85,7 +86,12 @@ sealed interface AbilityActionState {
             val attackerDoublesBonus: Int,
         ) : Passive
 
-        @Immutable data class TeleportDieState(val userId: String, val roll: Int? = null)
+        @Immutable
+        data class TeleportDieState(
+            val userId: String,
+            val diePosition: DiePosition,
+            val roll: Int? = null,
+        )
 
         @Immutable
         data class MirrorImage(
@@ -247,11 +253,13 @@ internal fun AbilityActionState.toDomain(): AbilityAction =
                         attackerRoll =
                             AbilityAction.Passive.Teleport.TeleportDie(
                                 userId = attackerRoll.userId,
+                                diePosition = attackerRoll.diePosition,
                                 roll = attackerRoll.roll,
                             ),
                         defenderRoll =
                             AbilityAction.Passive.Teleport.TeleportDie(
                                 userId = defenderRoll.userId,
+                                diePosition = defenderRoll.diePosition,
                                 roll = defenderRoll.roll,
                             ),
                         attackerDoublesBonus = attackerDoublesBonus,
@@ -364,11 +372,13 @@ internal fun AbilityAction.toState(): AbilityActionState =
                         attackerRoll =
                             AbilityActionState.Passive.TeleportDieState(
                                 userId = attackerRoll.userId,
+                                diePosition = attackerRoll.diePosition,
                                 roll = attackerRoll.roll,
                             ),
                         defenderRoll =
                             AbilityActionState.Passive.TeleportDieState(
                                 userId = defenderRoll.userId,
+                                diePosition = defenderRoll.diePosition,
                                 roll = defenderRoll.roll,
                             ),
                         attackerDoublesBonus = attackerDoublesBonus,

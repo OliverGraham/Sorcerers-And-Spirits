@@ -11,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -42,8 +41,6 @@ internal fun dieRestCenterX(
 internal fun DiceOverlay(
     diceStateHolder: DiceStateHolder,
     diceBadgeState: DiceBadgeState?,
-    firstDieTint: Color?,
-    secondDieTint: Color?,
     homeBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
@@ -58,26 +55,21 @@ internal fun DiceOverlay(
         val homeCenter =
             Offset(x = constraints.maxWidth / 2f, y = homeBounds.center.y - overlayOrigin.y)
         val shakeTick = diceStateHolder.shakeTick
-        val isRolling = diceStateHolder.isRolling
 
         SingleDie(
             dieState = diceStateHolder.firstDieState,
-            isRolling = isRolling,
-            tint = firstDieTint,
+            isRolling = diceStateHolder.isDieRolling(diePosition = DiePosition.First),
             diePosition = DiePosition.First,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
-            settleKey = diceStateHolder.rollGeneration,
             onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.First) },
         )
         SingleDie(
             dieState = diceStateHolder.secondDieState,
-            isRolling = isRolling,
-            tint = secondDieTint,
+            isRolling = diceStateHolder.isDieRolling(diePosition = DiePosition.Second),
             diePosition = DiePosition.Second,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
-            settleKey = diceStateHolder.rollGeneration,
             onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.Second) },
         )
 
@@ -89,11 +81,9 @@ internal fun DiceOverlay(
 private fun BoxWithConstraintsScope.SingleDie(
     dieState: DieState,
     isRolling: Boolean,
-    tint: Color?,
     diePosition: DiePosition,
     homeCenter: Offset,
     shakeTick: Int,
-    settleKey: Int,
     onSettled: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -103,17 +93,16 @@ private fun BoxWithConstraintsScope.SingleDie(
             y = homeCenter.y,
         )
 
-    val isActive = dieState.isActive
     Die3d(
         value = dieState.value,
-        isRolling = isActive && isRolling,
-        enabled = isActive,
+        isRolling = isRolling,
+        enabled = dieState.isEnabled,
         shakeTick = shakeTick,
         trayWidth = maxWidth,
         trayHeight = maxHeight,
         restCenter = restCenter,
-        tint = tint,
-        settleKey = settleKey,
+        tint = dieState.tint,
+        settleKey = dieState.settleGeneration,
         onSettled = onSettled,
         modifier = modifier,
     )

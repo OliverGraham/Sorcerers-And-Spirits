@@ -375,7 +375,10 @@ class ArenaScreenStateTest {
                     ),
             )
 
-        assertEquals(expected = DiceBadgeState.DoublesBonus(), actual = state.diceBadgeState)
+        assertEquals(
+            expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
+            actual = state.diceBadgeState,
+        )
     }
 
     @Test
@@ -412,6 +415,44 @@ class ArenaScreenStateTest {
 
         assertEquals(
             expected = DiceBadgeState.MirrorImageBonus(diePosition = DiePosition.First),
+            actual = state.diceBadgeState,
+        )
+    }
+
+    @Test
+    fun `Given a Teleport roll-off doubles bonus, then the badge sits over the attacker's roll-off die`() {
+        val state =
+            combatState(
+                combatActionState =
+                    CombatActionState.AbilityRoll(
+                        action =
+                            AbilityActionState.Passive.Teleport(
+                                attackerRoll =
+                                    AbilityActionState.Passive.TeleportDieState(
+                                        userId = OPPONENT_ID,
+                                        diePosition = DiePosition.First,
+                                    ),
+                                defenderRoll =
+                                    AbilityActionState.Passive.TeleportDieState(
+                                        userId = USER_ID,
+                                        diePosition = DiePosition.Second,
+                                    ),
+                                attackerDoublesBonus = 1,
+                            ),
+                        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
+                        defenderUserId = USER_ID,
+                        activeUserIds = setOf(OPPONENT_ID, USER_ID),
+                    ),
+                diceRollState =
+                    DiceRollState.OneDie(
+                        value = 4,
+                        diePosition = DiePosition.First,
+                        doublesBonus = DoublesBonusState(userId = OPPONENT_ID),
+                    ),
+            )
+
+        assertEquals(
+            expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.First),
             actual = state.diceBadgeState,
         )
     }

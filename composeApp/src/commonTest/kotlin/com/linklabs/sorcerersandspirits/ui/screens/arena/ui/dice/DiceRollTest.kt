@@ -1,9 +1,11 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice
 
+import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DiceRollTest {
@@ -12,19 +14,17 @@ class DiceRollTest {
     fun `committing a two-dice roll settles both dice on their faces`() {
         val holder = releasedRoll()
 
-        holder.commitRoll(
-            diceRollState = DiceRollState.TwoDice(firstDie = 5, secondDie = 3, doublesBonus = null)
-        )
+        holder.commitRoll(diceRollState = DiceRollState.TwoDice(firstDie = 5, secondDie = 3))
 
         assertFalse(actual = holder.isRolling)
         assertEquals(expected = 5, actual = holder.firstDieState.value)
         assertEquals(expected = 3, actual = holder.secondDieState.value)
-        assertTrue(actual = holder.firstDieState.isActive)
-        assertTrue(actual = holder.secondDieState.isActive)
+        assertTrue(actual = holder.firstDieState.isEnabled)
+        assertTrue(actual = holder.secondDieState.isEnabled)
     }
 
     @Test
-    fun `committing a one-die roll activates only the rolled die`() {
+    fun `committing a solo one-die roll greys the untouched die`() {
         val holder = releasedRoll()
 
         holder.commitRoll(
@@ -32,14 +32,68 @@ class DiceRollTest {
                 DiceRollState.OneDie(
                     value = 4,
                     diePosition = DiePosition.First,
-                    doublesBonus = null,
+                    disabledDiePosition = DiePosition.Second,
                 )
         )
 
         assertFalse(actual = holder.isRolling)
         assertEquals(expected = 4, actual = holder.firstDieState.value)
-        assertTrue(actual = holder.firstDieState.isActive)
-        assertFalse(actual = holder.secondDieState.isActive)
+        assertTrue(actual = holder.firstDieState.isEnabled)
+        assertFalse(actual = holder.secondDieState.isEnabled)
+    }
+
+    @Test
+    fun `a roll-off roll colors only its own die and leaves the other untouched`() {
+        val holder = releasedRoll()
+
+        holder.commitRoll(
+            diceRollState =
+                DiceRollState.OneDie(value = 4, diePosition = DiePosition.First, tint = Color.Red)
+        )
+
+        assertEquals(expected = Color.Red, actual = holder.firstDieState.tint)
+        assertTrue(actual = holder.firstDieState.isEnabled)
+        assertNull(actual = holder.secondDieState.tint)
+        assertTrue(actual = holder.secondDieState.isEnabled)
+    }
+
+    @Test
+    fun `the first combatant's die keeps its color and value once the second combatant rolls`() {
+        val holder = releasedRoll()
+
+        holder.commitRoll(
+            diceRollState =
+                DiceRollState.OneDie(value = 4, diePosition = DiePosition.First, tint = Color.Red)
+        )
+
+        holder.commitRoll(
+            diceRollState =
+                DiceRollState.OneDie(value = 2, diePosition = DiePosition.Second, tint = Color.Blue)
+        )
+
+        assertEquals(expected = Color.Red, actual = holder.firstDieState.tint)
+        assertEquals(expected = 4, actual = holder.firstDieState.value)
+        assertTrue(actual = holder.firstDieState.isEnabled)
+        assertEquals(expected = Color.Blue, actual = holder.secondDieState.tint)
+        assertEquals(expected = 2, actual = holder.secondDieState.value)
+    }
+
+    @Test
+    fun `each die keeps its own settle generation across a roll-off`() {
+        val holder = releasedRoll()
+
+        holder.commitRoll(
+            diceRollState =
+                DiceRollState.OneDie(value = 4, diePosition = DiePosition.First, tint = Color.Red)
+        )
+
+        holder.commitRoll(
+            diceRollState =
+                DiceRollState.OneDie(value = 6, diePosition = DiePosition.Second, tint = Color.Blue)
+        )
+
+        assertEquals(expected = 1, actual = holder.firstDieState.settleGeneration)
+        assertEquals(expected = 1, actual = holder.secondDieState.settleGeneration)
     }
 
     @Test

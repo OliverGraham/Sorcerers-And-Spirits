@@ -7,9 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 sealed interface DiceBadgeState {
     val diePosition: DiePosition
 
-    @Immutable
-    data class DoublesBonus(override val diePosition: DiePosition = DiePosition.Second) :
-        DiceBadgeState
+    @Immutable data class DoublesBonus(override val diePosition: DiePosition) : DiceBadgeState
 
     @Immutable data class MirrorImageBonus(override val diePosition: DiePosition) : DiceBadgeState
 }

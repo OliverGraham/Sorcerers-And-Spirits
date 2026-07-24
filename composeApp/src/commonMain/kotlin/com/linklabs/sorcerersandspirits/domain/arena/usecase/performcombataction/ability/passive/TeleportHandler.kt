@@ -120,8 +120,13 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     ): TeleportDie {
         val userId = unrolledTeleportDie.userId
         val result =
-            diceRoller.roll1D6(userId = userId, diePosition = unrolledTeleportDie.diePosition).die +
-                bonus
+            diceRoller
+                .roll1D6(
+                    userId = userId,
+                    diePosition = unrolledTeleportDie.diePosition,
+                    isRollOff = true,
+                )
+                .die + bonus
 
         addMessage(
             message =

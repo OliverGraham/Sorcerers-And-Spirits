@@ -12,6 +12,7 @@ interface DiceRoller {
         userId: String,
         diePosition: DiePosition = DiePosition.getRandomPosition(),
         isMirrorImageReroll: Boolean = false,
+        isRollOff: Boolean = false,
     ): RollResult.OneDie
 
     fun roll2D6(userId: String): RollResult.TwoDice
@@ -45,6 +46,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
         userId: String,
         diePosition: DiePosition,
         isMirrorImageReroll: Boolean,
+        isRollOff: Boolean,
     ): RollResult.OneDie {
         val roll = getRandom1D6Value()
         val result = RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
@@ -54,6 +56,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
                 diePosition = diePosition,
                 doublesBonus = doublesBonus,
                 isMirrorImageReroll = isMirrorImageReroll,
+                rollOffOwnerUserId = userId.takeIf { isRollOff },
             )
 
         return result

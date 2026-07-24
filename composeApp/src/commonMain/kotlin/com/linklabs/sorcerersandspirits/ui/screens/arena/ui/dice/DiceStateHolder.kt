@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
@@ -21,7 +22,14 @@ private const val BUZZ_LINGER_MILLIS = 200L
 private const val ROLL_TUMBLE_IMPULSE_MILLIS = 220L
 private const val MAX_ROLL_TUMBLE_IMPULSES = 27
 
-data class DieState(val value: Int = DIE_RESTING_FACE, val isActive: Boolean = true)
+data class DieState(
+    val value: Int = DIE_RESTING_FACE,
+    val isEnabled: Boolean = true,
+    val tint: Color? = null,
+    val settleGeneration: Int = 0,
+    val isRollingLocally: Boolean = false,
+    val isSettling: Boolean = false,
+)
 
 @Stable
 internal class DiceStateHolder {
@@ -37,12 +45,6 @@ internal class DiceStateHolder {
     var isUserRolling by mutableStateOf(value = false)
         private set
 
-    var settlingDice by mutableStateOf(value = emptySet<DiePosition>())
-        private set
-
-    var rollGeneration by mutableStateOf(value = 0)
-        private set
-
     var firstDieState by mutableStateOf(value = DieState())
     var secondDieState by mutableStateOf(value = DieState())
 
@@ -50,13 +52,17 @@ internal class DiceStateHolder {
         get() = isHolding || isUserRolling
 
     val isSettled: Boolean
-        get() = !isRolling && settlingDice.isEmpty()
+        get() = !isRolling && !firstDieState.isSettling && !secondDieState.isSettling
 
-    // TODO: Refactor rollingDiePositions
+    fun isDieRolling(diePosition: DiePosition): Boolean =
+        isRolling && dieStateAt(diePosition = diePosition).isRollingLocally
+
     fun startHold(rollingPositions: Set<DiePosition>) {
         isArmed = false
-        firstDieState = firstDieState.copy(isActive = DiePosition.First in rollingPositions)
-        secondDieState = secondDieState.copy(isActive = DiePosition.Second in rollingPositions)
+        firstDieState =
+            firstDieState.startingHold(isRolling = DiePosition.First in rollingPositions)
+        secondDieState =
+            secondDieState.startingHold(isRolling = DiePosition.Second in rollingPositions)
         isHolding = true
     }
 
@@ -83,8 +89,17 @@ internal class DiceStateHolder {
     }
 
     internal fun markDieSettled(diePosition: DiePosition) {
-        settlingDice = settlingDice - diePosition
+        when (diePosition) {
+            DiePosition.First -> firstDieState = firstDieState.copy(isSettling = false)
+            DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)
+        }
     }
+
+    private fun dieStateAt(diePosition: DiePosition): DieState =
+        when (diePosition) {
+            DiePosition.First -> firstDieState
+            DiePosition.Second -> secondDieState
+        }
 
     // TODO: Likely not necessary - maybe call if diceRollState is null???
 
@@ -100,37 +115,38 @@ internal class DiceStateHolder {
     }
 
     internal fun commitRoll(diceRollState: DiceRollState) {
-        settlingDice =
-            when (diceRollState) {
-                is DiceRollState.OneDie -> diceRollState.commitRoll()
-                is DiceRollState.TwoDice -> diceRollState.commitRoll()
-            }
-
+        firstDieState =
+            firstDieState.applying(diceRollState = diceRollState, at = DiePosition.First)
+        secondDieState =
+            secondDieState.applying(diceRollState = diceRollState, at = DiePosition.Second)
         isUserRolling = false
-        rollGeneration++
+    }
+}
+
+private fun DieState.startingHold(isRolling: Boolean): DieState =
+    if (isRolling) {
+        copy(isRollingLocally = true, isEnabled = true)
+    } else {
+        copy(isRollingLocally = false)
     }
 
-    private fun DiceRollState.OneDie.commitRoll(): Set<DiePosition> {
-        when (diePosition) {
-            DiePosition.First -> {
-                firstDieState = DieState(value = value, isActive = true)
-                secondDieState = secondDieState.copy(isActive = false)
-            }
+private fun DieState.applying(diceRollState: DiceRollState, at: DiePosition): DieState {
+    val rolledValue = diceRollState.rolledValueAt(diePosition = at)
 
-            DiePosition.Second -> {
-                firstDieState = firstDieState.copy(isActive = false)
-                secondDieState = DieState(value = value, isActive = true)
-            }
-        }
+    return when {
+        rolledValue != null ->
+            copy(
+                value = rolledValue,
+                isEnabled = true,
+                tint = diceRollState.tintAt(diePosition = at),
+                settleGeneration = settleGeneration + 1,
+                isRollingLocally = false,
+                isSettling = true,
+            )
 
-        return setOf(diePosition)
-    }
+        at == diceRollState.disabledDiePosition -> copy(isEnabled = false, isRollingLocally = false)
 
-    private fun DiceRollState.TwoDice.commitRoll(): Set<DiePosition> {
-        firstDieState = DieState(value = firstDie, isActive = true)
-        secondDieState = DieState(value = secondDie, isActive = true)
-
-        return setOf(DiePosition.First, DiePosition.Second)
+        else -> copy(isRollingLocally = false)
     }
 }
 

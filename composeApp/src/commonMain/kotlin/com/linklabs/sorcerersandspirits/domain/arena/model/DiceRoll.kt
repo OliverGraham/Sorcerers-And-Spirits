@@ -10,6 +10,7 @@ sealed interface DiceRoll {
         val diePosition: DiePosition,
         override val doublesBonus: DoublesBonus? = null,
         val isMirrorImageReroll: Boolean = false,
+        val rollOffOwnerUserId: String? = null,
     ) : DiceRoll
 
     data class TwoDice(

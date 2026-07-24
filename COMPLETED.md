@@ -402,6 +402,17 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   class color. `rollingDiePositions` precomputed as a construction-time val on `ArenaCombatControl`.
   Follow-ups: SS-244 (settle/color timing, independent settle, doubles badge on correct die),
   SS-245 (tie indicator).
+- **SS-244** — Dice settle and are legible before results/colors change. Bug 1: flash sequencer
+  commits the roll, awaits each die's real landing, then plays the combat cue (settle-before-result).
+  Bugs 2-4: each die is fully independent — `DieState` carries value/tint/enabled/settleGeneration
+  plus per-die isRollingLocally/isSettling (no parallel Sets on the holder); a roll only touches its
+  own die, coloring it when it lands and leaving the other die's face/color/enabled alone (roll-off
+  dice never white-out or disable mid-roll-off; solo single-die still greys the unused die). Tint is
+  carried on the roll itself, not derived from the (already-advanced) combat action: Domain
+  `DiceRoll.OneDie.rollOffOwnerUserId` set via `DiceRoller.roll1D6(isRollOff)` from `TeleportHandler`,
+  persisted in `DiceRollEntity`, mapped to a class color in `DiceRoll.toState`. Bug 5: doubles badge
+  sits over the die owned by the bonus holder in a roll-off. Follow-ups: SS-246 (wrongful re-roll),
+  SS-247 (class-color all ability dice via a DieColor enum), SS-248 (badge persists to latest state).
 
 ## App / Main
 

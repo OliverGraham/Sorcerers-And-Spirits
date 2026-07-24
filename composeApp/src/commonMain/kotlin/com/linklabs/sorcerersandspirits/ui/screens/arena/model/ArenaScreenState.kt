@@ -142,16 +142,19 @@ private fun ArenaMatch.toState(
         }
 
         is ArenaMatch.Combat -> {
+            val selectedPlayerMap = playerMap.mapValues { it.value.toSelectedState() }
+            val combatActionState = nextCombatAction.toCombatActionState()
+
             ArenaState.Combat(
-                playerMap = playerMap.mapValues { it.value.toSelectedState() },
+                playerMap = selectedPlayerMap,
                 userPlayerId = userId,
-                combatActionState = nextCombatAction.toCombatActionState(),
+                combatActionState = combatActionState,
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
                 isMatchOver = isMatchOver,
                 turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
                 lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
-                diceRollState = diceRoll?.toState(),
+                diceRollState = diceRoll?.toState(playerMap = selectedPlayerMap),
             )
         }
 

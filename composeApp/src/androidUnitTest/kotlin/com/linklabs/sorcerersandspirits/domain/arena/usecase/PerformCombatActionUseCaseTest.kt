@@ -56,7 +56,12 @@ class PerformCombatActionUseCaseTest {
 
     private fun setupOneDiceRoll(userId: String, die: Int = 3, bonus: Int = 0) {
         every {
-            diceRoller.roll1D6(userId = userId, diePosition = any(), isMirrorImageReroll = any())
+            diceRoller.roll1D6(
+                userId = userId,
+                diePosition = any(),
+                isMirrorImageReroll = any(),
+                isRollOff = any(),
+            )
         } returns RollResult.OneDie(die = die, bonus = bonus)
     }
 

@@ -354,55 +354,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-244 — Dice must settle and be seen before the result/color changes (roll-off + color timing)
-
-- [ ] Partially completed — Bug 1 (settle-before-result) done; Bugs 2–5 remain.
-- **Core principle:** a die's outcome may only be enforced/animated **after** that die has visibly
-  landed and shows its face. In the real world a human reads the settled die, then the rules that
-  follow from that result play out. Right now results are shown before the dice are even legible.
-- **Progress (settle-before-result sequencing landed):** The flash sequencer
-  (`rememberFlashPlayback`) now drives the whole order in one coroutine off Domain data — per update
-  it commits the roll to the dice, awaits their real landing, then plays the combat cue/callout. The
-  dice-commit is no longer a separate reactive effect racing the sequencer (that race let watched
-  rolls play the strike before the dice settled). Each die reports its own landing via `Die3d`'s
-  `onSettled`; `DiceStateHolder` tracks `settlingDice` (from the roll) + a `rollGeneration` trigger,
-  and exposes `isSettled` for the sequencer to await. Removed UI decision heuristics (willAnimate /
-  wasUserRolling / value-diffing). Timing tuned so the combat animation starts as the die rights onto
-  its face and the glide-home overlaps the strike (`SETTLE_REST_SPEED_DP`, `RIGHTING_MILLIS`,
-  `GLIDE_HOME_MILLIS` in `Die3d.kt` are the knobs).
-- **Bug 1 — DONE — result plays before the roll is visible:** Rogue attacks Mage, breaks armor,
-  Teleport roll-off begins (both dice correctly class-colored). Rolling for Rogue settles fine. Then
-  rolling for Mage **immediately turns the dice white and plays the result animation before the Mage
-  die roll is visible/settled.** The die must finish its natural roll and settle first; only then may
-  the outcome animation proceed. Fixed by the settle-before-result sequencing above.
-- **Bug 2 — color changes too early:** dice should **keep whatever color they currently are until
-  the next user actually begins rolling them.** A normal attack against the Mage shows **white the
-  entire time**; only when a user starts rolling a die does it take on that roller's class color.
-  Today the color flips before the dice have settled/shown their result.
-- **Bug 3 — one roll force-settles the other:** if player A rolls and then player B rolls while A's
-  die is still animating, B's roll **immediately settles A's die**. Each die must be **completely
-  independent** — finish its own roll naturally, then play its own resulting animation. No die may
-  cut another die's roll short.
-- **Bug 4 — no "disabled"/greyed die in a Teleport roll-off:** both dice must **stay their owner's
-  class color the entire time** (never grey/disabled), and a die keeps its color until the **next**
-  roll of that die actually begins. Today the shared commit path greys the sibling die when the
-  other combatant rolls, dropping its class color. Roll-off dice are both always live and colored.
-- **Bug 5 — doubles badge on the correct roll-off die:** doubles must be checked for Teleport and
-  the +1 dice badge must sit **above the specific die belonging to whoever holds the applicable
-  doubles bonus** (attacker's die = First, Mage's die = Second). This is believed to be wrong right
-  now — the badge doesn't track the correct combatant's die in a roll-off. Verify `deriveDiceBadge`
-  / `DiceBadgeState.DoublesBonus.diePosition` against the roll-off owner, not a fixed position.
-- **Discussion needed:** exact sequencing/timing (how long to hold on a settled die before the
-  result animation, how the two independent dice hand off to the shared resolution flash) to be
-  worked out with the owner when this ticket is picked up.
-- **Source:** `ui/screens/arena/ui/dice/DiceStateHolder.kt` (`applyRollOff`, `isDieRolling`,
-  commit/settle timing), `CombatDiceOverlay.kt`, `Die3d.kt` (settle → then value/color), the
-  per-die tint derivation in `ArenaState.Combat` (`deriveDiceTints`), and the flash/animation
-  sequencing that consumes the roll result.
-- **Related:** SS-242 (separate roll-off dice + class-color tint), SS-215 (lock controls until
-  animations finish), [[dice-roll-must-be-roll-bearing]], [[dice-show-last-roll]],
-  [[disabled-die-never-animates]], [[message-log-is-passive]].
-
 ### SS-245 — Teleport roll-off: clearly indicate a tie (reroll) instead of looking broken
 
 - [ ] Not completed
@@ -422,6 +373,69 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `ArenaMessage.Teleport`), the Teleport flash/message mapping, and the dice reset visuals.
 - **Related:** SS-242 (separate roll-off dice), SS-244 (settle-before-result timing),
   [[message-log-is-passive]], [[never-search-messages-for-decisions]].
+
+### SS-246 — Teleport re-rolls when it shouldn't (roll-off resolving before rolls settle)
+
+- [ ] Not completed
+- **Symptom (intermittent):** In a Teleport roll-off the defender re-rolls even when they clearly
+  won. Observed: Mage rolled a 2, attacker (Bard) rolled a 1, no doubles bonus in play, yet the
+  Mage was made to roll again. 2 vs 1 with no bonus should let the Mage escape outright — a strict
+  higher roll, not a tie — so the re-roll is wrong. Does not reproduce every time.
+- **Suspected cause (owner's read):** it is possible to roll for Teleport before the other
+  combatant's roll has resolved, so the outcome is evaluated against a stale/incomplete roll value
+  (a race). Likely a regression around the settle-before-result / roll-off sequencing work.
+- **Not a display-only issue:** this is an actual extra roll being performed, not just a missing
+  badge — confirmed there was no doubles bonus, so it is not the legitimate tie/reroll path.
+- **Investigate:** the roll-off gating (can a roll be submitted before the opponent's roll settles?)
+  and how the domain compares attacker vs defender rolls (`TeleportHandler.handleTeleportOutcome` /
+  `rerollTeleport`) relative to when each roll-off roll is committed/emitted.
+- **Related:** SS-244 (settle-before-result timing, per-die roll-off sequencing), SS-245 (tie →
+  reroll communication), SS-242 (separate roll-off dice), [[dice-roll-must-be-roll-bearing]],
+  [[message-log-is-passive]].
+
+### SS-247 — Generalize dice coloring: all ability dice class-colored via a domain DieColor
+
+- [ ] Not completed
+- **Goal:** every ability roll (offensive and defensive/roll-off) class-colors its dice; normal
+  attacks stay white; a single-die ability still shows the other die disabled/greyed (as is mostly
+  the case today). Right now only the Teleport roll-off colors its dice.
+- **Approach (owner's idea):** add a `DieColor` enum in the **Domain** (domain enums are shared by
+  Data and UI, so the color intent flows Domain → Data → UI cleanly). The roll carries its color
+  intent; the UI maps it to the actual `Color`. This should be simple.
+- **Supersedes the current stopgap:** SS-244 tags Teleport roll-off rolls with
+  `DiceRoll.OneDie.rollOffOwnerUserId` (set in `DiceRoller.roll1D6(isRollOff = true)` from
+  `TeleportHandler`, persisted in `DiceRollEntity`, mapped to a class color in
+  `DiceRoll.toState`). Replace/generalize that with the `DieColor` mechanism so it covers all
+  abilities rather than just roll-offs.
+- **Design questions to settle when picked up:** what `DieColor`'s values are (a dedicated enum vs.
+  carrying the roller's `CharacterClassType`, which already maps to a color via `toColor()`); how it
+  is expressed per-die for a two-owner roll-off; whether "disabled" is a `DieColor` value or stays a
+  separate flag (`disabledDiePosition`).
+- **Source:** `DiceRoll`/`DiceRollEntity`/`DiceRoller`, `DiceRoll.toState` and `DiceRollState`,
+  `DiceStateHolder.applying`.
+- **Related:** SS-244 (per-die tint on the roll), [[dicerollstate-is-tray-source-of-truth]],
+  [[domain-is-source-of-truth]], [[no-enums-with-properties]], [[disabled-die-never-animates]].
+
+### SS-248 — Dice badge must persist to latest state until the next roll (not just Teleport)
+
+- [ ] Not completed
+- **Symptom:** when an attacker rolls doubles and triggers a Teleport, the +1 doubles badge should
+  stay pinned to the correct die for the entire Teleport experience and only clear once the next
+  roll comes through. Today the badge is derived reactively from the (advancing) combat action /
+  active users, so it can vanish mid-sequence.
+- **Principle:** the dice tray must ALWAYS show its latest committed state until the next roll
+  replaces it — and this includes the `diceBadge`, not just the dice faces/colors. The badge should
+  be committed and held like the dice (SS-244 made the dice do this; the badge still isn't).
+- **Applies everywhere, not only Teleport:** any doubles/mirror-image badge should hold until the
+  next roll rather than blinking out when transient combat state changes.
+- **Implication:** `diceBadgeState` likely moves off reactive `ArenaState.Combat` derivation and
+  onto the committed roll state carried through `DiceStateHolder`. Re-check the existing lingering
+  test (`doubles bonus lingers but the turn passed → no badge`) — the intended behavior may change to
+  "held until next roll."
+- **Source:** `ArenaState.Combat.deriveDiceBadge`, `DiceBadgeState`, `DiceStateHolder`,
+  `DiceBadgeOverlay`.
+- **Related:** SS-244 (dice hold latest state), [[dicerollstate-is-tray-source-of-truth]],
+  [[doubles-visibility-message-gated]], [[dice-show-last-roll]].
 
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 

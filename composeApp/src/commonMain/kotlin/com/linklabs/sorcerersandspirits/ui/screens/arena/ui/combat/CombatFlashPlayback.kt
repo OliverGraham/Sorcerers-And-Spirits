@@ -41,7 +41,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.nec
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.paladinHolyShieldOverlayDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.paladinNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.rogueNormalAttackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 private const val FLASH_HOLD_MILLIS = 850L
 private const val FLASH_EXIT_MILLIS = 320L
@@ -95,13 +98,19 @@ internal class FlashPlaybackState {
 }
 
 @Composable
-internal fun rememberFlashPlayback(messages: List<PlayableMessage>): FlashPlaybackState {
+internal fun rememberFlashPlayback(
+    messages: List<PlayableMessage>,
+    diceRollState: DiceRollState?,
+    diceStateHolder: DiceStateHolder,
+): FlashPlaybackState {
     val playback = remember { FlashPlaybackState() }
     val latestMessages by rememberUpdatedState(newValue = messages)
+    val latestDiceRoll by rememberUpdatedState(newValue = diceRollState)
 
     LaunchedEffect(key1 = Unit) {
         var lastPlayedId = latestMessages.lastOrNull()?.id
         var lastSize = latestMessages.size
+        var lastRoll = latestDiceRoll
         snapshotFlow { latestMessages }
             .collect { messages ->
                 val wasReset = messages.size < lastSize
@@ -110,6 +119,14 @@ internal fun rememberFlashPlayback(messages: List<PlayableMessage>): FlashPlayba
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
                 val hasPlayable = fresh.any { it.cue != null || it.callout != null }
                 if (hasPlayable) playback.updateSequencing(isPlaying = true)
+
+                val roll = latestDiceRoll
+                val isNewRoll = roll != null && roll != lastRoll
+                lastRoll = roll
+                if (isNewRoll) {
+                    diceStateHolder.commitRoll(diceRollState = roll)
+                    snapshotFlow { diceStateHolder.isSettled }.first { it }
+                }
 
                 for (playable in fresh) {
                     val cue = playable.cue

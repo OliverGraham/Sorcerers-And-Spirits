@@ -52,6 +52,8 @@ private const val FRICTION_PER_SECOND = 1.8f
 // At or below this speed (dp/sec) the die is treated as at rest and stops bouncing.
 private const val REST_SPEED_DP = 45f
 
+private const val SETTLE_REST_SPEED_DP = 180f
+
 // How fast the die tumbles as it travels: degrees of spin per dp of travel.
 private const val ROLL_DEGREES_PER_DP = 0.7f
 
@@ -87,11 +89,11 @@ private const val MIN_SHAKE_IMPULSE_DP = 450f
 private const val MAX_SHAKE_IMPULSE_DP = 950f
 
 // Once the die stops bouncing it rights itself over this long so the rolled face reads up.
-private const val RIGHTING_MILLIS = 450
+private const val RIGHTING_MILLIS = 320
 
 // After a roll settles, the die glides from wherever it stopped back to its resting home over this
 // long (SS-149); only when a [restCenter] is given (the screen-spanning roll, not the tray).
-private const val GLIDE_HOME_MILLIS = 480
+private const val GLIDE_HOME_MILLIS = 360
 
 private val DIE_BODY_ENABLED = Color(color = 0xFFF4ECDA)
 private val DIE_SHADOW_ENABLED = Color(color = 0xFF9C8F70)
@@ -114,6 +116,8 @@ internal fun Die3d(
     trayHeight: Dp = TRAY_HEIGHT_DP.dp,
     restCenter: Offset? = null,
     tint: Color? = null,
+    settleKey: Int = 0,
+    onSettled: () -> Unit = {},
 ) {
     val density = LocalDensity.current
     val trayWidthPx = with(density) { trayWidth.toPx() }
@@ -138,14 +142,13 @@ internal fun Die3d(
     val velocity = remember { mutableStateOf(value = Offset.Zero) }
     // Read inside the physics loop so each new shake is seen without restarting the loop.
     val currentShakeTick by rememberUpdatedState(newValue = shakeTick)
-    var isSettling by remember { mutableStateOf(value = false) }
+    val currentOnSettled by rememberUpdatedState(newValue = onSettled)
 
-    LaunchedEffect(key1 = isRolling, key2 = value, key3 = enabled) {
+    LaunchedEffect(isRolling, value, enabled, settleKey) {
         val target = faceAngles(value = value)
         val restSpeed = REST_SPEED_DP * density.density
         if (isRolling) {
             isFirstLayout = false
-            isSettling = true
             var lastShakeTick = currentShakeTick
             runDiePhysics(
                 center = center,
@@ -176,7 +179,6 @@ internal fun Die3d(
             angleY.snapTo(targetValue = target.second)
             center.snapTo(targetValue = homeCenter)
         } else {
-            isSettling = true
             val hasValueChanged = value != previousValue
             previousValue = value
             val heldVelocity = velocity.value
@@ -191,6 +193,7 @@ internal fun Die3d(
                 }
 
             if (settleVelocity != Offset.Zero) {
+                val settleRestSpeed = SETTLE_REST_SPEED_DP * density.density
                 runDiePhysics(
                     center = center,
                     angleX = angleX,
@@ -201,10 +204,9 @@ internal fun Die3d(
                     startVelocity = settleVelocity,
                     onVelocityChanged = {},
                     nextImpulse = { Offset.Zero },
-                    isAtRest = { speed -> speed <= restSpeed },
+                    isAtRest = { speed -> speed <= settleRestSpeed },
                 )
             }
-            isSettling = false
 
             coroutineScope {
                 launch {
@@ -221,21 +223,28 @@ internal fun Die3d(
                         tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
                 )
             }
+
+            currentOnSettled()
+
+            if (center.value != homeCenter) {
+                if (shouldGlideHome) {
+                    center.animateTo(
+                        targetValue = homeCenter,
+                        animationSpec =
+                            tween(
+                                durationMillis = GLIDE_HOME_MILLIS,
+                                easing = LinearOutSlowInEasing,
+                            ),
+                    )
+                } else {
+                    center.snapTo(targetValue = homeCenter)
+                }
+            }
         }
     }
 
-    LaunchedEffect(key1 = isSettling, key2 = isRolling, key3 = homeCenter) {
-        val isAtRest = !isSettling && !isRolling
-        if (!isAtRest || center.value == homeCenter) return@LaunchedEffect
-        if (shouldGlideHome) {
-            center.animateTo(
-                targetValue = homeCenter,
-                animationSpec =
-                    tween(durationMillis = GLIDE_HOME_MILLIS, easing = LinearOutSlowInEasing),
-            )
-        } else {
-            center.snapTo(targetValue = homeCenter)
-        }
+    LaunchedEffect(key1 = homeCenter) {
+        if (!isRolling && center.value != homeCenter) center.snapTo(targetValue = homeCenter)
     }
 
     Canvas(modifier = modifier.size(width = trayWidth, height = trayHeight)) {

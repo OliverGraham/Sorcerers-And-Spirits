@@ -46,9 +46,14 @@ internal fun ArenaCombat(
     modifier: Modifier = Modifier,
 ) {
     // TODO: Encapsulate all dice-rolling state DiceStateHolder
-    val diceStateHolder = rememberDiceStateHolder(diceRollState = state.diceRollState)
+    val diceStateHolder = rememberDiceStateHolder()
 
-    val flashPlayback = rememberFlashPlayback(messages = screenState.playbackMessages)
+    val flashPlayback =
+        rememberFlashPlayback(
+            messages = screenState.playbackMessages,
+            diceRollState = state.diceRollState,
+            diceStateHolder = diceStateHolder,
+        )
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }

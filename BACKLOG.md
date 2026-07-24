@@ -356,15 +356,25 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 ### SS-244 — Dice must settle and be seen before the result/color changes (roll-off + color timing)
 
-- [ ] Not completed — follow-up hardening of SS-242.
+- [ ] Partially completed — Bug 1 (settle-before-result) done; Bugs 2–5 remain.
 - **Core principle:** a die's outcome may only be enforced/animated **after** that die has visibly
   landed and shows its face. In the real world a human reads the settled die, then the rules that
   follow from that result play out. Right now results are shown before the dice are even legible.
-- **Bug 1 — result plays before the roll is visible:** Rogue attacks Mage, breaks armor, Teleport
-  roll-off begins (both dice correctly class-colored). Rolling for Rogue settles fine. Then rolling
-  for Mage **immediately turns the dice white and plays the result animation before the Mage die
-  roll is visible/settled.** The die must finish its natural roll and settle first; only then may
-  the outcome animation proceed.
+- **Progress (settle-before-result sequencing landed):** The flash sequencer
+  (`rememberFlashPlayback`) now drives the whole order in one coroutine off Domain data — per update
+  it commits the roll to the dice, awaits their real landing, then plays the combat cue/callout. The
+  dice-commit is no longer a separate reactive effect racing the sequencer (that race let watched
+  rolls play the strike before the dice settled). Each die reports its own landing via `Die3d`'s
+  `onSettled`; `DiceStateHolder` tracks `settlingDice` (from the roll) + a `rollGeneration` trigger,
+  and exposes `isSettled` for the sequencer to await. Removed UI decision heuristics (willAnimate /
+  wasUserRolling / value-diffing). Timing tuned so the combat animation starts as the die rights onto
+  its face and the glide-home overlaps the strike (`SETTLE_REST_SPEED_DP`, `RIGHTING_MILLIS`,
+  `GLIDE_HOME_MILLIS` in `Die3d.kt` are the knobs).
+- **Bug 1 — DONE — result plays before the roll is visible:** Rogue attacks Mage, breaks armor,
+  Teleport roll-off begins (both dice correctly class-colored). Rolling for Rogue settles fine. Then
+  rolling for Mage **immediately turns the dice white and plays the result animation before the Mage
+  die roll is visible/settled.** The die must finish its natural roll and settle first; only then may
+  the outcome animation proceed. Fixed by the settle-before-result sequencing above.
 - **Bug 2 — color changes too early:** dice should **keep whatever color they currently are until
   the next user actually begins rolling them.** A normal attack against the Mage shows **white the
   entire time**; only when a user starts rolling a die does it take on that roller's class color.

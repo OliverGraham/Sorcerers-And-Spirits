@@ -37,11 +37,20 @@ internal class DiceStateHolder {
     var isUserRolling by mutableStateOf(value = false)
         private set
 
+    var settlingDice by mutableStateOf(value = emptySet<DiePosition>())
+        private set
+
+    var rollGeneration by mutableStateOf(value = 0)
+        private set
+
     var firstDieState by mutableStateOf(value = DieState())
     var secondDieState by mutableStateOf(value = DieState())
 
     val isRolling: Boolean
         get() = isHolding || isUserRolling
+
+    val isSettled: Boolean
+        get() = !isRolling && settlingDice.isEmpty()
 
     // TODO: Refactor rollingDiePositions
     fun startHold(rollingPositions: Set<DiePosition>) {
@@ -73,6 +82,10 @@ internal class DiceStateHolder {
         isUserRolling = false
     }
 
+    internal fun markDieSettled(diePosition: DiePosition) {
+        settlingDice = settlingDice - diePosition
+    }
+
     // TODO: Likely not necessary - maybe call if diceRollState is null???
 
     /**
@@ -87,15 +100,17 @@ internal class DiceStateHolder {
     }
 
     internal fun commitRoll(diceRollState: DiceRollState) {
-        when (diceRollState) {
-            is DiceRollState.OneDie -> diceRollState.commitRoll()
-            is DiceRollState.TwoDice -> diceRollState.commitRoll()
-        }
+        settlingDice =
+            when (diceRollState) {
+                is DiceRollState.OneDie -> diceRollState.commitRoll()
+                is DiceRollState.TwoDice -> diceRollState.commitRoll()
+            }
 
         isUserRolling = false
+        rollGeneration++
     }
 
-    private fun DiceRollState.OneDie.commitRoll() {
+    private fun DiceRollState.OneDie.commitRoll(): Set<DiePosition> {
         when (diePosition) {
             DiePosition.First -> {
                 firstDieState = DieState(value = value, isActive = true)
@@ -107,29 +122,21 @@ internal class DiceStateHolder {
                 secondDieState = DieState(value = value, isActive = true)
             }
         }
+
+        return setOf(diePosition)
     }
 
-    private fun DiceRollState.TwoDice.commitRoll() {
+    private fun DiceRollState.TwoDice.commitRoll(): Set<DiePosition> {
         firstDieState = DieState(value = firstDie, isActive = true)
         secondDieState = DieState(value = secondDie, isActive = true)
+
+        return setOf(DiePosition.First, DiePosition.Second)
     }
 }
 
-/**
- * Remembers a [DiceStateHolder] and wires its effects: while held, each phone shake arms the roll
- * and kicks the dice with a haptic buzz; landed rolls (this player's or anyone's) are committed to
- * the dice; after a roll commits, the dice keep tumbling for the whole round trip to the Domain and
- * settle only once the result lands.
- */
 @Composable
-internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHolder {
+internal fun rememberDiceStateHolder(): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
-
-    LaunchedEffect(key1 = diceRollState) {
-        if (diceRollState != null) {
-            diceStateHolder.commitRoll(diceRollState = diceRollState)
-        }
-    }
 
     diceStateHolder.settleIfResolvedWithoutResult()
 

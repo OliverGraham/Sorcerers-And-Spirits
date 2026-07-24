@@ -101,18 +101,8 @@ private val DIE_SHADOW_DISABLED = Color(color = 0xFF3A3A3A)
 private val DIE_PIP_DISABLED = Color(color = 0xFF8A8A8A)
 private val DIE_EDGE = Color(color = 0x33000000)
 
-/**
- * A real 3D die (SS-077 prototype): an actual cube projected with perspective and back-face
- * culling, drawn entirely in Compose [Canvas]. While [isRolling] it bounces around the tray and
- * each [shakeTick] (one per phone shake) kicks it with a fresh impulse, so shaking the device
- * throws the dice around live (SS-112); a tiny per-frame physics simulation [runDiePhysics]
- * ricochets it off the tray walls, tumbling and slowing under friction (SS-113). On release the
- * motion the shaking built up carries through and settles, and when [value] changes because any
- * player rolled, a fresh throw reveals it. Only once it comes to rest does it right itself so the
- * face carrying [value] reads up — the way a physical die settles after it stops rolling. The
- * landing value is exact because the righting target is the orientation that puts that face up,
- * independent of the chaotic path the die took to get there.
- */
+private const val DIE_TINT_FRACTION = 0.45f
+
 @Composable
 internal fun Die3d(
     value: Int,
@@ -123,6 +113,7 @@ internal fun Die3d(
     trayWidth: Dp = TRAY_WIDTH_DP.dp,
     trayHeight: Dp = TRAY_HEIGHT_DP.dp,
     restCenter: Offset? = null,
+    tint: Color? = null,
 ) {
     val density = LocalDensity.current
     val trayWidthPx = with(density) { trayWidth.toPx() }
@@ -253,6 +244,7 @@ internal fun Die3d(
             angleY = angleY.value,
             center = center.value,
             enabled = enabled,
+            tint = tint,
         )
     }
 }
@@ -339,9 +331,17 @@ private fun randomShakeImpulse(density: Float): Offset {
     return Offset(x = cos(x = angle) * speed, y = sin(x = angle) * speed)
 }
 
-private fun DrawScope.drawDie(angleX: Float, angleY: Float, center: Offset, enabled: Boolean) {
-    val bodyColor = if (enabled) DIE_BODY_ENABLED else DIE_BODY_DISABLED
-    val shadowColor = if (enabled) DIE_SHADOW_ENABLED else DIE_SHADOW_DISABLED
+private fun DrawScope.drawDie(
+    angleX: Float,
+    angleY: Float,
+    center: Offset,
+    enabled: Boolean,
+    tint: Color?,
+) {
+    val baseBody = if (enabled) DIE_BODY_ENABLED else DIE_BODY_DISABLED
+    val baseShadow = if (enabled) DIE_SHADOW_ENABLED else DIE_SHADOW_DISABLED
+    val bodyColor = baseBody.tintedBy(tint = tint)
+    val shadowColor = baseShadow.tintedBy(tint = tint)
     val pipColor = if (enabled) DIE_PIP_ENABLED else DIE_PIP_DISABLED
 
     val rotation =
@@ -386,6 +386,9 @@ private fun DrawScope.drawDie(angleX: Float, angleY: Float, center: Offset, enab
         }
     }
 }
+
+private fun Color.tintedBy(tint: Color?): Color =
+    if (tint != null) lerp(start = this, stop = tint, fraction = DIE_TINT_FRACTION) else this
 
 private fun project(point: Vec3, center: Offset, halfWidth: Float): Offset {
     val perspective = CAMERA_DISTANCE / (CAMERA_DISTANCE - point.z)

@@ -373,6 +373,65 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
   ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
 
+### SS-244 — Dice must settle and be seen before the result/color changes (roll-off + color timing)
+
+- [ ] Not completed — follow-up hardening of SS-242.
+- **Core principle:** a die's outcome may only be enforced/animated **after** that die has visibly
+  landed and shows its face. In the real world a human reads the settled die, then the rules that
+  follow from that result play out. Right now results are shown before the dice are even legible.
+- **Bug 1 — result plays before the roll is visible:** Rogue attacks Mage, breaks armor, Teleport
+  roll-off begins (both dice correctly class-colored). Rolling for Rogue settles fine. Then rolling
+  for Mage **immediately turns the dice white and plays the result animation before the Mage die
+  roll is visible/settled.** The die must finish its natural roll and settle first; only then may
+  the outcome animation proceed.
+- **Bug 2 — color changes too early:** dice should **keep whatever color they currently are until
+  the next user actually begins rolling them.** A normal attack against the Mage shows **white the
+  entire time**; only when a user starts rolling a die does it take on that roller's class color.
+  Today the color flips before the dice have settled/shown their result.
+- **Bug 3 — one roll force-settles the other:** if player A rolls and then player B rolls while A's
+  die is still animating, B's roll **immediately settles A's die**. Each die must be **completely
+  independent** — finish its own roll naturally, then play its own resulting animation. No die may
+  cut another die's roll short.
+- **Bug 4 — no "disabled"/greyed die in a Teleport roll-off:** both dice must **stay their owner's
+  class color the entire time** (never grey/disabled), and a die keeps its color until the **next**
+  roll of that die actually begins. Today the shared commit path greys the sibling die when the
+  other combatant rolls, dropping its class color. Roll-off dice are both always live and colored.
+- **Bug 5 — doubles badge on the correct roll-off die:** doubles must be checked for Teleport and
+  the +1 dice badge must sit **above the specific die belonging to whoever holds the applicable
+  doubles bonus** (attacker's die = First, Mage's die = Second). This is believed to be wrong right
+  now — the badge doesn't track the correct combatant's die in a roll-off. Verify `deriveDiceBadge`
+  / `DiceBadgeState.DoublesBonus.diePosition` against the roll-off owner, not a fixed position.
+- **Discussion needed:** exact sequencing/timing (how long to hold on a settled die before the
+  result animation, how the two independent dice hand off to the shared resolution flash) to be
+  worked out with the owner when this ticket is picked up.
+- **Source:** `ui/screens/arena/ui/dice/DiceStateHolder.kt` (`applyRollOff`, `isDieRolling`,
+  commit/settle timing), `CombatDiceOverlay.kt`, `Die3d.kt` (settle → then value/color), the
+  per-die tint derivation in `ArenaState.Combat` (`deriveDiceTints`), and the flash/animation
+  sequencing that consumes the roll result.
+- **Related:** SS-242 (separate roll-off dice + class-color tint), SS-215 (lock controls until
+  animations finish), [[dice-roll-must-be-roll-bearing]], [[dice-show-last-roll]],
+  [[disabled-die-never-animates]], [[message-log-is-passive]].
+
+### SS-245 — Teleport roll-off: clearly indicate a tie (reroll) instead of looking broken
+
+- [ ] Not completed
+- **Symptom:** On a Teleport roll-off, when the attacker and the Mage roll the **same value** it is
+  a tie, and the domain **correctly rerolls both** (Mage escapes only on a strictly higher roll).
+  But the UI gives no clear signal that a tie happened, so both dice re-rolling reads as "it just
+  didn't work" rather than "tie → roll again." A tester genuinely could not tell whether it was a
+  legitimate tie or a bug.
+- **Goal:** Surface the tie explicitly — e.g. a flash/message "Tie — roll again!" (and/or a brief
+  hold on the two equal dice before they reset) so the reroll is understood as a rule, not a
+  glitch. Coordinate with SS-244 (dice must settle and be legible before the outcome plays) so the
+  equal values are actually visible before the reroll.
+- **Note:** The tie/reroll logic itself is already correct in the domain (`TeleportHandler`
+  `handleTeleportOutcome` → `rerollTeleport` on equal rolls); this is purely a
+  UI-communication gap.
+- **Source:** `TeleportHandler` (tie already emits no distinguishing message — add one via
+  `ArenaMessage.Teleport`), the Teleport flash/message mapping, and the dice reset visuals.
+- **Related:** SS-242 (separate roll-off dice), SS-244 (settle-before-result timing),
+  [[message-log-is-passive]], [[never-search-messages-for-decisions]].
+
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 
 - [ ] Not completed — **do not start until the owner describes the intended UI.**

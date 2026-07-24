@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.Serializable
@@ -370,11 +371,13 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction =
                         attackerRoll =
                             AbilityAction.Passive.Teleport.TeleportDie(
                                 userId = attackerRoll.userId,
+                                diePosition = DiePosition.First,
                                 roll = attackerRoll.roll,
                             ),
                         defenderRoll =
                             AbilityAction.Passive.Teleport.TeleportDie(
                                 userId = defenderRoll.userId,
+                                diePosition = DiePosition.Second,
                                 roll = defenderRoll.roll,
                             ),
                         attackerDoublesBonus = attackerDoublesBonus,

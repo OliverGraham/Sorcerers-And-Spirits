@@ -78,7 +78,12 @@ class CombatControlDiceCountTest {
     }
 
     private fun abilityRoll(action: AbilityActionState) =
-        ArenaCombatControl.AbilityRoll(action = action, label = "", requiresTarget = false)
+        ArenaCombatControl.AbilityRoll(
+            action = action,
+            label = "",
+            requiresTarget = false,
+            rollingDiePositions = emptySet(),
+        )
 
     private fun activatedAbility(action: AbilityActionState.Activated) =
         ArenaCombatControl.ActivatedAbility(

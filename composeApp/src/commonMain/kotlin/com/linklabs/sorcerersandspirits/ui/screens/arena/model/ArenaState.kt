@@ -1,9 +1,12 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
@@ -57,6 +60,10 @@ sealed interface ArenaState {
             }
 
         val diceBadgeState = deriveDiceBadge()
+
+        private val diceTints = deriveTeleportDiceTints()
+        val firstDieTint = diceTints.first
+        val secondDieTint = diceTints.second
     }
 
     @Immutable
@@ -87,6 +94,29 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     if (!currentRoll.isMirrorImageReroll) return null
 
     return DiceBadgeState.MirrorImageBonus(diePosition = currentRoll.diePosition)
+}
+
+private fun ArenaState.Combat.deriveTeleportDiceTints(): Pair<Color?, Color?> {
+    val abilityRoll = combatActionState as? CombatActionState.AbilityRoll ?: return null to null
+    val teleport = abilityRoll.action as? AbilityActionState.Passive.Teleport ?: return null to null
+
+    return classColorAt(teleport = teleport, position = DiePosition.First) to
+        classColorAt(teleport = teleport, position = DiePosition.Second)
+}
+
+private fun ArenaState.Combat.classColorAt(
+    teleport: AbilityActionState.Passive.Teleport,
+    position: DiePosition,
+): Color? {
+    val ownerUserId =
+        if (teleport.attackerRoll.diePosition == position) {
+            teleport.attackerRoll.userId
+        } else {
+            teleport.defenderRoll.userId
+        }
+
+    val player = playerMap[ownerUserId] ?: return null
+    return player.characterClass.type.toColor()
 }
 
 private fun ArenaCombatControl.isImpersonate(): Boolean =

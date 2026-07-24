@@ -396,6 +396,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   `EncoreHandler.triggerEncore` so a Bard's Encore no longer triggers when the hit defeated the last
   opponent (`consciousPlayers.size <= 1` → resolve turn end) — the leak was the Holy Shield failed-
   Prayer path. Also closes the matching SS-206 follow-up. Related: SS-231, SS-206.
+- **SS-242** — Roll-off dice per combatant: the Domain assigns each Teleport roll-off die a stable
+  `diePosition` (attacker = First, Mage = Second) on `TeleportDie`, threaded through the data entity
+  and UI-state mappings; each player rolls only their own die and each die is tinted its owner's
+  class color. `rollingDiePositions` precomputed as a construction-time val on `ArenaCombatControl`.
+  Follow-ups: SS-244 (settle/color timing, independent settle, doubles badge on correct die),
+  SS-245 (tie indicator).
 
 ## App / Main
 

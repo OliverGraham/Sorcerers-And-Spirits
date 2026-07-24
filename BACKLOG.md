@@ -354,25 +354,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-242 — Roll-off dice: each client rolls its own die simultaneously on the shared tray
-
-- [ ] Not completed
-- **Context:** SS-224 made the two roll-off Teleport buttons stay visible so both combatants can
-  hold and roll at the same time. The remaining gap is the **dice tray**: both roll-off dice map to
-  `DiePosition.First` on a single shared per-device tray, so if one player rolls while the other's
-  roll is still animating the two rolls visually contend on the same die.
-- **Goal:** In a two-combatant roll-off, present the two dice as **separate** dice (attacker's and
-  the opponent's), each driven by its own client, so both can be rolled simultaneously without
-  clashing. Whoever rolls first settles their die; the other die keeps tumbling until its owner
-  rolls.
-- **Nice-to-have:** consider tinting each roll-off die in its owner's **class color** so it's clear
-  which die belongs to whom.
-- **Source:** `ui/screens/arena/ui/dice/DiceStateHolder.kt`, `DiceRollState.kt`, the dice overlay,
-  and `ArenaCombatControl.rollingDiePositions()` (Teleport currently `NumberOfDice.One` → First for
-  both sides).
-- **Related:** SS-224 (roll-off buttons/resolution), dice must be roll-bearing
-  ([[dice-roll-must-be-roll-bearing]]), [[dice-show-last-roll]].
-
 ### SS-244 — Dice must settle and be seen before the result/color changes (roll-off + color timing)
 
 - [ ] Not completed — follow-up hardening of SS-242.

@@ -124,7 +124,8 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 .roll1D6(
                     userId = userId,
                     diePosition = unrolledTeleportDie.diePosition,
-                    isRollOff = true,
+                    disablesSibling = false,
+                    dieColor = dieColorFor(userId = userId),
                 )
                 .die + bonus
 

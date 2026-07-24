@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -16,7 +17,8 @@ sealed interface DiceRollEntity {
         val diePosition: DiePosition,
         override val doublesBonusEntity: DoublesBonusEntity? = null,
         val isMirrorImageReroll: Boolean = false,
-        val rollOffOwnerUserId: String? = null,
+        val dieColor: DieColor = DieColor.NormalAttack,
+        val disablesSibling: Boolean = true,
     ) : DiceRollEntity
 
     @Serializable
@@ -25,6 +27,7 @@ sealed interface DiceRollEntity {
         val firstDie: Int,
         val secondDie: Int,
         override val doublesBonusEntity: DoublesBonusEntity? = null,
+        val dieColor: DieColor = DieColor.NormalAttack,
     ) : DiceRollEntity
 
     companion object {
@@ -41,7 +44,8 @@ internal fun DiceRollEntity.toDomain(): DiceRoll =
                 diePosition = diePosition,
                 doublesBonus = doublesBonusEntity?.toDomain(),
                 isMirrorImageReroll = isMirrorImageReroll,
-                rollOffOwnerUserId = rollOffOwnerUserId,
+                dieColor = dieColor,
+                disablesSibling = disablesSibling,
             )
 
         is DiceRollEntity.TwoDice ->
@@ -49,6 +53,7 @@ internal fun DiceRollEntity.toDomain(): DiceRoll =
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonus = doublesBonusEntity?.toDomain(),
+                dieColor = dieColor,
             )
     }
 
@@ -60,7 +65,8 @@ internal fun DiceRoll.toEntity(): DiceRollEntity =
                 diePosition = diePosition,
                 doublesBonusEntity = doublesBonus?.toEntity(),
                 isMirrorImageReroll = isMirrorImageReroll,
-                rollOffOwnerUserId = rollOffOwnerUserId,
+                dieColor = dieColor,
+                disablesSibling = disablesSibling,
             )
 
         is DiceRoll.TwoDice ->
@@ -68,5 +74,6 @@ internal fun DiceRoll.toEntity(): DiceRollEntity =
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonusEntity = doublesBonus?.toEntity(),
+                dieColor = dieColor,
             )
     }

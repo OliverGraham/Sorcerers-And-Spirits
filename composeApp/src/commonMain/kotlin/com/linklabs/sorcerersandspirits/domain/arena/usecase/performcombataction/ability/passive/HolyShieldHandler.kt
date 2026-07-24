@@ -39,7 +39,11 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.attemptPrayer() {
-        val result = diceRoller.roll2D6(userId = defenderUserId)
+        val result =
+            diceRoller.roll2D6(
+                userId = defenderUserId,
+                dieColor = dieColorFor(userId = defenderUserId),
+            )
         val didSurvive = result.total in abilityConfig.holyShieldSuccessRange
 
         addMessage(
@@ -91,7 +95,10 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
      * them.
      */
     private fun CombatMutator.wrathRoll() {
-        val result = diceRoller.roll1D6(userId = defenderUserId).total
+        val result =
+            diceRoller
+                .roll1D6(userId = defenderUserId, dieColor = dieColorFor(userId = defenderUserId))
+                .total
 
         updateAttackerClass { attacker -> attacker.copy(hitPoints = attacker.hitPoints - result) }
 

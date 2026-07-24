@@ -36,7 +36,11 @@ internal class RiposteHandler(
      * roll, so the bonus is not consecutive and is left unannounced.
      */
     private fun CombatMutator.rollRiposte() {
-        val result = diceRoller.roll2D6(userId = defenderUserId)
+        val result =
+            diceRoller.roll2D6(
+                userId = defenderUserId,
+                dieColor = dieColorFor(userId = defenderUserId),
+            )
         val isSuccessful = result.total in abilityConfig.riposteSuccessRange
 
         addMessage(

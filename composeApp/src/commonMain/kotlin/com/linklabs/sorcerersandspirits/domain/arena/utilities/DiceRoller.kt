@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.utilities
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
+import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.arena.model.DoublesBonus
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import kotlin.random.Random
@@ -10,12 +11,13 @@ interface DiceRoller {
 
     fun roll1D6(
         userId: String,
-        diePosition: DiePosition = DiePosition.getRandomPosition(),
+        diePosition: DiePosition = DiePosition.First,
         isMirrorImageReroll: Boolean = false,
-        isRollOff: Boolean = false,
+        disablesSibling: Boolean = true,
+        dieColor: DieColor = DieColor.NormalAttack,
     ): RollResult.OneDie
 
-    fun roll2D6(userId: String): RollResult.TwoDice
+    fun roll2D6(userId: String, dieColor: DieColor = DieColor.NormalAttack): RollResult.TwoDice
 
     fun mirrorImagePass(firstDie: Int, secondDie: Int): DiceRoll.TwoDice
 
@@ -46,7 +48,8 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
         userId: String,
         diePosition: DiePosition,
         isMirrorImageReroll: Boolean,
-        isRollOff: Boolean,
+        disablesSibling: Boolean,
+        dieColor: DieColor,
     ): RollResult.OneDie {
         val roll = getRandom1D6Value()
         val result = RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
@@ -56,7 +59,8 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
                 diePosition = diePosition,
                 doublesBonus = doublesBonus,
                 isMirrorImageReroll = isMirrorImageReroll,
-                rollOffOwnerUserId = userId.takeIf { isRollOff },
+                dieColor = dieColor,
+                disablesSibling = disablesSibling,
             )
 
         return result
@@ -74,7 +78,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
         return untouchedDiceRoll
     }
 
-    override fun roll2D6(userId: String): RollResult.TwoDice {
+    override fun roll2D6(userId: String, dieColor: DieColor): RollResult.TwoDice {
         val firstDie = getRandom1D6Value()
         val secondDie = getRandom1D6Value()
         val result =
@@ -92,6 +96,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonus = doublesBonus,
+                dieColor = dieColor,
             )
 
         return result

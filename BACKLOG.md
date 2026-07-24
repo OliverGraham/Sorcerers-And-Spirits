@@ -393,29 +393,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   reroll communication), SS-242 (separate roll-off dice), [[dice-roll-must-be-roll-bearing]],
   [[message-log-is-passive]].
 
-### SS-247 — Generalize dice coloring: all ability dice class-colored via a domain DieColor
-
-- [ ] Not completed
-- **Goal:** every ability roll (offensive and defensive/roll-off) class-colors its dice; normal
-  attacks stay white; a single-die ability still shows the other die disabled/greyed (as is mostly
-  the case today). Right now only the Teleport roll-off colors its dice.
-- **Approach (owner's idea):** add a `DieColor` enum in the **Domain** (domain enums are shared by
-  Data and UI, so the color intent flows Domain → Data → UI cleanly). The roll carries its color
-  intent; the UI maps it to the actual `Color`. This should be simple.
-- **Supersedes the current stopgap:** SS-244 tags Teleport roll-off rolls with
-  `DiceRoll.OneDie.rollOffOwnerUserId` (set in `DiceRoller.roll1D6(isRollOff = true)` from
-  `TeleportHandler`, persisted in `DiceRollEntity`, mapped to a class color in
-  `DiceRoll.toState`). Replace/generalize that with the `DieColor` mechanism so it covers all
-  abilities rather than just roll-offs.
-- **Design questions to settle when picked up:** what `DieColor`'s values are (a dedicated enum vs.
-  carrying the roller's `CharacterClassType`, which already maps to a color via `toColor()`); how it
-  is expressed per-die for a two-owner roll-off; whether "disabled" is a `DieColor` value or stays a
-  separate flag (`disabledDiePosition`).
-- **Source:** `DiceRoll`/`DiceRollEntity`/`DiceRoller`, `DiceRoll.toState` and `DiceRollState`,
-  `DiceStateHolder.applying`.
-- **Related:** SS-244 (per-die tint on the roll), [[dicerollstate-is-tray-source-of-truth]],
-  [[domain-is-source-of-truth]], [[no-enums-with-properties]], [[disabled-die-never-animates]].
-
 ### SS-248 — Dice badge must persist to latest state until the next roll (not just Teleport)
 
 - [ ] Not completed

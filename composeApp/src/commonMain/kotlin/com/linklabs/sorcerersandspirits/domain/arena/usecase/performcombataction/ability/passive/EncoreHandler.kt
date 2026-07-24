@@ -27,7 +27,10 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rollEncore() {
-        val result = diceRoller.roll1D6(userId = attackerUserId).total
+        val result =
+            diceRoller
+                .roll1D6(userId = attackerUserId, dieColor = dieColorFor(userId = attackerUserId))
+                .total
         val isSuccessful = result in abilityConfig.encoreSuccessRange
 
         addMessage(

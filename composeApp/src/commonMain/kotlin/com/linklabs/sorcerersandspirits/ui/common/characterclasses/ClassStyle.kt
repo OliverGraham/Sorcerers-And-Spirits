@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import org.jetbrains.compose.resources.DrawableResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -84,6 +85,20 @@ fun CharacterClassType.toGradient(): ClassGradient =
     }
 
 fun CharacterClassType.toColor(): Color = toGradient().topStop
+
+fun DieColor.toColor(): Color? =
+    when (this) {
+        DieColor.NormalAttack -> null
+        DieColor.Disabled -> null
+        DieColor.Rogue -> CharacterClassType.Rogue.toColor()
+        DieColor.Gambler -> CharacterClassType.Gambler.toColor()
+        DieColor.Duelist -> CharacterClassType.Duelist.toColor()
+        DieColor.Necromancer -> CharacterClassType.Necromancer.toColor()
+        DieColor.Bard -> CharacterClassType.Bard.toColor()
+        DieColor.Illusionist -> CharacterClassType.Illusionist.toColor()
+        DieColor.Mage -> CharacterClassType.Mage.toColor()
+        DieColor.Paladin -> CharacterClassType.Paladin.toColor()
+    }
 
 fun classFamilyColors(): List<Color> =
     listOf(RED.topStop, YELLOW.topStop, GREEN.topStop, BLUE.topStop)

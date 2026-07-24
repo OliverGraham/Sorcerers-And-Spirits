@@ -1,7 +1,8 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice
 
-import androidx.compose.ui.graphics.Color
+import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -32,7 +33,8 @@ class DiceRollTest {
                 DiceRollState.OneDie(
                     value = 4,
                     diePosition = DiePosition.First,
-                    disabledDiePosition = DiePosition.Second,
+                    dieColor = DieColor.Bard,
+                    isSiblingDisabled = true,
                 )
         )
 
@@ -48,10 +50,15 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(value = 4, diePosition = DiePosition.First, tint = Color.Red)
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    dieColor = DieColor.Rogue,
+                    isSiblingDisabled = false,
+                )
         )
 
-        assertEquals(expected = Color.Red, actual = holder.firstDieState.tint)
+        assertEquals(expected = DieColor.Rogue.toColor(), actual = holder.firstDieState.tint)
         assertTrue(actual = holder.firstDieState.isEnabled)
         assertNull(actual = holder.secondDieState.tint)
         assertTrue(actual = holder.secondDieState.isEnabled)
@@ -63,18 +70,28 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(value = 4, diePosition = DiePosition.First, tint = Color.Red)
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    dieColor = DieColor.Rogue,
+                    isSiblingDisabled = false,
+                )
         )
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(value = 2, diePosition = DiePosition.Second, tint = Color.Blue)
+                DiceRollState.OneDie(
+                    value = 2,
+                    diePosition = DiePosition.Second,
+                    dieColor = DieColor.Mage,
+                    isSiblingDisabled = false,
+                )
         )
 
-        assertEquals(expected = Color.Red, actual = holder.firstDieState.tint)
+        assertEquals(expected = DieColor.Rogue.toColor(), actual = holder.firstDieState.tint)
         assertEquals(expected = 4, actual = holder.firstDieState.value)
         assertTrue(actual = holder.firstDieState.isEnabled)
-        assertEquals(expected = Color.Blue, actual = holder.secondDieState.tint)
+        assertEquals(expected = DieColor.Mage.toColor(), actual = holder.secondDieState.tint)
         assertEquals(expected = 2, actual = holder.secondDieState.value)
     }
 
@@ -84,12 +101,22 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(value = 4, diePosition = DiePosition.First, tint = Color.Red)
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    dieColor = DieColor.Rogue,
+                    isSiblingDisabled = false,
+                )
         )
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(value = 6, diePosition = DiePosition.Second, tint = Color.Blue)
+                DiceRollState.OneDie(
+                    value = 6,
+                    diePosition = DiePosition.Second,
+                    dieColor = DieColor.Mage,
+                    isSiblingDisabled = false,
+                )
         )
 
         assertEquals(expected = 1, actual = holder.firstDieState.settleGeneration)

@@ -55,7 +55,7 @@ class MirrorImageKeepFlowTest {
                 {
                     DiceRoll.TwoDice(firstDie = firstArg(), secondDie = secondArg())
                 }
-            every { roll2D6(userId = ROGUE_ID) } returns
+            every { roll2D6(userId = ROGUE_ID, dieColor = any()) } returns
                 RollResult.TwoDice(firstDie = 3, secondDie = 4, bonus = 0)
         }
 
@@ -171,7 +171,7 @@ class MirrorImageKeepFlowTest {
 
     @Test
     fun `Given Mirror Image interrupts the Health roll, then the trigger carries the new dice so the table matches the reroll labels`() {
-        every { diceRoller.roll2D6(userId = ROGUE_ID) } returns
+        every { diceRoller.roll2D6(userId = ROGUE_ID, dieColor = any()) } returns
             RollResult.TwoDice(firstDie = 2, secondDie = 5, bonus = 0)
         every { diceRoller.getDiceRoll() } returns
             DiceRoll.TwoDice(firstDie = 2, secondDie = 5, doublesBonus = null)

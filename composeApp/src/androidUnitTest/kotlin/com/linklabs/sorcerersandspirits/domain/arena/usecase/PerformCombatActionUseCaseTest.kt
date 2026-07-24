@@ -50,7 +50,7 @@ class PerformCombatActionUseCaseTest {
         secondDie: Int = 6,
         bonus: Int = 0,
     ) {
-        every { diceRoller.roll2D6(userId = userId) } returns
+        every { diceRoller.roll2D6(userId = userId, dieColor = any()) } returns
             RollResult.TwoDice(firstDie = firstDie, secondDie = secondDie, bonus = bonus)
     }
 
@@ -60,7 +60,8 @@ class PerformCombatActionUseCaseTest {
                 userId = userId,
                 diePosition = any(),
                 isMirrorImageReroll = any(),
-                isRollOff = any(),
+                disablesSibling = any(),
+                dieColor = any(),
             )
         } returns RollResult.OneDie(die = die, bonus = bonus)
     }

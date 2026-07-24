@@ -10,12 +10,14 @@ sealed interface DiceRoll {
         val diePosition: DiePosition,
         override val doublesBonus: DoublesBonus? = null,
         val isMirrorImageReroll: Boolean = false,
-        val rollOffOwnerUserId: String? = null,
+        val dieColor: DieColor = DieColor.NormalAttack,
+        val disablesSibling: Boolean = true,
     ) : DiceRoll
 
     data class TwoDice(
         val firstDie: Int,
         val secondDie: Int,
         override val doublesBonus: DoublesBonus? = null,
+        val dieColor: DieColor = DieColor.NormalAttack,
     ) : DiceRoll
 }

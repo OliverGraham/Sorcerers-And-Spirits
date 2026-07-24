@@ -117,6 +117,8 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                     userId = defenderUserId,
                     diePosition = rerolledDiePosition,
                     isMirrorImageReroll = true,
+                    disablesSibling = false,
+                    dieColor = dieColorFor(userId = defenderUserId),
                 )
                 .die
 

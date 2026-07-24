@@ -24,7 +24,10 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.flipLuckyCoin() {
-        val result = diceRoller.roll1D6(userId = defenderUserId).total
+        val result =
+            diceRoller
+                .roll1D6(userId = defenderUserId, dieColor = dieColorFor(userId = defenderUserId))
+                .total
 
         if (result == abilityConfig.luckyCoinHighRollerRoll) {
             triggerHighRoller()
@@ -50,7 +53,10 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.handleHighRoller() {
-        val result = diceRoller.roll1D6(userId = defenderUserId).total
+        val result =
+            diceRoller
+                .roll1D6(userId = defenderUserId, dieColor = dieColorFor(userId = defenderUserId))
+                .total
 
         updateAttackerClass { attacker -> attacker.takeDamage(damage = result) }
 

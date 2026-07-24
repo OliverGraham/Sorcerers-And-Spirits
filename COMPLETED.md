@@ -413,6 +413,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   persisted in `DiceRollEntity`, mapped to a class color in `DiceRoll.toState`. Bug 5: doubles badge
   sits over the die owned by the bonus holder in a roll-off. Follow-ups: SS-246 (wrongful re-roll),
   SS-247 (class-color all ability dice via a DieColor enum), SS-248 (badge persists to latest state).
+- **SS-247** — Class-color all ability dice via a domain `DieColor` enum (NormalAttack, Disabled, one
+  per class) with a UI `toColor()`; the roll carries its color intent Domain → Data → UI. Every
+  ability roll (offensive, defensive, roll-off) tints its dice by the die owner's class; normal
+  attacks stay white; solo single-die abilities grey the unused die. Replaced SS-244's
+  `rollOffOwnerUserId` stopgap. Also: `DiceRoll.OneDie.disablesSibling` (renamed the wrong `isRollOff`
+  concept — Teleport and MirrorImage both keep their sibling live), solo rolls default to
+  `DiePosition.First` so the armed and rolled die agree (no more both-dice-moving), and a disabled die
+  clears its tint (no gray-green).
 
 ## App / Main
 

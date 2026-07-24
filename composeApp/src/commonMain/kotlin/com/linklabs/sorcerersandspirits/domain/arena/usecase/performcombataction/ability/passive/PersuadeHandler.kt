@@ -24,7 +24,10 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.strumLute() {
-        val result = diceRoller.roll1D6(userId = defenderUserId).total
+        val result =
+            diceRoller
+                .roll1D6(userId = defenderUserId, dieColor = dieColorFor(userId = defenderUserId))
+                .total
         if (result < abilityConfig.persuadeLullRoll) {
             handleStrumLuteFailure(persuadeDie = result)
         } else {

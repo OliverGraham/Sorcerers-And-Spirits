@@ -8,8 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
 import kotlinx.coroutines.Job
@@ -116,9 +118,9 @@ internal class DiceStateHolder {
 
     internal fun commitRoll(diceRollState: DiceRollState) {
         firstDieState =
-            firstDieState.applying(diceRollState = diceRollState, at = DiePosition.First)
+            firstDieState.applying(diceRollState = diceRollState, diePosition = DiePosition.First)
         secondDieState =
-            secondDieState.applying(diceRollState = diceRollState, at = DiePosition.Second)
+            secondDieState.applying(diceRollState = diceRollState, diePosition = DiePosition.Second)
         isUserRolling = false
     }
 }
@@ -130,21 +132,23 @@ private fun DieState.startingHold(isRolling: Boolean): DieState =
         copy(isRollingLocally = false)
     }
 
-private fun DieState.applying(diceRollState: DiceRollState, at: DiePosition): DieState {
-    val rolledValue = diceRollState.rolledValueAt(diePosition = at)
+private fun DieState.applying(diceRollState: DiceRollState, diePosition: DiePosition): DieState {
+    val rolledValue = diceRollState.rolledValueAt(diePosition = diePosition)
+    val dieColor = diceRollState.dieColorAt(diePosition = diePosition)
 
     return when {
         rolledValue != null ->
             copy(
                 value = rolledValue,
                 isEnabled = true,
-                tint = diceRollState.tintAt(diePosition = at),
+                tint = dieColor?.toColor(),
                 settleGeneration = settleGeneration + 1,
                 isRollingLocally = false,
                 isSettling = true,
             )
 
-        at == diceRollState.disabledDiePosition -> copy(isEnabled = false, isRollingLocally = false)
+        dieColor == DieColor.Disabled ->
+            copy(isEnabled = false, tint = null, isRollingLocally = false)
 
         else -> copy(isRollingLocally = false)
     }

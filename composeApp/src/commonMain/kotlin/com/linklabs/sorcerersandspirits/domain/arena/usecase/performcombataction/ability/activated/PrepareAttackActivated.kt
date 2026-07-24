@@ -9,7 +9,11 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
     operator fun invoke() = combatMutator.prepareAttackOutcome()
 
     private fun CombatMutator.prepareAttackOutcome() {
-        val result = diceRoller.roll2D6(userId = attackerUserId)
+        val result =
+            diceRoller.roll2D6(
+                userId = attackerUserId,
+                dieColor = dieColorFor(userId = attackerUserId),
+            )
         val total = result.total
 
         when {

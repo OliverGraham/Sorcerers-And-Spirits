@@ -5,8 +5,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
+import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.toDieColor
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
@@ -42,6 +44,9 @@ internal class CombatMutator(
 
     val consciousPlayers
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
+
+    fun dieColorFor(userId: UserId): DieColor =
+        updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextCombatAction = nextAction

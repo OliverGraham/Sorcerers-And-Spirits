@@ -52,6 +52,8 @@ internal fun ArenaCombat(
         rememberFlashPlayback(
             messages = screenState.playbackMessages,
             diceRollState = state.diceRollState,
+            diceBadgeState = state.diceBadgeState,
+            isBadgeBonusSpent = state.isTeleportDoublesBonusSpent,
             diceStateHolder = diceStateHolder,
         )
 
@@ -198,11 +200,7 @@ internal fun ArenaCombat(
             //                Should be elsewhere
             val homeBounds = diceHomeBounds
             if (homeBounds != null) {
-                DiceOverlay(
-                    diceStateHolder = diceStateHolder,
-                    diceBadgeState = state.diceBadgeState,
-                    homeBounds = homeBounds,
-                )
+                DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
             }
 
             FlashOverlay(playback = flashPlayback, avatarBounds = avatarBounds)

@@ -15,7 +15,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DieState
@@ -40,7 +39,6 @@ internal fun dieRestCenterX(
 @Composable
 internal fun DiceOverlay(
     diceStateHolder: DiceStateHolder,
-    diceBadgeState: DiceBadgeState?,
     homeBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
@@ -73,7 +71,11 @@ internal fun DiceOverlay(
             onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.Second) },
         )
 
-        DiceBadgeOverlay(diceBadgeState = diceBadgeState, homeCenter = homeCenter)
+        DiceBadgeOverlay(
+            diceBadgeState =
+                diceStateHolder.firstDieState.badge ?: diceStateHolder.secondDieState.badge,
+            homeCenter = homeCenter,
+        )
     }
 }
 

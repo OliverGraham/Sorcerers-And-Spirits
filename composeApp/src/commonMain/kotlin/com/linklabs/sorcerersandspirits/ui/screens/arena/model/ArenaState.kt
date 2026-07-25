@@ -60,6 +60,9 @@ sealed interface ArenaState {
             }
 
         val diceBadgeState = deriveDiceBadge()
+
+        val isTeleportDoublesBonusSpent =
+            combatActionState.teleportAction()?.let { it.attackerDoublesBonus == 0 } ?: false
     }
 
     @Immutable
@@ -85,9 +88,7 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     val doublesBonus = diceRollState?.doublesBonus
     val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
     if (isDoublesBonusLive) {
-        return DiceBadgeState.DoublesBonus(
-            diePosition = doublesBonusDiePosition(userId = doublesBonus.userId)
-        )
+        return DiceBadgeState.DoublesBonus(diePosition = doublesBonusDiePosition())
     }
 
     val currentRoll = diceRollState as? DiceRollState.OneDie ?: return null
@@ -96,15 +97,9 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     return DiceBadgeState.MirrorImageBonus(diePosition = currentRoll.diePosition)
 }
 
-private fun ArenaState.Combat.doublesBonusDiePosition(userId: String): DiePosition {
+private fun ArenaState.Combat.doublesBonusDiePosition(): DiePosition {
     val teleport = combatActionState.teleportAction() ?: return DEFAULT_DOUBLES_DIE_POSITION
-    val attackerRoll = teleport.attackerRoll
-
-    return if (attackerRoll.userId == userId) {
-        attackerRoll.diePosition
-    } else {
-        teleport.defenderRoll.diePosition
-    }
+    return teleport.attackerRoll.diePosition
 }
 
 internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Teleport? {

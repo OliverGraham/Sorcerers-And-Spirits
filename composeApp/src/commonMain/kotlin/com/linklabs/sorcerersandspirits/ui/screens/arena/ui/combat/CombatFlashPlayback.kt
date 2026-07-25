@@ -14,6 +14,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayableMessage
@@ -101,11 +102,15 @@ internal class FlashPlaybackState {
 internal fun rememberFlashPlayback(
     messages: List<PlayableMessage>,
     diceRollState: DiceRollState?,
+    diceBadgeState: DiceBadgeState?,
+    isBadgeBonusSpent: Boolean,
     diceStateHolder: DiceStateHolder,
 ): FlashPlaybackState {
     val playback = remember { FlashPlaybackState() }
     val latestMessages by rememberUpdatedState(newValue = messages)
     val latestDiceRoll by rememberUpdatedState(newValue = diceRollState)
+    val latestDiceBadge by rememberUpdatedState(newValue = diceBadgeState)
+    val latestIsBadgeBonusSpent by rememberUpdatedState(newValue = isBadgeBonusSpent)
 
     LaunchedEffect(key1 = Unit) {
         var lastPlayedId = latestMessages.lastOrNull()?.id
@@ -124,7 +129,11 @@ internal fun rememberFlashPlayback(
                 val isNewRoll = roll != null && roll != lastRoll
                 lastRoll = roll
                 if (isNewRoll) {
-                    diceStateHolder.commitRoll(diceRollState = roll)
+                    diceStateHolder.commitRoll(
+                        diceRollState = roll,
+                        diceBadge = latestDiceBadge,
+                        isBadgeBonusSpent = latestIsBadgeBonusSpent,
+                    )
                     snapshotFlow { diceStateHolder.isSettled }.first { it }
                 }
 

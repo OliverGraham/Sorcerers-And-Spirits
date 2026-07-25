@@ -12,6 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
 import kotlinx.coroutines.Job
@@ -28,6 +29,7 @@ data class DieState(
     val value: Int = DIE_RESTING_FACE,
     val isEnabled: Boolean = true,
     val tint: Color? = null,
+    val badge: DiceBadgeState? = null,
     val settleGeneration: Int = 0,
     val isRollingLocally: Boolean = false,
     val isSettling: Boolean = false,
@@ -116,13 +118,49 @@ internal class DiceStateHolder {
         if (hasTurnResolvedWithoutRoll) finishAwaiting()
     }
 
-    internal fun commitRoll(diceRollState: DiceRollState) {
+    internal fun commitRoll(
+        diceRollState: DiceRollState,
+        diceBadge: DiceBadgeState?,
+        isBadgeBonusSpent: Boolean,
+    ) {
         firstDieState =
-            firstDieState.applying(diceRollState = diceRollState, diePosition = DiePosition.First)
+            firstDieState
+                .applying(diceRollState = diceRollState, diePosition = DiePosition.First)
+                .committingBadge(
+                    diceRollState = diceRollState,
+                    diceBadge = diceBadge,
+                    diePosition = DiePosition.First,
+                    isBadgeBonusSpent = isBadgeBonusSpent,
+                )
         secondDieState =
-            secondDieState.applying(diceRollState = diceRollState, diePosition = DiePosition.Second)
+            secondDieState
+                .applying(diceRollState = diceRollState, diePosition = DiePosition.Second)
+                .committingBadge(
+                    diceRollState = diceRollState,
+                    diceBadge = diceBadge,
+                    diePosition = DiePosition.Second,
+                    isBadgeBonusSpent = isBadgeBonusSpent,
+                )
         isUserRolling = false
     }
+}
+
+private fun DieState.committingBadge(
+    diceRollState: DiceRollState,
+    diceBadge: DiceBadgeState?,
+    diePosition: DiePosition,
+    isBadgeBonusSpent: Boolean,
+): DieState {
+    val isRollOffContinuation =
+        diceRollState is DiceRollState.OneDie && !diceRollState.isSiblingDisabled
+    val nextBadge =
+        when {
+            diceBadge != null -> diceBadge.takeIf { it.diePosition == diePosition }
+            isRollOffContinuation && !isBadgeBonusSpent -> badge
+            else -> null
+        }
+
+    return copy(badge = nextBadge)
 }
 
 private fun DieState.startingHold(isRolling: Boolean): DieState =

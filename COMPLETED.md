@@ -421,6 +421,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   concept — Teleport and MirrorImage both keep their sibling live), solo rolls default to
   `DiePosition.First` so the armed and rolled die agree (no more both-dice-moving), and a disabled die
   clears its tint (no gray-green).
+- **SS-248** — Dice badge persists to latest committed state until the next roll (not just Teleport):
+  the `diceBadge` is committed and held on the roll state through `DiceStateHolder` like the dice
+  faces/colors (SS-244), instead of being derived reactively from the advancing combat action / active
+  users, so any doubles/mirror-image badge holds until the next roll replaces it rather than blinking
+  out mid-sequence.
+- **SS-237** — Illusionist Mirror Image keeps the −1 die badge on the rerolled die until the next
+  reroll: the −1 badge is modeled as a property of the specific die Mirror Image rerolled, carried on
+  the roll state Domain → Data → UI, and cleared only when a subsequent reroll replaces the dice
+  (applies to both ArmorClass and Damage/Health rerolls; not on SPC damage).
 
 ## App / Main
 

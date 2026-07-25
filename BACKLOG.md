@@ -393,27 +393,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   reroll communication), SS-242 (separate roll-off dice), [[dice-roll-must-be-roll-bearing]],
   [[message-log-is-passive]].
 
-### SS-248 — Dice badge must persist to latest state until the next roll (not just Teleport)
-
-- [ ] Not completed
-- **Symptom:** when an attacker rolls doubles and triggers a Teleport, the +1 doubles badge should
-  stay pinned to the correct die for the entire Teleport experience and only clear once the next
-  roll comes through. Today the badge is derived reactively from the (advancing) combat action /
-  active users, so it can vanish mid-sequence.
-- **Principle:** the dice tray must ALWAYS show its latest committed state until the next roll
-  replaces it — and this includes the `diceBadge`, not just the dice faces/colors. The badge should
-  be committed and held like the dice (SS-244 made the dice do this; the badge still isn't).
-- **Applies everywhere, not only Teleport:** any doubles/mirror-image badge should hold until the
-  next roll rather than blinking out when transient combat state changes.
-- **Implication:** `diceBadgeState` likely moves off reactive `ArenaState.Combat` derivation and
-  onto the committed roll state carried through `DiceStateHolder`. Re-check the existing lingering
-  test (`doubles bonus lingers but the turn passed → no badge`) — the intended behavior may change to
-  "held until next roll."
-- **Source:** `ArenaState.Combat.deriveDiceBadge`, `DiceBadgeState`, `DiceStateHolder`,
-  `DiceBadgeOverlay`.
-- **Related:** SS-244 (dice hold latest state), [[dicerollstate-is-tray-source-of-truth]],
-  [[doubles-visibility-message-gated]], [[dice-show-last-roll]].
-
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 
 - [ ] Not completed — **do not start until the owner describes the intended UI.**
@@ -429,41 +408,78 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-207 (Persuade animation), game rule: Persuade redirect needs ≥2 alive non-Bard
   players.
 
-### SS-237 — Illusionist Mirror Image: keep the −1 die badge on the rerolled die until the next reroll
-
-- [ ] Not completed — **Priority: dice must always match the roll.**
-- **Symptom / requirement:** When the Illusionist rerolls a die against their **Health** (Mirror
-  Image: reroll 1d6, result −1, min 0), the die that was rerolled must show the **−1 badge**. The
-  badge must **stay** on that rerolled die until the **next action that rerolls dice** occurs — it
-  should not vanish early or attach to the wrong die. This has been repeatedly mis-implemented;
-  take the time to model it correctly rather than patching symptoms.
-- **Correct model:** the −1 badge is a property of the **specific die that Mirror Image rerolled**,
-  carried on the roll state through Domain → Data → UI ([[domain-is-source-of-truth]],
-  [[never-search-messages-for-decisions]]), and cleared only when a subsequent reroll replaces the
-  dice. Applies to both the ArmorClass reroll and the Damage (Health) reroll; not usable on SPC
-  damage.
-- **Source:** `domain/.../ability/passive/MirrorImageHandler.kt`, the dice-badge mapping in the
-  dice tray, and `mirrorImageControls()` in `ArenaCombatControl.kt` (SS-222 also touches this).
-- **Related:** SS-222 (Mirror Image domain regressions + reroll button order), SS-029 (Mirror Image
-  reroll label), SS-229 (sibling dice-fidelity bug), [[disabled-die-never-animates]].
-
 ## Profile & Auth
+
+### SS-249 — Keep users signed in with a local session record (fix re-login + duplicate accounts)
+
+- [ ] Not completed — **fixes the SS-223 symptom for good.**
+- **The bug (user-facing):** on some devices Firebase Auth loses the saved session between app
+  launches. When that happens the app (1) shows the "choose your name" sign-in screen again, and
+  (2) if the user continues, creates a **brand-new anonymous account** — orphaning their existing
+  profile and stats. Confirmed on the Galaxy S9 (see SS-223). The user must never be asked to sign
+  in again once they already have, and must never lose their stats.
+- **The fix:** keep our own tiny durable record of the signed-in user in local storage (DataStore —
+  already used in the app), and use it alongside Firebase to decide the launch screen. Never trust
+  Firebase's session alone.
+    1. **On successful sign-in / profile load**, save locally: `userId`, `displayName`, and sign-in
+       method (guest vs Google).
+    2. **On launch**, if Firebase has a live session → behave as today. If Firebase has **no**
+       session but a local record exists:
+        - **Google:** silently re-authenticate with the stored Google account (Credential Manager
+          can return the already-authorized credential with no prompt) → same account restored, no
+          dialog.
+        - **Guest:** skip the name dialog, keep the stored `displayName`, and re-establish the
+          session **without** discarding the old account. (An anonymous token can't be resurrected
+          from just the uid; decide during implementation whether to re-link or do a one-time silent
+          repair — the hard rule is: do NOT create a new account when a local record exists.)
+    3. **Never mint a new anonymous user when a local record is present** — this is what stops the
+       stat-orphaning today.
+- **Done when:** on the S9, after signing in once (guest or Google), relaunching the app goes
+  straight in — no name dialog, no duplicate account, stats intact — every time.
+- **Source:** local record in DataStore; `AppViewModel.loadScreenState` (the launch gating);
+  `FirebaseAuthenticationRepository`; `CreateProfileUseCase` (the code path that currently mints a
+  new anonymous user); `AndroidSocialSignInProvider` (silent Google re-auth).
+- **Related:** SS-223 (root-cause investigation), [[sign-in-not-cached-device-specific]],
+  [[connectivity-resilience-priority]].
 
 ### SS-223 — Google Sign-In no longer cached on a physical device (regression)
 
-- [ ] Not completed — **regression: worked previously, now broken.**
-- **Symptom:** On a physical Android device, Google Sign-In is **not cached** — the user is not kept
-  signed in across launches and must re-authenticate. This worked before and now does not, so it's a
-  regression (SS-088 marked Android Google "DONE & verified live").
-- **Investigate:** what changed the persistence — Firebase Auth session persistence / anonymous→
-  Google `linkWithCredential` upgrade, the Credential Manager flow, or a `google-services.json` /
-  signing-cert (SHA) mismatch on the installed build vs. the registered fingerprints. Confirm the
-  signed-in `FirebaseUser` survives process death on device (not just emulator). Bisect against the
-  last known-good commit where sign-in cached correctly.
-- **Source:** `AndroidSocialSignInProvider` and the auth/session persistence layer; the
-  `composeApp/src/google-services.json` config; the anonymous-account upgrade path noted in SS-088.
-- **Related:** SS-088 (Android Google enablement), SS-061/SS-086 (Google sign-in), the owner's
-  standing emphasis on session/connectivity resilience ([[connectivity-resilience-priority]]).
+- [~] Diagnosed 2026-07-25 — **device-specific, not a code regression.** Reproduces only on the old
+  Galaxy S9 (Android 10); does **not** occur on a Pixel 7a. **Fix tracked in SS-249** (local session
+  record); this entry keeps the root-cause investigation.
+- **Symptom:** On a physical Android device, sign-in is **not cached** — the user is not kept signed
+  in across launches and must re-authenticate. Affects **both Google and guest/anonymous** (so it is
+  auth-level, not a Google/Credential-Manager/SHA issue).
+- **Findings (traced live on the S9 via adb):**
+    - Sign-in always succeeds — guest and Google both create the user + profile (`createProfile
+      result=SUCCESS`); the **encrypted session is written to disk**
+      (`shared_prefs/com.google.firebase.auth.api.Store.*.xml` → `FIREBASE_USER=ENCRYPTED:…`, with a
+      self-contained Tink AES-GCM keyset, so it is not an Android-Keystore decryption failure).
+    - **Persistence is a timing race on this device:** kill the app ~2s after sign-in → session lost,
+      dialog on relaunch; kill ~15s after → session survives into the app. The encrypted session is
+      not durable for several seconds after sign-in and the S9 loses it if the process dies inside
+      that window. The emulator and Pixel 7a persist correctly with short gaps.
+    - Secondary damage: on a lost session the app treats the user as new and mints a **fresh
+      anonymous user, orphaning prior stats** (gate: `isSignedIn=false`, or `isSignedIn=true` but
+      `getProfile==null`). This orphaning is the part worth fixing in code regardless of the device.
+    - Ruled out: `firebase-bom` pin (it is `androidInstrumentedTest`-only, not app runtime); any
+      `signOut`/persistence-disable (none exist); the `isSignedIn` gate logic. GMS log noise
+      (`SecurityException: Unknown calling package name 'com.google.android.gms'`, Phenotype
+      `DEVELOPER_ERROR`) appears even in working runs → benign.
+- **Dependency update — tried, does NOT fix it (2026-07-25):** GitLive `2.4.0→2.5.0` is a no-op for
+  this (both pin native `firebase-auth 23.2.1`). Forcing native `firebase-auth 24.2.0` (app-runtime
+  `firebase-bom 34.16.0`) builds and runs (GitLive 2.4.0 runtime-compatible with native 24 on the
+  auth path), but a definitive S9 test — sign in, wait 20s, force-stop, relaunch — still **lost** the
+  session (the encrypted `Store` file intermittently isn't even written). Reverted; it's an
+  unsupported GitLive+native-24 combo with no benefit here.
+- **Options if picked up:** (a) accept as an old-device quirk (Pixel 7a fine, app unreleased); (b)
+  app-side resilience — stop orphaning accounts on a lost session and/or persist a durable local
+  record to detect+repair.
+- **Source:** `FirebaseAuthenticationRepository` (auth/session persistence), `AppViewModel.loadScreenState`
+  (the two dialog gates), `CreateProfileUseCase` (mints a new anon user when not signed in).
+- **Related:** SS-088 (Android Google enablement), SS-061/SS-086 (Google sign-in),
+  [[auth-restore-race-bounded-wait]], the owner's standing emphasis on session/connectivity
+  resilience ([[connectivity-resilience-priority]]).
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers
 

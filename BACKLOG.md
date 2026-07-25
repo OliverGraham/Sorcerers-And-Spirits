@@ -960,18 +960,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   `const val` per [[animation-labels-as-const-vals]]. Related: SS-239 (ChallengeButton animation),
   SS-240 (full Tavern overhaul).
 
-### SS-239 — ChallengeButton slides up from off-screen, then back down to dismiss
-
-- [ ] Not completed
-- **Goal:** The `ChallengeButton` in `TheBar` should **animate in from below the bottom of the
-  screen up into view** when it becomes available, and **slide back down off-screen** (then
-  disappear) when dismissed, instead of appearing/vanishing in place.
-- **Source:** `ChallengeButton` in `ui/screens/tavern/ui/TheBar.kt`. Drive an
-  `AnimatedVisibility` with vertical slide-in/slide-out (enter from below, exit downward) tied to
-  the button's visibility condition.
-- **Notes:** Extract animation labels to private `const val`s ([[animation-labels-as-const-vals]]).
-  Related: SS-238, SS-240 (the overhaul may relocate/restyle this button).
-
 ### SS-240 — Complete UI overhaul of TavernScreen (owner to spec before work)
 
 - [ ] Not completed

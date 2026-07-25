@@ -15,6 +15,9 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Tavern UI
 
+- **SS-239** — ChallengeButton slides up from off-screen, then back down to dismiss: Drove the
+  `ChallengeButton` `AnimatedVisibility` in `TheBar` with `slideInVertically` (enter from below) /
+  `slideOutVertically` (exit downward); label extracted to a private `const val`.
 - **SS-004** — Decide source of class list in TavernState: Decide whether the class list should come
   from RemoteConfig or stay static (`CharacterClass.getAllClasses()`). Related: SS-047.
 - **SS-005** — Move navigateToArena out of TavernState: Reconsider whether `navigateToArena` belongs

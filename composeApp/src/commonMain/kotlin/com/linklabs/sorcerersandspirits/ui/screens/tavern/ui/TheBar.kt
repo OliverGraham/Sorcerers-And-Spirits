@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +52,7 @@ import sorcerersandspirits.composeapp.generated.resources.tavern_travelers_to_ch
 
 private const val TRAVELERS_IN_TAVERN_COUNT_LABEL = "TravelersInTavernCount"
 private const val TRAVELER_CARD_SELECTION_LABEL = "TravelerCardSelection"
+private const val CHALLENGE_BUTTON_VISIBILITY_LABEL = "ChallengeButtonVisibility"
 
 /** Location where users can challenge other users to fight in the Arena. */
 @Composable
@@ -207,7 +210,13 @@ private fun ChallengeButton(
     resetSelectedTravelers: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedVisibility(visible = selectedTravelers.isNotEmpty(), modifier = modifier) {
+    AnimatedVisibility(
+        visible = selectedTravelers.isNotEmpty(),
+        enter = slideInVertically(initialOffsetY = { fullHeight -> fullHeight }),
+        exit = slideOutVertically(targetOffsetY = { fullHeight -> fullHeight }),
+        label = CHALLENGE_BUTTON_VISIBILITY_LABEL,
+        modifier = modifier,
+    ) {
         val onSendChallengerNotifications =
             TavernActionsProvider.current.onSendChallengerNotifications
 

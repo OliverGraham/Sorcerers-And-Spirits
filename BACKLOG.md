@@ -712,19 +712,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081. The
   `ScreenSizeClass.Large` bucket also seeds SS-083 (tablet).
 
-### SS-182 — ArenaScreen top padding should sit just below the system UI
-
-- [ ] Not completed
-- **Symptom:** The ArenaScreen's topmost padding is too large; it should sit only a hair or two
-  below
-  the system UI (status bar / display cutout).
-- **Goal:** Tighten the top inset so combat content starts just below the system bars. May require
-  platform-specific insets (`expect`/`actual`) to get right on both Android and iOS.
-- **Source:** `ArenaScreen.kt` / `LoadedArenaScreen.kt` root layout (no explicit `WindowInsets`/
-  status-bar padding found today — confirm where the top spacing comes from). Use the safe-content /
-  status-bar insets rather than a fixed padding.
-- **Related:** SS-080 (responsive), SS-159 (raise DiceHome/buttons).
-
 ### SS-082 — Decide on landscape support
 
 - [ ] Not completed

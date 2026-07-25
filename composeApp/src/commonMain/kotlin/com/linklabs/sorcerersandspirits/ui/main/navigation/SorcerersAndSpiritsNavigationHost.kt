@@ -160,7 +160,15 @@ private fun AppContent(
         gesturesEnabled = true,
     ) {
         Scaffold(modifier = modifier) { innerPadding ->
-            Column(modifier = Modifier.padding(paddingValues = innerPadding)) {
+            val isEdgeToEdgeRoute = backStack.lastOrNull() is Route.ArenaScreen
+            Column(
+                modifier =
+                    if (isEdgeToEdgeRoute) {
+                        Modifier
+                    } else {
+                        Modifier.padding(paddingValues = innerPadding)
+                    }
+            ) {
                 OfflineBanner(isOffline = isOffline)
 
                 NavigationDisplay(backStack = backStack, modifier = modifier)

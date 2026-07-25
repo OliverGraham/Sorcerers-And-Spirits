@@ -6,9 +6,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -109,7 +114,6 @@ internal fun ArenaCombat(
             if (isMessagesExpanded) 0 else unreadMessageCount + screenState.numberOfNewMessages
     }
 
-    // TODO: Needs to cover bottom and top system UI
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -125,6 +129,7 @@ internal fun ArenaCombat(
                         isMessagesExpanded = !isMessagesExpanded
                         unreadMessageCount = 0
                     },
+                    modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
                 )
 
                 Box(modifier = Modifier.weight(weight = 1f)) {
@@ -163,7 +168,11 @@ internal fun ArenaCombat(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(height = BOTTOM_CONTROLS_HEIGHT))
+                Spacer(
+                    modifier =
+                        Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
+                            .height(height = BOTTOM_CONTROLS_HEIGHT)
+                )
             }
 
             EncoreFullScreenOverlay(
@@ -180,7 +189,8 @@ internal fun ArenaCombat(
                 isActionInFlight = isActionInFlight,
                 isSequencing = flashPlayback.isSequencing,
                 onActionDispatched = { isActionInFlight = true },
-                modifier = Modifier.align(alignment = Alignment.BottomCenter),
+                modifier =
+                    Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
             )
 
             SpellPotencyFullScreenOverlay(
@@ -194,6 +204,7 @@ internal fun ArenaCombat(
                 isExpanded = isMessagesExpanded,
                 diceHomeBounds = diceHomeBounds,
                 onDismiss = { isMessagesExpanded = false },
+                modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
             )
 
             // TODO Yourself: These things truly go on top of the screen column, but perhaps

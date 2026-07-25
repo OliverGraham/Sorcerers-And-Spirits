@@ -60,6 +60,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-182** — ArenaScreen edge-to-edge so full-screen effects cover the whole screen: The root nav
+  host padded every screen by the system-bar insets, clipping the Arena into the safe area so the
+  Encore/Spell Potency full-screen overlays stopped at the status/nav bars and the top gap was too
+  large. Made the Arena route full-bleed (skip the root inset padding for `Route.ArenaScreen`) and
+  applied insets locally instead — `statusBars` to `MessagesBar`/`MessageLogOverlay`, `navigationBars`
+  to `BottomControls` and the bottom spacer — so the effects now cover the entire screen while the
+  interactive chrome stays in the safe area. No `expect`/`actual` needed; CMP `WindowInsets` resolves
+  per platform. Other screens keep the global padding.
+
 - **SS-112** — Persist dice on screen; re-roll animation on any player's roll: Lifted the dice out
   of the per-turn roll controls into a persistent `DiceTray` placed in `ArenaCombat` outside the
   turn-keyed `AnimatedContent`, so it stays on screen the whole match. The tray's faces come from

@@ -41,8 +41,8 @@ data class ArenaScreenState(
 
     val animationCount: Int = playbackMessages.count { it.cue != null || it.callout != null }
 
-    val logMessages: List<ArenaMessageState> =
-        messages.filterNot { it is ArenaMessageState.NormalRoll.Attack }
+    fun revealedLogMessages(revealedCount: Int): List<ArenaMessageState> =
+        messages.take(n = revealedCount).filterNot { it is ArenaMessageState.NormalRoll.Attack }
 }
 
 // TODO(SS-031): Need to refactor this badly

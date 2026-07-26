@@ -100,8 +100,8 @@ internal class FlashPlaybackState(
         playedAnimationCount++
     }
 
-    fun settlePlayback(playedMessageCount: Int) {
-        this.playedMessageCount = playedMessageCount
+    fun revealMessage() {
+        playedMessageCount++
     }
 
     fun isAnimating(animationCount: Int): Boolean =
@@ -179,34 +179,38 @@ internal fun rememberFlashPlayback(
                 for (playable in fresh) {
                     val cue = playable.cue
                     val callout = playable.callout
-                    if (cue == null && callout == null) continue
+                    val hasAnimation = cue != null || callout != null
 
-                    val collapsingUserId = playable.collapsingUserId
-                    if (collapsingUserId != null) playback.beginCollapse(userId = collapsingUserId)
+                    if (hasAnimation) {
+                        val collapsingUserId = playable.collapsingUserId
+                        if (collapsingUserId != null) {
+                            playback.beginCollapse(userId = collapsingUserId)
+                        }
 
-                    playback.playAnimation(cue = cue)
-                    val animationMillis = cue?.playbackDurationMillis() ?: 0L
-                    if (animationMillis > 0L) delay(timeMillis = animationMillis)
+                        playback.playAnimation(cue = cue)
+                        val animationMillis = cue?.playbackDurationMillis() ?: 0L
+                        if (animationMillis > 0L) delay(timeMillis = animationMillis)
 
-                    if (callout != null) {
-                        playback.show(
-                            message = playable.message,
-                            callout = callout,
-                            anchor = playable.anchor,
-                        )
-                        delay(timeMillis = FLASH_HOLD_MILLIS)
-                        playback.dismiss()
-                        delay(timeMillis = FLASH_EXIT_MILLIS)
+                        if (callout != null) {
+                            playback.show(
+                                message = playable.message,
+                                callout = callout,
+                                anchor = playable.anchor,
+                            )
+                            delay(timeMillis = FLASH_HOLD_MILLIS)
+                            playback.dismiss()
+                            delay(timeMillis = FLASH_EXIT_MILLIS)
+                        }
+
+                        val shouldReleaseCollapsedSeat =
+                            collapsingUserId != null && !latestIsMatchEnding
+                        if (shouldReleaseCollapsedSeat) playback.endCollapse()
+
+                        playback.advancePlayedAnimation()
                     }
 
-                    val shouldReleaseCollapsedSeat =
-                        collapsingUserId != null && !latestIsMatchEnding
-                    if (shouldReleaseCollapsedSeat) playback.endCollapse()
-
-                    playback.advancePlayedAnimation()
+                    playback.revealMessage()
                 }
-
-                playback.settlePlayback(playedMessageCount = messages.size)
             }
     }
 

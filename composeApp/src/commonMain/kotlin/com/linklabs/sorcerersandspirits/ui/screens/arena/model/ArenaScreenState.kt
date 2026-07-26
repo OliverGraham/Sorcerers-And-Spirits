@@ -39,8 +39,6 @@ data class ArenaScreenState(
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
     val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
 
-    val latestAnimationMessageId: String? = playbackMessages.lastOrNull { it.cue != null }?.id
-
     val animationCount: Int = playbackMessages.count { it.cue != null || it.callout != null }
 
     val logMessages: List<ArenaMessageState> =

@@ -9,14 +9,18 @@ data class PlayableMessage(
     val cue: CombatAnimationCue?,
     val callout: FlashCallout?,
     val anchor: FlashAnchor,
+    val collapsingUserId: String?,
 ) {
     val id: String = message.id
 }
 
-fun ArenaMessageState.toPlayable(): PlayableMessage =
-    PlayableMessage(
+fun ArenaMessageState.toPlayable(): PlayableMessage {
+    val cue = combatAnimationCue
+    return PlayableMessage(
         message = this,
-        cue = combatAnimationCue,
+        cue = cue,
         callout = toFlashCallout(),
         anchor = toFlashAnchor(),
+        collapsingUserId = cue?.toCollapsingUserId(),
     )
+}

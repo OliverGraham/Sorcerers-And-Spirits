@@ -52,7 +52,9 @@ internal class CombatMutator(
         nextCombatAction = nextAction
     }
 
-    fun currentAttackTurn(): AttackTurn =
+    fun currentAttackTurn(): AttackTurn = attackTurnFor(attackerUserId = attackerUserId)
+
+    fun attackTurnFor(attackerUserId: UserId): AttackTurn =
         if (attackerUserId == originalTurnUserId) {
             AttackTurn.Standard(attackerUserId = attackerUserId)
         } else {
@@ -74,21 +76,17 @@ internal class CombatMutator(
         )
     }
 
-    /**
-     * Sets the next action to an ability roll, carrying this action's combatant ids forward.
-     * [defenderUserId] can be overridden when the ability owner is not the current defender (e.g.
-     * Holy Shield triggered by Spell Potency splash damage).
-     */
     fun setNextAbilityRoll(
         purpose: AbilityAction,
         activeUserIds: Set<UserId>,
         defenderUserId: UserId = this.defenderUserId,
+        attackTurn: AttackTurn = currentAttackTurn(),
     ) {
         setNextCombatAction(
             nextAction =
                 NextCombatAction.AbilityRoll(
                     purpose = purpose,
-                    attackTurn = currentAttackTurn(),
+                    attackTurn = attackTurn,
                     defenderUserId = defenderUserId,
                     activeUserIds = activeUserIds,
                 )

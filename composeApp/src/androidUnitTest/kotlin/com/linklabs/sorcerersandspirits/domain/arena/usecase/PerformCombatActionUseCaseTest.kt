@@ -1144,6 +1144,99 @@ class PerformCombatActionUseCaseTest {
     }
 
     @Test
+    fun `When High Roller knocks out an attacking Paladin, then Holy Shield triggers and Wrath retaliates against the Gambler`() {
+        // Arrange: a Paladin low enough that the High Roller damage knocks them out.
+        val arguments =
+            createTwoPlayerArguments(
+                attackerClass = TestCharacterClasses.paladin().copy(hitPoints = 5),
+                defenderClass = TestCharacterClasses.gambler().copy(hitPoints = 10),
+            )
+        val highRollerAction = getLuckyCoinHighRollerAction(attackerRollTotal = 10)
+        val paladinUserId = highRollerAction.attackTurn.attackerUserId
+        val gamblerUserId = highRollerAction.defenderUserId
+
+        setupOneDiceRoll(userId = gamblerUserId, die = 6)
+
+        // Act: the High Roller damage knocks out the attacking Paladin.
+        val highRollerOutcome =
+            getPerformCombatAction(arguments = arguments).invoke(currentAction = highRollerAction)
+
+        // Assert: Holy Shield is owed to the Paladin, and the Gambler who dealt the knockout is
+        // seated as this roll's attacker so both combatants keep their seats.
+        val prayerNext =
+            assertIs<NextCombatAction.AbilityRoll>(value = highRollerOutcome.nextCombatAction)
+        assertIs<AbilityAction.Passive.HolyShield.Prayer>(value = prayerNext.purpose)
+        assertEquals(expected = gamblerUserId, actual = prayerNext.attackTurn.attackerUserId)
+        assertEquals(expected = paladinUserId, actual = prayerNext.defenderUserId)
+        assertTrue(actual = prayerNext.isThisUserNext(userId = paladinUserId))
+        val savedPaladin = highRollerOutcome.getPlayerById(userId = paladinUserId).characterClass
+        val holyShield =
+            assertIs<DefensiveAbility.HolyShield>(value = savedPaladin.defensiveAbility)
+        assertTrue(actual = holyShield.usedThisMatch)
+        assertTrue(actual = !highRollerOutcome.isMatchFinished)
+
+        // Act: the Paladin prays successfully (10) and survives with 1 HP.
+        val prayerArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                playerMap = highRollerOutcome.updatedPlayerMap,
+                roundNumber = highRollerOutcome.roundNumber,
+                doublesBonus = null,
+            )
+        val prayerAction =
+            getAbilityRollAction(
+                purpose = AbilityAction.Passive.HolyShield.Prayer,
+                attackerUserId = gamblerUserId,
+                defenderUserId = paladinUserId,
+                originalTurnUserId = paladinUserId,
+                rollingUserId = paladinUserId,
+            )
+        setupTwoDiceRoll(userId = paladinUserId, firstDie = 4, secondDie = 6)
+        val prayerOutcome =
+            getPerformCombatAction(arguments = prayerArguments).invoke(currentAction = prayerAction)
+        assertIs<AbilityAction.Passive.HolyShield.Wrath>(
+            value =
+                assertIs<NextCombatAction.AbilityRoll>(value = prayerOutcome.nextCombatAction)
+                    .purpose
+        )
+
+        // Act: Wrath deals unblockable damage to the Gambler, not the surviving Paladin.
+        val gamblerHitPointsBeforeWrath =
+            prayerOutcome.getPlayerById(userId = gamblerUserId).characterClass.hitPoints
+        val wrathArguments =
+            CombatActionArguments(
+                arenaId = arguments.arenaId,
+                playerMap = prayerOutcome.updatedPlayerMap,
+                roundNumber = prayerOutcome.roundNumber,
+                doublesBonus = null,
+            )
+        val wrathAction =
+            getAbilityRollAction(
+                purpose = AbilityAction.Passive.HolyShield.Wrath,
+                attackerUserId = gamblerUserId,
+                defenderUserId = paladinUserId,
+                originalTurnUserId = paladinUserId,
+                rollingUserId = paladinUserId,
+            )
+        val wrathDamage = 3
+        setupOneDiceRoll(userId = paladinUserId, die = wrathDamage)
+        val wrathOutcome =
+            getPerformCombatAction(arguments = wrathArguments).invoke(currentAction = wrathAction)
+
+        // Assert
+        assertEquals(
+            expected = gamblerHitPointsBeforeWrath - wrathDamage,
+            actual = wrathOutcome.getPlayerById(userId = gamblerUserId).characterClass.hitPoints,
+        )
+        assertEquals(
+            expected = 1,
+            actual = wrathOutcome.getPlayerById(userId = paladinUserId).characterClass.hitPoints,
+        )
+        assertTrue(actual = wrathOutcome.nextCombatAction is NextCombatAction.Idle)
+        assertTrue(actual = !wrathOutcome.isMatchFinished)
+    }
+
+    @Test
     fun `When a Gambler uses High Roller and deals damage but the attacker survives, then the attacker rolls against health`() {
         // Arrange
         val gambler = TestCharacterClasses.gambler()

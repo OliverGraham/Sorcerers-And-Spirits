@@ -65,6 +65,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_m
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_escaped
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_roll
+import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_tie
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_trigger
 
 @Composable
@@ -142,6 +143,9 @@ internal fun ArenaMessageState.getDisplayString(): String =
 
         is ArenaMessageState.Teleport.Roll ->
             stringResource(resource = Res.string.arena_message_teleport_roll, playerName, singleDie)
+
+        is ArenaMessageState.Teleport.Tie ->
+            stringResource(resource = Res.string.arena_message_teleport_tie)
 
         is ArenaMessageState.Teleport.Result ->
             if (didDefenderEscape) {

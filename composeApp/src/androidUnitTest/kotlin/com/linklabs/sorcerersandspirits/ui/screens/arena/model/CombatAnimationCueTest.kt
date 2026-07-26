@@ -446,6 +446,8 @@ class CombatAnimationCueTest {
             ArenaMessageState.Teleport.Roll(
                     id = MESSAGE_ID,
                     mageUserId = DEFENDER_ID,
+                    rollerUserId = DEFENDER_ID,
+                    rollerClassType = CharacterClassType.Mage,
                     playerName = "Mage",
                     singleDie = 5,
                 )

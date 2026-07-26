@@ -51,6 +51,8 @@ sealed interface ArenaMessage {
         data class Roll(override val mageUserId: String, val userId: String, val singleDie: Int) :
             Teleport
 
+        data class Tie(override val mageUserId: String) : Teleport
+
         data class Result(override val mageUserId: String, val didDefenderEscape: Boolean) :
             Teleport
     }

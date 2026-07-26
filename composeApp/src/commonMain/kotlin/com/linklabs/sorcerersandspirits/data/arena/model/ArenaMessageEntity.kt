@@ -94,6 +94,10 @@ sealed interface ArenaMessageEntity {
         ) : Teleport
 
         @Serializable
+        @SerialName(value = TELEPORT_TIE)
+        data class Tie(override val id: String, override val mageUserId: String) : Teleport
+
+        @Serializable
         @SerialName(value = TELEPORT_RESULT)
         data class Result(
             override val id: String,
@@ -340,6 +344,7 @@ sealed interface ArenaMessageEntity {
         private const val TELEPORT = "Teleport"
         private const val TELEPORT_TRIGGER = "TeleportTrigger"
         private const val TELEPORT_ROLL = "TeleportRoll"
+        private const val TELEPORT_TIE = "TeleportTie"
         private const val TELEPORT_RESULT = "TeleportResult"
         private const val LUCKY_COIN = "LuckyCoin"
         private const val LUCKY_COIN_TRIGGER = "LuckyCoinTrigger"
@@ -429,6 +434,8 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     singleDie = singleDie,
                     mageUserId = mageUserId,
                 )
+
+            is ArenaMessageEntity.Teleport.Tie -> ArenaMessage.Teleport.Tie(mageUserId = mageUserId)
 
             is ArenaMessageEntity.Teleport.Result ->
                 ArenaMessage.Teleport.Result(
@@ -654,6 +661,9 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 singleDie = singleDie,
                 mageUserId = mageUserId,
             )
+
+        is ArenaMessage.Teleport.Tie ->
+            ArenaMessageEntity.Teleport.Tie(id = id, mageUserId = mageUserId)
 
         is ArenaMessage.Teleport.Result ->
             ArenaMessageEntity.Teleport.Result(

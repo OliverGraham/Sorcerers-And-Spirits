@@ -389,6 +389,14 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
                     didEscape = null,
                 )
 
+            is ArenaMessageState.Teleport.Tie ->
+                CombatAnimationCue.Teleport(
+                    id = id,
+                    mageUserId = mageUserId,
+                    phase = TeleportPhase.Hold,
+                    didEscape = null,
+                )
+
             is ArenaMessageState.Teleport.Result ->
                 CombatAnimationCue.Teleport(
                     id = id,

@@ -571,6 +571,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-243** — Teleport tie re-rolls until a winner: a tied roll-off no longer resolves in the
   attacker's favor; `TeleportHandler.handleUpdatedTeleport` now detects an equal roll and resets both
   dice (clearing the spent attacker doubles bonus) to re-run the roll-off until one side rolls higher.
+- **SS-245** — Teleport roll-off tie now reads as a rule, not a glitch: `rerollTeleport` emits a new
+  `ArenaMessage.Teleport.Tie` (threaded through entity/state) that surfaces a center "Tie — roll
+  again!" flash + log line, so the double reroll is understood. The pre-reroll hold falls out of the
+  existing wait-for-animations button gating (no artificial delay). Also anchored the per-roll flash
+  over the actual roller in their class color (`Teleport.Roll.rollerUserId`/`rollerClassType`) instead
+  of always over the Mage in Mage blue.
 - **SS-228** — Using an activated ability must restart the turn timer: All-In and Impersonate keep
   the turn with the same Idle player, so `combatActionState` was unchanged and `determineTimerAction`
   left the pre-ability countdown running. It now also restarts the combat clock when the active

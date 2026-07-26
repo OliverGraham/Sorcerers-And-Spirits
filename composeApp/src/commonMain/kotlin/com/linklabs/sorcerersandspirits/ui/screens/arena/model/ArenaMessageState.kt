@@ -85,9 +85,14 @@ sealed interface ArenaMessageState {
         data class Roll(
             override val id: String,
             override val mageUserId: String,
+            val rollerUserId: String,
+            val rollerClassType: CharacterClassType,
             val playerName: String,
             val singleDie: Int,
         ) : Teleport
+
+        @Immutable
+        data class Tie(override val id: String, override val mageUserId: String) : Teleport
 
         @Immutable
         data class Result(
@@ -615,9 +620,14 @@ private fun ArenaMessage.toState(
             ArenaMessageState.Teleport.Roll(
                 id = id,
                 mageUserId = mageUserId,
+                rollerUserId = userId,
+                rollerClassType = participants.resolveClassType(userId = userId),
                 playerName = participants.resolveClassName(userId = userId),
                 singleDie = singleDie,
             )
+
+        is ArenaMessage.Teleport.Tie ->
+            ArenaMessageState.Teleport.Tie(id = id, mageUserId = mageUserId)
 
         is ArenaMessage.Teleport.Trigger ->
             ArenaMessageState.Teleport.Trigger(id = id, mageUserId = mageUserId)

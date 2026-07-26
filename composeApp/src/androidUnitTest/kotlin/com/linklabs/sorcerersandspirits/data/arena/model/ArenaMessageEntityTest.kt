@@ -76,6 +76,7 @@ class ArenaMessageEntityTest {
                 ArenaMessage.Dodge(didArmorIncrease = false, dodgerUserId = "rogue"),
                 ArenaMessage.Teleport.Trigger(mageUserId = "mage"),
                 ArenaMessage.Teleport.Roll(mageUserId = "mage", userId = "mage", singleDie = 5),
+                ArenaMessage.Teleport.Tie(mageUserId = "mage"),
                 ArenaMessage.Teleport.Result(mageUserId = "mage", didDefenderEscape = true),
                 ArenaMessage.LuckyCoin.Trigger(gamblerUserId = "gambler"),
                 ArenaMessage.LuckyCoin.Flip(

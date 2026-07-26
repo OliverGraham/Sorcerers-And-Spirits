@@ -53,7 +53,10 @@ private const val FLASH_EXIT_MILLIS = 320L
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
 
 @Stable
-internal class FlashPlaybackState(initialLastPlayedMessageId: String?) {
+internal class FlashPlaybackState(
+    initialPlayedMessageCount: Int,
+    initialPlayedAnimationCount: Int,
+) {
     var currentMessage by mutableStateOf<ArenaMessageState?>(value = null)
         private set
 
@@ -72,7 +75,10 @@ internal class FlashPlaybackState(initialLastPlayedMessageId: String?) {
     var isActing by mutableStateOf(value = false)
         private set
 
-    var lastPlayedMessageId by mutableStateOf(value = initialLastPlayedMessageId)
+    var playedMessageCount by mutableStateOf(value = initialPlayedMessageCount)
+        private set
+
+    var playedAnimationCount by mutableStateOf(value = initialPlayedAnimationCount)
         private set
 
     val visibleState = MutableTransitionState(initialState = false)
@@ -85,17 +91,21 @@ internal class FlashPlaybackState(initialLastPlayedMessageId: String?) {
         isActing = false
     }
 
-    fun settlePlayback(lastPlayedMessageId: String?) {
-        this.lastPlayedMessageId = lastPlayedMessageId
+    fun resetPlayback() {
+        playedMessageCount = 0
+        playedAnimationCount = 0
     }
 
-    // TODO(SS-250): don't derive "animation in progress" by scanning the message stream; drive it
-    //  from the sequencer's own play/idle lifecycle so it never depends on ArenaMessage shape.
-    fun isAnimating(messages: List<PlayableMessage>): Boolean =
-        isActing ||
-            messages.freshAfter(lastPlayedId = lastPlayedMessageId).any {
-                it.cue != null || it.callout != null
-            }
+    fun advancePlayedAnimation() {
+        playedAnimationCount++
+    }
+
+    fun settlePlayback(playedMessageCount: Int) {
+        this.playedMessageCount = playedMessageCount
+    }
+
+    fun isAnimating(animationCount: Int): Boolean =
+        isActing || playedAnimationCount < animationCount
 
     fun playAnimation(cue: CombatAnimationCue?) {
         combatAnimationCue = cue
@@ -126,7 +136,10 @@ internal fun rememberFlashPlayback(
     diceStateHolder: DiceStateHolder,
 ): FlashPlaybackState {
     val playback = remember {
-        FlashPlaybackState(initialLastPlayedMessageId = messages.lastOrNull()?.id)
+        FlashPlaybackState(
+            initialPlayedMessageCount = messages.size,
+            initialPlayedAnimationCount = messages.count { it.cue != null || it.callout != null },
+        )
     }
     val latestMessages by rememberUpdatedState(newValue = messages)
     val latestDiceRoll by rememberUpdatedState(newValue = diceRollState)
@@ -134,17 +147,15 @@ internal fun rememberFlashPlayback(
     val latestIsBadgeBonusSpent by rememberUpdatedState(newValue = isBadgeBonusSpent)
 
     LaunchedEffect(key1 = Unit) {
-        var lastPlayedId = latestMessages.lastOrNull()?.id
-        var lastSize = latestMessages.size
         var lastRoll = latestDiceRoll
         snapshotFlow { latestMessages }
             .collect { messages ->
                 playback.clearActing()
 
-                val wasReset = messages.size < lastSize
-                if (wasReset) lastPlayedId = null
+                val wasReset = messages.size < playback.playedMessageCount
+                if (wasReset) playback.resetPlayback()
 
-                val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
+                val fresh = messages.drop(n = playback.playedMessageCount)
 
                 val roll = latestDiceRoll
                 val isNewRoll = roll != null && roll != lastRoll
@@ -182,11 +193,11 @@ internal fun rememberFlashPlayback(
                     if (cue?.collapsingUserId != null) {
                         playback.markCollapseFinished(messageId = playable.message.id)
                     }
+
+                    playback.advancePlayedAnimation()
                 }
 
-                lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
-                lastSize = messages.size
-                playback.settlePlayback(lastPlayedMessageId = lastPlayedId)
+                playback.settlePlayback(playedMessageCount = messages.size)
             }
     }
 
@@ -274,12 +285,3 @@ private fun normalAttackOverlayDurationMillis(
 
         else -> 0L
     }
-
-private fun List<PlayableMessage>.freshAfter(lastPlayedId: String?): List<PlayableMessage> {
-    if (lastPlayedId == null) return this
-
-    val lastPlayedIndex = indexOfLast { it.id == lastPlayedId }
-    if (lastPlayedIndex == -1) return emptyList()
-
-    return subList(lastPlayedIndex + 1, size)
-}

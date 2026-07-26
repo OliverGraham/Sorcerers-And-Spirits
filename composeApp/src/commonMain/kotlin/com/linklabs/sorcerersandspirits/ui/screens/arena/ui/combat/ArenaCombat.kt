@@ -62,6 +62,7 @@ internal fun ArenaCombat(
             diceStateHolder = diceStateHolder,
         )
     val isAnimating = flashPlayback.isAnimating(animationCount = screenState.animationCount)
+    val revealedMessageCount = flashPlayback.playedMessageCount
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
@@ -88,7 +89,10 @@ internal fun ArenaCombat(
             activeUserIds = state.activeUserIds,
             turnOwnerUserId = state.turnOwnerUserId,
         )
-    val heldMoment = rememberHeldCombatMoment(liveMoment = liveMoment, isSequencing = isAnimating)
+    val heldMoment = rememberHeldDuringSequence(liveValue = liveMoment, isSequencing = isAnimating)
+    val displayedPlayerMap =
+        rememberHeldDuringSequence(liveValue = state.playerMap, isSequencing = isAnimating)
+    val displayedState = state.copy(playerMap = displayedPlayerMap)
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
     val avatarBounds = remember { CombatAvatarBounds() }
@@ -98,19 +102,24 @@ internal fun ArenaCombat(
             state.playerMap.values.map { it.characterClass.type }.toSet()
         }
 
+    val revealedLogMessages = screenState.revealedLogMessages(revealedCount = revealedMessageCount)
+
     var isMessagesExpanded by remember { mutableStateOf(value = false) }
-    var unreadMessageCount by remember { mutableStateOf(value = 0) }
-    LaunchedEffect(key1 = screenState.messages.size) {
-        unreadMessageCount =
-            if (isMessagesExpanded) 0 else unreadMessageCount + screenState.numberOfNewMessages
+    var seenLogMessageCount by remember { mutableStateOf(value = revealedLogMessages.size) }
+    LaunchedEffect(key1 = isMessagesExpanded, key2 = revealedLogMessages.size) {
+        val shouldSyncSeenCount =
+            isMessagesExpanded || revealedLogMessages.size < seenLogMessageCount
+        if (shouldSyncSeenCount) seenLogMessageCount = revealedLogMessages.size
     }
+    val unreadMessageCount =
+        (revealedLogMessages.size - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // TODO: Make MessagesBar and TurnTimer part of Screen Column
                 MessagesBar(
-                    latestMessage = screenState.messages.lastOrNull(),
+                    latestMessage = revealedLogMessages.lastOrNull(),
                     secondsRemaining = screenState.secondsRemaining,
                     isTimerVisible = screenState.isTimerVisible,
                     isTimerUrgent = screenState.isTimerUrgent,
@@ -118,7 +127,7 @@ internal fun ArenaCombat(
                     diceHomeBounds = diceHomeBounds,
                     onToggleExpanded = {
                         isMessagesExpanded = !isMessagesExpanded
-                        unreadMessageCount = 0
+                        if (isMessagesExpanded) seenLogMessageCount = revealedLogMessages.size
                     },
                     modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
                 )
@@ -134,7 +143,7 @@ internal fun ArenaCombat(
                             animatedVisibilityScope = this@AnimatedContent,
                         ) {
                             CombatStage(
-                                state = state,
+                                state = displayedState,
                                 seating = seating,
                                 activeUserIds = heldMoment.activeUserIds,
                                 turnOwnerUserId = heldMoment.turnOwnerUserId,
@@ -194,7 +203,7 @@ internal fun ArenaCombat(
             )
 
             MessageLogOverlay(
-                messages = screenState.logMessages,
+                messages = revealedLogMessages,
                 isExpanded = isMessagesExpanded,
                 diceHomeBounds = diceHomeBounds,
                 onDismiss = { isMessagesExpanded = false },

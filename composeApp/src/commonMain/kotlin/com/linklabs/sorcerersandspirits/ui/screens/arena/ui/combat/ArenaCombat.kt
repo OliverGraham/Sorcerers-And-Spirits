@@ -31,7 +31,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
@@ -59,6 +58,7 @@ internal fun ArenaCombat(
             diceRollState = state.diceRollState,
             diceBadgeState = state.diceBadgeState,
             isBadgeBonusSpent = state.isTeleportDoublesBonusSpent,
+            isMatchEnding = screenState.isMatchEnding,
             diceStateHolder = diceStateHolder,
         )
     val isAnimating = flashPlayback.isAnimating(animationCount = screenState.animationCount)
@@ -83,18 +83,12 @@ internal fun ArenaCombat(
                 state.seatingFor(
                     targetUserId = targetedOpponentUserId,
                     isMatchEnding = screenState.isMatchEnding,
-                    collapsingTargetUserId =
-                        screenState.collapsingSeatUserId(playback = flashPlayback),
+                    collapsingTargetUserId = flashPlayback.collapsingSeatUserId,
                 ),
             activeUserIds = state.activeUserIds,
             turnOwnerUserId = state.turnOwnerUserId,
         )
-    val heldMoment =
-        rememberHeldCombatMoment(
-            liveMoment = liveMoment,
-            latestAnimationMessageId = screenState.latestAnimationMessageId,
-            isSequencing = isAnimating,
-        )
+    val heldMoment = rememberHeldCombatMoment(liveMoment = liveMoment, isSequencing = isAnimating)
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
     val avatarBounds = remember { CombatAvatarBounds() }
@@ -222,16 +216,6 @@ internal fun ArenaCombat(
             )
         }
     }
-}
-
-private fun ArenaScreenState.collapsingSeatUserId(playback: FlashPlaybackState): String? {
-    val latestCollapse =
-        playbackMessages.lastOrNull { it.cue?.collapsingUserId != null } ?: return null
-
-    val isCollapseFinished = latestCollapse.id == playback.finishedCollapseMessageId
-    val shouldHoldSeat = isMatchEnding || !isCollapseFinished
-
-    return if (shouldHoldSeat) latestCollapse.cue?.collapsingUserId else null
 }
 
 /**

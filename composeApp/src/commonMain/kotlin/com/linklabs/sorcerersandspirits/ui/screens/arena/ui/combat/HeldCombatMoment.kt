@@ -7,33 +7,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMomentHold
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.advancedWith
 
 @Composable
 internal fun rememberHeldCombatMoment(
     liveMoment: CombatMoment,
-    latestAnimationMessageId: String?,
     isSequencing: Boolean,
 ): CombatMoment {
-    var hold by remember {
-        mutableStateOf(
-            value =
-                CombatMomentHold.initial(
-                    liveMoment = liveMoment,
-                    latestAnimationMessageId = latestAnimationMessageId,
-                )
-        )
-    }
+    var heldMoment by remember { mutableStateOf(value = liveMoment) }
 
-    val nextHold =
-        hold.advancedWith(
-            liveMoment = liveMoment,
-            latestAnimationMessageId = latestAnimationMessageId,
-            isSequencing = isSequencing,
-        )
+    val displayedMoment = if (isSequencing) heldMoment else liveMoment
 
-    SideEffect { hold = nextHold }
+    SideEffect { heldMoment = displayedMoment }
 
-    return nextHold.displayedMoment
+    return displayedMoment
 }

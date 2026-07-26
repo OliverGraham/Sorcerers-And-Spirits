@@ -437,58 +437,54 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.Doubles -> null
         }
 
-// TODO: This should be data passed from Domain layer type
-val CombatAnimationCue.collapsingUserId: String?
-    get() =
-        when (this) {
-            is CombatAnimationCue.NormalAttack ->
-                if (normalRollMessageType == NormalRollMessageType.Knockout) {
-                    defenderUserId
-                } else {
-                    null
-                }
+fun CombatAnimationCue.toCollapsingUserId(): String? =
+    when (this) {
+        is CombatAnimationCue.NormalAttack ->
+            if (normalRollMessageType == NormalRollMessageType.Knockout) {
+                defenderUserId
+            } else {
+                null
+            }
 
-            is CombatAnimationCue.PrepareAttack -> if (isSuccessful) targetUserId else null
+        is CombatAnimationCue.PrepareAttack -> if (isSuccessful) targetUserId else null
 
-            is CombatAnimationCue.Riposte -> null
+        is CombatAnimationCue.Riposte -> null
 
-            is CombatAnimationCue.LuckyCoinHighRollerThrow ->
-                if (isKnockout) attackerUserId else null
+        is CombatAnimationCue.LuckyCoinHighRollerThrow -> if (isKnockout) attackerUserId else null
 
-            is CombatAnimationCue.AllIn ->
-                if (outcome == AllInOutcome.SelfKnockout) gamblerUserId else null
+        is CombatAnimationCue.AllIn ->
+            if (outcome == AllInOutcome.SelfKnockout) gamblerUserId else null
 
-            is CombatAnimationCue.KillingMomentum -> null
+        is CombatAnimationCue.KillingMomentum -> null
 
-            is CombatAnimationCue.Dodge -> null
+        is CombatAnimationCue.Dodge -> null
 
-            is CombatAnimationCue.LuckyCoinFlip -> null
+        is CombatAnimationCue.LuckyCoinFlip -> null
 
-            is CombatAnimationCue.LuckyCoinHighRoller -> null
+        is CombatAnimationCue.LuckyCoinHighRoller -> null
 
-            is CombatAnimationCue.SummonMinion -> null
+        is CombatAnimationCue.SummonMinion -> null
 
-            is CombatAnimationCue.Persuade -> null
+        is CombatAnimationCue.Persuade -> null
 
-            is CombatAnimationCue.Encore -> null
+        is CombatAnimationCue.Encore -> null
 
-            is CombatAnimationCue.Impersonate -> null
+        is CombatAnimationCue.Impersonate -> null
 
-            is CombatAnimationCue.MirrorImage ->
-                if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
+        is CombatAnimationCue.MirrorImage ->
+            if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
 
-            is CombatAnimationCue.SpellPotency ->
-                if (isMainTargetKnockedOut) mainTargetUserId else null
+        is CombatAnimationCue.SpellPotency -> if (isMainTargetKnockedOut) mainTargetUserId else null
 
-            is CombatAnimationCue.Teleport -> null
+        is CombatAnimationCue.Teleport -> null
 
-            is CombatAnimationCue.HolyShield ->
-                when {
-                    phase == HolyShieldPhase.Pray && didSurvive == false -> paladinUserId
-                    phase == HolyShieldPhase.Wrath && isAttackerKnockedOut -> attackerUserId
-                    else -> null
-                }
-        }
+        is CombatAnimationCue.HolyShield ->
+            when {
+                phase == HolyShieldPhase.Pray && didSurvive == false -> paladinUserId
+                phase == HolyShieldPhase.Wrath && isAttackerKnockedOut -> attackerUserId
+                else -> null
+            }
+    }
 
 fun CombatAnimationCue.gestureFor(userId: String): AvatarGesture? =
     when (this) {

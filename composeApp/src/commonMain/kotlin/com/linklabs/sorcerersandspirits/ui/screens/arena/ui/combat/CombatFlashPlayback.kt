@@ -19,7 +19,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayableMessage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.collapsingUserId
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.bardNormalAttackDurationMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.encoreDurationMillis
@@ -69,7 +68,7 @@ internal class FlashPlaybackState(
     var combatAnimationCue by mutableStateOf<CombatAnimationCue?>(value = null)
         private set
 
-    var finishedCollapseMessageId by mutableStateOf<String?>(value = null)
+    var collapsingSeatUserId by mutableStateOf<String?>(value = null)
         private set
 
     var isActing by mutableStateOf(value = false)
@@ -94,6 +93,7 @@ internal class FlashPlaybackState(
     fun resetPlayback() {
         playedMessageCount = 0
         playedAnimationCount = 0
+        collapsingSeatUserId = null
     }
 
     fun advancePlayedAnimation() {
@@ -111,8 +111,12 @@ internal class FlashPlaybackState(
         combatAnimationCue = cue
     }
 
-    fun markCollapseFinished(messageId: String) {
-        finishedCollapseMessageId = messageId
+    fun beginCollapse(userId: String) {
+        collapsingSeatUserId = userId
+    }
+
+    fun endCollapse() {
+        collapsingSeatUserId = null
     }
 
     fun show(message: ArenaMessageState, callout: FlashCallout, anchor: FlashAnchor) {
@@ -133,6 +137,7 @@ internal fun rememberFlashPlayback(
     diceRollState: DiceRollState?,
     diceBadgeState: DiceBadgeState?,
     isBadgeBonusSpent: Boolean,
+    isMatchEnding: Boolean,
     diceStateHolder: DiceStateHolder,
 ): FlashPlaybackState {
     val playback = remember {
@@ -145,6 +150,7 @@ internal fun rememberFlashPlayback(
     val latestDiceRoll by rememberUpdatedState(newValue = diceRollState)
     val latestDiceBadge by rememberUpdatedState(newValue = diceBadgeState)
     val latestIsBadgeBonusSpent by rememberUpdatedState(newValue = isBadgeBonusSpent)
+    val latestIsMatchEnding by rememberUpdatedState(newValue = isMatchEnding)
 
     LaunchedEffect(key1 = Unit) {
         var lastRoll = latestDiceRoll
@@ -175,6 +181,9 @@ internal fun rememberFlashPlayback(
                     val callout = playable.callout
                     if (cue == null && callout == null) continue
 
+                    val collapsingUserId = playable.collapsingUserId
+                    if (collapsingUserId != null) playback.beginCollapse(userId = collapsingUserId)
+
                     playback.playAnimation(cue = cue)
                     val animationMillis = cue?.playbackDurationMillis() ?: 0L
                     if (animationMillis > 0L) delay(timeMillis = animationMillis)
@@ -190,9 +199,9 @@ internal fun rememberFlashPlayback(
                         delay(timeMillis = FLASH_EXIT_MILLIS)
                     }
 
-                    if (cue?.collapsingUserId != null) {
-                        playback.markCollapseFinished(messageId = playable.message.id)
-                    }
+                    val shouldReleaseCollapsedSeat =
+                        collapsingUserId != null && !latestIsMatchEnding
+                    if (shouldReleaseCollapsedSeat) playback.endCollapse()
 
                     playback.advancePlayedAnimation()
                 }

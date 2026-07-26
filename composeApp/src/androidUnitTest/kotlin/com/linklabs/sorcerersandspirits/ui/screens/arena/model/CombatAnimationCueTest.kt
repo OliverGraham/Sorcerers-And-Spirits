@@ -204,7 +204,7 @@ class CombatAnimationCueTest {
         )
         assertNull(actual = cue.gestureFor(userId = DEFENDER_ID))
         assertNull(actual = cue.gestureFor(userId = SPECTATOR_ID))
-        assertNull(actual = cue.collapsingUserId)
+        assertNull(actual = cue.toCollapsingUserId())
     }
 
     @Test
@@ -224,7 +224,7 @@ class CombatAnimationCueTest {
             expected = AvatarGesture.Collapse,
             actual = cue.gestureFor(userId = ATTACKER_ID),
         )
-        assertEquals(expected = ATTACKER_ID, actual = cue.collapsingUserId)
+        assertEquals(expected = ATTACKER_ID, actual = cue.toCollapsingUserId())
     }
 
     @Test
@@ -287,7 +287,7 @@ class CombatAnimationCueTest {
             actual = cue?.gestureFor(userId = DEFENDER_ID),
         )
         assertNull(actual = cue?.gestureFor(userId = SPECTATOR_ID))
-        assertNull(actual = cue?.collapsingUserId)
+        assertNull(actual = cue?.toCollapsingUserId())
     }
 
     @Test
@@ -313,7 +313,7 @@ class CombatAnimationCueTest {
             expected = AvatarGesture.Collapse,
             actual = cue?.gestureFor(userId = DEFENDER_ID),
         )
-        assertEquals(expected = DEFENDER_ID, actual = cue?.collapsingUserId)
+        assertEquals(expected = DEFENDER_ID, actual = cue?.toCollapsingUserId())
     }
 
     @Test
@@ -382,7 +382,7 @@ class CombatAnimationCueTest {
             actual = cue,
         )
         assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
-        assertNull(actual = cue?.collapsingUserId)
+        assertNull(actual = cue?.toCollapsingUserId())
     }
 
     @Test
@@ -393,7 +393,7 @@ class CombatAnimationCueTest {
             expected = AvatarGesture.Sidestep,
             actual = cue?.gestureFor(userId = DEFENDER_ID),
         )
-        assertNull(actual = cue?.collapsingUserId)
+        assertNull(actual = cue?.toCollapsingUserId())
         assertNull(actual = cue?.gestureFor(userId = SPECTATOR_ID))
     }
 
@@ -405,7 +405,7 @@ class CombatAnimationCueTest {
             expected = AvatarGesture.Collapse,
             actual = cue?.gestureFor(userId = DEFENDER_ID),
         )
-        assertEquals(expected = DEFENDER_ID, actual = cue?.collapsingUserId)
+        assertEquals(expected = DEFENDER_ID, actual = cue?.toCollapsingUserId())
     }
 
     private fun mirrorImageResolveCue(outcome: NormalRollMessageType) =
@@ -437,7 +437,7 @@ class CombatAnimationCueTest {
             actual = cue,
         )
         assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
-        assertNull(actual = cue?.collapsingUserId)
+        assertNull(actual = cue?.toCollapsingUserId())
     }
 
     @Test
@@ -470,8 +470,8 @@ class CombatAnimationCueTest {
 
         assertEquals(expected = true, actual = (escaped as? CombatAnimationCue.Teleport)?.didEscape)
         assertEquals(expected = false, actual = (failed as? CombatAnimationCue.Teleport)?.didEscape)
-        assertNull(actual = escaped?.collapsingUserId)
-        assertNull(actual = failed?.collapsingUserId)
+        assertNull(actual = escaped?.toCollapsingUserId())
+        assertNull(actual = failed?.toCollapsingUserId())
     }
 
     private fun teleportResultCue(didDefenderEscape: Boolean) =

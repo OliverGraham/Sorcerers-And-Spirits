@@ -16,9 +16,12 @@ fun ArenaMessageState.toFlashAnchor(): FlashAnchor =
         is ArenaMessageState.ConnectedToArena,
         is ArenaMessageState.NewTurn,
         is ArenaMessageState.Persuade.Lull,
+        is ArenaMessageState.Teleport.Tie,
         is ArenaMessageState.Doubles -> FlashAnchor.Center
 
         is ArenaMessageState.NormalRoll -> FlashAnchor.Avatar(userId = defenderUserId)
+
+        is ArenaMessageState.Teleport.Roll -> FlashAnchor.Avatar(userId = rollerUserId)
 
         is ArenaMessageState.KillingMomentum -> FlashAnchor.Avatar(userId = attackerUserId)
 

@@ -119,6 +119,7 @@
 
     <string name="arena_message_teleport_trigger">Teleport! Rolling to escape…</string>
     <string name="arena_message_teleport_roll">%1$s rolled a %2$s</string>
+    <string name="arena_message_teleport_tie">Tie — roll again!</string>
     <string name="arena_message_teleport_escaped">The defender teleported away!</string>
     <string name="arena_message_teleport_failed">The teleport failed</string>
 
@@ -220,6 +221,7 @@
     <string name="arena_flash_joined">%1$s joined!</string>
     <string name="arena_flash_turn_start">%1$s\'s turn!</string>
     <string name="arena_flash_teleport_roll">Rolled %1$s!</string>
+    <string name="arena_flash_teleport_tie">Tie — roll again!</string>
     <string name="arena_flash_high_roller">High Roller!</string>
     <string name="arena_flash_lulled">Lulled!</string>
     <string name="arena_flash_encore_again">Again!</string>

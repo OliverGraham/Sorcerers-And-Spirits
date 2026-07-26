@@ -206,7 +206,11 @@ sealed interface FlashCallout {
         FlashCallout
 
     @Immutable
-    data class TeleportRoll(val die: Int) : FlashCallout {
+    data class TeleportRoll(val die: Int, override val actingClassType: CharacterClassType) :
+        FlashCallout
+
+    @Immutable
+    data object TieRollAgain : FlashCallout {
         override val actingClassType = CharacterClassType.Mage
     }
 
@@ -274,7 +278,10 @@ fun ArenaMessageState.toFlashCallout() =
 
         is ArenaMessageState.Teleport.Trigger -> null
 
-        is ArenaMessageState.Teleport.Roll -> FlashCallout.TeleportRoll(die = singleDie)
+        is ArenaMessageState.Teleport.Roll ->
+            FlashCallout.TeleportRoll(die = singleDie, actingClassType = rollerClassType)
+
+        is ArenaMessageState.Teleport.Tie -> FlashCallout.TieRollAgain
 
         is ArenaMessageState.Teleport.Result ->
             if (didDefenderEscape) FlashCallout.Escaped else FlashCallout.Caught

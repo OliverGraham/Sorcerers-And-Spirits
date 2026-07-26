@@ -314,26 +314,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-245 — Teleport roll-off: clearly indicate a tie (reroll) instead of looking broken
-
-- [ ] Not completed
-- **Symptom:** On a Teleport roll-off, when the attacker and the Mage roll the **same value** it is
-  a tie, and the domain **correctly rerolls both** (Mage escapes only on a strictly higher roll).
-  But the UI gives no clear signal that a tie happened, so both dice re-rolling reads as "it just
-  didn't work" rather than "tie → roll again." A tester genuinely could not tell whether it was a
-  legitimate tie or a bug.
-- **Goal:** Surface the tie explicitly — e.g. a flash/message "Tie — roll again!" (and/or a brief
-  hold on the two equal dice before they reset) so the reroll is understood as a rule, not a
-  glitch. Coordinate with SS-244 (dice must settle and be legible before the outcome plays) so the
-  equal values are actually visible before the reroll.
-- **Note:** The tie/reroll logic itself is already correct in the domain (`TeleportHandler`
-  `handleTeleportOutcome` → `rerollTeleport` on equal rolls); this is purely a
-  UI-communication gap.
-- **Source:** `TeleportHandler` (tie already emits no distinguishing message — add one via
-  `ArenaMessage.Teleport`), the Teleport flash/message mapping, and the dice reset visuals.
-- **Related:** SS-242 (separate roll-off dice), SS-244 (settle-before-result timing),
-  [[message-log-is-passive]], [[never-search-messages-for-decisions]].
-
 ### SS-246 — Teleport re-rolls when it shouldn't (roll-off resolving before rolls settle)
 
 - [ ] Not completed

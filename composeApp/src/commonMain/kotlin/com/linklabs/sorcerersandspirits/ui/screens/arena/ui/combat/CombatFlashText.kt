@@ -52,6 +52,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_spell_pote
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_struck_down
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_roll
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_tie
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_turn_start
 
 /** The rendered wording for a [FlashCallout], built from its string resource and data (SS-164). */
@@ -157,6 +158,8 @@ internal fun FlashCallout.text(): String =
         is FlashCallout.TurnStart -> stringResource(Res.string.arena_flash_turn_start, className)
 
         is FlashCallout.TeleportRoll -> stringResource(Res.string.arena_flash_teleport_roll, die)
+
+        is FlashCallout.TieRollAgain -> stringResource(Res.string.arena_flash_teleport_tie)
 
         is FlashCallout.HighRoller -> stringResource(Res.string.arena_flash_high_roller)
 

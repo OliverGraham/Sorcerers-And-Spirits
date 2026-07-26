@@ -74,6 +74,8 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rerollTeleport(teleport: AbilityAction.Passive.Teleport) {
+        addMessage(message = ArenaMessage.Teleport.Tie(mageUserId = teleport.defenderRoll.userId))
+
         val resetTeleport =
             teleport.copy(
                 attackerRoll = teleport.attackerRoll.copy(roll = null),

@@ -1308,3 +1308,8 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-214** — Spell Potency splash: decrement HP off the class-head icons: splashed conscious
   opponents get a per-head-icon hit-point decrement animation so a multiplayer Spell Potency reads
   as hitting the whole table, not just the seated main target. Cue: `ArenaMessageState.SpellPotency`.
+- **SS-215** — Lock combat controls until all animations finish playing: controls hide the instant an
+  action is dispatched and stay gone until the sequencer is idle, via a gapless `isAnimating` (kept
+  separate from the SS-181 `isActionInFlight` double-dispatch lock); teleport roll-off keeps both
+  rollers' buttons up through the other's die via an idle-beat latch. Follow-up SS-250 removes the
+  message-derived logic.

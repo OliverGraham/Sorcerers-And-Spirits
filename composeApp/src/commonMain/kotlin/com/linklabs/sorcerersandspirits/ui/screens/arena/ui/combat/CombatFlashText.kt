@@ -31,6 +31,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_impersonat
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_joined
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_killing_momentum
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lulled
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_holds
@@ -64,7 +65,7 @@ internal fun FlashCallout.text(): String =
                 stringResource(Res.string.arena_flash_hit, total)
             }
 
-        is FlashCallout.Miss -> stringResource(Res.string.arena_flash_miss)
+        is FlashCallout.Miss -> stringResource(Res.string.arena_flash_miss, total)
 
         is FlashCallout.Damage ->
             if (doublesBonus > 0) {
@@ -73,7 +74,12 @@ internal fun FlashCallout.text(): String =
                 stringResource(Res.string.arena_flash_damage, amount)
             }
 
-        is FlashCallout.Knockout -> stringResource(Res.string.arena_flash_knockout)
+        is FlashCallout.Knockout ->
+            if (total != null) {
+                stringResource(Res.string.arena_flash_knockout_total, total)
+            } else {
+                stringResource(Res.string.arena_flash_knockout)
+            }
 
         is FlashCallout.KillingMomentum -> stringResource(Res.string.arena_flash_killing_momentum)
 

@@ -203,25 +203,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   [[downsample-figma-raster-assets]]) or request/export it first. Related: SS-144 (target-selection
   transition), SS-136 (head icon).
 
-### SS-236 — Flash messages must play in resolution order (sequenced, correctly colored)
-
-- [ ] Not completed
-- **Symptom / goal:** When one resolution produces multiple flash call-outs, they must play **in
-  order**, each colored by the class it belongs to. Worked example: Rogue hits Gambler for 7 →
-  first flash **"7 · Hit!"** in **Rogue-red** over the Gambler, then the next flash **"Lucky
-  Coin!"** in **Gambler-yellow** over the Gambler. The sequence and per-message color must be
-  correct and stable.
-- **Mechanism:** Flashes derive from `ArenaMessageState.flashCallout` and are played by the flash
-  sequencer; each `FlashCallout` variant already carries its color + data ([[message-derivations-compute-once]]).
-  Ensure the sequencer preserves message order and that each call-out's color comes from the
-  **acting/owning class** for that specific message (attacker's class for the hit, defender's class
-  for their triggered ability), and that the flash anchors over the correct player.
-- **Source:** `CombatFlashOverlay.kt` / flash sequencer + `FlashCallout.kt`.
-- **Related:** SS-164 (one message → flash + log), SS-185 (pare back flashes), SS-215 (sequencer
-  idle gating), SS-179 (class-color text), SS-177 (doubles flash suppression).
-
----
-
 ## Combat animations
 
 Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system

@@ -53,7 +53,7 @@ private const val FLASH_EXIT_MILLIS = 320L
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
 
 @Stable
-internal class FlashPlaybackState {
+internal class FlashPlaybackState(initialLastPlayedMessageId: String?) {
     var currentMessage by mutableStateOf<ArenaMessageState?>(value = null)
         private set
 
@@ -69,14 +69,33 @@ internal class FlashPlaybackState {
     var finishedCollapseMessageId by mutableStateOf<String?>(value = null)
         private set
 
-    var isSequencing by mutableStateOf(value = false)
+    var isActing by mutableStateOf(value = false)
+        private set
+
+    var lastPlayedMessageId by mutableStateOf(value = initialLastPlayedMessageId)
         private set
 
     val visibleState = MutableTransitionState(initialState = false)
 
-    fun updateSequencing(isPlaying: Boolean) {
-        isSequencing = isPlaying
+    fun markActing() {
+        isActing = true
     }
+
+    fun clearActing() {
+        isActing = false
+    }
+
+    fun settlePlayback(lastPlayedMessageId: String?) {
+        this.lastPlayedMessageId = lastPlayedMessageId
+    }
+
+    // TODO(SS-250): don't derive "animation in progress" by scanning the message stream; drive it
+    //  from the sequencer's own play/idle lifecycle so it never depends on ArenaMessage shape.
+    fun isAnimating(messages: List<PlayableMessage>): Boolean =
+        isActing ||
+            messages.freshAfter(lastPlayedId = lastPlayedMessageId).any {
+                it.cue != null || it.callout != null
+            }
 
     fun playAnimation(cue: CombatAnimationCue?) {
         combatAnimationCue = cue
@@ -106,7 +125,9 @@ internal fun rememberFlashPlayback(
     isBadgeBonusSpent: Boolean,
     diceStateHolder: DiceStateHolder,
 ): FlashPlaybackState {
-    val playback = remember { FlashPlaybackState() }
+    val playback = remember {
+        FlashPlaybackState(initialLastPlayedMessageId = messages.lastOrNull()?.id)
+    }
     val latestMessages by rememberUpdatedState(newValue = messages)
     val latestDiceRoll by rememberUpdatedState(newValue = diceRollState)
     val latestDiceBadge by rememberUpdatedState(newValue = diceBadgeState)
@@ -118,16 +139,17 @@ internal fun rememberFlashPlayback(
         var lastRoll = latestDiceRoll
         snapshotFlow { latestMessages }
             .collect { messages ->
+                playback.clearActing()
+
                 val wasReset = messages.size < lastSize
                 if (wasReset) lastPlayedId = null
 
                 val fresh = messages.freshAfter(lastPlayedId = lastPlayedId)
-                val hasPlayable = fresh.any { it.cue != null || it.callout != null }
-                if (hasPlayable) playback.updateSequencing(isPlaying = true)
 
                 val roll = latestDiceRoll
                 val isNewRoll = roll != null && roll != lastRoll
                 lastRoll = roll
+
                 if (isNewRoll) {
                     diceStateHolder.commitRoll(
                         diceRollState = roll,
@@ -162,9 +184,9 @@ internal fun rememberFlashPlayback(
                     }
                 }
 
-                if (hasPlayable) playback.updateSequencing(isPlaying = false)
                 lastPlayedId = messages.lastOrNull()?.id ?: lastPlayedId
                 lastSize = messages.size
+                playback.settlePlayback(lastPlayedMessageId = lastPlayedId)
             }
     }
 

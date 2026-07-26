@@ -304,26 +304,28 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
 
-### SS-215 — Lock combat controls until all animations finish playing
+### SS-250 — Drive combat-control visibility/lock from state, not from ArenaMessages
 
 - [ ] Not completed
-- **Symptom:** After acting, the combat buttons re-enable as soon as the resolution message arrives,
-  but the resolution's animations can run several seconds longer. A user can therefore fire the next
-  action while the previous effect is still playing, stacking animations until it becomes impossible
-  to see what is going on.
-- **Goal:** The buttons must not be usable (they fade out entirely) until **all** of a resolution's
-  queued animations have played through — the controls return only once the flash sequencer is idle.
-- **Mechanism (first pass, implemented):** `FlashPlaybackState.isSequencing` is set true while the
-  sequencer plays out a fresh batch of messages (their `combatAnimationCue`s and flash callouts) and
-  false once the batch finishes; `BottomControls` folds it into `areButtonsShown` so the buttons
-  fade out via the existing `AnimatedVisibility` while animations play. A "waiting for the user's
-  roll" beat (e.g. Encore SetStage, where the sequencer goes idle after the darkness rises) still
-  shows the buttons, so the Encore/roll prompts are unaffected.
-- **Open for owner:** verify on-device across multi-step resolutions (chained KOs, Spell Potency
-  splash, Encore-again, Riposte redirects) that the controls hide/return at the right beats and no
-  legitimate roll prompt is ever swallowed.
-- **Related:** SS-201 (animation-before-flash sequencing), SS-185 (flash coverage), SS-210 (Spell
-  Potency full-screen), SS-206 (Encore full-screen).
+- **Symptom:** The combat-control hide-during-animation and double-dispatch guard were made to work
+  (SS-215) by reading the `ArenaMessage` stream for logic, which violates the "message log is passive"
+  rule. Messages are a presentation/log stream and can change shape at any time; they must not direct
+  logic.
+- **Two offenders:**
+  - `FlashPlaybackState.isAnimating(messages)` decides "is a combat animation in progress" by scanning
+    `messages` for the first unplayed `cue`/`callout` after a `lastPlayedMessageId` cursor
+    (`CombatFlashPlayback.kt`, tagged `// TODO(SS-250)`).
+  - `isActionInFlight` (the SS-181 double-dispatch guard) resets via a `remember` keyed on
+    `screenState.messages.lastOrNull()?.id` (`ArenaCombat.kt`, tagged `// TODO(SS-250)`), i.e. "has the
+    step advanced?" is inferred from a new message arriving.
+- **Goal:** Express both signals from authoritative Domain/VM/sequencer-lifecycle state instead of the
+  message list. "An animation is in progress" should come from the sequencer's own play/idle lifecycle
+  (it already owns the coroutine that plays each effect); "this action's step has resolved" should come
+  from the combat action state / turn progression the Domain already emits — not from message identity.
+  The result must stay gapless and symmetric for the acting player and observers (the property that
+  made the message-derived version necessary), and must keep the double-dispatch lock intact.
+- **Related:** SS-215 (the mechanism this refactors), SS-181 (double-dispatch lock), SS-164 (one
+  message → flash + log), message-log-is-passive principle.
 
 ---
 

@@ -1,9 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -23,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -65,8 +66,8 @@ internal fun BottomControls(
     lockTarget: () -> Unit,
     diceStateHolder: DiceStateHolder,
     areControlsVisible: Boolean,
+    isAnimating: Boolean,
     isActionInFlight: Boolean,
-    isSequencing: Boolean,
     onActionDispatched: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -75,6 +76,13 @@ internal fun BottomControls(
 
     val classColor = state.userPlayer.characterClass.type.toColor()
     val controls = state.combatControls
+
+    val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
+    var hasReachedTeleportRollBeat by
+        remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
+    if (hasPendingTeleportRoll && !isAnimating) hasReachedTeleportRollBeat = true
+
+    val isSuppressedByAnimation = isAnimating && !hasReachedTeleportRollBeat
 
     // TODO: Very, very rarely are nested functions allowable (these are not)
     fun isEnabled(control: ArenaCombatControl): Boolean =
@@ -94,10 +102,13 @@ internal fun BottomControls(
             onActionDispatched = onActionDispatched,
         )
 
-    val isHiddenBySequencing = isSequencing && !state.isAwaitingTeleportRoll
-    val areButtonsShown = areControlsVisible && !isHiddenBySequencing && controls.isNotEmpty()
+    val areButtonsShown = areControlsVisible && !isSuppressedByAnimation && controls.isNotEmpty()
     Box(modifier = modifier.fillMaxWidth().height(height = BOTTOM_CONTROLS_HEIGHT)) {
-        AnimatedVisibility(visible = areButtonsShown, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(
+            visible = areButtonsShown,
+            enter = fadeIn(),
+            exit = ExitTransition.None,
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly,

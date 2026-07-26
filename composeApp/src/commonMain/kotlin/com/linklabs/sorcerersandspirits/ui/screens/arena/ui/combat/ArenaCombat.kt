@@ -61,6 +61,7 @@ internal fun ArenaCombat(
             isBadgeBonusSpent = state.isTeleportDoublesBonusSpent,
             diceStateHolder = diceStateHolder,
         )
+    val isAnimating = flashPlayback.isAnimating(messages = screenState.playbackMessages)
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
@@ -71,7 +72,8 @@ internal fun ArenaCombat(
     var isTargetLockedOptimistically by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
 
-    // TODO: Don't use messages for logic - do this later, Claude
+    // TODO(SS-250): don't key the double-dispatch guard off message identity; derive
+    //  "has this step resolved" from Domain combat-action/turn state instead.
     var isActionInFlight by
         remember(key1 = state.combatActionState, key2 = screenState.messages.lastOrNull()?.id) {
             mutableStateOf(value = false)
@@ -96,7 +98,7 @@ internal fun ArenaCombat(
         rememberHeldCombatMoment(
             liveMoment = liveMoment,
             latestAnimationMessageId = screenState.latestAnimationMessageId,
-            isSequencing = flashPlayback.isSequencing,
+            isSequencing = isAnimating,
         )
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
@@ -186,9 +188,12 @@ internal fun ArenaCombat(
                 lockTarget = { isTargetLockedOptimistically = true },
                 diceStateHolder = diceStateHolder,
                 areControlsVisible = !screenState.isMatchEnding,
+                isAnimating = isAnimating,
                 isActionInFlight = isActionInFlight,
-                isSequencing = flashPlayback.isSequencing,
-                onActionDispatched = { isActionInFlight = true },
+                onActionDispatched = {
+                    isActionInFlight = true
+                    flashPlayback.markActing()
+                },
                 modifier =
                     Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
             )

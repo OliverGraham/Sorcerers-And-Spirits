@@ -61,7 +61,7 @@ internal fun ArenaCombat(
             isBadgeBonusSpent = state.isTeleportDoublesBonusSpent,
             diceStateHolder = diceStateHolder,
         )
-    val isAnimating = flashPlayback.isAnimating(messages = screenState.playbackMessages)
+    val isAnimating = flashPlayback.isAnimating(animationCount = screenState.animationCount)
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
@@ -72,12 +72,7 @@ internal fun ArenaCombat(
     var isTargetLockedOptimistically by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
 
-    // TODO(SS-250): don't key the double-dispatch guard off message identity; derive
-    //  "has this step resolved" from Domain combat-action/turn state instead.
-    var isActionInFlight by
-        remember(key1 = state.combatActionState, key2 = screenState.messages.lastOrNull()?.id) {
-            mutableStateOf(value = false)
-        }
+    var isActionInFlight by remember(key1 = state) { mutableStateOf(value = false) }
 
     val targetedOpponentUserId =
         state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)

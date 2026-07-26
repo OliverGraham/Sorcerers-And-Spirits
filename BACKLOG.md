@@ -304,29 +304,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.Persuade.*`.
 - **Parent:** SS-191. Split out of SS-196.
 
-### SS-250 — Drive combat-control visibility/lock from state, not from ArenaMessages
-
-- [ ] Not completed
-- **Symptom:** The combat-control hide-during-animation and double-dispatch guard were made to work
-  (SS-215) by reading the `ArenaMessage` stream for logic, which violates the "message log is passive"
-  rule. Messages are a presentation/log stream and can change shape at any time; they must not direct
-  logic.
-- **Two offenders:**
-  - `FlashPlaybackState.isAnimating(messages)` decides "is a combat animation in progress" by scanning
-    `messages` for the first unplayed `cue`/`callout` after a `lastPlayedMessageId` cursor
-    (`CombatFlashPlayback.kt`, tagged `// TODO(SS-250)`).
-  - `isActionInFlight` (the SS-181 double-dispatch guard) resets via a `remember` keyed on
-    `screenState.messages.lastOrNull()?.id` (`ArenaCombat.kt`, tagged `// TODO(SS-250)`), i.e. "has the
-    step advanced?" is inferred from a new message arriving.
-- **Goal:** Express both signals from authoritative Domain/VM/sequencer-lifecycle state instead of the
-  message list. "An animation is in progress" should come from the sequencer's own play/idle lifecycle
-  (it already owns the coroutine that plays each effect); "this action's step has resolved" should come
-  from the combat action state / turn progression the Domain already emits — not from message identity.
-  The result must stay gapless and symmetric for the acting player and observers (the property that
-  made the message-derived version necessary), and must keep the double-dispatch lock intact.
-- **Related:** SS-215 (the mechanism this refactors), SS-181 (double-dispatch lock), SS-164 (one
-  message → flash + log), message-log-is-passive principle.
-
 ---
 
 ## Domain layer

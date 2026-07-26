@@ -41,6 +41,8 @@ data class ArenaScreenState(
 
     val latestAnimationMessageId: String? = playbackMessages.lastOrNull { it.cue != null }?.id
 
+    val animationCount: Int = playbackMessages.count { it.cue != null || it.callout != null }
+
     val logMessages: List<ArenaMessageState> =
         messages.filterNot { it is ArenaMessageState.NormalRoll.Attack }
 }

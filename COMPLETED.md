@@ -1313,3 +1313,8 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   separate from the SS-181 `isActionInFlight` double-dispatch lock); teleport roll-off keeps both
   rollers' buttons up through the other's die via an idle-beat latch. Follow-up SS-250 removes the
   message-derived logic.
+- **SS-250** — Drive combat-control visibility/lock from state, not from ArenaMessages: `isAnimating`
+  is now `isActing || playedAnimationCount < ArenaScreenState.animationCount` (sequencer play/idle
+  lifecycle vs. a count mapped once from messages), and the SS-181 double-dispatch guard keys on the
+  whole `ArenaState.Combat` instead of `messages.lastOrNull()?.id`; message log stays passive.
+  Related: SS-215, SS-181, message-log-is-passive.

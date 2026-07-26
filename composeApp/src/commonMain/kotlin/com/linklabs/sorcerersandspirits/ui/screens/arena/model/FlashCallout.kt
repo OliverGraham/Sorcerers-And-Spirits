@@ -169,7 +169,7 @@ sealed interface FlashCallout {
     }
 
     @Immutable
-    data class Reroll(val finalRoll: Int) : FlashCallout {
+    data class Reroll(val rawReroll: Int) : FlashCallout {
         override val actingClassType = CharacterClassType.Illusionist
     }
 
@@ -368,7 +368,7 @@ fun ArenaMessageState.toFlashCallout() =
                     FlashCallout.Knockout(actingClassType = attackerClassType, total = total)
             }
 
-        is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(finalRoll = finalRoll)
+        is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(rawReroll = rawReroll)
 
         is ArenaMessageState.SpellPotency -> FlashCallout.SpellPotency
 

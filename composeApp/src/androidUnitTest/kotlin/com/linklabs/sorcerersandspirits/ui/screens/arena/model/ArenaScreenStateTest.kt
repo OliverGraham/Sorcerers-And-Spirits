@@ -382,7 +382,7 @@ class ArenaScreenStateTest {
     }
 
     @Test
-    fun `Given a doubles bonus lingers but the turn passed to another player, then no doubles badge shows`() {
+    fun `Given the resting dice still show a doubles roll after the turn passed, then the doubles badge stays`() {
         val state =
             combatState(
                 combatActionState =
@@ -395,7 +395,41 @@ class ArenaScreenStateTest {
                     ),
             )
 
-        assertNull(actual = state.diceBadgeState)
+        assertEquals(
+            expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
+            actual = state.diceBadgeState,
+        )
+    }
+
+    @Test
+    fun `Given the same resting doubles roll, then the doubles badge is unchanged by whose turn it is`() {
+        val doublesRoll =
+            DiceRollState.TwoDice(
+                firstDie = 3,
+                secondDie = 3,
+                doublesBonus = DoublesBonusState(userId = USER_ID),
+            )
+        val whileRollerActive =
+            combatState(
+                combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
+                diceRollState = doublesRoll,
+            )
+        val afterTurnPassed =
+            combatState(
+                combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                diceRollState = doublesRoll,
+            )
+
+        assertEquals(
+            expected = whileRollerActive.diceBadgeState,
+            actual = afterTurnPassed.diceBadgeState,
+        )
+        assertEquals(
+            expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
+            actual = afterTurnPassed.diceBadgeState,
+        )
     }
 
     @Test

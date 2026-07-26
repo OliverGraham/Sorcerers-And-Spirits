@@ -82,7 +82,9 @@ internal class LuckyCoinHandler(
         val wasHolyShieldTriggered =
             HolyShieldHandler.triggerHolyShieldIfApplicable(
                 combatMutator = combatMutator,
-                defenderDefensiveAbility = defender.defensiveAbility,
+                defenderDefensiveAbility = attacker.defensiveAbility,
+                holyShieldUserId = attackerUserId,
+                knockoutDealerUserId = defenderUserId,
             )
         if (wasHolyShieldTriggered) return
 

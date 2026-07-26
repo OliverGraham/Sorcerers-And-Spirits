@@ -11,10 +11,15 @@ import kotlin.contracts.contract
 
 internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
-    fun triggerHolyShield(holyShield: DefensiveAbility.HolyShield, holyShieldUserId: String) =
+    fun triggerHolyShield(
+        holyShield: DefensiveAbility.HolyShield,
+        holyShieldUserId: String,
+        knockoutDealerUserId: String,
+    ) =
         combatMutator.triggerHolyShield(
             holyShield = holyShield,
             holyShieldUserId = holyShieldUserId,
+            knockoutDealerUserId = knockoutDealerUserId,
         )
 
     fun attemptPrayer() = combatMutator.attemptPrayer()
@@ -24,6 +29,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.triggerHolyShield(
         holyShield: DefensiveAbility.HolyShield,
         holyShieldUserId: String,
+        knockoutDealerUserId: String,
     ) {
         addMessage(message = ArenaMessage.HolyShield.Trigger(paladinUserId = holyShieldUserId))
 
@@ -35,6 +41,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             purpose = AbilityAction.Passive.HolyShield.Prayer,
             activeUserIds = setOf(element = holyShieldUserId),
             defenderUserId = holyShieldUserId,
+            attackTurn = attackTurnFor(attackerUserId = knockoutDealerUserId),
         )
     }
 
@@ -88,12 +95,6 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    /**
-     * Wrath retaliates against the attacker: the player whose turn dealt the damage. This holds
-     * even when the Paladin was knocked out by Mage Spell Potency splash damage rather than a
-     * direct hit, because the Mage is still the attacker, so the unblockable Wrath damage lands on
-     * them.
-     */
     private fun CombatMutator.wrathRoll() {
         val result =
             diceRoller
@@ -141,6 +142,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             combatMutator: CombatMutator,
             defenderDefensiveAbility: DefensiveAbility,
             holyShieldUserId: String = combatMutator.defenderUserId,
+            knockoutDealerUserId: String = combatMutator.attackerUserId,
         ): Boolean {
             val shouldTriggerHolyShield = isHolyShieldAvailable(defenderDefensiveAbility)
 
@@ -149,6 +151,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
                     .triggerHolyShield(
                         holyShield = defenderDefensiveAbility,
                         holyShieldUserId = holyShieldUserId,
+                        knockoutDealerUserId = knockoutDealerUserId,
                     )
             }
 

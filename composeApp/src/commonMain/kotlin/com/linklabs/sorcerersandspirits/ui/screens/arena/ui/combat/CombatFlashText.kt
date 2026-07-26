@@ -138,7 +138,7 @@ internal fun FlashCallout.text(): String =
 
         is FlashCallout.MirrorImage -> stringResource(Res.string.arena_flash_mirror_image)
 
-        is FlashCallout.Reroll -> stringResource(Res.string.arena_flash_reroll, finalRoll)
+        is FlashCallout.Reroll -> stringResource(Res.string.arena_flash_reroll, rawReroll)
 
         is FlashCallout.HolyShield -> stringResource(Res.string.arena_flash_holy_shield)
 

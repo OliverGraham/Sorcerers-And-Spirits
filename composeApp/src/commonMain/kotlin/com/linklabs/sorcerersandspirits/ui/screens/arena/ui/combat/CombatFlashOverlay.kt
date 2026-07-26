@@ -4,6 +4,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -24,11 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
@@ -44,7 +49,10 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
 
-private val flashFontSize = 26.sp
+private val flashFontSize = 46.sp
+private const val FLASH_OUTLINE_FRACTION = 0.09f
+private const val FLASH_SWING_DEGREES = 7f
+private const val FLASH_SWING_MILLIS = 900
 private const val PI_FLOAT = 3.1415927f
 private const val CONFETTI_COUNT = 14
 private const val CONFETTI_MILLIS = 750
@@ -132,20 +140,55 @@ private fun Modifier.centeredAt(point: () -> Offset): Modifier = layout { measur
 
 @Composable
 private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
-    val color = callout.actingClassType?.toColor() ?: Color.White
-    Text(
-        text = callout.text(),
-        style =
-            TextStyle(
-                fontSize = flashFontSize,
-                fontWeight = FontWeight.Black,
-                color = color,
-                textAlign = TextAlign.Center,
-                shadow =
-                    Shadow(color = Color.Black, offset = Offset(x = 0f, y = 3f), blurRadius = 6f),
-            ),
-        modifier = modifier,
-    )
+    val fillColor = callout.actingClassType?.toColor() ?: Color.White
+    val text = callout.text()
+    val swing = remember { Animatable(initialValue = 0f) }
+
+    LaunchedEffect(key1 = Unit) {
+        swing.snapTo(targetValue = 0f)
+        swing.animateTo(
+            targetValue = 0f,
+            animationSpec =
+                keyframes {
+                    durationMillis = FLASH_SWING_MILLIS
+                    0f at 0
+                    -FLASH_SWING_DEGREES at 130
+                    FLASH_SWING_DEGREES at 320
+                    -FLASH_SWING_DEGREES * 0.6f at 500
+                    FLASH_SWING_DEGREES * 0.35f at 680
+                    0f at FLASH_SWING_MILLIS
+                },
+        )
+    }
+
+    val baseStyle =
+        TextStyle(
+            fontSize = flashFontSize,
+            fontWeight = FontWeight.Black,
+            fontStyle = FontStyle.Italic,
+            letterSpacing = 1.sp,
+            textAlign = TextAlign.Center,
+        )
+    val outlineWidthPx =
+        with(LocalDensity.current) { flashFontSize.toPx() } * FLASH_OUTLINE_FRACTION
+
+    Box(modifier = modifier.graphicsLayer { rotationZ = swing.value }) {
+        Text(
+            text = text,
+            style =
+                baseStyle.copy(
+                    color = Color.Black,
+                    drawStyle = Stroke(width = outlineWidthPx),
+                    shadow =
+                        Shadow(
+                            color = Color.Black,
+                            offset = Offset(x = 0f, y = 4f),
+                            blurRadius = 12f,
+                        ),
+                ),
+        )
+        Text(text = text, style = baseStyle.copy(color = fillColor))
+    }
 }
 
 @Composable

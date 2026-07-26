@@ -46,7 +46,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
-private const val FLASH_HOLD_MILLIS = 850L
+private const val FLASH_HOLD_MILLIS = 1100L
 private const val FLASH_EXIT_MILLIS = 320L
 
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS

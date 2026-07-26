@@ -7,9 +7,9 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 /**
  * A full-screen flash call-out (SS-148/SS-164): a sealed, punchy description of a flash-worthy
  * event. Each variant carries only the data its wording needs, so the text is built from a string
- * resource at render time rather than baked in here. [actingClassType] colors a call-out in that
- * class's color; a null type renders neutral (white) — used for "Miss!" and ability call-outs until
- * per-class message coloring lands (SS-179).
+ * resource at render time rather than baked in here. [actingClassType] colors a call-out in its
+ * owning class's color (attacker's class for a normal roll, the ability's class for a triggered
+ * ability); a null type renders neutral (white) for system banners like new rounds and joins.
  */
 @Immutable
 sealed interface FlashCallout {
@@ -23,7 +23,8 @@ sealed interface FlashCallout {
         val doublesBonus: Int,
     ) : FlashCallout
 
-    @Immutable data object Miss : FlashCallout
+    @Immutable
+    data class Miss(val total: Int, override val actingClassType: CharacterClassType) : FlashCallout
 
     @Immutable
     data class Damage(
@@ -33,71 +34,164 @@ sealed interface FlashCallout {
     ) : FlashCallout
 
     @Immutable
-    data class Knockout(override val actingClassType: CharacterClassType? = null) : FlashCallout
+    data class Knockout(
+        override val actingClassType: CharacterClassType? = null,
+        val total: Int? = null,
+    ) : FlashCallout
 
-    @Immutable data object KillingMomentum : FlashCallout
+    @Immutable
+    data object KillingMomentum : FlashCallout {
+        override val actingClassType = CharacterClassType.Rogue
+    }
 
-    @Immutable data object Dodge : FlashCallout
+    @Immutable
+    data object Dodge : FlashCallout {
+        override val actingClassType = CharacterClassType.Rogue
+    }
 
-    @Immutable data object SpellPotency : FlashCallout
+    @Immutable
+    data object SpellPotency : FlashCallout {
+        override val actingClassType = CharacterClassType.Mage
+    }
 
     @Immutable data object Doubles : FlashCallout
 
-    @Immutable data object Impersonate : FlashCallout
+    @Immutable
+    data object Impersonate : FlashCallout {
+        override val actingClassType = CharacterClassType.Illusionist
+    }
 
-    @Immutable data object PreparedStrike : FlashCallout
+    @Immutable
+    data object PreparedStrike : FlashCallout {
+        override val actingClassType = CharacterClassType.Duelist
+    }
 
-    @Immutable data object AttackWhiffed : FlashCallout
+    @Immutable
+    data object AttackWhiffed : FlashCallout {
+        override val actingClassType = CharacterClassType.Duelist
+    }
 
-    @Immutable data object Encore : FlashCallout
+    @Immutable
+    data object Encore : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data object AllIn : FlashCallout
+    @Immutable
+    data object AllIn : FlashCallout {
+        override val actingClassType = CharacterClassType.Gambler
+    }
 
-    @Immutable data object AllInStrikeTwice : FlashCallout
+    @Immutable
+    data object AllInStrikeTwice : FlashCallout {
+        override val actingClassType = CharacterClassType.Gambler
+    }
 
-    @Immutable data object Fizzle : FlashCallout
+    @Immutable
+    data object Fizzle : FlashCallout {
+        override val actingClassType = CharacterClassType.Necromancer
+    }
 
-    @Immutable data object Skeleton : FlashCallout
+    @Immutable
+    data object Skeleton : FlashCallout {
+        override val actingClassType = CharacterClassType.Necromancer
+    }
 
-    @Immutable data class SkeletonAndHeal(val necromancerName: String) : FlashCallout
+    @Immutable
+    data class SkeletonAndHeal(val necromancerName: String) : FlashCallout {
+        override val actingClassType = CharacterClassType.Necromancer
+    }
 
-    @Immutable data class Golem(val necromancerName: String) : FlashCallout
+    @Immutable
+    data class Golem(val necromancerName: String) : FlashCallout {
+        override val actingClassType = CharacterClassType.Necromancer
+    }
 
-    @Immutable data object Teleport : FlashCallout
+    @Immutable
+    data object Teleport : FlashCallout {
+        override val actingClassType = CharacterClassType.Mage
+    }
 
-    @Immutable data object Escaped : FlashCallout
+    @Immutable
+    data object Escaped : FlashCallout {
+        override val actingClassType = CharacterClassType.Mage
+    }
 
-    @Immutable data object Caught : FlashCallout
+    @Immutable
+    data object Caught : FlashCallout {
+        override val actingClassType = CharacterClassType.Mage
+    }
 
-    @Immutable data object LuckyCoin : FlashCallout
+    @Immutable
+    data object LuckyCoin : FlashCallout {
+        override val actingClassType = CharacterClassType.Gambler
+    }
 
-    @Immutable data object AttackStopped : FlashCallout
+    @Immutable
+    data class AttackStopped(override val actingClassType: CharacterClassType) : FlashCallout
 
-    @Immutable data class AttackContinues(val die: Int) : FlashCallout
+    @Immutable
+    data class AttackContinues(val die: Int, override val actingClassType: CharacterClassType) :
+        FlashCallout
 
-    @Immutable data object Riposte : FlashCallout
+    @Immutable
+    data object Riposte : FlashCallout {
+        override val actingClassType = CharacterClassType.Duelist
+    }
 
-    @Immutable data object Reversed : FlashCallout
+    @Immutable
+    data object Reversed : FlashCallout {
+        override val actingClassType = CharacterClassType.Duelist
+    }
 
-    @Immutable data object CounterFailed : FlashCallout
+    @Immutable
+    data object CounterFailed : FlashCallout {
+        override val actingClassType = CharacterClassType.Duelist
+    }
 
-    @Immutable data object Persuade : FlashCallout
+    @Immutable
+    data object Persuade : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data object Charmed : FlashCallout
+    @Immutable
+    data object Charmed : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data class Redirected(val targetName: String) : FlashCallout
+    @Immutable
+    data class Redirected(val targetName: String) : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data object MirrorImage : FlashCallout
+    @Immutable
+    data object MirrorImage : FlashCallout {
+        override val actingClassType = CharacterClassType.Illusionist
+    }
 
-    @Immutable data class Reroll(val finalRoll: Int) : FlashCallout
+    @Immutable
+    data class Reroll(val finalRoll: Int) : FlashCallout {
+        override val actingClassType = CharacterClassType.Illusionist
+    }
 
-    @Immutable data object HolyShield : FlashCallout
+    @Immutable
+    data object HolyShield : FlashCallout {
+        override val actingClassType = CharacterClassType.Paladin
+    }
 
-    @Immutable data object Saved : FlashCallout
+    @Immutable
+    data object Saved : FlashCallout {
+        override val actingClassType = CharacterClassType.Paladin
+    }
 
-    @Immutable data object StruckDown : FlashCallout
+    @Immutable
+    data object StruckDown : FlashCallout {
+        override val actingClassType = CharacterClassType.Paladin
+    }
 
-    @Immutable data object HolyWrath : FlashCallout
+    @Immutable
+    data object HolyWrath : FlashCallout {
+        override val actingClassType = CharacterClassType.Paladin
+    }
 
     @Immutable data class NewRound(val roundNumber: String) : FlashCallout
 
@@ -111,17 +205,35 @@ sealed interface FlashCallout {
     data class TurnStart(val className: String, override val actingClassType: CharacterClassType) :
         FlashCallout
 
-    @Immutable data class TeleportRoll(val die: Int) : FlashCallout
+    @Immutable
+    data class TeleportRoll(val die: Int) : FlashCallout {
+        override val actingClassType = CharacterClassType.Mage
+    }
 
-    @Immutable data object HighRoller : FlashCallout
+    @Immutable
+    data object HighRoller : FlashCallout {
+        override val actingClassType = CharacterClassType.Gambler
+    }
 
-    @Immutable data object Lulled : FlashCallout
+    @Immutable
+    data object Lulled : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data object EncoreAgain : FlashCallout
+    @Immutable
+    data object EncoreAgain : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data object NoEncore : FlashCallout
+    @Immutable
+    data object NoEncore : FlashCallout {
+        override val actingClassType = CharacterClassType.Bard
+    }
 
-    @Immutable data object MirrorHolds : FlashCallout
+    @Immutable
+    data object MirrorHolds : FlashCallout {
+        override val actingClassType = CharacterClassType.Illusionist
+    }
 }
 
 /** The flash call-out for a message, or null when the message is log-only. */
@@ -143,7 +255,8 @@ fun ArenaMessageState.toFlashCallout() =
                         doublesBonus = bonus,
                     )
 
-                NormalRollMessageType.ArmorClassMiss -> FlashCallout.Miss
+                NormalRollMessageType.ArmorClassMiss ->
+                    FlashCallout.Miss(total = total, actingClassType = attackerClassType)
 
                 NormalRollMessageType.Damage ->
                     FlashCallout.Damage(
@@ -153,7 +266,7 @@ fun ArenaMessageState.toFlashCallout() =
                     )
 
                 NormalRollMessageType.Knockout ->
-                    FlashCallout.Knockout(actingClassType = attackerClassType)
+                    FlashCallout.Knockout(actingClassType = attackerClassType, total = total)
             }
 
         is ArenaMessageState.KillingMomentum,
@@ -172,13 +285,23 @@ fun ArenaMessageState.toFlashCallout() =
 
         is ArenaMessageState.LuckyCoin.Flip ->
             if (didStopAttack) {
-                FlashCallout.AttackStopped
+                FlashCallout.AttackStopped(actingClassType = CharacterClassType.Gambler)
             } else {
-                FlashCallout.AttackContinues(die = singleDie)
+                FlashCallout.AttackContinues(
+                    die = singleDie,
+                    actingClassType = CharacterClassType.Gambler,
+                )
             }
 
         is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-            if (isKnockout) FlashCallout.Knockout() else FlashCallout.Damage(amount = singleDie)
+            if (isKnockout) {
+                FlashCallout.Knockout(actingClassType = CharacterClassType.Gambler)
+            } else {
+                FlashCallout.Damage(
+                    amount = singleDie,
+                    actingClassType = CharacterClassType.Gambler,
+                )
+            }
 
         is ArenaMessageState.Riposte.Trigger -> null
 
@@ -201,9 +324,12 @@ fun ArenaMessageState.toFlashCallout() =
 
         is ArenaMessageState.Persuade.StrumLute ->
             if (isSuccessful) {
-                FlashCallout.AttackStopped
+                FlashCallout.AttackStopped(actingClassType = CharacterClassType.Bard)
             } else {
-                FlashCallout.AttackContinues(die = diceRoll)
+                FlashCallout.AttackContinues(
+                    die = diceRoll,
+                    actingClassType = CharacterClassType.Bard,
+                )
             }
 
         is ArenaMessageState.Persuade.CharmActivation,
@@ -228,7 +354,8 @@ fun ArenaMessageState.toFlashCallout() =
                         doublesBonus = doublesBonus,
                     )
 
-                NormalRollMessageType.ArmorClassMiss -> FlashCallout.Miss
+                NormalRollMessageType.ArmorClassMiss ->
+                    FlashCallout.Miss(total = total, actingClassType = attackerClassType)
 
                 NormalRollMessageType.Damage ->
                     FlashCallout.Damage(
@@ -238,7 +365,7 @@ fun ArenaMessageState.toFlashCallout() =
                     )
 
                 NormalRollMessageType.Knockout ->
-                    FlashCallout.Knockout(actingClassType = attackerClassType)
+                    FlashCallout.Knockout(actingClassType = attackerClassType, total = total)
             }
 
         is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(finalRoll = finalRoll)
@@ -254,8 +381,11 @@ fun ArenaMessageState.toFlashCallout() =
 
         is ArenaMessageState.AllIn ->
             when (outcome) {
-                AllInOutcome.SelfKnockout -> FlashCallout.Knockout()
+                AllInOutcome.SelfKnockout ->
+                    FlashCallout.Knockout(actingClassType = CharacterClassType.Gambler)
+
                 AllInOutcome.DoubleAttack -> FlashCallout.AllInStrikeTwice
+
                 AllInOutcome.NoEffect -> FlashCallout.AllIn
             }
 

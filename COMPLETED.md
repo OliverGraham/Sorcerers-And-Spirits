@@ -442,6 +442,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   reroll: the −1 badge is modeled as a property of the specific die Mirror Image rerolled, carried on
   the roll state Domain → Data → UI, and cleared only when a subsequent reroll replaces the dice
   (applies to both ArmorClass and Damage/Health rerolls; not on SPC damage).
+- **SS-236** — Flash messages play in resolution order, correctly colored, in a bigger comic-book
+  style: the sequencer already preserved order, so the work was per-message coloring, copy, and
+  presentation. Every `FlashCallout` now carries its owning class's color (offensive rolls =
+  attacker, defensive triggers = defender/ability class; shared Attack-stopped/continues carry the
+  acting class per-instance). Copy now includes the roll total on every normal-roll outcome (Miss →
+  "7 · Miss!", roll-driven Knockout → "12 · Knocked Out!"). `FlashText` restyled comic-book: 46sp
+  Black italic with a proportional black stroke outline (readable at any class color, incl. green) +
+  drop shadow, and the flash swings back and forth (~7° keyframed over 900ms, hold bumped to 1100ms)
+  before the scale/fade exit. Related: SS-164, SS-185, SS-179, SS-177, SS-215.
 
 ## App / Main
 

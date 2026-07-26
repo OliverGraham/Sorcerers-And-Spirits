@@ -85,9 +85,8 @@ sealed interface ActiveState : ArenaState {
 private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     if (isMatchOver) return null
 
-    val doublesBonus = diceRollState?.doublesBonus
-    val isDoublesBonusLive = doublesBonus != null && doublesBonus.userId in activeUserIds
-    if (isDoublesBonusLive) {
+    val hasDoublesRoll = diceRollState?.doublesBonus != null
+    if (hasDoublesRoll) {
         return DiceBadgeState.DoublesBonus(diePosition = doublesBonusDiePosition())
     }
 

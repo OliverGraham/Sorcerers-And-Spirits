@@ -100,7 +100,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_hit,
                         attackerName,
                         defenderName,
-                        rolledTotalDisplay(total = total, doublesBonus = bonus),
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
@@ -108,7 +108,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_miss,
                         attackerName,
                         defenderName,
-                        rolledTotalDisplay(total = total, doublesBonus = bonus),
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.Damage ->
@@ -116,7 +116,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_damage,
                         attackerName,
                         defenderName,
-                        rolledTotalDisplay(total = total, doublesBonus = bonus),
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.Knockout ->
@@ -124,7 +124,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                         resource = Res.string.arena_message_normal_roll_knockout,
                         attackerName,
                         defenderName,
-                        rolledTotalDisplay(total = total, doublesBonus = bonus),
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
             }
 
@@ -436,5 +436,5 @@ internal fun ArenaMessageState.getDisplayString(): String =
             }
     }
 
-private fun rolledTotalDisplay(total: Int, doublesBonus: Int): String =
-    if (doublesBonus > 0) "$total (+$doublesBonus)" else total.toString()
+private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int): String =
+    if (doublesBonus > 0) "$baseRoll (+$doublesBonus)" else baseRoll.toString()

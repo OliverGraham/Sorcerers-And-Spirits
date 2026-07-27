@@ -60,6 +60,21 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-164** — One message → flash call-out + log line (two string resources): Every combat message
+  flows Data → Domain → UI as one `ArenaMessageState` and renders two ways from that same message —
+  a full-screen flash via `ArenaMessageState.toFlashCallout()` + `CombatFlashText.text()`
+  (`arena_flash_*`), and a passive log line via `ArenaMessageDisplay` (`arena_message_*`). No wrapper
+  type: `toFlashCallout()` is an exhaustive, else-less `when` returning a nullable `FlashCallout`
+  (null = log-only, holding the SS-185 pare-back seam), so a new message type is a compile error
+  until its flash is chosen. `NormalRoll` carries the consecutive-doubles bonus through every layer.
+- **SS-241** — Doubles total double-counts the bonus in message + flash: The dice badge was correct
+  but the log line and flash call-out showed the already-bonused total plus the "(+1)" suffix, so a
+  doubles roll of 7+1 read "8 (+1)". Fixed at the model, not the display: messages now carry a
+  display-ready `baseRoll` (raw dice sum) alongside `doublesBonus` — `NormalRoll.Outcome` derives it
+  in the state model, and `MirrorImage.Pass` carries it unfolded end-to-end (domain/entity/UI), while
+  the effective total stays in the domain for game-logic comparisons only. `FlashCallout` Hit/Miss/
+  Damage/Knockout carry `baseRoll`; `rolledTotalDisplay` and `CombatFlashText.text()` just render
+  `"$baseRoll (+$doublesBonus)"` with no arithmetic. Dice badge unchanged.
 - **SS-182** — ArenaScreen edge-to-edge so full-screen effects cover the whole screen: The root nav
   host padded every screen by the system-bar insets, clipping the Arena into the safe area so the
   Encore/Spell Potency full-screen overlays stopped at the status/nav bars and the top gap was too

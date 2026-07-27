@@ -162,14 +162,16 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 illusionistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
                 messageType = messageType,
-                total = mirrorImageAction.total(),
+                baseRoll = mirrorImageAction.baseRoll(),
                 doublesBonus = mirrorImageAction.existingDoublesBonus,
             )
         }
     }
 
-    private fun AbilityAction.Passive.MirrorImage.total() =
-        firstDie.finalValue + secondDie.finalValue + existingDoublesBonus
+    private fun AbilityAction.Passive.MirrorImage.baseRoll() =
+        firstDie.finalValue + secondDie.finalValue
+
+    private fun AbilityAction.Passive.MirrorImage.total() = baseRoll() + existingDoublesBonus
 
     // TODO: More refactoring. This function, resolveModifiedRoll, is too abstract
     private fun CombatMutator.resolveModifiedRoll(

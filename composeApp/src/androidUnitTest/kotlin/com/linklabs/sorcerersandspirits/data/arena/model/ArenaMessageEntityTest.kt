@@ -135,7 +135,7 @@ class ArenaMessageEntityTest {
                     illusionistUserId = "illusionist",
                     attackerUserId = "attacker",
                     messageType = NormalRollMessageType.ArmorClassMiss,
-                    total = 4,
+                    baseRoll = 4,
                     doublesBonus = 0,
                 ),
                 ArenaMessage.MirrorImage.TemptFate(

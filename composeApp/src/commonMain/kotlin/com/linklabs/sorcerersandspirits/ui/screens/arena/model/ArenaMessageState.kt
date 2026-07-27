@@ -59,7 +59,7 @@ sealed interface ArenaMessageState {
             val bonus: Int,
             val type: NormalRollMessageType,
         ) : NormalRoll {
-            val total: Int = firstDie + secondDie + bonus
+            val baseRoll: Int = firstDie + secondDie
         }
     }
 
@@ -233,7 +233,7 @@ sealed interface ArenaMessageState {
             val attackerName: String,
             val attackerClassType: CharacterClassType,
             val messageType: NormalRollMessageType,
-            val total: Int,
+            val baseRoll: Int,
             val doublesBonus: Int,
         ) : MirrorImage
 
@@ -485,7 +485,7 @@ private fun ArenaMessage.toState(
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 attackerClassType = participants.resolveClassType(userId = attackerUserId),
                 messageType = messageType,
-                total = total,
+                baseRoll = baseRoll,
                 doublesBonus = doublesBonus,
             )
 

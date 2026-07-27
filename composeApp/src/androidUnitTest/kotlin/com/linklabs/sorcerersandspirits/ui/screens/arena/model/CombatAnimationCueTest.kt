@@ -415,7 +415,7 @@ class CombatAnimationCueTest {
                 attackerName = "Mage",
                 attackerClassType = CharacterClassType.Mage,
                 messageType = outcome,
-                total = 8,
+                baseRoll = 8,
                 doublesBonus = 0,
             )
             .combatAnimationCue

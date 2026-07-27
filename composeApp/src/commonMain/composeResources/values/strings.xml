@@ -180,10 +180,12 @@
     <string name="arena_flash_hit">%1$s · Hit!</string>
     <string name="arena_flash_hit_doubles">%1$s (+%2$s) · Hit!</string>
     <string name="arena_flash_miss">%1$s · Miss!</string>
+    <string name="arena_flash_miss_doubles">%1$s (+%2$s) · Miss!</string>
     <string name="arena_flash_damage">%1$s Damage!</string>
-    <string name="arena_flash_damage_doubles">%1$s Damage! (+%2$s)</string>
+    <string name="arena_flash_damage_doubles">%1$s (+%2$s) Damage!</string>
     <string name="arena_flash_knockout">Knocked Out!</string>
     <string name="arena_flash_knockout_total">%1$s · Knocked Out!</string>
+    <string name="arena_flash_knockout_total_doubles">%1$s (+%2$s) · Knocked Out!</string>
     <string name="arena_flash_killing_momentum">Killing Momentum!</string>
     <string name="arena_flash_dodge">Dodge!</string>
     <string name="arena_flash_spell_potency">Spell Potency!</string>

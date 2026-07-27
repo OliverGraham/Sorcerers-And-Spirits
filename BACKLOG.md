@@ -112,18 +112,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
 > respectively — so the placeholder tickets were removed.
 
-### SS-225 — MessageLog auto-scrolls to newest line
-
-- [ ] Not completed
-- **Symptom:** As new combat lines arrive, the message log does not follow them — once content
-  reaches the bottom, the newest lines are out of view and the user has to scroll manually.
-- **Goal:** The message log keeps the **newest** line in view: when a new line is appended and the
-  user is at (or near) the bottom, scroll up so the latest entry is visible. Preserve the passive
-  role of the log ([[message-log-is-passive]]) — this is view-follow only, no logic.
-- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` — animate/scroll the list state to
-  the last index on append (respect the overlay behavior from SS-226 / [[message-log-overlays-not-pushes]]).
-- **Related:** SS-226 (log stops above DiceHome), SS-025 (message-log animation), SS-164.
-
 ### SS-226 — MessageLog must stop above DiceHome, not be covered by it
 
 - [ ] Not completed

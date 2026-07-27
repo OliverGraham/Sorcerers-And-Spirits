@@ -60,6 +60,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-225** — MessageLog scroll behavior, spacing, and class-only coloring: `ArenaMessageLog`
+  opens at the top with newest-first (`asReversed()` + fresh `rememberLazyListState` per open),
+  overscrolling past the end dismisses the log via a `NestedScrollConnection` (accumulated
+  overscroll past a threshold calls `onDismiss`), inter-message vertical spacing tightened, and
+  class color now styles only the class-name span (`classHighlightedText` → `AnnotatedString` with
+  `type.toColor()`) instead of the whole line in `NewTurn`/`ChoseCharacterClass`.
 - **SS-164** — One message → flash call-out + log line (two string resources): Every combat message
   flows Data → Domain → UI as one `ArenaMessageState` and renders two ways from that same message —
   a full-screen flash via `ArenaMessageState.toFlashCallout()` + `CombatFlashText.text()`

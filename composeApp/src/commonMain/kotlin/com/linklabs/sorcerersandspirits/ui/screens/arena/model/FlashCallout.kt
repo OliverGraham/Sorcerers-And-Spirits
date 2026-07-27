@@ -19,16 +19,20 @@ sealed interface FlashCallout {
     @Immutable
     data class Hit(
         override val actingClassType: CharacterClassType,
-        val total: Int,
+        val baseRoll: Int,
         val doublesBonus: Int,
     ) : FlashCallout
 
     @Immutable
-    data class Miss(val total: Int, override val actingClassType: CharacterClassType) : FlashCallout
+    data class Miss(
+        val baseRoll: Int,
+        override val actingClassType: CharacterClassType,
+        val doublesBonus: Int = 0,
+    ) : FlashCallout
 
     @Immutable
     data class Damage(
-        val amount: Int,
+        val baseRoll: Int,
         override val actingClassType: CharacterClassType? = null,
         val doublesBonus: Int = 0,
     ) : FlashCallout
@@ -36,7 +40,8 @@ sealed interface FlashCallout {
     @Immutable
     data class Knockout(
         override val actingClassType: CharacterClassType? = null,
-        val total: Int? = null,
+        val baseRoll: Int? = null,
+        val doublesBonus: Int = 0,
     ) : FlashCallout
 
     @Immutable
@@ -255,22 +260,30 @@ fun ArenaMessageState.toFlashCallout() =
                 NormalRollMessageType.ArmorClassHit ->
                     FlashCallout.Hit(
                         actingClassType = attackerClassType,
-                        total = total,
+                        baseRoll = baseRoll,
                         doublesBonus = bonus,
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
-                    FlashCallout.Miss(total = total, actingClassType = attackerClassType)
+                    FlashCallout.Miss(
+                        baseRoll = baseRoll,
+                        actingClassType = attackerClassType,
+                        doublesBonus = bonus,
+                    )
 
                 NormalRollMessageType.Damage ->
                     FlashCallout.Damage(
-                        amount = total,
+                        baseRoll = baseRoll,
                         actingClassType = attackerClassType,
                         doublesBonus = bonus,
                     )
 
                 NormalRollMessageType.Knockout ->
-                    FlashCallout.Knockout(actingClassType = attackerClassType, total = total)
+                    FlashCallout.Knockout(
+                        actingClassType = attackerClassType,
+                        baseRoll = baseRoll,
+                        doublesBonus = bonus,
+                    )
             }
 
         is ArenaMessageState.KillingMomentum,
@@ -305,7 +318,7 @@ fun ArenaMessageState.toFlashCallout() =
                 FlashCallout.Knockout(actingClassType = CharacterClassType.Gambler)
             } else {
                 FlashCallout.Damage(
-                    amount = singleDie,
+                    baseRoll = singleDie,
                     actingClassType = CharacterClassType.Gambler,
                 )
             }
@@ -357,22 +370,30 @@ fun ArenaMessageState.toFlashCallout() =
                 NormalRollMessageType.ArmorClassHit ->
                     FlashCallout.Hit(
                         actingClassType = attackerClassType,
-                        total = total,
+                        baseRoll = baseRoll,
                         doublesBonus = doublesBonus,
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
-                    FlashCallout.Miss(total = total, actingClassType = attackerClassType)
+                    FlashCallout.Miss(
+                        baseRoll = baseRoll,
+                        actingClassType = attackerClassType,
+                        doublesBonus = doublesBonus,
+                    )
 
                 NormalRollMessageType.Damage ->
                     FlashCallout.Damage(
-                        amount = total,
+                        baseRoll = baseRoll,
                         actingClassType = attackerClassType,
                         doublesBonus = doublesBonus,
                     )
 
                 NormalRollMessageType.Knockout ->
-                    FlashCallout.Knockout(actingClassType = attackerClassType, total = total)
+                    FlashCallout.Knockout(
+                        actingClassType = attackerClassType,
+                        baseRoll = baseRoll,
+                        doublesBonus = doublesBonus,
+                    )
             }
 
         is ArenaMessageState.MirrorImage.TemptFate -> FlashCallout.Reroll(rawReroll = rawReroll)

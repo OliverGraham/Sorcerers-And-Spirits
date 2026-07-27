@@ -253,7 +253,7 @@ sealed interface ArenaMessageEntity {
             override val illusionistUserId: String,
             val attackerUserId: String,
             val messageType: NormalRollMessageType,
-            val total: Int = 0,
+            val baseRoll: Int = 0,
             val doublesBonus: Int = 0,
         ) : MirrorImage
 
@@ -536,7 +536,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
                     illusionistUserId = illusionistUserId,
                     attackerUserId = attackerUserId,
                     messageType = messageType,
-                    total = total,
+                    baseRoll = baseRoll,
                     doublesBonus = doublesBonus,
                 )
 
@@ -780,7 +780,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 attackerUserId = attackerUserId,
                 messageType = messageType,
-                total = total,
+                baseRoll = baseRoll,
                 doublesBonus = doublesBonus,
             )
 

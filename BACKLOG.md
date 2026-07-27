@@ -17,41 +17,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
-### SS-164 — One message → flash call-out + log line (two string resources)
-
-- [ ] Not completed
-- **Core model:** Every combat message flows Data → Domain → UI as **one** `ArenaMessageState` and
-  is rendered **two ways from that same message**: (1) a short, punchy full-screen **flash**
-  animation, and (2) a fuller line in the passive **message log**. Multiple flashes from one
-  resolution play **in sequence** (e.g. `Hit!` → `3 Damage!` → `Knocked Out!`).
-- **Two string resources per message:**
-    - **Flash:** `arena_flash_*` — short, animated. Hit/Damage/Knockout render in the **acting
-      class's color**, everything else neutral white. Built from the sealed `FlashCallout` (each
-      variant carries the color + the data its resource needs) via `CombatFlashText.text()`.
-    - **Log:** `arena_message_*` — the more complete, passive record, built in
-      `ArenaMessageDisplay`.
-      Final wording **TBD** (owner-refined).
-- **No wrapper type:** one `ArenaMessageState` maps to both resources at the two display sites;
-  there
-  is no `FlashMessage`/pair object. `flashCallout`'s `when` is **exhaustive over every message**, so
-  a new message type is a compile error until its flash is chosen.
-- **Coverage (this pass):** **every** message currently flashes — round/turn/connection/info and
-  every intermediate roll step included. Paring some back to log-only is **SS-185**; the nullable
-  `flashCallout` + `ArenaScreenState.flashMessages` filter hold the seam for it.
-- **Normal-attack flash wording (first pass):** `ArmorClassHit` → `"{total} · Hit!"`;
-  `ArmorClassMiss` → `"Miss!"`; `Damage` → `"{total} Damage!"`; `Knockout` → `"Knocked Out!"`.
-  `NormalRoll` carries the consecutive-doubles `bonus` through every layer so `total` is
-  `firstDie + secondDie + bonus`, not just the visible dice.
-- **Ability flash wording (first pass, owner refines each):** each defensive ability flashes every
-  step — its name then the roll's outcome (e.g. Lucky Coin → `Lucky Coin!` → `Attack stopped!` /
-  `"{die} · Attack continues!"`; Summon Minion → `Skeleton! Necromancer heals to full!`). Derived
-  **only** from messages the domain already adds; no new domain structures.
-- **Wording status:** both the flash and the log wording are owner-refined. All flash strings are
-  `arena_flash_*` (in place); log strings are `arena_message_*` (in place, final wording TBD).
-- **Related:** SS-185 (pare back flash coverage), SS-148 (flash callout), SS-163 (flash hold
-  duration), SS-029 (string resources), SS-025 (message-log animation), SS-179 (message text
-  styling/backgrounds), SS-177 (doubles flash suppression).
-
 ### SS-185 — Pare back which messages flash
 
 - [ ] Not completed
@@ -901,25 +866,3 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   Related: SS-238, SS-239 (fold in or supersede as the new design dictates).
 
 ---
-
-## Arena UI — Doubles
-
-### SS-241 — Doubles total double-counts the bonus in message + flash ("8 (+1)" should read "7 (+1)")
-
-- [ ] Not completed
-- **Symptom:** On a doubles roll, the dice badge shows the bonus correctly, but the **message log
-  line and the flash call-out** display the already-bonused total *plus* the "(+1)" suffix, so the
-  bonus is counted twice. Worked example: attacker rolls doubles on an AC break, then rolls toward
-  health for **7**; the +1 bonus makes the effective roll 8. The messages read **"8 (+1)"** when they
-  should read **"7 (+1)"** — the base (pre-bonus) roll, then the "(+1)" indicating the bonus.
-- **Source:**
-    - Message log: `rolledTotalDisplay(total, doublesBonus)` in
-      `ui/screens/arena/ui/message/ArenaMessageDisplay.kt:435` — `total` already includes the bonus,
-      so it should render `total - doublesBonus` (the base roll) before the `(+N)`.
-    - Flash: `arena_flash_hit_doubles` / `arena_flash_damage_doubles` fed from `CombatFlashText.kt`
-      (~lines 61–71), which pass the bonused `total`/`amount` alongside `doublesBonus`.
-- **Fix direction:** Show the **base roll** (total minus the doubles bonus) next to the `(+N)` suffix
-  in both the message and the flash, so the two numbers add up to the effective roll rather than
-  restating it. Keep the dice badge unchanged (it's already correct, [[doubles-visibility-message-gated]]).
-- **Notes:** Compute the base once and carry it rather than re-deriving per access
-  ([[message-derivations-compute-once]]). Related: SS-164 (one message → flash + log).

@@ -56,7 +56,7 @@ class ArenaMessageStateTest {
                 illusionistUserId = DEFENDER_ID,
                 attackerUserId = ATTACKER_ID,
                 messageType = NormalRollMessageType.Damage,
-                total = 8,
+                baseRoll = 7,
                 doublesBonus = 1,
             )
 
@@ -65,7 +65,7 @@ class ArenaMessageStateTest {
         assertEquals(
             expected =
                 FlashCallout.Damage(
-                    amount = 8,
+                    baseRoll = 7,
                     actingClassType = CharacterClassType.Mage,
                     doublesBonus = 1,
                 ),
@@ -113,6 +113,81 @@ class ArenaMessageStateTest {
                     dodgerUserId = DEFENDER_ID,
                 ),
             actual = states.last(),
+        )
+    }
+
+    @Test
+    fun `Given a normal damage roll with a doubles bonus, then the flash carries the base roll and the bonus separately`() {
+        val message =
+            ArenaMessage.NormalRoll.Outcome(
+                attackerUserId = ATTACKER_ID,
+                defenderUserId = DEFENDER_ID,
+                firstDie = 4,
+                secondDie = 4,
+                bonus = 1,
+                type = NormalRollMessageType.Damage,
+            )
+
+        val callout = message.toSingleState().toFlashCallout()
+
+        assertEquals(
+            expected =
+                FlashCallout.Damage(
+                    baseRoll = 8,
+                    actingClassType = CharacterClassType.Mage,
+                    doublesBonus = 1,
+                ),
+            actual = callout,
+        )
+    }
+
+    @Test
+    fun `Given a knockout roll with a doubles bonus, then the flash carries the base roll and the bonus separately`() {
+        val message =
+            ArenaMessage.NormalRoll.Outcome(
+                attackerUserId = ATTACKER_ID,
+                defenderUserId = DEFENDER_ID,
+                firstDie = 4,
+                secondDie = 4,
+                bonus = 1,
+                type = NormalRollMessageType.Knockout,
+            )
+
+        val callout = message.toSingleState().toFlashCallout()
+
+        assertEquals(
+            expected =
+                FlashCallout.Knockout(
+                    actingClassType = CharacterClassType.Mage,
+                    baseRoll = 8,
+                    doublesBonus = 1,
+                ),
+            actual = callout,
+        )
+    }
+
+    @Test
+    fun `Given an armor-miss roll with a doubles bonus, then the flash carries the base roll and the bonus separately`() {
+        val message =
+            ArenaMessage.NormalRoll.Outcome(
+                attackerUserId = ATTACKER_ID,
+                defenderUserId = DEFENDER_ID,
+                firstDie = 4,
+                secondDie = 4,
+                bonus = 1,
+                type = NormalRollMessageType.ArmorClassMiss,
+            )
+
+        val callout = message.toSingleState().toFlashCallout()
+
+        assertEquals(
+            expected =
+                FlashCallout.Miss(
+                    baseRoll = 8,
+                    actingClassType = CharacterClassType.Mage,
+                    doublesBonus = 1,
+                ),
+            actual = callout,
         )
     }
 

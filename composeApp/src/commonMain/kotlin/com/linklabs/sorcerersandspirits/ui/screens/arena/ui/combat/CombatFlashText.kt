@@ -32,11 +32,13 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_joined
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_killing_momentum
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lulled
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_holds
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_image
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_miss
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_miss_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_new_round
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_no_encore
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_persuade
@@ -61,25 +63,36 @@ internal fun FlashCallout.text(): String =
     when (this) {
         is FlashCallout.Hit ->
             if (doublesBonus > 0) {
-                stringResource(Res.string.arena_flash_hit_doubles, total, doublesBonus)
+                stringResource(Res.string.arena_flash_hit_doubles, baseRoll, doublesBonus)
             } else {
-                stringResource(Res.string.arena_flash_hit, total)
+                stringResource(Res.string.arena_flash_hit, baseRoll)
             }
 
-        is FlashCallout.Miss -> stringResource(Res.string.arena_flash_miss, total)
+        is FlashCallout.Miss ->
+            if (doublesBonus > 0) {
+                stringResource(Res.string.arena_flash_miss_doubles, baseRoll, doublesBonus)
+            } else {
+                stringResource(Res.string.arena_flash_miss, baseRoll)
+            }
 
         is FlashCallout.Damage ->
             if (doublesBonus > 0) {
-                stringResource(Res.string.arena_flash_damage_doubles, amount, doublesBonus)
+                stringResource(Res.string.arena_flash_damage_doubles, baseRoll, doublesBonus)
             } else {
-                stringResource(Res.string.arena_flash_damage, amount)
+                stringResource(Res.string.arena_flash_damage, baseRoll)
             }
 
         is FlashCallout.Knockout ->
-            if (total != null) {
-                stringResource(Res.string.arena_flash_knockout_total, total)
-            } else {
+            if (baseRoll == null) {
                 stringResource(Res.string.arena_flash_knockout)
+            } else if (doublesBonus > 0) {
+                stringResource(
+                    Res.string.arena_flash_knockout_total_doubles,
+                    baseRoll,
+                    doublesBonus,
+                )
+            } else {
+                stringResource(Res.string.arena_flash_knockout_total, baseRoll)
             }
 
         is FlashCallout.KillingMomentum -> stringResource(Res.string.arena_flash_killing_momentum)

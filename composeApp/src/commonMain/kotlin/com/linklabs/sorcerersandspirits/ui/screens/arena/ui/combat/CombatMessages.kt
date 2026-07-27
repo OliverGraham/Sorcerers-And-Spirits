@@ -186,6 +186,7 @@ internal fun MessageLogOverlay(
     Box(modifier = modifier.fillMaxSize()) {
         ArenaMessageLog(
             messages = messages,
+            onDismiss = onDismiss,
             modifier =
                 Modifier.fillMaxWidth()
                     .padding(top = messageBarHeight)

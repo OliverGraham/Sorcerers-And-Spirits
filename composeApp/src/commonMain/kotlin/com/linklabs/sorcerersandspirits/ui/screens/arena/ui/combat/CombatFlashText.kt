@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashCallout
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_no_effect
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_strike_twice
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_continues
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_stopped
@@ -57,130 +57,159 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_r
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_tie
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_turn_start
 
-/** The rendered wording for a [FlashCallout], built from its string resource and data (SS-164). */
 @Composable
 internal fun FlashCallout.text(): String =
     when (this) {
         is FlashCallout.Hit ->
             if (doublesBonus > 0) {
-                stringResource(Res.string.arena_flash_hit_doubles, baseRoll, doublesBonus)
-            } else {
-                stringResource(Res.string.arena_flash_hit, baseRoll)
-            }
-
-        is FlashCallout.Miss ->
-            if (doublesBonus > 0) {
-                stringResource(Res.string.arena_flash_miss_doubles, baseRoll, doublesBonus)
-            } else {
-                stringResource(Res.string.arena_flash_miss, baseRoll)
-            }
-
-        is FlashCallout.Damage ->
-            if (doublesBonus > 0) {
-                stringResource(Res.string.arena_flash_damage_doubles, baseRoll, doublesBonus)
-            } else {
-                stringResource(Res.string.arena_flash_damage, baseRoll)
-            }
-
-        is FlashCallout.Knockout ->
-            if (baseRoll == null) {
-                stringResource(Res.string.arena_flash_knockout)
-            } else if (doublesBonus > 0) {
                 stringResource(
-                    Res.string.arena_flash_knockout_total_doubles,
+                    resource = Res.string.arena_flash_hit_doubles,
                     baseRoll,
                     doublesBonus,
                 )
             } else {
-                stringResource(Res.string.arena_flash_knockout_total, baseRoll)
+                stringResource(resource = Res.string.arena_flash_hit, baseRoll)
             }
 
-        is FlashCallout.KillingMomentum -> stringResource(Res.string.arena_flash_killing_momentum)
+        is FlashCallout.Miss ->
+            if (doublesBonus > 0) {
+                stringResource(
+                    resource = Res.string.arena_flash_miss_doubles,
+                    baseRoll,
+                    doublesBonus,
+                )
+            } else {
+                stringResource(resource = Res.string.arena_flash_miss, baseRoll)
+            }
 
-        is FlashCallout.Dodge -> stringResource(Res.string.arena_flash_dodge)
+        is FlashCallout.Damage ->
+            if (doublesBonus > 0) {
+                stringResource(
+                    resource = Res.string.arena_flash_damage_doubles,
+                    baseRoll,
+                    doublesBonus,
+                )
+            } else {
+                stringResource(resource = Res.string.arena_flash_damage, baseRoll)
+            }
 
-        is FlashCallout.SpellPotency -> stringResource(Res.string.arena_flash_spell_potency)
+        is FlashCallout.Knockout ->
+            if (baseRoll == null) {
+                stringResource(resource = Res.string.arena_flash_knockout)
+            } else if (doublesBonus > 0) {
+                stringResource(
+                    resource = Res.string.arena_flash_knockout_total_doubles,
+                    baseRoll,
+                    doublesBonus,
+                )
+            } else {
+                stringResource(resource = Res.string.arena_flash_knockout_total, baseRoll)
+            }
 
-        is FlashCallout.Doubles -> stringResource(Res.string.arena_flash_doubles)
+        is FlashCallout.KillingMomentum ->
+            stringResource(resource = Res.string.arena_flash_killing_momentum)
 
-        is FlashCallout.Impersonate -> stringResource(Res.string.arena_flash_impersonate)
+        is FlashCallout.Dodge -> stringResource(resource = Res.string.arena_flash_dodge)
 
-        is FlashCallout.PreparedStrike -> stringResource(Res.string.arena_flash_prepared_strike)
+        is FlashCallout.SpellPotency ->
+            stringResource(resource = Res.string.arena_flash_spell_potency)
 
-        is FlashCallout.AttackWhiffed -> stringResource(Res.string.arena_flash_attack_whiffed)
+        is FlashCallout.Doubles -> stringResource(resource = Res.string.arena_flash_doubles)
 
-        is FlashCallout.Encore -> stringResource(Res.string.arena_flash_encore)
+        is FlashCallout.Impersonate -> stringResource(resource = Res.string.arena_flash_impersonate)
 
-        is FlashCallout.AllIn -> stringResource(Res.string.arena_flash_all_in)
+        is FlashCallout.PreparedStrike ->
+            stringResource(resource = Res.string.arena_flash_prepared_strike)
+
+        is FlashCallout.AttackWhiffed ->
+            stringResource(resource = Res.string.arena_flash_attack_whiffed)
+
+        is FlashCallout.Encore -> stringResource(resource = Res.string.arena_flash_encore)
+
+        is FlashCallout.AllInNoEffect ->
+            stringResource(resource = Res.string.arena_flash_all_in_no_effect)
 
         is FlashCallout.AllInStrikeTwice ->
-            stringResource(Res.string.arena_flash_all_in_strike_twice)
+            stringResource(resource = Res.string.arena_flash_all_in_strike_twice)
 
-        is FlashCallout.Fizzle -> stringResource(Res.string.arena_flash_fizzle)
+        is FlashCallout.Fizzle -> stringResource(resource = Res.string.arena_flash_fizzle)
 
-        is FlashCallout.Skeleton -> stringResource(Res.string.arena_flash_skeleton)
+        is FlashCallout.Skeleton -> stringResource(resource = Res.string.arena_flash_skeleton)
 
         is FlashCallout.SkeletonAndHeal ->
-            stringResource(Res.string.arena_flash_skeleton_and_heal, necromancerName)
+            stringResource(resource = Res.string.arena_flash_skeleton_and_heal)
 
-        is FlashCallout.Golem -> stringResource(Res.string.arena_flash_golem, necromancerName)
+        is FlashCallout.Golem -> stringResource(resource = Res.string.arena_flash_golem)
 
-        is FlashCallout.Teleport -> stringResource(Res.string.arena_flash_teleport)
+        is FlashCallout.Teleport -> stringResource(resource = Res.string.arena_flash_teleport)
 
-        is FlashCallout.Escaped -> stringResource(Res.string.arena_flash_escaped)
+        is FlashCallout.Escaped -> stringResource(resource = Res.string.arena_flash_escaped)
 
-        is FlashCallout.Caught -> stringResource(Res.string.arena_flash_caught)
+        is FlashCallout.Caught -> stringResource(resource = Res.string.arena_flash_caught)
 
-        is FlashCallout.LuckyCoin -> stringResource(Res.string.arena_flash_lucky_coin)
+        is FlashCallout.LuckyCoin -> stringResource(resource = Res.string.arena_flash_lucky_coin)
 
-        is FlashCallout.AttackStopped -> stringResource(Res.string.arena_flash_attack_stopped)
+        is FlashCallout.AttackStopped ->
+            stringResource(resource = Res.string.arena_flash_attack_stopped)
 
         is FlashCallout.AttackContinues ->
-            stringResource(Res.string.arena_flash_attack_continues, die)
+            stringResource(resource = Res.string.arena_flash_attack_continues, die)
 
-        is FlashCallout.Riposte -> stringResource(Res.string.arena_flash_riposte)
+        is FlashCallout.Riposte -> stringResource(resource = Res.string.arena_flash_riposte)
 
-        is FlashCallout.Reversed -> stringResource(Res.string.arena_flash_reversed)
+        is FlashCallout.Reversed -> stringResource(resource = Res.string.arena_flash_reversed)
 
-        is FlashCallout.CounterFailed -> stringResource(Res.string.arena_flash_counter_failed)
+        is FlashCallout.CounterFailed ->
+            stringResource(resource = Res.string.arena_flash_counter_failed)
 
-        is FlashCallout.Persuade -> stringResource(Res.string.arena_flash_persuade)
+        is FlashCallout.Persuade -> stringResource(resource = Res.string.arena_flash_persuade)
 
-        is FlashCallout.Charmed -> stringResource(Res.string.arena_flash_charmed)
+        is FlashCallout.Charmed -> stringResource(resource = Res.string.arena_flash_charmed)
 
-        is FlashCallout.Redirected -> stringResource(Res.string.arena_flash_redirected, targetName)
+        is FlashCallout.Redirected ->
+            stringResource(resource = Res.string.arena_flash_redirected, targetName)
 
-        is FlashCallout.MirrorImage -> stringResource(Res.string.arena_flash_mirror_image)
+        is FlashCallout.MirrorImage ->
+            stringResource(resource = Res.string.arena_flash_mirror_image)
 
-        is FlashCallout.Reroll -> stringResource(Res.string.arena_flash_reroll, rawReroll)
+        is FlashCallout.Reroll ->
+            stringResource(resource = Res.string.arena_flash_reroll, rawReroll)
 
-        is FlashCallout.HolyShield -> stringResource(Res.string.arena_flash_holy_shield)
+        is FlashCallout.HolyShield -> stringResource(resource = Res.string.arena_flash_holy_shield)
 
-        is FlashCallout.Saved -> stringResource(Res.string.arena_flash_saved)
+        is FlashCallout.Saved -> stringResource(resource = Res.string.arena_flash_saved)
 
-        is FlashCallout.StruckDown -> stringResource(Res.string.arena_flash_struck_down)
+        is FlashCallout.StruckDown -> stringResource(resource = Res.string.arena_flash_struck_down)
 
-        is FlashCallout.HolyWrath -> stringResource(Res.string.arena_flash_holy_wrath)
+        is FlashCallout.HolyWrath -> stringResource(resource = Res.string.arena_flash_holy_wrath)
 
-        is FlashCallout.NewRound -> stringResource(Res.string.arena_flash_new_round, roundNumber)
+        is FlashCallout.NewRound ->
+            stringResource(resource = Res.string.arena_flash_new_round, roundNumber)
 
-        is FlashCallout.ChoseClass -> stringResource(Res.string.arena_flash_chose_class, className)
+        is FlashCallout.ChoseClass ->
+            stringResource(resource = Res.string.arena_flash_chose_class, className)
 
-        is FlashCallout.Joined -> stringResource(Res.string.arena_flash_joined, playerName)
+        is FlashCallout.Joined ->
+            stringResource(resource = Res.string.arena_flash_joined, playerName)
 
-        is FlashCallout.TurnStart -> stringResource(Res.string.arena_flash_turn_start, className)
+        is FlashCallout.TurnStart ->
+            stringResource(resource = Res.string.arena_flash_turn_start, className)
 
-        is FlashCallout.TeleportRoll -> stringResource(Res.string.arena_flash_teleport_roll, die)
+        is FlashCallout.TeleportRoll ->
+            stringResource(resource = Res.string.arena_flash_teleport_roll, die)
 
-        is FlashCallout.TieRollAgain -> stringResource(Res.string.arena_flash_teleport_tie)
+        is FlashCallout.TieRollAgain ->
+            stringResource(resource = Res.string.arena_flash_teleport_tie)
 
-        is FlashCallout.HighRoller -> stringResource(Res.string.arena_flash_high_roller)
+        is FlashCallout.HighRoller -> stringResource(resource = Res.string.arena_flash_high_roller)
 
-        is FlashCallout.Lulled -> stringResource(Res.string.arena_flash_lulled)
+        is FlashCallout.Lulled -> stringResource(resource = Res.string.arena_flash_lulled)
 
-        is FlashCallout.EncoreAgain -> stringResource(Res.string.arena_flash_encore_again)
+        is FlashCallout.EncoreAgain ->
+            stringResource(resource = Res.string.arena_flash_encore_again)
 
-        is FlashCallout.NoEncore -> stringResource(Res.string.arena_flash_no_encore)
+        is FlashCallout.NoEncore -> stringResource(resource = Res.string.arena_flash_no_encore)
 
-        is FlashCallout.MirrorHolds -> stringResource(Res.string.arena_flash_mirror_holds)
+        is FlashCallout.MirrorHolds ->
+            stringResource(resource = Res.string.arena_flash_mirror_holds)
     }

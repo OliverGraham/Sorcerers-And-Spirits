@@ -45,7 +45,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.imageResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.golem_minion
 import sorcerersandspirits.composeapp.generated.resources.ic_health
+import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
 
 private const val PORTAL_OPEN_MILLIS = 340
 private const val PORTAL_HOLD_MILLIS = 160L
@@ -62,60 +64,8 @@ private const val HEAL_BURST_FRACTION = 0.4f
 private const val HEAL_MOTE_COUNT = 5
 
 private val healRed = Color(color = 0xFFE5484D)
-
-/** The red-and-green heal icon that floats up when a summon restores the Necromancer (SS-205). */
 private val healGreen = necroGlowGreen
 
-/**
- * One rising hitpoints icon of the heal payload (SS-205): it lifts off the Necromancer and fades.
- */
-@Immutable
-internal data class HealMote(
-    val x: Float,
-    val baseY: Float,
-    val risePx: Float,
-    val bobPx: Float,
-    val sizePx: Float,
-    val phase: Float,
-)
-
-/** The measured geometry of one Summon Minion, laid out from the Necromancer's avatar bounds. */
-@Immutable
-internal data class SummonMinionScene(
-    val portalCenter: Offset,
-    val portalRadiusPx: Float,
-    val minionKind: MinionKind,
-    val minionHeightPx: Float,
-    val minionWidthPx: Float,
-    val heals: Boolean,
-    val healCenter: Offset,
-    val healRadiusPx: Float,
-    val healMotes: List<HealMote>,
-)
-
-/**
- * The animation channels of one Summon Minion (SS-205): [portal] opens the ground disc and later
- * closes it, [gray] drains it lifeless on a fizzle, [minion] raises the skeleton or golem out of it
- * while [minionFade] dismisses it, and [heal] plays the restoring burst and floating hitpoints.
- */
-@Stable
-internal class SummonMinionEffectState {
-    val portal = Animatable(initialValue = 0f)
-    val gray = Animatable(initialValue = 0f)
-    val minion = Animatable(initialValue = 0f)
-    val minionFade = Animatable(initialValue = 1f)
-    val heal = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<SummonMinionScene?>(value = null)
-}
-
-/**
- * The Necromancer's Summon Minion effect (SS-205): a green glowing portal opens at the summoner's
- * feet, then the rolled outcome plays out — the portal drains gray and closes on a fizzle, a white
- * green-eyed skeleton or a clay golem rises out of it, and a heal restores the Necromancer in a
- * red-green burst with hitpoints floating up. Anchored to the Necromancer's measured avatar bounds
- * via [avatarBoundsFor], and sits out any cue that is not a Summon Minion.
- */
 @Composable
 internal fun NecromancerSummonMinionOverlay(
     animationCue: CombatAnimationCue?,
@@ -125,6 +75,8 @@ internal fun NecromancerSummonMinionOverlay(
     val state = remember { SummonMinionEffectState() }
     val density = LocalDensity.current
     val healIcon = imageResource(resource = Res.drawable.ic_health)
+    val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
+    val golemImage = imageResource(resource = Res.drawable.golem_minion)
 
     CueEffectOverlay(
         animationCue = animationCue,
@@ -144,29 +96,15 @@ internal fun NecromancerSummonMinionOverlay(
                 )
             },
         modifier = modifier,
-        draw = { drawSummonMinion(state = state, healIcon = healIcon) },
+        draw = {
+            drawSummonMinion(
+                state = state,
+                healIcon = healIcon,
+                skeletonImage = skeletonImage,
+                golemImage = golemImage,
+            )
+        },
     )
-}
-
-/**
- * How long the Summon Minion effect runs, so the message sequencer holds the event until the portal
- * has opened, raised its minion or fizzled, healed, and closed, instead of flashing over it
- * (SS-201).
- */
-internal fun necromancerSummonMinionDurationMillis(outcome: SummonMinionOutcome): Long {
-    val opening = PORTAL_OPEN_MILLIS.toLong() + PORTAL_HOLD_MILLIS
-    val closing = maxOf(MINION_FADE_MILLIS, PORTAL_CLOSE_MILLIS).toLong()
-    val body =
-        when (outcome) {
-            SummonMinionOutcome.Fizzle ->
-                FIZZLE_GRAY_MILLIS.toLong() + FIZZLE_HOLD_MILLIS + PORTAL_CLOSE_MILLIS
-
-            SummonMinionOutcome.Skeleton -> MINION_RISE_MILLIS + MINION_HOLD_MILLIS + closing
-
-            SummonMinionOutcome.SkeletonAndHeal,
-            SummonMinionOutcome.Golem -> MINION_RISE_MILLIS + HEAL_MILLIS + closing
-        }
-    return opening + body
 }
 
 private suspend fun SummonMinionEffectState.play(
@@ -198,17 +136,12 @@ private suspend fun SummonMinionEffectState.play(
     this.scene = null
 }
 
-/** The portal drains to lifeless gray, holds, then closes — the failed summon (SS-205). */
 private suspend fun SummonMinionEffectState.fizzle() {
     gray.animateTo(targetValue = 1f, animationSpec = tween(durationMillis = FIZZLE_GRAY_MILLIS))
     delay(timeMillis = FIZZLE_HOLD_MILLIS)
     portal.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = PORTAL_CLOSE_MILLIS))
 }
 
-/**
- * The minion rises out of the portal and holds; a healing summon restores the Necromancer while it
- * stands. Then the minion fades as the portal closes beneath it.
- */
 private suspend fun SummonMinionEffectState.raiseMinion(heals: Boolean) {
     minion.animateTo(
         targetValue = 1f,
@@ -253,21 +186,21 @@ private fun summonMinionScene(
 ): SummonMinionScene {
     val center = bounds.center
     val portalCenter = Offset(x = center.x, y = bounds.bottom - bounds.height * 0.05f)
-    val kind = minionKindFor(outcome = outcome)
+    val minionType = minionTypeFor(outcome = outcome)
     val heals =
         outcome == SummonMinionOutcome.SkeletonAndHeal || outcome == SummonMinionOutcome.Golem
 
     val minionHeight =
-        when (kind) {
-            MinionKind.None -> 0f
-            MinionKind.Skeleton -> bounds.height * 0.72f
-            MinionKind.Golem -> bounds.height * 0.9f
+        when (minionType) {
+            MinionType.None -> 0f
+            MinionType.Skeleton -> bounds.height * 0.72f
+            MinionType.Golem -> bounds.height * 0.9f
         }
     val minionWidth =
-        when (kind) {
-            MinionKind.None -> 0f
-            MinionKind.Skeleton -> bounds.width * 0.4f
-            MinionKind.Golem -> bounds.width * 0.66f
+        when (minionType) {
+            MinionType.None -> 0f
+            MinionType.Skeleton -> bounds.width * 0.66f
+            MinionType.Golem -> bounds.width * 0.66f
         }
 
     val random = Random(seed = seed)
@@ -290,7 +223,7 @@ private fun summonMinionScene(
     return SummonMinionScene(
         portalCenter = portalCenter,
         portalRadiusPx = bounds.width * 0.42f,
-        minionKind = kind,
+        minionType = minionType,
         minionHeightPx = minionHeight,
         minionWidthPx = minionWidth,
         heals = heals,
@@ -300,17 +233,22 @@ private fun summonMinionScene(
     )
 }
 
-private fun minionKindFor(outcome: SummonMinionOutcome): MinionKind =
+private fun minionTypeFor(outcome: SummonMinionOutcome): MinionType =
     when (outcome) {
-        SummonMinionOutcome.Fizzle -> MinionKind.None
+        SummonMinionOutcome.Fizzle -> MinionType.None
 
         SummonMinionOutcome.Skeleton,
-        SummonMinionOutcome.SkeletonAndHeal -> MinionKind.Skeleton
+        SummonMinionOutcome.SkeletonAndHeal -> MinionType.Skeleton
 
-        SummonMinionOutcome.Golem -> MinionKind.Golem
+        SummonMinionOutcome.Golem -> MinionType.Golem
     }
 
-private fun DrawScope.drawSummonMinion(state: SummonMinionEffectState, healIcon: ImageBitmap) {
+private fun DrawScope.drawSummonMinion(
+    state: SummonMinionEffectState,
+    healIcon: ImageBitmap,
+    skeletonImage: ImageBitmap,
+    golemImage: ImageBitmap,
+) {
     val scene = state.scene ?: return
     val open = state.portal.value
 
@@ -323,18 +261,20 @@ private fun DrawScope.drawSummonMinion(state: SummonMinionEffectState, healIcon:
     )
 
     val rise = state.minion.value
-    val hasMinion = scene.minionKind != MinionKind.None && rise > 0f
+    val hasMinion = scene.minionType != MinionType.None && rise > 0f
     if (hasMinion) {
         val emergeOffset = (1f - rise) * scene.minionHeightPx
         val fadeIn = (rise / MINION_FADE_IN_FRACTION).coerceAtMost(maximumValue = 1f)
         clipRect(bottom = scene.portalCenter.y) {
             translate(top = emergeOffset) {
                 drawMinion(
-                    kind = scene.minionKind,
+                    kind = scene.minionType,
                     footCenter = scene.portalCenter,
                     height = scene.minionHeightPx,
                     width = scene.minionWidthPx,
                     alpha = fadeIn * state.minionFade.value,
+                    skeletonImage = skeletonImage,
+                    golemImage = golemImage,
                 )
             }
         }
@@ -347,9 +287,6 @@ private fun DrawScope.drawSummonMinion(state: SummonMinionEffectState, healIcon:
     }
 }
 
-/**
- * The heal flare: a green outer burst around a red core, expanding off the Necromancer and fading.
- */
 private fun DrawScope.drawHealBurst(center: Offset, radius: Float, heal: Float) {
     val burst = (heal / HEAL_BURST_FRACTION).coerceAtMost(maximumValue = 1f)
     val fade = 1f - burst
@@ -403,6 +340,56 @@ private fun DrawScope.drawHealMote(mote: HealMote, heal: Float, icon: ImageBitma
 }
 
 private fun Random.nextFloat(min: Float, max: Float): Float = nextFloat() * (max - min) + min
+
+@Stable
+private class SummonMinionEffectState {
+    val portal = Animatable(initialValue = 0f)
+    val gray = Animatable(initialValue = 0f)
+    val minion = Animatable(initialValue = 0f)
+    val minionFade = Animatable(initialValue = 1f)
+    val heal = Animatable(initialValue = 0f)
+
+    var scene by mutableStateOf<SummonMinionScene?>(value = null)
+}
+
+@Immutable
+private data class SummonMinionScene(
+    val portalCenter: Offset,
+    val portalRadiusPx: Float,
+    val minionType: MinionType,
+    val minionHeightPx: Float,
+    val minionWidthPx: Float,
+    val heals: Boolean,
+    val healCenter: Offset,
+    val healRadiusPx: Float,
+    val healMotes: List<HealMote>,
+)
+
+@Immutable
+private data class HealMote(
+    val x: Float,
+    val baseY: Float,
+    val risePx: Float,
+    val bobPx: Float,
+    val sizePx: Float,
+    val phase: Float,
+)
+
+internal fun necromancerSummonMinionDurationMillis(outcome: SummonMinionOutcome): Long {
+    val opening = PORTAL_OPEN_MILLIS.toLong() + PORTAL_HOLD_MILLIS
+    val closing = maxOf(MINION_FADE_MILLIS, PORTAL_CLOSE_MILLIS).toLong()
+    val body =
+        when (outcome) {
+            SummonMinionOutcome.Fizzle ->
+                FIZZLE_GRAY_MILLIS.toLong() + FIZZLE_HOLD_MILLIS + PORTAL_CLOSE_MILLIS
+
+            SummonMinionOutcome.Skeleton -> MINION_RISE_MILLIS + MINION_HOLD_MILLIS + closing
+
+            SummonMinionOutcome.SkeletonAndHeal,
+            SummonMinionOutcome.Golem -> MINION_RISE_MILLIS + HEAL_MILLIS + closing
+        }
+    return opening + body
+}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable

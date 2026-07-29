@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.keyframes
@@ -140,27 +141,6 @@ private fun Modifier.centeredAt(point: () -> Offset): Modifier = layout { measur
 
 @Composable
 private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
-    val fillColor = callout.actingClassType?.toColor() ?: Color.White
-    val text = callout.text()
-    val swing = remember { Animatable(initialValue = 0f) }
-
-    LaunchedEffect(key1 = Unit) {
-        swing.snapTo(targetValue = 0f)
-        swing.animateTo(
-            targetValue = 0f,
-            animationSpec =
-                keyframes {
-                    durationMillis = FLASH_SWING_MILLIS
-                    0f at 0
-                    -FLASH_SWING_DEGREES at 130
-                    FLASH_SWING_DEGREES at 320
-                    -FLASH_SWING_DEGREES * 0.6f at 500
-                    FLASH_SWING_DEGREES * 0.35f at 680
-                    0f at FLASH_SWING_MILLIS
-                },
-        )
-    }
-
     val baseStyle =
         TextStyle(
             fontSize = flashFontSize,
@@ -172,7 +152,11 @@ private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
     val outlineWidthPx =
         with(LocalDensity.current) { flashFontSize.toPx() } * FLASH_OUTLINE_FRACTION
 
-    Box(modifier = modifier.graphicsLayer { rotationZ = swing.value }) {
+    val text = callout.text()
+    val fillColor = callout.actingClassType?.toColor() ?: Color.White
+
+    val swingAnimation = getSwingAnimation()
+    Box(modifier = modifier.graphicsLayer { rotationZ = swingAnimation.value }) {
         Text(
             text = text,
             style =
@@ -189,6 +173,30 @@ private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
         )
         Text(text = text, style = baseStyle.copy(color = fillColor))
     }
+}
+
+@Composable
+private fun getSwingAnimation(): Animatable<Float, AnimationVector1D> {
+    val swing = remember { Animatable(initialValue = 0f) }
+
+    LaunchedEffect(key1 = Unit) {
+        swing.snapTo(targetValue = 0f)
+        swing.animateTo(
+            targetValue = 0f,
+            animationSpec =
+                keyframes {
+                    durationMillis = FLASH_SWING_MILLIS
+                    0f at 0
+                    FLASH_SWING_DEGREES at 130
+                    FLASH_SWING_DEGREES at 320
+                    FLASH_SWING_DEGREES * 0.6f at 500
+                    FLASH_SWING_DEGREES * 0.35f at 680
+                    0f at FLASH_SWING_MILLIS
+                },
+        )
+    }
+
+    return swing
 }
 
 @Composable

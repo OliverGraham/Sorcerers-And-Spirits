@@ -4,13 +4,6 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
-/**
- * A full-screen flash call-out (SS-148/SS-164): a sealed, punchy description of a flash-worthy
- * event. Each variant carries only the data its wording needs, so the text is built from a string
- * resource at render time rather than baked in here. [actingClassType] colors a call-out in its
- * owning class's color (attacker's class for a normal roll, the ability's class for a triggered
- * ability); a null type renders neutral (white) for system banners like new rounds and joins.
- */
 @Immutable
 sealed interface FlashCallout {
     val actingClassType: CharacterClassType?
@@ -82,7 +75,7 @@ sealed interface FlashCallout {
     }
 
     @Immutable
-    data object AllIn : FlashCallout {
+    data object AllInNoEffect : FlashCallout {
         override val actingClassType = CharacterClassType.Gambler
     }
 
@@ -101,6 +94,7 @@ sealed interface FlashCallout {
         override val actingClassType = CharacterClassType.Necromancer
     }
 
+    // TODO: name not needed...
     @Immutable
     data class SkeletonAndHeal(val necromancerName: String) : FlashCallout {
         override val actingClassType = CharacterClassType.Necromancer
@@ -414,7 +408,7 @@ fun ArenaMessageState.toFlashCallout() =
 
                 AllInOutcome.DoubleAttack -> FlashCallout.AllInStrikeTwice
 
-                AllInOutcome.NoEffect -> FlashCallout.AllIn
+                AllInOutcome.NoEffect -> FlashCallout.AllInNoEffect
             }
 
         is ArenaMessageState.PrepareAttack ->

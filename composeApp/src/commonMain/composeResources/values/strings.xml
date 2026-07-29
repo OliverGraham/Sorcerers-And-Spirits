@@ -6,7 +6,7 @@
     <string name="sign_in_label_name">Name</string>
     <string name="sign_in_button_random">Random</string>
     <string name="sign_in_button_accept">Accept</string>
-    <string name="sign_in_offline_message">Couldn\'t reach the realm. Check your connection and try again.</string>
+    <string name="sign_in_offline_message">Couldn't reach the realm. Check your connection and try again.</string>
     <string name="sign_in_name_taken_message">That name is already taken. Choose another.</string>
 
     <string name="link_account_optional_note">Signing in is optional — it just keeps your name and stats safe if you switch devices.</string>
@@ -18,14 +18,14 @@
     <string name="link_account_email_submit">Link email</string>
     <string name="link_account_error_credential_in_use">That account is already linked to another player. Try a different one.</string>
     <string name="link_account_error_invalid_credential">Check your email and password (at least 6 characters) and try again.</string>
-    <string name="link_account_error_unavailable">This sign-in option isn\'t available yet.</string>
-    <string name="link_account_error_generic">Couldn\'t finish signing in. Please try again.</string>
-    <string name="link_account_success">You\'re all set — your progress is saved.</string>
+    <string name="link_account_error_unavailable">This sign-in option isn't available yet.</string>
+    <string name="link_account_error_generic">Couldn't finish signing in. Please try again.</string>
+    <string name="link_account_success">You're all set — your progress is saved.</string>
 
     <string name="profile_title">Profile</string>
     <string name="profile_display_name_label">Display name</string>
     <string name="profile_name_update_success">Name updated.</string>
-    <string name="profile_name_update_error">Couldn\'t update your name. Please try again.</string>
+    <string name="profile_name_update_error">Couldn't update your name. Please try again.</string>
     <string name="profile_save">Save</string>
     <string name="profile_cancel">Cancel</string>
     <string name="profile_stats_title">Your stats</string>
@@ -41,7 +41,7 @@
     <string name="profile_stats_class_record">%1$d match wins · %2$d gauntlet wins</string>
     <string name="profile_delete">Delete profile</string>
     <string name="profile_delete_confirm_title">Delete profile?</string>
-    <string name="profile_delete_confirm_message">This permanently deletes your profile, including your display name and game stats. This can\'t be undone.</string>
+    <string name="profile_delete_confirm_message">This permanently deletes your profile, including your display name and game stats. This can't be undone.</string>
     <string name="profile_delete_confirm_button">Delete</string>
 
     <string name="leaderboard_title">Leaderboard</string>
@@ -61,7 +61,7 @@
     <string name="achievements_unlocked">Unlocked</string>
     <string name="achievements_locked">Locked</string>
 
-    <string name="offline_banner_message">You\'re offline — reconnecting…</string>
+    <string name="offline_banner_message">You're offline — reconnecting…</string>
 
     <string name="app_update_force_title">Update required</string>
     <string name="app_update_force_message">This version of Sorcerers &amp; Spirits is no longer supported. Update to keep playing.</string>
@@ -94,9 +94,9 @@
     <string name="arena_waiting_subtitle">The arena fills. Steel your nerve while the others arrive…</string>
     <string name="arena_waiting_tips_label">While you wait</string>
     <string name="arena_waiting_tip_doubles">Roll doubles and your next consecutive roll gains a +1 bonus — chain them to break armor and land the blow.</string>
-    <string name="arena_waiting_tip_rogue">The Rogue\'s Dodge stacks: every armor an opponent fails to break hardens it further, up to +2 for the match.</string>
-    <string name="arena_waiting_tip_mage">The Mage\'s Spell Potency turns doubles into a storm — full damage to your target, half to everyone else.</string>
-    <string name="arena_waiting_tip_duelist">The Duelist\'s Riposte can spin an attack right back at the attacker. Pass their armor at your peril.</string>
+    <string name="arena_waiting_tip_rogue">The Rogue's Dodge stacks: every armor an opponent fails to break hardens it further, up to +2 for the match.</string>
+    <string name="arena_waiting_tip_mage">The Mage's Spell Potency turns doubles into a storm — full damage to your target, half to everyone else.</string>
+    <string name="arena_waiting_tip_duelist">The Duelist's Riposte can spin an attack right back at the attacker. Pass their armor at your peril.</string>
     <string name="arena_waiting_tip_gambler">All-In is a gamble: a 1 knocks you out, but a 5 or 6 lets the Gambler strike twice this round.</string>
     <string name="arena_waiting_tip_paladin">A Paladin can cheat death once a match — Holy Shield may leave them standing on 1 Health, then lash back.</string>
 
@@ -154,11 +154,11 @@
 
     <string name="arena_message_mirror_image_trigger">Mirror Image! Which one is real?</string>
     <string name="arena_message_mirror_image_pass_armor_broke">The Illusionist lets the roll stand, and %1$s breaks through the armor!</string>
-    <string name="arena_message_mirror_image_pass_armor_held">The Illusionist lets the roll stand and turns aside %1$s\'s attack!</string>
+    <string name="arena_message_mirror_image_pass_armor_held">The Illusionist lets the roll stand and turns aside %1$s's attack!</string>
     <string name="arena_message_mirror_image_pass_damage">The Illusionist lets the roll stand, and %1$s lands a blow!</string>
     <string name="arena_message_mirror_image_pass_knockout">The Illusionist lets the roll stand, and %1$s lands a knockout blow!</string>
     <string name="arena_message_mirror_image_tempt_fate_armor_broke">The Illusionist rerolls a die (%1$s), but %2$s breaks through the armor anyway!</string>
-    <string name="arena_message_mirror_image_tempt_fate_armor_held">The Illusionist rerolls a die (%1$s) and turns aside %2$s\'s attack!</string>
+    <string name="arena_message_mirror_image_tempt_fate_armor_held">The Illusionist rerolls a die (%1$s) and turns aside %2$s's attack!</string>
     <string name="arena_message_mirror_image_tempt_fate_damage">The Illusionist rerolls a die (%1$s), but %2$s still lands a blow!</string>
     <string name="arena_message_mirror_image_tempt_fate_knockout">The Illusionist rerolls a die (%1$s), but %2$s lands a knockout blow!</string>
 
@@ -183,9 +183,9 @@
     <string name="arena_flash_miss_doubles">%1$s (+%2$s) · Miss!</string>
     <string name="arena_flash_damage">%1$s Damage!</string>
     <string name="arena_flash_damage_doubles">%1$s (+%2$s) Damage!</string>
-    <string name="arena_flash_knockout">Knocked Out!</string>
-    <string name="arena_flash_knockout_total">%1$s · Knocked Out!</string>
-    <string name="arena_flash_knockout_total_doubles">%1$s (+%2$s) · Knocked Out!</string>
+    <string name="arena_flash_knockout">K.O!</string>
+    <string name="arena_flash_knockout_total">%1$s · K.O!</string>
+    <string name="arena_flash_knockout_total_doubles">%1$s (+%2$s) · K.O!</string>
     <string name="arena_flash_killing_momentum">Killing Momentum!</string>
     <string name="arena_flash_dodge">Dodge!</string>
     <string name="arena_flash_spell_potency">Spell Potency!</string>
@@ -194,12 +194,12 @@
     <string name="arena_flash_prepared_strike">Prepared Strike!</string>
     <string name="arena_flash_attack_whiffed">Whiffed!</string>
     <string name="arena_flash_encore">Encore!</string>
-    <string name="arena_flash_all_in">All-In!</string>
-    <string name="arena_flash_all_in_strike_twice">All-In! Strike twice!</string>
+    <string name="arena_flash_all_in_no_effect">No effect</string>
+    <string name="arena_flash_all_in_strike_twice">Extra attack!</string>
     <string name="arena_flash_fizzle">Fizzle!</string>
     <string name="arena_flash_skeleton">Skeleton!</string>
-    <string name="arena_flash_skeleton_and_heal">Skeleton! %1$s heals to full!</string>
-    <string name="arena_flash_golem">Golem! %1$s heals to full!</string>
+    <string name="arena_flash_skeleton_and_heal">Skeleton!</string>
+    <string name="arena_flash_golem">Golem!</string>
     <string name="arena_flash_teleport">Teleport!</string>
     <string name="arena_flash_escaped">Escaped!</string>
     <string name="arena_flash_caught">Caught!</string>
@@ -221,7 +221,7 @@
     <string name="arena_flash_new_round">Round %1$s!</string>
     <string name="arena_flash_chose_class">%1$s!</string>
     <string name="arena_flash_joined">%1$s joined!</string>
-    <string name="arena_flash_turn_start">%1$s\'s turn!</string>
+    <string name="arena_flash_turn_start">%1$s's turn!</string>
     <string name="arena_flash_teleport_roll">Rolled %1$s!</string>
     <string name="arena_flash_teleport_tie">Tie — roll again!</string>
     <string name="arena_flash_high_roller">High Roller!</string>

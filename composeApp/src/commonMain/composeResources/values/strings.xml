@@ -101,6 +101,11 @@
     <string name="arena_waiting_tip_paladin">A Paladin can cheat death once a match — Holy Shield may leave them standing on 1 Health, then lash back.</string>
 
     <string name="arena_message_round">ROUND %1$s</string>
+    <string name="arena_log_round">Round %1$s</string>
+    <string name="arena_log_round_in_progress">Round %1$s — In Progress</string>
+    <string name="arena_log_turn">%1$s's Turn</string>
+    <string name="arena_log_header">Round %1$s · %2$s's turn</string>
+    <string name="arena_log_setup">Match Setup</string>
     <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>
     <string name="arena_message_new_turn">It's %1$s's turn</string>

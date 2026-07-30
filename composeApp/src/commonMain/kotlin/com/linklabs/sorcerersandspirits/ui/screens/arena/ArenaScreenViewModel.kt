@@ -200,7 +200,7 @@ class ArenaScreenViewModel(
         nextState: ArenaScreenState,
     ): Long {
         val previousMessageIds =
-            previousState?.messages?.mapTo(mutableSetOf()) { it.id } ?: emptySet()
+            previousState?.playbackMessages?.mapTo(mutableSetOf()) { it.id } ?: emptySet()
         val newMessages = nextState.playbackMessages.filter { it.id !in previousMessageIds }
         val playbackMillis =
             newMessages.sumOf { playable ->

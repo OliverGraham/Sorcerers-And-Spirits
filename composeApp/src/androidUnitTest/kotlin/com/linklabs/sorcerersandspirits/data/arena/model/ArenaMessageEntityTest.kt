@@ -20,7 +20,7 @@ class ArenaMessageEntityTest {
     @Test
     fun `every arena message survives a data-layer round trip with its id and fields intact`() {
         allMessages.forEach { message ->
-            val restored = message.toEntity(id = MESSAGE_ID).toDomain()
+            val restored = message.toEntity(id = MESSAGE_ID).toDomain(roundNumber = 1)
 
             assertEquals(expected = MESSAGE_ID, actual = restored.id)
             assertEquals(

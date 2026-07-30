@@ -14,6 +14,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
@@ -203,7 +204,8 @@ private fun PreviewArenaCombat(
     val allMessages = if (flashMessage != null) messages + flashMessage else messages
     val screenState =
         ArenaScreenState(
-            messages = allMessages,
+            messageGroups =
+                listOf(ArenaMessageGroupState.Round(roundNumber = 1, messages = allMessages)),
             secondsRemaining = secondsRemaining,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,

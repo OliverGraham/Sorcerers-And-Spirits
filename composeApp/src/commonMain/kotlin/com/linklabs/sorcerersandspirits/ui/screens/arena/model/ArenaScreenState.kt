@@ -22,7 +22,7 @@ private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 // TODO: Can this massive data class be reduced in some way?
 @Immutable
 data class ArenaScreenState(
-    val messages: List<ArenaMessageState>,
+    val messageGroups: List<ArenaMessageGroupState>,
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
@@ -33,16 +33,14 @@ data class ArenaScreenState(
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-    val playbackMessages: List<PlayableMessage> = messages.map { it.toPlayable() },
+    val playbackMessages: List<PlayableMessage> =
+        messageGroups.flatMap { it.messages }.map { it.toPlayable() },
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
     val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
 
     val animationCount: Int = playbackMessages.count { it.cue != null || it.callout != null }
-
-    fun revealedLogMessages(revealedCount: Int): List<ArenaMessageState> =
-        messages.take(n = revealedCount).filterNot { it is ArenaMessageState.NormalRoll.Attack }
 }
 
 // TODO(SS-031): Need to refactor this badly
@@ -61,7 +59,7 @@ internal fun ArenaMatch.toUpdatedState(
             else -> emptyMap()
         }.mapValues { ParticipantClass(className = it.value.name, type = it.value) }
 
-    val messages = messages.toStates(participants = participants)
+    val messageGroups = messages.toStates(participants = participants)
 
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
@@ -100,7 +98,7 @@ internal fun ArenaMatch.toUpdatedState(
 
     val finalState =
         ArenaScreenState(
-            messages = messages,
+            messageGroups = messageGroups,
             secondsRemaining = secondsRemaining,
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = userPlayer.isKnockedOut(),

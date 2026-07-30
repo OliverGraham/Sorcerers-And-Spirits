@@ -125,6 +125,60 @@ are archived in [COMPLETED.md](COMPLETED.md).
   DiceHome top.
 - **Related:** SS-225 (auto-scroll), SS-159 (raise DiceHome/buttons), SS-182 (top inset).
 
+### SS-252 — Finished state: show a version of the arena message log (UI + location TBD)
+
+- [ ] Not completed
+- **Goal:** Surface a version of the arena message log in the **Finished (match-over)** state so
+  players can review what happened after the match ends. The **exact UI and placement are to be
+  specified by the owner at the start of this work** — do not build until the spec is given.
+- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` for the host; reuse the grouped log
+  rendering from SS-251 (`ui/screens/arena/ui/message/ArenaMessageLog.kt`) rather than duplicating
+  it.
+- **Notes:** Follow-up to SS-251 (build that grouped log first). During combat the log lives behind a
+  tap-to-open handle; the Finished-state version likely wants a different affordance/location — hence
+  owner-to-spec. Related: SS-227 (Finished-state readiness), SS-179 (Finished-state text styling).
+
+### SS-253 — Class-color every className across all arena messages
+
+- [ ] Not completed
+- **Goal:** Every message that contains a class name should render that name in the class's family
+  color, everywhere it appears in the log and flashes — not just the handful (NewTurn header,
+  ChoseCharacterClass) that do today.
+- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` (`classHighlightedText` /
+  `ArenaMessageItem`) and `ui/screens/arena/ui/message/ArenaMessageDisplay.kt` (`getDisplayString`).
+  The message states carry `attackerClassType` / participant class info already; thread the class
+  type(s) into a colored `AnnotatedString` builder rather than plain strings.
+- **Notes:** Follow-up to SS-251 (owner flagged this as a separate ticket). Watch messages with two
+  class names (e.g. attacker + defender) — both should be colored. Reuse the class color source
+  (`CharacterClassType.toColor()`).
+
+### SS-254 — Message log: gradual drag-to-dismiss (ModalBottomSheet-style), not all-or-nothing
+
+- [ ] Not completed
+- **Symptom:** The open message log dismisses via an overscroll threshold
+  (`rememberOverscrollDismissConnection` in `ArenaMessageLog.kt`): scrolling past the end snaps it
+  closed all at once.
+- **Goal:** Replace this with a **gradual, scroll-linked dismiss** like a `ModalBottomSheet` — as the
+  user scrolls/drags past the edge the log translates with the gesture and only dismisses once past a
+  distance/velocity, and springs back otherwise. Reuse the built-in bottom-sheet nested-scroll /
+  anchored-draggable behavior rather than the custom threshold accumulator.
+- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` and the unfurl host
+  `MessageLogOverlay` in `ui/screens/arena/ui/combat/CombatMessages.kt`.
+- **Notes:** Follow-up to SS-251.
+
+### SS-255 — Message log open/insert animation reads wrong (topmost line doesn't move)
+
+- [ ] Not completed
+- **Symptom:** When the log opens (and when a new line is revealed), the **topmost** message stays put
+  while everything below it slides — it should all move together as the content shifts.
+- **Goal:** Make the log content animate as a unit on open and on insert (the whole column slides),
+  rather than the first item anchoring while the rest animate via `animateItem()`.
+- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` (per-item `animateItem()` +
+  most-recent-first ordering + auto-scroll-to-top) and the unfurl height animation in
+  `MessageLogOverlay` (`CombatMessages.kt`). Likely needs the unfurl to translate the content down
+  rather than reveal it top-anchored.
+- **Notes:** Follow-up to SS-251; needs on-device animation iteration.
+
 ### SS-227 — Finished state: show which players have readied up (like ChallengeDialog)
 
 - [ ] Not completed

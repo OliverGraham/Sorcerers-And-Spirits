@@ -26,10 +26,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
@@ -112,30 +112,43 @@ internal fun ArenaCombat(
             }
         }
 
-    val latestHandleMessage by
+    val playedMessages by
         remember(key1 = screenState.messageGroups) {
             derivedStateOf {
                 screenState.messageGroups
                     .flatMap { it.messages }
                     .take(n = flashPlayback.playedMessageCount)
-                    .lastOrNull {
-                        it !is ArenaMessageState.NewRound &&
-                            it !is ArenaMessageState.NewTurn &&
-                            it !is ArenaMessageState.NormalRoll.Attack
-                    }
             }
         }
 
-    val turnOwnerPlayer = state.playerMap[state.turnOwnerUserId]
-    val turnOwnerClass =
-        if (turnOwnerPlayer != null) {
-            CharacterClassMessageInfoState(
-                className = turnOwnerPlayer.characterClass.className,
-                type = turnOwnerPlayer.characterClass.type,
-            )
-        } else {
-            null
+    val setupMessageIds =
+        remember(key1 = screenState.messageGroups) {
+            screenState.messageGroups
+                .filterIsInstance<ArenaMessageGroupState.Setup>()
+                .flatMap { it.messages }
+                .mapTo(destination = HashSet()) { it.id }
         }
+
+    val latestHandleMessage =
+        playedMessages.lastOrNull {
+            it !is ArenaMessageState.NewRound &&
+                it !is ArenaMessageState.NewTurn &&
+                it !is ArenaMessageState.NormalRoll.Attack &&
+                it.id !in setupMessageIds
+        }
+
+    val displayedRoundNumber =
+        playedMessages
+            .filterIsInstance<ArenaMessageState.NewRound>()
+            .lastOrNull()
+            ?.roundNumber
+            ?.toIntOrNull() ?: state.roundNumber
+
+    val displayedTurnOwnerClass =
+        playedMessages
+            .filterIsInstance<ArenaMessageState.NewTurn>()
+            .lastOrNull()
+            ?.characterClassInfo
 
     val revealedMessageCount = revealedMessageGroups.sumOf { it.messages.size }
 
@@ -153,8 +166,8 @@ internal fun ArenaCombat(
             Column(modifier = Modifier.fillMaxSize()) {
                 // TODO: Make MessagesBar and TurnTimer part of Screen Column
                 MessagesBar(
-                    roundNumber = state.roundNumber,
-                    turnOwnerClass = turnOwnerClass,
+                    roundNumber = displayedRoundNumber,
+                    turnOwnerClass = displayedTurnOwnerClass,
                     latestMessage = latestHandleMessage,
                     secondsRemaining = screenState.secondsRemaining,
                     isTimerVisible = screenState.isTimerVisible,

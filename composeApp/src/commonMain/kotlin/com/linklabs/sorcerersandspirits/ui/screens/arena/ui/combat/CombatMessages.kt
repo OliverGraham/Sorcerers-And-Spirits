@@ -15,10 +15,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -76,22 +74,14 @@ private const val UNREAD_DISPLAY_CAP = 9
 private const val UNREAD_COUNT_COLOR_TRANSITION_LABEL = "MessagesUnreadCountColor"
 private const val UNREAD_COUNT_COLOR_SHIFT_LABEL = "MessagesUnreadCountColorShift"
 private const val MESSAGES_EXPAND_LABEL = "MessagesExpand"
+private const val ROUND_HEADER_TRANSITION_LABEL = "MessagesRoundHeader"
 private const val LATEST_MESSAGE_TRANSITION_LABEL = "MessagesLatestMessage"
 private const val UNREAD_COUNT_CHANGE_LABEL = "MessagesUnreadCountChange"
 private const val UNREAD_COUNT_COLOR_CYCLE_MILLIS = 2000
 private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
 private val messageBarHeight = 84.dp
+private val headerBookendReserve = 60.dp
 
-/**
- * The pinned top bar / handle of the combat screen: a full-width gradient surface with two stacked
- * rows (SS-251). The top row carries the messages icon and its unread tally, the persistent "Round
- * X · {class}'s turn" header, and the [TurnTimer] on the right, aligned with the header. The most
- * recent message animates in the row below, centered. Tapping the handle toggles the message log
- * via [onToggleExpanded]. The log itself is drawn separately by [MessageLogOverlay] so it can paint
- * over the combat content rather than pushing it down; the bar paints the top slice of the same
- * shared gradient span (bar top to [diceHomeBounds] top) so the two read as one connected surface
- * whether the log is open or closed.
- */
 @Composable
 internal fun MessagesBar(
     roundNumber: Int,
@@ -117,29 +107,41 @@ internal fun MessagesBar(
                 .clickable(onClick = onToggleExpanded)
                 .padding(horizontal = 8.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            MessagesIcon(unreadMessageCount = unreadMessageCount)
-
-            Text(
-                text =
-                    roundTurnHeaderText(roundNumber = roundNumber, turnOwnerClass = turnOwnerClass),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.weight(weight = 1f),
+        Box(modifier = Modifier.fillMaxWidth()) {
+            MessagesIcon(
+                unreadMessageCount = unreadMessageCount,
+                modifier = Modifier.align(alignment = Alignment.CenterStart),
             )
+
+            AnimatedContent(
+                targetState = roundNumber to turnOwnerClass,
+                transitionSpec = {
+                    (slideInVertically { height -> height } + fadeIn()) togetherWith
+                        (slideOutVertically { height -> -height } + fadeOut())
+                },
+                label = ROUND_HEADER_TRANSITION_LABEL,
+                modifier =
+                    Modifier.align(alignment = Alignment.Center)
+                        .fillMaxWidth()
+                        .padding(horizontal = headerBookendReserve),
+            ) { (round, ownerClass) ->
+                Text(
+                    text = roundTurnHeaderText(roundNumber = round, turnOwnerClass = ownerClass),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
 
             TurnTimer(
                 secondsRemaining = secondsRemaining,
                 isVisible = isTimerVisible,
                 isUrgent = isTimerUrgent,
+                modifier = Modifier.align(alignment = Alignment.CenterEnd),
             )
         }
 

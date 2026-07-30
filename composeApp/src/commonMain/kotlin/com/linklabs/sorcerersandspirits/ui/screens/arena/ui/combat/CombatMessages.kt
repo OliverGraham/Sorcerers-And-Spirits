@@ -17,8 +17,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -39,21 +39,32 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.getDisplayString
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_log_header
+import sorcerersandspirits.composeapp.generated.resources.arena_log_round
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
-internal val messagesIconSize = 56.dp
-private val unreadCountFontSize = 20.sp
+internal val messagesIconSize = 44.dp
+private val unreadCountFontSize = 18.sp
 private val messagesGradientTop = Color(color = 0xFF654E35)
 private val messagesGradientMiddle = Color(color = 0xFFCB9C6A)
 private val messagesGradientBottom = Color(color = 0xFF98754F)
@@ -66,20 +77,25 @@ private const val UNREAD_COUNT_COLOR_TRANSITION_LABEL = "MessagesUnreadCountColo
 private const val UNREAD_COUNT_COLOR_SHIFT_LABEL = "MessagesUnreadCountColorShift"
 private const val MESSAGES_EXPAND_LABEL = "MessagesExpand"
 private const val LATEST_MESSAGE_TRANSITION_LABEL = "MessagesLatestMessage"
+private const val UNREAD_COUNT_CHANGE_LABEL = "MessagesUnreadCountChange"
 private const val UNREAD_COUNT_COLOR_CYCLE_MILLIS = 2000
 private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
-private val messageBarHeight = 64.dp
+private val messageBarHeight = 84.dp
 
 /**
- * The pinned top bar of the combat screen: a full-width gradient bar with the messages icon and its
- * unread tally on the left, the most recent message beside it, and the [TurnTimer] on the right
- * (SS-173). Tapping the messages region toggles the message log via [onToggleExpanded]. The log
- * itself is drawn separately by [MessageLogOverlay] so it can paint over the combat content rather
- * than pushing it down; the bar paints the top slice of the same shared gradient span (bar top to
- * [diceHomeBounds] top) so the two read as one connected surface whether the log is open or closed.
+ * The pinned top bar / handle of the combat screen: a full-width gradient surface with two stacked
+ * rows (SS-251). The top row carries the messages icon and its unread tally, the persistent "Round
+ * X · {class}'s turn" header, and the [TurnTimer] on the right, aligned with the header. The most
+ * recent message animates in the row below, centered. Tapping the handle toggles the message log
+ * via [onToggleExpanded]. The log itself is drawn separately by [MessageLogOverlay] so it can paint
+ * over the combat content rather than pushing it down; the bar paints the top slice of the same
+ * shared gradient span (bar top to [diceHomeBounds] top) so the two read as one connected surface
+ * whether the log is open or closed.
  */
 @Composable
 internal fun MessagesBar(
+    roundNumber: Int,
+    turnOwnerClass: CharacterClassMessageInfoState?,
     latestMessage: ArenaMessageState?,
     secondsRemaining: Int,
     isTimerVisible: Boolean,
@@ -92,25 +108,45 @@ internal fun MessagesBar(
     val barHeightPx = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
     val spanEndY = diceHomeBounds?.top ?: barHeightPx
 
-    Row(
+    Column(
         modifier =
             modifier
                 .fillMaxWidth()
                 .height(height = messageBarHeight)
-                .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY)),
-        verticalAlignment = Alignment.CenterVertically,
+                .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY))
+                .clickable(onClick = onToggleExpanded)
+                .padding(horizontal = 8.dp)
     ) {
         Row(
-            modifier =
-                Modifier.weight(weight = 1f)
-                    .fillMaxHeight()
-                    .clickable(onClick = onToggleExpanded)
-                    .padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             MessagesIcon(unreadMessageCount = unreadMessageCount)
 
+            Text(
+                text =
+                    roundTurnHeaderText(roundNumber = roundNumber, turnOwnerClass = turnOwnerClass),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.weight(weight = 1f),
+            )
+
+            TurnTimer(
+                secondsRemaining = secondsRemaining,
+                isVisible = isTimerVisible,
+                isUrgent = isTimerUrgent,
+            )
+        }
+
+        Box(
+            modifier = Modifier.fillMaxWidth().weight(weight = 1f),
+            contentAlignment = Alignment.Center,
+        ) {
             AnimatedContent(
                 targetState = latestMessage,
                 transitionSpec = {
@@ -118,25 +154,54 @@ internal fun MessagesBar(
                         (slideOutVertically { height -> -height } + fadeOut())
                 },
                 label = LATEST_MESSAGE_TRANSITION_LABEL,
-                modifier = Modifier.weight(weight = 1f),
             ) { message ->
                 Text(
                     text = message?.getDisplayString().orEmpty(),
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
+    }
+}
 
-        TurnTimer(
-            secondsRemaining = secondsRemaining,
-            isVisible = isTimerVisible,
-            isUrgent = isTimerUrgent,
+/**
+ * The persistent handle header — "Round X · {class}'s turn" — with the class name tinted its family
+ * color. Falls back to just the round when no turn owner is known (e.g. between matches).
+ */
+@Composable
+private fun roundTurnHeaderText(
+    roundNumber: Int,
+    turnOwnerClass: CharacterClassMessageInfoState?,
+): AnnotatedString {
+    if (turnOwnerClass == null) {
+        return AnnotatedString(
+            text = stringResource(resource = Res.string.arena_log_round, roundNumber.toString())
         )
+    }
+
+    val fullText =
+        stringResource(
+            resource = Res.string.arena_log_header,
+            roundNumber.toString(),
+            turnOwnerClass.className,
+        )
+    val classNameStart = fullText.lastIndexOf(string = turnOwnerClass.className)
+
+    return buildAnnotatedString {
+        if (classNameStart < 0) {
+            append(fullText)
+            return@buildAnnotatedString
+        }
+        append(fullText.substring(startIndex = 0, endIndex = classNameStart))
+        withStyle(style = SpanStyle(color = turnOwnerClass.type.toColor())) {
+            append(turnOwnerClass.className)
+        }
+        append(fullText.substring(startIndex = classNameStart + turnOwnerClass.className.length))
     }
 }
 
@@ -169,7 +234,7 @@ private fun MessagesIcon(unreadMessageCount: Int, modifier: Modifier = Modifier)
  */
 @Composable
 internal fun MessageLogOverlay(
-    messages: List<ArenaMessageState>,
+    messageGroups: List<ArenaMessageGroupState>,
     isExpanded: Boolean,
     diceHomeBounds: Rect?,
     onDismiss: () -> Unit,
@@ -185,7 +250,7 @@ internal fun MessageLogOverlay(
 
     Box(modifier = modifier.fillMaxSize()) {
         ArenaMessageLog(
-            messages = messages,
+            messageGroups = messageGroups,
             onDismiss = onDismiss,
             modifier =
                 Modifier.fillMaxWidth()
@@ -256,14 +321,23 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
 
     val tally = if (count > UNREAD_DISPLAY_CAP) "$UNREAD_DISPLAY_CAP+" else count.toString()
 
-    Text(
-        text = tally,
-        style =
-            TextStyle(
-                brush = flowingBrush,
-                fontSize = unreadCountFontSize,
-                fontWeight = FontWeight.Bold,
-            ),
+    AnimatedContent(
+        targetState = tally,
+        transitionSpec = {
+            (slideInVertically { height -> height } + fadeIn()) togetherWith
+                (slideOutVertically { height -> -height } + fadeOut())
+        },
+        label = UNREAD_COUNT_CHANGE_LABEL,
         modifier = modifier,
-    )
+    ) { value ->
+        Text(
+            text = value,
+            style =
+                TextStyle(
+                    brush = flowingBrush,
+                    fontSize = unreadCountFontSize,
+                    fontWeight = FontWeight.Bold,
+                ),
+        )
+    }
 }

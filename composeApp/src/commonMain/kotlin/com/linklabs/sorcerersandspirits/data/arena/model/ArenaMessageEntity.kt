@@ -384,7 +384,7 @@ sealed interface ArenaMessageEntity {
 @Serializable
 data class CharacterClassMessageInfoEntity(val className: String, val type: CharacterClassType)
 
-fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
+fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
     val message =
         when (this) {
             is ArenaMessageEntity.ChoseCharacterClass ->
@@ -396,7 +396,7 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
             is ArenaMessageEntity.ConnectedToArena ->
                 ArenaMessage.ConnectedToArena(displayName = displayName)
 
-            is ArenaMessageEntity.NewRound -> ArenaMessage.NewRound(roundNumber = roundNumber)
+            is ArenaMessageEntity.NewRound -> ArenaMessage.NewRound(roundNumber = this.roundNumber)
 
             is ArenaMessageEntity.NewTurn ->
                 ArenaMessage.NewTurn(characterClassInfo = characterClassInfo.toDomain())
@@ -598,7 +598,20 @@ fun ArenaMessageEntity.toDomain(): IncomingArenaMessage {
             is ArenaMessageEntity.Doubles -> ArenaMessage.Doubles(userId = userId)
         }
 
-    return IncomingArenaMessage(id = id, message = message)
+    return IncomingArenaMessage(id = id, roundNumber = roundNumber, message = message)
+}
+
+/**
+ * Maps the flat message entities to domain messages, tagging each with the round it belongs to. The
+ * persisted stream already marks its round boundaries with NewRound entities, so a single in-order
+ * pass carries the current round onto every message (pre-combat messages stay at round 0).
+ */
+internal fun List<ArenaMessageEntity>.toDomain(): List<IncomingArenaMessage> {
+    var currentRoundNumber = 0
+    return map { entity ->
+        if (entity is ArenaMessageEntity.NewRound) currentRoundNumber = entity.roundNumber
+        entity.toDomain(roundNumber = currentRoundNumber)
+    }
 }
 
 private fun CharacterClassMessageInfoEntity.toDomain() =

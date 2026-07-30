@@ -317,6 +317,7 @@ class ArenaScreenStateTest {
                 (1..messageCount).map { index ->
                     IncomingArenaMessage(
                         id = "message-$index",
+                        roundNumber = index,
                         message = ArenaMessage.NewRound(roundNumber = index),
                     )
                 },
@@ -545,10 +546,10 @@ class ArenaScreenStateTest {
     private fun screenState(
         arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
         hasReadiedForNextMatch: Boolean = false,
-        messages: List<ArenaMessageState> = emptyList(),
+        messageGroups: List<ArenaMessageGroupState> = emptyList(),
     ) =
         ArenaScreenState(
-            messages = messages,
+            messageGroups = messageGroups,
             secondsRemaining = 0,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,

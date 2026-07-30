@@ -60,6 +60,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-251** — Group the arena message log by Round → Turn, with a compact round/turn handle header:
+  Messages are tagged with their round in the data layer (`List<ArenaMessageEntity>.toDomain()`
+  carries the running `NewRound` number onto each message) and grouped in the state model
+  (`toStates()` → `List<ArenaMessageGroupState>` of `Setup`/`Round`); `ArenaMessageLog` renders each
+  group as a collapsible header + lines (current round expanded, older rounds and the pre-combat
+  Setup group collapsed at the bottom), and `MessagesBar` gained a two-row handle with a persistent
+  "Round X · {class}'s turn" header (class-tinted) aligned with the timer, and the animating latest
+  message centered below.
 - **SS-225** — MessageLog scroll behavior, spacing, and class-only coloring: `ArenaMessageLog`
   opens at the top with newest-first (`asReversed()` + fresh `rememberLazyListState` per open),
   overscrolling past the end dismisses the log via a `NestedScrollConnection` (accumulated

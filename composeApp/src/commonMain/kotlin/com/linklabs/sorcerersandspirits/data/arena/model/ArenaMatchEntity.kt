@@ -74,7 +74,7 @@ internal fun Map<String, ArenaPlayerEntity>.toParticipants(): Map<String, Charac
     }
 
 internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
-    val messages = messages.map { it.toDomain() }
+    val messages = messages.toDomain()
 
     return when (this) {
         is ArenaMatchEntity.WaitingForAllPlayers ->

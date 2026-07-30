@@ -80,10 +80,11 @@ class ArenaMessageStateTest {
                     incomingNormalRoll(id = "roll", type = NormalRollMessageType.Knockout),
                     IncomingArenaMessage(
                         id = "trigger",
+                        roundNumber = 1,
                         message = ArenaMessage.KillingMomentum(attackerUserId = ATTACKER_ID),
                     ),
                 )
-                .toStates(participants = participants)
+                .toMessageStates()
 
         assertEquals(
             expected =
@@ -99,11 +100,12 @@ class ArenaMessageStateTest {
                     incomingNormalRoll(id = "roll", type = NormalRollMessageType.ArmorClassMiss),
                     IncomingArenaMessage(
                         id = "trigger",
+                        roundNumber = 1,
                         message =
                             ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = DEFENDER_ID),
                     ),
                 )
-                .toStates(participants = participants)
+                .toMessageStates()
 
         assertEquals(
             expected =
@@ -192,13 +194,17 @@ class ArenaMessageStateTest {
     }
 
     private fun ArenaMessage.toSingleState(): ArenaMessageState =
-        listOf(IncomingArenaMessage(id = MESSAGE_ID, message = this))
-            .toStates(participants = participants)
+        listOf(IncomingArenaMessage(id = MESSAGE_ID, roundNumber = 1, message = this))
+            .toMessageStates()
             .single()
+
+    private fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> =
+        toStates(participants = participants).flatMap { it.messages }
 
     private fun incomingNormalRoll(id: String, type: NormalRollMessageType) =
         IncomingArenaMessage(
             id = id,
+            roundNumber = 1,
             message =
                 ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = ATTACKER_ID,

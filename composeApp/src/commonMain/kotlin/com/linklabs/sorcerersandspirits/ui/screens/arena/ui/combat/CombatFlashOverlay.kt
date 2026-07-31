@@ -67,11 +67,14 @@ private const val CENTER_BANNER_FRACTION = 0.2f
 
 @Composable
 internal fun FlashOverlay(
-    playback: FlashPlaybackState,
+    callout: FlashCallout?,
+    anchor: FlashAnchor,
     avatarBounds: CombatAvatarBounds,
     modifier: Modifier = Modifier,
 ) {
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
+    var shownCallout by remember { mutableStateOf<FlashCallout?>(value = null) }
+    if (callout != null) shownCallout = callout
 
     Box(
         modifier =
@@ -82,24 +85,20 @@ internal fun FlashOverlay(
                 }
                 .onSizeChanged { overlaySize = it }
     ) {
-        val message = playback.currentMessage ?: return@Box
-        val callout = playback.currentCallout ?: return@Box
-        val point =
-            playback.currentAnchor.resolvePoint(
-                avatarBounds = avatarBounds,
-                overlaySize = overlaySize,
-            )
+        val visibleCallout = shownCallout ?: return@Box
+        val point = anchor.resolvePoint(avatarBounds = avatarBounds, overlaySize = overlaySize)
 
-        if (playback.visibleState.targetState || playback.visibleState.currentState) {
+        val isVisible = callout != null
+        if (isVisible) {
             ConfettiBurst(
-                triggerKey = message.id,
+                triggerKey = visibleCallout,
                 origin = point,
                 modifier = Modifier.fillMaxSize(),
             )
         }
 
         AnimatedVisibility(
-            visibleState = playback.visibleState,
+            visible = isVisible,
             enter =
                 scaleIn(
                     initialScale = 0.3f,
@@ -112,7 +111,7 @@ internal fun FlashOverlay(
             exit = scaleOut(targetScale = 1.5f) + fadeOut(),
             modifier = Modifier.centeredAt(point = { point }),
         ) {
-            FlashText(callout = callout)
+            FlashText(callout = visibleCallout)
         }
     }
 }

@@ -66,7 +66,7 @@ internal fun BottomControls(
     lockTarget: () -> Unit,
     diceStateHolder: DiceStateHolder,
     areControlsVisible: Boolean,
-    isAnimating: Boolean,
+    isPlayingBack: Boolean,
     isActionInFlight: Boolean,
     onActionDispatched: () -> Unit,
     modifier: Modifier = Modifier,
@@ -77,12 +77,15 @@ internal fun BottomControls(
     val classColor = state.userPlayer.characterClass.type.toColor()
     val controls = state.combatControls
 
+    val isBusy = isPlayingBack || isActionInFlight
+
     val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
     var hasReachedTeleportRollBeat by
         remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
-    if (hasPendingTeleportRoll && !isAnimating) hasReachedTeleportRollBeat = true
+    val hasReachedRollBeatNow = hasPendingTeleportRoll && !isBusy
+    if (hasReachedRollBeatNow) hasReachedTeleportRollBeat = true
 
-    val isSuppressedByAnimation = isAnimating && !hasReachedTeleportRollBeat
+    val isSuppressedByAnimation = isBusy && !hasReachedTeleportRollBeat
 
     // TODO: Very, very rarely are nested functions allowable (these are not)
     fun isEnabled(control: ArenaCombatControl): Boolean =

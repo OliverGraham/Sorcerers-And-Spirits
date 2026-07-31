@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 
+// TODO: Delete - only informs a boolean choice in CombatFlashOverlay
+
 @Immutable
 sealed interface FlashAnchor {
     @Immutable data class Avatar(val userId: String) : FlashAnchor

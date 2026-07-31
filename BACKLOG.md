@@ -17,6 +17,30 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
+### SS-256 — Rearchitect combat animation gating around a ViewModel-owned playback queue
+
+- [ ] Not completed
+- **Goal:** Fix the high-priority bug where the CombatButtons disappear permanently mid-match (game
+  becomes unplayable), and prevent the whole class of bug by moving animation gating off the
+  composables into a single, serialized, bounded queue in the ViewModel.
+- **Root cause (the real one):** the arena message log is a rolling 30-message window
+  (`appendCapped` / `MAX_RETAINED_MESSAGES` in `data/arena/utilities/Common.kt`), and every update
+  reports `numberOfNewMessages`. Both the old in-composable sequencer and the first cut of the VM
+  sequencer computed fresh work with `messages.drop(playedCount)`, which only holds while the log
+  grows. Once a match passes 30 messages (repeated Summon Minion reaches it quickly) the drop stops
+  lining up with what is actually new, playback desyncs, and the controls disappear. Moving the loop
+  to the ViewModel did not fix this — the windowing mismatch was the bug the whole time.
+- **Fix:** `CombatPlaybackSequencer` (`ui/screens/arena/playback/`) runs one bounded drain coroutine
+  in `viewModelScope` and now derives fresh steps from `numberOfNewMessages`
+  (`messages.takeLast(numberOfNewMessages)`), so windowing no longer desyncs it; every wait is
+  bounded with a crash-recovery path so the controls can't be left hidden. The UI keeps its
+  `rememberHeldDuringSequence` seating/stats rendering, gated on `ArenaScreenState.isPlayingBack`.
+- **Remaining (owner to build the real thing):** replace the mechanical port with a plain queue of
+  already-built animation steps that a single consumer polls off one at a time — no `emit`/`compose`
+  indirection, no held-state gymnastics. Also drop the `ArenaScreenState` playback default args,
+  unify the two "last roll" trackers (`CombatPlaybackSequencer.lastDiceRoll` vs the UI's
+  `CommitDiceRolls.lastRoll`), and close the CONFLATED `diceSettled` stale-signal race.
+
 ### SS-185 — Pare back which messages flash
 
 - [ ] Not completed

@@ -45,6 +45,7 @@ internal fun ArenaScreen(
                 onChooseCharacterClass = viewModel::onChooseCharacterClass,
                 onAttack = viewModel::onAttack,
                 onUseAbility = viewModel::onUseAbility,
+                onDiceSettled = viewModel::onDiceSettled,
                 onTryLeaveArena = viewModel::onTryLeaveArena,
                 onConfirmLeaveArena = viewModel::onConfirmLeaveArena,
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,

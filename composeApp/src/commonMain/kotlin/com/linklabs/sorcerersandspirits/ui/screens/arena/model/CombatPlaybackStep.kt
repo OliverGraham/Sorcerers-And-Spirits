@@ -3,8 +3,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 
 // TODO: Why are there so many different types here? Can't the ArenaMessageState simply be used?
+
 @Immutable
-data class PlayableMessage(
+data class CombatPlaybackStep(
     val message: ArenaMessageState,
     val cue: CombatAnimationCue?,
     val callout: FlashCallout?,
@@ -12,11 +13,12 @@ data class PlayableMessage(
     val collapsingUserId: String?,
 ) {
     val id: String = message.id
+    val isAnimated: Boolean = cue != null || callout != null
 }
 
-fun ArenaMessageState.toPlayable(): PlayableMessage {
+fun ArenaMessageState.toPlaybackStep(): CombatPlaybackStep {
     val cue = combatAnimationCue
-    return PlayableMessage(
+    return CombatPlaybackStep(
         message = this,
         cue = cue,
         callout = toFlashCallout(),

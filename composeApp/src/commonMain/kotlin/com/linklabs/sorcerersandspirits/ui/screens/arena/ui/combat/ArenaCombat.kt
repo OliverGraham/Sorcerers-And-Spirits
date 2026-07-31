@@ -16,16 +16,18 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
@@ -41,7 +43,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Com
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
+import kotlinx.coroutines.flow.first
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
 
@@ -56,16 +61,9 @@ internal fun ArenaCombat(
     // TODO: Encapsulate all dice-rolling state DiceStateHolder
     val diceStateHolder = rememberDiceStateHolder()
 
-    val flashPlayback =
-        rememberFlashPlayback(
-            messages = screenState.playbackMessages,
-            diceRollState = state.diceRollState,
-            diceBadgeState = state.diceBadgeState,
-            isBadgeBonusSpent = state.isTeleportDoublesBonusSpent,
-            isMatchEnding = screenState.isMatchEnding,
-            diceStateHolder = diceStateHolder,
-        )
-    val isAnimating = flashPlayback.isAnimating(animationCount = screenState.animationCount)
+    CommitDiceRolls(state = state, diceStateHolder = diceStateHolder)
+
+    val isPlayingBack = screenState.isPlayingBack
 
     var selectedOpponentUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
@@ -87,14 +85,15 @@ internal fun ArenaCombat(
                 state.seatingFor(
                     targetUserId = targetedOpponentUserId,
                     isMatchEnding = screenState.isMatchEnding,
-                    collapsingTargetUserId = flashPlayback.collapsingSeatUserId,
+                    collapsingTargetUserId = screenState.collapsingSeatUserId,
                 ),
             activeUserIds = state.activeUserIds,
             turnOwnerUserId = state.turnOwnerUserId,
         )
-    val heldMoment = rememberHeldDuringSequence(liveValue = liveMoment, isSequencing = isAnimating)
+    val heldMoment =
+        rememberHeldDuringSequence(liveValue = liveMoment, isSequencing = isPlayingBack)
     val displayedPlayerMap =
-        rememberHeldDuringSequence(liveValue = state.playerMap, isSequencing = isAnimating)
+        rememberHeldDuringSequence(liveValue = state.playerMap, isSequencing = isPlayingBack)
     val displayedState = state.copy(playerMap = displayedPlayerMap)
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
@@ -105,20 +104,16 @@ internal fun ArenaCombat(
             state.playerMap.values.map { it.characterClass.type }.toSet()
         }
 
-    val revealedMessageGroups by
-        remember(key1 = screenState.messageGroups) {
-            derivedStateOf {
-                screenState.messageGroups.revealed(count = flashPlayback.playedMessageCount)
-            }
+    val revealedMessageGroups =
+        remember(key1 = screenState.messageGroups, key2 = screenState.revealedMessageCount) {
+            screenState.messageGroups.revealed(count = screenState.revealedMessageCount)
         }
 
-    val playedMessages by
-        remember(key1 = screenState.messageGroups) {
-            derivedStateOf {
-                screenState.messageGroups
-                    .flatMap { it.messages }
-                    .take(n = flashPlayback.playedMessageCount)
-            }
+    val playedMessages =
+        remember(key1 = screenState.messageGroups, key2 = screenState.revealedMessageCount) {
+            screenState.messageGroups
+                .flatMap { it.messages }
+                .take(n = screenState.revealedMessageCount)
         }
 
     val setupMessageIds =
@@ -150,7 +145,7 @@ internal fun ArenaCombat(
             .lastOrNull()
             ?.characterClassInfo
 
-    val revealedMessageCount = revealedMessageGroups.sumOf { it.messages.size }
+    val revealedMessageCount = screenState.revealedMessageCount
 
     var isMessagesExpanded by remember { mutableStateOf(value = false) }
     var seenLogMessageCount by remember { mutableStateOf(value = revealedMessageCount) }
@@ -196,11 +191,12 @@ internal fun ArenaCombat(
                                 seating = seating,
                                 activeUserIds = heldMoment.activeUserIds,
                                 turnOwnerUserId = heldMoment.turnOwnerUserId,
-                                animationCue = flashPlayback.combatAnimationCue,
+                                animationCue = screenState.currentCue,
                                 onSelectTarget = { selectedOpponentUserId = it },
                                 onInspect = { inspectedUserId = it },
                                 isTargetable =
-                                    state.isItThisUsersTurn &&
+                                    !isPlayingBack &&
+                                        state.isItThisUsersTurn &&
                                         !state.isMatchOver &&
                                         state.lockedTargetUserId == null &&
                                         !isTargetLockedOptimistically,
@@ -211,7 +207,7 @@ internal fun ArenaCombat(
                     }
 
                     CombatAnimationOverlays(
-                        animationCue = flashPlayback.combatAnimationCue,
+                        animationCue = screenState.currentCue,
                         avatarBounds = avatarBounds,
                         presentClasses = presentClasses,
                     )
@@ -225,7 +221,7 @@ internal fun ArenaCombat(
             }
 
             EncoreFullScreenOverlay(
-                animationCue = flashPlayback.combatAnimationCue,
+                animationCue = screenState.currentCue,
                 presentClasses = presentClasses,
             )
 
@@ -235,18 +231,15 @@ internal fun ArenaCombat(
                 lockTarget = { isTargetLockedOptimistically = true },
                 diceStateHolder = diceStateHolder,
                 areControlsVisible = !screenState.isMatchEnding,
-                isAnimating = isAnimating,
+                isPlayingBack = isPlayingBack,
                 isActionInFlight = isActionInFlight,
-                onActionDispatched = {
-                    isActionInFlight = true
-                    flashPlayback.markActing()
-                },
+                onActionDispatched = { isActionInFlight = true },
                 modifier =
                     Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
             )
 
             SpellPotencyFullScreenOverlay(
-                animationCue = flashPlayback.combatAnimationCue,
+                animationCue = screenState.currentCue,
                 avatarBounds = avatarBounds,
                 presentClasses = presentClasses,
             )
@@ -266,13 +259,41 @@ internal fun ArenaCombat(
                 DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
             }
 
-            FlashOverlay(playback = flashPlayback, avatarBounds = avatarBounds)
+            FlashOverlay(
+                callout = screenState.currentFlash,
+                anchor = screenState.currentFlashAnchor,
+                avatarBounds = avatarBounds,
+            )
 
             InspectDrawer(
                 player = inspectedUserId?.let { state.playerMap[it] },
                 onClose = { inspectedUserId = null },
             )
         }
+    }
+}
+
+@Composable
+private fun CommitDiceRolls(state: ArenaState.Combat, diceStateHolder: DiceStateHolder) {
+    val onDiceSettled = ArenaActionsProvider.current.onDiceSettled
+    val latestState by rememberUpdatedState(newValue = state)
+
+    LaunchedEffect(key1 = Unit) {
+        var lastRoll: DiceRollState? = latestState.diceRollState
+        snapshotFlow { latestState.diceRollState }
+            .collect { roll ->
+                val isNewRoll = roll != null && roll != lastRoll
+                if (!isNewRoll) return@collect
+                lastRoll = roll
+
+                diceStateHolder.commitRoll(
+                    diceRollState = roll,
+                    diceBadge = latestState.diceBadgeState,
+                    isBadgeBonusSpent = latestState.isTeleportDoublesBonusSpent,
+                )
+                snapshotFlow { diceStateHolder.isSettled }.first { it }
+                onDiceSettled()
+            }
     }
 }
 

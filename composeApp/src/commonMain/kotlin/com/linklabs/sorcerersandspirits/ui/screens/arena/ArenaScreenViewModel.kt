@@ -32,24 +32,21 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.FLASH_MESSAGE_DURATION_MILLIS
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.playbackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.playback.CombatPlaybackSequencer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
-
-private const val CLOSING_FLASH_TAIL_MILLIS = 2000L
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -102,7 +99,23 @@ class ArenaScreenViewModel(
 
     private var previousPlayerNames: Map<String, String> = emptyMap()
 
+    private val playbackSequencer =
+        CombatPlaybackSequencer(
+            scope = viewModelScope,
+            emit = { target, compose ->
+                _uiStateFlow.update { state ->
+                    when (state) {
+                        is UiState.Loaded -> UiState.Loaded(data = compose(state.data))
+                        is UiState.Loading -> UiState.Loaded(data = compose(target))
+                        is UiState.Error -> state
+                    }
+                }
+            },
+            onMatchPlaybackComplete = ::finishMatchAfterPlayback,
+        )
+
     init {
+        playbackSequencer.start()
         loadArenaMatch()
     }
 
@@ -180,37 +193,13 @@ class ArenaScreenViewModel(
         }
     }
 
-    private fun startFinishWriteIfMatchOver(previousState: ArenaScreenState?) {
-        val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        val combatState = loadedState.arenaState as? ArenaState.Combat ?: return
-        if (!combatState.isMatchOver) return
+    private fun finishMatchAfterPlayback() {
         if (finishWriteJob?.isActive == true) return
-
-        val closingMillis =
-            closingFlashMillis(previousState = previousState, nextState = loadedState)
-        finishWriteJob =
-            viewModelScope.launch {
-                delay(timeMillis = closingMillis)
-                finishMatchUseCase(arenaId = arguments.arenaId)
-            }
+        finishWriteJob = viewModelScope.launch { finishMatchUseCase(arenaId = arguments.arenaId) }
     }
 
-    private fun closingFlashMillis(
-        previousState: ArenaScreenState?,
-        nextState: ArenaScreenState,
-    ): Long {
-        val previousMessageIds =
-            previousState?.playbackMessages?.mapTo(mutableSetOf()) { it.id } ?: emptySet()
-        val newMessages = nextState.playbackMessages.filter { it.id !in previousMessageIds }
-        val playbackMillis =
-            newMessages.sumOf { playable ->
-                val animationMillis = playable.cue?.playbackDurationMillis() ?: 0L
-                val flashMillis =
-                    if (playable.callout != null) FLASH_MESSAGE_DURATION_MILLIS else 0L
-                animationMillis + flashMillis
-            }
-
-        return playbackMillis + CLOSING_FLASH_TAIL_MILLIS
+    fun onDiceSettled() {
+        playbackSequencer.notifyDiceSettled()
     }
 
     fun onAttack(attackArguments: AttackArguments) {
@@ -283,6 +272,7 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
+        playbackSequencer.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -335,6 +325,7 @@ class ArenaScreenViewModel(
         if (this == null) {
             screenStateFlowJob?.cancel()
             finishWriteJob?.cancel()
+            playbackSequencer.cancel()
 
             viewModelScope.launch {
                 setCurrentTravelerAvailableUseCase()
@@ -361,9 +352,7 @@ class ArenaScreenViewModel(
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 
         val nextState = updatedArenaStateUpdate.nextState
-        _uiStateFlow.value = UiState.Loaded(data = nextState)
-
-        startFinishWriteIfMatchOver(previousState = previousState)
+        playbackSequencer.submit(target = nextState)
 
         computerOpponentHandler.onArenaState(
             arenaState = nextState.arenaState,
@@ -436,6 +425,7 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
+        playbackSequencer.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()

@@ -33,14 +33,17 @@ data class ArenaScreenState(
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-    val playbackMessages: List<PlayableMessage> =
-        messageGroups.flatMap { it.messages }.map { it.toPlayable() },
+    val totalMessageCount: Int = messageGroups.sumOf { it.messages.size },
+    val revealedMessageCount: Int = totalMessageCount,
+    val isPlayingBack: Boolean = false,
+    val currentCue: CombatAnimationCue? = null,
+    val currentFlash: FlashCallout? = null,
+    val currentFlashAnchor: FlashAnchor = FlashAnchor.Center,
+    val collapsingSeatUserId: String? = null,
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
     val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
-
-    val animationCount: Int = playbackMessages.count { it.cue != null || it.callout != null }
 }
 
 // TODO(SS-031): Need to refactor this badly

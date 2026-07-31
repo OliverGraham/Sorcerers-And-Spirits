@@ -25,6 +25,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
@@ -33,6 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.playback.CombatPlaybackSequencer
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
@@ -72,6 +74,9 @@ class ArenaScreenViewModel(
 
     private val _uiStateFlow = MutableStateFlow<UiState<ArenaScreenState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
+
+    private val messageQueue =
+        MessageQueue(addAnimatingMessageToScreenState = ::addAnimatingMessageToScreenState)
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
     private val classCopy by lazy { getCharacterClassCopyUseCase() }
@@ -492,5 +497,9 @@ class ArenaScreenViewModel(
         val userPlayer = arenaState.playerMap.getValue(key = arenaState.userPlayerId)
 
         onChooseCharacterClass(playerState = userPlayer, characterClassState = chosenClass)
+    }
+
+    private fun addAnimatingMessageToScreenState(arenaMessageState: ArenaMessageState) {
+        // TODO: add to _uiState
     }
 }

@@ -4,6 +4,8 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
+// TODO: This can be deleted and ArenaMessageState used in its place
+
 @Immutable
 sealed interface FlashCallout {
     val actingClassType: CharacterClassType?

@@ -2,7 +2,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 
-// TODO: Delete - only informs a boolean choice in CombatFlashOverlay
+// TODO: Delete - only informs a boolean choice in CombatFlashOverlay - can be determined by
+//       ArenaMessageState
 
 @Immutable
 sealed interface FlashAnchor {

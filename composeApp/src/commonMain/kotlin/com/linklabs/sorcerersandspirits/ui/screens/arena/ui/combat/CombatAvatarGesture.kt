@@ -225,6 +225,8 @@ private fun GraphicsLayerScope.applyGesture(gestureState: AvatarGestureState) {
     alpha = 1f - gestureState.teleportVanish.value
 }
 
+// TODO: This naming is wrong. It does return a remembered value, but it plays the animation as
+// well. I believe it should just remember something if needed, then return it.
 @Composable
 internal fun rememberAvatarGesture(
     animationCue: CombatAnimationCue?,
@@ -252,6 +254,7 @@ internal fun rememberAvatarGesture(
             return@LaunchedEffect
         }
 
+        // TODO: Does animationCue just become AvatarGesture? And also just use a property or two?
         val gesture = cue.gestureFor(userId = userId) ?: return@LaunchedEffect
         gestureState.play(
             gesture = gesture,

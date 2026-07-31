@@ -124,6 +124,7 @@ internal fun ArenaCombat(
                 .mapTo(destination = HashSet()) { it.id }
         }
 
+    // TODO: FFS
     val latestHandleMessage =
         playedMessages.lastOrNull {
             it !is ArenaMessageState.NewRound &&
@@ -273,6 +274,7 @@ internal fun ArenaCombat(
     }
 }
 
+// TODO: Should be DiceStateHolder. Also, see if it's correct
 @Composable
 private fun CommitDiceRolls(state: ArenaState.Combat, diceStateHolder: DiceStateHolder) {
     val onDiceSettled = ArenaActionsProvider.current.onDiceSettled
@@ -297,17 +299,6 @@ private fun CommitDiceRolls(state: ArenaState.Combat, diceStateHolder: DiceState
     }
 }
 
-/**
- * The main combat area: the two seated combatant avatars on the left two-thirds and the remaining
- * players as a column of class heads on the right third. The dice rest between the two avatars; the
- * buttons and overlays live outside this stage so they do not take part in the avatar morph.
- *
- * Everything here is placed by the [seating] snapshot this pane was keyed on, never re-derived from
- * the live state: while the seating transition runs, the outgoing pane keeps showing the
- * arrangement it was built for, so a player leaving a seat morphs to their head icon instead of
- * vanishing or appearing twice (SS-181). Only the mutable player data (hit points, halo) reads
- * live.
- */
 @Composable
 private fun CombatStage(
     state: ArenaState.Combat,

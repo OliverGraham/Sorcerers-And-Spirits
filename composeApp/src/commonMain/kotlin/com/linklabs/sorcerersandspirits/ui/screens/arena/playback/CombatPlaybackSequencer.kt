@@ -22,6 +22,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 private const val DICE_SETTLE_TIMEOUT_MILLIS = 8000L
 private const val MATCH_END_TAIL_MILLIS = 2000L
 
+// TODO: Completely delete this. Use MessageQueue
+
 internal class CombatPlaybackSequencer(
     private val scope: CoroutineScope,
     private val emit:

@@ -26,17 +26,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.pal
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PaladinNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.RogueNormalAttackOverlay
 
-/**
- * The weapon and ability effect layers of the combat stage, drawn across both seats. Hosted above
- * the seating transition rather than inside it: a knockout re-seats the stage in the same frame its
- * animation cue goes live, and an overlay living inside the swapped pane would be recreated mid-cue
- * and skip the whole effect (SS-203). Up here the overlays outlive any seat change and play every
- * cue exactly once.
- *
- * Only the overlays for classes actually in the arena are hosted: a class's effect can never fire
- * unless that class is seated, so an arena with no Gambler never composes the All-In or Lucky Coin
- * layers. New per-class effects gate themselves on [presentClasses] the same way.
- */
 @Composable
 internal fun CombatAnimationOverlays(
     animationCue: CombatAnimationCue?,
@@ -47,7 +36,7 @@ internal fun CombatAnimationOverlays(
     Box(
         modifier =
             modifier.fillMaxSize().onGloballyPositioned {
-                avatarBounds.reportOverlayBounds(it.boundsInRoot())
+                avatarBounds.reportOverlayBounds(boundsInRoot = it.boundsInRoot())
             }
     ) {
         if (CharacterClassType.Rogue in presentClasses) {

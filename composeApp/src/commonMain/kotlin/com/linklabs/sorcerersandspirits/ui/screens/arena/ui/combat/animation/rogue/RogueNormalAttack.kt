@@ -1,15 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -57,27 +52,6 @@ internal const val MELEE_REACTION_DELAY_MILLIS = 280L
 
 private const val WITHDRAW_MILLIS = 220
 
-/**
- * The flight of the Rogue's dagger strike. The choreography drives these Animatables and the draw
- * layer reads them, so a strike redraws the canvas without recomposing anything.
- */
-@Stable
-internal class RogueStrikeState {
-    val travel = Animatable(initialValue = 0f)
-    val weaponAlpha = Animatable(initialValue = 0f)
-    val impactAlpha = Animatable(initialValue = 0f)
-    val impactScale = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
-}
-
-/**
- * The Rogue's normal attack (SS-192): a close-combat dagger strike. The dagger appears in front of
- * the avatar as it dashes into range, thrusts into the defender avatar — or past it on a miss —
- * flares a burst in the Rogue's class color, and withdraws as the avatar settles back. Geometry
- * comes from the measured avatar bounds via [avatarBoundsFor], so the pierce always lands on the
- * defender art regardless of layout. Sits out any cue that is not a Rogue normal attack.
- */
 @Composable
 internal fun RogueNormalAttackOverlay(
     animationCue: CombatAnimationCue?,
@@ -93,6 +67,8 @@ internal fun RogueNormalAttackOverlay(
         avatarBoundsFor = avatarBoundsFor,
         onCancel = { state.scene = null },
         play = { cue, attackerBounds, defenderBounds ->
+            // TODO: this cue is the passed in animationCue - they're the same thing
+
             state.play(
                 geometry =
                     projectileStrikeGeometry(
@@ -142,7 +118,6 @@ internal suspend fun RogueStrikeState.play(
     this.scene = null
 }
 
-/** The blade fades in at the attacker's hands and rides the avatar's dash into melee range. */
 private suspend fun RogueStrikeState.closeIn(dashFraction: Float) {
     coroutineScope {
         launch {
@@ -157,10 +132,6 @@ private suspend fun RogueStrikeState.closeIn(dashFraction: Float) {
     }
 }
 
-/**
- * The close-combat pierce: dash into range, thrust the blade into the defender, hold it embedded
- * while the burst flares, then withdraw as the attacker settles back.
- */
 private suspend fun RogueStrikeState.pierce(dashFraction: Float, burstScale: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
@@ -182,9 +153,6 @@ private suspend fun RogueStrikeState.pierce(dashFraction: Float, burstScale: Flo
     }
 }
 
-/**
- * The knockout: the pierce, then the blade driven deeper with a bigger burst before withdrawing.
- */
 private suspend fun RogueStrikeState.pierceDeep(dashFraction: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
@@ -214,7 +182,6 @@ private suspend fun RogueStrikeState.pierceDeep(dashFraction: Float) {
     }
 }
 
-/** The miss: the thrust carries past the defender into empty air, hangs, and is pulled back. */
 private suspend fun RogueStrikeState.whiff(dashFraction: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
@@ -269,7 +236,6 @@ internal fun DrawScope.drawRogueStrike(state: RogueStrikeState) {
     }
 }
 
-/** The flash of steel: a class-color streak trailing the blade, brightening to white at its tip. */
 private fun DrawScope.drawBladeThrust(
     geometry: WeaponStrikeGeometry,
     travel: Float,
@@ -312,11 +278,6 @@ private fun DrawScope.drawDagger(geometry: WeaponStrikeGeometry, position: Offse
     }
 }
 
-/**
- * The dagger in local coordinates: tip at the origin leading the thrust, blade trailing behind it,
- * with the guard, hilt, and pommel bringing up the rear. The blade is a steel gradient; the guard
- * and hilt carry the class-color accent.
- */
 private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
     val bladeLength = 52.dp.toPx()
     val bladeHalfWidth = 6.5.dp.toPx()

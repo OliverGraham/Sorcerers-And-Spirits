@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 
+// TODO: Remove this? Definitely change with AnimationQueue
 /**
  * The shared plumbing every cue-driven effect overlay repeats (SS-191): hold the id of the last cue
  * it played, and on each new [animationCue] either play the one it is responsible for or stand
@@ -47,12 +48,6 @@ internal fun <T : CombatAnimationCue> CueEffectOverlay(
     Canvas(modifier = modifier) { draw() }
 }
 
-/**
- * The normal-attack flavor of [CueEffectOverlay]: it acts only on the normal attack of
- * [attackerClassType] and resolves the attacker and defender seats before handing off, so each
- * class's overlay supplies only what makes its weapon its own — the strike line it measures, the
- * choreography it plays, and the frame it draws.
- */
 @Composable
 internal fun NormalAttackOverlay(
     animationCue: CombatAnimationCue?,

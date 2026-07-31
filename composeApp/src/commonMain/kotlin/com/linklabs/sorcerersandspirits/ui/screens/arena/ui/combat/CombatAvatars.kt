@@ -72,16 +72,6 @@ private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
 private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 
-/**
- * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
- * between them (SS-157). Either seat is empty when it has no combatant so the dice stay centered.
- * The seats are assigned by identity — the user's player always sits at the bottom (SS-181) — and
- * the [ActivePlayerHalo] marks whoever is rolling, so the seats themselves carry no meaning.
- *
- * Each seat reports its measured bounds up through [onAvatarBoundsChanged], feeding the
- * CombatAnimationOverlays that host the weapon and ability effects above the seating transition
- * (SS-192, SS-203).
- */
 @Composable
 internal fun CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
@@ -173,6 +163,8 @@ private fun LargeAvatar(
     modifier: Modifier = Modifier,
 ) {
     val classColor = player.characterClass.type.toColor()
+
+    // TODO: This is playing the avatar gesture animation. Should indicate that
     val gestureState =
         rememberAvatarGesture(
             animationCue = animationCue,
@@ -212,12 +204,6 @@ private fun LargeAvatar(
     }
 }
 
-/**
- * The Speed / Armor / Hit-points pills shown beside an avatar, mirroring the inspect drawer's stat
- * markers (SS-157). The local player's identity marker sits atop the pills so the column reads as
- * "you", with each pill stacked vertically down the side of the avatar. An attacks-remaining pill
- * joins them only while this avatar's player owns the turn (SS-200).
- */
 @Composable
 private fun AvatarStatsBar(
     characterClass: CharacterClassState,
@@ -269,11 +255,6 @@ private fun StatPill(
     }
 }
 
-/**
- * The turn owner's attacks-remaining pill, shown only while it is their turn. The number swaps with
- * an [AnimatedContent] so a Necromancer's follow-ups tick down (or a fresh count fades in) rather
- * than snapping.
- */
 @Composable
 private fun AttacksStatPill(count: Int, classColor: Color, modifier: Modifier = Modifier) {
     StatPillFrame(
@@ -322,12 +303,6 @@ private fun StatPillValue(value: String) {
     )
 }
 
-/**
- * The glowing oval the active roller stands on (SS-157): the attacker, a defender mid-defensive
- * ability, or both combatants during a Teleport roll-off. Seated at the bottom of the avatar box so
- * the bottom-aligned art's feet rest on it. Drawn behind the art so the transparent base reads as a
- * halo on the ground.
- */
 @Composable
 private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
     val sweep = rememberInfiniteTransition(label = HALO_SWEEP_LABEL)

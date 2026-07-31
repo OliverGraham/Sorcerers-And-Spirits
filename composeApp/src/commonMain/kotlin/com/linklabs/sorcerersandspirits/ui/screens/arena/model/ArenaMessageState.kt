@@ -7,26 +7,45 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
+// TODO: Determine if using this enum is the correct route. There are many data classes to delete
+//       and refactor. This could be a simple way to do it.
+enum class AnimationType {
+    FlashOnly,
+    AvatarOnly,
+    FlashAndAvatar,
+    None,
+}
+
 @Immutable
 sealed interface ArenaMessageState {
+    val animationType: AnimationType
     val id: String
 
     @Immutable
-    data class NewRound(override val id: String, val roundNumber: String) : ArenaMessageState
+    data class NewRound(
+        override val animationType: AnimationType = AnimationType.FlashOnly,
+        override val id: String,
+        val roundNumber: String,
+    ) : ArenaMessageState
 
     @Immutable
     data class ChoseCharacterClass(
+        override val animationType: AnimationType = AnimationType.None,
         override val id: String,
         val displayName: String,
         val characterClassInfo: CharacterClassMessageInfoState,
     ) : ArenaMessageState
 
     @Immutable
-    data class ConnectedToArena(override val id: String, val displayName: String) :
-        ArenaMessageState
+    data class ConnectedToArena(
+        override val animationType: AnimationType = AnimationType.None,
+        override val id: String,
+        val displayName: String,
+    ) : ArenaMessageState
 
     @Immutable
     data class NewTurn(
+        override val animationType: AnimationType = AnimationType.None,
         override val id: String,
         val characterClassInfo: CharacterClassMessageInfoState,
     ) : ArenaMessageState
@@ -38,6 +57,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class Attack(
+            override val animationType: AnimationType = AnimationType.AvatarOnly,
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
@@ -48,6 +68,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class Outcome(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
@@ -64,11 +85,15 @@ sealed interface ArenaMessageState {
     }
 
     @Immutable
-    data class KillingMomentum(override val id: String, val attackerUserId: String) :
-        ArenaMessageState
+    data class KillingMomentum(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+        override val id: String,
+        val attackerUserId: String,
+    ) : ArenaMessageState
 
     @Immutable
     data class Dodge(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
         override val id: String,
         val didArmorIncrease: Boolean,
         val dodgerUserId: String,
@@ -79,10 +104,15 @@ sealed interface ArenaMessageState {
         val mageUserId: String
 
         @Immutable
-        data class Trigger(override val id: String, override val mageUserId: String) : Teleport
+        data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+            override val mageUserId: String,
+        ) : Teleport
 
         @Immutable
         data class Roll(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val mageUserId: String,
             val rollerUserId: String,
@@ -92,10 +122,15 @@ sealed interface ArenaMessageState {
         ) : Teleport
 
         @Immutable
-        data class Tie(override val id: String, override val mageUserId: String) : Teleport
+        data class Tie(
+            override val animationType: AnimationType = AnimationType.None,
+            override val id: String,
+            override val mageUserId: String,
+        ) : Teleport
 
         @Immutable
         data class Result(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val mageUserId: String,
             val didDefenderEscape: Boolean,
@@ -107,10 +142,15 @@ sealed interface ArenaMessageState {
         val gamblerUserId: String
 
         @Immutable
-        data class Trigger(override val id: String, override val gamblerUserId: String) : LuckyCoin
+        data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+            override val gamblerUserId: String,
+        ) : LuckyCoin
 
         @Immutable
         data class Flip(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val gamblerUserId: String,
             val singleDie: Int,
@@ -119,6 +159,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class HighRollerTrigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val gamblerUserId: String,
             val targetName: String,
@@ -126,6 +167,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class HighRollerDamage(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val gamblerUserId: String,
             val attackerUserId: String,
@@ -138,6 +180,7 @@ sealed interface ArenaMessageState {
     sealed interface Riposte : ArenaMessageState {
         @Immutable
         data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             val duelistUserId: String,
             val attackerUserId: String,
@@ -145,6 +188,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class EnGarde(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             val duelistUserId: String,
             val attackerUserId: String,
@@ -156,6 +200,7 @@ sealed interface ArenaMessageState {
 
     @Immutable
     data class SummonMinion(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
         override val id: String,
         val necroUserId: String,
         val necroName: String,
@@ -165,10 +210,16 @@ sealed interface ArenaMessageState {
 
     @Immutable
     sealed interface Persuade : ArenaMessageState {
-        @Immutable data class Trigger(override val id: String, val bardUserId: String) : Persuade
+        @Immutable
+        data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+            val bardUserId: String,
+        ) : Persuade
 
         @Immutable
         data class StrumLute(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             val bardUserId: String,
             val diceRoll: Int,
@@ -176,12 +227,21 @@ sealed interface ArenaMessageState {
         ) : Persuade
 
         @Immutable
-        data class CharmActivation(override val id: String, val bardUserId: String) : Persuade
+        data class CharmActivation(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+            val bardUserId: String,
+        ) : Persuade
 
-        @Immutable data class Lull(override val id: String) : Persuade
+        @Immutable
+        data class Lull(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+        ) : Persuade
 
         @Immutable
         data class Charm(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             val bardUserId: String,
             val attackerName: String,
@@ -194,10 +254,15 @@ sealed interface ArenaMessageState {
         val bardUserId: String
 
         @Immutable
-        data class Trigger(override val id: String, override val bardUserId: String) : Encore
+        data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+            override val bardUserId: String,
+        ) : Encore
 
         @Immutable
         data class Roll(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val bardUserId: String,
             val encoreDie: Int,
@@ -207,6 +272,7 @@ sealed interface ArenaMessageState {
 
     @Immutable
     data class Impersonate(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
         override val id: String,
         val illusionistUserId: String,
         val illusionistName: String,
@@ -220,6 +286,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val illusionistUserId: String,
             val firstDie: Int?,
@@ -228,6 +295,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class Pass(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val illusionistUserId: String,
             val attackerName: String,
@@ -239,6 +307,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class TemptFate(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val illusionistUserId: String,
             val originalRoll: Int,
@@ -254,6 +323,7 @@ sealed interface ArenaMessageState {
 
     @Immutable
     data class SpellPotency(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
         override val id: String,
         val mageUserId: String,
         val mageName: String,
@@ -272,10 +342,15 @@ sealed interface ArenaMessageState {
         val paladinUserId: String
 
         @Immutable
-        data class Trigger(override val id: String, override val paladinUserId: String) : HolyShield
+        data class Trigger(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
+            override val id: String,
+            override val paladinUserId: String,
+        ) : HolyShield
 
         @Immutable
         data class Prayer(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val paladinUserId: String,
             val firstDie: Int,
@@ -285,6 +360,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class Wrath(
+            override val animationType: AnimationType = AnimationType.FlashAndAvatar,
             override val id: String,
             override val paladinUserId: String,
             val paladinName: String,
@@ -297,6 +373,7 @@ sealed interface ArenaMessageState {
 
     @Immutable
     data class AllIn(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
         override val id: String,
         val gamblerUserId: String,
         val gamblerName: String,
@@ -306,6 +383,7 @@ sealed interface ArenaMessageState {
 
     @Immutable
     data class PrepareAttack(
+        override val animationType: AnimationType = AnimationType.FlashAndAvatar,
         override val id: String,
         val duelistUserId: String,
         val duelistName: String,
@@ -317,7 +395,11 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState
 
     @Immutable
-    data class Doubles(override val id: String, val playerName: String) : ArenaMessageState
+    data class Doubles(
+        override val animationType: AnimationType = AnimationType.None,
+        override val id: String,
+        val playerName: String,
+    ) : ArenaMessageState
 }
 
 enum class SummonMinionOutcome {

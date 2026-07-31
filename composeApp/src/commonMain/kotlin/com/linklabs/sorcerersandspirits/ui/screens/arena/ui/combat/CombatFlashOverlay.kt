@@ -116,6 +116,7 @@ internal fun FlashOverlay(
     }
 }
 
+// TODO: Delete FlashAnchor, and find a simple way to pass in the boolean here.
 private fun FlashAnchor.resolvePoint(
     avatarBounds: CombatAvatarBounds,
     overlaySize: IntSize,

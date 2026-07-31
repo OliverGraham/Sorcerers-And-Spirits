@@ -28,10 +28,9 @@ internal class MessageQueue(
     }
 
     // TODO: To be called from UI when dice settle back to DiceHome (after getting update from
-    // Domain layer)
-    //       OR when an ability is being used, like Impersonate (with no Dice roll). So, the name
-    // should
-    //       change from onDiceSettled() to something that indicates its an action being completed
+    // Domain layer) OR when an ability is being used, like Impersonate (with no Dice roll). So, the
+    // name should  change from onDiceSettled() to something that indicates its an action being
+    // completed
     suspend fun onDiceSettled() {
         while (queue.isNotEmpty()) {
             animatingMessageSignal = CompletableDeferred()

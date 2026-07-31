@@ -6,6 +6,9 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 private const val HIGH_ROLLER_ROLL = 6
 
+// TODO: Keep this for now, but we'll be refactoring big time. I think ArenaMessageState can simply
+//       be used.
+
 @Immutable
 sealed interface CombatAnimationCue {
     val id: String
@@ -200,6 +203,8 @@ enum class AvatarGesture {
     Collapse,
 }
 
+// TODO: Don't need combatAnimationCue - all data is available from ArenaMessageState, so it's a
+//       pointless mapping to a pointless new type.
 val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
     get() =
         when (this) {
@@ -445,6 +450,7 @@ val ArenaMessageState.combatAnimationCue: CombatAnimationCue?
             is ArenaMessageState.Doubles -> null
         }
 
+// TODO: This should just be data that is passed from the domain
 fun CombatAnimationCue.toCollapsingUserId(): String? =
     when (this) {
         is CombatAnimationCue.NormalAttack ->

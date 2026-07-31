@@ -57,6 +57,9 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_r
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_tie
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_turn_start
 
+// TODO: since FlashCallout should be deleted, ArenaMessageState can be used here to get the correct
+//  stringResource
+
 @Composable
 internal fun FlashCallout.text(): String =
     when (this) {

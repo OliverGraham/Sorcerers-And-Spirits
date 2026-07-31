@@ -241,6 +241,8 @@ sealed interface FlashCallout {
     }
 }
 
+// TODO: No, just use ArenaMessageState. Delete FlashCallout
+
 /** The flash call-out for a message, or null when the message is log-only. */
 fun ArenaMessageState.toFlashCallout() =
     when (this) {

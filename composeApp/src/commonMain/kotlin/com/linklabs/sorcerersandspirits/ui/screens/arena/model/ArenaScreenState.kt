@@ -20,6 +20,10 @@ private const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
 private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 
 // TODO: Can this massive data class be reduced in some way?
+//       Remove:
+//       - totalMessageCount
+//       - revealedMessageCount
+//       - all default arguments
 @Immutable
 data class ArenaScreenState(
     val messageGroups: List<ArenaMessageGroupState>,

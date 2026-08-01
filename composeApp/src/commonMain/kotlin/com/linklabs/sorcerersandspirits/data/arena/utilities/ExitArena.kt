@@ -31,8 +31,7 @@ internal class ExitArena(private val userId: String) {
 
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
-                        messages = messages,
-                        numberOfNewMessages = 0,
+                        newMessages = newMessages,
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
                     )
@@ -56,8 +55,7 @@ internal class ExitArena(private val userId: String) {
 
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
-                        messages = messages,
-                        numberOfNewMessages = 0,
+                        newMessages = newMessages,
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
                         participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },

@@ -352,6 +352,9 @@ class ArenaScreenViewModel(
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 
         val nextState = updatedArenaStateUpdate.nextState
+        // MessageQueue (future): enqueue the numberOfNewMessages tail of nextState here; dequeue
+        // each
+        // as its animation plays, attaching it to the log on completion (replaces the sequencer).
         playbackSequencer.submit(target = nextState)
 
         computerOpponentHandler.onArenaState(
@@ -360,13 +363,6 @@ class ArenaScreenViewModel(
         )
     }
 
-    /**
-     * Surfaces a one-off notice for every opponent who has left the arena since the last update
-     * (SS-045). A player only disappears from the shared player map by leaving, so any opponent
-     * present before and now absent has departed — for the last remaining player this is how they
-     * learn the match ended because the other player left rather than being dropped onto the
-     * Finished screen with no explanation.
-     */
     private fun ArenaMatch.notifyDepartedOpponents(userId: String) {
         val currentPlayerIds = playerMap.keys
         val departedOpponentNames =
@@ -413,9 +409,6 @@ class ArenaScreenViewModel(
 
             is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
 
-            // When the Finished countdown expires the user is auto-readied into the next match (or
-            // new Gauntlet) rather than being left behind. A user who already readied has nothing
-            // left to do.
             is ArenaState.Finished ->
                 if (!loadedState.hasReadiedForNextMatch) onStayForAnotherMatch()
         }

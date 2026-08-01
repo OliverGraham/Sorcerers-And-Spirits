@@ -37,8 +37,6 @@ actual fun platformModule(): Module = module {
     single<DataStore<Preferences>> {
         createPendingStatsDataStore { "${documentDirectoryPath()}/$PENDING_STATS_DATASTORE_FILE" }
     }
-    // ADD: a second, QUALIFIED DataStore<Preferences> for arena messages, at
-    // "${documentDirectoryPath()}/$ARENA_MESSAGES_DATASTORE_FILE" via createArenaMessageDataStore.
 }
 
 @OptIn(ExperimentalForeignApi::class)

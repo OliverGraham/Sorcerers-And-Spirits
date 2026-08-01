@@ -40,6 +40,4 @@ actual fun platformModule(): Module = module {
     single<SocialSignInProvider> {
         AndroidSocialSignInProvider(context = get(), currentActivityHolder = get())
     }
-    // ADD: a second, QUALIFIED DataStore<Preferences> for arena messages, pointing at
-    // ARENA_MESSAGES_DATASTORE_FILE via createArenaMessageDataStore { context.filesDir.resolve(...) }.
 }

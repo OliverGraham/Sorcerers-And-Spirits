@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
+import com.linklabs.sorcerersandspirits.data.arena.message.ArenaMessageStore
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
@@ -21,7 +22,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.builtins.nullable
 
-class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
+class FirebaseArenaRepository(
+    database: FirebaseDatabase,
+    private val arenaMessageStore: ArenaMessageStore,
+) : ArenaRepository {
 
     private val arenaMatchesReference = database.reference(path = ARENA_MATCHES_PATH)
 
@@ -69,7 +73,19 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .child(path = arenaId)
             .valueEvents
             .map { snapshot ->
-                snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
+                val entity =
+                    snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)
+                        ?: return@map null
+
+                val update =
+                    arenaMessageStore.appendAndLoad(
+                        arenaId = arenaId,
+                        newMessages = entity.newMessages,
+                    )
+                entity.toDomain(
+                    fullMessageLog = update.messages,
+                    newMessageCount = update.newMessageCount,
+                )
             }
             .distinctUntilChanged()
 

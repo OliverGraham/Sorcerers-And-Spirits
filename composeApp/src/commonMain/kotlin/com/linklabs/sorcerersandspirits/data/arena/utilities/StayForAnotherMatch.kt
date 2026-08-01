@@ -13,7 +13,7 @@ internal class StayForAnotherMatch(private val userId: String) {
     suspend operator fun invoke(arenaReference: DatabaseReference) {
         val strategy =
             nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
-        val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+        val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
 
         arenaReference.runTransaction(strategy = strategy) { match ->
             match.stayForAnotherMatchTransaction(messagesReference = messagesReference)
@@ -77,17 +77,9 @@ internal class StayForAnotherMatch(private val userId: String) {
                 startingCharacterClass = fastestPlayer.characterClassEntity
             )
 
-        // CHANGE: numberOfNewMessages removed; `messages` is the fresh batch (replace).
-        // NEW-MATCH BOUNDARY: this starts the next match in the gauntlet (matchNumberInGauntlet+1).
-        // This (and startNewGauntlet below) is the point where on-device stored messages should be
-        // CLEARED. QUESTION: clear it here on the RTDB write side (can't — store is per-device), or
-        // detect the match-boundary in CoordinateArenaMatchUseCase (matchNumberInGauntlet changed /
-        // roundNumber back to 1 + isNewRound) and clear the local store there? Leaning: the latter.
-        // Don't worry about clearing the messages, but likely when a match starts is when they should
-        // be cleared.
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = freshPlayers,
-            messages = newMessages,
+            newMessages = newMessages,
             nextCombatActionEntity =
                 NextCombatActionEntity.IdleEntity(
                     activeUserIds = setOf(element = fastestPlayer.userId)
@@ -110,11 +102,10 @@ internal class StayForAnotherMatch(private val userId: String) {
 
         if (resetPlayers.size < 2) return null
 
-        // CHANGE: numberOfNewMessages removed. NEW-GAUNTLET BOUNDARY: also a store-clear point.
         return ArenaMatchEntity.ChoosingClasses(
             playerEntitiesMap = resetPlayers,
             activePlayerUserId = resetPlayers.keys.random(),
-            messages = emptyList(),
+            newMessages = emptyList(),
             matchNumberInGauntlet = 1,
         )
     }

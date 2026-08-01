@@ -19,7 +19,7 @@ internal class ConnectToArena(
         try {
             val strategy =
                 nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
-            val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+            val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
 
             arenaReference.runTransaction(strategy = strategy) { existingMatch ->
                 existingMatch.connectToArenaTransaction(messagesReference = messagesReference)
@@ -59,32 +59,18 @@ internal class ConnectToArena(
                 id = messagesReference.addNewKey(),
                 displayName = displayName,
             )
-        // QUESTION (central fork): lobby-phase messages are CROSS-CLIENT and currently accumulate
-        // in RTDB (appendCapped), so every already-present player sees "X connected"/"chose Y".
-        // If setup writes also become REPLACE (only latest batch) + per-device store, a player only
-        // stores batches it witnessed live — so a player who connects 5th never gets "player 1..4
-        // connected". "No mid-MATCH joins" holds, but the LOBBY fills at staggered times.
-        // Options:
-        //   A) Replace everywhere; accept lobby log starts from when each client joined (simplest).
-        //   B) Keep append semantics for the lobby/choosing phase; only Combat uses replace.
-        //   C) On connect, seed the joining client's store with the current RTDB message list once,
-        //      then switch to replace+witnessed thereafter.
-        // Which do you want? (Skeleton below is written assuming A / replace, matching combat.)
-        // CHANGE: numberOfNewMessages removed; the batch written here is just [connectedMessage].
-        // Option B seems like the best user experience. Let's go that route. If it's difficult or
-        // very different than what you're doing here, make a ticket and we can take care of it later.
         val updatedMessages =
-            messages.appendCapped(newMessages = listOf(element = connectedMessage))
+            newMessages.appendCapped(newMessages = listOf(element = connectedMessage))
 
         return if (updatedPlayers.size == expectedNumberOfPlayers) {
             ArenaMatchEntity.ChoosingClasses(
                 playerEntitiesMap = updatedPlayers,
                 activePlayerUserId = userId,
-                messages = updatedMessages,
+                newMessages = updatedMessages,
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
-            copy(playerEntitiesMap = updatedPlayers, messages = updatedMessages)
+            copy(playerEntitiesMap = updatedPlayers, newMessages = updatedMessages)
         }
     }
 }

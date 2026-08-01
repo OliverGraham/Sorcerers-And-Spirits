@@ -352,6 +352,8 @@ class ArenaScreenViewModel(
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 
         val nextState = updatedArenaStateUpdate.nextState
+        // MessageQueue (future): enqueue the numberOfNewMessages tail of nextState here; dequeue each
+        // as its animation plays, attaching it to the log on completion (replaces the sequencer).
         playbackSequencer.submit(target = nextState)
 
         computerOpponentHandler.onArenaState(

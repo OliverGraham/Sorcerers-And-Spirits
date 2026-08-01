@@ -80,11 +80,6 @@ internal class CombatPlaybackSequencer(
             return
         }
 
-        // CHANGE: the "fresh" steps are now the actual newMessages batch, not a takeLast(count).
-        // Match target.newMessages (by id) against messageGroups' messages -> playback steps. This
-        // removes the count-vs-log drift risk now that messages is the full on-device log.
-        // Don't worry too much about changing in CombatPlaybackSequencer - once we complete this messaging
-        // work, I'm going to delete this file and rearchitect completely.
         val newMessageCount =
             target.numberOfNewMessages.coerceIn(
                 minimumValue = 0,

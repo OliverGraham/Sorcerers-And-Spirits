@@ -10,6 +10,7 @@ import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
 
 internal class StayForAnotherMatch(private val userId: String) {
+
     suspend operator fun invoke(arenaReference: DatabaseReference) {
         val strategy =
             nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
@@ -47,9 +48,9 @@ internal class StayForAnotherMatch(private val userId: String) {
         players: Map<String, ArenaPlayerEntity>,
         messagesReference: DatabaseReference,
     ): ArenaMatchEntity? {
-        val isFinalMatch = matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET
+        val isNewGauntlet = matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET
 
-        return if (isFinalMatch) {
+        return if (isNewGauntlet) {
             startNewGauntlet(players = players)
         } else {
             startNextGauntletMatch(players = players, messagesReference = messagesReference)

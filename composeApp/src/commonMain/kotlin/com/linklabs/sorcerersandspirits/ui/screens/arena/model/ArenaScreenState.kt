@@ -44,6 +44,7 @@ data class ArenaScreenState(
     val currentFlash: FlashCallout? = null,
     val currentFlashAnchor: FlashAnchor = FlashAnchor.Center,
     val collapsingSeatUserId: String? = null,
+    val animatingMessage: ArenaMessageState? = null,
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS

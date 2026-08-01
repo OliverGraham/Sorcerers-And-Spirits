@@ -33,7 +33,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.playback.CombatPlaybackSequencer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -45,7 +44,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
@@ -104,23 +102,7 @@ class ArenaScreenViewModel(
 
     private var previousPlayerNames: Map<String, String> = emptyMap()
 
-    private val playbackSequencer =
-        CombatPlaybackSequencer(
-            scope = viewModelScope,
-            emit = { target, compose ->
-                _uiStateFlow.update { state ->
-                    when (state) {
-                        is UiState.Loaded -> UiState.Loaded(data = compose(state.data))
-                        is UiState.Loading -> UiState.Loaded(data = compose(target))
-                        is UiState.Error -> state
-                    }
-                }
-            },
-            onMatchPlaybackComplete = ::finishMatchAfterPlayback,
-        )
-
     init {
-        playbackSequencer.start()
         loadArenaMatch()
     }
 
@@ -204,7 +186,11 @@ class ArenaScreenViewModel(
     }
 
     fun onDiceSettled() {
-        playbackSequencer.notifyDiceSettled()
+        viewModelScope.launch { messageQueue.onDiceSettled() }
+    }
+
+    fun onAnimationComplete() {
+        messageQueue.onAnimationComplete()
     }
 
     fun onAttack(attackArguments: AttackArguments) {
@@ -277,7 +263,6 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
-        playbackSequencer.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -330,7 +315,6 @@ class ArenaScreenViewModel(
         if (this == null) {
             screenStateFlowJob?.cancel()
             finishWriteJob?.cancel()
-            playbackSequencer.cancel()
 
             viewModelScope.launch {
                 setCurrentTravelerAvailableUseCase()
@@ -357,10 +341,7 @@ class ArenaScreenViewModel(
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 
         val nextState = updatedArenaStateUpdate.nextState
-        // MessageQueue (future): enqueue the numberOfNewMessages tail of nextState here; dequeue
-        // each
-        // as its animation plays, attaching it to the log on completion (replaces the sequencer).
-        playbackSequencer.submit(target = nextState)
+        submitToMessageQueue(nextState = nextState)
 
         computerOpponentHandler.onArenaState(
             arenaState = nextState.arenaState,
@@ -423,7 +404,6 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
-        playbackSequencer.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()
@@ -492,7 +472,18 @@ class ArenaScreenViewModel(
         onChooseCharacterClass(playerState = userPlayer, characterClassState = chosenClass)
     }
 
+    private fun submitToMessageQueue(nextState: ArenaScreenState) {
+        val newMessages =
+            nextState.messageGroups
+                .flatMap { it.messages }
+                .takeLast(n = nextState.numberOfNewMessages)
+
+        messageQueue.enqueue(newMessages = newMessages)
+    }
+
     private fun addAnimatingMessageToScreenState(arenaMessageState: ArenaMessageState) {
-        // TODO: add to _uiState
+        _uiStateFlow.updateLoaded { screenState ->
+            screenState.copy(animatingMessage = arenaMessageState)
+        }
     }
 }

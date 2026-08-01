@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
@@ -60,6 +61,7 @@ internal fun RogueNormalAttackOverlay(
 ) {
     val state = remember { RogueStrikeState() }
     val density = LocalDensity.current
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     NormalAttackOverlay(
         animationCue = animationCue,
@@ -80,6 +82,7 @@ internal fun RogueNormalAttackOverlay(
                     ),
                 normalRollMessageType = cue.normalRollMessageType,
             )
+            onAnimationComplete()
         },
         modifier = modifier,
         draw = { drawRogueStrike(state = state) },

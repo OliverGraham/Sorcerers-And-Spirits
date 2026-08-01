@@ -14,6 +14,7 @@ internal data class ArenaActions(
     val onAttack: (arguments: AttackArguments) -> Unit = {},
     val onUseAbility: (arguments: UseAbilityArguments) -> Unit = {},
     val onDiceSettled: () -> Unit = {},
+    val onAnimationComplete: () -> Unit = {},
     val onTryLeaveArena: () -> Unit = {},
     val onConfirmLeaveArena: () -> Unit = {},
     val onDismissForfeitDialog: () -> Unit = {},

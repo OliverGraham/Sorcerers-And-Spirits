@@ -19,7 +19,7 @@ internal class ConnectToArena(
         try {
             val strategy =
                 nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
-            val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+            val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
 
             arenaReference.runTransaction(strategy = strategy) { existingMatch ->
                 existingMatch.connectToArenaTransaction(messagesReference = messagesReference)
@@ -60,22 +60,17 @@ internal class ConnectToArena(
                 displayName = displayName,
             )
         val updatedMessages =
-            messages.appendCapped(newMessages = listOf(element = connectedMessage))
+            newMessages.appendCapped(newMessages = listOf(element = connectedMessage))
 
         return if (updatedPlayers.size == expectedNumberOfPlayers) {
             ArenaMatchEntity.ChoosingClasses(
                 playerEntitiesMap = updatedPlayers,
                 activePlayerUserId = userId,
-                messages = updatedMessages,
-                numberOfNewMessages = 1,
+                newMessages = updatedMessages,
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
-            copy(
-                playerEntitiesMap = updatedPlayers,
-                messages = updatedMessages,
-                numberOfNewMessages = numberOfNewMessages + 1,
-            )
+            copy(playerEntitiesMap = updatedPlayers, newMessages = updatedMessages)
         }
     }
 }

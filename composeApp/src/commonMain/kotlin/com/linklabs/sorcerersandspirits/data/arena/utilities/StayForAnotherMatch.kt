@@ -10,10 +10,11 @@ import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
 
 internal class StayForAnotherMatch(private val userId: String) {
+
     suspend operator fun invoke(arenaReference: DatabaseReference) {
         val strategy =
             nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
-        val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+        val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
 
         arenaReference.runTransaction(strategy = strategy) { match ->
             match.stayForAnotherMatchTransaction(messagesReference = messagesReference)
@@ -47,9 +48,9 @@ internal class StayForAnotherMatch(private val userId: String) {
         players: Map<String, ArenaPlayerEntity>,
         messagesReference: DatabaseReference,
     ): ArenaMatchEntity? {
-        val isFinalMatch = matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET
+        val isNewGauntlet = matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET
 
-        return if (isFinalMatch) {
+        return if (isNewGauntlet) {
             startNewGauntlet(players = players)
         } else {
             startNextGauntletMatch(players = players, messagesReference = messagesReference)
@@ -79,8 +80,7 @@ internal class StayForAnotherMatch(private val userId: String) {
 
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = freshPlayers,
-            messages = newMessages,
-            numberOfNewMessages = newMessages.size,
+            newMessages = newMessages,
             nextCombatActionEntity =
                 NextCombatActionEntity.IdleEntity(
                     activeUserIds = setOf(element = fastestPlayer.userId)
@@ -106,8 +106,7 @@ internal class StayForAnotherMatch(private val userId: String) {
         return ArenaMatchEntity.ChoosingClasses(
             playerEntitiesMap = resetPlayers,
             activePlayerUserId = resetPlayers.keys.random(),
-            messages = emptyList(),
-            numberOfNewMessages = 0,
+            newMessages = emptyList(),
             matchNumberInGauntlet = 1,
         )
     }

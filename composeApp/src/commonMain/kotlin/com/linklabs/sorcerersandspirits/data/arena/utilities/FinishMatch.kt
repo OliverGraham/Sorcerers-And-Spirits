@@ -16,8 +16,7 @@ internal class FinishMatch {
         if (!isMatchOver) return this
 
         return ArenaMatchEntity.Finished(
-            messages = messages,
-            numberOfNewMessages = 0,
+            newMessages = newMessages,
             playerEntitiesMap = playerEntitiesMap,
             matchNumberInGauntlet = matchNumberInGauntlet,
             participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },

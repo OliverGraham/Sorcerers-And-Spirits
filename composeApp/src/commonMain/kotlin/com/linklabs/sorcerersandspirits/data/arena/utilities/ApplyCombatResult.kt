@@ -10,7 +10,7 @@ import dev.gitlive.firebase.database.DatabaseReference
 
 internal class ApplyCombatResult(private val result: ActionOutcome) {
     suspend operator fun invoke(arenaReference: DatabaseReference) {
-        val messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName)
+        val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
 
         arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer()) { existingMatch ->
             existingMatch.applyCombatResultTransaction(messagesReference = messagesReference)
@@ -28,16 +28,14 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
                 outgoingArenaMessage.toEntity(id = messagesReference.addNewKey())
             }
 
-        val updatedMessages = messages.appendCapped(newMessages = newMessages)
-        return toUpdatedCombat(updatedMessages = updatedMessages)
+        return toUpdatedCombat(updatedMessages = newMessages)
     }
 
     private fun ArenaMatchEntity.Combat.toUpdatedCombat(
         updatedMessages: List<ArenaMessageEntity>
     ): ArenaMatchEntity.Combat =
         ArenaMatchEntity.Combat(
-            messages = updatedMessages,
-            numberOfNewMessages = result.messages.size,
+            newMessages = updatedMessages,
             playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
             nextCombatActionEntity = result.nextCombatAction.toEntity(),
             roundNumber = result.roundNumber,

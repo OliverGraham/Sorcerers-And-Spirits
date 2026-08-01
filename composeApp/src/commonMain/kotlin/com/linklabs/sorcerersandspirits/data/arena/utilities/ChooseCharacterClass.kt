@@ -37,8 +37,8 @@ internal class ChooseCharacterClass(
         ArenaMatchEntity {
         val messageGenerator =
             ChooseCharacterClassMessageGenerator(
-                messagesReference = arenaReference.child(path = ArenaMatchEntity.messagesName),
-                previousMessages = messages,
+                messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName),
+                previousMessages = newMessages,
             )
 
         val updatedPlayers = playerEntitiesMap.toMutableMap()
@@ -69,7 +69,7 @@ internal class ChooseCharacterClass(
         matchNumberInGauntlet: Int,
     ): ArenaMatchEntity.Combat {
         val fastestPlayer = selectedPlayers.getFastestPlayer()
-        val (updatedMessages, numberOfNewMessages) =
+        val updatedMessages =
             messageGenerator.generateCombatStartingMessages(
                 startingCharacterClass = fastestPlayer.characterClassEntity
             )
@@ -77,8 +77,7 @@ internal class ChooseCharacterClass(
         val fastestPlayerUserId = fastestPlayer.userId
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = selectedPlayers,
-            messages = updatedMessages,
-            numberOfNewMessages = numberOfNewMessages,
+            newMessages = updatedMessages,
             nextCombatActionEntity =
                 NextCombatActionEntity.IdleEntity(
                     activeUserIds = setOf(element = fastestPlayerUserId)
@@ -94,14 +93,12 @@ internal class ChooseCharacterClass(
         messageGenerator: ChooseCharacterClassMessageGenerator,
         updatedPlayers: Map<String, ArenaPlayerEntity>,
     ): ArenaMatchEntity.ChoosingClasses {
-        val (updatedMessages, numberOfNewMessages) =
-            messageGenerator.generateCharacterSelectionMessage()
+        val updatedMessages = messageGenerator.generateCharacterSelectionMessage()
 
         return copy(
             playerEntitiesMap = updatedPlayers,
             activePlayerUserId = nextPlayerId,
-            messages = updatedMessages,
-            numberOfNewMessages = numberOfNewMessages,
+            newMessages = updatedMessages,
         )
     }
 
@@ -109,30 +106,23 @@ internal class ChooseCharacterClass(
         private val messagesReference: DatabaseReference,
         private val previousMessages: List<ArenaMessageEntity>,
     ) {
-        fun generateCharacterSelectionMessage(): Pair<List<ArenaMessageEntity>, Int> {
+        fun generateCharacterSelectionMessage(): List<ArenaMessageEntity> {
             val selectionMessage =
                 listOf(element = messagesReference.generateCharacterSelectionMessage())
 
-            return Pair(
-                first = previousMessages.appendCapped(newMessages = selectionMessage),
-                second = selectionMessage.size,
-            )
+            return previousMessages.appendCapped(newMessages = selectionMessage)
         }
 
         fun generateCombatStartingMessages(
             startingCharacterClass: CharacterClassEntity
-        ): Pair<List<ArenaMessageEntity>, Int> {
+        ): List<ArenaMessageEntity> {
             val selectionMessage = messagesReference.generateCharacterSelectionMessage()
             val combatStartingMessages =
                 messagesReference.generateInitialCombatRoundMessages(
                     startingCharacterClass = startingCharacterClass
                 )
 
-            val newMessages = listOf(selectionMessage) + combatStartingMessages
-            return Pair(
-                first = previousMessages.appendCapped(newMessages = newMessages),
-                second = combatStartingMessages.size,
-            )
+            return listOf(selectionMessage) + combatStartingMessages
         }
 
         private fun DatabaseReference.generateCharacterSelectionMessage() =

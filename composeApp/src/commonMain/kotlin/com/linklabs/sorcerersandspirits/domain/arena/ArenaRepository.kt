@@ -24,6 +24,10 @@ interface ArenaRepository {
         displayName: String,
     ): Boolean
 
+    // NOTE: this flow now emits an ArenaMatch whose `messages` = latest RTDB batch and `newMessages`
+    // = same batch; the full accumulated log is layered on in CoordinateArenaMatchUseCase via the
+    // on-device store (see ArenaMessageStore). This interface method is otherwise unchanged.
+    // No, this should not happen, and is the type of thing I want to avoid. See my note in ArenaMatchEntity.
     fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?>
 
     suspend fun exitArena(arenaId: String, userId: String)

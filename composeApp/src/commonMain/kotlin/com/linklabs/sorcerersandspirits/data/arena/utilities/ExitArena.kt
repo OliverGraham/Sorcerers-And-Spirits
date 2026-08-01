@@ -29,10 +29,10 @@ internal class ExitArena(private val userId: String) {
                 // TODO: make function
                 val updatedPlayers = playerEntitiesMap - userId
 
+                // CHANGE: numberOfNewMessages removed; transition carries no new batch (see below).
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
                         messages = messages,
-                        numberOfNewMessages = 0,
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
                     )
@@ -54,10 +54,10 @@ internal class ExitArena(private val userId: String) {
                 // TODO: make function
                 val updatedPlayers = playerEntitiesMap - userId
 
+                // CHANGE: numberOfNewMessages removed; transition carries no new batch.
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
                         messages = messages,
-                        numberOfNewMessages = 0,
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
                         participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },

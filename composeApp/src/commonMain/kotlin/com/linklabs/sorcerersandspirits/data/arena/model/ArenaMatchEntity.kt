@@ -7,6 +7,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed interface ArenaMatchEntity {
+    // CHANGE: `messages` now holds ONLY the latest batch written to RTDB (replace semantics), not a
+    // rolling log. Delete `numberOfNewMessages` from the interface and every subtype below; the
+    // batch size is just messages.size, and "how many are new" is no longer an RTDB concern.
+    // Yes, although here we can now call the property newMessages (not messages)
     val messages: List<ArenaMessageEntity>
     val numberOfNewMessages: Int
     val playerEntitiesMap: Map<String, ArenaPlayerEntity>
@@ -73,6 +77,18 @@ internal fun Map<String, ArenaPlayerEntity>.toParticipants(): Map<String, Charac
         it.userId to it.characterClassEntity.type
     }
 
+// CHANGE: this maps the RTDB entity -> domain ArenaMatch, where `messages` is now the latest BATCH.
+// The domain ArenaMatch gains `newMessages` (this batch) and its `messages` (full log) is filled in
+// downstream by CoordinateArenaMatchUseCase from the on-device store — NOT here.
+// QUESTION: should toDomain set ArenaMatch.messages = this batch as a placeholder (use case
+// overwrites with the full log), or should the use case be the ONLY place messages is assembled and
+// toDomain leave messages empty + populate newMessages only? Leaning: latter (single owner).
+// Yes, but call it newMessages so it'll be easy and clear. Since we're in the data layer, the
+//  local data source should be combined here, before going to the Domain layer. I had the wrong-ish
+//  wording when first describing what to do. So, there should be an interception before calling toDomain()
+//  where it gets the local data source and combines with the new messages. Hmm, is that the correct
+//  way? I don't want to construct an ArenaMatch instance here with empty messages - that's a code smell;
+//  so I'm trying to think of a good way around that.
 internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
     val messages = messages.toDomain()
 

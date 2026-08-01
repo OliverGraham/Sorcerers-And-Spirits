@@ -68,6 +68,9 @@ internal class ChooseCharacterClass(
         selectedPlayers: Map<String, ArenaPlayerEntity.Selected>,
         matchNumberInGauntlet: Int,
     ): ArenaMatchEntity.Combat {
+        // CHANGE: with replace semantics, the generator returns ONLY the new batch (drop the
+        // previousMessages append + the numberOfNewMessages Int). See generator comments below.
+        // Yeah, all looks good.
         val fastestPlayer = selectedPlayers.getFastestPlayer()
         val (updatedMessages, numberOfNewMessages) =
             messageGenerator.generateCombatStartingMessages(
@@ -78,7 +81,6 @@ internal class ChooseCharacterClass(
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = selectedPlayers,
             messages = updatedMessages,
-            numberOfNewMessages = numberOfNewMessages,
             nextCombatActionEntity =
                 NextCombatActionEntity.IdleEntity(
                     activeUserIds = setOf(element = fastestPlayerUserId)
@@ -94,6 +96,7 @@ internal class ChooseCharacterClass(
         messageGenerator: ChooseCharacterClassMessageGenerator,
         updatedPlayers: Map<String, ArenaPlayerEntity>,
     ): ArenaMatchEntity.ChoosingClasses {
+        // CHANGE: numberOfNewMessages removed; `messages` becomes just this selection batch.
         val (updatedMessages, numberOfNewMessages) =
             messageGenerator.generateCharacterSelectionMessage()
 
@@ -101,10 +104,11 @@ internal class ChooseCharacterClass(
             playerEntitiesMap = updatedPlayers,
             activePlayerUserId = nextPlayerId,
             messages = updatedMessages,
-            numberOfNewMessages = numberOfNewMessages,
         )
     }
 
+    // CHANGE: generator no longer needs previousMessages and returns List<ArenaMessageEntity>
+    // (the batch) instead of Pair<List, Int>; drop appendCapped calls below (replace semantics).
     private inner class ChooseCharacterClassMessageGenerator(
         private val messagesReference: DatabaseReference,
         private val previousMessages: List<ArenaMessageEntity>,

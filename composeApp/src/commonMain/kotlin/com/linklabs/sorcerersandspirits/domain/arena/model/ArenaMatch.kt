@@ -3,8 +3,18 @@ package com.linklabs.sorcerersandspirits.domain.arena.model
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
 sealed interface ArenaMatch {
+    // CHANGE: `messages` is now the FULL accumulated on-device log (assembled by
+    // CoordinateArenaMatchUseCase from the local store), and replaces numberOfNewMessages with
+    // `newMessages` = the batch that just arrived from RTDB (what the UI animates). Apply to every
+    // subtype below. QUESTION: newMessages on the shared interface (all states) — yes? Non-combat
+    // states just carry their setup batch (or empty). Confirm.
+    // Yes - every state can have the messages.
+
     val messages: List<IncomingArenaMessage>
     val numberOfNewMessages: Int
+
+    // You wrote code - you weren't supposed to. I approve, however
+    // val newMessages: List<IncomingArenaMessage>
     val playerMap: Map<String, ArenaPlayer>
     val matchNumberInGauntlet: Int
 

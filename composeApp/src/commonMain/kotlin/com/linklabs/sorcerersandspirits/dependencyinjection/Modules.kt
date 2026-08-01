@@ -107,6 +107,9 @@ private fun Module.initializeRepositories() {
     singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
     singleOf(::DataStorePendingStatsStore) { bind<PendingStatsStore>() }
+    // ADD: singleOf(::DataStoreArenaMessageStore) { bind<ArenaMessageStore>() } — but it needs the
+    // MESSAGES DataStore<Preferences> (qualified), not the pending-stats one. Wire the qualifier here
+    // and inject it into DataStoreArenaMessageStore. (See ArenaMessageDataStore QUESTION on qualifier.)
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
 }

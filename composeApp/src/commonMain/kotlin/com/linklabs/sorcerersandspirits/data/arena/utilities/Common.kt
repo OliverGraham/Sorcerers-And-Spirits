@@ -6,6 +6,8 @@ import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
+// CHANGE: delete MAX_RETAINED_MESSAGES + appendCapped. RTDB no longer accumulates or caps messages;
+// each write replaces the node with the latest batch, and the on-device store holds the full log.
 internal const val MAX_RETAINED_MESSAGES = 30
 
 internal fun List<ArenaMessageEntity>.appendCapped(

@@ -29,6 +29,11 @@ data class ArenaScreenState(
     val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState,
     val participants: Map<String, ParticipantClass>,
+    // CHANGE: replace numberOfNewMessages with the actual newMessages batch (as message-group states,
+    // or ids the sequencer can match) so playback animates exactly those, not a takeLast(count).
+    // QUESTION: carry newMessages as List<ArenaMessageGroupState> here, or just the batch ids and let
+    // the sequencer resolve them against messageGroups? Leaning: ids (smaller, avoids duplication).
+    // Yes, likely the latter.
     val numberOfNewMessages: Int,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
@@ -111,6 +116,7 @@ internal fun ArenaMatch.toUpdatedState(
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
+            // CHANGE: source from ArenaMatch.newMessages (the batch) instead of numberOfNewMessages.
             numberOfNewMessages = numberOfNewMessages,
         )
 

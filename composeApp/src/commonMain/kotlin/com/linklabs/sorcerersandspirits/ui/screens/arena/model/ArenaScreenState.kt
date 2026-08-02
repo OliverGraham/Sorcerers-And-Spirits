@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.isKnockedOut
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
@@ -22,19 +23,17 @@ private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 // TODO: Can this massive data class be reduced in some way?
 @Immutable
 data class ArenaScreenState(
-    val messageGroups: List<ArenaMessageGroupState>,
+    val messages: List<ArenaMessageState>,
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState,
     val participants: Map<String, ParticipantClass>,
-    val numberOfNewMessages: Int,
+    val messageGroups: List<ArenaMessageGroupState> = messages.toMessageGroups(),
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-    val totalMessageCount: Int = messageGroups.sumOf { it.messages.size },
-    val revealedMessageCount: Int = totalMessageCount,
     val isPlayingBack: Boolean = false,
     val currentCue: CombatAnimationCue? = null,
     val currentFlash: FlashCallout? = null,
@@ -51,18 +50,13 @@ data class ArenaScreenState(
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
+    newMessages: List<IncomingArenaMessage> = messages,
     characterClasses: List<CharacterClassState> = emptyList(),
     classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
 ): ArenaStateUpdate {
-    // TODO: Make function - do this later, Claude
-    val participants =
-        when (this) {
-            is ArenaMatch.Combat -> this.participants
-            is ArenaMatch.Finished -> this.participants
-            else -> emptyMap()
-        }.mapValues { ParticipantClass(className = it.value.name, type = it.value) }
+    val participants = participantClasses()
 
-    val messageGroups = messages.toStates(participants = participants)
+    val freshMessages = newMessages.toMessageStates(participants = participants)
 
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
@@ -101,7 +95,8 @@ internal fun ArenaMatch.toUpdatedState(
 
     val finalState =
         ArenaScreenState(
-            messageGroups = messageGroups,
+            messages = previousState?.messages ?: emptyList(),
+            messageGroups = previousState?.messageGroups ?: emptyList(),
             secondsRemaining = secondsRemaining,
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
@@ -111,11 +106,21 @@ internal fun ArenaMatch.toUpdatedState(
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
-            numberOfNewMessages = numberOfNewMessages,
         )
 
-    return ArenaStateUpdate(nextState = finalState, timerAction = timerAction)
+    return ArenaStateUpdate(
+        nextState = finalState,
+        timerAction = timerAction,
+        freshMessages = freshMessages,
+    )
 }
+
+private fun ArenaMatch.participantClasses(): Map<String, ParticipantClass> =
+    when (this) {
+        is ArenaMatch.Combat -> participants
+        is ArenaMatch.Finished -> participants
+        else -> emptyMap()
+    }.mapValues { ParticipantClass(className = it.value.name, type = it.value) }
 
 private fun ArenaMatch.toState(
     userId: String,
@@ -280,4 +285,8 @@ private fun determineGauntletFinishedTimerAction(
     }
 }
 
-data class ArenaStateUpdate(val nextState: ArenaScreenState, val timerAction: TimerAction)
+data class ArenaStateUpdate(
+    val nextState: ArenaScreenState,
+    val timerAction: TimerAction,
+    val freshMessages: List<ArenaMessageState> = emptyList(),
+)

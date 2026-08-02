@@ -197,7 +197,6 @@ class ArenaSessionStatsTest {
         val survivingClass = if (userWon) userClass else userClass.copy(hitPoints = 0)
         return ArenaMatch.Finished(
             messages = emptyList(),
-            numberOfNewMessages = 0,
             playerMap =
                 mapOf(
                     USER_ID to selectedPlayer(userId = USER_ID, characterClass = survivingClass),
@@ -223,7 +222,6 @@ class ArenaSessionStatsTest {
         val userPlayer = selectedPlayer(userId = USER_ID, characterClass = userClass)
         return ArenaMatch.ChoosingClasses(
             messages = emptyList(),
-            numberOfNewMessages = 0,
             playerMap = mapOf(USER_ID to userPlayer),
             activePlayer = userPlayer,
             activePlayerUserId = USER_ID,

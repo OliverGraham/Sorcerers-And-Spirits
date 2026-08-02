@@ -1,5 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.playback
 
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
@@ -22,18 +23,23 @@ import kotlinx.coroutines.withTimeoutOrNull
 private const val DICE_SETTLE_TIMEOUT_MILLIS = 8000L
 private const val MATCH_END_TAIL_MILLIS = 2000L
 
+private data class PlaybackSubmission(
+    val target: ArenaScreenState,
+    val freshMessages: List<ArenaMessageState>,
+)
+
 internal class CombatPlaybackSequencer(
     private val scope: CoroutineScope,
     private val emit:
         (
             target: ArenaScreenState, compose: (current: ArenaScreenState) -> ArenaScreenState,
         ) -> Unit,
+    private val appendMessage: (ArenaMessageState) -> Unit,
     private val onMatchPlaybackComplete: () -> Unit,
 ) {
-    private val targets = Channel<ArenaScreenState>(capacity = Channel.UNLIMITED)
+    private val submissions = Channel<PlaybackSubmission>(capacity = Channel.UNLIMITED)
     private val diceSettled = Channel<Unit>(capacity = Channel.CONFLATED)
 
-    private var revealedCount = 0
     private var lastDiceRoll: DiceRollState? = null
 
     private var currentCue: CombatAnimationCue? = null
@@ -46,20 +52,22 @@ internal class CombatPlaybackSequencer(
     fun start() {
         drainJob =
             scope.launch {
-                for (target in targets) {
+                for (submission in submissions) {
                     try {
-                        playThrough(target = target)
+                        playThrough(submission = submission)
                     } catch (cancellation: CancellationException) {
                         throw cancellation
                     } catch (_: Throwable) {
-                        recoverFrom(target = target)
+                        recoverFrom(submission = submission)
                     }
                 }
             }
     }
 
-    fun submit(target: ArenaScreenState) {
-        targets.trySend(element = target)
+    fun submit(target: ArenaScreenState, freshMessages: List<ArenaMessageState>) {
+        submissions.trySend(
+            element = PlaybackSubmission(target = target, freshMessages = freshMessages)
+        )
     }
 
     fun notifyDiceSettled() {
@@ -70,27 +78,20 @@ internal class CombatPlaybackSequencer(
         drainJob?.cancel()
     }
 
-    private suspend fun playThrough(target: ArenaScreenState) {
+    private suspend fun playThrough(submission: PlaybackSubmission) {
+        val target = submission.target
+        val steps = submission.freshMessages.map { it.toPlaybackStep() }
+
         val targetCombat = target.arenaState as? ArenaState.Combat
         if (targetCombat == null) {
-            revealedCount = target.totalMessageCount
             lastDiceRoll = null
             clearChannel()
             emitFrame(target = target, isPlayingBack = false)
+            steps.forEach { appendMessage(it.message) }
             return
         }
 
-        val newMessageCount =
-            target.numberOfNewMessages.coerceIn(
-                minimumValue = 0,
-                maximumValue = target.totalMessageCount,
-            )
-        val freshSteps =
-            target.messageGroups
-                .flatMap { it.messages }
-                .takeLast(n = newMessageCount)
-                .map { it.toPlaybackStep() }
-        val hasAnimation = freshSteps.any { it.isAnimated }
+        val hasAnimation = steps.any { it.isAnimated }
 
         val roll = targetCombat.diceRollState
         val isNewRoll = roll != null && roll != lastDiceRoll
@@ -100,12 +101,12 @@ internal class CombatPlaybackSequencer(
             drainPlayback(
                 target = target,
                 isMatchOver = targetCombat.isMatchOver,
-                freshSteps = freshSteps,
+                steps = steps,
                 isNewRoll = isNewRoll,
             )
         } else {
-            revealedCount = target.totalMessageCount
             emitFrame(target = target, isPlayingBack = false)
+            steps.forEach { appendMessage(it.message) }
         }
 
         if (targetCombat.isMatchOver) {
@@ -117,15 +118,14 @@ internal class CombatPlaybackSequencer(
     private suspend fun drainPlayback(
         target: ArenaScreenState,
         isMatchOver: Boolean,
-        freshSteps: List<CombatPlaybackStep>,
+        steps: List<CombatPlaybackStep>,
         isNewRoll: Boolean,
     ) {
-        revealedCount = target.totalMessageCount - freshSteps.size
         emitFrame(target = target, isPlayingBack = true)
 
         if (isNewRoll) awaitDiceSettle()
 
-        for (step in freshSteps) {
+        for (step in steps) {
             if (step.isAnimated) {
                 if (step.collapsingUserId != null) collapsingSeatUserId = step.collapsingUserId
 
@@ -150,8 +150,7 @@ internal class CombatPlaybackSequencer(
                 if (shouldReleaseCollapse) collapsingSeatUserId = null
             }
 
-            revealedCount++
-            emitFrame(target = target, isPlayingBack = true)
+            appendMessage(step.message)
         }
 
         emitFrame(target = target, isPlayingBack = false)
@@ -168,16 +167,17 @@ internal class CombatPlaybackSequencer(
         collapsingSeatUserId = null
     }
 
-    private fun recoverFrom(target: ArenaScreenState) {
-        revealedCount = target.totalMessageCount
+    private fun recoverFrom(submission: PlaybackSubmission) {
         clearChannel()
-        emitFrame(target = target, isPlayingBack = false)
+        emitFrame(target = submission.target, isPlayingBack = false)
+        submission.freshMessages.forEach { appendMessage(it) }
     }
 
     private fun emitFrame(target: ArenaScreenState, isPlayingBack: Boolean) {
         emit(target) { current ->
             target.copy(
-                revealedMessageCount = revealedCount,
+                messages = current.messages,
+                messageGroups = current.messageGroups,
                 isPlayingBack = isPlayingBack,
                 currentCue = currentCue,
                 currentFlash = currentFlash,

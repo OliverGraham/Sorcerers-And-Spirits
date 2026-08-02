@@ -13,7 +13,6 @@ class ExitArenaUseCase(
         val userId = authenticationRepository.getUserId() ?: return
 
         arenaRepository.exitArena(arenaId = arenaId, userId = userId)
-        arenaRepository.clearArenaMessages(arenaId = arenaId)
         tavernRepository.setTravelerAvailableIfPresent(userId = userId)
     }
 }

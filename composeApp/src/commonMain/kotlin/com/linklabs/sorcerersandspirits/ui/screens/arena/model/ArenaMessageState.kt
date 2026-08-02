@@ -11,6 +11,11 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 sealed interface ArenaMessageState {
     val animation: ArenaAnimation
     val id: String
+    val collapsingUserId: String?
+        get() = null
+
+    val actingClassType: CharacterClassType?
+        get() = null
 
     @Immutable
     data class NewRound(
@@ -25,7 +30,9 @@ sealed interface ArenaMessageState {
         override val id: String,
         val displayName: String,
         val characterClassInfo: CharacterClassMessageInfoState,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val actingClassType: CharacterClassType = characterClassInfo.type
+    }
 
     @Immutable
     data class ConnectedToArena(
@@ -39,12 +46,18 @@ sealed interface ArenaMessageState {
         override val animation: ArenaAnimation = ArenaAnimation.None,
         override val id: String,
         val characterClassInfo: CharacterClassMessageInfoState,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val actingClassType: CharacterClassType = characterClassInfo.type
+    }
 
     @Immutable
     sealed interface NormalRoll : ArenaMessageState {
         val attackerUserId: String
         val defenderUserId: String
+        val attackerClassType: CharacterClassType
+
+        override val actingClassType: CharacterClassType
+            get() = attackerClassType
 
         @Immutable
         data class Attack(
@@ -52,10 +65,17 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
-            val attackerClassType: CharacterClassType,
+            override val attackerClassType: CharacterClassType,
             val impersonatedClassType: CharacterClassType?,
             val normalRollMessageType: NormalRollMessageType,
-        ) : NormalRoll
+        ) : NormalRoll {
+            override val collapsingUserId: String? =
+                if (normalRollMessageType == NormalRollMessageType.Knockout) {
+                    defenderUserId
+                } else {
+                    null
+                }
+        }
 
         @Immutable
         data class Outcome(
@@ -63,7 +83,7 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
-            val attackerClassType: CharacterClassType,
+            override val attackerClassType: CharacterClassType,
             val attackerName: String,
             val defenderName: String,
             val firstDie: Int,
@@ -72,6 +92,9 @@ sealed interface ArenaMessageState {
             val type: NormalRollMessageType,
         ) : NormalRoll {
             val baseRoll: Int = firstDie + secondDie
+
+            override val collapsingUserId: String? =
+                if (type == NormalRollMessageType.Knockout) defenderUserId else null
         }
     }
 
@@ -80,7 +103,9 @@ sealed interface ArenaMessageState {
         override val animation: ArenaAnimation,
         override val id: String,
         val attackerUserId: String,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val actingClassType: CharacterClassType = CharacterClassType.Rogue
+    }
 
     @Immutable
     data class Dodge(
@@ -88,11 +113,16 @@ sealed interface ArenaMessageState {
         override val id: String,
         val didArmorIncrease: Boolean,
         val dodgerUserId: String,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val actingClassType: CharacterClassType = CharacterClassType.Rogue
+    }
 
     @Immutable
     sealed interface Teleport : ArenaMessageState {
         val mageUserId: String
+
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Mage
 
         @Immutable
         data class Trigger(
@@ -110,7 +140,9 @@ sealed interface ArenaMessageState {
             val rollerClassType: CharacterClassType,
             val playerName: String,
             val singleDie: Int,
-        ) : Teleport
+        ) : Teleport {
+            override val actingClassType: CharacterClassType = rollerClassType
+        }
 
         @Immutable
         data class Tie(
@@ -131,6 +163,9 @@ sealed interface ArenaMessageState {
     @Immutable
     sealed interface LuckyCoin : ArenaMessageState {
         val gamblerUserId: String
+
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Gambler
 
         @Immutable
         data class Trigger(
@@ -164,11 +199,16 @@ sealed interface ArenaMessageState {
             val attackerUserId: String,
             val singleDie: Int,
             val isKnockout: Boolean,
-        ) : LuckyCoin
+        ) : LuckyCoin {
+            override val collapsingUserId: String? = if (isKnockout) attackerUserId else null
+        }
     }
 
     @Immutable
     sealed interface Riposte : ArenaMessageState {
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Duelist
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimation = ArenaAnimation.Flash,
@@ -197,10 +237,15 @@ sealed interface ArenaMessageState {
         val necroName: String,
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val actingClassType: CharacterClassType = CharacterClassType.Necromancer
+    }
 
     @Immutable
     sealed interface Persuade : ArenaMessageState {
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Bard
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimation = ArenaAnimation.Flash,
@@ -244,6 +289,9 @@ sealed interface ArenaMessageState {
     sealed interface Encore : ArenaMessageState {
         val bardUserId: String
 
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Bard
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimation = ArenaAnimation.Flash,
@@ -269,11 +317,16 @@ sealed interface ArenaMessageState {
         val illusionistName: String,
         val impersonatedClassType: CharacterClassType,
         val impersonatedAbilityName: String,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val actingClassType: CharacterClassType = CharacterClassType.Illusionist
+    }
 
     @Immutable
     sealed interface MirrorImage : ArenaMessageState {
         val illusionistUserId: String
+
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Illusionist
 
         @Immutable
         data class Trigger(
@@ -294,7 +347,11 @@ sealed interface ArenaMessageState {
             val messageType: NormalRollMessageType,
             val baseRoll: Int,
             val doublesBonus: Int,
-        ) : MirrorImage
+        ) : MirrorImage {
+            override val collapsingUserId: String? =
+                if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
+            override val actingClassType: CharacterClassType = attackerClassType
+        }
 
         @Immutable
         data class TemptFate(
@@ -308,6 +365,9 @@ sealed interface ArenaMessageState {
             val messageType: NormalRollMessageType,
         ) : MirrorImage {
             val rerollDisplay: String = "$rawReroll - 1"
+
+            override val collapsingUserId: String? =
+                if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
         }
     }
 
@@ -325,11 +385,18 @@ sealed interface ArenaMessageState {
         val splashDamage: Int,
         val splashTargetUserIds: List<String>,
         val isMainTargetKnockedOut: Boolean,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val collapsingUserId: String? =
+            if (isMainTargetKnockedOut) mainTargetUserId else null
+        override val actingClassType: CharacterClassType = CharacterClassType.Mage
+    }
 
     @Immutable
     sealed interface HolyShield : ArenaMessageState {
         val paladinUserId: String
+
+        override val actingClassType: CharacterClassType
+            get() = CharacterClassType.Paladin
 
         @Immutable
         data class Trigger(
@@ -346,7 +413,9 @@ sealed interface ArenaMessageState {
             val firstDie: Int,
             val secondDie: Int,
             val didSurvive: Boolean,
-        ) : HolyShield
+        ) : HolyShield {
+            override val collapsingUserId: String? = if (!didSurvive) paladinUserId else null
+        }
 
         @Immutable
         data class Wrath(
@@ -358,7 +427,10 @@ sealed interface ArenaMessageState {
             val attackerName: String,
             val singleDie: Int,
             val isAttackerKnockedOut: Boolean,
-        ) : HolyShield
+        ) : HolyShield {
+            override val collapsingUserId: String? =
+                if (isAttackerKnockedOut) attackerUserId else null
+        }
     }
 
     @Immutable
@@ -369,7 +441,11 @@ sealed interface ArenaMessageState {
         val gamblerName: String,
         val singleDie: Int,
         val outcome: AllInOutcome,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val collapsingUserId: String? =
+            if (outcome == AllInOutcome.SelfKnockout) gamblerUserId else null
+        override val actingClassType: CharacterClassType = CharacterClassType.Gambler
+    }
 
     @Immutable
     data class PrepareAttack(
@@ -382,7 +458,10 @@ sealed interface ArenaMessageState {
         val firstDie: Int,
         val secondDie: Int,
         val isSuccessful: Boolean,
-    ) : ArenaMessageState
+    ) : ArenaMessageState {
+        override val collapsingUserId: String? = if (isSuccessful) targetUserId else null
+        override val actingClassType: CharacterClassType = CharacterClassType.Duelist
+    }
 
     @Immutable
     data class Doubles(
@@ -390,24 +469,6 @@ sealed interface ArenaMessageState {
         override val id: String,
         val playerName: String,
     ) : ArenaMessageState
-}
-
-@Immutable
-sealed interface ArenaAnimation {
-    data object None : ArenaAnimation
-
-    data object Flash : ArenaAnimation
-
-    data class Avatar(val userId: String, val gesture: AvatarGesture) : ArenaAnimation
-
-    data class FlashAndAvatar(val userId: String, val gesture: AvatarGesture) : ArenaAnimation
-
-    fun gestureFor(userId: String): AvatarGesture? =
-        when (this) {
-            is Avatar -> if (this.userId == userId) gesture else null
-            is FlashAndAvatar -> if (this.userId == userId) gesture else null
-            else -> null
-        }
 }
 
 enum class SummonMinionOutcome {
@@ -452,7 +513,7 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
 // TODO: figure out how to do this better
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
-internal fun List<IncomingArenaMessage>.toMessageStates(
+fun List<IncomingArenaMessage>.toMessageStates(
     participants: Map<String, ParticipantClass>
 ): List<ArenaMessageState> = map { incomingMessage ->
     incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
@@ -481,20 +542,23 @@ private fun ArenaMessage.toState(
 
         is ArenaMessage.AllIn -> {
             val outcome = allInOutcomeFor(singleDie = singleDie)
-            val gesture =
-                when (outcome) {
-                    AllInOutcome.SelfKnockout -> AvatarGesture.AllInBust
+            val gestures = buildMap {
+                val gesture =
+                    when (outcome) {
+                        AllInOutcome.SelfKnockout -> AvatarGesture.AllInBust
 
-                    AllInOutcome.NoEffect,
-                    AllInOutcome.DoubleAttack -> AvatarGesture.AllInToss
-                }
+                        AllInOutcome.NoEffect,
+                        AllInOutcome.DoubleAttack -> AvatarGesture.AllInToss
+                    }
+                put(gamblerUserId, gesture)
+            }
             ArenaMessageState.AllIn(
                 id = id,
                 gamblerUserId = gamblerUserId,
                 gamblerName = participants.resolveClassName(userId = gamblerUserId),
                 singleDie = singleDie,
                 outcome = outcome,
-                animation = ArenaAnimation.FlashAndAvatar(userId = gamblerUserId, gesture = gesture),
+                animation = ArenaAnimation.FlashAndAvatar(gestures = gestures),
             )
         }
 
@@ -505,7 +569,7 @@ private fun ArenaMessage.toState(
                 id = id,
                 didArmorIncrease = didArmorIncrease,
                 dodgerUserId = dodgerUserId,
-                animation = ArenaAnimation.FlashAndAvatar(userId = dodgerUserId, gesture = gesture),
+                animation = ArenaAnimation.FlashAndAvatar(gestures = mapOf(dodgerUserId to gesture)),
             )
         }
 
@@ -532,7 +596,7 @@ private fun ArenaMessage.toState(
                 singleDie = singleDie,
                 isAttackerKnockedOut = isAttackerKnockedOut,
                 animation =
-                    ArenaAnimation.FlashAndAvatar(userId = attackerUserId, gesture = gesture),
+                    ArenaAnimation.FlashAndAvatar(gestures = mapOf(attackerUserId to gesture)),
             )
         }
 
@@ -540,8 +604,7 @@ private fun ArenaMessage.toState(
             val animation =
                 if (!didSurvive) {
                     ArenaAnimation.FlashAndAvatar(
-                        userId = paladinUserId,
-                        gesture = AvatarGesture.Collapse,
+                        gestures = mapOf(paladinUserId to AvatarGesture.Collapse)
                     )
                 } else {
                     ArenaAnimation.Flash
@@ -575,8 +638,7 @@ private fun ArenaMessage.toState(
                 attackerUserId = attackerUserId,
                 animation =
                     ArenaAnimation.FlashAndAvatar(
-                        userId = attackerUserId,
-                        gesture = AvatarGesture.ReArm,
+                        gestures = mapOf(attackerUserId to AvatarGesture.ReArm)
                     ),
             )
         }
@@ -590,17 +652,20 @@ private fun ArenaMessage.toState(
             )
 
         is ArenaMessage.LuckyCoin.HighRollerDamage -> {
+            val gestures = buildMap {
+                put(gamblerUserId, AvatarGesture.Throw)
+                put(
+                    attackerUserId,
+                    if (isKnockout) AvatarGesture.Collapse else AvatarGesture.FlinchHeavy,
+                )
+            }
             ArenaMessageState.LuckyCoin.HighRollerDamage(
                 id = id,
                 gamblerUserId = gamblerUserId,
                 attackerUserId = attackerUserId,
                 singleDie = singleDie,
                 isKnockout = isKnockout,
-                animation =
-                    ArenaAnimation.FlashAndAvatar(
-                        userId = gamblerUserId,
-                        gesture = AvatarGesture.Throw,
-                    ),
+                animation = ArenaAnimation.FlashAndAvatar(gestures = gestures),
             )
         }
 
@@ -625,7 +690,7 @@ private fun ArenaMessage.toState(
                 baseRoll = baseRoll,
                 doublesBonus = doublesBonus,
                 animation =
-                    ArenaAnimation.FlashAndAvatar(userId = illusionistUserId, gesture = gesture),
+                    ArenaAnimation.FlashAndAvatar(gestures = mapOf(illusionistUserId to gesture)),
             )
         }
 
@@ -648,22 +713,27 @@ private fun ArenaMessage.toState(
                 attackerName = participants.resolveClassName(userId = attackerUserId),
                 messageType = messageType,
                 animation =
-                    ArenaAnimation.FlashAndAvatar(userId = illusionistUserId, gesture = gesture),
+                    ArenaAnimation.FlashAndAvatar(gestures = mapOf(illusionistUserId to gesture)),
             )
         }
 
         is ArenaMessage.NormalRoll.Attack -> {
             val attackerClassType = participants.resolveClassType(userId = attackerUserId)
-            val gesture =
-                attackerStrike(
-                    weaponClassType =
-                        resolveWeaponClassType(
-                            attackerClassType = attackerClassType,
-                            impersonatedClassType = impersonatedCharacterType,
-                            id = id,
-                        ),
-                    messageType = normalRollMessageType,
+            val gestures = buildMap {
+                put(
+                    attackerUserId,
+                    attackerStrike(
+                        weaponClassType =
+                            resolveWeaponClassType(
+                                attackerClassType = attackerClassType,
+                                impersonatedClassType = impersonatedCharacterType,
+                                id = id,
+                            ),
+                        messageType = normalRollMessageType,
+                    ),
                 )
+                put(defenderUserId, defenderReactionGesture(normalRollMessageType))
+            }
 
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
@@ -672,22 +742,27 @@ private fun ArenaMessage.toState(
                 attackerClassType = attackerClassType,
                 impersonatedClassType = impersonatedCharacterType,
                 normalRollMessageType = normalRollMessageType,
-                animation = ArenaAnimation.Avatar(userId = attackerUserId, gesture = gesture),
+                animation = ArenaAnimation.Avatar(gestures = gestures),
             )
         }
 
         is ArenaMessage.NormalRoll.Outcome -> {
             val attackerClassType = participants.resolveClassType(userId = attackerUserId)
-            val gesture =
-                attackerStrike(
-                    weaponClassType =
-                        resolveWeaponClassType(
-                            attackerClassType = attackerClassType,
-                            impersonatedClassType = null,
-                            id = id,
-                        ),
-                    messageType = type,
+            val gestures = buildMap {
+                put(
+                    attackerUserId,
+                    attackerStrike(
+                        weaponClassType =
+                            resolveWeaponClassType(
+                                attackerClassType = attackerClassType,
+                                impersonatedClassType = null,
+                                id = id,
+                            ),
+                        messageType = type,
+                    ),
                 )
+                put(defenderUserId, defenderReactionGesture(type))
+            }
 
             ArenaMessageState.NormalRoll.Outcome(
                 id = id,
@@ -700,8 +775,7 @@ private fun ArenaMessage.toState(
                 secondDie = secondDie,
                 bonus = bonus,
                 type = type,
-                animation =
-                    ArenaAnimation.FlashAndAvatar(userId = attackerUserId, gesture = gesture),
+                animation = ArenaAnimation.FlashAndAvatar(gestures = gestures),
             )
         }
 
@@ -730,12 +804,20 @@ private fun ArenaMessage.toState(
             ArenaMessageState.Persuade.Trigger(id = id, bardUserId = bardUserId)
 
         is ArenaMessage.PrepareAttack -> {
-            val gesture =
-                if (isSuccessful) {
-                    AvatarGesture.PreparedThrust
-                } else {
-                    AvatarGesture.PreparedThrustWhiff
-                }
+            val gestures = buildMap {
+                put(
+                    duelistUserId,
+                    if (isSuccessful) {
+                        AvatarGesture.PreparedThrust
+                    } else {
+                        AvatarGesture.PreparedThrustWhiff
+                    },
+                )
+                put(
+                    targetUserId,
+                    if (isSuccessful) AvatarGesture.Collapse else AvatarGesture.Sidestep,
+                )
+            }
             ArenaMessageState.PrepareAttack(
                 id = id,
                 duelistUserId = duelistUserId,
@@ -745,7 +827,7 @@ private fun ArenaMessage.toState(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 isSuccessful = isSuccessful,
-                animation = ArenaAnimation.FlashAndAvatar(userId = duelistUserId, gesture = gesture),
+                animation = ArenaAnimation.FlashAndAvatar(gestures = gestures),
             )
         }
 
@@ -753,8 +835,7 @@ private fun ArenaMessage.toState(
             val animation =
                 if (isSuccessful) {
                     ArenaAnimation.FlashAndAvatar(
-                        userId = attackerUserId,
-                        gesture = AvatarGesture.Flinch,
+                        gestures = mapOf(attackerUserId to AvatarGesture.Flinch)
                     )
                 } else {
                     ArenaAnimation.Flash
@@ -778,6 +859,17 @@ private fun ArenaMessage.toState(
             )
 
         is ArenaMessage.SpellPotency -> {
+            val gestures = buildMap {
+                put(mageUserId, AvatarGesture.Cast)
+                put(
+                    mainTargetUserId,
+                    if (isMainTargetKnockedOut) {
+                        AvatarGesture.Collapse
+                    } else {
+                        AvatarGesture.FlinchHeavy
+                    },
+                )
+            }
             ArenaMessageState.SpellPotency(
                 id = id,
                 mageUserId = mageUserId,
@@ -790,8 +882,7 @@ private fun ArenaMessage.toState(
                 splashDamage = splashDamage,
                 splashTargetUserIds = splashTargetUserIds,
                 isMainTargetKnockedOut = isMainTargetKnockedOut,
-                animation =
-                    ArenaAnimation.FlashAndAvatar(userId = mageUserId, gesture = AvatarGesture.Cast),
+                animation = ArenaAnimation.FlashAndAvatar(gestures = gestures),
             )
         }
 
@@ -804,8 +895,7 @@ private fun ArenaMessage.toState(
                 outcome = summonMinionOutcomeFor(singleDie = singleDie),
                 animation =
                     ArenaAnimation.FlashAndAvatar(
-                        userId = necroUserId,
-                        gesture = AvatarGesture.Cast,
+                        gestures = mapOf(necroUserId to AvatarGesture.Cast)
                     ),
             )
         }
@@ -839,6 +929,26 @@ private fun ArenaMessage.toState(
                 playerName = participants.resolveClassName(userId = userId),
             )
     }
+
+fun ArenaMessageState.toCollapsingUserId(): String? = collapsingUserId
+
+@Immutable
+sealed interface ArenaAnimation {
+    data object None : ArenaAnimation
+
+    data object Flash : ArenaAnimation
+
+    data class Avatar(val gestures: Map<String, AvatarGesture>) : ArenaAnimation
+
+    data class FlashAndAvatar(val gestures: Map<String, AvatarGesture>) : ArenaAnimation
+
+    fun gestureFor(userId: String): AvatarGesture? =
+        when (this) {
+            is Avatar -> gestures[userId]
+            is FlashAndAvatar -> gestures[userId]
+            else -> null
+        }
+}
 
 private fun resolveWeaponClassType(
     attackerClassType: CharacterClassType,

@@ -17,6 +17,9 @@ sealed interface ArenaMessageState {
     val actingClassType: CharacterClassType?
         get() = null
 
+    val flashAnchor: FlashAnchor
+        get() = FlashAnchor.Center
+
     @Immutable
     data class NewRound(
         override val animation: ArenaAnimation = ArenaAnimation.Flash,
@@ -58,6 +61,9 @@ sealed interface ArenaMessageState {
 
         override val actingClassType: CharacterClassType
             get() = attackerClassType
+
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = defenderUserId)
 
         @Immutable
         data class Attack(
@@ -105,6 +111,7 @@ sealed interface ArenaMessageState {
         val attackerUserId: String,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = attackerUserId)
     }
 
     @Immutable
@@ -115,6 +122,7 @@ sealed interface ArenaMessageState {
         val dodgerUserId: String,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = dodgerUserId)
     }
 
     @Immutable
@@ -123,6 +131,9 @@ sealed interface ArenaMessageState {
 
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Mage
+
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = mageUserId)
 
         @Immutable
         data class Trigger(
@@ -142,6 +153,7 @@ sealed interface ArenaMessageState {
             val singleDie: Int,
         ) : Teleport {
             override val actingClassType: CharacterClassType = rollerClassType
+            override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = rollerUserId)
         }
 
         @Immutable
@@ -149,7 +161,9 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimation = ArenaAnimation.None,
             override val id: String,
             override val mageUserId: String,
-        ) : Teleport
+        ) : Teleport {
+            override val flashAnchor: FlashAnchor = FlashAnchor.Center
+        }
 
         @Immutable
         data class Result(
@@ -166,6 +180,9 @@ sealed interface ArenaMessageState {
 
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Gambler
+
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = gamblerUserId)
 
         @Immutable
         data class Trigger(
@@ -201,6 +218,7 @@ sealed interface ArenaMessageState {
             val isKnockout: Boolean,
         ) : LuckyCoin {
             override val collapsingUserId: String? = if (isKnockout) attackerUserId else null
+            override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = attackerUserId)
         }
     }
 
@@ -209,11 +227,16 @@ sealed interface ArenaMessageState {
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Duelist
 
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = duelistUserId)
+
+        val duelistUserId: String
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimation = ArenaAnimation.Flash,
             override val id: String,
-            val duelistUserId: String,
+            override val duelistUserId: String,
             val attackerUserId: String,
         ) : Riposte
 
@@ -221,7 +244,7 @@ sealed interface ArenaMessageState {
         data class EnGarde(
             override val animation: ArenaAnimation,
             override val id: String,
-            val duelistUserId: String,
+            override val duelistUserId: String,
             val attackerUserId: String,
             val firstDie: Int,
             val secondDie: Int,
@@ -239,12 +262,25 @@ sealed interface ArenaMessageState {
         val outcome: SummonMinionOutcome,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Necromancer
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necroUserId)
     }
 
     @Immutable
     sealed interface Persuade : ArenaMessageState {
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Bard
+
+        override val flashAnchor: FlashAnchor
+            get() {
+                val bardId = when (this) {
+                    is Trigger -> bardUserId
+                    is StrumLute -> bardUserId
+                    is CharmActivation -> bardUserId
+                    is Charm -> bardUserId
+                    is Lull -> null
+                }
+                return if (bardId != null) FlashAnchor.Avatar(userId = bardId) else FlashAnchor.Center
+            }
 
         @Immutable
         data class Trigger(
@@ -292,6 +328,9 @@ sealed interface ArenaMessageState {
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Bard
 
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = bardUserId)
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimation = ArenaAnimation.Flash,
@@ -319,6 +358,7 @@ sealed interface ArenaMessageState {
         val impersonatedAbilityName: String,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Illusionist
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = illusionistUserId)
     }
 
     @Immutable
@@ -327,6 +367,9 @@ sealed interface ArenaMessageState {
 
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Illusionist
+
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = illusionistUserId)
 
         @Immutable
         data class Trigger(
@@ -389,6 +432,7 @@ sealed interface ArenaMessageState {
         override val collapsingUserId: String? =
             if (isMainTargetKnockedOut) mainTargetUserId else null
         override val actingClassType: CharacterClassType = CharacterClassType.Mage
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = mageUserId)
     }
 
     @Immutable
@@ -397,6 +441,9 @@ sealed interface ArenaMessageState {
 
         override val actingClassType: CharacterClassType
             get() = CharacterClassType.Paladin
+
+        override val flashAnchor: FlashAnchor
+            get() = FlashAnchor.Avatar(userId = paladinUserId)
 
         @Immutable
         data class Trigger(
@@ -430,6 +477,7 @@ sealed interface ArenaMessageState {
         ) : HolyShield {
             override val collapsingUserId: String? =
                 if (isAttackerKnockedOut) attackerUserId else null
+            override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = attackerUserId)
         }
     }
 
@@ -445,6 +493,7 @@ sealed interface ArenaMessageState {
         override val collapsingUserId: String? =
             if (outcome == AllInOutcome.SelfKnockout) gamblerUserId else null
         override val actingClassType: CharacterClassType = CharacterClassType.Gambler
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = gamblerUserId)
     }
 
     @Immutable
@@ -461,6 +510,7 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState {
         override val collapsingUserId: String? = if (isSuccessful) targetUserId else null
         override val actingClassType: CharacterClassType = CharacterClassType.Duelist
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = duelistUserId)
     }
 
     @Immutable
@@ -721,8 +771,8 @@ private fun ArenaMessage.toState(
             val attackerClassType = participants.resolveClassType(userId = attackerUserId)
             val gestures = buildMap {
                 put(
-                    attackerUserId,
-                    attackerStrike(
+                    key = attackerUserId,
+                    value = attackerStrike(
                         weaponClassType =
                             resolveWeaponClassType(
                                 attackerClassType = attackerClassType,
@@ -732,7 +782,7 @@ private fun ArenaMessage.toState(
                         messageType = normalRollMessageType,
                     ),
                 )
-                put(defenderUserId, defenderReactionGesture(normalRollMessageType))
+                put(key = defenderUserId, value = defenderReactionGesture(normalRollMessageType = normalRollMessageType))
             }
 
             ArenaMessageState.NormalRoll.Attack(
@@ -933,6 +983,13 @@ private fun ArenaMessage.toState(
 fun ArenaMessageState.toCollapsingUserId(): String? = collapsingUserId
 
 @Immutable
+sealed interface FlashAnchor {
+    @Immutable data class Avatar(val userId: String) : FlashAnchor
+
+    @Immutable data object Center : FlashAnchor
+}
+
+@Immutable
 sealed interface ArenaAnimation {
     data object None : ArenaAnimation
 
@@ -956,15 +1013,26 @@ private fun resolveWeaponClassType(
     id: String,
 ): CharacterClassType {
     if (attackerClassType != CharacterClassType.Illusionist) return attackerClassType
-    val borrowedWeapon = impersonatedClassType?.takeIf { it in builtWeaponClassTypes }
+    val borrowedWeapon = impersonatedClassType?.takeIf { it in classWeapons }
     return borrowedWeapon ?: randomBuiltWeaponFor(cueId = id)
 }
 
 private fun randomBuiltWeaponFor(cueId: String): CharacterClassType {
-    val count = builtWeaponClassTypes.size
+    val count = classWeapons.size
     val index = ((cueId.hashCode() % count) + count) % count
-    return builtWeaponClassTypes[index]
+    return classWeapons[index]
 }
+
+private val classWeapons =
+    listOf(
+        CharacterClassType.Rogue,
+        CharacterClassType.Gambler,
+        CharacterClassType.Duelist,
+        CharacterClassType.Necromancer,
+        CharacterClassType.Bard,
+        CharacterClassType.Mage,
+        CharacterClassType.Paladin,
+    )
 
 private fun attackerStrike(
     weaponClassType: CharacterClassType,

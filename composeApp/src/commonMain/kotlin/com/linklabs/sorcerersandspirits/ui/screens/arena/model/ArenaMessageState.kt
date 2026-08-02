@@ -989,8 +989,6 @@ private fun ArenaMessage.toState(
             )
     }
 
-fun ArenaMessageState.toCollapsingUserId(): String? = collapsingUserId
-
 @Immutable
 sealed interface FlashAnchor {
     @Immutable data class Avatar(val userId: String) : FlashAnchor

@@ -199,7 +199,7 @@ class ArenaMessageStateTest {
             .single()
 
     private fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> =
-        toStates(participants = participants).flatMap { it.messages }
+        toMessageStates(participants = participants)
 
     private fun incomingNormalRoll(id: String, type: NormalRollMessageType) =
         IncomingArenaMessage(

@@ -36,7 +36,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.revealed
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
@@ -104,17 +103,7 @@ internal fun ArenaCombat(
             state.playerMap.values.map { it.characterClass.type }.toSet()
         }
 
-    val revealedMessageGroups =
-        remember(key1 = screenState.messageGroups, key2 = screenState.revealedMessageCount) {
-            screenState.messageGroups.revealed(count = screenState.revealedMessageCount)
-        }
-
-    val playedMessages =
-        remember(key1 = screenState.messageGroups, key2 = screenState.revealedMessageCount) {
-            screenState.messageGroups
-                .flatMap { it.messages }
-                .take(n = screenState.revealedMessageCount)
-        }
+    val playedMessages = screenState.messages
 
     val setupMessageIds =
         remember(key1 = screenState.messageGroups) {
@@ -146,16 +135,16 @@ internal fun ArenaCombat(
             .lastOrNull()
             ?.characterClassInfo
 
-    val revealedMessageCount = screenState.revealedMessageCount
+    val displayedMessageCount = playedMessages.size
 
     var isMessagesExpanded by remember { mutableStateOf(value = false) }
-    var seenLogMessageCount by remember { mutableStateOf(value = revealedMessageCount) }
-    LaunchedEffect(key1 = isMessagesExpanded, key2 = revealedMessageCount) {
-        val shouldSyncSeenCount = isMessagesExpanded || revealedMessageCount < seenLogMessageCount
-        if (shouldSyncSeenCount) seenLogMessageCount = revealedMessageCount
+    var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
+    LaunchedEffect(key1 = isMessagesExpanded, key2 = displayedMessageCount) {
+        val shouldSyncSeenCount = isMessagesExpanded || displayedMessageCount < seenLogMessageCount
+        if (shouldSyncSeenCount) seenLogMessageCount = displayedMessageCount
     }
     val unreadMessageCount =
-        (revealedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
+        (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -172,7 +161,7 @@ internal fun ArenaCombat(
                     diceHomeBounds = diceHomeBounds,
                     onToggleExpanded = {
                         isMessagesExpanded = !isMessagesExpanded
-                        if (isMessagesExpanded) seenLogMessageCount = revealedMessageCount
+                        if (isMessagesExpanded) seenLogMessageCount = displayedMessageCount
                     },
                     modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
                 )
@@ -246,7 +235,7 @@ internal fun ArenaCombat(
             )
 
             MessageLogOverlay(
-                messageGroups = revealedMessageGroups,
+                messageGroups = screenState.messageGroups,
                 isExpanded = isMessagesExpanded,
                 diceHomeBounds = diceHomeBounds,
                 onDismiss = { isMessagesExpanded = false },

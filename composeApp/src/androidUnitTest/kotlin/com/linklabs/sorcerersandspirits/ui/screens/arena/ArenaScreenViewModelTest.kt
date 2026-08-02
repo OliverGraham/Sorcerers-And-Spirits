@@ -598,7 +598,6 @@ class ArenaScreenViewModelTest {
             arenaMatchFlow.value =
                 ArenaMatch.Finished(
                     messages = emptyList(),
-                    numberOfNewMessages = 0,
                     playerMap = playerMap,
                     participants = playerMap.mapValues { it.value.characterClass.type },
                 )
@@ -618,7 +617,6 @@ class ArenaScreenViewModelTest {
             arenaMatchFlow.value =
                 ArenaMatch.Finished(
                     messages = emptyList(),
-                    numberOfNewMessages = 0,
                     playerMap = playerMap,
                     participants = playerMap.mapValues { it.value.characterClass.type },
                 )
@@ -639,7 +637,6 @@ class ArenaScreenViewModelTest {
             arenaMatchFlow.value =
                 ArenaMatch.Finished(
                     messages = emptyList(),
-                    numberOfNewMessages = 0,
                     matchNumberInGauntlet = Gauntlet.MATCHES_PER_GAUNTLET,
                     playerMap = playerMap,
                     participants = playerMap.mapValues { it.value.characterClass.type },
@@ -658,7 +655,6 @@ class ArenaScreenViewModelTest {
         arenaMatchFlow.value =
             ArenaMatch.WaitingForAllPlayers(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap =
                     mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
             )
@@ -687,7 +683,6 @@ class ArenaScreenViewModelTest {
         arenaMatchFlow.value =
             ArenaMatch.WaitingForAllPlayers(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap =
                     mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
             )
@@ -716,7 +711,6 @@ class ArenaScreenViewModelTest {
         arenaMatchFlow.value =
             ArenaMatch.WaitingForAllPlayers(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap =
                     mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")),
             )
@@ -741,7 +735,6 @@ class ArenaScreenViewModelTest {
         arenaMatchFlow.value =
             ArenaMatch.Finished(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap =
                     mapOf(
                         USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User")
@@ -821,7 +814,6 @@ class ArenaScreenViewModelTest {
         arenaMatchFlow.value =
             ArenaMatch.WaitingForAllPlayers(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap =
                     mapOf(
                         USER_ID to selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue()),
@@ -837,7 +829,6 @@ class ArenaScreenViewModelTest {
             arenaMatchFlow.value =
                 ArenaMatch.WaitingForAllPlayers(
                     messages = emptyList(),
-                    numberOfNewMessages = 0,
                     playerMap =
                         mapOf(
                             USER_ID to
@@ -1607,7 +1598,6 @@ class ArenaScreenViewModelTest {
         ) =
             ArenaMatch.Combat(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap = playerMap,
                 nextCombatAction = nextCombatAction,
                 roundNumber = roundNumber,

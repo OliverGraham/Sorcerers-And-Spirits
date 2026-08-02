@@ -98,7 +98,7 @@ class ArenaScreenStateTest {
     fun `Given the screen opens directly onto a finished match, then it shows the finished screen without holding`() {
         // No prior combat view to hold (e.g. reconnecting into an already-finished match), so there
         // is nothing to hold for and the finished screen shows immediately.
-        val finishedMatch = finishedMatch(messageCount = 0, numberOfNewMessages = 0)
+        val finishedMatch = finishedMatch(messageCount = 0)
 
         val nextState =
             finishedMatch.toUpdatedState(previousState = null, userId = USER_ID).nextState
@@ -109,8 +109,7 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given the user has readied in the match data, then the finished screen shows them as readied`() {
-        val finishedMatch =
-            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = true)
+        val finishedMatch = finishedMatch(messageCount = 0, isUserReady = true)
 
         val nextState =
             finishedMatch.toUpdatedState(previousState = null, userId = USER_ID).nextState
@@ -121,8 +120,7 @@ class ArenaScreenStateTest {
     @Test
     fun `Given the user readied last match but the next match has not, then readiness does not carry over`() {
         val previousState = screenState(hasReadiedForNextMatch = true)
-        val finishedMatch =
-            finishedMatch(messageCount = 0, numberOfNewMessages = 0, isUserReady = false)
+        val finishedMatch = finishedMatch(messageCount = 0, isUserReady = false)
 
         val nextState =
             finishedMatch.toUpdatedState(previousState = previousState, userId = USER_ID).nextState
@@ -143,7 +141,6 @@ class ArenaScreenStateTest {
         val finishedMatch =
             finishedMatch(
                 messageCount = 0,
-                numberOfNewMessages = 0,
                 isUserReady = false,
                 matchNumberInGauntlet = FINAL_MATCH_NUMBER,
             )
@@ -159,7 +156,6 @@ class ArenaScreenStateTest {
         val finishedMatch =
             finishedMatch(
                 messageCount = 0,
-                numberOfNewMessages = 0,
                 isUserReady = true,
                 matchNumberInGauntlet = FINAL_MATCH_NUMBER,
             )
@@ -178,7 +174,6 @@ class ArenaScreenStateTest {
         val finishedMatch =
             finishedMatch(
                 messageCount = 0,
-                numberOfNewMessages = 0,
                 isUserReady = true,
                 matchNumberInGauntlet = FINAL_MATCH_NUMBER,
             )
@@ -267,7 +262,6 @@ class ArenaScreenStateTest {
         val match =
             ArenaMatch.ChoosingClasses(
                 messages = emptyList(),
-                numberOfNewMessages = 0,
                 playerMap =
                     mapOf(
                         USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
@@ -308,7 +302,6 @@ class ArenaScreenStateTest {
 
     private fun finishedMatch(
         messageCount: Int,
-        numberOfNewMessages: Int,
         isUserReady: Boolean = false,
         matchNumberInGauntlet: Int = 1,
     ) =
@@ -321,7 +314,6 @@ class ArenaScreenStateTest {
                         message = ArenaMessage.NewRound(roundNumber = index),
                     )
                 },
-            numberOfNewMessages = numberOfNewMessages,
             matchNumberInGauntlet = matchNumberInGauntlet,
             playerMap = combatPlayers(isUserReady = isUserReady),
             participants = matchParticipants,
@@ -330,7 +322,6 @@ class ArenaScreenStateTest {
     private fun endingCombatMatch() =
         ArenaMatch.Combat(
             messages = emptyList(),
-            numberOfNewMessages = 0,
             playerMap = combatPlayers(),
             nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
             roundNumber = 1,
@@ -546,17 +537,16 @@ class ArenaScreenStateTest {
     private fun screenState(
         arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
         hasReadiedForNextMatch: Boolean = false,
-        messageGroups: List<ArenaMessageGroupState> = emptyList(),
+        messages: List<ArenaMessageState> = emptyList(),
     ) =
         ArenaScreenState(
-            messageGroups = messageGroups,
+            messages = messages,
             secondsRemaining = 0,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
             participants = emptyMap(),
-            numberOfNewMessages = 0,
         )
 
     private fun players() =

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
+import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
@@ -31,6 +32,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.plusMessage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
@@ -102,7 +104,27 @@ class ArenaScreenViewModel(
 
     private var previousPlayerNames: Map<String, String> = emptyMap()
 
+    private val seenMessageIds = mutableSetOf<String>()
+    private var lastMatchNumber: Int? = null
+
+   /* private val playbackSequencer =
+        CombatPlaybackSequencer(
+            scope = viewModelScope,
+            emit = { target, compose ->
+                _uiStateFlow.update { state ->
+                    when (state) {
+                        is UiState.Loaded -> UiState.Loaded(data = compose(state.data))
+                        is UiState.Loading -> UiState.Loaded(data = compose(target))
+                        is UiState.Error -> state
+                    }
+                }
+            },
+            appendMessage = ::addMessage,
+            onMatchPlaybackComplete = ::finishMatchAfterPlayback,
+        )
+*/
     init {
+        // playbackSequencer.start()
         loadArenaMatch()
     }
 
@@ -263,6 +285,7 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
+        // playbackSequencer.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -315,6 +338,7 @@ class ArenaScreenViewModel(
         if (this == null) {
             screenStateFlowJob?.cancel()
             finishWriteJob?.cancel()
+            // playbackSequencer.cancel()
 
             viewModelScope.launch {
                 setCurrentTravelerAvailableUseCase()
@@ -328,12 +352,16 @@ class ArenaScreenViewModel(
         if (recordedStat) persistPendingStats()
         notifyDepartedOpponents(userId = userId)
 
+        val messageUpdate = collectNewMessages(match = this)
+        if (messageUpdate.isNewMatch) clearMessages()
+
         val previousState = _uiStateFlow.getLoadedStateOrNull()
 
         val updatedArenaStateUpdate =
             toUpdatedState(
                 previousState = previousState,
                 userId = userId,
+                newMessages = messageUpdate.newMessages,
                 characterClasses = characterClasses,
                 classCopy = classCopy,
             )
@@ -341,12 +369,47 @@ class ArenaScreenViewModel(
         handleTimerAction(timerAction = updatedArenaStateUpdate.timerAction)
 
         val nextState = updatedArenaStateUpdate.nextState
-        submitToMessageQueue(nextState = nextState)
+        /*playbackSequencer.submit(
+            target = nextState,
+            freshMessages = updatedArenaStateUpdate.freshMessages,
+        )*/
 
         computerOpponentHandler.onArenaState(
             arenaState = nextState.arenaState,
             characterClasses = nextState.characterClasses,
         )
+    }
+
+    private fun addMessage(message: ArenaMessageState) {
+        _uiStateFlow.updateLoaded { screenState ->
+            val isAlreadyShown = screenState.messages.any { it.id == message.id }
+            if (isAlreadyShown) {
+                screenState
+            } else {
+                screenState.copy(
+                    messages = screenState.messages + message,
+                    messageGroups = screenState.messageGroups.plusMessage(message = message),
+                )
+            }
+        }
+    }
+
+    private fun clearMessages() {
+        _uiStateFlow.updateLoaded { screenState ->
+            screenState.copy(messages = emptyList(), messageGroups = emptyList())
+        }
+    }
+
+    private fun collectNewMessages(match: ArenaMatch): MessageUpdate {
+        val previousMatchNumber = lastMatchNumber
+        val isNewMatch =
+            previousMatchNumber != null && match.matchNumberInGauntlet != previousMatchNumber
+        lastMatchNumber = match.matchNumberInGauntlet
+
+        if (isNewMatch) seenMessageIds.clear()
+
+        val newMessages = match.messages.filter { message -> seenMessageIds.add(message.id) }
+        return MessageUpdate(newMessages = newMessages, isNewMatch = isNewMatch)
     }
 
     private fun ArenaMatch.notifyDepartedOpponents(userId: String) {
@@ -404,6 +467,7 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
         computerOpponentHandler.cancel()
+        // playbackSequencer.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()
@@ -471,19 +535,9 @@ class ArenaScreenViewModel(
 
         onChooseCharacterClass(playerState = userPlayer, characterClassState = chosenClass)
     }
-
-    private fun submitToMessageQueue(nextState: ArenaScreenState) {
-        val newMessages =
-            nextState.messageGroups
-                .flatMap { it.messages }
-                .takeLast(n = nextState.numberOfNewMessages)
-
-        messageQueue.enqueue(newMessages = newMessages)
-    }
-
-    private fun addAnimatingMessageToScreenState(arenaMessageState: ArenaMessageState) {
-        _uiStateFlow.updateLoaded { screenState ->
-            screenState.copy(animatingMessage = arenaMessageState)
-        }
-    }
 }
+
+private data class MessageUpdate(
+    val newMessages: List<IncomingArenaMessage>,
+    val isNewMatch: Boolean,
+)

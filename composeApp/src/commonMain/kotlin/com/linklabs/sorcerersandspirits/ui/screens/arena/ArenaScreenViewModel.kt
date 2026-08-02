@@ -76,7 +76,11 @@ class ArenaScreenViewModel(
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
     private val messageQueue =
-        MessageQueue(addAnimatingMessageToScreenState = ::addAnimatingMessageToScreenState)
+        MessageQueue(
+            onAnimationTriggered = ::onAnimationTriggered,
+            onMessageCommitted = ::addMessageToScreenState,
+            onSequenceComplete = ::commitPendingUpdate,
+        )
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
     private val classCopy by lazy { getCharacterClassCopyUseCase() }
@@ -194,8 +198,12 @@ class ArenaScreenViewModel(
         viewModelScope.launch { messageQueue.onDiceSettled() }
     }
 
-    fun onAnimationComplete() {
-        messageQueue.onAnimationComplete()
+    fun onFlashComplete() {
+        messageQueue.onFlashComplete()
+    }
+
+    fun onAvatarComplete() {
+        messageQueue.onAvatarComplete()
     }
 
     fun onAttack(attackArguments: AttackArguments) {

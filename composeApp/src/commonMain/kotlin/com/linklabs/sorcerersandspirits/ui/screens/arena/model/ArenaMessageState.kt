@@ -362,24 +362,11 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
 // TODO: figure out how to do this better
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
-fun List<IncomingArenaMessage>.toStates(
+fun List<IncomingArenaMessage>.toMessageStates(
     participants: Map<String, ParticipantClass>
-): List<ArenaMessageGroupState> =
-    groupBy { it.roundNumber }
-        .map { (roundNumber, messagesInRound) ->
-            val messages =
-                messagesInRound.map { incomingMessage ->
-                    incomingMessage.message.toState(
-                        id = incomingMessage.id,
-                        participants = participants,
-                    )
-                }
-            if (roundNumber == 0) {
-                ArenaMessageGroupState.Setup(messages = messages)
-            } else {
-                ArenaMessageGroupState.Round(roundNumber = roundNumber, messages = messages)
-            }
-        }
+): List<ArenaMessageState> = map { incomingMessage ->
+    incomingMessage.message.toState(id = incomingMessage.id, participants = participants)
+}
 
 private fun ArenaMessage.toState(
     id: String,

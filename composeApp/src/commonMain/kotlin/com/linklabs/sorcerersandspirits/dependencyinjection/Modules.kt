@@ -1,8 +1,6 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
-import com.linklabs.sorcerersandspirits.data.arena.message.ArenaMessageStore
-import com.linklabs.sorcerersandspirits.data.arena.message.InMemoryArenaMessageStore
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
 import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigAbilityConfigProvider
@@ -109,7 +107,6 @@ private fun Module.initializeRepositories() {
     singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
     singleOf(::DataStorePendingStatsStore) { bind<PendingStatsStore>() }
-    single<ArenaMessageStore> { InMemoryArenaMessageStore() }
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
     singleOf(::FirebaseTavernRepository) { bind<TavernRepository>() }
 }

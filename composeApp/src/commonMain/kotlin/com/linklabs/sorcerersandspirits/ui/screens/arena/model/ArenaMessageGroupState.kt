@@ -20,21 +20,24 @@ sealed interface ArenaMessageGroupState {
         }
 }
 
-/**
- * Reveals the groups up to [count] messages of the flat, ordered stream, so the log and its handle
- * stay in step with the animation playback: a group only appears once its first message has been
- * revealed, and it only shows the messages revealed so far. Trailing empty groups drop out.
- */
-fun List<ArenaMessageGroupState>.revealed(count: Int): List<ArenaMessageGroupState> {
-    var consumed = 0
-    return mapNotNull { group ->
-        val revealedInGroup =
-            (count - consumed).coerceIn(minimumValue = 0, maximumValue = group.messages.size)
-        consumed += group.messages.size
-        if (revealedInGroup == 0) {
-            null
-        } else {
-            group.withMessages(messages = group.messages.take(n = revealedInGroup))
-        }
+fun List<ArenaMessageGroupState>.plusMessage(
+    message: ArenaMessageState
+): List<ArenaMessageGroupState> {
+    if (message is ArenaMessageState.NewRound) {
+        val roundNumber = message.roundNumber.toIntOrNull()
+        val newGroup =
+            if (roundNumber == null) {
+                ArenaMessageGroupState.Setup(messages = listOf(message))
+            } else {
+                ArenaMessageGroupState.Round(roundNumber = roundNumber, messages = listOf(message))
+            }
+        return this + newGroup
     }
+
+    val lastGroup =
+        lastOrNull() ?: return listOf(ArenaMessageGroupState.Setup(messages = listOf(message)))
+    return dropLast(n = 1) + lastGroup.withMessages(messages = lastGroup.messages + message)
 }
+
+fun List<ArenaMessageState>.toMessageGroups(): List<ArenaMessageGroupState> =
+    fold(initial = emptyList()) { groups, message -> groups.plusMessage(message = message) }

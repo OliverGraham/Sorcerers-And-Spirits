@@ -68,17 +68,13 @@ internal fun Map<String, ArenaPlayerEntity>.toParticipants(): Map<String, Charac
         it.userId to it.characterClassEntity.type
     }
 
-internal fun ArenaMatchEntity.toDomain(
-    fullMessageLog: List<ArenaMessageEntity>,
-    newMessageCount: Int,
-): ArenaMatch {
-    val messages = fullMessageLog.toDomain()
+internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
+    val messages = newMessages.toDomain()
 
     return when (this) {
         is ArenaMatchEntity.WaitingForAllPlayers ->
             ArenaMatch.WaitingForAllPlayers(
                 messages = messages,
-                numberOfNewMessages = newMessageCount,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
@@ -89,7 +85,6 @@ internal fun ArenaMatchEntity.toDomain(
             ArenaMatch.ChoosingClasses(
                 playerMap = playerMap,
                 messages = messages,
-                numberOfNewMessages = newMessageCount,
                 activePlayerUserId = activePlayerUserId,
                 activePlayer = playerMap.getValue(key = activePlayerUserId),
                 matchNumberInGauntlet = matchNumberInGauntlet,
@@ -100,7 +95,6 @@ internal fun ArenaMatchEntity.toDomain(
             ArenaMatch.Combat(
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 messages = messages,
-                numberOfNewMessages = newMessageCount,
                 nextCombatAction = nextCombatActionEntity.toDomain(),
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
@@ -113,7 +107,6 @@ internal fun ArenaMatchEntity.toDomain(
         is ArenaMatchEntity.Finished ->
             ArenaMatch.Finished(
                 messages = messages,
-                numberOfNewMessages = newMessageCount,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 matchNumberInGauntlet = matchNumberInGauntlet,
                 participants = participants,

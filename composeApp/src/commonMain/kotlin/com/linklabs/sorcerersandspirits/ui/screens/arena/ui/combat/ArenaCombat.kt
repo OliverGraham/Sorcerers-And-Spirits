@@ -42,6 +42,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Com
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
@@ -249,11 +250,7 @@ internal fun ArenaCombat(
                 DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
             }
 
-            FlashOverlay(
-                callout = screenState.currentFlash,
-                anchor = screenState.currentFlashAnchor,
-                avatarBounds = avatarBounds,
-            )
+            FlashOverlay(message = screenState.animatingMessage, avatarBounds = avatarBounds)
 
             InspectDrawer(
                 player = inspectedUserId?.let { state.playerMap[it] },

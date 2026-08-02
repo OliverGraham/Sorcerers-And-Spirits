@@ -568,7 +568,7 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
 // TODO: figure out how to do this better
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
-fun List<IncomingArenaMessage>.toMessageStates(
+internal fun List<IncomingArenaMessage>.toMessageStates(
     participants: Map<String, ParticipantClass>
 ): List<ArenaMessageState> = map { incomingMessage ->
     incomingMessage.message.toState(id = incomingMessage.id, participants = participants)

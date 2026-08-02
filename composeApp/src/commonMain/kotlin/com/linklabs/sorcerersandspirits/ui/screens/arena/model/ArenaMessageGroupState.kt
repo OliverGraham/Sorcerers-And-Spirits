@@ -20,6 +20,7 @@ sealed interface ArenaMessageGroupState {
         }
 }
 
+// TODO: Hmm, is this the way? dropLast()?
 fun List<ArenaMessageGroupState>.plusMessage(
     message: ArenaMessageState
 ): List<ArenaMessageGroupState> {
@@ -36,6 +37,7 @@ fun List<ArenaMessageGroupState>.plusMessage(
 
     val lastGroup =
         lastOrNull() ?: return listOf(ArenaMessageGroupState.Setup(messages = listOf(message)))
+
     return dropLast(n = 1) + lastGroup.withMessages(messages = lastGroup.messages + message)
 }
 

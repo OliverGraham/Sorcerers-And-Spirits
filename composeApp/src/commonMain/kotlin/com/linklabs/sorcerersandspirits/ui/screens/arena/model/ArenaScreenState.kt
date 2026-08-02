@@ -59,10 +59,6 @@ internal fun ArenaMatch.toUpdatedState(
     characterClasses: List<CharacterClassState> = emptyList(),
     classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
 ): ArenaStateUpdate {
-    val participants = participantClasses()
-
-    val freshMessages = newMessages.toMessageStates(participants = participants)
-
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 
@@ -98,6 +94,7 @@ internal fun ArenaMatch.toUpdatedState(
             TimerAction.None -> previousSeconds
         }
 
+    val participants = participantClasses()
     val finalState =
         ArenaScreenState(
             messages = previousState?.messages ?: emptyList(),
@@ -106,17 +103,18 @@ internal fun ArenaMatch.toUpdatedState(
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
             hasReadiedForNextMatch = userPlayer.isReadyForNextMatch,
-            arenaState = computedArenaState,
+            arenaState = previousState?.arenaState ?: computedArenaState, // TODO: weird
             participants = participants,
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
+            pendingArenaState = computedArenaState,
         )
 
     return ArenaStateUpdate(
         nextState = finalState,
         timerAction = timerAction,
-        freshMessages = freshMessages,
+        newMessages = newMessages.toMessageStates(participants = participants),
     )
 }
 
@@ -293,5 +291,5 @@ private fun determineGauntletFinishedTimerAction(
 data class ArenaStateUpdate(
     val nextState: ArenaScreenState,
     val timerAction: TimerAction,
-    val freshMessages: List<ArenaMessageState> = emptyList(),
+    val newMessages: List<ArenaMessageState>,
 )

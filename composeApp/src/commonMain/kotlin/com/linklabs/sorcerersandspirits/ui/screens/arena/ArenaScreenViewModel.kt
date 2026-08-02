@@ -107,24 +107,7 @@ class ArenaScreenViewModel(
     private val seenMessageIds = mutableSetOf<String>()
     private var lastMatchNumber: Int? = null
 
-   /* private val playbackSequencer =
-        CombatPlaybackSequencer(
-            scope = viewModelScope,
-            emit = { target, compose ->
-                _uiStateFlow.update { state ->
-                    when (state) {
-                        is UiState.Loaded -> UiState.Loaded(data = compose(state.data))
-                        is UiState.Loading -> UiState.Loaded(data = compose(target))
-                        is UiState.Error -> state
-                    }
-                }
-            },
-            appendMessage = ::addMessage,
-            onMatchPlaybackComplete = ::finishMatchAfterPlayback,
-        )
-*/
     init {
-        // playbackSequencer.start()
         loadArenaMatch()
     }
 

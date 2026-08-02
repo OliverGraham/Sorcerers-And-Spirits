@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashCallout
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -67,14 +67,13 @@ private const val CENTER_BANNER_FRACTION = 0.2f
 
 @Composable
 internal fun FlashOverlay(
-    callout: FlashCallout?,
-    anchor: FlashAnchor,
+    message: ArenaMessageState?,
     avatarBounds: CombatAvatarBounds,
     modifier: Modifier = Modifier,
 ) {
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
-    var shownCallout by remember { mutableStateOf<FlashCallout?>(value = null) }
-    if (callout != null) shownCallout = callout
+    var shownMessage by remember { mutableStateOf<ArenaMessageState?>(value = null) }
+    if (message != null) shownMessage = message
 
     Box(
         modifier =
@@ -85,13 +84,17 @@ internal fun FlashOverlay(
                 }
                 .onSizeChanged { overlaySize = it }
     ) {
-        val visibleCallout = shownCallout ?: return@Box
-        val point = anchor.resolvePoint(avatarBounds = avatarBounds, overlaySize = overlaySize)
+        val visibleMessage = shownMessage ?: return@Box
+        val point =
+            visibleMessage.flashAnchor.resolvePoint(
+                avatarBounds = avatarBounds,
+                overlaySize = overlaySize,
+            )
 
-        val isVisible = callout != null
+        val isVisible = message != null
         if (isVisible) {
             ConfettiBurst(
-                triggerKey = visibleCallout,
+                triggerKey = visibleMessage,
                 origin = point,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -111,36 +114,13 @@ internal fun FlashOverlay(
             exit = scaleOut(targetScale = 1.5f) + fadeOut(),
             modifier = Modifier.centeredAt(point = { point }),
         ) {
-            FlashText(callout = visibleCallout)
+            FlashText(message = visibleMessage)
         }
     }
 }
 
-// TODO: Delete FlashAnchor, and find a simple way to pass in the boolean here.
-private fun FlashAnchor.resolvePoint(
-    avatarBounds: CombatAvatarBounds,
-    overlaySize: IntSize,
-): Offset {
-    val center = Offset(x = overlaySize.width / 2f, y = overlaySize.height * CENTER_BANNER_FRACTION)
-    if (this !is FlashAnchor.Avatar) return center
-
-    val seat = avatarBounds.fullScreenBoundsFor(userId = userId) ?: return center
-    return Offset(x = seat.center.x, y = seat.top + seat.height * AVATAR_HEAD_FRACTION)
-}
-
-private fun Modifier.centeredAt(point: () -> Offset): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints = constraints)
-    layout(width = placeable.width, height = placeable.height) {
-        val target = point()
-        placeable.place(
-            x = (target.x - placeable.width / 2f).roundToInt(),
-            y = (target.y - placeable.height / 2f).roundToInt(),
-        )
-    }
-}
-
 @Composable
-private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
+private fun FlashText(message: ArenaMessageState, modifier: Modifier = Modifier) {
     val baseStyle =
         TextStyle(
             fontSize = flashFontSize,
@@ -152,8 +132,8 @@ private fun FlashText(callout: FlashCallout, modifier: Modifier = Modifier) {
     val outlineWidthPx =
         with(LocalDensity.current) { flashFontSize.toPx() } * FLASH_OUTLINE_FRACTION
 
-    val text = callout.text()
-    val fillColor = callout.actingClassType?.toColor() ?: Color.White
+    val text = message.toStringResource()
+    val fillColor = message.actingClassType?.toColor() ?: Color.White
 
     val swingAnimation = getSwingAnimation()
     Box(modifier = modifier.graphicsLayer { rotationZ = swingAnimation.value }) {
@@ -228,6 +208,28 @@ private fun ConfettiBurst(triggerKey: Any, origin: Offset, modifier: Modifier = 
                 center = position,
             )
         }
+    }
+}
+
+private fun FlashAnchor.resolvePoint(
+    avatarBounds: CombatAvatarBounds,
+    overlaySize: IntSize,
+): Offset {
+    val center = Offset(x = overlaySize.width / 2f, y = overlaySize.height * CENTER_BANNER_FRACTION)
+    if (this !is FlashAnchor.Avatar) return center
+
+    val seat = avatarBounds.fullScreenBoundsFor(userId = userId) ?: return center
+    return Offset(x = seat.center.x, y = seat.top + seat.height * AVATAR_HEAD_FRACTION)
+}
+
+private fun Modifier.centeredAt(point: () -> Offset): Modifier = layout { measurable, constraints ->
+    val placeable = measurable.measure(constraints = constraints)
+    layout(width = placeable.width, height = placeable.height) {
+        val target = point()
+        placeable.place(
+            x = (target.x - placeable.width / 2f).roundToInt(),
+            y = (target.y - placeable.height / 2f).roundToInt(),
+        )
     }
 }
 

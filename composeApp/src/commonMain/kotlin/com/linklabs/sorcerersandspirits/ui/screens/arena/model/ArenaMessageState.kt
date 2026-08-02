@@ -272,14 +272,19 @@ sealed interface ArenaMessageState {
 
         override val flashAnchor: FlashAnchor
             get() {
-                val bardId = when (this) {
-                    is Trigger -> bardUserId
-                    is StrumLute -> bardUserId
-                    is CharmActivation -> bardUserId
-                    is Charm -> bardUserId
-                    is Lull -> null
+                val bardId =
+                    when (this) {
+                        is Trigger -> bardUserId
+                        is StrumLute -> bardUserId
+                        is CharmActivation -> bardUserId
+                        is Charm -> bardUserId
+                        is Lull -> null
+                    }
+                return if (bardId != null) {
+                    FlashAnchor.Avatar(userId = bardId)
+                } else {
+                    FlashAnchor.Center
                 }
-                return if (bardId != null) FlashAnchor.Avatar(userId = bardId) else FlashAnchor.Center
             }
 
         @Immutable
@@ -772,17 +777,21 @@ private fun ArenaMessage.toState(
             val gestures = buildMap {
                 put(
                     key = attackerUserId,
-                    value = attackerStrike(
-                        weaponClassType =
-                            resolveWeaponClassType(
-                                attackerClassType = attackerClassType,
-                                impersonatedClassType = impersonatedCharacterType,
-                                id = id,
-                            ),
-                        messageType = normalRollMessageType,
-                    ),
+                    value =
+                        attackerStrike(
+                            weaponClassType =
+                                resolveWeaponClassType(
+                                    attackerClassType = attackerClassType,
+                                    impersonatedClassType = impersonatedCharacterType,
+                                    id = id,
+                                ),
+                            messageType = normalRollMessageType,
+                        ),
                 )
-                put(key = defenderUserId, value = defenderReactionGesture(normalRollMessageType = normalRollMessageType))
+                put(
+                    key = defenderUserId,
+                    value = defenderReactionGesture(normalRollMessageType = normalRollMessageType),
+                )
             }
 
             ArenaMessageState.NormalRoll.Attack(

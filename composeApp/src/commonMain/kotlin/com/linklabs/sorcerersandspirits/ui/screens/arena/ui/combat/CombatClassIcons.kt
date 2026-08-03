@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.painterResource
@@ -28,7 +29,6 @@ internal fun ClassIcons(
     headIconPlayers: List<PlayerState.Selected>,
     userPlayerId: String,
     isTargetable: Boolean,
-    onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     animatingMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
@@ -43,7 +43,6 @@ internal fun ClassIcons(
                 player = player,
                 isUserPlayer = player.userId == userPlayerId,
                 isTargetable = isTargetable,
-                onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
                 animatingMessage = animatingMessage,
             )
@@ -56,7 +55,6 @@ private fun ClassIcon(
     player: PlayerState.Selected,
     isUserPlayer: Boolean,
     isTargetable: Boolean,
-    onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     animatingMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
@@ -70,6 +68,7 @@ private fun ClassIcon(
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val headWidth = minOf(a = maxWidth, b = maxHeight)
 
+        val onTargetOpponent = LocalArenaActions.current.onTargetOpponent
         ClassHeadIcon(
             characterClass = player.characterClass,
             isEnabled = isConscious,
@@ -77,7 +76,11 @@ private fun ClassIcon(
             hitPointsEmphasis = splash.hitPointsEmphasis,
             modifier =
                 Modifier.sharedBounds(key = player.userId).clickable {
-                    if (isTargetingTap) onSelectTarget(player.userId) else onInspect(player.userId)
+                    if (isTargetingTap) {
+                        onTargetOpponent(player.userId)
+                    } else {
+                        onInspect(player.userId)
+                    }
                 },
         )
 

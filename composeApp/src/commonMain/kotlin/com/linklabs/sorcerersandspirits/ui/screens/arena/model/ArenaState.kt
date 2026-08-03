@@ -40,6 +40,7 @@ sealed interface ArenaState {
         val turnOwnerUserId: String,
         val lockedTargetUserId: String?,
         val diceRollState: DiceRollState?,
+        val selectedOpponentUserId: String? = null,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
@@ -63,6 +64,24 @@ sealed interface ArenaState {
 
         val isTeleportDoublesBonusSpent =
             combatActionState.teleportAction()?.let { it.attackerDoublesBonus == 0 } ?: false
+
+        val turnOwner = playerMap.getValue(key = turnOwnerUserId)
+        val turnOwnerCharacterClass = turnOwner.characterClass
+
+        private val targetedUserId = getTargetedPlayerUserId()
+
+        // TODO: For "Choose your target avatar" if this is null, then show it
+        val targetedPlayer = playerMap[targetedUserId]
+        val playersInTheStands = getPlayersInTheStands(targetedUserId = targetedUserId)
+        val areTherePlayersInTheStands = playersInTheStands.isNotEmpty()
+
+        val characterTypesInArena = playerMap.values.map { it.characterClass.type }.toSet()
+
+        fun canTurnOwnerTargetAnOpponent(isAnAnimationActive: Boolean) =
+            !isAnAnimationActive &&
+                isItThisUsersTurn &&
+                !isMatchOver &&
+                lockedTargetUserId.isNullOrEmpty()
     }
 
     @Immutable
@@ -75,6 +94,16 @@ sealed interface ArenaState {
         val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
     }
 }
+
+private fun ArenaState.Combat.getTargetedPlayerUserId() =
+    lockedTargetUserId
+        ?: selectedOpponentUserId
+        ?: playerMap.values
+            .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
+            ?.userId
+
+private fun ArenaState.Combat.getPlayersInTheStands(targetedUserId: String?) =
+    playerMap.filterKeys { it != turnOwnerUserId && it != targetedUserId }.values.toList()
 
 @Immutable
 sealed interface ActiveState : ArenaState {

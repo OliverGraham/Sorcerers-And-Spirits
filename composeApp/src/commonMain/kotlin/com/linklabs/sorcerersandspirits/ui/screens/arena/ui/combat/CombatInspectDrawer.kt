@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
 import org.jetbrains.compose.resources.painterResource
 
 private val inspectDrawerColor = Color(color = 0xF21A1A1A)
@@ -112,7 +113,7 @@ internal fun InspectContent(
             fontWeight = FontWeight.Bold,
             color = Color.White,
         )
-        ClassAvatar(
+        AvatarImage(
             characterClass = player.characterClass,
             modifier = Modifier.fillMaxWidth().height(height = 200.dp),
         )

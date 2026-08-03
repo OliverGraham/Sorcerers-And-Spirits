@@ -206,6 +206,15 @@ class ArenaScreenViewModel(
         messageQueue.onAvatarComplete()
     }
 
+    fun onTargetOpponent(opponentUserId: String) {
+        _uiStateFlow.updateLoaded { screenState ->
+            val arenaState =
+                screenState.arenaState as? ArenaState.Combat ?: return@updateLoaded screenState
+
+            screenState.copy(arenaState = arenaState.copy(selectedOpponentUserId = opponentUserId))
+        }
+    }
+
     fun onAttack(attackArguments: AttackArguments) {
         viewModelScope.launch { attackArguments.onAttack() }
     }
@@ -214,6 +223,7 @@ class ArenaScreenViewModel(
         val arenaState = currentCombatState() ?: return
         val normalAttack = toDomain(combatActionState = arenaState.combatActionState) ?: return
 
+        updateLockedTargetUserId(lockedTargetUserId = normalAttack.defenderUserId)
         arenaState.performCombatAction(currentAction = normalAttack)
     }
 

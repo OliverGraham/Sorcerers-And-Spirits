@@ -2,7 +2,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,15 +30,9 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
@@ -54,18 +50,16 @@ private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTra
 @Composable
 internal fun ArenaCombat(
     screenState: ArenaScreenState,
-    state: ArenaState.Combat,
+    arenaState: ArenaState.Combat,
     modifier: Modifier = Modifier,
 ) {
     // TODO: Encapsulate all dice-rolling state DiceStateHolder
     val diceStateHolder = rememberDiceStateHolder()
 
-    CommitDiceRolls(state = state, diceStateHolder = diceStateHolder)
+    CommitDiceRolls(state = arenaState, diceStateHolder = diceStateHolder)
 
-    val isPlayingBack = screenState.isPlayingBack
-
-    var selectedOpponentUserId by
-        remember(key1 = state.activeUserIds) { mutableStateOf(value = "") }
+    val inspectedUserId =
+        remember(key1 = arenaState.activeUserIds) { mutableStateOf<String?>(value = null) }
 
     var inspectedUserId by
         remember(key1 = state.activeUserIds) { mutableStateOf<String?>(value = null) }
@@ -96,173 +90,193 @@ internal fun ArenaCombat(
     val displayedState = state.copy(playerMap = displayedPlayerMap)
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
-    val avatarBounds = remember { CombatAvatarBounds() }
 
-    val presentClasses =
-        remember(key1 = state.playerMap.keys) {
-            state.playerMap.values.map { it.characterClass.type }.toSet()
-        }
-
-    val playedMessages = screenState.messages
-
-    val setupMessageIds =
-        remember(key1 = screenState.messageGroups) {
-            screenState.messageGroups
-                .filterIsInstance<ArenaMessageGroupState.Setup>()
-                .flatMap { it.messages }
-                .mapTo(destination = HashSet()) { it.id }
-        }
-
-    // TODO: FFS
-    val latestHandleMessage =
-        playedMessages.lastOrNull {
-            it !is ArenaMessageState.NewRound &&
-                it !is ArenaMessageState.NewTurn &&
-                it !is ArenaMessageState.NormalRoll.Attack &&
-                it.id !in setupMessageIds
-        }
-
-    val displayedRoundNumber =
-        playedMessages
-            .filterIsInstance<ArenaMessageState.NewRound>()
-            .lastOrNull()
-            ?.roundNumber
-            ?.toIntOrNull() ?: state.roundNumber
-
-    val displayedTurnOwnerClass =
-        playedMessages
-            .filterIsInstance<ArenaMessageState.NewTurn>()
-            .lastOrNull()
-            ?.characterClassInfo
-
-    val displayedMessageCount = playedMessages.size
-
-    var isMessagesExpanded by remember { mutableStateOf(value = false) }
+    val displayedMessageCount = screenState.messages.size
+    var isMessageLogExpanded by remember { mutableStateOf(value = false) }
     var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
-    LaunchedEffect(key1 = isMessagesExpanded, key2 = displayedMessageCount) {
-        val shouldSyncSeenCount = isMessagesExpanded || displayedMessageCount < seenLogMessageCount
+    LaunchedEffect(key1 = isMessageLogExpanded, key2 = displayedMessageCount) {
+        val shouldSyncSeenCount = isMessageLogExpanded || displayedMessageCount < seenLogMessageCount
         if (shouldSyncSeenCount) seenLogMessageCount = displayedMessageCount
     }
-    val unreadMessageCount =
-        (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
-
-    val animatingMessage = screenState.animatingMessage
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                // TODO: Make MessagesBar and TurnTimer part of Screen Column
-                MessagesBar(
-                    roundNumber = displayedRoundNumber,
-                    turnOwnerClass = displayedTurnOwnerClass,
-                    latestMessage = latestHandleMessage,
-                    secondsRemaining = screenState.secondsRemaining,
-                    isTimerVisible = screenState.isTimerVisible,
-                    isTimerUrgent = screenState.isTimerUrgent,
-                    unreadMessageCount = unreadMessageCount,
-                    diceHomeBounds = diceHomeBounds,
-                    onToggleExpanded = {
-                        isMessagesExpanded = !isMessagesExpanded
-                        if (isMessagesExpanded) seenLogMessageCount = displayedMessageCount
-                    },
-                    modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
-                )
+            val avatarBoundsStateHolder = remember { CombatAvatarBounds() }
 
-                Box(modifier = Modifier.weight(weight = 1f)) {
-                    AnimatedContent(
-                        targetState = heldMoment.seating,
-                        label = AVATAR_SEATING_TRANSITION_LABEL,
-                        modifier = Modifier.fillMaxSize(),
-                    ) { seating ->
-                        SharedTransitionProvider(
-                            sharedTransitionScope = this@SharedTransitionLayout,
-                            animatedVisibilityScope = this@AnimatedContent,
-                        ) {
-                            CombatStage(
-                                state = displayedState,
-                                seating = seating,
-                                activeUserIds = heldMoment.activeUserIds,
-                                turnOwnerUserId = heldMoment.turnOwnerUserId,
-                                animatingMessage = screenState.animatingMessage,
-                                onSelectTarget = { selectedOpponentUserId = it },
-                                onInspect = { inspectedUserId = it },
-                                isTargetable =
-                                    !isPlayingBack &&
-                                        state.isItThisUsersTurn &&
-                                        !state.isMatchOver &&
-                                        state.lockedTargetUserId == null &&
-                                        !isTargetLockedOptimistically,
-                                onAvatarBoundsChanged = avatarBounds::reportAvatarBounds,
-                                onDiceHomeBoundsChanged = { diceHomeBounds = it },
-                            )
-                        }
-                    }
-
-                    CombatAnimationOverlays(
-                        animatingMessage = screenState.animatingMessage,
-                        avatarBounds = avatarBounds,
-                        presentClasses = presentClasses,
-                    )
-                }
-
-                Spacer(
-                    modifier =
-                        Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
-                            .height(height = BOTTOM_CONTROLS_HEIGHT)
-                )
-            }
-
-            EncoreFullScreenOverlay(
-                animatingMessage = screenState.animatingMessage,
-                presentClasses = presentClasses,
+            ScreenContent(
+                arenaScreenState = screenState,
+                arenaState = arenaState,
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
+                unreadMessageCount =
+                    (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0),
+                diceHomeBoundsTop = diceHomeBounds?.top,
+                onDiceHomeBoundsChanged = { diceHomeBounds = it },
+                onToggleExpanded = {
+                    isMessageLogExpanded = !isMessageLogExpanded
+                    if (isMessageLogExpanded) seenLogMessageCount = displayedMessageCount
+                },
+                onInspect = { inspectedUserId.value = it },
             )
 
-            BottomControls(
-                state = state,
-                targetedOpponentUserId = targetedOpponentUserId,
-                lockTarget = { isTargetLockedOptimistically = true },
+            OverlayContent(
+                arenaScreenState = screenState,
+                arenaState = arenaState,
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
                 diceStateHolder = diceStateHolder,
-                areControlsVisible = !screenState.isMatchEnding,
-                isPlayingBack = isPlayingBack,
-                isActionInFlight = isActionInFlight,
-                onActionDispatched = { isActionInFlight = true },
-                modifier =
-                    Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
-            )
-
-            SpellPotencyFullScreenOverlay(
-                animatingMessage = screenState.animatingMessage,
-                avatarBounds = avatarBounds,
-                presentClasses = presentClasses,
-            )
-
-            MessageLogOverlay(
-                messageGroups = screenState.messageGroups,
-                isExpanded = isMessagesExpanded,
+                isMessageLogExpanded = isMessageLogExpanded,
                 diceHomeBounds = diceHomeBounds,
-                onDismiss = { isMessagesExpanded = false },
-                modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
-            )
-
-            // TODO Yourself: These things truly go on top of the screen column, but perhaps
-            //                Should be elsewhere
-            val homeBounds = diceHomeBounds
-            if (homeBounds != null) {
-                DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
-            }
-
-            if (animatingMessage?.isFlash() == true) {
-                FlashMessageOverlay(
-                    message = screenState.animatingMessage,
-                    avatarBounds = avatarBounds,
-                )
-            }
-
-            InspectDrawer(
-                player = inspectedUserId?.let { state.playerMap[it] },
-                onClose = { inspectedUserId = null },
+                inspectedUserId = inspectedUserId.value,
+                onCloseInspectCharacterDrawer = { inspectedUserId.value = null },
+                onCloseMessageLog = { isMessageLogExpanded = false },
             )
         }
+    }
+}
+
+@Composable
+private fun SharedTransitionScope.ScreenContent(
+    arenaScreenState: ArenaScreenState,
+    arenaState: ArenaState.Combat,
+    unreadMessageCount: Int,
+    diceHomeBoundsTop: Float?,
+    onDiceHomeBoundsChanged: (Rect) -> Unit,
+    avatarBoundsStateHolder: CombatAvatarBounds,
+    onInspect: (String) -> Unit,
+    onToggleExpanded: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = modifier.fillMaxSize()) {
+        MessagesBar(
+            roundNumber = arenaState.roundNumber,
+            turnOwnerCharacterClass = arenaState.turnOwnerCharacterClass,
+            latestMessage = arenaScreenState.latestCombatHeaderMessage,
+            secondsRemaining = arenaScreenState.secondsRemaining,
+            isTimerVisible = arenaScreenState.isTimerVisible,
+            isTimerUrgent = arenaScreenState.isTimerUrgent,
+            unreadMessageCount = unreadMessageCount,
+            diceHomeBoundsTop = diceHomeBoundsTop,
+            onToggleExpanded = onToggleExpanded,
+            modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
+        )
+
+        CombatContent(
+            animatingMessage = arenaScreenState.animatingMessage,
+            arenaState = arenaState,
+            avatarBoundsStateHolder = avatarBoundsStateHolder,
+            onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
+            onInspect = onInspect,
+            modifier = Modifier.weight(weight = 1f),
+        )
+    }
+
+    Spacer(
+        modifier =
+            Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
+                .height(height = BOTTOM_CONTROLS_HEIGHT)
+    )
+}
+
+@Composable
+private fun BoxScope.OverlayContent(
+    arenaScreenState: ArenaScreenState,
+    arenaState: ArenaState.Combat,
+    avatarBoundsStateHolder: CombatAvatarBounds,
+    diceStateHolder: DiceStateHolder,
+    isMessageLogExpanded: Boolean,
+    diceHomeBounds: Rect?,
+    inspectedUserId: String?,
+    onCloseInspectCharacterDrawer: () -> Unit,
+    onCloseMessageLog: () -> Unit,
+) {
+
+    val animatingMessage = arenaScreenState.animatingMessage
+    EncoreFullScreenOverlay(
+        animatingMessage = animatingMessage,
+        characterTypesInArena = arenaState.characterTypesInArena,
+    )
+
+    // TODO: is this it?
+    val isPlayingBack = animatingMessage != null
+    BottomControls(
+        state = arenaState,
+        diceStateHolder = diceStateHolder,
+        areControlsVisible = !arenaScreenState.isMatchEnding,
+        isPlayingBack = isPlayingBack,
+        isActionInFlight = isActionInFlight,
+        onActionDispatched = { isActionInFlight = true },
+        modifier =
+            Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
+    )
+
+    SpellPotencyFullScreenOverlay(
+        animatingMessage = animatingMessage,
+        avatarBounds = avatarBoundsStateHolder,
+        characterTypesInArena = arenaState.characterTypesInArena,
+    )
+
+    MessageLogOverlay(
+        messageGroups = arenaScreenState.messageGroups,
+        isExpanded = isMessageLogExpanded,
+        diceHomeBounds = diceHomeBounds,
+        onDismiss = onCloseMessageLog,
+        modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
+    )
+
+    if (diceHomeBounds != null) {
+        DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = diceHomeBounds)
+    }
+
+    if (animatingMessage?.isFlash() == true) {
+        FlashMessageOverlay(
+            message = animatingMessage,
+            avatarBounds = avatarBoundsStateHolder,
+        )
+    }
+
+    InspectDrawer(
+        player = inspectedUserId?.let { arenaState.playerMap[it] },
+        onClose = onCloseInspectCharacterDrawer,
+    )
+}
+
+@Composable
+private fun SharedTransitionScope.CombatContent(
+    arenaState: ArenaState.Combat,
+    animatingMessage: ArenaMessageState?,
+    onInspect: (String) -> Unit,
+    avatarBoundsStateHolder: CombatAvatarBounds,
+    onDiceHomeBoundsChanged: (Rect) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(modifier = modifier) {
+        AnimatedContent(
+            targetState = arenaState,
+            label = AVATAR_SEATING_TRANSITION_LABEL,
+            modifier = Modifier.fillMaxSize(),
+        ) { animatingState ->
+            SharedTransitionProvider(
+                sharedTransitionScope = this@CombatContent,
+                animatedVisibilityScope = this@AnimatedContent,
+            ) {
+                CombatStage(
+                    arenaState = animatingState,
+                    animatingMessage = animatingMessage,
+                    onInspect = onInspect,
+                    isTargetable =
+                        arenaState.canTurnOwnerTargetAnOpponent(
+                            isAnAnimationActive = animatingMessage != null
+                        ),
+                    onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
+                    onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
+                )
+            }
+        }
+
+        CombatAnimationOverlays(
+            animatingMessage = animatingMessage,
+            avatarBounds = avatarBoundsStateHolder,
+            characterTypesInArena = arenaState.characterTypesInArena,
+        )
     }
 }
 
@@ -293,41 +307,35 @@ private fun CommitDiceRolls(state: ArenaState.Combat, diceStateHolder: DiceState
 
 @Composable
 private fun CombatStage(
-    state: ArenaState.Combat,
-    seating: CombatSeating,
-    activeUserIds: Set<String>,
-    turnOwnerUserId: String,
+    arenaState: ArenaState.Combat,
     animatingMessage: ArenaMessageState?,
-    onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val headIconPlayers = seating.headIconUserIds.mapNotNull { state.playerMap[it] }
-    val hasHeadIcons = headIconPlayers.isNotEmpty()
+    val areTherePlayersInTheStands = arenaState.areTherePlayersInTheStands
 
     Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
-            topPlayer = state.seatedPlayer(seatUserId = seating.topSeatUserId),
-            bottomPlayer = state.seatedPlayer(seatUserId = seating.bottomSeatUserId),
+            topPlayer = arenaState.targetedPlayer,
+            bottomPlayer = arenaState.turnOwner,
             animatingMessage = animatingMessage,
-            userPlayerId = state.userPlayerId,
-            activeUserIds = activeUserIds,
-            turnOwnerUserId = turnOwnerUserId,
+            userPlayerId = arenaState.userPlayerId,
+            activeUserIds = arenaState.activeUserIds,
+            turnOwnerUserId = arenaState.turnOwnerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
-            modifier = Modifier.weight(weight = if (hasHeadIcons) 0.7f else 1f),
+            modifier = Modifier.weight(weight = if (areTherePlayersInTheStands) 0.7f else 1f),
         )
 
-        if (hasHeadIcons) {
+        if (areTherePlayersInTheStands) {
             ClassIcons(
-                headIconPlayers = headIconPlayers,
-                userPlayerId = state.userPlayerId,
+                headIconPlayers = arenaState.playersInTheStands,
+                userPlayerId = arenaState.userPlayerId,
                 isTargetable = isTargetable,
-                onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
                 animatingMessage = animatingMessage,
                 modifier = Modifier.weight(weight = 0.3f),
@@ -335,30 +343,3 @@ private fun CombatStage(
         }
     }
 }
-
-// TODO: This logic needs to be simplified and made correct, without confusing fallbacks that should
-//       never happen
-internal fun ArenaState.Combat.resolveTargetUserId(selectedOpponentUserId: String): String =
-    when (val action = combatActionState) {
-        is CombatActionState.NormalAttack -> action.defenderUserId
-
-        is CombatActionState.AbilityRoll -> action.defenderUserId
-
-        is CombatActionState.Idle ->
-            idleTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
-    }
-
-private fun ArenaState.Combat.idleTargetUserId(selectedOpponentUserId: String): String {
-    val isUserTheTurnOwner = turnOwnerUserId == userPlayerId
-    val userChosenTarget =
-        if (isUserTheTurnOwner) lockedTargetUserId ?: selectedOpponentUserId else ""
-
-    return userChosenTarget.ifEmpty { defaultTargetedOpponentUserId() }
-}
-
-/** Finds opponent user id if there is only a single conscious opponent. */
-private fun ArenaState.Combat.defaultTargetedOpponentUserId(): String =
-    playerMap.values
-        .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
-        ?.userId
-        .orEmpty()

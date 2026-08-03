@@ -32,22 +32,31 @@ data class ArenaScreenState(
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
-    val arenaState: ArenaState,
+    val arenaState: ArenaState, // TODO: rename currentArenaState
     val participants: Map<String, ParticipantClass>,
     val messageGroups: List<ArenaMessageGroupState> = messages.toMessageGroups(),
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-    val isPlayingBack: Boolean = false,
-    val currentCue: CombatAnimationCue? = null,
-    val currentFlash: FlashCallout? = null,
-    val currentFlashAnchor: FlashAnchor = FlashAnchor.Center,
-    val collapsingSeatUserId: String? = null,
     val animatingMessage: ArenaMessageState? = null,
+    val pendingArenaState: ArenaState? = null, // TODO: rename to postAnimationsArenaState
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
     val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
+
+    val latestCombatHeaderMessage = messageGroups.getLatestCombatHeaderMessage()
+}
+
+private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMessageState? {
+    val latestGroupMessage = lastOrNull() ?: return null
+    if (latestGroupMessage !is ArenaMessageGroupState.Round) return null
+
+    return latestGroupMessage.messages.lastOrNull {
+        it !is ArenaMessageState.NewRound &&
+            it !is ArenaMessageState.NewTurn &&
+            it !is ArenaMessageState.NormalRoll.Attack
+    }
 }
 
 // TODO(SS-031): Need to refactor this badly

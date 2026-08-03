@@ -91,7 +91,7 @@ private fun ArenaStateContent(
             is ArenaState.ChoosingClasses ->
                 arenaState.ArenaChoosingClasses(characterClasses = screenState.characterClasses)
 
-            is ArenaState.Combat -> ArenaCombat(screenState = screenState, state = arenaState)
+            is ArenaState.Combat -> ArenaCombat(screenState = screenState, arenaState = arenaState)
 
             is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

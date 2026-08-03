@@ -30,7 +30,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rog
 internal fun CombatAnimationOverlays(
     animatingMessage: ArenaMessageState?,
     avatarBounds: CombatAvatarBounds,
-    presentClasses: Set<CharacterClassType>,
+    characterTypesInArena: Set<CharacterClassType>,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -39,7 +39,7 @@ internal fun CombatAnimationOverlays(
                 avatarBounds.reportOverlayBounds(boundsInRoot = it.boundsInRoot())
             }
     ) {
-        if (CharacterClassType.Rogue in presentClasses) {
+        if (CharacterClassType.Rogue in characterTypesInArena) {
             RogueNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -47,7 +47,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Gambler in presentClasses) {
+        if (CharacterClassType.Gambler in characterTypesInArena) {
             GamblerNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -65,7 +65,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Necromancer in presentClasses) {
+        if (CharacterClassType.Necromancer in characterTypesInArena) {
             NecromancerNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -78,7 +78,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Bard in presentClasses) {
+        if (CharacterClassType.Bard in characterTypesInArena) {
             BardNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -91,7 +91,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Duelist in presentClasses) {
+        if (CharacterClassType.Duelist in characterTypesInArena) {
             DuelistNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -109,7 +109,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Mage in presentClasses) {
+        if (CharacterClassType.Mage in characterTypesInArena) {
             MageNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -122,7 +122,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Paladin in presentClasses) {
+        if (CharacterClassType.Paladin in characterTypesInArena) {
             PaladinNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
@@ -135,7 +135,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        if (CharacterClassType.Illusionist in presentClasses) {
+        if (CharacterClassType.Illusionist in characterTypesInArena) {
             IllusionistNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,

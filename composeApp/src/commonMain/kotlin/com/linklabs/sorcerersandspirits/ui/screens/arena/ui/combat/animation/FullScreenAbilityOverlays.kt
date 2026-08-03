@@ -14,34 +14,27 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 @Composable
 internal fun EncoreFullScreenOverlay(
     animatingMessage: ArenaMessageState?,
-    presentClasses: Set<CharacterClassType>,
+    characterTypesInArena: Set<CharacterClassType>,
     modifier: Modifier = Modifier,
 ) {
-    if (CharacterClassType.Bard !in presentClasses) return
+    if (CharacterClassType.Bard !in characterTypesInArena) return
 
     EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier.fillMaxSize())
 }
 
-/**
- * The Mage's Spell Potency storm (SS-210), hosted over the whole screen and above the combat
- * buttons in the arena's z-order, so a doubles-triggered area-of-effect engulfs the entire screen —
- * the buttons included — rather than stopping at the seating region. Anchored to the measured seats
- * through [CombatAvatarBounds.fullScreenBoundsFor], which resolves them in this full-screen host's
- * own coordinate space. Draws nothing between casts.
- */
 @Composable
 internal fun SpellPotencyFullScreenOverlay(
     animatingMessage: ArenaMessageState?,
     avatarBounds: CombatAvatarBounds,
-    presentClasses: Set<CharacterClassType>,
+    characterTypesInArena: Set<CharacterClassType>,
     modifier: Modifier = Modifier,
 ) {
-    if (CharacterClassType.Mage !in presentClasses) return
+    if (CharacterClassType.Mage !in characterTypesInArena) return
 
     Box(
         modifier =
             modifier.fillMaxSize().onGloballyPositioned {
-                avatarBounds.reportFullScreenOverlayBounds(it.boundsInRoot())
+                avatarBounds.reportFullScreenOverlayBounds(boundsInRoot = it.boundsInRoot())
             }
     ) {
         MageSpellPotencyOverlay(

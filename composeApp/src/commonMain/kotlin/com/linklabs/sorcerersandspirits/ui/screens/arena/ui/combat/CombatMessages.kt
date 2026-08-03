@@ -47,18 +47,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.getDisplayString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_log_header
-import sorcerersandspirits.composeapp.generated.resources.arena_log_round
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
 internal val messagesIconSize = 44.dp
@@ -85,18 +84,18 @@ private val headerBookendReserve = 60.dp
 @Composable
 internal fun MessagesBar(
     roundNumber: Int,
-    turnOwnerClass: CharacterClassMessageInfoState?,
+    turnOwnerCharacterClass: CharacterClassState,
     latestMessage: ArenaMessageState?,
     secondsRemaining: Int,
     isTimerVisible: Boolean,
     isTimerUrgent: Boolean,
     unreadMessageCount: Int,
-    diceHomeBounds: Rect?,
+    diceHomeBoundsTop: Float?,
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val barHeightPx = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
-    val spanEndY = diceHomeBounds?.top ?: barHeightPx
+    val spanEndY =
+        diceHomeBoundsTop ?: with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
 
     Column(
         modifier =
@@ -114,7 +113,7 @@ internal fun MessagesBar(
             )
 
             AnimatedContent(
-                targetState = roundNumber to turnOwnerClass,
+                targetState = roundNumber to turnOwnerCharacterClass,
                 transitionSpec = {
                     (slideInVertically { height -> height } + fadeIn()) togetherWith
                         (slideOutVertically { height -> -height } + fadeOut())
@@ -124,9 +123,10 @@ internal fun MessagesBar(
                     Modifier.align(alignment = Alignment.Center)
                         .fillMaxWidth()
                         .padding(horizontal = headerBookendReserve),
-            ) { (round, ownerClass) ->
+            ) { (round, characterClass) ->
                 Text(
-                    text = roundTurnHeaderText(roundNumber = round, turnOwnerClass = ownerClass),
+                    text =
+                        roundTurnHeaderText(roundNumber = round, characterClass = characterClass),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -178,32 +178,24 @@ internal fun MessagesBar(
 @Composable
 private fun roundTurnHeaderText(
     roundNumber: Int,
-    turnOwnerClass: CharacterClassMessageInfoState?,
+    characterClass: CharacterClassState,
 ): AnnotatedString {
-    if (turnOwnerClass == null) {
-        return AnnotatedString(
-            text = stringResource(resource = Res.string.arena_log_round, roundNumber.toString())
-        )
-    }
-
+    val className = characterClass.className
     val fullText =
-        stringResource(
-            resource = Res.string.arena_log_header,
-            roundNumber.toString(),
-            turnOwnerClass.className,
-        )
-    val classNameStart = fullText.lastIndexOf(string = turnOwnerClass.className)
+        stringResource(resource = Res.string.arena_log_header, roundNumber.toString(), className)
+    val classNameStart = fullText.lastIndexOf(string = className)
 
     return buildAnnotatedString {
         if (classNameStart < 0) {
-            append(fullText)
+            append(text = fullText)
             return@buildAnnotatedString
         }
-        append(fullText.substring(startIndex = 0, endIndex = classNameStart))
-        withStyle(style = SpanStyle(color = turnOwnerClass.type.toColor())) {
-            append(turnOwnerClass.className)
+
+        append(text = fullText.substring(startIndex = 0, endIndex = classNameStart))
+        withStyle(style = SpanStyle(color = characterClass.type.toColor())) {
+            append(text = className)
         }
-        append(fullText.substring(startIndex = classNameStart + turnOwnerClass.className.length))
+        append(text = fullText.substring(startIndex = classNameStart + className.length))
     }
 }
 

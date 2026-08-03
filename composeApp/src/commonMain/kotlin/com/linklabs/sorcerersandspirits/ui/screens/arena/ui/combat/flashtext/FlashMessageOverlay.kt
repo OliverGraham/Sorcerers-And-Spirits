@@ -66,14 +66,12 @@ private const val AVATAR_HEAD_FRACTION = 0.28f
 private const val CENTER_BANNER_FRACTION = 0.2f
 
 @Composable
-internal fun FlashOverlay(
-    message: ArenaMessageState?,
+internal fun FlashMessageOverlay(
+    message: ArenaMessageState,
     avatarBounds: CombatAvatarBounds,
     modifier: Modifier = Modifier,
 ) {
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
-    var shownMessage by remember { mutableStateOf<ArenaMessageState?>(value = null) }
-    if (message != null) shownMessage = message
 
     Box(
         modifier =
@@ -84,24 +82,21 @@ internal fun FlashOverlay(
                 }
                 .onSizeChanged { overlaySize = it }
     ) {
-        val visibleMessage = shownMessage ?: return@Box
         val point =
-            visibleMessage.flashAnchor.resolvePoint(
+            message.flashAnchor.resolvePoint(
                 avatarBounds = avatarBounds,
                 overlaySize = overlaySize,
             )
 
-        val isVisible = message != null
-        if (isVisible) {
-            ConfettiBurst(
-                triggerKey = visibleMessage,
-                origin = point,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        ConfettiBurst(
+            triggerKey = message,
+            origin = point,
+            modifier = Modifier.fillMaxSize(),
+        )
+
 
         AnimatedVisibility(
-            visible = isVisible,
+            visible = true,
             enter =
                 scaleIn(
                     initialScale = 0.3f,
@@ -114,7 +109,7 @@ internal fun FlashOverlay(
             exit = scaleOut(targetScale = 1.5f) + fadeOut(),
             modifier = Modifier.centeredAt(point = { point }),
         ) {
-            FlashText(message = visibleMessage)
+            FlashText(message = message)
         }
     }
 }

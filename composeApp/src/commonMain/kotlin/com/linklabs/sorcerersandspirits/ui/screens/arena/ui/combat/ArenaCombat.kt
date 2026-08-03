@@ -33,7 +33,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatMoment
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatedPlayer
@@ -42,7 +41,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Com
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
@@ -147,6 +146,8 @@ internal fun ArenaCombat(
     val unreadMessageCount =
         (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
 
+    val animatingMessage = screenState.animatingMessage
+
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -182,7 +183,7 @@ internal fun ArenaCombat(
                                 seating = seating,
                                 activeUserIds = heldMoment.activeUserIds,
                                 turnOwnerUserId = heldMoment.turnOwnerUserId,
-                                animationCue = screenState.currentCue,
+                                animatingMessage = screenState.animatingMessage,
                                 onSelectTarget = { selectedOpponentUserId = it },
                                 onInspect = { inspectedUserId = it },
                                 isTargetable =
@@ -198,7 +199,7 @@ internal fun ArenaCombat(
                     }
 
                     CombatAnimationOverlays(
-                        animationCue = screenState.currentCue,
+                        animatingMessage = screenState.animatingMessage,
                         avatarBounds = avatarBounds,
                         presentClasses = presentClasses,
                     )
@@ -212,7 +213,7 @@ internal fun ArenaCombat(
             }
 
             EncoreFullScreenOverlay(
-                animationCue = screenState.currentCue,
+                animatingMessage = screenState.animatingMessage,
                 presentClasses = presentClasses,
             )
 
@@ -230,7 +231,7 @@ internal fun ArenaCombat(
             )
 
             SpellPotencyFullScreenOverlay(
-                animationCue = screenState.currentCue,
+                animatingMessage = screenState.animatingMessage,
                 avatarBounds = avatarBounds,
                 presentClasses = presentClasses,
             )
@@ -250,7 +251,12 @@ internal fun ArenaCombat(
                 DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = homeBounds)
             }
 
-            FlashOverlay(message = screenState.animatingMessage, avatarBounds = avatarBounds)
+            if (animatingMessage?.isFlash() == true) {
+                FlashMessageOverlay(
+                    message = screenState.animatingMessage,
+                    avatarBounds = avatarBounds,
+                )
+            }
 
             InspectDrawer(
                 player = inspectedUserId?.let { state.playerMap[it] },
@@ -291,7 +297,7 @@ private fun CombatStage(
     seating: CombatSeating,
     activeUserIds: Set<String>,
     turnOwnerUserId: String,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     onSelectTarget: (String) -> Unit,
     onInspect: (String) -> Unit,
     isTargetable: Boolean,
@@ -306,7 +312,7 @@ private fun CombatStage(
         CombatAvatarColumn(
             topPlayer = state.seatedPlayer(seatUserId = seating.topSeatUserId),
             bottomPlayer = state.seatedPlayer(seatUserId = seating.bottomSeatUserId),
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             userPlayerId = state.userPlayerId,
             activeUserIds = activeUserIds,
             turnOwnerUserId = turnOwnerUserId,
@@ -323,7 +329,7 @@ private fun CombatStage(
                 isTargetable = isTargetable,
                 onSelectTarget = onSelectTarget,
                 onInspect = onInspect,
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 modifier = Modifier.weight(weight = 0.3f),
             )
         }

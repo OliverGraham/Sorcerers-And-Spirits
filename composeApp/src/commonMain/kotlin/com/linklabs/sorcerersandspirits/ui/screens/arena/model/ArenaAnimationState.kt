@@ -11,4 +11,8 @@ sealed interface ArenaAnimationState {
     data object Avatar : ArenaAnimationState
 
     data object FlashAndAvatar : ArenaAnimationState
+
+    fun isFlash() = this == Flash || this == FlashAndAvatar
+
+    fun isAvatar() = this == Avatar || this == FlashAndAvatar
 }

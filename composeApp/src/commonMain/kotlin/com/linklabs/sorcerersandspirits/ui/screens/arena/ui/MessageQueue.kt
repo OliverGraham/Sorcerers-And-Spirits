@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimation
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitAll
@@ -43,22 +43,17 @@ internal class MessageQueue(
         avatarSignal = null
     }
 
-    private fun ArenaAnimation.toAnimationSignals(): List<CompletableDeferred<Unit>> {
-        val isFlashAnimation = this is ArenaAnimation.Flash || this is ArenaAnimation.FlashAndAvatar
-        val isAvatarAnimation =
-            this is ArenaAnimation.Avatar || this is ArenaAnimation.FlashAndAvatar
+    private fun ArenaAnimationState.toAnimationSignals() = buildList {
+        if (isFlash()) {
+            val flashSignal = CompletableDeferred<Unit>()
+            this@MessageQueue.flashSignal = flashSignal
+            add(element = flashSignal)
+        }
 
-        return buildList {
-            if (isFlashAnimation) {
-                val flashSignal = CompletableDeferred<Unit>()
-                this@MessageQueue.flashSignal = flashSignal
-                add(element = flashSignal)
-            }
-            if (isAvatarAnimation) {
-                val avatarSignal = CompletableDeferred<Unit>()
-                this@MessageQueue.avatarSignal = avatarSignal
-                add(element = avatarSignal)
-            }
+        if (isAvatar()) {
+            val avatarSignal = CompletableDeferred<Unit>()
+            this@MessageQueue.avatarSignal = avatarSignal
+            add(element = avatarSignal)
         }
     }
 }

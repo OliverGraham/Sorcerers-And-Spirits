@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.DrawableResource
@@ -73,7 +74,7 @@ private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 internal fun CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
     bottomPlayer: PlayerState.Selected?,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     userPlayerId: String,
     activeUserIds: Set<String>,
     turnOwnerUserId: String,
@@ -85,7 +86,7 @@ internal fun CombatAvatarColumn(
     Column(modifier = modifier.fillMaxSize()) {
         SeatedAvatar(
             player = topPlayer,
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             isTopSeat = true,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
@@ -98,7 +99,7 @@ internal fun CombatAvatarColumn(
 
         SeatedAvatar(
             player = bottomPlayer,
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             isTopSeat = false,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
@@ -112,7 +113,7 @@ internal fun CombatAvatarColumn(
 @Composable
 private fun ColumnScope.SeatedAvatar(
     player: PlayerState.Selected?,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: CombatAnimationCue?,
     isTopSeat: Boolean,
     userPlayerId: String,
     activeUserIds: Set<String>,
@@ -123,7 +124,7 @@ private fun ColumnScope.SeatedAvatar(
     if (player != null) {
         LargeAvatar(
             player = player,
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             isTopSeat = isTopSeat,
             isUserPlayer = player.userId == userPlayerId,
             isActiveRoller = player.userId in activeUserIds,
@@ -150,7 +151,7 @@ private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = M
 @Composable
 private fun LargeAvatar(
     player: PlayerState.Selected,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: CombatAnimationCue?,
     isTopSeat: Boolean,
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
@@ -164,7 +165,7 @@ private fun LargeAvatar(
     // TODO: This is playing the avatar gesture animation. Should indicate that
     val gestureState =
         rememberAvatarGesture(
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             userId = player.userId,
             isTopSeat = isTopSeat,
         )

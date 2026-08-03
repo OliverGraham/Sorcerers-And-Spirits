@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
@@ -164,7 +165,7 @@ private class LuckyCoinEffectState {
  */
 @Composable
 internal fun LuckyCoinOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {

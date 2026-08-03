@@ -92,7 +92,7 @@ internal class BardStrikeState {
  */
 @Composable
 internal fun BardNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -100,7 +100,7 @@ internal fun BardNormalAttackOverlay(
     val density = LocalDensity.current
 
     NormalAttackOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         attackerClassType = CharacterClassType.Bard,
         avatarBoundsFor = avatarBoundsFor,
         onCancel = { state.scene = null },

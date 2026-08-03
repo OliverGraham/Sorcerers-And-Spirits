@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toBustResource
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
@@ -103,7 +104,7 @@ internal class ImpersonateEffectState {
  */
 @Composable
 internal fun ImpersonateOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -115,7 +116,7 @@ internal fun ImpersonateOverlay(
     val impersonatedImage = imageResource(resource = impersonatedClass.toBustResource())
 
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.Impersonate },
         onCancel = { state.scene = null },
         play = playLabel@{ cue ->

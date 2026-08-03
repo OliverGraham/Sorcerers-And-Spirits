@@ -55,7 +55,7 @@ private const val WITHDRAW_MILLIS = 220
 
 @Composable
 internal fun RogueNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -64,7 +64,7 @@ internal fun RogueNormalAttackOverlay(
     val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     NormalAttackOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         attackerClassType = CharacterClassType.Rogue,
         avatarBoundsFor = avatarBoundsFor,
         onCancel = { state.scene = null },

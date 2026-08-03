@@ -14,6 +14,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -74,7 +75,7 @@ private val illusionistScythePalette =
  */
 @Composable
 internal fun IllusionistNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -90,7 +91,7 @@ internal fun IllusionistNormalAttackOverlay(
     val accentColor = CharacterClassType.Illusionist.toColor()
 
     NormalAttackOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         attackerClassType = CharacterClassType.Illusionist,
         avatarBoundsFor = avatarBoundsFor,
         onCancel = {

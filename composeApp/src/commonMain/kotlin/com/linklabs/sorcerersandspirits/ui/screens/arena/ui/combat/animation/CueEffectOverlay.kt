@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 
 // TODO: Remove this? Definitely change with AnimationQueue
@@ -24,7 +25,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCu
  */
 @Composable
 internal fun <T : CombatAnimationCue> CueEffectOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     select: (CombatAnimationCue) -> T?,
     onCancel: () -> Unit,
     play: suspend (T) -> Unit,
@@ -50,19 +51,19 @@ internal fun <T : CombatAnimationCue> CueEffectOverlay(
 
 @Composable
 internal fun NormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     attackerClassType: CharacterClassType,
     avatarBoundsFor: (String) -> Rect?,
     onCancel: () -> Unit,
     play:
         suspend (
-            cue: CombatAnimationCue.NormalAttack, attackerBounds: Rect, defenderBounds: Rect,
+            cue: ArenaMessageState.NormalRoll, attackerBounds: Rect, defenderBounds: Rect,
         ) -> Unit,
     modifier: Modifier = Modifier,
     draw: DrawScope.() -> Unit,
 ) {
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { cue ->
             (cue as? CombatAnimationCue.NormalAttack)?.takeIf {
                 it.attackerClassType == attackerClassType

@@ -90,7 +90,7 @@ internal class PersuadeEffectState {
  */
 @Composable
 internal fun PersuadeOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -98,7 +98,7 @@ internal fun PersuadeOverlay(
     val density = LocalDensity.current
 
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.Persuade },
         onCancel = { state.scene = null },
         play = playLabel@{ cue ->

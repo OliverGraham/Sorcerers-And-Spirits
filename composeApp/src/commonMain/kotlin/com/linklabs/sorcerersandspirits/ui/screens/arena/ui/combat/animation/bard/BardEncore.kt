@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.EncorePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -97,7 +98,7 @@ internal class EncoreEffectState {
  * than anchored to a seat; sits out any cue that is not an Encore.
  */
 @Composable
-internal fun EncoreOverlay(animationCue: CombatAnimationCue?, modifier: Modifier = Modifier) {
+internal fun EncoreOverlay(animatingMessage: ArenaMessageState?, modifier: Modifier = Modifier) {
     val state = remember { EncoreEffectState() }
     val crowd = remember { encoreCrowd() }
     val avatars = rememberEncoreCrowdAvatars()
@@ -125,7 +126,7 @@ internal fun EncoreOverlay(animationCue: CombatAnimationCue?, modifier: Modifier
         )
 
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.Encore },
         onCancel = { state.scene = null },
         play = { cue ->

@@ -7,25 +7,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.EncoreOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageSpellPotencyOverlay
 
-/**
- * The Bard's Encore concert scene (SS-206), hosted over the whole screen rather than the seating
- * region so the darkened stage covers everything up to the edges. It sits below the combat buttons
- * in the arena's z-order, so while the stage holds waiting for the Encore roll the buttons float on
- * top of the darkness and stay usable. Draws nothing between casts.
- */
 @Composable
 internal fun EncoreFullScreenOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     presentClasses: Set<CharacterClassType>,
     modifier: Modifier = Modifier,
 ) {
     if (CharacterClassType.Bard !in presentClasses) return
 
-    EncoreOverlay(animationCue = animationCue, modifier = modifier.fillMaxSize())
+    EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier.fillMaxSize())
 }
 
 /**
@@ -37,7 +31,7 @@ internal fun EncoreFullScreenOverlay(
  */
 @Composable
 internal fun SpellPotencyFullScreenOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBounds: CombatAvatarBounds,
     presentClasses: Set<CharacterClassType>,
     modifier: Modifier = Modifier,
@@ -51,7 +45,7 @@ internal fun SpellPotencyFullScreenOverlay(
             }
     ) {
         MageSpellPotencyOverlay(
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             avatarBoundsFor = avatarBounds::fullScreenBoundsFor,
             modifier = Modifier.fillMaxSize(),
         )

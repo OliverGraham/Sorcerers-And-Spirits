@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
@@ -196,7 +196,7 @@ internal class AllInEffectState {
  */
 @Composable
 internal fun AllInOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -212,7 +212,7 @@ internal fun AllInOverlay(
             )
         }
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.AllIn },
         onCancel = {},
         play = playLabel@{ cue ->

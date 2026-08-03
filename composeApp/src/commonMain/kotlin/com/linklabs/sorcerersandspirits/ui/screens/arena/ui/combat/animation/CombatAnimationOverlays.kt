@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BardNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.PersuadeOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.DuelistNormalAttackOverlay
@@ -28,7 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rog
 
 @Composable
 internal fun CombatAnimationOverlays(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBounds: CombatAvatarBounds,
     presentClasses: Set<CharacterClassType>,
     modifier: Modifier = Modifier,
@@ -41,7 +41,7 @@ internal fun CombatAnimationOverlays(
     ) {
         if (CharacterClassType.Rogue in presentClasses) {
             RogueNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -49,17 +49,17 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Gambler in presentClasses) {
             GamblerNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             AllInOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             LuckyCoinOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -67,12 +67,12 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Necromancer in presentClasses) {
             NecromancerNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             NecromancerSummonMinionOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -80,12 +80,12 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Bard in presentClasses) {
             BardNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             PersuadeOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -93,17 +93,17 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Duelist in presentClasses) {
             DuelistNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             PrepareAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             RiposteOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -111,12 +111,12 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Mage in presentClasses) {
             MageNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             MageTeleportOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -124,12 +124,12 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Paladin in presentClasses) {
             PaladinNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             PaladinHolyShieldOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
@@ -137,12 +137,12 @@ internal fun CombatAnimationOverlays(
 
         if (CharacterClassType.Illusionist in presentClasses) {
             IllusionistNormalAttackOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )
             ImpersonateOverlay(
-                animationCue = animationCue,
+                animatingMessage = animatingMessage,
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = Modifier.fillMaxSize(),
             )

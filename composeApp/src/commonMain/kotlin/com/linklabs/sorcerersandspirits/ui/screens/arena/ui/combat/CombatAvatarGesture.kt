@@ -6,7 +6,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -17,6 +16,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.HolyShieldPhase
@@ -124,19 +124,14 @@ internal fun GestureClassAvatar(
 // well. I believe it should just remember something if needed, then return it.
 @Composable
 internal fun rememberAvatarGesture(
-    animationCue: CombatAnimationCue?,
+    arenaAnimation: ArenaAnimationState?,
     userId: String,
     isTopSeat: Boolean,
 ): AvatarGestureState {
     val gestureState = remember { AvatarGestureState() }
     val density = LocalDensity.current
-    var lastPlayedCueId by remember { mutableStateOf(value = animationCue?.id) }
 
-    LaunchedEffect(key1 = animationCue) {
-        val cue = animationCue ?: return@LaunchedEffect
-        if (cue.id == lastPlayedCueId) return@LaunchedEffect
-        lastPlayedCueId = cue.id
-
+    LaunchedEffect(key1 = arenaAnimation) {
         val mirrorImageCue = cue.mirrorImageActingFor(userId = userId)
         if (mirrorImageCue != null) {
             gestureState.playMirrorImage(cue = mirrorImageCue, density = density)

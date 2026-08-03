@@ -112,7 +112,7 @@ internal class PaladinStrikeState {
  */
 @Composable
 internal fun PaladinNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -120,7 +120,7 @@ internal fun PaladinNormalAttackOverlay(
     val density = LocalDensity.current
 
     NormalAttackOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         attackerClassType = CharacterClassType.Paladin,
         avatarBoundsFor = avatarBoundsFor,
         onCancel = { state.scene = null },

@@ -120,7 +120,7 @@ internal class NecromancerStrikeState {
  */
 @Composable
 internal fun NecromancerNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -128,7 +128,7 @@ internal fun NecromancerNormalAttackOverlay(
     val density = LocalDensity.current
 
     NormalAttackOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         attackerClassType = CharacterClassType.Necromancer,
         avatarBoundsFor = avatarBoundsFor,
         onCancel = { state.scene = null },

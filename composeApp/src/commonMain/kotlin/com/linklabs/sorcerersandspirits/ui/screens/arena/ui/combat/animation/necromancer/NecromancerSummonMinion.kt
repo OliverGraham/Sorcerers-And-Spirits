@@ -68,7 +68,7 @@ private val healGreen = necroGlowGreen
 
 @Composable
 internal fun NecromancerSummonMinionOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -79,7 +79,7 @@ internal fun NecromancerSummonMinionOverlay(
     val golemImage = imageResource(resource = Res.drawable.golem_minion)
 
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.SummonMinion },
         onCancel = { state.scene = null },
         play = playLabel@{ cue ->

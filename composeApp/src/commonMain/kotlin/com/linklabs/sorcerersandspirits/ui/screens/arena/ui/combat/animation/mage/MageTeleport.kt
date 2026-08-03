@@ -113,14 +113,14 @@ internal data class TeleportScene(val center: Offset, val radiusX: Float, val ra
  */
 @Composable
 internal fun MageTeleportOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { TeleportPortalState() }
 
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.Teleport },
         onCancel = { state.scene = null },
         play = playLabel@{ cue ->

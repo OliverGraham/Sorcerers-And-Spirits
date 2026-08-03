@@ -23,6 +23,10 @@ sealed interface ArenaMessageState {
     val flashAnchor: FlashAnchor
         get() = FlashAnchor.Center
 
+    fun isFlash() = animation.isFlash()
+
+    fun isAvatar() = animation.isAvatar()
+
     fun gestureFor(userId: String): AvatarGesture? = gestures[userId]
 
     @Immutable
@@ -1029,7 +1033,6 @@ sealed interface FlashAnchor {
 
     @Immutable data object Center : FlashAnchor
 }
-
 
 // TODO: These, again, can simply be data passed through as necessary. This is ridiculous
 private fun Map<String, ParticipantClass>.resolveClassName(userId: String) =

@@ -112,7 +112,7 @@ private val gemRuby = Color(color = 0xFFE23A5A)
  */
 @Composable
 internal fun PaladinHolyShieldOverlay(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsFor: (String) -> Rect?,
     modifier: Modifier = Modifier,
 ) {
@@ -127,7 +127,7 @@ internal fun PaladinHolyShieldOverlay(
         }
 
     CueEffectOverlay(
-        animationCue = animationCue,
+        animatingMessage = animatingMessage,
         select = { it as? CombatAnimationCue.HolyShield },
         onCancel = {},
         play = playLabel@{ cue ->

@@ -34,15 +34,12 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toAvatarResource
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
@@ -333,22 +330,5 @@ private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
                             tileMode = TileMode.Repeated,
                         )
                 )
-    )
-}
-
-@Composable
-internal fun ClassAvatar(
-    characterClass: CharacterClassState,
-    modifier: Modifier = Modifier,
-    alignment: Alignment = Alignment.Center,
-    colorFilter: ColorFilter? = null,
-) {
-    Image(
-        painter = painterResource(resource = characterClass.type.toAvatarResource()),
-        contentDescription = characterClass.className,
-        contentScale = ContentScale.Fit,
-        alignment = alignment,
-        colorFilter = colorFilter,
-        modifier = modifier,
     )
 }

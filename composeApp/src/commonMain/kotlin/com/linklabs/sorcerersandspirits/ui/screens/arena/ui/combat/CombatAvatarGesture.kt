@@ -1,22 +1,14 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.GraphicsLayerScope
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
@@ -34,6 +26,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TeleportPhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarGestureState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.applyGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_APPEAR_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_STRIKE_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PREPARE_ATTACK_WINDUP_MILLIS
@@ -49,6 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.due
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.ALL_IN_SETTLE_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.ALL_IN_TOSS_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.THROW_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.MirrorSplitClassAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_BOLT_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
@@ -73,8 +69,6 @@ private const val SLASH_LEAN_MILLIS = 130
 private const val SLASH_RECOVER_MILLIS = 240
 
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
-private const val COLLAPSE_ROTATION_DEGREES = 80f
-private const val COLLAPSE_FEET_SLIDE_FRACTION = 0.4f
 
 private const val TELEPORT_REACT_MILLIS = 120L
 private const val TELEPORT_ENTER_MILLIS = 300
@@ -91,14 +85,6 @@ private const val MIRROR_SPLIT_MILLIS = 360
 private const val MIRROR_SPLIT_HOLD_MILLIS = 160L
 private const val MIRROR_POOF_MILLIS = 340
 private const val MIRROR_RETURN_MILLIS = 320
-private const val MIRROR_SPLIT_OFFSET_FRACTION = 0.28f
-private const val MIRROR_COPY_ALPHA = 0.72f
-private const val MIRROR_POOF_SCALE_GROWTH = 0.2f
-private const val MIRROR_POOF_RISE_FRACTION = 0.12f
-private const val HURT_TINT_MAX_RED_OFFSET = 130f
-private const val HURT_TINT_CHANNEL_DAMP = 0.45f
-private const val ARMOR_TINT_MAX_BLUE_OFFSET = 110f
-private const val ARMOR_TINT_CHANNEL_DAMP = 0.3f
 
 private const val FLINCH_BODY_MILLIS = 380L
 private const val FLINCH_HEAVY_BODY_MILLIS = 470L
@@ -110,38 +96,6 @@ private const val REARM_BODY_MILLIS = 650L
 private const val CAST_BODY_MILLIS = 480L
 private const val ALL_IN_BUST_JOLT_MILLIS = 160L
 
-private val feetPivot = TransformOrigin(pivotFractionX = 0.5f, pivotFractionY = 1f)
-
-@Stable
-internal class AvatarGestureState {
-    val offsetX = Animatable(initialValue = 0f)
-    val offsetY = Animatable(initialValue = 0f)
-    val rotation = Animatable(initialValue = 0f)
-    val scaleX = Animatable(initialValue = 1f)
-    val scaleY = Animatable(initialValue = 1f)
-    val collapseFraction = Animatable(initialValue = 0f)
-    val hurtTint = Animatable(initialValue = 0f)
-    val armorTint = Animatable(initialValue = 0f)
-    val saturation = Animatable(initialValue = 1f)
-
-    val mirrorSplit = Animatable(initialValue = 0f)
-    val mirrorReturn = Animatable(initialValue = 0f)
-    val mirrorFakeVanish = Animatable(initialValue = 0f)
-
-    val teleportVanish = Animatable(initialValue = 0f)
-
-    val colorFilter: ColorFilter?
-        get() {
-            val isAtRest = hurtTint.value == 0f && armorTint.value == 0f && saturation.value == 1f
-            if (isAtRest) return null
-
-            val matrix = ColorMatrix().apply { setToSaturation(sat = saturation.value) }
-            matrix *= hurtTintMatrix(tint = hurtTint.value)
-            matrix *= armorTintMatrix(tint = armorTint.value)
-            return ColorFilter.colorMatrix(colorMatrix = matrix)
-        }
-}
-
 /** The seated avatar art with its gesture transforms applied. */
 @Composable
 internal fun GestureClassAvatar(
@@ -151,7 +105,7 @@ internal fun GestureClassAvatar(
 ) {
     val isMirrorSplit = gestureState.mirrorSplit.value > 0f
     if (!isMirrorSplit) {
-        ClassAvatar(
+        AvatarImage(
             characterClass = characterClass,
             colorFilter = gestureState.colorFilter,
             modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
@@ -164,65 +118,6 @@ internal fun GestureClassAvatar(
         gestureState = gestureState,
         modifier = modifier,
     )
-}
-
-@Composable
-private fun MirrorSplitClassAvatar(
-    characterClass: CharacterClassState,
-    gestureState: AvatarGestureState,
-    modifier: Modifier = Modifier,
-) {
-    Box(modifier = modifier) {
-        ClassAvatar(
-            characterClass = characterClass,
-            modifier =
-                Modifier.matchParentSize().graphicsLayer {
-                    applyMirrorFake(gestureState = gestureState)
-                },
-        )
-        ClassAvatar(
-            characterClass = characterClass,
-            colorFilter = gestureState.colorFilter,
-            modifier =
-                Modifier.matchParentSize().graphicsLayer {
-                    applyMirrorReal(gestureState = gestureState)
-                },
-        )
-    }
-}
-
-private fun GraphicsLayerScope.applyMirrorFake(gestureState: AvatarGestureState) {
-    val split = gestureState.mirrorSplit.value
-    val vanish = gestureState.mirrorFakeVanish.value
-    transformOrigin = feetPivot
-    translationX = -size.width * MIRROR_SPLIT_OFFSET_FRACTION * split
-    translationY = -size.height * MIRROR_POOF_RISE_FRACTION * vanish
-    val grow = 1f + MIRROR_POOF_SCALE_GROWTH * vanish
-    scaleX = grow
-    scaleY = grow
-    alpha = MIRROR_COPY_ALPHA * (1f - vanish)
-}
-
-private fun GraphicsLayerScope.applyMirrorReal(gestureState: AvatarGestureState) {
-    applyGesture(gestureState = gestureState)
-    val split = gestureState.mirrorSplit.value
-    val returnFraction = gestureState.mirrorReturn.value
-    translationX += size.width * MIRROR_SPLIT_OFFSET_FRACTION * split * (1f - returnFraction)
-    alpha = MIRROR_COPY_ALPHA + (1f - MIRROR_COPY_ALPHA) * returnFraction
-}
-
-private fun GraphicsLayerScope.applyGesture(gestureState: AvatarGestureState) {
-    val collapse = gestureState.collapseFraction.value
-    val lyingScale = (size.width / size.height).coerceAtMost(maximumValue = 1f)
-    val collapseScale = 1f + (lyingScale - 1f) * collapse
-
-    transformOrigin = feetPivot
-    translationX = gestureState.offsetX.value - size.width * COLLAPSE_FEET_SLIDE_FRACTION * collapse
-    translationY = gestureState.offsetY.value
-    rotationZ = gestureState.rotation.value + COLLAPSE_ROTATION_DEGREES * collapse
-    scaleX = gestureState.scaleX.value * collapseScale
-    scaleY = gestureState.scaleY.value * collapseScale
-    alpha = 1f - gestureState.teleportVanish.value
 }
 
 // TODO: This naming is wrong. It does return a remembered value, but it plays the animation as
@@ -267,6 +162,7 @@ internal fun rememberAvatarGesture(
     return gestureState
 }
 
+// TODO: Put in ArenaStateMapping
 private fun CombatAnimationCue.mirrorImageActingFor(
     userId: String
 ): CombatAnimationCue.MirrorImage? =
@@ -434,6 +330,7 @@ private suspend fun AvatarGestureState.playDefenderReaction(
         }
     }
 
+// TODO: Put in ArenaMessageState
 private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
@@ -454,6 +351,7 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
         else -> REACTION_DELAY_MILLIS
     }
 
+// TODO: Put in ArenaMessageState
 private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): Long =
     when (weaponClassType) {
         CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
@@ -466,9 +364,11 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
         else -> REACTION_DELAY_MILLIS
     }
 
+// TODO: Put in ArenaMessageState
 private fun CombatAnimationCue.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
+// TODO: Put in ArenaMessageState
 internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
     when (this) {
         is CombatAnimationCue.NormalAttack ->
@@ -523,6 +423,7 @@ internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
         }
     }
 
+// TODO: Put in ArenaMessageState
 private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
     when (phase) {
         TeleportPhase.Open,
@@ -541,6 +442,7 @@ private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
             }
     }
 
+// TODO: Put in ArenaMessageState
 private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
     when (phase) {
         MirrorImagePhase.Split -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
@@ -558,6 +460,7 @@ private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
         }
     }
 
+// TODO: Put in ArenaMessageState
 private fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
     when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> FLINCH_BODY_MILLIS
@@ -566,6 +469,7 @@ private fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageT
         NormalRollMessageType.Knockout -> COLLAPSE_BODY_MILLIS
     }
 
+// TODO: Put in ArenaMessageState
 private fun allInBodyMillis(outcome: AllInOutcome): Long =
     when (outcome) {
         AllInOutcome.SelfKnockout ->
@@ -659,6 +563,7 @@ private suspend fun AvatarGestureState.cast(reachPx: Float) {
     offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
 }
 
+// TODO: Figure out which ones are used by which attack
 private suspend fun AvatarGestureState.lunge(distancePx: Float, peakScale: Float) {
     coroutineScope {
         launch {
@@ -1156,62 +1061,4 @@ private suspend fun AvatarGestureState.snapToRest() {
     mirrorReturn.snapTo(targetValue = 0f)
     mirrorFakeVanish.snapTo(targetValue = 0f)
     teleportVanish.snapTo(targetValue = 0f)
-}
-
-private fun armorTintMatrix(tint: Float): ColorMatrix {
-    val damp = 1f - ARMOR_TINT_CHANNEL_DAMP * tint
-    return ColorMatrix(
-        values =
-            floatArrayOf(
-                damp,
-                0f,
-                0f,
-                0f,
-                0f,
-                0f,
-                damp,
-                0f,
-                0f,
-                0f,
-                0f,
-                0f,
-                1f,
-                0f,
-                ARMOR_TINT_MAX_BLUE_OFFSET * tint,
-                0f,
-                0f,
-                0f,
-                1f,
-                0f,
-            )
-    )
-}
-
-private fun hurtTintMatrix(tint: Float): ColorMatrix {
-    val damp = 1f - HURT_TINT_CHANNEL_DAMP * tint
-    return ColorMatrix(
-        values =
-            floatArrayOf(
-                1f,
-                0f,
-                0f,
-                0f,
-                HURT_TINT_MAX_RED_OFFSET * tint,
-                0f,
-                damp,
-                0f,
-                0f,
-                0f,
-                0f,
-                0f,
-                damp,
-                0f,
-                0f,
-                0f,
-                0f,
-                0f,
-                1f,
-                0f,
-            )
-    )
 }

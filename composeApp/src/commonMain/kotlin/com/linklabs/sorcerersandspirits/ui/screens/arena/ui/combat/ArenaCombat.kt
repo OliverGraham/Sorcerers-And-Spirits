@@ -61,41 +61,14 @@ internal fun ArenaCombat(
     val inspectedUserId =
         remember(key1 = arenaState.activeUserIds) { mutableStateOf<String?>(value = null) }
 
-    var inspectedUserId by
-        remember(key1 = state.activeUserIds) { mutableStateOf<String?>(value = null) }
-
-    var isTargetLockedOptimistically by
-        remember(key1 = state.activeUserIds) { mutableStateOf(value = false) }
-
-    var isActionInFlight by remember(key1 = state) { mutableStateOf(value = false) }
-
-    val targetedOpponentUserId =
-        state.resolveTargetUserId(selectedOpponentUserId = selectedOpponentUserId)
-
-    val liveMoment =
-        CombatMoment(
-            seating =
-                state.seatingFor(
-                    targetUserId = targetedOpponentUserId,
-                    isMatchEnding = screenState.isMatchEnding,
-                    collapsingTargetUserId = screenState.collapsingSeatUserId,
-                ),
-            activeUserIds = state.activeUserIds,
-            turnOwnerUserId = state.turnOwnerUserId,
-        )
-    val heldMoment =
-        rememberHeldDuringSequence(liveValue = liveMoment, isSequencing = isPlayingBack)
-    val displayedPlayerMap =
-        rememberHeldDuringSequence(liveValue = state.playerMap, isSequencing = isPlayingBack)
-    val displayedState = state.copy(playerMap = displayedPlayerMap)
-
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
 
     val displayedMessageCount = screenState.messages.size
     var isMessageLogExpanded by remember { mutableStateOf(value = false) }
     var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
     LaunchedEffect(key1 = isMessageLogExpanded, key2 = displayedMessageCount) {
-        val shouldSyncSeenCount = isMessageLogExpanded || displayedMessageCount < seenLogMessageCount
+        val shouldSyncSeenCount =
+            isMessageLogExpanded || displayedMessageCount < seenLogMessageCount
         if (shouldSyncSeenCount) seenLogMessageCount = displayedMessageCount
     }
 
@@ -188,7 +161,6 @@ private fun BoxScope.OverlayContent(
     onCloseInspectCharacterDrawer: () -> Unit,
     onCloseMessageLog: () -> Unit,
 ) {
-
     val animatingMessage = arenaScreenState.animatingMessage
     EncoreFullScreenOverlay(
         animatingMessage = animatingMessage,
@@ -202,10 +174,7 @@ private fun BoxScope.OverlayContent(
         diceStateHolder = diceStateHolder,
         areControlsVisible = !arenaScreenState.isMatchEnding,
         isPlayingBack = isPlayingBack,
-        isActionInFlight = isActionInFlight,
-        onActionDispatched = { isActionInFlight = true },
-        modifier =
-            Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
+        modifier = Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
     )
 
     SpellPotencyFullScreenOverlay(
@@ -227,10 +196,7 @@ private fun BoxScope.OverlayContent(
     }
 
     if (animatingMessage?.isFlash() == true) {
-        FlashMessageOverlay(
-            message = animatingMessage,
-            avatarBounds = avatarBoundsStateHolder,
-        )
+        FlashMessageOverlay(message = animatingMessage, avatarBounds = avatarBoundsStateHolder)
     }
 
     InspectDrawer(

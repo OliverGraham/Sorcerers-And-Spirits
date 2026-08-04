@@ -77,6 +77,7 @@ internal fun BottomControls(
     val classColor = state.userPlayer.characterClass.type.toColor()
     val controls = state.combatControls
 
+    val isActionInFlight = state.isActionInFlight
     val isBusy = isPlayingBack || isActionInFlight
 
     val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
@@ -90,19 +91,14 @@ internal fun BottomControls(
     // TODO: Very, very rarely are nested functions allowable (these are not)
     fun isEnabled(control: ArenaCombatControl): Boolean =
         !isActionInFlight &&
-            state.isControlEnabled(
-                control = control,
-                targetedOpponentUserId = targetedOpponentUserId,
-            )
+            state.isControlEnabled(control = control, targetedOpponentUserId = state.targetedUserId)
 
     fun rollAction(control: ArenaCombatControl): () -> Unit =
         state.rollActionFor(
             control = control,
-            targetedOpponentUserId = targetedOpponentUserId,
+            targetedOpponentUserId = state.targetedUserId,
             onAttack = onAttack,
             onUseAbility = onUseAbility,
-            lockTarget = lockTarget,
-            onActionDispatched = onActionDispatched,
         )
 
     val areButtonsShown = areControlsVisible && !isSuppressedByAnimation && controls.isNotEmpty()
@@ -326,9 +322,9 @@ private fun ArenaCombatControl.toButtonIcon(): DrawableResource =
 
 private fun ArenaState.Combat.isControlEnabled(
     control: ArenaCombatControl,
-    targetedOpponentUserId: String,
+    targetedOpponentUserId: String?,
 ): Boolean {
-    val hasRequiredTarget = !control.requiresTarget || targetedOpponentUserId.isNotEmpty()
+    val hasRequiredTarget = !control.requiresTarget || !targetedOpponentUserId.isNullOrEmpty()
     val isRedundantImpersonate =
         isImpersonateRedundant(control = control, targetedOpponentUserId = targetedOpponentUserId)
 
@@ -339,7 +335,7 @@ private fun ArenaState.Combat.isControlEnabled(
 //       can they? done.)
 internal fun ArenaState.Combat.isImpersonateRedundant(
     control: ArenaCombatControl,
-    targetedOpponentUserId: String,
+    targetedOpponentUserId: String?,
 ): Boolean {
     val isImpersonateControl =
         control is ArenaCombatControl.ActivatedAbility &&

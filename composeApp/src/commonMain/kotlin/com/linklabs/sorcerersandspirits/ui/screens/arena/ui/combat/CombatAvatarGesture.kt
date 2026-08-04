@@ -5,7 +5,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
@@ -16,15 +15,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.HolyShieldPhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.MirrorImagePhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TeleportPhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.gestureFor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarGestureState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
@@ -45,8 +37,14 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.ALL_IN_TOSS_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.THROW_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.MirrorSplitClassAvatar
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.getMirrorImageMessageOrNull
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.mirrorImageBodyMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.playMirrorImage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_BOLT_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.getTeleportMessageOrNull
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.playTeleport
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.teleportAnimationMilliseconds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
@@ -63,28 +61,12 @@ import kotlinx.coroutines.launch
 // TODO: Break out into separate package and files. One new package with utilities file and
 //       per-class files - do this later, Claude
 
-private const val REACTION_DELAY_MILLIS = 170L
+internal const val REACTION_DELAY_MILLIS = 170L
 private const val SHAKE_SEGMENT_MILLIS = 55
 private const val SLASH_LEAN_MILLIS = 130
 private const val SLASH_RECOVER_MILLIS = 240
 
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
-
-private const val TELEPORT_REACT_MILLIS = 120L
-private const val TELEPORT_ENTER_MILLIS = 300
-private const val TELEPORT_GONE_MILLIS = 220L
-private const val TELEPORT_RETURN_MILLIS = 260
-private const val TELEPORT_LUNGE_MILLIS = 160
-private const val TELEPORT_RECOIL_MILLIS = 180
-private const val TELEPORT_GRAY_MILLIS = 320
-private const val TELEPORT_ENTER_SCALE = 0.5f
-private const val TELEPORT_RETURN_SCALE = 0.72f
-private const val TELEPORT_GRAY_SATURATION = 0.12f
-
-private const val MIRROR_SPLIT_MILLIS = 360
-private const val MIRROR_SPLIT_HOLD_MILLIS = 160L
-private const val MIRROR_POOF_MILLIS = 340
-private const val MIRROR_RETURN_MILLIS = 320
 
 private const val FLINCH_BODY_MILLIS = 380L
 private const val FLINCH_HEAVY_BODY_MILLIS = 470L
@@ -96,13 +78,25 @@ private const val REARM_BODY_MILLIS = 650L
 private const val CAST_BODY_MILLIS = 480L
 private const val ALL_IN_BUST_JOLT_MILLIS = 160L
 
+// TODO: This function is set up so weird
+
 /** The seated avatar art with its gesture transforms applied. */
 @Composable
 internal fun GestureClassAvatar(
+    animatingMessage: ArenaMessageState?,
+    isTopSeat: Boolean,
+    userId: String,
     characterClass: CharacterClassState,
-    gestureState: AvatarGestureState,
     modifier: Modifier = Modifier,
 ) {
+    // TODO: This is playing the avatar gesture animation. Should indicate that
+    val gestureState =
+        rememberAvatarGesture(
+            animatingMessage = animatingMessage,
+            userId = userId,
+            isTopSeat = isTopSeat,
+        )
+
     val isMirrorSplit = gestureState.mirrorSplit.value > 0f
     if (!isMirrorSplit) {
         AvatarImage(
@@ -122,222 +116,62 @@ internal fun GestureClassAvatar(
 
 // TODO: This naming is wrong. It does return a remembered value, but it plays the animation as
 // well. I believe it should just remember something if needed, then return it.
+// This is the refactor idea:
+//    remember state
+//  → interpret animatingMessage
+//  → select animation path
+//  → mutate gestureState
+//  → render gestureState
 @Composable
 internal fun rememberAvatarGesture(
-    arenaAnimation: ArenaAnimationState?,
+    animatingMessage: ArenaMessageState?,
     userId: String,
     isTopSeat: Boolean,
 ): AvatarGestureState {
     val gestureState = remember { AvatarGestureState() }
+    if (animatingMessage == null || !animatingMessage.isAvatar()) return gestureState
+
     val density = LocalDensity.current
 
-    LaunchedEffect(key1 = arenaAnimation) {
-        val mirrorImageCue = cue.mirrorImageActingFor(userId = userId)
-        if (mirrorImageCue != null) {
-            gestureState.playMirrorImage(cue = mirrorImageCue, density = density)
+    LaunchedEffect(key1 = animatingMessage) {
+        val mirrorImageMessage = animatingMessage.getMirrorImageMessageOrNull(userId = userId)
+        if (mirrorImageMessage != null) {
+            gestureState.playMirrorImage(message = mirrorImageMessage, density = density)
             return@LaunchedEffect
         }
 
-        val teleportCue = cue.teleportActingFor(userId = userId)
-        if (teleportCue != null) {
-            gestureState.playTeleport(cue = teleportCue, density = density)
+        val teleportMessage = animatingMessage.getTeleportMessageOrNull(userId = userId)
+        if (teleportMessage != null) {
+            gestureState.playTeleport(message = teleportMessage, density = density)
             return@LaunchedEffect
         }
 
-        // TODO: Does animationCue just become AvatarGesture? And also just use a property or two?
-        val gesture = cue.gestureFor(userId = userId) ?: return@LaunchedEffect
+        // TODO: gestures can be entirely determined at view model mapping time, for top and bottom
+        val gesture = animatingMessage.gestureFor(userId = userId) ?: return@LaunchedEffect
         gestureState.play(
             gesture = gesture,
             strikeDirection = if (isTopSeat) 1f else -1f,
             density = density,
-            reactionDelayMillis = cue.defenderReactionDelayMillis(),
+            reactionDelayMillis = animatingMessage.defenderReactionDelayMillis(),
         )
     }
 
     return gestureState
 }
 
-// TODO: Put in ArenaStateMapping
-private fun CombatAnimationCue.mirrorImageActingFor(
-    userId: String
-): CombatAnimationCue.MirrorImage? =
-    (this as? CombatAnimationCue.MirrorImage)?.takeIf { it.illusionistUserId == userId }
-
-private fun CombatAnimationCue.teleportActingFor(userId: String): CombatAnimationCue.Teleport? =
-    (this as? CombatAnimationCue.Teleport)?.takeIf { it.mageUserId == userId }
-
-private suspend fun AvatarGestureState.playTeleport(
-    cue: CombatAnimationCue.Teleport,
-    density: Density,
-) {
-    if (cue.phase != TeleportPhase.Resolve) return
-    val didEscape = cue.didEscape ?: return
-
-    snapToRest()
-    if (didEscape) teleportEscape(density = density) else teleportFail(density = density)
-}
-
-private suspend fun AvatarGestureState.teleportEscape(density: Density) =
-    with(density) {
-        delay(timeMillis = TELEPORT_REACT_MILLIS)
-        coroutineScope {
-            launch {
-                offsetY.animateTo(
-                    targetValue = -60.dp.toPx(),
-                    animationSpec =
-                        tween(
-                            durationMillis = TELEPORT_ENTER_MILLIS,
-                            easing = FastOutLinearInEasing,
-                        ),
-                )
-            }
-            launch {
-                stretchTo(
-                    targetX = TELEPORT_ENTER_SCALE,
-                    targetY = TELEPORT_ENTER_SCALE,
-                    durationMillis = TELEPORT_ENTER_MILLIS,
-                )
-            }
-            launch {
-                teleportVanish.animateTo(
-                    targetValue = 1f,
-                    animationSpec = tween(durationMillis = TELEPORT_ENTER_MILLIS),
-                )
-            }
-        }
-
-        delay(timeMillis = TELEPORT_GONE_MILLIS)
-
-        offsetY.snapTo(targetValue = 0f)
-        scaleX.snapTo(targetValue = TELEPORT_RETURN_SCALE)
-        scaleY.snapTo(targetValue = TELEPORT_RETURN_SCALE)
-        coroutineScope {
-            launch {
-                teleportVanish.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(durationMillis = TELEPORT_RETURN_MILLIS),
-                )
-            }
-            launch {
-                stretchTo(targetX = 1f, targetY = 1f, durationMillis = TELEPORT_RETURN_MILLIS)
-            }
-        }
-    }
-
-private suspend fun AvatarGestureState.teleportFail(density: Density) =
-    with(density) {
-        delay(timeMillis = TELEPORT_REACT_MILLIS)
-        offsetY.animateTo(
-            targetValue = -24.dp.toPx(),
-            animationSpec =
-                tween(durationMillis = TELEPORT_LUNGE_MILLIS, easing = FastOutSlowInEasing),
-        )
-        coroutineScope {
-            launch {
-                offsetY.animateTo(
-                    targetValue = 8.dp.toPx(),
-                    animationSpec = tween(durationMillis = TELEPORT_RECOIL_MILLIS / 2),
-                )
-                offsetY.animateTo(
-                    targetValue = 0f,
-                    animationSpec = tween(durationMillis = TELEPORT_RECOIL_MILLIS / 2),
-                )
-            }
-            launch {
-                saturation.animateTo(
-                    targetValue = TELEPORT_GRAY_SATURATION,
-                    animationSpec = tween(durationMillis = TELEPORT_GRAY_MILLIS),
-                )
-            }
-        }
-    }
-
-private suspend fun AvatarGestureState.playMirrorImage(
-    cue: CombatAnimationCue.MirrorImage,
-    density: Density,
-) {
-    when (cue.phase) {
-        MirrorImagePhase.Split -> mirrorSplitOut()
-        MirrorImagePhase.Resolve -> mirrorResolve(outcome = cue.messageType, density = density)
-    }
-}
-
-private suspend fun AvatarGestureState.mirrorSplitOut() {
-    snapToRest()
-    mirrorSplit.animateTo(
-        targetValue = 1f,
-        animationSpec = tween(durationMillis = MIRROR_SPLIT_MILLIS, easing = FastOutSlowInEasing),
-    )
-}
-
-private suspend fun AvatarGestureState.mirrorResolve(
-    outcome: NormalRollMessageType?,
-    density: Density,
-) {
-    if (mirrorSplit.value == 0f) mirrorSplit.snapTo(targetValue = 1f)
-    mirrorReturn.snapTo(targetValue = 0f)
-    mirrorFakeVanish.snapTo(targetValue = 0f)
-
-    coroutineScope {
-        launch {
-            mirrorFakeVanish.animateTo(
-                targetValue = 1f,
-                animationSpec = tween(durationMillis = MIRROR_POOF_MILLIS),
-            )
-        }
-        launch {
-            mirrorReturn.animateTo(
-                targetValue = 1f,
-                animationSpec =
-                    tween(durationMillis = MIRROR_RETURN_MILLIS, easing = FastOutSlowInEasing),
-            )
-        }
-        if (outcome != null) {
-            launch { playDefenderReaction(outcome = outcome, density = density) }
-        }
-    }
-
-    mirrorSplit.snapTo(targetValue = 0f)
-    mirrorReturn.snapTo(targetValue = 0f)
-    mirrorFakeVanish.snapTo(targetValue = 0f)
-}
-
-private suspend fun AvatarGestureState.playDefenderReaction(
-    outcome: NormalRollMessageType,
-    density: Density,
-) =
-    with(density) {
-        when (outcome) {
-            NormalRollMessageType.ArmorClassHit ->
-                flinch(
-                    shakePx = 10.dp.toPx(),
-                    tintPeak = 0.7f,
-                    reactionDelayMillis = REACTION_DELAY_MILLIS,
-                )
-
-            NormalRollMessageType.ArmorClassMiss ->
-                sidestep(distancePx = 40.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
-
-            NormalRollMessageType.Damage ->
-                flinchHeavy(shakePx = 16.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
-
-            NormalRollMessageType.Knockout -> collapse(reactionDelayMillis = REACTION_DELAY_MILLIS)
-        }
-    }
-
-// TODO: Put in ArenaMessageState
-private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
+// TODO: Common
+private fun ArenaMessageState.defenderReactionDelayMillis(): Long =
     when (this) {
-        is CombatAnimationCue.NormalAttack -> normalAttackReactionDelayMillis()
+        is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
 
-        is CombatAnimationCue.PrepareAttack -> prepareAttackReactionDelayMillis()
+        is ArenaMessageState.PrepareAttack -> prepareAttackReactionDelayMillis()
 
-        is CombatAnimationCue.Riposte -> RIPOSTE_STRIKE_MILLIS
+        is ArenaMessageState.Riposte -> RIPOSTE_STRIKE_MILLIS
 
-        is CombatAnimationCue.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
+        is ArenaMessageState.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 
-        is CombatAnimationCue.HolyShield ->
-            if (phase == HolyShieldPhase.Wrath) {
+        is ArenaMessageState.HolyShield ->
+            if (this is ArenaMessageState.HolyShield.Wrath) {
                 HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong()
             } else {
                 HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
@@ -346,9 +180,9 @@ private fun CombatAnimationCue.defenderReactionDelayMillis(): Long =
         else -> REACTION_DELAY_MILLIS
     }
 
-// TODO: Put in ArenaMessageState
-private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): Long =
-    when (weaponClassType) {
+// TODO: Common
+private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long =
+    when (attackerClassType) {
         CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
         CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
         CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
@@ -359,104 +193,69 @@ private fun CombatAnimationCue.NormalAttack.normalAttackReactionDelayMillis(): L
         else -> REACTION_DELAY_MILLIS
     }
 
-// TODO: Put in ArenaMessageState
-private fun CombatAnimationCue.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
+// TODO: Duelist
+private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
-// TODO: Put in ArenaMessageState
-internal fun CombatAnimationCue.seatedAvatarDurationMillis(): Long =
+// TODO: Common
+internal fun ArenaMessageState.seatedAvatarDurationMillis(): Long =
     when (this) {
-        is CombatAnimationCue.NormalAttack ->
+        is ArenaMessageState.NormalRoll.Outcome ->
             normalAttackReactionDelayMillis() +
-                defenderReactionBodyMillis(normalRollMessageType = normalRollMessageType)
+                defenderReactionBodyMillis(normalRollMessageType = type)
 
-        is CombatAnimationCue.KillingMomentum -> REARM_BODY_MILLIS
+        is ArenaMessageState.KillingMomentum -> REARM_BODY_MILLIS
 
-        is CombatAnimationCue.Dodge ->
+        is ArenaMessageState.Dodge ->
             if (didArmorIncrease) DODGE_BRACE_BODY_MILLIS else DODGE_FLOURISH_BODY_MILLIS
 
-        is CombatAnimationCue.AllIn -> allInBodyMillis(outcome = outcome)
+        is ArenaMessageState.AllIn -> allInBodyMillis(outcome = outcome)
 
-        is CombatAnimationCue.LuckyCoinFlip -> 0L
-
-        is CombatAnimationCue.LuckyCoinHighRoller -> 0L
-
-        is CombatAnimationCue.LuckyCoinHighRollerThrow ->
+        is ArenaMessageState.LuckyCoin.HighRollerDamage ->
             REACTION_DELAY_MILLIS +
                 if (isKnockout) COLLAPSE_BODY_MILLIS else FLINCH_HEAVY_BODY_MILLIS
 
-        is CombatAnimationCue.PrepareAttack ->
+        is ArenaMessageState.PrepareAttack ->
             prepareAttackReactionDelayMillis() +
                 if (isSuccessful) COLLAPSE_BODY_MILLIS else SIDESTEP_BODY_MILLIS
 
-        is CombatAnimationCue.Riposte ->
-            if (phase == RipostePhase.Landed) RIPOSTE_STRIKE_MILLIS + FLINCH_BODY_MILLIS else 0L
+        is ArenaMessageState.Riposte ->
+            when (this) {
+                is ArenaMessageState.Riposte.EnGarde ->
+                    if (isSuccessful) RIPOSTE_STRIKE_MILLIS + FLINCH_BODY_MILLIS else 0L
 
-        is CombatAnimationCue.SummonMinion -> CAST_BODY_MILLIS
+                is ArenaMessageState.Riposte.Trigger -> 0L
+            }
 
-        is CombatAnimationCue.Persuade -> 0L
+        is ArenaMessageState.SummonMinion -> CAST_BODY_MILLIS
 
-        is CombatAnimationCue.Encore -> 0L
+        is ArenaMessageState.MirrorImage -> mirrorImageBodyMillis()
 
-        is CombatAnimationCue.Impersonate -> 0L
-
-        is CombatAnimationCue.MirrorImage -> mirrorImageBodyMillis()
-
-        is CombatAnimationCue.SpellPotency ->
+        is ArenaMessageState.SpellPotency ->
             MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS + FLINCH_HEAVY_BODY_MILLIS
 
-        is CombatAnimationCue.Teleport -> teleportBodyMillis()
+        is ArenaMessageState.Teleport -> teleportAnimationMilliseconds()
 
-        is CombatAnimationCue.HolyShield -> {
-            val isWrath = phase == HolyShieldPhase.Wrath
-            val didFailPrayer = phase == HolyShieldPhase.Pray && didSurvive == false
-            when {
-                isWrath -> HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong() + FLINCH_HEAVY_BODY_MILLIS
-                didFailPrayer -> HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong() + COLLAPSE_BODY_MILLIS
-                else -> 0L
+        is ArenaMessageState.HolyShield ->
+            when (this) {
+                is ArenaMessageState.HolyShield.Prayer ->
+                    if (!didSurvive) {
+                        HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong() + COLLAPSE_BODY_MILLIS
+                    } else {
+                        0L
+                    }
+
+                is ArenaMessageState.HolyShield.Trigger -> 0L
+
+                is ArenaMessageState.HolyShield.Wrath ->
+                    HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong() + FLINCH_HEAVY_BODY_MILLIS
             }
-        }
+
+        else -> 0L
     }
 
-// TODO: Put in ArenaMessageState
-private fun CombatAnimationCue.Teleport.teleportBodyMillis(): Long =
-    when (phase) {
-        TeleportPhase.Open,
-        TeleportPhase.Hold -> 0L
-
-        TeleportPhase.Resolve ->
-            if (didEscape == true) {
-                TELEPORT_REACT_MILLIS +
-                    TELEPORT_ENTER_MILLIS +
-                    TELEPORT_GONE_MILLIS +
-                    TELEPORT_RETURN_MILLIS
-            } else {
-                TELEPORT_REACT_MILLIS +
-                    TELEPORT_LUNGE_MILLIS +
-                    maxOf(TELEPORT_RECOIL_MILLIS.toLong(), TELEPORT_GRAY_MILLIS.toLong())
-            }
-    }
-
-// TODO: Put in ArenaMessageState
-private fun CombatAnimationCue.MirrorImage.mirrorImageBodyMillis(): Long =
-    when (phase) {
-        MirrorImagePhase.Split -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
-
-        MirrorImagePhase.Resolve -> {
-            val resolvedMessageType = messageType
-            val reactionMillis =
-                if (resolvedMessageType != null) {
-                    REACTION_DELAY_MILLIS +
-                        defenderReactionBodyMillis(normalRollMessageType = resolvedMessageType)
-                } else {
-                    0L
-                }
-            maxOf(MIRROR_POOF_MILLIS.toLong(), MIRROR_RETURN_MILLIS.toLong(), reactionMillis)
-        }
-    }
-
-// TODO: Put in ArenaMessageState
-private fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
+// TODO: Common
+internal fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
     when (normalRollMessageType) {
         NormalRollMessageType.ArmorClassHit -> FLINCH_BODY_MILLIS
         NormalRollMessageType.ArmorClassMiss -> SIDESTEP_BODY_MILLIS
@@ -464,7 +263,7 @@ private fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageT
         NormalRollMessageType.Knockout -> COLLAPSE_BODY_MILLIS
     }
 
-// TODO: Put in ArenaMessageState
+// TODO: Gambler
 private fun allInBodyMillis(outcome: AllInOutcome): Long =
     when (outcome) {
         AllInOutcome.SelfKnockout ->
@@ -476,6 +275,7 @@ private fun allInBodyMillis(outcome: AllInOutcome): Long =
         AllInOutcome.DoubleAttack -> ALL_IN_TOSS_GESTURE_MILLIS.toLong()
     }
 
+// TODO: Common
 private suspend fun AvatarGestureState.play(
     gesture: AvatarGesture,
     strikeDirection: Float,
@@ -553,12 +353,13 @@ private suspend fun AvatarGestureState.play(
     }
 }
 
+// TODO: Common
 private suspend fun AvatarGestureState.cast(reachPx: Float) {
     offsetY.animateTo(targetValue = reachPx, animationSpec = tween(durationMillis = 180))
     offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
 }
 
-// TODO: Figure out which ones are used by which attack
+// TODO: Common
 private suspend fun AvatarGestureState.lunge(distancePx: Float, peakScale: Float) {
     coroutineScope {
         launch {
@@ -572,6 +373,7 @@ private suspend fun AvatarGestureState.lunge(distancePx: Float, peakScale: Float
     }
 }
 
+// TODO: Common
 private suspend fun AvatarGestureState.lungeOvershoot(distancePx: Float) {
     coroutineScope {
         launch {
@@ -947,7 +749,7 @@ private suspend fun AvatarGestureState.dodgeBrace(distancePx: Float) {
     }
 }
 
-private suspend fun AvatarGestureState.flinch(
+internal suspend fun AvatarGestureState.flinch(
     shakePx: Float,
     tintPeak: Float,
     reactionDelayMillis: Long,
@@ -962,7 +764,7 @@ private suspend fun AvatarGestureState.flinch(
     }
 }
 
-private suspend fun AvatarGestureState.flinchHeavy(shakePx: Float, reactionDelayMillis: Long) {
+internal suspend fun AvatarGestureState.flinchHeavy(shakePx: Float, reactionDelayMillis: Long) {
     delay(timeMillis = reactionDelayMillis)
     coroutineScope {
         launch { shake(shakePx, -0.8f * shakePx, 0.5f * shakePx, -0.25f * shakePx, 0f) }
@@ -977,7 +779,7 @@ private suspend fun AvatarGestureState.flinchHeavy(shakePx: Float, reactionDelay
     }
 }
 
-private suspend fun AvatarGestureState.sidestep(distancePx: Float, reactionDelayMillis: Long) {
+internal suspend fun AvatarGestureState.sidestep(distancePx: Float, reactionDelayMillis: Long) {
     delay(timeMillis = reactionDelayMillis)
     coroutineScope {
         launch {
@@ -993,7 +795,7 @@ private suspend fun AvatarGestureState.sidestep(distancePx: Float, reactionDelay
     }
 }
 
-private suspend fun AvatarGestureState.collapse(reactionDelayMillis: Long) {
+internal suspend fun AvatarGestureState.collapse(reactionDelayMillis: Long) {
     delay(timeMillis = reactionDelayMillis)
     coroutineScope {
         launch {
@@ -1021,7 +823,7 @@ private suspend fun AvatarGestureState.shake(vararg targetsPx: Float) {
     }
 }
 
-private suspend fun AvatarGestureState.stretchTo(
+internal suspend fun AvatarGestureState.stretchTo(
     targetX: Float,
     targetY: Float,
     durationMillis: Int,
@@ -1042,7 +844,7 @@ private suspend fun AvatarGestureState.stretchTo(
     }
 }
 
-private suspend fun AvatarGestureState.snapToRest() {
+internal suspend fun AvatarGestureState.snapToRest() {
     offsetX.snapTo(targetValue = 0f)
     offsetY.snapTo(targetValue = 0f)
     rotation.snapTo(targetValue = 0f)

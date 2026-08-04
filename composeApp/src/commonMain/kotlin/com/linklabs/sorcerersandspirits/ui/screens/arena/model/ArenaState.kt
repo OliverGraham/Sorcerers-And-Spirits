@@ -41,6 +41,7 @@ sealed interface ArenaState {
         val lockedTargetUserId: String?,
         val diceRollState: DiceRollState?,
         val selectedOpponentUserId: String? = null,
+        val isActionInFlight: Boolean = false,
     ) : ActiveState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
@@ -68,7 +69,7 @@ sealed interface ArenaState {
         val turnOwner = playerMap.getValue(key = turnOwnerUserId)
         val turnOwnerCharacterClass = turnOwner.characterClass
 
-        private val targetedUserId = getTargetedPlayerUserId()
+        val targetedUserId = getTargetedPlayerUserId()
 
         // TODO: For "Choose your target avatar" if this is null, then show it
         val targetedPlayer = playerMap[targetedUserId]

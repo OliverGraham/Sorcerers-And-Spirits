@@ -43,7 +43,6 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -113,7 +112,7 @@ internal fun CombatAvatarColumn(
 @Composable
 private fun ColumnScope.SeatedAvatar(
     player: PlayerState.Selected?,
-    animatingMessage: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
     userPlayerId: String,
     activeUserIds: Set<String>,
@@ -134,6 +133,7 @@ private fun ColumnScope.SeatedAvatar(
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
         )
     } else {
+        // TODO: If the player is null, then show the not-yet-created "Choose your target" avatar
         Spacer(modifier = Modifier.weight(weight = 1f))
     }
 }
@@ -151,7 +151,7 @@ private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = M
 @Composable
 private fun LargeAvatar(
     player: PlayerState.Selected,
-    animatingMessage: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
@@ -160,16 +160,6 @@ private fun LargeAvatar(
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val classColor = player.characterClass.type.toColor()
-
-    // TODO: This is playing the avatar gesture animation. Should indicate that
-    val gestureState =
-        rememberAvatarGesture(
-            animatingMessage = animatingMessage,
-            userId = player.userId,
-            isTopSeat = isTopSeat,
-        )
-
     Row(
         modifier = modifier.clickable { onInspect(player.userId) },
         verticalAlignment = Alignment.CenterVertically,
@@ -178,7 +168,7 @@ private fun LargeAvatar(
             characterClass = player.characterClass,
             isUserPlayer = isUserPlayer,
             isTurnOwner = isTurnOwner,
-            classColor = classColor,
+            classColor = player.characterClass.type.toColor(),
             modifier = Modifier.sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
         )
 
@@ -194,8 +184,10 @@ private fun LargeAvatar(
             }
 
             GestureClassAvatar(
+                animatingMessage = animatingMessage,
                 characterClass = player.characterClass,
-                gestureState = gestureState,
+                userId = player.userId,
+                isTopSeat = isTopSeat,
                 modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
             )
         }

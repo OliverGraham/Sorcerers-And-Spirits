@@ -11,6 +11,9 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 sealed interface ArenaMessageState {
     val animation: ArenaAnimationState
     val id: String
+
+    // TODO: gestures can be fully built into the message itself. top and bottom players are known
+    //       at this time. Don't need to query from the composable
     val gestures: Map<String, AvatarGesture>
         get() = emptyMap()
 
@@ -67,6 +70,7 @@ sealed interface ArenaMessageState {
         val attackerUserId: String
         val defenderUserId: String
         val attackerClassType: CharacterClassType
+        val normalRollMessageType: NormalRollMessageType
 
         override val actingClassType: CharacterClassType
             get() = attackerClassType
@@ -81,8 +85,8 @@ sealed interface ArenaMessageState {
             override val attackerUserId: String,
             override val defenderUserId: String,
             override val attackerClassType: CharacterClassType,
+            override val normalRollMessageType: NormalRollMessageType,
             val impersonatedClassType: CharacterClassType?,
-            val normalRollMessageType: NormalRollMessageType,
             override val gestures: Map<String, AvatarGesture>,
         ) : NormalRoll {
             override val collapsingUserId: String? =
@@ -101,17 +105,17 @@ sealed interface ArenaMessageState {
             override val defenderUserId: String,
             override val attackerClassType: CharacterClassType,
             override val gestures: Map<String, AvatarGesture>,
+            override val normalRollMessageType: NormalRollMessageType,
             val attackerName: String,
             val defenderName: String,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
-            val type: NormalRollMessageType,
         ) : NormalRoll {
             val baseRoll: Int = firstDie + secondDie
 
             override val collapsingUserId: String? =
-                if (type == NormalRollMessageType.Knockout) defenderUserId else null
+                if (normalRollMessageType == NormalRollMessageType.Knockout) defenderUserId else null
         }
     }
 
@@ -245,13 +249,14 @@ sealed interface ArenaMessageState {
             get() = FlashAnchor.Avatar(userId = duelistUserId)
 
         val duelistUserId: String
+        val attackerUserId: String
 
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
             override val id: String,
             override val duelistUserId: String,
-            val attackerUserId: String,
+            override val attackerUserId: String,
         ) : Riposte
 
         @Immutable
@@ -259,7 +264,7 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimationState,
             override val id: String,
             override val duelistUserId: String,
-            val attackerUserId: String,
+            override val attackerUserId: String,
             val firstDie: Int,
             val secondDie: Int,
             val isSuccessful: Boolean,
@@ -869,7 +874,7 @@ private fun ArenaMessage.toState(
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = bonus,
-                type = type,
+                normalRollMessageType = type,
                 animation = ArenaAnimationState.FlashAndAvatar,
                 gestures = gestures,
             )

@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
@@ -121,7 +122,8 @@ internal class NecromancerStrikeState {
 @Composable
 internal fun NecromancerNormalAttackOverlay(
     animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { NecromancerStrikeState() }

@@ -33,8 +33,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAnimationOverlays
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
@@ -74,7 +74,7 @@ internal fun ArenaCombat(
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
-            val avatarBoundsStateHolder = remember { CombatAvatarBounds() }
+            val avatarBoundsStateHolder = remember { AvatarBoundsStateHolder() }
 
             ScreenContent(
                 arenaScreenState = screenState,
@@ -113,7 +113,7 @@ private fun SharedTransitionScope.ScreenContent(
     unreadMessageCount: Int,
     diceHomeBoundsTop: Float?,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
-    avatarBoundsStateHolder: CombatAvatarBounds,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
     onInspect: (String) -> Unit,
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
@@ -153,7 +153,7 @@ private fun SharedTransitionScope.ScreenContent(
 private fun BoxScope.OverlayContent(
     arenaScreenState: ArenaScreenState,
     arenaState: ArenaState.Combat,
-    avatarBoundsStateHolder: CombatAvatarBounds,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
     diceStateHolder: DiceStateHolder,
     isMessageLogExpanded: Boolean,
     diceHomeBounds: Rect?,
@@ -210,7 +210,7 @@ private fun SharedTransitionScope.CombatContent(
     arenaState: ArenaState.Combat,
     animatingMessage: ArenaMessageState?,
     onInspect: (String) -> Unit,
-    avatarBoundsStateHolder: CombatAvatarBounds,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -238,11 +238,12 @@ private fun SharedTransitionScope.CombatContent(
             }
         }
 
-        CombatAnimationOverlays(
-            animatingMessage = animatingMessage,
-            avatarBounds = avatarBoundsStateHolder,
-            characterTypesInArena = arenaState.characterTypesInArena,
-        )
+        if (animatingMessage != null && animatingMessage.isAvatar()) {
+            CombatAnimationOverlays(
+                animatingMessage = animatingMessage,
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
+            )
+        }
     }
 }
 

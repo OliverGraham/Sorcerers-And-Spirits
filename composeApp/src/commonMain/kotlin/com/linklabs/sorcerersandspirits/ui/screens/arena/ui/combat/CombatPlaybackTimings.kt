@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.RipostePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.weaponClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.bardNormalAttackDurationMillis
@@ -32,33 +32,33 @@ internal const val FLASH_EXIT_MILLIS = 320L
 
 internal const val FLASH_MESSAGE_DURATION_MILLIS = FLASH_HOLD_MILLIS + FLASH_EXIT_MILLIS
 
-internal fun CombatAnimationCue.playbackDurationMillis(): Long =
+internal fun ArenaMessageState.playbackDurationMillis(): Long =
     maxOf(a = effectOverlayDurationMillis(), b = seatedAvatarDurationMillis())
 
-private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
+private fun ArenaMessageState.effectOverlayDurationMillis(): Long =
     when (this) {
-        is CombatAnimationCue.NormalAttack ->
+        is ArenaMessageState.NormalRoll ->
             normalAttackOverlayDurationMillis(
                 weaponClassType = weaponClassType,
                 normalRollMessageType = normalRollMessageType,
             )
 
-        is CombatAnimationCue.KillingMomentum -> 0L
+        is ArenaMessageState.KillingMomentum -> 0L
 
-        is CombatAnimationCue.Dodge -> 0L
+        is ArenaMessageState.Dodge -> 0L
 
-        is CombatAnimationCue.AllIn -> gamblerAllInDurationMillis(outcome = outcome)
+        is ArenaMessageState.AllIn -> gamblerAllInDurationMillis(outcome = outcome)
 
-        is CombatAnimationCue.LuckyCoinFlip ->
+        is ArenaMessageState.LuckyCoinFlip ->
             gamblerLuckyCoinFlipDurationMillis(didStopAttack = didStopAttack)
 
-        is CombatAnimationCue.LuckyCoinHighRoller -> gamblerLuckyCoinHighRollerDurationMillis()
+        is ArenaMessageState.LuckyCoinHighRoller -> gamblerLuckyCoinHighRollerDurationMillis()
 
-        is CombatAnimationCue.LuckyCoinHighRollerThrow -> gamblerLuckyCoinThrowDurationMillis()
+        is ArenaMessageState.LuckyCoinHighRollerThrow -> gamblerLuckyCoinThrowDurationMillis()
 
-        is CombatAnimationCue.PrepareAttack -> PREPARE_ATTACK_TOTAL_MILLIS
+        is ArenaMessageState.PrepareAttack -> PREPARE_ATTACK_TOTAL_MILLIS
 
-        is CombatAnimationCue.Riposte ->
+        is ArenaMessageState.Riposte ->
             when (phase) {
                 RipostePhase.Ready -> RIPOSTE_READY_MILLIS
 
@@ -66,32 +66,31 @@ private fun CombatAnimationCue.effectOverlayDurationMillis(): Long =
                 RipostePhase.Missed -> RIPOSTE_TOTAL_MILLIS
             }
 
-        is CombatAnimationCue.SummonMinion ->
+        is ArenaMessageState.SummonMinion ->
             necromancerSummonMinionDurationMillis(outcome = outcome)
 
-        is CombatAnimationCue.Persuade -> persuadeDurationMillis(phase = phase)
+        is ArenaMessageState.Persuade -> persuadeDurationMillis(phase = phase)
 
-        is CombatAnimationCue.Encore -> encoreDurationMillis(phase = phase)
+        is ArenaMessageState.Encore -> encoreDurationMillis(phase = phase)
 
-        is CombatAnimationCue.Impersonate -> illusionistImpersonateDurationMillis()
+        is ArenaMessageState.Impersonate -> illusionistImpersonateDurationMillis()
 
-        is CombatAnimationCue.MirrorImage -> 0L
+        is ArenaMessageState.MirrorImage -> 0L
 
-        is CombatAnimationCue.SpellPotency ->
-            mageSpellPotencyDurationMillis(mainDamage = mainDamage)
+        is ArenaMessageState.SpellPotency -> mageSpellPotencyDurationMillis(mainDamage = mainDamage)
 
-        is CombatAnimationCue.Teleport ->
+        is ArenaMessageState.Teleport ->
             teleportOverlayDurationMillis(phase = phase, didEscape = didEscape)
 
-        is CombatAnimationCue.HolyShield ->
+        is ArenaMessageState.HolyShield ->
             paladinHolyShieldOverlayDurationMillis(phase = phase, didSurvive = didSurvive)
     }
 
 private fun normalAttackOverlayDurationMillis(
-    weaponClassType: CharacterClassType,
+    characterClassType: CharacterClassType,
     normalRollMessageType: NormalRollMessageType,
 ): Long =
-    when (weaponClassType) {
+    when (characterClassType) {
         CharacterClassType.Rogue ->
             rogueNormalAttackDurationMillis(normalRollMessageType = normalRollMessageType)
 

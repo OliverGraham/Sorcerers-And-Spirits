@@ -105,7 +105,8 @@ internal class DuelistStrikeState {
 @Composable
 internal fun DuelistNormalAttackOverlay(
     animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { DuelistStrikeState() }

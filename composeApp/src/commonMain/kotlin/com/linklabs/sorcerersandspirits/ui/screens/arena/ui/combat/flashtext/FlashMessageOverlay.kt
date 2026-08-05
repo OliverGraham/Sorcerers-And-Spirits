@@ -44,7 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyCo
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CombatAvatarBounds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -68,7 +68,7 @@ private const val CENTER_BANNER_FRACTION = 0.2f
 @Composable
 internal fun FlashMessageOverlay(
     message: ArenaMessageState,
-    avatarBounds: CombatAvatarBounds,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
@@ -78,12 +78,12 @@ internal fun FlashMessageOverlay(
             modifier
                 .fillMaxSize()
                 .onGloballyPositioned {
-                    avatarBounds.reportFullScreenOverlayBounds(boundsInRoot = it.boundsInRoot())
+                    avatarBoundsStateHolder.reportFullScreenOverlayBounds(boundsInRoot = it.boundsInRoot())
                 }
                 .onSizeChanged { overlaySize = it }
     ) {
         val point =
-            message.flashAnchor.resolvePoint(avatarBounds = avatarBounds, overlaySize = overlaySize)
+            message.flashAnchor.resolvePoint(avatarBoundsStateHolder = avatarBoundsStateHolder, overlaySize = overlaySize)
 
         ConfettiBurst(triggerKey = message, origin = point, modifier = Modifier.fillMaxSize())
 
@@ -199,13 +199,13 @@ private fun ConfettiBurst(triggerKey: Any, origin: Offset, modifier: Modifier = 
 }
 
 private fun FlashAnchor.resolvePoint(
-    avatarBounds: CombatAvatarBounds,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
     overlaySize: IntSize,
 ): Offset {
     val center = Offset(x = overlaySize.width / 2f, y = overlaySize.height * CENTER_BANNER_FRACTION)
     if (this !is FlashAnchor.Avatar) return center
 
-    val seat = avatarBounds.fullScreenBoundsFor(userId = userId) ?: return center
+    val seat = avatarBoundsStateHolder.fullScreenBoundsFor(userId = userId) ?: return center
     return Offset(x = seat.center.x, y = seat.top + seat.height * AVATAR_HEAD_FRACTION)
 }
 

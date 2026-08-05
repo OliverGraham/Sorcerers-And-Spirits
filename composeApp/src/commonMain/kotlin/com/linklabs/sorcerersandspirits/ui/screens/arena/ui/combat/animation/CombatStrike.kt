@@ -60,18 +60,19 @@ internal fun weaponStrikeGeometry(
 }
 
 internal fun projectileStrikeGeometry(
-    cue: CombatAnimationCue.NormalAttack,
+    messageType: NormalRollMessageType,
     attackerBounds: Rect,
     defenderBounds: Rect,
     accentColor: Color,
     density: Density,
 ): WeaponStrikeGeometry {
     val target =
-        if (cue.normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {
+        if (messageType == NormalRollMessageType.ArmorClassMiss) {
             missThrustTarget(defenderBounds = defenderBounds, origin = attackerBounds.center)
         } else {
             defenderBounds.center
         }
+
     return weaponStrikeGeometry(
         attackerBounds = attackerBounds,
         target = target,

@@ -31,8 +31,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TeleportPhase
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.GestureClassAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
@@ -40,7 +39,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.visibleAvatarWidth
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.rememberAvatarGesture
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlin.math.PI
@@ -61,14 +60,8 @@ private const val PORTAL_SNAP_MILLIS = 200
 private const val GRAY_BLOOM_MILLIS = 260
 private const val GRAY_FADE_MILLIS = 460
 
-/** How many revolutions each swirl strand winds from the void out to the rim. */
 private const val SPIRAL_TURNS = 1.35f
 
-/**
- * The portal opens beside the Mage rather than over their head: [PORTAL_RADIUS_X_FRACTION] and
- * [PORTAL_RADIUS_Y_FRACTION] size it off the visible avatar width, [PORTAL_SIDE_OFFSET_FRACTION]
- * pushes it clear of the body, and [PORTAL_HEIGHT_FRACTION] seats it at head height off the bounds.
- */
 private const val PORTAL_RADIUS_X_FRACTION = 0.3f
 private const val PORTAL_RADIUS_Y_FRACTION = 0.36f
 private const val PORTAL_SIDE_OFFSET_FRACTION = 0.52f
@@ -83,34 +76,6 @@ private val PORTAL_SPIRAL = Color(color = 0xFF6FC8FF)
 private val PORTAL_VOID = Color(color = 0xFF081733)
 private val PORTAL_GRAY = Color(color = 0xFF9AA0A6)
 
-/**
- * The state of one Teleport portal (SS-211). The choreography drives these Animatables and the draw
- * layer reads them, so the portal churns and closes without recomposing anything. [open] grows the
- * portal from nothing to full; [swirl] winds monotonically so the spiral reads as one endless turn
- * even across the roll-off holds; [swallow] flashes bright as the escaping Mage passes through; and
- * [gray] blooms the failure wash over the scene.
- */
-@Stable
-internal class TeleportPortalState {
-    val open = Animatable(initialValue = 0f)
-    val swirl = Animatable(initialValue = 0f)
-    val swallow = Animatable(initialValue = 0f)
-    val gray = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<TeleportScene?>(value = null)
-}
-
-/** The fixed geometry of one portal: an upright ellipse centered on [center]. */
-@Immutable
-internal data class TeleportScene(val center: Offset, val radiusX: Float, val radiusY: Float)
-
-/**
- * The Mage's Teleport portal (SS-211). The instant the Mage's armor is passed a swirling blue
- * portal tears open beside them and churns endlessly through the roll-off. On the resolving roll it
- * either flashes and closes behind the escaping Mage, or — on a failed escape — snaps shut too soon
- * and washes the scene gray. Anchored to the Mage's measured seat via [avatarBoundsFor]; sits out
- * any cue that is not a Teleport.
- */
 @Composable
 internal fun MageTeleportOverlay(
     animatingMessage: ArenaMessageState?,
@@ -177,7 +142,6 @@ private suspend fun TeleportPortalState.play(
     }
 }
 
-/** The portal tears open the moment the Mage's armor is passed and starts its endless churn. */
 private suspend fun TeleportPortalState.open(scene: TeleportScene) {
     this.scene = scene
     open.snapTo(targetValue = 0f)
@@ -201,10 +165,6 @@ private suspend fun TeleportPortalState.hold(scene: TeleportScene) {
     swirlForever()
 }
 
-/**
- * The endless swirl: winds one full turn at a time from wherever it left off, so a fresh roll-off
- * die resumes the rotation seamlessly rather than snapping the spiral back to its start.
- */
 private suspend fun TeleportPortalState.swirlForever() {
     while (true) {
         swirl.animateTo(
@@ -214,9 +174,6 @@ private suspend fun TeleportPortalState.swirlForever() {
     }
 }
 
-/**
- * A successful escape: the portal flashes as the Mage passes through, then spins shut behind them.
- */
 private suspend fun TeleportPortalState.resolveEscape(scene: TeleportScene) {
     this.scene = scene
     if (open.value == 0f) open.snapTo(targetValue = 1f)
@@ -305,11 +262,6 @@ private fun DrawScope.drawTeleport(state: TeleportPortalState) {
     }
 }
 
-/**
- * The portal drawn as an upright ellipse: an outer blue glow, a bright rim, a deep receding void
- * for depth, three winding spiral strands, and a handful of sparks orbiting the mouth — with a
- * white flash blooming from the center as an escaping Mage passes through.
- */
 private fun DrawScope.drawPortal(scene: TeleportScene, open: Float, swirl: Float, swallow: Float) {
     val center = scene.center
     val radius = scene.radiusX * open
@@ -396,6 +348,20 @@ private fun DrawScope.drawSpiralStrand(center: Offset, radius: Float, swirl: Flo
     )
 }
 
+@Stable
+private class TeleportPortalState {
+    val open = Animatable(initialValue = 0f)
+    val swirl = Animatable(initialValue = 0f)
+    val swallow = Animatable(initialValue = 0f)
+    val gray = Animatable(initialValue = 0f)
+
+    var scene by mutableStateOf<TeleportScene?>(value = null)
+}
+
+/** The fixed geometry of one portal: an upright ellipse centered on [center]. */
+@Immutable
+private data class TeleportScene(val center: Offset, val radiusX: Float, val radiusY: Float)
+
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun MageTeleportEscapePreview() {
@@ -408,11 +374,6 @@ private fun MageTeleportFailPreview() {
     MageTeleportPreview(didEscape = false)
 }
 
-/**
- * The whole Teleport played over a real seated Mage: the portal opens and churns through two roll
- * dice, then the Mage either rises through it and vanishes, or lunges and is thrown back as the
- * scene grays — the seat gesture and the portal overlay driven off the one replaying cue.
- */
 @Composable
 private fun MageTeleportPreview(didEscape: Boolean) {
     val seats = rememberSoloSeat()

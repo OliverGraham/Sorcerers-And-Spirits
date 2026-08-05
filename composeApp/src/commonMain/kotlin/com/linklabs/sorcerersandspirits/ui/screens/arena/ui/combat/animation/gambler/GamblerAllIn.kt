@@ -67,10 +67,6 @@ private const val ALL_IN_HOLD_MILLIS = 480L
 private const val ALL_IN_CASH_MILLIS = 1300
 private const val ALL_IN_FADE_MILLIS = 360
 
-/**
- * How long the All-In toss runs to its outcome, so the message sequencer holds the event until the
- * winnings finish landing, busting, or cashing out instead of flashing over the toss (SS-201).
- */
 internal fun gamblerAllInDurationMillis(outcome: AllInOutcome): Long {
     val tossMillis = (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS).toLong()
     val outcomeMillis =
@@ -120,84 +116,10 @@ private val grayBarrelBand = Color(color = 0xFFE0E0E0)
 private val dollarSignColor = Color(color = 0xFFF4C752)
 private val blastCore = Color(color = 0xFFFFF3D0)
 
-/** The kinds of loot the Gambler flings up on All-In, drawn distinctly and mixed in the pile. */
-enum class ValuableKind {
-    Coin,
-    Gem,
-    Bill,
-    Painting,
-    Barrel,
-}
-
-/**
- * One tossed valuable in the All-In pile (SS-193): a coin or a jewel launched from the Gambler
- * along a lobbed arc — [launchStart] up over [apex] down into its [rest] spot in the pile — then
- * blown out along [explodeDir] if the roll busts.
- */
-@Immutable
-internal data class Valuable(
-    val kind: ValuableKind,
-    val color: Color,
-    val accent: Color,
-    val launchStart: Offset,
-    val apex: Offset,
-    val rest: Offset,
-    val explodeDir: Offset,
-    val radiusPx: Float,
-    val spinTurns: Float,
-)
-
-/**
- * One floating dollar sign of the winning payout (SS-193): it springs up from the pile and bobs.
- */
-@Immutable
-internal data class DollarSign(
-    val x: Float,
-    val baseY: Float,
-    val risePx: Float,
-    val bobPx: Float,
-    val sizePx: Float,
-    val phase: Float,
-)
-
-/** The measured geometry of one All-In toss, laid out from the Gambler's avatar bounds. */
-@Immutable
-internal data class AllInScene(
-    val valuables: List<Valuable>,
-    val dollarSigns: List<DollarSign>,
-    val pileCenter: Offset,
-    val accentColor: Color,
-    val explodeDistancePx: Float,
-)
-
-/**
- * The animation channels of one All-In toss (SS-193): [toss] arcs the valuables up and into the
- * pile, then exactly one of [explode] (bust), [gray] (no effect), or [cash] (payout) resolves it,
- * and [fade] clears whatever is left so the pile always vanishes.
- */
-@Stable
-internal class AllInEffectState {
-    val toss = Animatable(initialValue = 0f)
-    val explode = Animatable(initialValue = 0f)
-    val gray = Animatable(initialValue = 0f)
-    val cash = Animatable(initialValue = 0f)
-    val fade = Animatable(initialValue = 1f)
-
-    var scene by mutableStateOf<AllInScene?>(value = null)
-}
-
-/**
- * The Gambler's All-In effect (SS-193): on an activated All-In, a spray of coins and jewels is
- * tossed up off the Gambler and lands in a pile at their feet, then the rolled outcome plays out —
- * the pile detonates on a self-knockout, drains to lifeless gray on no effect, or throws up
- * bouncing dollar signs on a double-attack payout — before everything clears. Anchored to the
- * Gambler's measured avatar bounds via [avatarBoundsFor], and sits out any cue that is not an
- * All-In.
- */
 @Composable
 internal fun AllInOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.AllIn,
+    avatarBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { AllInEffectState() }
@@ -733,6 +655,57 @@ private fun valuableRadiusDp(kind: ValuableKind): Float =
         ValuableKind.Painting -> 12f
         ValuableKind.Barrel -> 17f
     }
+
+enum class ValuableKind {
+    Coin,
+    Gem,
+    Bill,
+    Painting,
+    Barrel,
+}
+
+@Immutable
+internal data class Valuable(
+    val kind: ValuableKind,
+    val color: Color,
+    val accent: Color,
+    val launchStart: Offset,
+    val apex: Offset,
+    val rest: Offset,
+    val explodeDir: Offset,
+    val radiusPx: Float,
+    val spinTurns: Float,
+)
+
+@Immutable
+internal data class DollarSign(
+    val x: Float,
+    val baseY: Float,
+    val risePx: Float,
+    val bobPx: Float,
+    val sizePx: Float,
+    val phase: Float,
+)
+
+@Immutable
+internal data class AllInScene(
+    val valuables: List<Valuable>,
+    val dollarSigns: List<DollarSign>,
+    val pileCenter: Offset,
+    val accentColor: Color,
+    val explodeDistancePx: Float,
+)
+
+@Stable
+internal class AllInEffectState {
+    val toss = Animatable(initialValue = 0f)
+    val explode = Animatable(initialValue = 0f)
+    val gray = Animatable(initialValue = 0f)
+    val cash = Animatable(initialValue = 0f)
+    val fade = Animatable(initialValue = 1f)
+
+    var scene by mutableStateOf<AllInScene?>(value = null)
+}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable

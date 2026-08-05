@@ -18,6 +18,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.IMPACT_BURST_TAIL_MILLIS
@@ -75,7 +76,8 @@ internal class MageBoltState {
 @Composable
 internal fun MageNormalAttackOverlay(
     animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { MageBoltState() }

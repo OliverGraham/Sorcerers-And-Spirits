@@ -75,8 +75,9 @@ private val illusionistScythePalette =
  */
 @Composable
 internal fun IllusionistNormalAttackOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.NormalRoll,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val rogueState = remember { RogueStrikeState() }

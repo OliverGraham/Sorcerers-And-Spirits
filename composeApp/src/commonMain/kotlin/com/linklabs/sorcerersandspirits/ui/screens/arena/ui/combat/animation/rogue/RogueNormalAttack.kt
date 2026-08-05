@@ -2,8 +2,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ro
 
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -25,9 +27,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -40,11 +43,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rem
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
-import kotlin.math.PI
-import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.atan2
 
 internal const val MELEE_DASH_MILLIS = 200
 internal const val MELEE_THRUST_MILLIS = 100
@@ -55,38 +58,36 @@ private const val WITHDRAW_MILLIS = 220
 
 @Composable
 internal fun RogueNormalAttackOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.NormalRoll,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { RogueStrikeState() }
+    val rogueStrikeState = remember { RogueStrikeState() }
     val density = LocalDensity.current
-    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    NormalAttackOverlay(
-        animatingMessage = animatingMessage,
-        attackerClassType = CharacterClassType.Rogue,
-        avatarBoundsFor = avatarBoundsFor,
-        onCancel = { state.scene = null },
-        play = { cue, attackerBounds, defenderBounds ->
-            // TODO: this cue is the passed in animationCue - they're the same thing
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val messageType = animatingMessage.normalRollMessageType
 
-            state.play(
-                geometry =
-                    projectileStrikeGeometry(
-                        cue = cue,
-                        attackerBounds = attackerBounds,
-                        defenderBounds = defenderBounds,
-                        accentColor = cue.attackerClassType.toColor(),
-                        density = density,
-                    ),
-                normalRollMessageType = cue.normalRollMessageType,
-            )
-            onAnimationComplete()
-        },
-        modifier = modifier,
-        draw = { drawRogueStrike(state = state) },
-    )
+        rogueStrikeState.play(
+            geometry =
+                projectileStrikeGeometry(
+                    messageType = messageType,
+                    attackerBounds = attackerBounds,
+                    defenderBounds = defenderBounds,
+                    accentColor = animatingMessage.attackerClassType.toColor(),
+                    density = density,
+                ),
+            normalRollMessageType = messageType,
+        )
+
+        onAvatarAnimationComplete()
+    }
+
+    Canvas(modifier = modifier) {
+        drawRogueStrike(state = rogueStrikeState)
+    }
 }
 
 internal fun rogueNormalAttackDurationMillis(normalRollMessageType: NormalRollMessageType): Long =
@@ -360,21 +361,24 @@ private fun RogueNormalAttackArmorClassMissPreview() {
 @Composable
 private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
     val seats = rememberDuoSeats()
-    val cue =
+    val animatingMessage =
         rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
-            CombatAnimationCue.NormalAttack(
+            ArenaMessageState.NormalRoll.Attack(
                 id = "rogue-attack-$iteration",
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                animation = ArenaAnimationState.Avatar,
+                gestures = emptyMap(),
             )
         }
     AbilityAnimationStage(accentClass = CharacterClassType.Rogue, seats = seats) {
+        // TODO: Fix animations
         RogueNormalAttackOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = animatingMessage,
+            avatarBounds = seats.boundsFor,
             modifier = Modifier.fillMaxSize(),
         )
     }

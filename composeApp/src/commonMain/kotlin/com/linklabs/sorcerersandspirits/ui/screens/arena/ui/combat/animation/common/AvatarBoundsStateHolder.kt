@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -14,7 +14,7 @@ import androidx.compose.ui.geometry.Rect
  * bounds reported per player, so an effect can still land on a seat whose pane is mid-swap.
  */
 @Stable
-internal class CombatAvatarBounds {
+internal class AvatarBoundsStateHolder {
     private val boundsByUserId = mutableStateMapOf<String, Rect>()
     private var overlayBounds by mutableStateOf(value = Rect.Zero)
     private var fullScreenOverlayBounds by mutableStateOf(value = Rect.Zero)

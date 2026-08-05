@@ -81,7 +81,8 @@ internal class GamblerStrikeState {
 @Composable
 internal fun GamblerNormalAttackOverlay(
     animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { GamblerStrikeState() }

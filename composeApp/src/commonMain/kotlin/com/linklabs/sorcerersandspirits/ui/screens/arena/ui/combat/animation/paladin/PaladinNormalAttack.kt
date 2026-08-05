@@ -3,8 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.pa
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -39,8 +43,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.lerpAngle
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.drawRogueStrike
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue.play
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.slashPoint
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.slashTangent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.smoothstep
@@ -56,97 +63,52 @@ private const val MACE_READY_HOLD_MILLIS = 200L
 private const val MACE_SWING_MILLIS = 300
 private const val MACE_END_HOLD_MILLIS = 120L
 private const val MACE_FADE_MILLIS = 200
-
-/** The head slams the defender near this point in the swing, so the burst fires as it lands. */
-private const val MACE_SWING_CONTACT_MILLIS: Long = MACE_SWING_MILLIS * 82L / 100L
-
-/**
- * How far into the swing the mace uncocks from its overhead pose and follows the arc head-first.
- */
+private const val MACE_SWING_CONTACT_MILLIS = MACE_SWING_MILLIS * 82L / 100L
 private const val MACE_ENGAGE_FRACTION = 0.3f
-
-/** How much of the swept arc the green force plume covers, streaming behind the head. */
 private const val MACE_TRAIL_SPAN = 0.5f
-
-/** How many segments the force plume is sampled into as it follows the head's arc. */
 private const val MACE_TRAIL_SAMPLES = 14
-
-/**
- * The cocked-back overhead pose the mace holds before the swing — head up, haft down to the hands.
- */
 private const val MACE_COCK_DEGREES = 196f
 
-/** How far above the hands the head is hoisted for the overhead windup. */
 private val maceWindupLift = 118.dp
-
-/** How far back over the shoulder the head cocks behind the hands during the windup. */
 private val maceWindupBack = 26.dp
-
-/** How far the overhead swing bows out over the top, so the head arcs over and chops down. */
 private val maceSwingBow = 54.dp
 
-/**
- * When the swing lands, so the shared defender reaction (SS-191) flinches in step with the mace: it
- * is raised overhead, held, then swung down and across, biting the defender partway through.
- */
-internal val PALADIN_SWING_REACTION_DELAY_MILLIS: Long =
+internal const val PALADIN_SWING_REACTION_DELAY_MILLIS: Long =
     MACE_RAISE_MILLIS.toLong() + MACE_READY_HOLD_MILLIS + MACE_SWING_CONTACT_MILLIS
 
-@Stable
-internal class PaladinStrikeState {
-    val swing = Animatable(initialValue = 0f)
-    val alpha = Animatable(initialValue = 0f)
-    val impactAlpha = Animatable(initialValue = 0f)
-    val impactScale = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
-    var essence by mutableStateOf(value = 0f)
-}
-
-/**
- * The Paladin's normal attack (SS-199): a large ornate mace — shiny silver ringed with gold — swung
- * in a heavy arc, trailing green essence that intensifies with the roll. The mace fades in raised
- * overhead, holds, then swings down and across the defender; a green force trail follows the head,
- * brighter and fuller the harder the hit. A landed swing flares a burst as the head bites; a
- * parried one carries across cleanly while the defender sidesteps. Geometry comes from the measured
- * avatar bounds via [avatarBoundsFor]. Sits out any cue that is not a Paladin normal attack.
- */
 @Composable
 internal fun PaladinNormalAttackOverlay(
-    animatingMessage: ArenaMessageState?,
+    animatingMessage: ArenaMessageState.NormalRoll,
     attackerBounds: Rect,
     defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { PaladinStrikeState() }
+    val paladinStrikeState = remember { PaladinStrikeState() }
     val density = LocalDensity.current
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    NormalAttackOverlay(
-        animatingMessage = animatingMessage,
-        attackerClassType = CharacterClassType.Paladin,
-        avatarBoundsFor = avatarBoundsFor,
-        onCancel = { state.scene = null },
-        play = { cue, attackerBounds, defenderBounds ->
-            state.play(
-                geometry =
-                    weaponStrikeGeometry(
-                        attackerBounds = attackerBounds,
-                        target = defenderBounds.center,
-                        accentColor = paladinEssenceGreen,
-                        density = density,
-                    ),
-                normalRollMessageType = cue.normalRollMessageType,
-            )
-        },
-        modifier = modifier,
-        draw = { drawMaceSwing(state = state) },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val messageType = animatingMessage.normalRollMessageType
+
+        paladinStrikeState.play(
+            geometry =
+                weaponStrikeGeometry(
+                    attackerBounds = attackerBounds,
+                    target = defenderBounds.center,
+                    accentColor = paladinEssenceGreen,
+                    density = density,
+                ),
+            normalRollMessageType = messageType,
+        )
+
+        onAvatarAnimationComplete()
+    }
+
+    Canvas(modifier = modifier) {
+        drawMaceSwing(state = paladinStrikeState)
+    }
 }
 
-/**
- * How long the Paladin's mace swing runs, so the message sequencer can hold the event until the
- * mace is raised, held, swings across, and fades out instead of cutting it off (SS-201).
- */
 internal fun paladinNormalAttackDurationMillis(): Long =
     MACE_RAISE_MILLIS.toLong() +
         MACE_READY_HOLD_MILLIS +
@@ -214,11 +176,6 @@ internal suspend fun PaladinStrikeState.play(
     this.scene = null
 }
 
-/**
- * The mace swing (SS-199): the head leaves its raised overhead pose and rides a bowed arc across to
- * the defender, a green essence trail lagging the leading edge. The mace shape rides the head of
- * the arc, oriented along the swing, and a burst flares at the defender on a landed hit.
- */
 internal fun DrawScope.drawMaceSwing(state: PaladinStrikeState) {
     val geometry = state.scene ?: return
     val alpha = state.alpha.value
@@ -282,13 +239,6 @@ internal fun DrawScope.drawMaceSwing(state: PaladinStrikeState) {
     }
 }
 
-/**
- * The green force the swing trails: a heavy plume streaming off the back of the maul head. It
- * covers only the last [MACE_TRAIL_SPAN] of the swept arc — a comet tail, not a line drawn from the
- * wielder — layered as a wide soft halo, a mid body, and a hot core that brightens toward the head,
- * so the essence reads as force ripped along behind the hammer. [essence] swells every layer's
- * reach and glow with the roll, so a harder hit trails a fuller, brighter wake.
- */
 private fun DrawScope.drawEssenceTrail(
     start: Offset,
     end: Offset,
@@ -362,6 +312,17 @@ private fun DrawScope.drawEssenceTrail(
             ),
         alpha = alpha * (0.5f + 0.45f * essence),
     )
+}
+
+@Stable
+internal class PaladinStrikeState {
+    val swing = Animatable(initialValue = 0f)
+    val alpha = Animatable(initialValue = 0f)
+    val impactAlpha = Animatable(initialValue = 0f)
+    val impactScale = Animatable(initialValue = 0f)
+
+    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
+    var essence by mutableStateOf(value = 0f)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

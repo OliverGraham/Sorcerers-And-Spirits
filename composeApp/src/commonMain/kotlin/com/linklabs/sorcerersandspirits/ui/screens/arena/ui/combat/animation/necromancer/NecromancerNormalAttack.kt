@@ -3,8 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ne
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,10 +30,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -42,13 +44,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.imp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private const val SCYTHE_SUMMON_MILLIS = 260
 private const val SCYTHE_GLOW_HOLD_MILLIS = 240L
@@ -57,105 +59,58 @@ private const val SCYTHE_REAP_MILLIS = 320
 private const val SCYTHE_REAP_END_HOLD_MILLIS = 120L
 private const val SCYTHE_FADE_MILLIS = 200
 
-/** The blade bites the defender near this point in the reap, so the burst fires as it lands. */
 private const val SCYTHE_REAP_CONTACT_MILLIS: Long = SCYTHE_REAP_MILLIS * 56L / 100L
-
-/** How far the glowing slash trail lags behind the leading edge of the swing. */
 private const val SCYTHE_SLASH_TRAIL_SPAN = 0.55f
-
-/** The reaping swing first winds back over this fraction of the reap, then cuts across. */
 private const val SCYTHE_WINDUP_FRACTION = 0.18f
-
-/** How far the scythe cocks back behind vertical before the cut, for the wind-up. */
 private const val SCYTHE_COCK_DEGREES = 40f
-
-/** How far past vertical the blade follows through, carrying the reap across the defender. */
 private const val SCYTHE_SWING_DEGREES = 46f
 
-/**
- * The point on the snath the scythe swings about, in the local frame [drawScytheShape] draws in.
- */
 private val scytheGripX = 20.dp
 private val scytheGripY = 150.dp
-
-/** The grip sits this far back from the defender along the attack line, centering the blade. */
 private val scytheGripReach = 108.dp
-
-/** Where the grip is held while the scythe is summoned and glowing, just out of the caster. */
 private val scytheHoldLead = 8.dp
 
-/**
- * When the reap's cut lands, so the shared defender reaction (SS-191) flinches in step with it: the
- * scythe is summoned, held glowing, rises to the defender, then winds up and swings the blade
- * across, biting them partway through the reap.
- */
-internal val NECROMANCER_REAP_REACTION_DELAY_MILLIS: Long =
+internal const val NECROMANCER_REAP_REACTION_DELAY_MILLIS: Long =
     SCYTHE_SUMMON_MILLIS.toLong() +
         SCYTHE_GLOW_HOLD_MILLIS +
         SCYTHE_RISE_MILLIS.toLong() +
         SCYTHE_REAP_CONTACT_MILLIS
 
-/**
- * The flight of the Necromancer's scythe reap. The choreography drives these Animatables and the
- * draw layer reads them, so a strike redraws the canvas without recomposing anything.
- */
-@Stable
-internal class NecromancerStrikeState {
-    val bodyAlpha = Animatable(initialValue = 0f)
-    val glow = Animatable(initialValue = 0f)
-    val rise = Animatable(initialValue = 0f)
-    val reap = Animatable(initialValue = 0f)
-    val impactAlpha = Animatable(initialValue = 0f)
-    val impactScale = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
-    var palette by mutableStateOf(value = necroScythePalette)
-}
-
-/**
- * The Necromancer's normal attack (SS-195): a scythe summoned by magic. A big curved green blade
- * manifests at the caster and glows, rises to the defender, then winds up and reaps a menacing arc
- * across them — the cut carries across even on a miss, only the burst holds back. Geometry comes
- * from the measured avatar bounds via [avatarBoundsFor]. Sits out any cue that is not a Necromancer
- * normal attack.
- */
 @Composable
 internal fun NecromancerNormalAttackOverlay(
-    animatingMessage: ArenaMessageState?,
+    animatingMessage: ArenaMessageState.NormalRoll,
     attackerBounds: Rect,
     defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { NecromancerStrikeState() }
+    val necromancerStrikeState = remember { NecromancerStrikeState() }
     val density = LocalDensity.current
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    NormalAttackOverlay(
-        animatingMessage = animatingMessage,
-        attackerClassType = CharacterClassType.Necromancer,
-        avatarBoundsFor = avatarBoundsFor,
-        onCancel = { state.scene = null },
-        play = { cue, attackerBounds, defenderBounds ->
-            state.play(
-                geometry =
-                    weaponStrikeGeometry(
-                        attackerBounds = attackerBounds,
-                        target = defenderBounds.center,
-                        accentColor = necroScythePalette.blade,
-                        density = density,
-                    ),
-                palette = necroScythePalette,
-                normalRollMessageType = cue.normalRollMessageType,
-            )
-        },
-        modifier = modifier,
-        draw = { drawScytheReap(state = state) },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val messageType = animatingMessage.normalRollMessageType
+
+        necromancerStrikeState.play(
+            geometry =
+                weaponStrikeGeometry(
+                    attackerBounds = attackerBounds,
+                    target = defenderBounds.center,
+                    accentColor = necroScythePalette.blade,
+                    density = density,
+                ),
+            palette = necroScythePalette,
+            normalRollMessageType = messageType,
+        )
+
+        onAvatarAnimationComplete()
+    }
+
+    Canvas(modifier = modifier) {
+        drawScytheReap(state = necromancerStrikeState)
+    }
 }
 
-/**
- * How long the Necromancer's scythe reap runs, so the message sequencer can hold the event until
- * the weapon is summoned, glows, reaps across, and fades out instead of cutting it off (SS-201).
- */
+
 internal fun necromancerNormalAttackDurationMillis(): Long =
     SCYTHE_SUMMON_MILLIS.toLong() +
         SCYTHE_GLOW_HOLD_MILLIS +
@@ -164,11 +119,6 @@ internal fun necromancerNormalAttackDurationMillis(): Long =
         SCYTHE_REAP_END_HOLD_MILLIS +
         SCYTHE_FADE_MILLIS.toLong()
 
-/**
- * The scythe manifests at the caster and its aura builds, holds glowing, rises to the defender,
- * then winds up and reaps across them. A landed reap flares a burst as the blade bites; a parried
- * one carries across cleanly with no flare. The whole construct fades out once it lands.
- */
 internal suspend fun NecromancerStrikeState.play(
     geometry: WeaponStrikeGeometry,
     palette: ScythePalette,
@@ -275,14 +225,6 @@ internal fun DrawScope.drawScytheReap(state: NecromancerStrikeState) {
     }
 }
 
-/**
- * The rise and reaping swing (SS-195): the summoned scythe holds the pose it manifested in — snath
- * hanging down toward the caster, blade riding up top — and rises up to the defender in that pose.
- * Then it reaps: gripping the snath, it winds back and swings the whole weapon through a menacing
- * arc, the curved blade carving across the defender. The blade is what cuts, so the glowing slash
- * trail rides the arc the blade edge sweeps, not the tip. The weapon only ever swings about its
- * grip; it never flips or turns upside down.
- */
 private fun DrawScope.drawReapSweep(
     geometry: WeaponStrikeGeometry,
     palette: ScythePalette,
@@ -325,11 +267,6 @@ private fun DrawScope.drawReapSweep(
     }
 }
 
-/**
- * The swing angle at [reap]: the scythe first cocks back behind vertical over the wind-up, then
- * drives forward through vertical and past it, so the blade carves across the defender. The swing
- * runs so the concave cutting edge leads — the reap pulls in toward the blade's inside, not out.
- */
 private fun scytheSwingDegrees(reap: Float): Float =
     if (reap < SCYTHE_WINDUP_FRACTION) {
         SCYTHE_COCK_DEGREES * (reap / SCYTHE_WINDUP_FRACTION)
@@ -338,11 +275,6 @@ private fun scytheSwingDegrees(reap: Float): Float =
         SCYTHE_COCK_DEGREES - (SCYTHE_COCK_DEGREES + SCYTHE_SWING_DEGREES) * cutProgress
     }
 
-/**
- * The glowing slash: the arc the blade's tip has swept, drawn as a green energy crescent that lags
- * the leading edge and brightens to a hot core at the cut, so the slash reads as the blade carving,
- * not a line being drawn.
- */
 private fun DrawScope.drawSlashArc(
     pivot: Offset,
     palette: ScythePalette,
@@ -396,9 +328,6 @@ private fun DrawScope.drawSlashArc(
     )
 }
 
-/**
- * Where the blade tip lands for a given [reap], swinging about the [pivot] from the upright pose.
- */
 private fun bladeTip(pivot: Offset, uprightDegrees: Float, grip: Offset, reap: Float): Offset {
     val radians = (uprightDegrees + scytheSwingDegrees(reap = reap)) * PI.toFloat() / 180f
     val fromGrip = Offset(x = -grip.x, y = -grip.y)
@@ -406,6 +335,19 @@ private fun bladeTip(pivot: Offset, uprightDegrees: Float, grip: Offset, reap: F
         x = pivot.x + fromGrip.x * cos(x = radians) - fromGrip.y * sin(x = radians),
         y = pivot.y + fromGrip.x * sin(x = radians) + fromGrip.y * cos(x = radians),
     )
+}
+
+@Stable
+internal class NecromancerStrikeState {
+    val bodyAlpha = Animatable(initialValue = 0f)
+    val glow = Animatable(initialValue = 0f)
+    val rise = Animatable(initialValue = 0f)
+    val reap = Animatable(initialValue = 0f)
+    val impactAlpha = Animatable(initialValue = 0f)
+    val impactScale = Animatable(initialValue = 0f)
+
+    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
+    var palette by mutableStateOf(value = necroScythePalette)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)

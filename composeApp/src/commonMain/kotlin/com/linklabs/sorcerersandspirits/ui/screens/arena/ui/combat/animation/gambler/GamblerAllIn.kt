@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -122,38 +123,36 @@ private val blastCore = Color(color = 0xFFFFF3D0)
 @Composable
 internal fun AllInOverlay(
     animatingMessage: ArenaMessageState.AllIn,
-    allInAvatarBounds: Rect,
+    avatarBounds: Rect,
     modifier: Modifier = Modifier,
     accentColor: Color = animatingMessage.actingClassType.toColor(), // TODO: Illusionist color?
 ) {
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current
-    val textMeasurer = rememberTextMeasurer()
-    val dollarLayout =
-        remember(key1 = textMeasurer) {
-            textMeasurer.measure(
-                text = "$",
-                style = TextStyle(fontSize = DOLLAR_MEASURE_SP.sp, fontWeight = FontWeight.Black),
-            )
-        }
+
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(
             scene =
                 allInScene(
-                    bounds = allInAvatarBounds,
+                    bounds = avatarBounds,
                     accentColor = accentColor,
                     density = density,
                     seed = animatingMessage.id.hashCode(),
                 ),
             outcome = animatingMessage.outcome,
         )
+
+        onAvatarAnimationComplete()
     }
 
+    val dollarLayout = getRememberedDollarLayout()
     val barrelPainter = painterResource(resource = Res.drawable.ic_oil_barrel)
     Canvas(modifier = modifier) {
         drawAllIn(state = state, dollarLayout = dollarLayout, barrelPainter = barrelPainter)
     }
 }
+
 
 private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed: Int): AllInScene {
     val random = Random(seed = seed)
@@ -268,6 +267,17 @@ private suspend fun AllInEffectState.play(scene: AllInScene, outcome: AllInOutco
     }
 
     this.scene = null
+}
+
+@Composable
+private fun getRememberedDollarLayout(): TextLayoutResult {
+    val textMeasurer = rememberTextMeasurer()
+    return remember(key1 = textMeasurer) {
+        textMeasurer.measure(
+            text = "$",
+            style = TextStyle(fontSize = DOLLAR_MEASURE_SP.sp, fontWeight = FontWeight.Black),
+        )
+    }
 }
 
 private fun DrawScope.drawAllIn(

@@ -70,10 +70,6 @@ private const val COIN_THROW_FLIGHT_MILLIS = 480
 private const val THROW_SPIN_TURNS = 4
 private const val THROW_IMPACT_MILLIS = 220
 
-/**
- * How long a defensive Lucky Coin flip runs — the toss, the armor pulse when the bonus holds, the
- * rest, and the fade — so the message sequencer holds the event until the coin settles (SS-201).
- */
 internal fun gamblerLuckyCoinFlipDurationMillis(didStopAttack: Boolean): Long {
     val armorPulseMillis = if (didStopAttack) ARMOR_PULSE_MILLIS.toLong() else 0L
     return COIN_APPEAR_MILLIS +
@@ -83,11 +79,9 @@ internal fun gamblerLuckyCoinFlipDurationMillis(didStopAttack: Boolean): Long {
         COIN_FADE_MILLIS
 }
 
-/** How long the winning High Roller coin lofts up before it rests, awaiting the throw (SS-201). */
 internal fun gamblerLuckyCoinHighRollerDurationMillis(): Long =
     (COIN_APPEAR_MILLIS + TOSS_MILLIS).toLong()
 
-/** How long the High Roller throw flies into the attacker and bursts on landing (SS-201). */
 internal fun gamblerLuckyCoinThrowDurationMillis(): Long =
     (COIN_THROW_FLIGHT_MILLIS + THROW_IMPACT_MILLIS).toLong()
 

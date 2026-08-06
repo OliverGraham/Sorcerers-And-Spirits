@@ -71,7 +71,7 @@ private fun CombatAnimationOverlaysWithBounds(
 
             AllInOverlay(
                 animatingMessage = animatingMessage,
-                avatarBounds = avatarBounds,
+                allInAvatarBounds = avatarBounds,
                 modifier = modifier,
             )
         }

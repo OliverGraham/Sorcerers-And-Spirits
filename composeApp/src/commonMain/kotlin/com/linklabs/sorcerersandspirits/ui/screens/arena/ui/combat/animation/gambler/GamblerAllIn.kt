@@ -4,9 +4,11 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +25,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -119,42 +122,37 @@ private val blastCore = Color(color = 0xFFFFF3D0)
 @Composable
 internal fun AllInOverlay(
     animatingMessage: ArenaMessageState.AllIn,
-    avatarBounds: Rect,
+    allInAvatarBounds: Rect,
     modifier: Modifier = Modifier,
+    accentColor: Color = animatingMessage.actingClassType.toColor(), // TODO: Illusionist color?
 ) {
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
-    val barrelPainter = painterResource(resource = Res.drawable.ic_oil_barrel)
     val dollarLayout =
-        remember(textMeasurer) {
+        remember(key1 = textMeasurer) {
             textMeasurer.measure(
                 text = "$",
                 style = TextStyle(fontSize = DOLLAR_MEASURE_SP.sp, fontWeight = FontWeight.Black),
             )
         }
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { it as? CombatAnimationCue.AllIn },
-        onCancel = {},
-        play = playLabel@{ cue ->
-                val bounds = avatarBoundsFor(cue.gamblerUserId) ?: return@playLabel
-                state.play(
-                    scene =
-                        allInScene(
-                            bounds = bounds,
-                            accentColor = CharacterClassType.Gambler.toColor(),
-                            density = density,
-                            seed = cue.id.hashCode(),
-                        ),
-                    outcome = cue.outcome,
-                )
-            },
-        modifier = modifier,
-        draw = {
-            drawAllIn(state = state, dollarLayout = dollarLayout, barrelPainter = barrelPainter)
-        },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(
+            scene =
+                allInScene(
+                    bounds = allInAvatarBounds,
+                    accentColor = accentColor,
+                    density = density,
+                    seed = animatingMessage.id.hashCode(),
+                ),
+            outcome = animatingMessage.outcome,
+        )
+    }
+
+    val barrelPainter = painterResource(resource = Res.drawable.ic_oil_barrel)
+    Canvas(modifier = modifier) {
+        drawAllIn(state = state, dollarLayout = dollarLayout, barrelPainter = barrelPainter)
+    }
 }
 
 private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed: Int): AllInScene {
@@ -323,7 +321,6 @@ private fun DrawScope.drawAllIn(
     }
 }
 
-/** Draws one tumbling valuable in the pile, dispatching on its [ValuableKind]. */
 private fun DrawScope.drawValuable(
     valuable: Valuable,
     center: Offset,
@@ -387,7 +384,6 @@ private fun DrawScope.drawValuable(
     }
 }
 
-/** A coin drawn edge-flipping: its width pinches as it turns so a flat disc reads as tumbling. */
 private fun DrawScope.drawCoin(
     center: Offset,
     radius: Float,
@@ -420,7 +416,6 @@ private fun DrawScope.drawCoin(
     )
 }
 
-/** A faceted jewel: a four-point diamond spinning about its center, with a rim catch-light. */
 private fun DrawScope.drawGem(
     center: Offset,
     radius: Float,
@@ -450,7 +445,6 @@ private fun DrawScope.drawGem(
     }
 }
 
-/** A banknote fluttering: a green bill that rotates and pinches its width like turning paper. */
 private fun DrawScope.drawBill(
     center: Offset,
     radius: Float,
@@ -481,9 +475,6 @@ private fun DrawScope.drawBill(
     }
 }
 
-/**
- * A framed painting tumbling: a gilt frame around a colored canvas with a couple of brush marks.
- */
 private fun DrawScope.drawPainting(
     center: Offset,
     radius: Float,
@@ -521,7 +512,6 @@ private fun DrawScope.drawPainting(
     }
 }
 
-/** An oil barrel tumbling: its drawn using the [barrelPainter] icon. */
 private fun DrawScope.drawBarrel(
     center: Offset,
     radius: Float,
@@ -530,9 +520,6 @@ private fun DrawScope.drawBarrel(
     spinDegrees: Float,
     alpha: Float,
 ) {
-    // We map the icon's black (#000) and white (#fff) to our target colors.
-    // To ensure the "no effect" state is visibly gray and not too dark,
-    // we use a lighter gray for the barrel body when at full gray fraction.
     val currentBlack = lerp(start = barrelBody, stop = grayBarrelBody, fraction = gray)
     val currentWhite = lerp(start = barrelBand, stop = grayBarrelBand, fraction = gray)
 
@@ -572,9 +559,6 @@ private fun DrawScope.drawBarrel(
     }
 }
 
-/**
- * The bust flare: a white-cored burst rimmed in the Gambler's gold, plus an expanding shock ring.
- */
 private fun DrawScope.drawBlast(center: Offset, explode: Float, accentColor: Color, reach: Float) {
     val radius = reach * (0.45f + explode)
     val fade = 1f - explode
@@ -627,7 +611,6 @@ private fun quadraticBezier(start: Offset, control: Offset, end: Offset, fractio
 
 private fun Random.nextFloat(min: Float, max: Float): Float = nextFloat() * (max - min) + min
 
-/** The full spread of loot spawned per All-In, before it is shuffled into a mixed pile. */
 private fun valuableKinds(): List<ValuableKind> = buildList {
     repeat(times = COIN_COUNT) { add(element = ValuableKind.Coin) }
     repeat(times = BILL_COUNT) { add(element = ValuableKind.Bill) }
@@ -636,7 +619,6 @@ private fun valuableKinds(): List<ValuableKind> = buildList {
     repeat(times = BARREL_COUNT) { add(element = ValuableKind.Barrel) }
 }
 
-/** The primary and accent colors a valuable is drawn with, keyed off its kind. */
 private fun valuableColors(kind: ValuableKind, random: Random): Pair<Color, Color> =
     when (kind) {
         ValuableKind.Coin -> coinFace to coinRim
@@ -646,7 +628,6 @@ private fun valuableColors(kind: ValuableKind, random: Random): Pair<Color, Colo
         ValuableKind.Barrel -> barrelBody to barrelBand
     }
 
-/** The half-size of each valuable in dp — barrels and paintings ride bigger than coins and gems. */
 private fun valuableRadiusDp(kind: ValuableKind): Float =
     when (kind) {
         ValuableKind.Coin -> 8f

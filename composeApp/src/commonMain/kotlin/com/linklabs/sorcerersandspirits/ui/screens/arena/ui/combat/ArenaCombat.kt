@@ -162,10 +162,6 @@ private fun BoxScope.OverlayContent(
     onCloseMessageLog: () -> Unit,
 ) {
     val animatingMessage = arenaScreenState.animatingMessage
-    EncoreFullScreenOverlay(
-        animatingMessage = animatingMessage,
-        characterTypesInArena = arenaState.characterTypesInArena,
-    )
 
     // TODO: is this it?
     val isPlayingBack = animatingMessage != null
@@ -177,11 +173,6 @@ private fun BoxScope.OverlayContent(
         modifier = Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
     )
 
-    SpellPotencyFullScreenOverlay(
-        animatingMessage = animatingMessage,
-        avatarBounds = avatarBoundsStateHolder,
-        characterTypesInArena = arenaState.characterTypesInArena,
-    )
 
     MessageLogOverlay(
         messageGroups = arenaScreenState.messageGroups,
@@ -196,7 +187,7 @@ private fun BoxScope.OverlayContent(
     }
 
     if (animatingMessage?.isFlash() == true) {
-        FlashMessageOverlay(message = animatingMessage, avatarBounds = avatarBoundsStateHolder)
+        FlashMessageOverlay(message = animatingMessage, avatarBoundsStateHolder = avatarBoundsStateHolder)
     }
 
     InspectDrawer(

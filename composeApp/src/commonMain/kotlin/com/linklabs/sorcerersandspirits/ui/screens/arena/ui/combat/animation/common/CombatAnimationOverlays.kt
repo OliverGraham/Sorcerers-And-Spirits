@@ -12,6 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BardNormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.EncoreOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.PersuadeOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.DuelistNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.PrepareAttackOverlay
@@ -21,6 +22,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.LuckyCoinOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.ImpersonateOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageNormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageSpellPotencyOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageTeleportOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
@@ -61,6 +63,7 @@ private fun CombatAnimationOverlaysWithBounds(
         is ArenaMessageState.NormalRoll.Attack -> AnimateNormalAttack(
             animatingMessage = animatingMessage,
             avatarBoundsStateHolder = avatarBoundsStateHolder,
+            modifier = modifier,
         )
         is ArenaMessageState.AllIn -> {
             val avatarBounds =
@@ -73,11 +76,11 @@ private fun CombatAnimationOverlaysWithBounds(
             )
         }
         is ArenaMessageState.Dodge -> {
-            // TODO: no sure where this one is
+            // TODO: no sure where this one is. So weird
         }
-        is ArenaMessageState.Encore -> {
-            // TODO: is somewhere else, because it's full screen? Why aren't all just full screen
-        }
+        is ArenaMessageState.Encore ->
+            EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier)
+
         is ArenaMessageState.HolyShield -> PaladinHolyShieldOverlay(
             animatingMessage = animatingMessage,
             avatarBoundsFor = avatarBounds::boundsFor,
@@ -116,10 +119,14 @@ private fun CombatAnimationOverlaysWithBounds(
                 avatarBoundsFor = avatarBounds::boundsFor,
                 modifier = modifier,
             )
-        is ArenaMessageState.SpellPotency -> {
-            // TODO: Wherever this is - move all to there? Any reason to not have everything have
-            //       Have the capability for
-        }
+        is ArenaMessageState.SpellPotency ->
+            // TODO: attacker and defender bounds
+            MageSpellPotencyOverlay(
+                animatingMessage = animatingMessage,
+                avatarBoundsFor = avatarBoundsStateHolder::boundsFor,
+                modifier = modifier,
+            )
+
         is ArenaMessageState.SummonMinion -> NecromancerSummonMinionOverlay(
             animatingMessage = animatingMessage,
             avatarBoundsFor = avatarBounds::boundsFor,

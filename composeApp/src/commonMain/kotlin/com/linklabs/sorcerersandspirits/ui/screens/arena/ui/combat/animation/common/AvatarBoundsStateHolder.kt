@@ -17,7 +17,6 @@ import androidx.compose.ui.geometry.Rect
 internal class AvatarBoundsStateHolder {
     private val boundsByUserId = mutableStateMapOf<String, Rect>()
     private var overlayBounds by mutableStateOf(value = Rect.Zero)
-    private var fullScreenOverlayBounds by mutableStateOf(value = Rect.Zero)
 
     fun reportAvatarBounds(userId: String, boundsInRoot: Rect) {
         boundsByUserId[userId] = boundsInRoot
@@ -27,24 +26,9 @@ internal class AvatarBoundsStateHolder {
         overlayBounds = boundsInRoot
     }
 
-    /** The root-space bounds of a full-screen effect host that spans the whole screen. */
-    fun reportFullScreenOverlayBounds(boundsInRoot: Rect) {
-        fullScreenOverlayBounds = boundsInRoot
-    }
-
     fun boundsFor(userId: String): Rect? {
         val boundsInRoot = boundsByUserId[userId] ?: return null
         return boundsInRoot.translate(offset = -overlayBounds.topLeft)
-    }
-
-    /**
-     * A seat's bounds in the coordinate space of a full-screen effect host (SS-210/SS-206), which
-     * spans the whole screen rather than the seating region, so effects hosted over the buttons
-     * still land on the right avatar.
-     */
-    fun fullScreenBoundsFor(userId: String): Rect? {
-        val boundsInRoot = boundsByUserId[userId] ?: return null
-        return boundsInRoot.translate(offset = -fullScreenOverlayBounds.topLeft)
     }
 }
 

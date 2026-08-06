@@ -78,7 +78,7 @@ internal fun FlashMessageOverlay(
             modifier
                 .fillMaxSize()
                 .onGloballyPositioned {
-                    avatarBoundsStateHolder.reportFullScreenOverlayBounds(boundsInRoot = it.boundsInRoot())
+                    avatarBoundsStateHolder.reportOverlayBounds(boundsInRoot = it.boundsInRoot())
                 }
                 .onSizeChanged { overlaySize = it }
     ) {
@@ -205,7 +205,7 @@ private fun FlashAnchor.resolvePoint(
     val center = Offset(x = overlaySize.width / 2f, y = overlaySize.height * CENTER_BANNER_FRACTION)
     if (this !is FlashAnchor.Avatar) return center
 
-    val seat = avatarBoundsStateHolder.fullScreenBoundsFor(userId = userId) ?: return center
+    val seat = avatarBoundsStateHolder.boundsFor(userId = userId) ?: return center
     return Offset(x = seat.center.x, y = seat.top + seat.height * AVATAR_HEAD_FRACTION)
 }
 

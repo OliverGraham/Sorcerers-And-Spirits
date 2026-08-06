@@ -30,6 +30,14 @@ internal val necroScythePalette =
         snath = necroSnathGreen,
     )
 
+internal val illusionistScythePalette =
+    ScythePalette(
+        core = Color(color = 0xFFD6EAFF),
+        blade = Color(color = 0xFF387CD3),
+        glow = Color(color = 0xFF4C8FE0),
+        snath = Color(color = 0xFF1D406D),
+    )
+
 internal fun DrawScope.drawScytheShape(palette: ScythePalette, glow: Float, alpha: Float) {
     val blade = scytheBladePath()
     drawScytheGlow(blade = blade, palette = palette, glow = glow, alpha = alpha)

@@ -82,6 +82,7 @@ internal fun PaladinNormalAttackOverlay(
     attackerBounds: Rect,
     defenderBounds: Rect,
     modifier: Modifier = Modifier,
+    accentColor: Color = paladinEssenceGreen,
 ) {
     val paladinStrikeState = remember { PaladinStrikeState() }
     val density = LocalDensity.current
@@ -95,7 +96,7 @@ internal fun PaladinNormalAttackOverlay(
                 weaponStrikeGeometry(
                     attackerBounds = attackerBounds,
                     target = defenderBounds.center,
-                    accentColor = paladinEssenceGreen,
+                    accentColor = accentColor,
                     density = density,
                 ),
             normalRollMessageType = messageType,

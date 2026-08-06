@@ -72,6 +72,7 @@ internal fun BardNormalAttackOverlay(
     animatingMessage: ArenaMessageState.NormalRoll,
     attackerBounds: Rect,
     defenderBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val bardStrikeState = remember { BardStrikeState() }
@@ -86,7 +87,7 @@ internal fun BardNormalAttackOverlay(
                 weaponStrikeGeometry(
                     attackerBounds = attackerBounds,
                     target = defenderBounds.center,
-                    accentColor = animatingMessage.attackerClassType.toColor(),
+                    accentColor = accentColor,
                     density = density,
                 ),
             normalRollMessageType = messageType,

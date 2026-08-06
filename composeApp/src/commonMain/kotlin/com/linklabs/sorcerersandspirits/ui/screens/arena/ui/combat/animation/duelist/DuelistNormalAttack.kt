@@ -77,6 +77,7 @@ internal fun DuelistNormalAttackOverlay(
     animatingMessage: ArenaMessageState.NormalRoll,
     attackerBounds: Rect,
     defenderBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val duelistStrikeState = remember { DuelistStrikeState() }
@@ -91,7 +92,7 @@ internal fun DuelistNormalAttackOverlay(
                 weaponStrikeGeometry(
                     attackerBounds = attackerBounds,
                     target = defenderBounds.center,
-                    accentColor = animatingMessage.attackerClassType.toColor(),
+                    accentColor = accentColor,
                     density = density,
                 ),
             normalRollMessageType = messageType,

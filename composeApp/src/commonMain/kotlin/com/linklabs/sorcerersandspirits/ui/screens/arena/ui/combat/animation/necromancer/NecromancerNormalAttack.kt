@@ -81,6 +81,7 @@ internal fun NecromancerNormalAttackOverlay(
     animatingMessage: ArenaMessageState.NormalRoll,
     attackerBounds: Rect,
     defenderBounds: Rect,
+    scythePalette: ScythePalette,
     modifier: Modifier = Modifier,
 ) {
     val necromancerStrikeState = remember { NecromancerStrikeState() }
@@ -95,10 +96,10 @@ internal fun NecromancerNormalAttackOverlay(
                 weaponStrikeGeometry(
                     attackerBounds = attackerBounds,
                     target = defenderBounds.center,
-                    accentColor = necroScythePalette.blade,
+                    accentColor = scythePalette.blade,
                     density = density,
                 ),
-            palette = necroScythePalette,
+            palette = scythePalette,
             normalRollMessageType = messageType,
         )
 

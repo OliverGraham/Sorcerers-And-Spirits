@@ -16,14 +16,10 @@ enum class MageSpellElement {
     Fire,
 }
 
-/**
- * The element this cast renders, chosen deterministically from the cue [cueId] so every timing and
- * draw site resolves the same element for a given cast — the same keying the Illusionist uses to
- * borrow a weapon (SS-197). The pick spreads across whichever elements are currently built.
- */
-internal fun mageElementFor(cueId: String): MageSpellElement {
+internal fun mageElementFor(messageId: String): MageSpellElement {
     val elements = MageSpellElement.entries
-    val index = ((cueId.hashCode() % elements.size) + elements.size) % elements.size
+    val index = ((messageId.hashCode() % elements.size) + elements.size) % elements.size
+
     return elements[index]
 }
 

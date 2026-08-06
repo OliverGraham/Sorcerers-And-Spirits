@@ -66,6 +66,7 @@ internal fun GamblerNormalAttackOverlay(
     animatingMessage: ArenaMessageState.NormalRoll,
     attackerBounds: Rect,
     defenderBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val gamblerStrikeState = remember { GamblerStrikeState() }
@@ -82,7 +83,7 @@ internal fun GamblerNormalAttackOverlay(
                     messageType = messageType,
                     attackerBounds = attackerBounds,
                     defenderBounds = defenderBounds,
-                    accentColor = animatingMessage.attackerClassType.toColor(),
+                    accentColor = accentColor,
                     density = density,
                 ),
             normalRollMessageType = messageType,

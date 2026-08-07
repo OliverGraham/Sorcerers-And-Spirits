@@ -3,8 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ma
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,10 +20,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.IMPACT_BURST_TAIL_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -32,45 +34,26 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.imp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.PI
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val ATMOSPHERE_IN_MILLIS = 420
 private const val ATMOSPHERE_OUT_MILLIS = 420
 private const val BOLT_FLIGHT_MILLIS = 320
 private const val PUFF_FADE_MILLIS = 220
-
-/**
- * Bolts blast the opponent in waves rather than single file: several loose together, then a beat.
- */
 private const val BOLTS_PER_WAVE = 4
 private const val WAVE_STAGGER_MILLIS = 190
 private const val INTRA_WAVE_STAGGER_MILLIS = 48
-
-/** The barrage never fires more than this many bolts, however high the roll total climbs. */
 private const val MAX_BOLTS = 12
-
-/** How many turns the atmosphere churns through across the whole cast. */
 private const val SWIRL_TURNS = 2.4f
-
-/** The landing puff each bolt leaves is a small, subdued impact compared to the finale. */
 private const val PUFF_PEAK_SCALE = 0.55f
 private const val FINALE_PEAK_SCALE = 1.8f
-
-/**
- * How wide a wave's bolts gather at the Mage and how wide they blast across the opponent, as
- * fractions of the battlefield width, plus the lateral bow that curves each bolt's flight so the
- * wave reads alive rather than ruler-straight.
- */
 private const val GATHER_BAND_FRACTION = 0.36f
 private const val IMPACT_BAND_FRACTION = 0.24f
 private const val BOLT_BOW_FRACTION = 0.05f
 
-/**
- * The number of bolts the barrage fires for a roll total, clamped so it always reads as a volley.
- */
 internal fun spellPotencyBoltCount(mainDamage: Int): Int =
     mainDamage.coerceIn(minimumValue = 1, maximumValue = MAX_BOLTS)
 
@@ -87,30 +70,9 @@ private fun barrageWindowMillis(boltCount: Int): Int {
     return lastLaunch + BOLT_FLIGHT_MILLIS + PUFF_FADE_MILLIS
 }
 
-/**
- * When the first bolt reaches the main target, so its seated flinch (SS-191) lands in step: the
- * atmosphere sweeps in, then the opening wave flies the gap.
- */
-internal val MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS: Long =
+internal const val MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS =
     (ATMOSPHERE_IN_MILLIS + BOLT_FLIGHT_MILLIS).toLong()
 
-/**
- * How long a Spell Potency cast runs, so the sequencer holds the flash until the atmosphere sweeps
- * in, the whole [mainDamage]-bolt volley lands, the finale bursts, and the atmosphere clears
- * (SS-201).
- */
-internal fun mageSpellPotencyDurationMillis(mainDamage: Int): Long =
-    ATMOSPHERE_IN_MILLIS +
-        barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
-        IMPACT_BURST_TAIL_MILLIS +
-        ATMOSPHERE_OUT_MILLIS
-
-/**
- * The state of one Spell Potency cast. The choreography drives these Animatables and the draw layer
- * reads them, so the whole area-of-effect redraws the canvas without recomposing anything. [clock]
- * is the barrage's wall-clock position in milliseconds, from which each bolt's own flight is
- * derived.
- */
 @Stable
 internal class SpellPotencyState {
     val atmosphereAlpha = Animatable(initialValue = 0f)
@@ -124,45 +86,37 @@ internal class SpellPotencyState {
     var boltCount by mutableStateOf(value = 1)
 }
 
-/**
- * The Mage's Spell Potency (SS-210): the amplified form of the focused cast bolt (SS-198). A
- * doubles roll engulfs the whole battlefield in the element's area-of-effect — a Blizzard,
- * Thunderstorm, or Inferno centered on the opponent — and blasts the singular bolt
- * [CombatAnimationCue.SpellPotency.mainDamage] times at the main target in staggered waves, before
- * a finale burst and the atmosphere clearing. Sits out every other cue.
- */
 @Composable
 internal fun MageSpellPotencyOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.SpellPotency,
+    mageBounds: Rect,
+    defenderBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { SpellPotencyState() }
     val density = LocalDensity.current
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { cue -> cue as? CombatAnimationCue.SpellPotency },
-        onCancel = { state.scene = null },
-        play = playLabel@{ cue ->
-                val mageBounds = avatarBoundsFor(cue.mageUserId) ?: return@playLabel
-                val targetBounds = avatarBoundsFor(cue.mainTargetUserId) ?: return@playLabel
-                val element = mageElementFor(cueId = cue.id)
-                state.play(
-                    geometry =
-                        weaponStrikeGeometry(
-                            attackerBounds = mageBounds,
-                            target = targetBounds.center,
-                            accentColor = element.palette().glow,
-                            density = density,
-                        ),
-                    element = element,
-                    boltCount = spellPotencyBoltCount(mainDamage = cue.mainDamage),
-                )
-            },
-        modifier = modifier,
-        draw = { drawSpellPotency(state = state) },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val element = mageElementFor(messageId = animatingMessage.id)
+        state.play(
+            geometry =
+                weaponStrikeGeometry(
+                    attackerBounds = mageBounds,
+                    target = defenderBounds.center,
+                    accentColor = element.palette().glow,
+                    density = density,
+                ),
+            element = element,
+            boltCount = spellPotencyBoltCount(mainDamage = animatingMessage.mainDamage),
+        )
+
+        onAvatarAnimationComplete()
+    }
+
+   Canvas(modifier = modifier) {
+       drawSpellPotency(state = state)
+   }
 }
 
 internal suspend fun SpellPotencyState.play(
@@ -213,6 +167,12 @@ internal suspend fun SpellPotencyState.play(
     this.scene = null
 }
 
+private fun mageSpellPotencyDurationMillis(mainDamage: Int): Long =
+    ATMOSPHERE_IN_MILLIS +
+            barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
+            IMPACT_BURST_TAIL_MILLIS +
+            ATMOSPHERE_OUT_MILLIS
+
 internal fun DrawScope.drawSpellPotency(state: SpellPotencyState) {
     val geometry = state.scene ?: return
 
@@ -253,12 +213,6 @@ internal fun DrawScope.drawSpellPotency(state: SpellPotencyState) {
     }
 }
 
-/**
- * One bolt of a wave: it gathers at the Mage offset horizontally by [slot], bows sideways as it
- * flies so the wave looks alive, and blasts its own point across the opponent — then leaves a
- * fading puff once it lands. All derived from how far [clockMillis] has carried past this bolt's
- * [launchMillis], so every bolt shares the single barrage clock.
- */
 private fun DrawScope.drawBarrageBolt(
     geometry: WeaponStrikeGeometry,
     element: MageSpellElement,

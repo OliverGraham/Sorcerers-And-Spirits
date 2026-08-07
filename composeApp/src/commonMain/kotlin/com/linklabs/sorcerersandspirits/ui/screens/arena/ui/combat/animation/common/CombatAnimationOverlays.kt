@@ -147,29 +147,45 @@ private fun CombatAnimationOverlaysWithBounds(
         is ArenaMessageState.MirrorImage -> {
             // TODO: Where is it?
         }
-        is ArenaMessageState.SpellPotency ->
-            // TODO: attacker and defender bounds
+        is ArenaMessageState.SpellPotency -> {
+            val mageBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.mageUserId) ?: return
+            val defenderBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.mainTargetUserId) ?: return
+
             MageSpellPotencyOverlay(
+                animatingMessage = animatingMessage,
+                mageBounds = mageBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
+        }
+
+        is ArenaMessageState.Teleport -> {
+            val attackerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage) ?: return
+            val defenderBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.defenderUserId) ?: return
+            MageTeleportOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
                 modifier = modifier,
             )
+        }
 
-
-        is ArenaMessageState.Teleport -> MageTeleportOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            modifier = modifier,
-        )
-
-        is ArenaMessageState.HolyShield -> PaladinHolyShieldOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            modifier = modifier,
-        )
+        is ArenaMessageState.HolyShield -> {
+            val attackerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId) ?: return
+            val defenderBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.defenderUserId) ?: return
+            PaladinHolyShieldOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
+        }
         else -> {}
     }
 }

@@ -97,13 +97,20 @@ private fun CombatAnimationOverlaysWithBounds(
             )
         }
 
-        is ArenaMessageState.Riposte ->
+        is ArenaMessageState.Riposte -> {
+            val duelistBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.duelistUserId) ?: return
+            val attackerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId) ?: return
+
             RiposteOverlay(
                 riposteMessage = animatingMessage,
+                duelistBounds = duelistBounds,
                 attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
                 modifier = modifier,
             )
+        }
+
         is ArenaMessageState.SummonMinion -> NecromancerSummonMinionOverlay(
             animatingMessage = animatingMessage,
             avatarBounds = avatarBounds,

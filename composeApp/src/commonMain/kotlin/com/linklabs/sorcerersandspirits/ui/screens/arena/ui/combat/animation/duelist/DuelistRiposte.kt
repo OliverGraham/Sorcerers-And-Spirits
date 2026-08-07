@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -73,17 +74,15 @@ internal const val RIPOSTE_TOTAL_MILLIS =
 @Composable
 internal fun RiposteOverlay(
     riposteMessage: ArenaMessageState.Riposte,
-    avatarBoundsFor: (String) -> Rect?,
+    duelistBounds: Rect,
+    attackerBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { RiposteEffectState() }
     val density = LocalDensity.current
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
     LaunchedEffect(key1 = riposteMessage.id) {
-        val duelistBounds = avatarBoundsFor(riposteMessage.duelistUserId) ?: return@LaunchedEffect
-
-        val attackerBounds = avatarBoundsFor(riposteMessage.attackerUserId) ?: return@LaunchedEffect
-
         val scene =
             riposteScene(
                 duelistBounds = duelistBounds,
@@ -93,6 +92,7 @@ internal fun RiposteOverlay(
             ) ?: return@LaunchedEffect
 
         state.play(scene = scene, message = riposteMessage)
+        onAvatarAnimationComplete()
     }
 
     Canvas(modifier = modifier) { drawRiposte(state = state) }

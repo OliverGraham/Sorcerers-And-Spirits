@@ -7,9 +7,11 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -22,11 +24,11 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.EncorePhase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
@@ -59,24 +61,8 @@ private const val ENCORE_AMBIENT_LABEL = "encore-ambient"
 private const val ENCORE_SWAY_LABEL = "encore-sway"
 private const val ENCORE_GLINT_LABEL = "encore-glint"
 
-/**
- * How the crowd is carrying itself: restless and waiting, roaring an encore, or booing the miss.
- */
-internal enum class EncoreMood {
-    Waiting,
-    Wild,
-    Booing,
-}
+@Immutable internal data class EncoreScene(val accentColor: Color, val isSuccessful: Boolean)
 
-/** The fixed backdrop of one Encore: the accent the music is coloured with and the crowd's mood. */
-@Immutable internal data class EncoreScene(val accentColor: Color, val mood: EncoreMood)
-
-/**
- * The animation channels of one Encore (SS-206): [darkness] falls the house lights and doubles as
- * the fade the whole scene lifts on; [spotlight] brings up the beam on the microphone; [roll]
- * bursts the music off the mic as the die lands; [reaction] swings the crowd wild or booing; and
- * [grayness] drains the music to ash on a failed roll.
- */
 @Stable
 internal class EncoreEffectState {
     val darkness = Animatable(initialValue = 0f)
@@ -88,75 +74,58 @@ internal class EncoreEffectState {
     var scene by mutableStateOf<EncoreScene?>(value = null)
 }
 
-/**
- * The Bard's Encore effect (SS-206). The moment Encore triggers the whole arena drops into concert
- * dark and a spotlit stage rises, a 3D standing microphone picked out of the black while a restless
- * crowd of the class avatars sways in the distance, held alive as the roll is made. When the die
- * lands the mic throws off music in rising notes and rings of sound: a success sends the crowd wild
- * for the encore, while a failure drains the music to gray and turns the crowd to booing. Either
- * way the house lights then come up and the darkness lifts. Full-screen and centre-staged rather
- * than anchored to a seat; sits out any cue that is not an Encore.
- */
 @Composable
-internal fun EncoreOverlay(animatingMessage: ArenaMessageState?, modifier: Modifier = Modifier) {
+internal fun EncoreOverlay(
+    animatingMessage: ArenaMessageState.Encore,
+    modifier: Modifier = Modifier,
+) {
     val state = remember { EncoreEffectState() }
     val crowd = remember { encoreCrowd() }
-    val avatars = rememberEncoreCrowdAvatars()
+    val avatars = encoreCrowdAvatars()
+
+
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(message = animatingMessage, accentColor = animatingMessage.actingClassType.toColor())
+        onAvatarAnimationComplete()
+    }
 
     val ambient = rememberInfiniteTransition(label = ENCORE_AMBIENT_LABEL)
     val sway by
-        ambient.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing)
-                ),
-            label = ENCORE_SWAY_LABEL,
-        )
-    val glint by
-        ambient.animateFloat(
-            initialValue = 0f,
-            targetValue = 1f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing)
-                ),
-            label = ENCORE_GLINT_LABEL,
-        )
-
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { it as? CombatAnimationCue.Encore },
-        onCancel = { state.scene = null },
-        play = { cue ->
-            state.play(phase = cue.phase, accentColor = CharacterClassType.Bard.toColor())
-        },
-        modifier = modifier,
-        draw = {
-            drawEncore(state = state, crowd = crowd, avatars = avatars, sway = sway, glint = glint)
-        },
+    ambient.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing)
+            ),
+        label = ENCORE_SWAY_LABEL,
     )
+    val glint by
+    ambient.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec =
+            infiniteRepeatable(
+                animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing)
+            ),
+        label = ENCORE_GLINT_LABEL,
+    )
+    Canvas(modifier = modifier) {
+        drawEncore(state = state, crowd = crowd, avatars = avatars, sway = sway, glint = glint)
+    }
 }
 
-/**
- * How long each Encore phase runs, so the message sequencer holds its callout until the stage has
- * finished rising, or until the crowd has finished reacting and the lights have come back up.
- */
-internal fun encoreDurationMillis(phase: EncorePhase): Long =
-    when (phase) {
-        EncorePhase.SetStage -> DARKNESS_IN_MILLIS.toLong() + STAGE_HOLD_MILLIS
-
-        EncorePhase.Success,
-        EncorePhase.Failure ->
+internal fun encoreDurationMillis(message: ArenaMessageState.Encore) =
+    when (message) {
+        is ArenaMessageState.Encore.Roll ->
             ROLL_MILLIS.toLong() + REACTION_MILLIS.toLong() + LIGHTS_UP_MILLIS.toLong()
+        is ArenaMessageState.Encore.Trigger -> DARKNESS_IN_MILLIS.toLong() + STAGE_HOLD_MILLIS
     }
 
-/**
- * The eight class avatars the crowd is built from, in the fixed order [encoreCrowd] indexes into.
- */
 @Composable
-private fun rememberEncoreCrowdAvatars(): List<ImageBitmap> =
+private fun encoreCrowdAvatars(): List<ImageBitmap> =
     listOf(
         imageResource(resource = Res.drawable.rogue_avatar),
         imageResource(resource = Res.drawable.gambler_avatar),
@@ -168,20 +137,18 @@ private fun rememberEncoreCrowdAvatars(): List<ImageBitmap> =
         imageResource(resource = Res.drawable.paladin_avatar),
     )
 
-private suspend fun EncoreEffectState.play(phase: EncorePhase, accentColor: Color) {
-    when (phase) {
-        EncorePhase.SetStage -> setStage(accentColor = accentColor)
-        EncorePhase.Success -> resolve(accentColor = accentColor, mood = EncoreMood.Wild)
-        EncorePhase.Failure -> resolve(accentColor = accentColor, mood = EncoreMood.Booing)
+private suspend fun EncoreEffectState.play(message: ArenaMessageState.Encore, accentColor: Color) {
+    when (message) {
+        is ArenaMessageState.Encore.Roll -> resolve(accentColor = accentColor, isSuccessful = message.isSuccessful)
+        is ArenaMessageState.Encore.Trigger -> setStage(accentColor = accentColor)
     }
 }
 
-/** The lights fall and the spotlit stage rises, then holds alive while the Encore roll is made. */
 private suspend fun EncoreEffectState.setStage(accentColor: Color) {
     resetResolveChannels()
     darkness.snapTo(targetValue = 0f)
     spotlight.snapTo(targetValue = 0f)
-    scene = EncoreScene(accentColor = accentColor, mood = EncoreMood.Waiting)
+    scene = EncoreScene(accentColor = accentColor, isSuccessful = false)
 
     coroutineScope {
         launch {
@@ -199,12 +166,8 @@ private suspend fun EncoreEffectState.setStage(accentColor: Color) {
     }
 }
 
-/**
- * The roll lands: the mic sounds, the crowd swings to its [mood], and — on a failure — the music
- * drains to gray in step, before the house lights come up and the whole scene lifts away.
- */
-private suspend fun EncoreEffectState.resolve(accentColor: Color, mood: EncoreMood) {
-    scene = EncoreScene(accentColor = accentColor, mood = mood)
+private suspend fun EncoreEffectState.resolve(accentColor: Color, isSuccessful: Boolean) {
+    scene = EncoreScene(accentColor = accentColor, isSuccessful = isSuccessful)
     darkness.snapTo(targetValue = 1f)
     spotlight.snapTo(targetValue = 1f)
     resetResolveChannels()
@@ -219,7 +182,7 @@ private suspend fun EncoreEffectState.resolve(accentColor: Color, mood: EncoreMo
                     tween(durationMillis = REACTION_MILLIS, easing = FastOutSlowInEasing),
             )
         }
-        if (mood == EncoreMood.Booing) {
+        if (!isSuccessful) {
             launch {
                 grayness.animateTo(
                     targetValue = 1f,
@@ -228,10 +191,10 @@ private suspend fun EncoreEffectState.resolve(accentColor: Color, mood: EncoreMo
             }
         }
     }
+
     liftLights()
 }
 
-/** The house lights come up as the whole concert scene fades back out to the arena. */
 private suspend fun EncoreEffectState.liftLights() {
     coroutineScope {
         launch {
@@ -266,7 +229,6 @@ private fun DrawScope.drawEncore(
     val scene = state.scene ?: return
     val darkness = state.darkness.value
     val grayness = state.grayness.value
-    val isWild = scene.mood == EncoreMood.Wild
 
     drawEncoreScrim(darkness = darkness)
     drawEncoreCrowd(
@@ -274,7 +236,7 @@ private fun DrawScope.drawEncore(
         avatars = avatars,
         sway = sway,
         reaction = state.reaction.value,
-        isWild = isWild,
+        isSuccessful = scene.isSuccessful,
         darkness = darkness,
     )
     drawEncoreStage(alpha = darkness)

@@ -71,7 +71,7 @@ private fun ArenaMessageState.effectOverlayDurationMillis(): Long =
 
         is ArenaMessageState.Persuade -> persuadeDurationMillis(phase = phase)
 
-        is ArenaMessageState.Encore -> encoreDurationMillis(phase = phase)
+        is ArenaMessageState.Encore -> encoreDurationMillis(message = this)
 
         is ArenaMessageState.Impersonate -> illusionistImpersonateDurationMillis()
 

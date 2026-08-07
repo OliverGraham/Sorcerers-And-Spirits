@@ -20,33 +20,17 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
-/** The near-black the whole arena is drowned in when the concert lights fall. */
 private val encoreDark = Color(color = 0xFF05040A)
-
-/** The warm white the spotlight and the lit mic head glow with. */
 private val encoreSpotlight = Color(color = 0xFFFFF4D2)
-
-/**
- * The chrome the microphone stand and head are turned from, lit and shadowed for a round 3D read.
- */
 private val micChromeLight = Color(color = 0xFFEDEFF5)
 private val micChromeMid = Color(color = 0xFF9AA0AC)
 private val micChromeDark = Color(color = 0xFF35383F)
-
-/** The ash a failed Encore drains its music toward, matching the other Bard failures. */
 private val encoreAsh = Color(color = 0xFF8C8A85)
-
-/** The cool cast a booing crowd sours toward, against the warm spotlight of a cheering one. */
 private val encoreBooTint = Color(color = 0xFF9DA7C4)
 
 private fun Color.grayed(fraction: Float): Color =
     lerp(start = this, stop = encoreAsh, fraction = fraction)
 
-/**
- * One face in the audience: a fixed spot on a receding perspective grid, the avatar it wears, and a
- * personal phase so the crowd sways and cheers out of step rather than as one block. [depth] runs 0
- * at the near front to 1 at the far back, driving both how small and how dim the face reads.
- */
 internal class EncoreCrowdMember(
     val centerXFraction: Float,
     val centerYFraction: Float,
@@ -55,12 +39,6 @@ internal class EncoreCrowdMember(
     val phase: Float,
 )
 
-/**
- * A deterministic block of audience laid out in rows that recede up the screen, each row further
- * back holding more, smaller faces. The central lane at the very front is left open so the standing
- * microphone is never buried in bodies. Built once and reused every Encore, since the crowd stands
- * in the same seats each night.
- */
 internal fun encoreCrowd(): List<EncoreCrowdMember> {
     val rows = 7
     val members = mutableListOf<EncoreCrowdMember>()
@@ -93,25 +71,17 @@ internal fun encoreCrowd(): List<EncoreCrowdMember> {
     return members
 }
 
-/** Drops the whole arena into concert dark, the scrim deepening as [darkness] rises. */
 internal fun DrawScope.drawEncoreScrim(darkness: Float) {
     if (darkness <= 0f) return
     drawRect(color = encoreDark, alpha = darkness * 0.94f)
 }
 
-/**
- * The restless audience filling the dark (SS-206): copies of every class avatar packed into
- * receding rows, dim silhouettes lit faintly by the stage. As the ambient [sway] runs each face
- * bobs and leans on its own phase so the crowd reads alive; a landed roll then swings the whole
- * house through [reaction] — a [wild] crowd leaps and brightens for the encore, while a booing one
- * shrinks down and shakes, souring toward gray.
- */
 internal fun DrawScope.drawEncoreCrowd(
     crowd: List<EncoreCrowdMember>,
     avatars: List<ImageBitmap>,
     sway: Float,
     reaction: Float,
-    isWild: Boolean,
+    isSuccessful: Boolean,
     darkness: Float,
 ) {
     if (darkness <= 0f) return
@@ -126,23 +96,23 @@ internal fun DrawScope.drawEncoreCrowd(
         val ambientLean = cos(x = swayAngle) * faceWidth * 0.06f
 
         val reactionBob =
-            if (isWild) {
+            if (isSuccessful) {
                 -abs(x = sin(x = swayAngle * 1.6f)) * faceHeight * 0.35f * reaction
             } else {
                 0f
             }
         val reactionShake =
-            if (isWild) 0f else sin(x = swayAngle * 3.2f) * faceWidth * 0.22f * reaction
+            if (isSuccessful) 0f else sin(x = swayAngle * 3.2f) * faceWidth * 0.22f * reaction
 
         val centerX = member.centerXFraction * size.width + ambientLean + reactionShake
         val centerY = member.centerYFraction * size.height + ambientBob + reactionBob
 
         val spotlightSpill = 1f - abs(x = member.centerXFraction - 0.5f) * 1.4f
         val baseGlow = 0.28f + spotlightSpill.coerceAtLeast(minimumValue = 0f) * 0.32f
-        val moodGlow = if (isWild) reaction * 0.4f else -reaction * 0.14f
+        val moodGlow = if (isSuccessful) reaction * 0.4f else -reaction * 0.14f
         val brightness = (baseGlow + moodGlow).coerceIn(minimumValue = 0.12f, maximumValue = 0.95f)
 
-        val moodTint = if (isWild) encoreSpotlight else encoreBooTint
+        val moodTint = if (isSuccessful) encoreSpotlight else encoreBooTint
         val faceColor = lerp(start = Color.Black, stop = moodTint, fraction = brightness)
 
         drawImage(
@@ -159,7 +129,6 @@ internal fun DrawScope.drawEncoreCrowd(
     }
 }
 
-/** The stage lip the microphone stands on: a dark plank rising into the spotlight at the front. */
 internal fun DrawScope.drawEncoreStage(alpha: Float) {
     if (alpha <= 0f) return
     val stageTop = size.height * 0.82f
@@ -183,14 +152,9 @@ internal fun DrawScope.drawEncoreStage(alpha: Float) {
     )
 }
 
-/** Where on the stage the microphone stands, and the spread of the cone falling on it. */
 private fun DrawScope.micHeadCenter(): Offset =
     Offset(x = size.width * 0.5f, y = size.height * 0.58f)
 
-/**
- * The beam of light picking the microphone out of the dark: a soft cone dropping from above the
- * stage into a bright pool around the mic, brightening as [spotlight] rises.
- */
 internal fun DrawScope.drawEncoreSpotlight(spotlight: Float) {
     if (spotlight <= 0f) return
     val head = micHeadCenter()
@@ -233,15 +197,8 @@ internal fun DrawScope.drawEncoreSpotlight(spotlight: Float) {
     )
 }
 
-/** The reach of the mic head and the run of the stand down to its base, in screen units. */
 private fun DrawScope.micHeadRadius(): Float = size.minDimension * 0.06f
 
-/**
- * The standing microphone (SS-206), turned to read 3D: a chrome ball head shaded round by a radial
- * gradient with a sweeping [glint] of specular light, a grille of curved bands across it, a slim
- * cylindrical stand banded light-to-dark like a lathe-turned pole, and a domed base disc on the
- * stage. [grayness] drains the warm accents toward ash when the Encore fails.
- */
 internal fun DrawScope.drawMicrophone(glint: Float, grayness: Float, alpha: Float) {
     if (alpha <= 0f) return
     val head = micHeadCenter()
@@ -341,9 +298,6 @@ private fun DrawScope.drawMicHead(
     )
 }
 
-/**
- * The seats the burst of music blooms into around the mic head, and their staggered starts (dp).
- */
 private val encoreNoteSeats =
     listOf(
         Offset(x = -46f, y = -8f),
@@ -356,11 +310,6 @@ private val encoreNoteSeats =
 
 private val encoreNoteDelays = listOf(0f, 0.1f, 0.18f, 0.26f, 0.34f, 0.42f)
 
-/**
- * The music the microphone throws off as the roll lands (SS-206): notes bursting outward from the
- * head and rising away on a stagger, ringed by expanding rings of sound. A success keeps them warm
- * and bright; a failure drains them to gray as they scatter, matching the other Bard failures.
- */
 internal fun DrawScope.drawEncoreMusic(
     accentColor: Color,
     roll: Float,
@@ -391,7 +340,6 @@ internal fun DrawScope.drawEncoreMusic(
     }
 }
 
-/** Three rings of sound pushing out from the mic head as it sounds, thinning as they widen. */
 private fun DrawScope.drawSoundRings(center: Offset, roll: Float, color: Color, alpha: Float) {
     val maxRadius = size.minDimension * 0.22f
     for (ring in 0..2) {
@@ -407,10 +355,6 @@ private fun DrawScope.drawSoundRings(center: Offset, roll: Float, color: Color, 
     }
 }
 
-/**
- * The tight dark frame the concert is watched through: the corners of the screen sink to black on
- * all sides, the vignette deepening with [darkness] so the eye is held on the lit stage.
- */
 internal fun DrawScope.drawEncoreVignette(darkness: Float) {
     if (darkness <= 0f) return
     drawRect(
@@ -424,7 +368,6 @@ internal fun DrawScope.drawEncoreVignette(darkness: Float) {
     )
 }
 
-/** A staggered channel's local progress once its start [delay] has passed, else zero. */
 private fun phaseAfter(progress: Float, delay: Float): Float {
     if (progress <= delay) return 0f
     return ((progress - delay) / (1f - delay)).coerceIn(minimumValue = 0f, maximumValue = 1f)

@@ -12,7 +12,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlin.random.Random
 import kotlin.time.Clock

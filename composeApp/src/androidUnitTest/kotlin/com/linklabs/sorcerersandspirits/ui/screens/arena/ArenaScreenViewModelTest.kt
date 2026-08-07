@@ -35,6 +35,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatContro
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.isImpersonateRedundant
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.coVerify

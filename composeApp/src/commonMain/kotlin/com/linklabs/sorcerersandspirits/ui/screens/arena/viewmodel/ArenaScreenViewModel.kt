@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena
+package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -24,6 +24,10 @@ import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaSessionStats
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
@@ -37,6 +41,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -95,6 +100,13 @@ class ArenaScreenViewModel(
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
         )
 
+    private val chooseCharacterClassHandler = ChooseCharacterClassHandler(
+        arenaId = arguments.arenaId,
+        chooseCharacterClassUseCase = chooseCharacterClassUseCase,
+        sessionStats = sessionStats,
+        pendingStatsStore = pendingStatsStore,
+    )
+
     private val arenaTimer =
         Timer(
             coroutineScope = viewModelScope,
@@ -145,46 +157,26 @@ class ArenaScreenViewModel(
 
     fun onSelectCharacterClass(characterClassState: CharacterClassState) {
         _uiStateFlow.updateLoaded { screenState ->
-            val arenaState =
-                screenState.arenaState as? ArenaState.ChoosingClasses
-                    ?: return@updateLoaded screenState
-
-            screenState.copy(arenaState = arenaState.copy(selectedClass = characterClassState))
+            chooseCharacterClassHandler.selectCharacterClass(
+                screenState = screenState,
+                characterClassState = characterClassState,
+            )
         }
     }
 
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
-            val arenaState =
-                _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.ChoosingClasses
-                    ?: return@launch
+            val beforeClassSelectedArenaScreenState =
+                _uiStateFlow.getLoadedStateOrNull() ?: return@launch
 
-            val selectedArenaPlayer =
-                ArenaPlayer.Selected(
-                    userId = playerState.userId,
-                    displayName = playerState.displayName,
-                    characterClass = characterClassState.toDomain(),
-                )
+            val afterClassSelectedArenaScreenState = chooseCharacterClassHandler.chooseCharacterClass(
+                screenState = beforeClassSelectedArenaScreenState,
+                playerState = playerState,
+                characterClassState = characterClassState,
+            ) ?: return@launch
 
-            chooseCharacterClassUseCase(
-                arenaId = arguments.arenaId,
-                selectedArenaPlayer = selectedArenaPlayer,
-                allPlayers =
-                    arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
-            )
-
-            val recordedStat =
-                sessionStats.onClassSelected(classType = selectedArenaPlayer.characterClass.type)
-            if (recordedStat) persistPendingStats()
-
-            _uiStateFlow.updateLoaded { screenState ->
-                val nextArenaState =
-                    if (screenState.arenaState is ArenaState.ChoosingClasses) {
-                        screenState.arenaState.copy(selectedClass = null)
-                    } else {
-                        screenState.arenaState
-                    }
-                screenState.copy(arenaState = nextArenaState)
+            _uiStateFlow.updateLoaded {
+                afterClassSelectedArenaScreenState
             }
         }
     }
@@ -223,7 +215,11 @@ class ArenaScreenViewModel(
         val arenaState = currentCombatState() ?: return
         val normalAttack = toDomain(combatActionState = arenaState.combatActionState) ?: return
 
-        updateLockedTargetUserId(lockedTargetUserId = normalAttack.defenderUserId)
+        // TODO: Refactor
+        updateLockedTargetUserId(
+            lockedTargetUserId = normalAttack.defenderUserId,
+            shouldUpdateLockedTargetUserId = true,
+        )
         arenaState.performCombatAction(currentAction = normalAttack)
     }
 
@@ -237,7 +233,47 @@ class ArenaScreenViewModel(
         val currentAction =
             resolvedArguments.toDomain(combatActionState = arenaState.combatActionState) ?: return
 
+        // TODO: Refactor
+        updateLockedTargetUserId(
+            lockedTargetUserId = targetedOpponentUserId,
+            shouldUpdateLockedTargetUserId = abilityActionState.doesThisAbilityRequireATarget(),
+        )
+
         arenaState.performCombatAction(currentAction = currentAction)
+    }
+
+    // TODO: Refactor elsewhere.
+    private fun AbilityActionState.doesThisAbilityRequireATarget() =
+        when (this) {
+            is AbilityActionState.Activated.PrepareAttack,
+            is AbilityActionState.Activated.Impersonate,
+            is AbilityActionState.Passive.Persuade.Charm -> true
+
+            else -> false
+        }
+
+    // TODO: Refactor elsewhere. isActionInFlight needs better handling
+    private fun updateLockedTargetUserId(
+        lockedTargetUserId: String,
+        shouldUpdateLockedTargetUserId: Boolean,
+    ) {
+        _uiStateFlow.updateLoaded { screenState ->
+            val arenaState =
+                screenState.arenaState as? ArenaState.Combat ?: return@updateLoaded screenState
+
+            screenState.copy(
+                arenaState =
+                    arenaState.copy(
+                        lockedTargetUserId =
+                            if (shouldUpdateLockedTargetUserId) {
+                                lockedTargetUserId
+                            } else {
+                                arenaState.lockedTargetUserId
+                            },
+                        isActionInFlight = true,
+                    )
+            )
+        }
     }
 
     /**
@@ -310,12 +346,6 @@ class ArenaScreenViewModel(
         }
     }
 
-    /**
-     * Mirrors the in-memory session delta to durable storage as it grows, so a crash or kill
-     * mid-match loses at most the current in-progress match rather than the whole session (SS-076,
-     * shrinking the SS-075 loss window). Awaited inline with the state stream so it cannot race the
-     * clear in [flushSessionStats], which only runs after that stream is cancelled.
-     */
     private suspend fun persistPendingStats() {
         pendingStatsStore.save(delta = sessionStats.peekDelta())
     }

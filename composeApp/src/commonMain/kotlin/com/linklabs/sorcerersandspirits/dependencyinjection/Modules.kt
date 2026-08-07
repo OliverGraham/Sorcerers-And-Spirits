@@ -58,7 +58,7 @@ import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUs
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.AchievementsScreenViewModel
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel

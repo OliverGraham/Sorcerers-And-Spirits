@@ -93,7 +93,7 @@ sealed interface ArenaMessage {
         ) : Riposte
     }
 
-    data class SummonMinion(val necroUserId: String, val singleDie: Int) : ArenaMessage
+    data class SummonMinion(val necromancerUserId: String, val singleDie: Int) : ArenaMessage
 
     sealed interface Persuade : ArenaMessage {
 
@@ -103,8 +103,6 @@ sealed interface ArenaMessage {
             Persuade
 
         data class CharmActivation(val bardUserId: String) : Persuade
-
-        data object Lull : Persuade
 
         data class Charm(
             val bardUserId: String,

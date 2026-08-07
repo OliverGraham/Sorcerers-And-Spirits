@@ -91,13 +91,6 @@ internal fun RogueNormalAttackOverlay(
     }
 }
 
-internal fun rogueNormalAttackDurationMillis(normalRollMessageType: NormalRollMessageType): Long =
-    MELEE_DASH_MILLIS +
-        MELEE_THRUST_MILLIS +
-        MELEE_EMBED_MILLIS +
-        WITHDRAW_MILLIS +
-        if (normalRollMessageType == NormalRollMessageType.Knockout) 120L else 0L
-
 internal suspend fun RogueStrikeState.play(
     geometry: WeaponStrikeGeometry,
     normalRollMessageType: NormalRollMessageType,

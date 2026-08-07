@@ -48,7 +48,6 @@ internal const val BOLT_TRAIL_SPAN = 0.28f
 
 internal const val MAGE_BOLT_REACTION_DELAY_MILLIS = ICE_CHARGE_MILLIS + ICE_FLIGHT_MILLIS
 
-
 @Composable
 internal fun MageNormalAttackOverlay(
     animatingMessage: ArenaMessageState.NormalRoll,
@@ -84,17 +83,6 @@ internal fun MageNormalAttackOverlay(
         drawMageCast(state = mageBoltState)
     }
 }
-
-internal fun mageNormalAttackDurationMillis(normalRollMessageType: NormalRollMessageType): Long =
-    ICE_CHARGE_MILLIS +
-        ICE_FLIGHT_MILLIS +
-        IMPACT_BURST_TAIL_MILLIS +
-        ICE_FADE_MILLIS +
-        if (normalRollMessageType == NormalRollMessageType.Knockout) {
-            ICE_KNOCKOUT_EXTRA_MILLIS
-        } else {
-            0L
-        }
 
 internal suspend fun MageBoltState.play(
     geometry: WeaponStrikeGeometry,

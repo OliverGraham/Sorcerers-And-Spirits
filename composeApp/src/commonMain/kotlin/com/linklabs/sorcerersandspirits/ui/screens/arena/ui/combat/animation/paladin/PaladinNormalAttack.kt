@@ -110,13 +110,6 @@ internal fun PaladinNormalAttackOverlay(
     }
 }
 
-internal fun paladinNormalAttackDurationMillis(): Long =
-    MACE_RAISE_MILLIS.toLong() +
-        MACE_READY_HOLD_MILLIS +
-        MACE_SWING_MILLIS.toLong() +
-        MACE_END_HOLD_MILLIS +
-        MACE_FADE_MILLIS.toLong()
-
 // TODO: I had meant this to be related to the actual dice total value
 private fun essenceFor(normalRollMessageType: NormalRollMessageType): Float =
     when (normalRollMessageType) {

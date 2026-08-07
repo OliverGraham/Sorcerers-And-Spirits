@@ -101,9 +101,6 @@ internal fun BardNormalAttackOverlay(
     }
 }
 
-internal fun bardNormalAttackDurationMillis(): Long =
-    BARD_STRIKE_CONTACT_MILLIS + MUSIC_NOTE_MILLIS.toLong() + DRUM_FADE_MILLIS.toLong()
-
 internal suspend fun BardStrikeState.play(
     geometry: WeaponStrikeGeometry,
     normalRollMessageType: NormalRollMessageType,

@@ -111,15 +111,6 @@ internal fun NecromancerNormalAttackOverlay(
     }
 }
 
-
-internal fun necromancerNormalAttackDurationMillis(): Long =
-    SCYTHE_SUMMON_MILLIS.toLong() +
-        SCYTHE_GLOW_HOLD_MILLIS +
-        SCYTHE_RISE_MILLIS.toLong() +
-        SCYTHE_REAP_MILLIS.toLong() +
-        SCYTHE_REAP_END_HOLD_MILLIS +
-        SCYTHE_FADE_MILLIS.toLong()
-
 internal suspend fun NecromancerStrikeState.play(
     geometry: WeaponStrikeGeometry,
     palette: ScythePalette,

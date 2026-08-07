@@ -70,21 +70,6 @@ private const val COIN_THROW_FLIGHT_MILLIS = 480
 private const val THROW_SPIN_TURNS = 4
 private const val THROW_IMPACT_MILLIS = 220
 
-internal fun gamblerLuckyCoinFlipDurationMillis(didStopAttack: Boolean): Long {
-    val armorPulseMillis = if (didStopAttack) ARMOR_PULSE_MILLIS.toLong() else 0L
-    return COIN_APPEAR_MILLIS +
-        TOSS_MILLIS +
-        armorPulseMillis +
-        FLIP_REST_HOLD_MILLIS +
-        COIN_FADE_MILLIS
-}
-
-internal fun gamblerLuckyCoinHighRollerDurationMillis(): Long =
-    (COIN_APPEAR_MILLIS + TOSS_MILLIS).toLong()
-
-internal fun gamblerLuckyCoinThrowDurationMillis(): Long =
-    (COIN_THROW_FLIGHT_MILLIS + THROW_IMPACT_MILLIS).toLong()
-
 private const val LUCKY_FACE = 6
 private const val PIP_OFFSET = 0.42f
 private const val COIN_THICKNESS_FRACTION = 0.17f

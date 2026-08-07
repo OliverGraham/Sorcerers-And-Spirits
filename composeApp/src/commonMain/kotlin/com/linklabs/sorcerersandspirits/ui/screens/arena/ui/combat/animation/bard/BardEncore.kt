@@ -48,7 +48,6 @@ import sorcerersandspirits.composeapp.generated.resources.rogue_avatar
 
 private const val DARKNESS_IN_MILLIS = 620
 private const val SPOTLIGHT_IN_MILLIS = 520
-private const val STAGE_HOLD_MILLIS = 260L
 private const val ROLL_MILLIS = 620
 private const val REACTION_MILLIS = 760
 private const val GRAY_MILLIS = 500
@@ -116,13 +115,6 @@ internal fun EncoreOverlay(
         drawEncore(state = state, crowd = crowd, avatars = avatars, sway = sway, glint = glint)
     }
 }
-
-internal fun encoreDurationMillis(message: ArenaMessageState.Encore) =
-    when (message) {
-        is ArenaMessageState.Encore.Roll ->
-            ROLL_MILLIS.toLong() + REACTION_MILLIS.toLong() + LIGHTS_UP_MILLIS.toLong()
-        is ArenaMessageState.Encore.Trigger -> DARKNESS_IN_MILLIS.toLong() + STAGE_HOLD_MILLIS
-    }
 
 @Composable
 private fun encoreCrowdAvatars(): List<ImageBitmap> =

@@ -106,13 +106,6 @@ internal fun DuelistNormalAttackOverlay(
     }
 }
 
-internal fun duelistNormalAttackDurationMillis(): Long {
-    val followSweepMillis =
-        maxOf(SLASH_SWEEP_MILLIS.toLong(), SLASH_CONNECT_MILLIS + IMPACT_BURST_TAIL_MILLIS)
-    return (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS + TWIN_SLASH_STAGGER_MILLIS)
-        .toLong() + followSweepMillis + SLASH_END_HOLD_MILLIS + SLASH_FADE_MILLIS
-}
-
 internal suspend fun DuelistStrikeState.play(
     geometry: WeaponStrikeGeometry,
     normalRollMessageType: NormalRollMessageType,

@@ -379,22 +379,6 @@ private data class HealMote(
     val phase: Float,
 )
 
-internal fun necromancerSummonMinionDurationMillis(outcome: SummonMinionOutcome): Long {
-    val opening = PORTAL_OPEN_MILLIS.toLong() + PORTAL_HOLD_MILLIS
-    val closing = maxOf(MINION_FADE_MILLIS, PORTAL_CLOSE_MILLIS).toLong()
-    val body =
-        when (outcome) {
-            SummonMinionOutcome.Fizzle ->
-                FIZZLE_GRAY_MILLIS.toLong() + FIZZLE_HOLD_MILLIS + PORTAL_CLOSE_MILLIS
-
-            SummonMinionOutcome.Skeleton -> MINION_RISE_MILLIS + MINION_HOLD_MILLIS + closing
-
-            SummonMinionOutcome.SkeletonAndHeal,
-            SummonMinionOutcome.Golem -> MINION_RISE_MILLIS + HEAL_MILLIS + closing
-        }
-    return opening + body
-}
-
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun NecromancerSummonMinionFizzlePreview() {

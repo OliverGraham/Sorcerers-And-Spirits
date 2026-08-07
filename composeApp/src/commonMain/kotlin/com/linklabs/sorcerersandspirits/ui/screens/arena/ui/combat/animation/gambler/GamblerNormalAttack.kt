@@ -97,8 +97,6 @@ internal fun GamblerNormalAttackOverlay(
     }
 }
 
-internal fun gamblerNormalAttackDurationMillis(): Long = THROW_FLIGHT_MILLIS + 200L
-
 internal suspend fun GamblerStrikeState.play(
     geometry: WeaponStrikeGeometry,
     normalRollMessageType: NormalRollMessageType,

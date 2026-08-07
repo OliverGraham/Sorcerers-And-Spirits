@@ -66,10 +66,6 @@ internal const val PREPARE_ATTACK_WINDUP_MILLIS =
 internal const val PREPARE_ATTACK_STRIKE_MILLIS =
     PREPARE_ATTACK_WINDUP_MILLIS + PREPARE_THRUST_MILLIS
 
-internal const val PREPARE_ATTACK_TOTAL_MILLIS =
-    PREPARE_ATTACK_STRIKE_MILLIS + PREPARE_EMBED_MILLIS + PREPARE_FADE_MILLIS
-
-
 @Stable
 internal class PrepareAttackEffectState {
     val bladeAlpha = Animatable(initialValue = 0f)

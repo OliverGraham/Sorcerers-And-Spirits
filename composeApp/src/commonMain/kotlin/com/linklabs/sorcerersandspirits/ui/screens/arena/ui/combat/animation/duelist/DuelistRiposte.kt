@@ -64,10 +64,8 @@ private const val UPRIGHT_DEGREES = -90f
 
 private val upright = Offset(x = 0f, y = -1f)
 
-internal const val RIPOSTE_READY_MILLIS = RIPOSTE_APPEAR_MILLIS.toLong()
 internal const val RIPOSTE_STRIKE_MILLIS = (RIPOSTE_PARRY_MILLIS + RIPOSTE_STAB_MILLIS).toLong()
-internal const val RIPOSTE_TOTAL_MILLIS =
-    RIPOSTE_STRIKE_MILLIS + RIPOSTE_EMBED_MILLIS + RIPOSTE_FADE_MILLIS
+
 
 // TODO: Riposte Animation needs some work, visually
 

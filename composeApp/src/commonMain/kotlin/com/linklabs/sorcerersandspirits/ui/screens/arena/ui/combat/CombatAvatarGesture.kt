@@ -72,11 +72,6 @@ private const val FLINCH_BODY_MILLIS = 380L
 private const val FLINCH_HEAVY_BODY_MILLIS = 470L
 private const val SIDESTEP_BODY_MILLIS = 520L
 private const val COLLAPSE_BODY_MILLIS = 650L
-private const val DODGE_FLOURISH_BODY_MILLIS = 450L
-private const val DODGE_BRACE_BODY_MILLIS = 860L
-private const val REARM_BODY_MILLIS = 650L
-private const val CAST_BODY_MILLIS = 480L
-private const val ALL_IN_BUST_JOLT_MILLIS = 160L
 
 // TODO: This function is set up so weird
 
@@ -197,62 +192,6 @@ private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long
 private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
-// TODO: Common
-internal fun ArenaMessageState.seatedAvatarDurationMillis(): Long =
-    when (this) {
-        is ArenaMessageState.NormalRoll.Outcome ->
-            normalAttackReactionDelayMillis() +
-                defenderReactionBodyMillis(normalRollMessageType = type)
-
-        is ArenaMessageState.KillingMomentum -> REARM_BODY_MILLIS
-
-        is ArenaMessageState.Dodge ->
-            if (didArmorIncrease) DODGE_BRACE_BODY_MILLIS else DODGE_FLOURISH_BODY_MILLIS
-
-        is ArenaMessageState.AllIn -> allInBodyMillis(outcome = outcome)
-
-        is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-            REACTION_DELAY_MILLIS +
-                if (isKnockout) COLLAPSE_BODY_MILLIS else FLINCH_HEAVY_BODY_MILLIS
-
-        is ArenaMessageState.PrepareAttack ->
-            prepareAttackReactionDelayMillis() +
-                if (isSuccessful) COLLAPSE_BODY_MILLIS else SIDESTEP_BODY_MILLIS
-
-        is ArenaMessageState.Riposte ->
-            when (this) {
-                is ArenaMessageState.Riposte.EnGarde ->
-                    if (isSuccessful) RIPOSTE_STRIKE_MILLIS + FLINCH_BODY_MILLIS else 0L
-
-                is ArenaMessageState.Riposte.Trigger -> 0L
-            }
-
-        is ArenaMessageState.SummonMinion -> CAST_BODY_MILLIS
-
-        is ArenaMessageState.MirrorImage -> mirrorImageBodyMillis()
-
-        is ArenaMessageState.SpellPotency ->
-            MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS + FLINCH_HEAVY_BODY_MILLIS
-
-        is ArenaMessageState.Teleport -> teleportAnimationMilliseconds()
-
-        is ArenaMessageState.HolyShield ->
-            when (this) {
-                is ArenaMessageState.HolyShield.Prayer ->
-                    if (!didSurvive) {
-                        HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong() + COLLAPSE_BODY_MILLIS
-                    } else {
-                        0L
-                    }
-
-                is ArenaMessageState.HolyShield.Trigger -> 0L
-
-                is ArenaMessageState.HolyShield.Wrath ->
-                    HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong() + FLINCH_HEAVY_BODY_MILLIS
-            }
-
-        else -> 0L
-    }
 
 // TODO: Common
 internal fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
@@ -261,18 +200,6 @@ internal fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessage
         NormalRollMessageType.ArmorClassMiss -> SIDESTEP_BODY_MILLIS
         NormalRollMessageType.Damage -> FLINCH_HEAVY_BODY_MILLIS
         NormalRollMessageType.Knockout -> COLLAPSE_BODY_MILLIS
-    }
-
-// TODO: Gambler
-private fun allInBodyMillis(outcome: AllInOutcome): Long =
-    when (outcome) {
-        AllInOutcome.SelfKnockout ->
-            (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS).toLong() +
-                ALL_IN_BUST_JOLT_MILLIS +
-                COLLAPSE_BODY_MILLIS
-
-        AllInOutcome.NoEffect,
-        AllInOutcome.DoubleAttack -> ALL_IN_TOSS_GESTURE_MILLIS.toLong()
     }
 
 // TODO: Common

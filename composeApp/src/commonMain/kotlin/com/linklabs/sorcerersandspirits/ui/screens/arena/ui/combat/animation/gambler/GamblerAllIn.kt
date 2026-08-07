@@ -129,8 +129,8 @@ internal fun AllInOverlay(
 ) {
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current
-
     val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(
             scene =

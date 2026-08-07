@@ -105,7 +105,7 @@ class ArenaMessageEntityTest {
                     secondDie = 4,
                     isSuccessful = true,
                 ),
-                ArenaMessage.SummonMinion(necroUserId = "necro", singleDie = 6),
+                ArenaMessage.SummonMinion(necromancerUserId = "necro", singleDie = 6),
                 ArenaMessage.Persuade.Trigger(bardUserId = "bard"),
                 ArenaMessage.Persuade.StrumLute(
                     bardUserId = "bard",
@@ -113,7 +113,6 @@ class ArenaMessageEntityTest {
                     isSuccessful = true,
                 ),
                 ArenaMessage.Persuade.CharmActivation(bardUserId = "bard"),
-                ArenaMessage.Persuade.Lull,
                 ArenaMessage.Persuade.Charm(
                     bardUserId = "bard",
                     attackerUserId = "attacker",

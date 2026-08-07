@@ -76,8 +76,6 @@ sealed interface ArenaState {
         val playersInTheStands = getPlayersInTheStands(targetedUserId = targetedUserId)
         val areTherePlayersInTheStands = playersInTheStands.isNotEmpty()
 
-        val characterTypesInArena = playerMap.values.map { it.characterClass.type }.toSet()
-
         fun canTurnOwnerTargetAnOpponent(isAnAnimationActive: Boolean) =
             !isAnAnimationActive &&
                 isItThisUsersTurn &&

@@ -276,14 +276,14 @@ sealed interface ArenaMessageState {
     data class SummonMinion(
         override val animation: ArenaAnimationState,
         override val id: String,
-        val necroUserId: String,
+        val necromancerUserId: String,
         val necroName: String,
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
         override val gestures: Map<String, AvatarGesture>,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Necromancer
-        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necroUserId)
+        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
     }
 
     @Immutable
@@ -293,22 +293,12 @@ sealed interface ArenaMessageState {
 
         override val flashAnchor: FlashAnchor
             get() {
-                val bardId =
-                    when (this) {
-                        is Trigger -> bardUserId
-                        is StrumLute -> bardUserId
-                        is CharmActivation -> bardUserId
-                        is Charm -> bardUserId
-                        is Lull -> null
-                    }
-                return if (bardId != null) {
-                    FlashAnchor.Avatar(userId = bardId)
-                } else {
-                    FlashAnchor.Center
-                }
+
+                return  FlashAnchor.Avatar(userId = bardUserId)
+
             }
 
-        val bardUserId: String?
+        val bardUserId: String
 
         @Immutable
         data class Trigger(
@@ -332,14 +322,6 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val bardUserId: String,
         ) : Persuade
-
-        @Immutable
-        data class Lull(
-            override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
-            override val id: String,
-        ) : Persuade {
-            override val bardUserId: String? = null
-        }
 
         @Immutable
         data class Charm(
@@ -993,12 +975,12 @@ private fun ArenaMessage.toState(
         is ArenaMessage.SummonMinion -> {
             ArenaMessageState.SummonMinion(
                 id = id,
-                necroUserId = necroUserId,
-                necroName = participants.resolveClassName(userId = necroUserId),
+                necromancerUserId = necromancerUserId,
+                necroName = participants.resolveClassName(userId = necromancerUserId),
                 singleDie = singleDie,
                 outcome = summonMinionOutcomeFor(singleDie = singleDie),
                 animation = ArenaAnimationState.FlashAndAvatar,
-                gestures = mapOf(necroUserId to AvatarGesture.Cast),
+                gestures = mapOf(necromancerUserId to AvatarGesture.Cast),
             )
         }
 

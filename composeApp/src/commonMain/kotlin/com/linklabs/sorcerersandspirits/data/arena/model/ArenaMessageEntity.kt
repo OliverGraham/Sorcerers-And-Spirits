@@ -168,7 +168,7 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = SUMMON_MINION)
-    data class SummonMinion(override val id: String, val necroUserId: String, val singleDie: Int) :
+    data class SummonMinion(override val id: String, val necromancerUserId: String, val singleDie: Int) :
         ArenaMessageEntity
 
     @Serializable
@@ -190,10 +190,6 @@ sealed interface ArenaMessageEntity {
         @Serializable
         @SerialName(value = PERSUADE_CHARM_ACTIVATION)
         data class CharmActivation(override val id: String, val bardUserId: String) : Persuade
-
-        @Serializable
-        @SerialName(value = PERSUADE_LULL)
-        data class Lull(override val id: String) : Persuade
 
         @Serializable
         @SerialName(value = PERSUADE_CHARM)
@@ -359,7 +355,6 @@ sealed interface ArenaMessageEntity {
         private const val PERSUADE_TRIGGER = "PersuadeTrigger"
         private const val PERSUADE_STRUM_LUTE = "PersuadeStrumLute"
         private const val PERSUADE_CHARM_ACTIVATION = "PersuadeCharmActivation"
-        private const val PERSUADE_LULL = "PersuadeLull"
         private const val PERSUADE_CHARM = "PersuadeCharm"
         private const val ENCORE = "Encore"
         private const val ENCORE_TRIGGER = "EncoreTrigger"
@@ -483,7 +478,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.SummonMinion ->
-                ArenaMessage.SummonMinion(necroUserId = necroUserId, singleDie = singleDie)
+                ArenaMessage.SummonMinion(necromancerUserId = necromancerUserId, singleDie = singleDie)
 
             is ArenaMessageEntity.Persuade.Trigger ->
                 ArenaMessage.Persuade.Trigger(bardUserId = bardUserId)
@@ -497,8 +492,6 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
 
             is ArenaMessageEntity.Persuade.CharmActivation ->
                 ArenaMessage.Persuade.CharmActivation(bardUserId = bardUserId)
-
-            is ArenaMessageEntity.Persuade.Lull -> ArenaMessage.Persuade.Lull
 
             is ArenaMessageEntity.Persuade.Charm ->
                 ArenaMessage.Persuade.Charm(
@@ -732,7 +725,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
         is ArenaMessage.SummonMinion ->
             ArenaMessageEntity.SummonMinion(
                 id = id,
-                necroUserId = necroUserId,
+                necromancerUserId = necromancerUserId,
                 singleDie = singleDie,
             )
 
@@ -749,8 +742,6 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
 
         is ArenaMessage.Persuade.CharmActivation ->
             ArenaMessageEntity.Persuade.CharmActivation(id = id, bardUserId = bardUserId)
-
-        is ArenaMessage.Persuade.Lull -> ArenaMessageEntity.Persuade.Lull(id = id)
 
         is ArenaMessage.Persuade.Charm ->
             ArenaMessageEntity.Persuade.Charm(

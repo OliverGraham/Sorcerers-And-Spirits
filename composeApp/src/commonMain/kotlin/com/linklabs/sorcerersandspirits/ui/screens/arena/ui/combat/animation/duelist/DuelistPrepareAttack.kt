@@ -5,9 +5,11 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,22 +31,22 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 internal const val PREPARE_APPEAR_MILLIS = 160
 internal const val PREPARE_TWIRL_MILLIS = 450
@@ -57,25 +59,17 @@ private const val PREPARE_FADE_MILLIS = 220
 private const val TWIRL_DEGREES = 360f
 private const val WHIFF_OVERSHOOT_TRAVEL = 1.18f
 
-/** When the thrust launches: the blades have appeared, twirled, pulled back, and gleamed. */
-internal val PREPARE_ATTACK_WINDUP_MILLIS: Long =
+internal const val PREPARE_ATTACK_WINDUP_MILLIS =
     (PREPARE_APPEAR_MILLIS + PREPARE_TWIRL_MILLIS + PREPARE_PULL_BACK_MILLIS + PREPARE_GLEAM_MILLIS)
         .toLong()
 
-/** When the blades land, so the shared defender reaction (SS-191) meets the thrust. */
-internal val PREPARE_ATTACK_STRIKE_MILLIS: Long =
+internal const val PREPARE_ATTACK_STRIKE_MILLIS =
     PREPARE_ATTACK_WINDUP_MILLIS + PREPARE_THRUST_MILLIS
 
-/** Wall-clock time of the whole effect, so the message sequencer holds its message to the end. */
-internal val PREPARE_ATTACK_TOTAL_MILLIS: Long =
+internal const val PREPARE_ATTACK_TOTAL_MILLIS =
     PREPARE_ATTACK_STRIKE_MILLIS + PREPARE_EMBED_MILLIS + PREPARE_FADE_MILLIS
 
-/**
- * The animation channels of one Prepare Attack (SS-203): [bladeAlpha] fades the paired rapiers in
- * and out, [windup] twirls each a full revolution around the Duelist's hands, [pullBack] draws them
- * back a touch, [gleam] sweeps the glint down each blade, and [thrust] carries them into the target
- * — with the impact pair flaring the knockout burst on a landed strike.
- */
+
 @Stable
 internal class PrepareAttackEffectState {
     val bladeAlpha = Animatable(initialValue = 0f)
@@ -89,11 +83,6 @@ internal class PrepareAttackEffectState {
     var scene by mutableStateOf<PrepareAttackScene?>(value = null)
 }
 
-/**
- * The fixed geometry of one Prepare Attack, measured before it plays. The blades hang off
- * [handAnchor] spread [handSpreadPx] to either side along [perpAxis], and thrust down [axis] until
- * their tips converge on [strikePoint].
- */
 @Immutable
 internal data class PrepareAttackScene(
     val axis: Offset,
@@ -108,43 +97,35 @@ internal data class PrepareAttackScene(
     val perpAxis = Offset(x = -axis.y, y = axis.x)
 }
 
-/**
- * The Duelist's Prepare Attack effect (SS-203): the paired rapiers appear together at the Duelist's
- * sides aimed at the target, twirl a showy full revolution around the hands — each blade sweeping
- * backwards over its own side and coming around to where it started — pull back a touch, flash a
- * gleam down each blade, and thrust forward as one: converging on the defender with a knockout
- * burst on a successful roll, or sailing past the sidestepping defender and fading in flight on a
- * whiff. Anchored to the measured avatar bounds via [avatarBoundsFor], and sits out any cue that is
- * not a Prepare Attack.
- */
 @Composable
 internal fun PrepareAttackOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.PrepareAttack,
+    duelistBounds: Rect,
+    targetBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { PrepareAttackEffectState() }
     val density = LocalDensity.current
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { it as? CombatAnimationCue.PrepareAttack },
-        onCancel = { state.scene = null },
-        play = playLabel@{ cue ->
-                val duelistBounds = avatarBoundsFor(cue.duelistUserId) ?: return@playLabel
-                val targetBounds = avatarBoundsFor(cue.targetUserId) ?: return@playLabel
-                val scene =
-                    prepareAttackScene(
-                        duelistBounds = duelistBounds,
-                        targetBounds = targetBounds,
-                        accentColor = CharacterClassType.Duelist.toColor(),
-                        density = density,
-                    ) ?: return@playLabel
-                state.play(scene = scene, isSuccessful = cue.isSuccessful)
-            },
-        modifier = modifier,
-        draw = { drawPrepareAttack(state = state) },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val scene =
+            prepareAttackScene(
+                duelistBounds = duelistBounds,
+                targetBounds = targetBounds,
+                accentColor = CharacterClassType.Duelist.toColor(),
+                density = density,
+            ) ?: return@LaunchedEffect
+
+        state.play(scene = scene, isSuccessful = animatingMessage.isSuccessful)
+
+        onAvatarAnimationComplete()
+    }
+
+    Canvas(modifier = modifier) {
+        drawPrepareAttack(state = state)
+    }
+
 }
 
 private fun prepareAttackScene(
@@ -209,7 +190,6 @@ private suspend fun PrepareAttackEffectState.play(
     this.scene = null
 }
 
-/** The release: the twirl has already brought the tips back onto the target, so the blades fly. */
 private suspend fun PrepareAttackEffectState.thrustForward() {
     thrust.animateTo(
         targetValue = 1f,
@@ -218,7 +198,6 @@ private suspend fun PrepareAttackEffectState.thrustForward() {
     )
 }
 
-/** A landed strike: the blades sit embedded while the knockout burst flares, then fade out. */
 private suspend fun PrepareAttackEffectState.land() {
     coroutineScope {
         launch { impactBurst() }
@@ -232,7 +211,6 @@ private suspend fun PrepareAttackEffectState.land() {
     }
 }
 
-/** The whiff: the thrust carries past the sidestepping target and the blades fade in flight. */
 private suspend fun PrepareAttackEffectState.sailPast() {
     coroutineScope {
         launch {
@@ -280,11 +258,6 @@ private fun DrawScope.drawPrepareAttack(state: PrepareAttackEffectState) {
     }
 }
 
-/**
- * One prepared rapier: it hangs off the hand on its [side] of the Duelist, spins a full revolution
- * about that hand during the windup — mirrored, so each blade sweeps backwards over its own side —
- * and rides the thrust until its tip converges on the strike point.
- */
 private fun DrawScope.drawPreparedBlade(
     scene: PrepareAttackScene,
     state: PrepareAttackEffectState,
@@ -317,10 +290,6 @@ private fun DrawScope.drawPreparedBlade(
     }
 }
 
-/**
- * The shiny gleam: a white glint that sweeps hilt-to-tip along the cocked blade, brightest at the
- * middle of its run and gone at either end so it reads as light flashing across the steel.
- */
 private fun DrawScope.drawBladeGleam(progress: Float, bladeLengthPx: Float, alpha: Float) {
     val shimmer = sin(x = progress.toDouble() * PI).toFloat()
     if (shimmer <= 0f) return
@@ -354,7 +323,6 @@ private fun DrawScope.drawBladeGleam(progress: Float, bladeLengthPx: Float, alph
     )
 }
 
-/** The knockout flare: a white-cored burst rimmed in the Duelist's color at the strike point. */
 private fun DrawScope.drawKnockoutBurst(scene: PrepareAttackScene, scale: Float, alpha: Float) {
     val radius = 40.dp.toPx() * scale
     drawCircle(

@@ -65,76 +65,87 @@ private fun CombatAnimationOverlaysWithBounds(
             avatarBoundsStateHolder = avatarBoundsStateHolder,
             modifier = modifier,
         )
+
+        is ArenaMessageState.KillingMomentum -> {}
+        is ArenaMessageState.Dodge -> {
+            // TODO: no sure where this one is. So weird
+        }
         is ArenaMessageState.AllIn -> {
             val avatarBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.gamblerUserId) ?: return
 
             AllInOverlay(
                 animatingMessage = animatingMessage,
-                allInAvatarBounds = avatarBounds,
+                avatarBounds = avatarBounds,
                 modifier = modifier,
             )
         }
-        is ArenaMessageState.Dodge -> {
-            // TODO: no sure where this one is. So weird
+        is ArenaMessageState.LuckyCoin -> LuckyCoinOverlay(
+            animatingMessage = animatingMessage,
+            avatarBoundsStateHolder = avatarBoundsStateHolder,
+            modifier = modifier,
+        )
+        is ArenaMessageState.PrepareAttack -> {
+            val duelistBounds = avatarBoundsStateHolder.boundsFor(userId = animatingMessage.duelistUserId) ?: return
+            val targetBounds = avatarBoundsStateHolder.boundsFor(userId = animatingMessage.targetUserId) ?: return
+
+            PrepareAttackOverlay(
+                animatingMessage = animatingMessage,
+                duelistBounds = duelistBounds,
+                targetBounds = targetBounds,
+                modifier = modifier,
+            )
         }
+
+        is ArenaMessageState.Riposte ->
+            RiposteOverlay(
+                riposteMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
+        is ArenaMessageState.SummonMinion -> NecromancerSummonMinionOverlay(
+            animatingMessage = animatingMessage,
+            avatarBounds = avatarBounds,
+            modifier = modifier,
+        )
         is ArenaMessageState.Encore ->
             EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier)
-
-        is ArenaMessageState.HolyShield -> PaladinHolyShieldOverlay(
+        is ArenaMessageState.Persuade -> PersuadeOverlay(
             animatingMessage = animatingMessage,
-            avatarBoundsFor = avatarBounds::boundsFor,
+            avatarBounds = avatarBounds,
             modifier = modifier,
         )
         is ArenaMessageState.Impersonate -> ImpersonateOverlay(
             animatingMessage = animatingMessage,
-            avatarBoundsFor = avatarBounds::boundsFor,
+            avatarBounds = avatarBounds,
             modifier = modifier,
         )
-        is ArenaMessageState.KillingMomentum -> {}
-        is ArenaMessageState.LuckyCoin -> LuckyCoinOverlay(
-            animatingMessage = animatingMessage,
-            avatarBoundsFor = avatarBounds::boundsFor,
-            modifier = modifier,
-        )
+
         is ArenaMessageState.MirrorImage -> {
             // TODO: Where is it?
         }
-
-
-        is ArenaMessageState.Persuade -> PersuadeOverlay(
-            animatingMessage = animatingMessage,
-            avatarBoundsFor = avatarBounds::boundsFor,
-            modifier = modifier,
-        )
-        is ArenaMessageState.PrepareAttack ->
-            PrepareAttackOverlay(
-                animatingMessage = animatingMessage,
-                avatarBoundsFor = avatarBounds::boundsFor,
-                modifier = modifier,
-            )
-        is ArenaMessageState.Riposte ->
-            RiposteOverlay(
-                riposteMessage = animatingMessage,
-                avatarBoundsFor = avatarBounds::boundsFor,
-                modifier = modifier,
-            )
         is ArenaMessageState.SpellPotency ->
             // TODO: attacker and defender bounds
             MageSpellPotencyOverlay(
                 animatingMessage = animatingMessage,
-                avatarBoundsFor = avatarBoundsStateHolder::boundsFor,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
                 modifier = modifier,
             )
 
-        is ArenaMessageState.SummonMinion -> NecromancerSummonMinionOverlay(
-            animatingMessage = animatingMessage,
-            avatarBoundsFor = avatarBounds::boundsFor,
-            modifier = modifier,
-        )
+
         is ArenaMessageState.Teleport -> MageTeleportOverlay(
             animatingMessage = animatingMessage,
-            avatarBoundsFor = avatarBounds::boundsFor,
+            attackerBounds = attackerBounds,
+            defenderBounds = defenderBounds,
+            modifier = modifier,
+        )
+
+        is ArenaMessageState.HolyShield -> PaladinHolyShieldOverlay(
+            animatingMessage = animatingMessage,
+            attackerBounds = attackerBounds,
+            defenderBounds = defenderBounds,
             modifier = modifier,
         )
         else -> {}

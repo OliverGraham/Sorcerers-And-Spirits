@@ -4,9 +4,11 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toBustResource
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -53,7 +56,6 @@ private const val EMPTY_HOLD_MILLIS = 260L
 private const val SELF_FADE_MILLIS = 420
 private const val SELF_HOLD_MILLIS = 420L
 private const val MORPH_MILLIS = 720
-private const val TINT_MILLIS = 360
 private const val FINAL_HOLD_MILLIS = 520L
 private const val LOWER_MILLIS = 360
 
@@ -67,9 +69,6 @@ private val rimDark = Color(color = 0xFF34496B)
 private val handleLight = Color(color = 0xFF9FB4D2)
 private val handleDark = Color(color = 0xFF243651)
 
-/**
- * The measured hand mirror the Illusionist raises to impersonate, laid out from its avatar bounds.
- */
 @Immutable
 internal data class ImpersonateScene(
     val glassCenter: Offset,
@@ -80,12 +79,6 @@ internal data class ImpersonateScene(
     val riseDistancePx: Float,
 )
 
-/**
- * The animation channels of one Impersonate (SS-208): [rise] raises the mirror into view and later
- * lowers it, [selfReveal] fades the Illusionist's own reflection onto the empty glass, [morph]
- * crossfades that reflection through a blur into the impersonated class's face, and [tint] washes
- * the settled face in Illusionist blue.
- */
 @Stable
 internal class ImpersonateEffectState {
     val rise = Animatable(initialValue = 0f)
@@ -95,58 +88,31 @@ internal class ImpersonateEffectState {
     var scene by mutableStateOf<ImpersonateScene?>(value = null)
 }
 
-/**
- * The Illusionist's Impersonate effect (SS-208): the Illusionist pulls out a personal 3D hand
- * mirror that first shows no reflection, then its own class face, before crossfading through a blur
- * into the face of the class whose offensive ability it copies — the settled reflection washed in
- * Illusionist blue so the borrowed identity reads as an illusion. Anchored to the Illusionist's
- * measured avatar bounds via [avatarBoundsFor], and sits out any cue that is not an Impersonate.
- */
 @Composable
 internal fun ImpersonateOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.Impersonate,
+    avatarBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { ImpersonateEffectState() }
-    val selfImage = imageResource(resource = CharacterClassType.Illusionist.toBustResource())
-    val impersonatedClass =
-        (animationCue as? CombatAnimationCue.Impersonate)?.impersonatedClassType
-            ?: CharacterClassType.Illusionist
-    val impersonatedImage = imageResource(resource = impersonatedClass.toBustResource())
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { it as? CombatAnimationCue.Impersonate },
-        onCancel = { state.scene = null },
-        play = playLabel@{ cue ->
-                val bounds = avatarBoundsFor(cue.illusionistUserId) ?: return@playLabel
-                state.play(scene = impersonateScene(bounds = bounds))
-            },
-        modifier = modifier,
-        draw = {
-            drawImpersonate(
-                state = state,
-                selfImage = selfImage,
-                impersonatedImage = impersonatedImage,
-            )
-        },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(scene = impersonateScene(bounds = avatarBounds))
+        onAvatarAnimationComplete()
+    }
+
+    val selfImage = imageResource(resource = CharacterClassType.Illusionist.toBustResource())
+    val impersonatedImage = imageResource(resource = animatingMessage.impersonatedClassType.toBustResource())
+    Canvas(modifier = modifier) {
+        drawImpersonate(
+            state = state,
+            selfImage = selfImage,
+            impersonatedImage = impersonatedImage,
+        )
+    }
 }
 
-/**
- * How long the Impersonate effect runs, so the message sequencer holds the event until the mirror
- * has risen, revealed both faces, tinted, and lowered, instead of flashing over it (SS-201).
- */
-internal fun illusionistImpersonateDurationMillis(): Long =
-    RISE_MILLIS.toLong() +
-        EMPTY_HOLD_MILLIS +
-        SELF_FADE_MILLIS +
-        SELF_HOLD_MILLIS +
-        MORPH_MILLIS +
-        TINT_MILLIS +
-        FINAL_HOLD_MILLIS +
-        LOWER_MILLIS
 
 private suspend fun ImpersonateEffectState.play(scene: ImpersonateScene) {
     rise.snapTo(targetValue = 0f)
@@ -337,7 +303,6 @@ private fun DrawScope.drawFaceAt(image: ImageBitmap, topLeft: Offset, size: IntS
     )
 }
 
-/** A soft diagonal glare across the glass so it reads as a curved, reflective 3D surface. */
 private fun DrawScope.drawGlassSheen(scene: ImpersonateScene, alpha: Float) {
     clipPath(path = ovalPath(scene = scene)) {
         val highlightCenter =

@@ -123,16 +123,26 @@ private fun CombatAnimationOverlaysWithBounds(
         }
         is ArenaMessageState.Encore ->
             EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier)
-        is ArenaMessageState.Persuade -> PersuadeOverlay(
-            animatingMessage = animatingMessage,
-            avatarBounds = avatarBounds,
-            modifier = modifier,
-        )
-        is ArenaMessageState.Impersonate -> ImpersonateOverlay(
-            animatingMessage = animatingMessage,
-            avatarBounds = avatarBounds,
-            modifier = modifier,
-        )
+        is ArenaMessageState.Persuade -> {
+            val avatarBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.bardUserId) ?: return
+
+            PersuadeOverlay(
+                animatingMessage = animatingMessage,
+                bardBounds = avatarBounds,
+                modifier = modifier,
+            )
+        }
+        is ArenaMessageState.Impersonate -> {
+            val avatarBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.illusionistUserId) ?: return
+
+            ImpersonateOverlay(
+                animatingMessage = animatingMessage,
+                avatarBounds = avatarBounds,
+                modifier = modifier,
+            )
+        }
 
         is ArenaMessageState.MirrorImage -> {
             // TODO: Where is it?

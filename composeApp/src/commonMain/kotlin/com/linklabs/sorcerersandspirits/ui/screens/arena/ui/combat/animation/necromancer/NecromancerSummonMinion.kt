@@ -3,9 +3,11 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ne
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,6 +29,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.SummonMinionOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
@@ -34,6 +39,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Cue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.drawRiposte
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.play
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.riposteScene
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
 import kotlin.math.PI
@@ -68,43 +76,39 @@ private val healGreen = necroGlowGreen
 
 @Composable
 internal fun NecromancerSummonMinionOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.SummonMinion,
+    avatarBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { SummonMinionEffectState() }
     val density = LocalDensity.current
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(
+            scene =
+                summonMinionScene(
+                    bounds = avatarBounds,
+                    outcome = animatingMessage.outcome,
+                    density = density,
+                    seed = animatingMessage.id.hashCode(),
+                ),
+            outcome = animatingMessage.outcome,
+        )
+
+        onAvatarAnimationComplete()
+    }
+
     val healIcon = imageResource(resource = Res.drawable.ic_health)
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
     val golemImage = imageResource(resource = Res.drawable.golem_minion)
+    Canvas(modifier = modifier) { drawSummonMinion(
+        state = state,
+        healIcon = healIcon,
+        skeletonImage = skeletonImage,
+        golemImage = golemImage,
+    ) }
 
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { it as? CombatAnimationCue.SummonMinion },
-        onCancel = { state.scene = null },
-        play = playLabel@{ cue ->
-                val bounds = avatarBoundsFor(cue.necroUserId) ?: return@playLabel
-                state.play(
-                    scene =
-                        summonMinionScene(
-                            bounds = bounds,
-                            outcome = cue.outcome,
-                            density = density,
-                            seed = cue.id.hashCode(),
-                        ),
-                    outcome = cue.outcome,
-                )
-            },
-        modifier = modifier,
-        draw = {
-            drawSummonMinion(
-                state = state,
-                healIcon = healIcon,
-                skeletonImage = skeletonImage,
-                golemImage = golemImage,
-            )
-        },
-    )
 }
 
 private suspend fun SummonMinionEffectState.play(
@@ -422,7 +426,7 @@ private fun NecromancerSummonMinionPreview(outcome: SummonMinionOutcome) {
         rememberReplayingCue(replayKey = outcome) { iteration ->
             CombatAnimationCue.SummonMinion(
                 id = "summon-minion-$iteration",
-                necroUserId = PREVIEW_ACTOR_ID,
+                necromancerUserId = PREVIEW_ACTOR_ID,
                 outcome = outcome,
             )
         }

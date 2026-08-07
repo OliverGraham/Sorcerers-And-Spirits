@@ -111,11 +111,16 @@ private fun CombatAnimationOverlaysWithBounds(
             )
         }
 
-        is ArenaMessageState.SummonMinion -> NecromancerSummonMinionOverlay(
-            animatingMessage = animatingMessage,
-            avatarBounds = avatarBounds,
-            modifier = modifier,
-        )
+        is ArenaMessageState.SummonMinion -> {
+            val avatarBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.necromancerUserId) ?: return
+
+            NecromancerSummonMinionOverlay(
+                animatingMessage = animatingMessage,
+                avatarBounds = avatarBounds,
+                modifier = modifier,
+            )
+        }
         is ArenaMessageState.Encore ->
             EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier)
         is ArenaMessageState.Persuade -> PersuadeOverlay(

@@ -172,18 +172,12 @@ private fun CombatAnimationOverlaysWithBounds(
             )
         }
 
-        is ArenaMessageState.HolyShield -> {
-            val attackerBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId) ?: return
-            val defenderBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.defenderUserId) ?: return
+        is ArenaMessageState.HolyShield ->
             PaladinHolyShieldOverlay(
                 animatingMessage = animatingMessage,
-                attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
                 modifier = modifier,
             )
-        }
         else -> {}
     }
 }

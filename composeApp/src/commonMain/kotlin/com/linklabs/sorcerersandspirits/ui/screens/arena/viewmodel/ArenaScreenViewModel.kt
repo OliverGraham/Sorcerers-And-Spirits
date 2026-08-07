@@ -72,8 +72,6 @@ class ArenaScreenViewModel(
     private val pendingStatsStore: PendingStatsStore,
 ) : ViewModel() {
 
-    private val sessionStats = ArenaSessionStats()
-
     private val _eventChannelFlow = Channel<ArenaEvent>()
     val eventChannelFlow = _eventChannelFlow.receiveAsFlow()
 
@@ -86,6 +84,8 @@ class ArenaScreenViewModel(
             onMessageCommitted = ::addMessageToScreenState,
             onSequenceComplete = ::commitPendingUpdate,
         )
+
+    private val sessionStats = ArenaSessionStats()
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
     private val classCopy by lazy { getCharacterClassCopyUseCase() }
@@ -481,11 +481,16 @@ class ArenaScreenViewModel(
         when (val arenaState = loadedState.arenaState) {
             is ArenaState.WaitingForAllPlayers -> leaveTimedOutMatch()
 
-            is ArenaState.ChoosingClasses ->
-                autoChooseCharacterClassForUser(
+            is ArenaState.ChoosingClasses -> {
+                val afterClassSelectedArenaScreenState = chooseCharacterClassHandler.autoChooseCharacterClassForUser(
+                    screenState = loadedState,
                     arenaState = arenaState,
-                    characterClasses = loadedState.characterClasses,
-                )
+                ) ?: return
+
+                _uiStateFlow.updateLoaded {
+                    afterClassSelectedArenaScreenState
+                }
+            }
 
             is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
 
@@ -551,20 +556,6 @@ class ArenaScreenViewModel(
             attackArguments =
                 AttackArguments(targetedOpponentUserId = target.userId, userPlayerId = attackerId)
         )
-    }
-
-    private fun autoChooseCharacterClassForUser(
-        arenaState: ArenaState.ChoosingClasses,
-        characterClasses: List<CharacterClassState>,
-    ) {
-        if (!arenaState.isItThisUsersTurn) return
-
-        val availableClasses =
-            characterClasses.filterNot { it.type in arenaState.unavailableClasses }
-        val chosenClass = arenaState.selectedClass ?: availableClasses.randomOrNull() ?: return
-        val userPlayer = arenaState.playerMap.getValue(key = arenaState.userPlayerId)
-
-        onChooseCharacterClass(playerState = userPlayer, characterClassState = chosenClass)
     }
 }
 

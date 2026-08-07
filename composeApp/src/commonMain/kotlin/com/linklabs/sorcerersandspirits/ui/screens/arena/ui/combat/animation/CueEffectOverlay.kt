@@ -15,6 +15,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 
 // TODO: Remove this? Definitely change with AnimationQueue
+//       Another remember + doing something.
 /**
  * The shared plumbing every cue-driven effect overlay repeats (SS-191): hold the id of the last cue
  * it played, and on each new [animationCue] either play the one it is responsible for or stand
@@ -47,35 +48,4 @@ internal fun <T : CombatAnimationCue> CueEffectOverlay(
     }
 
     Canvas(modifier = modifier) { draw() }
-}
-
-@Composable
-internal fun NormalAttackOverlay(
-    animatingMessage: ArenaMessageState?,
-    attackerClassType: CharacterClassType,
-    avatarBoundsFor: (String) -> Rect?,
-    onCancel: () -> Unit,
-    play:
-        suspend (
-            cue: ArenaMessageState.NormalRoll, attackerBounds: Rect, defenderBounds: Rect,
-        ) -> Unit,
-    modifier: Modifier = Modifier,
-    draw: DrawScope.() -> Unit,
-) {
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { cue ->
-            (cue as? CombatAnimationCue.NormalAttack)?.takeIf {
-                it.attackerClassType == attackerClassType
-            }
-        },
-        onCancel = onCancel,
-        play = playLabel@{ cue ->
-                val attackerBounds = avatarBoundsFor(cue.attackerUserId) ?: return@playLabel
-                val defenderBounds = avatarBoundsFor(cue.defenderUserId) ?: return@playLabel
-                play(cue, attackerBounds, defenderBounds)
-            },
-        modifier = modifier,
-        draw = draw,
-    )
 }

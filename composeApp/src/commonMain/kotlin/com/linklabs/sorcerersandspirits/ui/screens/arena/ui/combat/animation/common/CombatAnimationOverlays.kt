@@ -66,7 +66,9 @@ private fun CombatAnimationOverlaysWithBounds(
             modifier = modifier,
         )
 
-        is ArenaMessageState.KillingMomentum -> {}
+        is ArenaMessageState.KillingMomentum -> {
+            // TODO: should probably be something
+        }
         is ArenaMessageState.Dodge -> {
             // TODO: no sure where this one is. So weird
         }
@@ -163,7 +165,7 @@ private fun CombatAnimationOverlaysWithBounds(
 
         is ArenaMessageState.Teleport -> {
             val mageBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage) ?: return
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.mageUserId) ?: return
 
             MageTeleportOverlay(
                 animatingMessage = animatingMessage,

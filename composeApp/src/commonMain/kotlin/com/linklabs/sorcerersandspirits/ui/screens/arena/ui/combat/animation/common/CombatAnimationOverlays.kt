@@ -162,14 +162,12 @@ private fun CombatAnimationOverlaysWithBounds(
         }
 
         is ArenaMessageState.Teleport -> {
-            val attackerBounds =
+            val mageBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage) ?: return
-            val defenderBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.defenderUserId) ?: return
+
             MageTeleportOverlay(
                 animatingMessage = animatingMessage,
-                attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
+                mageBounds = mageBounds,
                 modifier = modifier,
             )
         }

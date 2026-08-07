@@ -5,12 +5,14 @@ import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,26 +33,26 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.GestureClassAvatar
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.rememberAvatarGesture
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_background
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private const val PORTAL_OPEN_MILLIS = 420
 private const val SWIRL_PERIOD_MILLIS = 2600
@@ -78,43 +80,25 @@ private val PORTAL_GRAY = Color(color = 0xFF9AA0A6)
 
 @Composable
 internal fun MageTeleportOverlay(
-    animatingMessage: ArenaMessageState?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.Teleport,
+    mageBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { TeleportPortalState() }
+    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
-    CueEffectOverlay(
-        animatingMessage = animatingMessage,
-        select = { it as? CombatAnimationCue.Teleport },
-        onCancel = { state.scene = null },
-        play = playLabel@{ cue ->
-                val mageBounds = avatarBoundsFor(cue.mageUserId) ?: return@playLabel
-                state.play(scene = teleportScene(mageBounds = mageBounds), cue = cue)
-            },
-        modifier = modifier,
-        draw = { drawTeleport(state = state) },
-    )
-}
+    LaunchedEffect(key1 = animatingMessage.id) {
 
-/**
- * How long each Teleport phase's portal runs, so the message sequencer holds its callout until the
- * portal has opened, closed behind the escape, or snapped shut and washed gray — rather than
- * cutting it off. The hold phase re-asserts the already-open portal, so it adds no wait.
- */
-internal fun teleportOverlayDurationMillis(phase: TeleportPhase, didEscape: Boolean?): Long =
-    when (phase) {
-        TeleportPhase.Open -> PORTAL_OPEN_MILLIS.toLong()
+        val scene = teleportScene(mageBounds = mageBounds)
+        state.play(scene = scene, cue = cue)
 
-        TeleportPhase.Hold -> 0L
-
-        TeleportPhase.Resolve ->
-            if (didEscape == true) {
-                (SWALLOW_MILLIS + PORTAL_CLOSE_MILLIS).toLong()
-            } else {
-                maxOf(PORTAL_SNAP_MILLIS, GRAY_BLOOM_MILLIS).toLong() + GRAY_FADE_MILLIS
-            }
+        onAvatarAnimationComplete()
     }
+
+    Canvas(modifier = modifier) {
+        drawTeleport(state = state)
+    }
+}
 
 private fun teleportScene(mageBounds: Rect): TeleportScene {
     val avatarWidth = mageBounds.visibleAvatarWidth()
@@ -130,15 +114,15 @@ private fun teleportScene(mageBounds: Rect): TeleportScene {
 
 private suspend fun TeleportPortalState.play(
     scene: TeleportScene,
-    cue: CombatAnimationCue.Teleport,
+    message: ArenaMessageState.Teleport,
 ) {
-    when (cue.phase) {
-        TeleportPhase.Open -> open(scene = scene)
+    when (message) {
+        is ArenaMessageState.Teleport.Trigger -> open(scene = scene)
+        is ArenaMessageState.Teleport.Roll,
+        is ArenaMessageState.Teleport.Tie ->  hold(scene = scene)
 
-        TeleportPhase.Hold -> hold(scene = scene)
-
-        TeleportPhase.Resolve ->
-            if (cue.didEscape == true) resolveEscape(scene = scene) else resolveFail(scene = scene)
+        is ArenaMessageState.Teleport.Result ->
+            if (message.didDefenderEscape) resolveEscape(scene = scene) else resolveFail(scene = scene)
     }
 }
 
@@ -156,9 +140,6 @@ private suspend fun TeleportPortalState.open(scene: TeleportScene) {
     swirlForever()
 }
 
-/**
- * Each roll-off die re-asserts the already-open portal and resumes its churn without re-opening.
- */
 private suspend fun TeleportPortalState.hold(scene: TeleportScene) {
     this.scene = scene
     if (open.value == 0f) open.snapTo(targetValue = 1f)
@@ -212,7 +193,6 @@ private suspend fun TeleportPortalState.resolveEscape(scene: TeleportScene) {
     this.scene = null
 }
 
-/** A failed escape: the portal snaps shut too soon while a gray wash blooms over the scene. */
 private suspend fun TeleportPortalState.resolveFail(scene: TeleportScene) {
     this.scene = scene
     if (open.value == 0f) open.snapTo(targetValue = 1f)
@@ -326,7 +306,6 @@ private fun DrawScope.drawPortal(scene: TeleportScene, open: Float, swirl: Float
     }
 }
 
-/** One winding spiral strand from the void out to the rim, rotated by [swirl]. */
 private fun DrawScope.drawSpiralStrand(center: Offset, radius: Float, swirl: Float, alpha: Float) {
     val steps = 56
     val path = Path()
@@ -358,7 +337,6 @@ private class TeleportPortalState {
     var scene by mutableStateOf<TeleportScene?>(value = null)
 }
 
-/** The fixed geometry of one portal: an upright ellipse centered on [center]. */
 @Immutable
 private data class TeleportScene(val center: Offset, val radiusX: Float, val radiusY: Float)
 

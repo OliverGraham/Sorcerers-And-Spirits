@@ -90,7 +90,7 @@ internal fun MageTeleportOverlay(
     LaunchedEffect(key1 = animatingMessage.id) {
 
         val scene = teleportScene(mageBounds = mageBounds)
-        state.play(scene = scene, cue = cue)
+        state.play(scene = scene, message = animatingMessage)
 
         onAvatarAnimationComplete()
     }

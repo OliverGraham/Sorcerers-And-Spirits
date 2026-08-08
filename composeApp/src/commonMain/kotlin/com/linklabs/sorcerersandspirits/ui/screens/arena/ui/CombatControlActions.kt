@@ -54,6 +54,7 @@ private fun ArenaState.Combat.abilityAction(
             abilityActionState = action,
             targetedOpponentUserId = targetedOpponentUserId,
             userPlayerId = userPlayerId,
+            combatActionState = combatActionState,
         )
     )
 }

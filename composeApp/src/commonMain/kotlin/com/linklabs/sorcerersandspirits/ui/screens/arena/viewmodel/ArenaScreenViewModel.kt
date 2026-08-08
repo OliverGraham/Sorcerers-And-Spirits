@@ -3,18 +3,14 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
@@ -22,7 +18,6 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStat
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.domain.utilities.Timer
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaSessionStats
@@ -37,10 +32,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.plusMessage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.CombatHandler
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -218,7 +211,6 @@ class ArenaScreenViewModel(
             combatHandler.updateLockedTargetUserId(
                 screenState = screenState,
                 lockedTargetUserId = attackArguments.targetedOpponentUserId,
-                shouldUpdateLockedTargetUserId = true,
             )
         }
 
@@ -231,94 +223,20 @@ class ArenaScreenViewModel(
     }
 
     fun onUseAbility(useAbilityArguments: UseAbilityArguments) {
-        viewModelScope.launch { useAbilityArguments.onUseAbility() }
-    }
-
-    private suspend fun UseAbilityArguments.onUseAbility() {
-        val arenaState = currentCombatState() ?: return
-        val resolvedArguments = withImpersonatedTarget(arenaState = arenaState)
-        val currentAction =
-            resolvedArguments.toDomain(combatActionState = arenaState.combatActionState) ?: return
-
-        // TODO: Refactor
-        updateLockedTargetUserId(
-            lockedTargetUserId = targetedOpponentUserId,
-            shouldUpdateLockedTargetUserId = abilityActionState.doesThisAbilityRequireATarget(),
-        )
-
-        arenaState.performCombatAction(currentAction = currentAction)
-    }
-
-    // TODO: Refactor elsewhere.
-    private fun AbilityActionState.doesThisAbilityRequireATarget() =
-        when (this) {
-            is AbilityActionState.Activated.PrepareAttack,
-            is AbilityActionState.Activated.Impersonate,
-            is AbilityActionState.Passive.Persuade.Charm -> true
-
-            else -> false
-        }
-
-    // TODO: Refactor elsewhere. isActionInFlight needs better handling
-    private fun updateLockedTargetUserId(
-        lockedTargetUserId: String,
-        shouldUpdateLockedTargetUserId: Boolean,
-    ) {
         _uiStateFlow.updateLoaded { screenState ->
-            val arenaState =
-                screenState.arenaState as? ArenaState.Combat ?: return@updateLoaded screenState
-
-            screenState.copy(
-                arenaState =
-                    arenaState.copy(
-                        lockedTargetUserId =
-                            if (shouldUpdateLockedTargetUserId) {
-                                lockedTargetUserId
-                            } else {
-                                arenaState.lockedTargetUserId
-                            },
-                        isActionInFlight = true,
-                    )
+            combatHandler.updateIsActionInFlight(
+                screenState = screenState
             )
         }
-    }
 
-    /**
-     * Impersonate copies the offensive ability of the opponent the Illusionist targeted, so the
-     * copied ability is resolved here from the live [arenaState] rather than baked into the control
-     * (which is built before a target is chosen). Every other ability is returned unchanged.
-     */
-    private fun UseAbilityArguments.withImpersonatedTarget(
-        arenaState: ArenaState.Combat
-    ): UseAbilityArguments {
-        if (abilityActionState !is AbilityActionState.Activated.Impersonate) return this
 
-        val target = arenaState.playerMap[targetedOpponentUserId] ?: return this
-        val copiedAbility = target.characterClass.offensiveAbility.toDomain()
 
-        return copy(
-            abilityActionState =
-                AbilityActionState.Activated.Impersonate(
-                    impersonateAbility =
-                        OffensiveAbility.Impersonate(impersonatedAbility = copiedAbility)
-                )
-        )
-    }
-
-    private fun currentCombatState(): ArenaState.Combat? =
-        _uiStateFlow.getLoadedStateOrNull()?.arenaState as? ArenaState.Combat
-
-    private suspend fun ArenaState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
-        // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it
-        val combatActionArguments =
-            CombatActionArguments(
-                arenaId = arguments.arenaId,
-                playerMap = playerMap.mapValues { it.value.toDomain() },
-                roundNumber = roundNumber,
-                doublesBonus = diceRollState?.doublesBonus?.toDomain(),
+        viewModelScope.launch {
+            combatHandler.onUseAbility(
+                useAbilityArguments = useAbilityArguments,
+                arenaState = _uiStateFlow.getLoadedStateOrNull()?.arenaState,
             )
-
-        performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
+        }
     }
 
     fun onTryLeaveArena() {
@@ -546,6 +464,7 @@ class ArenaScreenViewModel(
                                     ?.randomOrNull()
                                     .orEmpty(),
                             userPlayerId = userPlayerId,
+                            combatActionState = actionState,
                         )
                 )
         }
@@ -561,7 +480,11 @@ class ArenaScreenViewModel(
 
         onAttack(
             attackArguments =
-                AttackArguments(targetedOpponentUserId = target.userId, userPlayerId = attackerId)
+                AttackArguments(
+                    targetedOpponentUserId = target.userId,
+                    userPlayerId = attackerId,
+                    combatActionState = arenaState.combatActionState,
+                )
         )
     }
 }

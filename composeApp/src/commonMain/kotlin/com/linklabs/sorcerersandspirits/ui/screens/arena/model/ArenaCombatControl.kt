@@ -306,13 +306,3 @@ private val AbilityActionState.label: String
             is AbilityActionState.Passive.MirrorImage -> "Mirror Image"
             is AbilityActionState.Passive.HolyShield -> "Holy Shield"
         }
-
-private val AbilityActionState.requiresTarget: Boolean
-    get() =
-        when (this) {
-            is AbilityActionState.Activated.PrepareAttack,
-            is AbilityActionState.Activated.Impersonate,
-            is AbilityActionState.Passive.Persuade.Charm -> true
-
-            else -> false
-        }

@@ -3,7 +3,11 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
+import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
@@ -25,7 +29,6 @@ internal class CombatHandler(
     fun updateLockedTargetUserId(
         screenState: ArenaScreenState,
         lockedTargetUserId: String,
-        shouldUpdateLockedTargetUserId: Boolean,
     ): ArenaScreenState {
         val arenaCombatState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
 
@@ -33,7 +36,6 @@ internal class CombatHandler(
             screenState = screenState,
             arenaCombatState = arenaCombatState,
             lockedTargetUserId = lockedTargetUserId,
-            shouldUpdateLockedTargetUserId = shouldUpdateLockedTargetUserId,
         )
     }
 
@@ -47,21 +49,42 @@ internal class CombatHandler(
         arenaCombatState.performCombatAction(currentAction =  currentCombatAction)
     }
 
+    suspend fun onUseAbility(
+        useAbilityArguments: UseAbilityArguments,
+        arenaState: ArenaState?,
+    ) {
+        val arenaCombatState = arenaState?.asCombatStateOrNull() ?: return
+        val argumentsWithImpersonateUpdatedIfApplicable = useAbilityArguments.withImpersonatedTarget(
+            arenaState = arenaCombatState
+        )
+
+        val currentCombatAction = argumentsWithImpersonateUpdatedIfApplicable.toDomain() ?: return
+
+        arenaCombatState.performCombatAction(currentAction =  currentCombatAction)
+    }
+
+    fun updateIsActionInFlight(
+        screenState: ArenaScreenState): ArenaScreenState {
+        val arenaCombatState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
+
+        return screenState.copy(
+            arenaState =
+                arenaCombatState.copy(
+                    isActionInFlight = true
+                )
+                    )
+    }
+
     private fun updateLockedTargetUserId(
         screenState: ArenaScreenState,
         arenaCombatState: ArenaState.Combat,
         lockedTargetUserId: String,
-        shouldUpdateLockedTargetUserId: Boolean,
         ): ArenaScreenState {
         return screenState.copy(
             arenaState =
                 arenaCombatState.copy(
                     lockedTargetUserId =
-                        if (shouldUpdateLockedTargetUserId) {
-                            lockedTargetUserId
-                        } else {
-                            arenaCombatState.lockedTargetUserId
-                        },
+                            lockedTargetUserId,
                     isActionInFlight = true,
                 )
         )
@@ -78,6 +101,23 @@ internal class CombatHandler(
             )
 
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
+    }
+
+    private fun UseAbilityArguments.withImpersonatedTarget(
+        arenaState: ArenaState.Combat
+    ): UseAbilityArguments {
+        if (abilityActionState !is AbilityActionState.Activated.Impersonate) return this
+
+        val target = arenaState.playerMap[targetedOpponentUserId] ?: return this
+        val copiedAbility = target.characterClass.offensiveAbility.toDomain()
+
+        return copy(
+            abilityActionState =
+                AbilityActionState.Activated.Impersonate(
+                    impersonateAbility =
+                        OffensiveAbility.Impersonate(impersonatedAbility = copiedAbility)
+                )
+        )
     }
 
     private fun ArenaState.asCombatStateOrNull() = this as? ArenaState.Combat

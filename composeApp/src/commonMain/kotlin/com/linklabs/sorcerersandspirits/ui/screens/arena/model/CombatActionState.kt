@@ -115,6 +115,16 @@ sealed interface AbilityActionState {
     }
 }
 
+internal val AbilityActionState.requiresTarget: Boolean
+    get() =
+        when (this) {
+            is AbilityActionState.Activated.PrepareAttack,
+            is AbilityActionState.Activated.Impersonate,
+            is AbilityActionState.Passive.Persuade.Charm -> true
+
+            else -> false
+        }
+
 // TODO: What is going on here? Refactor right? One when statement necessary?
 internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
     when (combatActionState) {
@@ -138,9 +148,7 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
 
 
 // TODO: What is going on here?
-internal fun UseAbilityArguments.toDomain(
-    combatActionState: CombatActionState
-): CurrentCombatAction.AbilityRoll? {
+internal fun UseAbilityArguments.toDomain(): CurrentCombatAction.AbilityRoll? {
     val purpose = abilityActionState.withSelectedCharmTarget(targetUserId = targetedOpponentUserId)
 
     return when (combatActionState) {

@@ -115,6 +115,7 @@ sealed interface AbilityActionState {
     }
 }
 
+// TODO: What is going on here? Refactor right? One when statement necessary?
 internal fun AttackArguments.toDomain(
     combatActionState: CombatActionState
 ): CurrentCombatAction.NormalAttack? =
@@ -146,6 +147,7 @@ internal fun AttackArguments.toDomain(
             }
     }
 
+// TODO: What is going on here?
 internal fun UseAbilityArguments.toDomain(
     combatActionState: CombatActionState
 ): CurrentCombatAction.AbilityRoll? {

@@ -12,7 +12,8 @@ sealed interface ArenaMessageState {
     val animation: ArenaAnimationState
     val id: String
 
-    // TODO: gestures can be fully built into the message itself. top and bottom players are known
+    // TODO: Maybe Claude can do this:
+    //  gestures can be fully built into the message itself. top and bottom players are known
     //       at this time. Don't need to query from the composable
     val gestures: Map<String, AvatarGesture>
         get() = emptyMap()
@@ -69,7 +70,7 @@ sealed interface ArenaMessageState {
     sealed interface NormalRoll : ArenaMessageState {
         val attackerUserId: String
         val defenderUserId: String
-        val attackerClassType: CharacterClassType
+        val attackerClassType: CharacterClassType // TODO: Change to Color?
         val normalRollMessageType: NormalRollMessageType
 
         override val actingClassType: CharacterClassType
@@ -97,6 +98,7 @@ sealed interface ArenaMessageState {
                 }
         }
 
+        // TODO: Does this need to be used for Avatar Animations???
         @Immutable
         data class Outcome(
             override val animation: ArenaAnimationState,
@@ -794,6 +796,9 @@ private fun ArenaMessage.toState(
             )
         }
 
+        // TODO: This does know if it's a hit or miss - it animates it. Part of the sequencing is
+        //       that the flash message and message display doesn't happen until after, so that's
+        //       the reason for outcome
         is ArenaMessage.NormalRoll.Attack -> {
             val attackerClassType = participants.resolveClassType(userId = attackerUserId)
             val gestures = buildMap {
@@ -828,8 +833,10 @@ private fun ArenaMessage.toState(
             )
         }
 
+        // TODO: Flash message and display in log
         is ArenaMessage.NormalRoll.Outcome -> {
             val attackerClassType = participants.resolveClassType(userId = attackerUserId)
+            // TODO: Shouldn't need a gesture?
             val gestures = buildMap {
                 put(
                     attackerUserId,

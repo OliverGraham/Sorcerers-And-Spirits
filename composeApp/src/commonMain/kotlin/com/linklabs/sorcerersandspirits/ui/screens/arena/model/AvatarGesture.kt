@@ -31,7 +31,6 @@ enum class AvatarGesture {
     Collapse,
 }
 
-
 internal fun resolveWeaponClassType(
     attackerClassType: CharacterClassType,
     impersonatedClassType: CharacterClassType?,
@@ -50,6 +49,7 @@ private fun randomBuiltWeaponFor(id: String): CharacterClassType {
     return characterClassTypes[index]
 }
 
+// TODO: Common
 internal fun attackerStrike(
     weaponClassType: CharacterClassType,
     messageType: NormalRollMessageType,

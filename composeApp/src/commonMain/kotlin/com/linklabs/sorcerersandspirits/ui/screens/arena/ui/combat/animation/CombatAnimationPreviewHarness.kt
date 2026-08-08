@@ -22,46 +22,26 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.playbackDurationMillis
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_background
 
-/**
- * Shared scaffolding for the isolated interactive previews each combat effect overlay hosts
- * (SS-192…SS-212). An overlay drives itself off a [CombatAnimationCue] and a lambda giving the
- * acting avatar's bounds, so a preview stands one overlay alone against fixed seats — no arena,
- * view model, or Firebase behind it. The cue is replayed on a loop so the effect keeps firing while
- * the preview runs in Android Studio's Interactive Mode; a static preview frame does not animate.
- *
- * Each overlay's own file holds its previews; this file holds only what they all reuse — the stage,
- * the seats the effects aim at, and the replay driver.
- */
+// TODO: Remove "seat" terminology
+
 internal const val PREVIEW_WIDTH_DP = 360
-
 internal const val PREVIEW_HEIGHT_DP = 720
-
-/** The avatar whose ability is being previewed — the striker, gambler, or duelist. */
 internal const val PREVIEW_ACTOR_ID = "actor"
-
-/** The other avatar an effect reaches — the defender, target, or countered attacker. */
 internal const val PREVIEW_TARGET_ID = "target"
 
 private const val PREVIEW_REPLAY_GAP_MILLIS = 700L
-
 private const val MIN_STEP_HOLD_MILLIS = 400L
-
 private const val AVATAR_MARKER_ALPHA = 0.24f
 
-/** The seats an ability preview aims at, plus the ids to mark on the stage. */
 @Stable internal class PreviewSeats(val userIds: List<String>, val boundsFor: (String) -> Rect?)
 
-/**
- * A single acting avatar planted center stage, for abilities that involve only their own caster.
- */
 @Composable
 internal fun rememberSoloSeat(): PreviewSeats {
     val density = LocalDensity.current
@@ -74,10 +54,6 @@ internal fun rememberSoloSeat(): PreviewSeats {
     }
 }
 
-/**
- * The actor low and the target high, facing off, so a weapon or counter travels between them the
- * way it does across the real combat stage.
- */
 @Composable
 internal fun rememberDuoSeats(): PreviewSeats {
     val density = LocalDensity.current
@@ -103,33 +79,26 @@ private fun avatarBounds(density: Density, centerYFraction: Float): Rect =
         )
     }
 
-/**
- * Drives one cue on a loop so its effect keeps replaying in Interactive Mode, holding for the cue's
- * own animation length before clearing and firing the next round.
- */
+// TODO: God, why so over-engineered?
 @Composable
 internal fun rememberReplayingCue(
     replayKey: Any,
-    cueFor: (iteration: Int) -> CombatAnimationCue,
-): CombatAnimationCue? =
+    cueFor: (iteration: Int) -> ArenaMessageState,
+): ArenaMessageState? =
     rememberReplayingCues(replayKey = replayKey) { iteration -> listOf(cueFor(iteration)) }
 
-/**
- * Drives a sequence of cues on a loop, holding each for its own animation length before the next,
- * so a multi-phase effect like a Riposte plays its guard-then-resolve arc in full. Starts null so
- * an overlay, which skips a cue already live at first composition, plays the opening cue.
- */
 @Composable
 internal fun rememberReplayingCues(
     replayKey: Any,
-    cuesFor: (iteration: Int) -> List<CombatAnimationCue>,
-): CombatAnimationCue? {
-    var cue by remember { mutableStateOf<CombatAnimationCue?>(value = null) }
+    cuesFor: (iteration: Int) -> List<ArenaMessageState>,
+): ArenaMessageState? {
+    var message by remember { mutableStateOf<ArenaMessageState?>(value = null) }
+
     LaunchedEffect(key1 = replayKey) {
         var iteration = 0
         while (true) {
             cuesFor(iteration++).forEach { step ->
-                cue = step
+                message = step
                 delay(
                     timeMillis =
                         step
@@ -138,18 +107,14 @@ internal fun rememberReplayingCues(
                 )
             }
             delay(timeMillis = PREVIEW_REPLAY_GAP_MILLIS)
-            cue = null
+            message = null
             delay(timeMillis = PREVIEW_REPLAY_GAP_MILLIS)
         }
     }
-    return cue
+
+    return message
 }
 
-/**
- * The shared preview backdrop: the arena background with a translucent silhouette at each seat, so
- * the origin an effect launches from and the target it reaches both read even without the real
- * avatars, and the hosted [overlay] painted on top.
- */
 @Composable
 internal fun AbilityAnimationStage(
     accentClass: CharacterClassType,

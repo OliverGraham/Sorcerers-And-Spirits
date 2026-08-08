@@ -35,8 +35,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.EncoreFullScreenOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.SpellPotencyFullScreenOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
@@ -56,6 +54,7 @@ internal fun ArenaCombat(
     // TODO: Encapsulate all dice-rolling state DiceStateHolder
     val diceStateHolder = rememberDiceStateHolder()
 
+    // TODO: Yep, refactor this BS
     CommitDiceRolls(state = arenaState, diceStateHolder = diceStateHolder)
 
     val inspectedUserId =
@@ -63,6 +62,7 @@ internal fun ArenaCombat(
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
 
+    // TODO: At least half of this can be contained in ScreenContent
     val displayedMessageCount = screenState.messages.size
     var isMessageLogExpanded by remember { mutableStateOf(value = false) }
     var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
@@ -165,7 +165,7 @@ private fun BoxScope.OverlayContent(
 
     // TODO: is this it?
     val isPlayingBack = animatingMessage != null
-    BottomControls(
+    CombatButtons(
         state = arenaState,
         diceStateHolder = diceStateHolder,
         areControlsVisible = !arenaScreenState.isMatchEnding,

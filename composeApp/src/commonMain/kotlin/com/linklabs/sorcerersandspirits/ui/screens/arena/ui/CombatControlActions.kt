@@ -11,10 +11,11 @@ internal fun ArenaState.Combat.rollActionFor(
     targetedOpponentUserId: String?,
     onAttack: (AttackArguments) -> Unit,
     onUseAbility: (UseAbilityArguments) -> Unit,
-    lockTarget: () -> Unit,
-    onActionDispatched: () -> Unit,
-): () -> Unit =
-    when (control) {
+): () -> Unit {
+    // TODO: Refactor. Likely remove ArenaCombatControl
+    val targetedOpponentUserId = targetedOpponentUserId ?: return {}
+
+    return when (control) {
         is ArenaCombatControl.NormalAttack -> {
             {
                 onAttack(

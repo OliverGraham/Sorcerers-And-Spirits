@@ -59,16 +59,13 @@ private val arenaButtonFaceColor = Color(color = 0xFF323232)
 private val arenaButtonNeutralBorder = Color(color = 0xFF555555)
 private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
 
+// TODO: Move state to view model layer. Goddamn you Claude
 @Composable
-internal fun BottomControls(
+internal fun CombatButtons(
     state: ArenaState.Combat,
-    targetedOpponentUserId: String,
-    lockTarget: () -> Unit,
     diceStateHolder: DiceStateHolder,
     areControlsVisible: Boolean,
     isPlayingBack: Boolean,
-    isActionInFlight: Boolean,
-    onActionDispatched: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -80,6 +77,8 @@ internal fun BottomControls(
     val isActionInFlight = state.isActionInFlight
     val isBusy = isPlayingBack || isActionInFlight
 
+    // TODO: What is this Teleport nonsense? Looks like the cause of the bug I've been seeing.
+    //       Need to hide the button per user, so a user can't roll twice (for teleport here).
     val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
     var hasReachedTeleportRollBeat by
         remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
@@ -320,6 +319,7 @@ private fun ArenaCombatControl.toButtonIcon(): DrawableResource =
             }
     }
 
+// TODO: Move to view model layer - in ArenaState.Combat itself
 private fun ArenaState.Combat.isControlEnabled(
     control: ArenaCombatControl,
     targetedOpponentUserId: String?,

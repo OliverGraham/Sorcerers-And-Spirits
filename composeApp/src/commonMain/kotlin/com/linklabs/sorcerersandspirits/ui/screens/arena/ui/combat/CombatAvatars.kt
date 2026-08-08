@@ -69,6 +69,7 @@ private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
 private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 
+// TODO: Continue renaming, refactoring CombatAnimationCue. Move things into separate files and such
 @Composable
 internal fun CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
@@ -109,6 +110,8 @@ internal fun CombatAvatarColumn(
     }
 }
 
+// TODO: Refactor data that's passed in. Confusing the pass in userPlayerId for the purpose its used
+// for
 @Composable
 private fun ColumnScope.SeatedAvatar(
     player: PlayerState.Selected?,

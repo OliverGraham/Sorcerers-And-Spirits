@@ -21,6 +21,9 @@ private const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
 private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 
 // TODO: Can this massive data class be reduced in some way?
+//       Rework how ArenaState.Combat gets updated after the MessageQueue dequeues everything
+//       Can messages be an ordered map? Also, why is there messages and messageGroups? should only
+//       be messageGroups
 //       Remove:
 //       - totalMessageCount
 //       - revealedMessageCount
@@ -173,6 +176,7 @@ private fun ArenaMatch.toState(
                 turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
                 lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
                 diceRollState = diceRoll?.toState(),
+                isActionInFlight = false,
             )
         }
 

@@ -42,6 +42,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.CombatHandler
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -105,6 +106,11 @@ class ArenaScreenViewModel(
         chooseCharacterClassUseCase = chooseCharacterClassUseCase,
         sessionStats = sessionStats,
         pendingStatsStore = pendingStatsStore,
+    )
+
+    private val combatHandler = CombatHandler(
+        arenaId = arguments.arenaId,
+        performCombatActionUseCase = performCombatActionUseCase,
     )
 
     private val arenaTimer =
@@ -200,27 +206,28 @@ class ArenaScreenViewModel(
 
     fun onTargetOpponent(opponentUserId: String) {
         _uiStateFlow.updateLoaded { screenState ->
-            val arenaState =
-                screenState.arenaState as? ArenaState.Combat ?: return@updateLoaded screenState
-
-            screenState.copy(arenaState = arenaState.copy(selectedOpponentUserId = opponentUserId))
+            combatHandler.targetOpponent(
+                screenState = screenState,
+                opponentUserId = opponentUserId
+            )
         }
     }
 
     fun onAttack(attackArguments: AttackArguments) {
-        viewModelScope.launch { attackArguments.onAttack() }
-    }
+        _uiStateFlow.updateLoaded { screenState ->
+            combatHandler.updateLockedTargetUserId(
+                screenState = screenState,
+                lockedTargetUserId = attackArguments.targetedOpponentUserId,
+                shouldUpdateLockedTargetUserId = true,
+            )
+        }
 
-    private suspend fun AttackArguments.onAttack() {
-        val arenaState = currentCombatState() ?: return
-        val normalAttack = toDomain(combatActionState = arenaState.combatActionState) ?: return
-
-        // TODO: Refactor
-        updateLockedTargetUserId(
-            lockedTargetUserId = normalAttack.defenderUserId,
-            shouldUpdateLockedTargetUserId = true,
-        )
-        arenaState.performCombatAction(currentAction = normalAttack)
+        viewModelScope.launch {
+            combatHandler.onNormalAttack(
+                attackArguments = attackArguments,
+                arenaState = _uiStateFlow.getLoadedStateOrNull()?.arenaState
+            )
+        }
     }
 
     fun onUseAbility(useAbilityArguments: UseAbilityArguments) {

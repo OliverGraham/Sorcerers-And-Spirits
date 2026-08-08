@@ -116,36 +116,26 @@ sealed interface AbilityActionState {
 }
 
 // TODO: What is going on here? Refactor right? One when statement necessary?
-internal fun AttackArguments.toDomain(
-    combatActionState: CombatActionState
-): CurrentCombatAction.NormalAttack? =
+internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
     when (combatActionState) {
         is CombatActionState.AbilityRoll -> null
 
-        is CombatActionState.Idle -> {
-            val isUsersTurn = userPlayerId in combatActionState.activeUserIds
-            if (isUsersTurn) {
-                CurrentCombatAction.NormalAttack(
-                    roll = NormalAttackType.ArmorClass,
-                    attackTurn = AttackTurn.Standard(attackerUserId = userPlayerId),
-                    defenderUserId = targetedOpponentUserId,
-                )
-            } else {
-                null
-            }
-        }
+        is CombatActionState.Idle ->
+            CurrentCombatAction.NormalAttack(
+                roll = NormalAttackType.ArmorClass,
+                attackTurn = AttackTurn.Standard(attackerUserId = userPlayerId),
+                defenderUserId = targetedOpponentUserId,
+            )
+
 
         is CombatActionState.NormalAttack ->
-            if (combatActionState.attackTurn.attackerUserId == userPlayerId) {
-                CurrentCombatAction.NormalAttack(
-                    roll = combatActionState.roll,
-                    attackTurn = combatActionState.attackTurn,
-                    defenderUserId = combatActionState.defenderUserId,
-                )
-            } else {
-                null
-            }
+            CurrentCombatAction.NormalAttack(
+                roll = combatActionState.roll,
+                attackTurn = combatActionState.attackTurn,
+                defenderUserId = combatActionState.defenderUserId,
+            )
     }
+
 
 // TODO: What is going on here?
 internal fun UseAbilityArguments.toDomain(

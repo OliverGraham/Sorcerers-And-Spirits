@@ -22,6 +22,7 @@ internal fun ArenaState.Combat.rollActionFor(
                     AttackArguments(
                         targetedOpponentUserId = targetedOpponentUserId,
                         userPlayerId = userPlayerId,
+                        combatActionState = combatActionState,
                     )
                 )
             }

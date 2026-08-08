@@ -450,6 +450,7 @@ class ArenaScreenViewModel(
                         AttackArguments(
                             targetedOpponentUserId = actionState.defenderUserId,
                             userPlayerId = userPlayerId,
+                            combatActionState = actionState,
                         )
                 )
 

@@ -29,19 +29,13 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.SummonMinionOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.drawRiposte
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.play
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.duelist.riposteScene
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
 import kotlin.math.PI
@@ -102,13 +96,14 @@ internal fun NecromancerSummonMinionOverlay(
     val healIcon = imageResource(resource = Res.drawable.ic_health)
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
     val golemImage = imageResource(resource = Res.drawable.golem_minion)
-    Canvas(modifier = modifier) { drawSummonMinion(
-        state = state,
-        healIcon = healIcon,
-        skeletonImage = skeletonImage,
-        golemImage = golemImage,
-    ) }
-
+    Canvas(modifier = modifier) {
+        drawSummonMinion(
+            state = state,
+            healIcon = healIcon,
+            skeletonImage = skeletonImage,
+            golemImage = golemImage,
+        )
+    }
 }
 
 private suspend fun SummonMinionEffectState.play(

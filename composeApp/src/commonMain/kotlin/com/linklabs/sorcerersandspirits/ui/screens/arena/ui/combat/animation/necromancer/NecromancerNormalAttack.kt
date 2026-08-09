@@ -44,13 +44,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.imp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val SCYTHE_SUMMON_MILLIS = 260
 private const val SCYTHE_GLOW_HOLD_MILLIS = 240L
@@ -106,9 +106,7 @@ internal fun NecromancerNormalAttackOverlay(
         onAvatarAnimationComplete()
     }
 
-    Canvas(modifier = modifier) {
-        drawScytheReap(state = necromancerStrikeState)
-    }
+    Canvas(modifier = modifier) { drawScytheReap(state = necromancerStrikeState) }
 }
 
 internal suspend fun NecromancerStrikeState.play(

@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import dev.gitlive.firebase.database.DatabaseReference
 
 internal class ChooseCharacterClass(
@@ -85,7 +84,6 @@ internal class ChooseCharacterClass(
             roundNumber = 1,
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet,
-            participants = selectedPlayers.toParticipants(),
         )
     }
 

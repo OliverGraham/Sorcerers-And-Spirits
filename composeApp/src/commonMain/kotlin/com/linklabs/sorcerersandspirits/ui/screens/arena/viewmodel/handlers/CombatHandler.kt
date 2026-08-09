@@ -19,13 +19,15 @@ internal class CombatHandler(
 ) {
 
     fun targetOpponent(screenState: ArenaScreenState, opponentUserId: String): ArenaScreenState {
-        val arenaState =
-            screenState.arenaState.asCombatStateOrNull() ?: return screenState
+        val arenaState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
 
-        return screenState.copy(arenaState = arenaState.copy(selectedOpponentUserId = opponentUserId))
+        return screenState.copy(
+            arenaState = arenaState.copy(selectedOpponentUserId = opponentUserId)
+        )
     }
 
-    // TODO: Need to refactor ArenaCombatControl, CombatButtons and AttackArguments and UseAbilityArguments
+    // TODO: Need to refactor ArenaCombatControl, CombatButtons and AttackArguments and
+    // UseAbilityArguments
     fun updateLockedTargetUserId(
         screenState: ArenaScreenState,
         lockedTargetUserId: String,
@@ -39,56 +41,41 @@ internal class CombatHandler(
         )
     }
 
-    suspend fun onNormalAttack(
-        attackArguments: AttackArguments,
-        arenaState: ArenaState?,
-    ) {
+    suspend fun onNormalAttack(attackArguments: AttackArguments, arenaState: ArenaState?) {
         val arenaCombatState = arenaState?.asCombatStateOrNull() ?: return
         val currentCombatAction = attackArguments.toDomain() ?: return
 
-        arenaCombatState.performCombatAction(currentAction =  currentCombatAction)
+        arenaCombatState.performCombatAction(currentAction = currentCombatAction)
     }
 
-    suspend fun onUseAbility(
-        useAbilityArguments: UseAbilityArguments,
-        arenaState: ArenaState?,
-    ) {
+    suspend fun onUseAbility(useAbilityArguments: UseAbilityArguments, arenaState: ArenaState?) {
         val arenaCombatState = arenaState?.asCombatStateOrNull() ?: return
-        val argumentsWithImpersonateUpdatedIfApplicable = useAbilityArguments.withImpersonatedTarget(
-            arenaState = arenaCombatState
-        )
+        val argumentsWithImpersonateUpdatedIfApplicable =
+            useAbilityArguments.withImpersonatedTarget(arenaState = arenaCombatState)
 
         val currentCombatAction = argumentsWithImpersonateUpdatedIfApplicable.toDomain() ?: return
 
-        arenaCombatState.performCombatAction(currentAction =  currentCombatAction)
+        arenaCombatState.performCombatAction(currentAction = currentCombatAction)
     }
 
-    fun updateIsActionInFlight(
-        screenState: ArenaScreenState): ArenaScreenState {
+    fun updateIsActionInFlight(screenState: ArenaScreenState): ArenaScreenState {
         val arenaCombatState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
 
-        return screenState.copy(
-            arenaState =
-                arenaCombatState.copy(
-                    isActionInFlight = true
-                )
-                    )
+        return screenState.copy(arenaState = arenaCombatState.copy(isActionInFlight = true))
     }
 
     private fun updateLockedTargetUserId(
         screenState: ArenaScreenState,
         arenaCombatState: ArenaState.Combat,
         lockedTargetUserId: String,
-        ): ArenaScreenState {
-        return screenState.copy(
+    ): ArenaScreenState =
+        screenState.copy(
             arenaState =
                 arenaCombatState.copy(
-                    lockedTargetUserId =
-                            lockedTargetUserId,
+                    lockedTargetUserId = lockedTargetUserId,
                     isActionInFlight = true,
                 )
         )
-    }
 
     private suspend fun ArenaState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
         // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it

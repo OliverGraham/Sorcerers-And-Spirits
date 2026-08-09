@@ -40,13 +40,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 internal const val PREPARE_APPEAR_MILLIS = 160
 internal const val PREPARE_TWIRL_MILLIS = 450
@@ -118,10 +118,7 @@ internal fun PrepareAttackOverlay(
         onAvatarAnimationComplete()
     }
 
-    Canvas(modifier = modifier) {
-        drawPrepareAttack(state = state)
-    }
-
+    Canvas(modifier = modifier) { drawPrepareAttack(state = state) }
 }
 
 private fun prepareAttackScene(

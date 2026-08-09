@@ -41,21 +41,6 @@ class ArenaMatchEntityExtensionsTest {
     }
 
     @Test
-    fun `toParticipants maps selected players to their class type and skips unselected`() {
-        val players =
-            mapOf(
-                "1" to createSelectedPlayer("1", 5),
-                "2" to createUnselectedPlayer("2"),
-                "3" to createSelectedPlayer("3", 3),
-            )
-
-        assertEquals(
-            mapOf("1" to CharacterClassType.Rogue, "3" to CharacterClassType.Rogue),
-            players.toParticipants(),
-        )
-    }
-
-    @Test
     fun `getFastestPlayerId ignores unselected players`() {
         val players =
             mapOf(

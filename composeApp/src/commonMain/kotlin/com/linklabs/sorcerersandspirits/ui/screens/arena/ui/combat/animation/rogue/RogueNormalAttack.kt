@@ -25,12 +25,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AvatarBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -43,11 +41,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rem
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
+import kotlin.math.PI
+import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
-import kotlin.math.atan2
 
 internal const val MELEE_DASH_MILLIS = 200
 internal const val MELEE_THRUST_MILLIS = 100
@@ -86,9 +84,7 @@ internal fun RogueNormalAttackOverlay(
         onAvatarAnimationComplete()
     }
 
-    Canvas(modifier = modifier) {
-        drawRogueStrike(state = rogueStrikeState)
-    }
+    Canvas(modifier = modifier) { drawRogueStrike(state = rogueStrikeState) }
 }
 
 internal suspend fun RogueStrikeState.play(

@@ -82,35 +82,37 @@ internal fun EncoreOverlay(
     val crowd = remember { encoreCrowd() }
     val avatars = encoreCrowdAvatars()
 
-
     val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
-        state.play(message = animatingMessage, accentColor = animatingMessage.actingClassType.toColor())
+        state.play(
+            message = animatingMessage,
+            accentColor = animatingMessage.actingClassType.toColor(),
+        )
         onAvatarAnimationComplete()
     }
 
     val ambient = rememberInfiniteTransition(label = ENCORE_AMBIENT_LABEL)
     val sway by
-    ambient.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing)
-            ),
-        label = ENCORE_SWAY_LABEL,
-    )
+        ambient.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing)
+                ),
+            label = ENCORE_SWAY_LABEL,
+        )
     val glint by
-    ambient.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing)
-            ),
-        label = ENCORE_GLINT_LABEL,
-    )
+        ambient.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec =
+                infiniteRepeatable(
+                    animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing)
+                ),
+            label = ENCORE_GLINT_LABEL,
+        )
     Canvas(modifier = modifier) {
         drawEncore(state = state, crowd = crowd, avatars = avatars, sway = sway, glint = glint)
     }
@@ -131,7 +133,9 @@ private fun encoreCrowdAvatars(): List<ImageBitmap> =
 
 private suspend fun EncoreEffectState.play(message: ArenaMessageState.Encore, accentColor: Color) {
     when (message) {
-        is ArenaMessageState.Encore.Roll -> resolve(accentColor = accentColor, isSuccessful = message.isSuccessful)
+        is ArenaMessageState.Encore.Roll ->
+            resolve(accentColor = accentColor, isSuccessful = message.isSuccessful)
+
         is ArenaMessageState.Encore.Trigger -> setStage(accentColor = accentColor)
     }
 }

@@ -102,6 +102,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 illusionistUserId = defenderUserId,
                 rerolledMirrorImageDie = rerolledDie,
                 attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
                 messageType = messageType,
             )
         }
@@ -161,6 +162,8 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             ArenaMessage.MirrorImage.Pass(
                 illusionistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 messageType = messageType,
                 baseRoll = mirrorImageAction.baseRoll(),
                 doublesBonus = mirrorImageAction.existingDoublesBonus,
@@ -217,7 +220,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         addMessage(message = message(NormalRollMessageType.ArmorClassHit))
 
         if (isAttackerDoublesLive) {
-            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
         }
 
         continueAttackWithHealthRoll()
@@ -231,7 +234,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         val shouldMessageDoubles = isAttackerDoublesLive && hasPendingExtraAttack()
         if (shouldMessageDoubles) {
-            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
         }
 
         resolveTurnEnd()
@@ -260,7 +263,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             }
         val shouldMessageDoubles = isAttackerDoublesLive && isDoublesBonusStillLive
         if (shouldMessageDoubles) {
-            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
         }
 
         if (consciousPlayers.size <= 1) {

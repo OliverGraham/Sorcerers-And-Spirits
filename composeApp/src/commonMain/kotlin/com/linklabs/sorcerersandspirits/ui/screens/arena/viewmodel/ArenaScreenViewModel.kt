@@ -32,6 +32,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.plusMessage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
@@ -94,17 +95,19 @@ class ArenaScreenViewModel(
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
         )
 
-    private val chooseCharacterClassHandler = ChooseCharacterClassHandler(
-        arenaId = arguments.arenaId,
-        chooseCharacterClassUseCase = chooseCharacterClassUseCase,
-        sessionStats = sessionStats,
-        pendingStatsStore = pendingStatsStore,
-    )
+    private val chooseCharacterClassHandler =
+        ChooseCharacterClassHandler(
+            arenaId = arguments.arenaId,
+            chooseCharacterClassUseCase = chooseCharacterClassUseCase,
+            sessionStats = sessionStats,
+            pendingStatsStore = pendingStatsStore,
+        )
 
-    private val combatHandler = CombatHandler(
-        arenaId = arguments.arenaId,
-        performCombatActionUseCase = performCombatActionUseCase,
-    )
+    private val combatHandler =
+        CombatHandler(
+            arenaId = arguments.arenaId,
+            performCombatActionUseCase = performCombatActionUseCase,
+        )
 
     private val arenaTimer =
         Timer(
@@ -168,15 +171,14 @@ class ArenaScreenViewModel(
             val beforeClassSelectedArenaScreenState =
                 _uiStateFlow.getLoadedStateOrNull() ?: return@launch
 
-            val afterClassSelectedArenaScreenState = chooseCharacterClassHandler.chooseCharacterClass(
-                screenState = beforeClassSelectedArenaScreenState,
-                playerState = playerState,
-                characterClassState = characterClassState,
-            ) ?: return@launch
+            val afterClassSelectedArenaScreenState =
+                chooseCharacterClassHandler.chooseCharacterClass(
+                    screenState = beforeClassSelectedArenaScreenState,
+                    playerState = playerState,
+                    characterClassState = characterClassState,
+                ) ?: return@launch
 
-            _uiStateFlow.updateLoaded {
-                afterClassSelectedArenaScreenState
-            }
+            _uiStateFlow.updateLoaded { afterClassSelectedArenaScreenState }
         }
     }
 
@@ -199,10 +201,7 @@ class ArenaScreenViewModel(
 
     fun onTargetOpponent(opponentUserId: String) {
         _uiStateFlow.updateLoaded { screenState ->
-            combatHandler.targetOpponent(
-                screenState = screenState,
-                opponentUserId = opponentUserId
-            )
+            combatHandler.targetOpponent(screenState = screenState, opponentUserId = opponentUserId)
         }
     }
 
@@ -217,19 +216,15 @@ class ArenaScreenViewModel(
         viewModelScope.launch {
             combatHandler.onNormalAttack(
                 attackArguments = attackArguments,
-                arenaState = _uiStateFlow.getLoadedStateOrNull()?.arenaState
+                arenaState = _uiStateFlow.getLoadedStateOrNull()?.arenaState,
             )
         }
     }
 
     fun onUseAbility(useAbilityArguments: UseAbilityArguments) {
         _uiStateFlow.updateLoaded { screenState ->
-            combatHandler.updateIsActionInFlight(
-                screenState = screenState
-            )
+            combatHandler.updateIsActionInFlight(screenState = screenState)
         }
-
-
 
         viewModelScope.launch {
             combatHandler.onUseAbility(
@@ -292,15 +287,7 @@ class ArenaScreenViewModel(
 
     private suspend fun ArenaMatch?.updateScreenState(userId: String) {
         if (this == null) {
-            screenStateFlowJob?.cancel()
-            finishWriteJob?.cancel()
-            // playbackSequencer.cancel()
-
-            viewModelScope.launch {
-                setCurrentTravelerAvailableUseCase()
-                flushSessionStats()
-                _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
-            }
+            handleScreenStateUpdateError()
             return
         }
 
@@ -407,10 +394,11 @@ class ArenaScreenViewModel(
             is ArenaState.WaitingForAllPlayers -> leaveTimedOutMatch()
 
             is ArenaState.ChoosingClasses -> {
-                val afterClassSelectedArenaScreenState = chooseCharacterClassHandler.autoChooseCharacterClassForUser(
-                    screenState = loadedState,
-                    arenaState = arenaState,
-                ) ?: return
+                val afterClassSelectedArenaScreenState =
+                    chooseCharacterClassHandler.autoChooseCharacterClassForUser(
+                        screenState = loadedState,
+                        arenaState = arenaState,
+                    ) ?: return
 
                 _uiStateFlow.updateLoaded {
                     afterClassSelectedArenaScreenState

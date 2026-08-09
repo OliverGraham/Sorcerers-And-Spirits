@@ -90,9 +90,7 @@ internal fun PersuadeOverlay(
         onAvatarAnimationComplete()
     }
 
-    Canvas(modifier = modifier) {
-        drawPersuade(state = state)
-    }
+    Canvas(modifier = modifier) { drawPersuade(state = state) }
 }
 
 private fun persuadeScene(bardBounds: Rect, accentColor: Color, density: Density): PersuadeScene {
@@ -103,11 +101,18 @@ private fun persuadeScene(bardBounds: Rect, accentColor: Color, density: Density
     )
 }
 
-private suspend fun PersuadeEffectState.play(scene: PersuadeScene, message: ArenaMessageState.Persuade) {
+private suspend fun PersuadeEffectState.play(
+    scene: PersuadeScene,
+    message: ArenaMessageState.Persuade,
+) {
     when (message) {
         is ArenaMessageState.Persuade.Trigger -> readyLute(scene = scene)
-        is ArenaMessageState.Persuade.StrumLute -> strumLute(scene = scene, isSuccessful = message.isSuccessful)
+
+        is ArenaMessageState.Persuade.StrumLute ->
+            strumLute(scene = scene, isSuccessful = message.isSuccessful)
+
         is ArenaMessageState.Persuade.CharmActivation -> readyFlute(scene = scene)
+
         is ArenaMessageState.Persuade.Charm -> blowFlute(scene = scene)
     }
 }

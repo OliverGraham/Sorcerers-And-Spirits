@@ -17,7 +17,15 @@ internal class AllInActivated(
             diceRoller
                 .roll1D6(userId = attackerUserId, dieColor = dieColorFor(userId = attackerUserId))
                 .total
-        addMessage(message = ArenaMessage.AllIn(gamblerUserId = attackerUserId, singleDie = result))
+
+        addMessage(
+            message =
+                ArenaMessage.AllIn(
+                    gamblerUserId = attackerUserId,
+                    gamblerName = attacker.className,
+                    singleDie = result,
+                )
+        )
 
         when (result) {
             abilityConfig.allInSelfKnockoutRoll -> {

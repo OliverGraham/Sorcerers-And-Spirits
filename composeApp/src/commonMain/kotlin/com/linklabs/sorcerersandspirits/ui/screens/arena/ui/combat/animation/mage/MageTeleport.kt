@@ -44,15 +44,15 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rem
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.rememberAvatarGesture
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_background
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 
 private const val PORTAL_OPEN_MILLIS = 420
 private const val SWIRL_PERIOD_MILLIS = 2600
@@ -88,16 +88,13 @@ internal fun MageTeleportOverlay(
     val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
-
         val scene = teleportScene(mageBounds = mageBounds)
         state.play(scene = scene, message = animatingMessage)
 
         onAvatarAnimationComplete()
     }
 
-    Canvas(modifier = modifier) {
-        drawTeleport(state = state)
-    }
+    Canvas(modifier = modifier) { drawTeleport(state = state) }
 }
 
 private fun teleportScene(mageBounds: Rect): TeleportScene {
@@ -118,11 +115,16 @@ private suspend fun TeleportPortalState.play(
 ) {
     when (message) {
         is ArenaMessageState.Teleport.Trigger -> open(scene = scene)
+
         is ArenaMessageState.Teleport.Roll,
-        is ArenaMessageState.Teleport.Tie ->  hold(scene = scene)
+        is ArenaMessageState.Teleport.Tie -> hold(scene = scene)
 
         is ArenaMessageState.Teleport.Result ->
-            if (message.didDefenderEscape) resolveEscape(scene = scene) else resolveFail(scene = scene)
+            if (message.didDefenderEscape) {
+                resolveEscape(scene = scene)
+            } else {
+                resolveFail(scene = scene)
+            }
     }
 }
 

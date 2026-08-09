@@ -14,9 +14,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -30,7 +28,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp as colorLerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
@@ -53,7 +50,6 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -86,7 +82,6 @@ private val luckyPip = Color(color = 0xFF7A4E12)
 private val luckyGlow = Color(color = 0xFFFFF3D0)
 private val impactCore = Color(color = 0xFFFFF3D0)
 private val groundShadow = Color(color = 0x55000000)
-
 
 private enum class LuckyCoinMode {
     Flip,
@@ -129,10 +124,11 @@ internal fun LuckyCoinOverlay(
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
-    val luckyCoinScene = getLuckyCoinScene(
-        message = animatingMessage,
-        avatarBoundsStateHolder = avatarBoundsStateHolder,
-    ) ?: return
+    val luckyCoinScene =
+        getLuckyCoinScene(
+            message = animatingMessage,
+            avatarBoundsStateHolder = avatarBoundsStateHolder,
+        ) ?: return
 
     val state = remember { LuckyCoinEffectState() }
     val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
@@ -144,7 +140,6 @@ internal fun LuckyCoinOverlay(
 
     Canvas(modifier = modifier) { drawLuckyCoinScene(state = state) }
 }
-
 
 @Composable
 private fun getLuckyCoinScene(
@@ -163,7 +158,6 @@ private fun getLuckyCoinScene(
                 didStopAttack = message.didStopAttack,
             )
         }
-
 
         is ArenaMessageState.LuckyCoin.HighRollerTrigger -> {
             val gamblerBounds =

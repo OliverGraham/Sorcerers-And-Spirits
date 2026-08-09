@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -39,7 +38,6 @@ sealed interface ArenaMatchEntity {
         val isNewRound: Boolean,
         val isMatchOver: Boolean = false,
         val diceRoll: DiceRollEntity? = null,
-        val participants: Map<String, CharacterClassType> = emptyMap(),
     ) : ArenaMatchEntity
 
     @Serializable
@@ -48,7 +46,6 @@ sealed interface ArenaMatchEntity {
         override val newMessages: List<ArenaMessageEntity>,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
         override val matchNumberInGauntlet: Int = 1,
-        val participants: Map<String, CharacterClassType> = emptyMap(),
     ) : ArenaMatchEntity
 
     companion object {
@@ -61,12 +58,6 @@ sealed interface ArenaMatchEntity {
         val newMessagesName = ArenaMatchEntity::newMessages.name
     }
 }
-
-// TODO: Double check this. The mapping should be able to be done without any filtering
-internal fun Map<String, ArenaPlayerEntity>.toParticipants(): Map<String, CharacterClassType> =
-    values.filterIsInstance<ArenaPlayerEntity.Selected>().associate {
-        it.userId to it.characterClassEntity.type
-    }
 
 internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
     val messages = newMessages.toDomain()
@@ -101,7 +92,6 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 isMatchOver = isMatchOver,
                 matchNumberInGauntlet = matchNumberInGauntlet,
                 diceRoll = diceRoll?.toDomain(),
-                participants = participants,
             )
 
         is ArenaMatchEntity.Finished ->
@@ -109,7 +99,6 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 messages = messages,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 matchNumberInGauntlet = matchNumberInGauntlet,
-                participants = participants,
             )
     }
 }

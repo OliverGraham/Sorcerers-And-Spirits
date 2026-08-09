@@ -164,7 +164,6 @@ private fun ArenaCombatFlashPreview() {
                 id = "ko",
                 attackerUserId = "player1",
                 attackerName = "Mage",
-                attackerClassType = CharacterClassType.Mage,
                 defenderUserId = "player2",
                 defenderName = "Rogue",
                 firstDie = 6,

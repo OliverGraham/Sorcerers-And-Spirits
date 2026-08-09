@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.resetForNewMatch
-import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
@@ -88,7 +87,6 @@ internal class StayForAnotherMatch(private val userId: String) {
             roundNumber = 1,
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet + 1,
-            participants = freshPlayers.toParticipants(),
         )
     }
 

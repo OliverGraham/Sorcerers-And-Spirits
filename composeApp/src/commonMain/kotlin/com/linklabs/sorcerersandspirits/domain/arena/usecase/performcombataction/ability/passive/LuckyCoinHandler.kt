@@ -41,7 +41,7 @@ internal class LuckyCoinHandler(
             message =
                 ArenaMessage.LuckyCoin.HighRollerTrigger(
                     gamblerUserId = defenderUserId,
-                    attackerUserId = attackerUserId,
+                    attackerClassName = attacker.className,
                 )
         )
 

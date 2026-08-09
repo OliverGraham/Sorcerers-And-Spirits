@@ -223,6 +223,8 @@ internal class NormalAttackRollHandler(
                 ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
+                    attackerClassName = attacker.className,
+                    defenderClassName = defender.className,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     bonus = bonus,
@@ -233,7 +235,7 @@ internal class NormalAttackRollHandler(
         val isDoubles = firstDie == secondDie
         val isDoublesBonusEarned = isDoubles && shouldMessageDoubles
         if (isDoublesBonusEarned) {
-            addMessage(message = ArenaMessage.Doubles(userId = attackerUserId))
+            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
         }
     }
 
@@ -243,6 +245,7 @@ internal class NormalAttackRollHandler(
                 ArenaMessage.NormalRoll.Attack(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
+                    attackerClassType = attacker.type,
                     impersonatedCharacterType = getImpersonatedCharacterTypeOrNone(),
                     normalRollMessageType = normalRollMessageType,
                 )

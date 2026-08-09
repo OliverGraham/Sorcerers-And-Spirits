@@ -36,7 +36,6 @@ data class ArenaScreenState(
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
     val arenaState: ArenaState, // TODO: rename currentArenaState
-    val participants: Map<String, ParticipantClass>,
     val messageGroups: List<ArenaMessageGroupState> = messages.toMessageGroups(),
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
@@ -106,7 +105,6 @@ internal fun ArenaMatch.toUpdatedState(
             TimerAction.None -> previousSeconds
         }
 
-    val participants = participantClasses()
     val finalState =
         ArenaScreenState(
             messages = previousState?.messages ?: emptyList(),
@@ -116,7 +114,6 @@ internal fun ArenaMatch.toUpdatedState(
             isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
             hasReadiedForNextMatch = userPlayer.isReadyForNextMatch,
             arenaState = previousState?.arenaState ?: computedArenaState, // TODO: weird
-            participants = participants,
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
@@ -126,16 +123,9 @@ internal fun ArenaMatch.toUpdatedState(
     return ArenaStateUpdate(
         nextState = finalState,
         timerAction = timerAction,
-        newMessages = newMessages.toMessageStates(participants = participants),
+        newMessages = newMessages.toMessageStates(),
     )
 }
-
-private fun ArenaMatch.participantClasses(): Map<String, ParticipantClass> =
-    when (this) {
-        is ArenaMatch.Combat -> participants
-        is ArenaMatch.Finished -> participants
-        else -> emptyMap()
-    }.mapValues { ParticipantClass(className = it.value.name, type = it.value) }
 
 private fun ArenaMatch.toState(
     userId: String,

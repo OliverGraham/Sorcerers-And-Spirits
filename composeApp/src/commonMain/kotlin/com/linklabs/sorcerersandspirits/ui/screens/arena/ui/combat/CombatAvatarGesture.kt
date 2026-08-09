@@ -14,7 +14,6 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
@@ -38,13 +37,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gam
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.gambler.THROW_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.MirrorSplitClassAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.getMirrorImageMessageOrNull
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.mirrorImageBodyMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.illusionist.playMirrorImage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_BOLT_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.getTeleportMessageOrNull
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.playTeleport
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.teleportAnimationMilliseconds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
@@ -191,16 +188,6 @@ private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long
 // TODO: Duelist
 private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
-
-
-// TODO: Common
-internal fun defenderReactionBodyMillis(normalRollMessageType: NormalRollMessageType): Long =
-    when (normalRollMessageType) {
-        NormalRollMessageType.ArmorClassHit -> FLINCH_BODY_MILLIS
-        NormalRollMessageType.ArmorClassMiss -> SIDESTEP_BODY_MILLIS
-        NormalRollMessageType.Damage -> FLINCH_HEAVY_BODY_MILLIS
-        NormalRollMessageType.Knockout -> COLLAPSE_BODY_MILLIS
-    }
 
 // TODO: Common
 private suspend fun AvatarGestureState.play(

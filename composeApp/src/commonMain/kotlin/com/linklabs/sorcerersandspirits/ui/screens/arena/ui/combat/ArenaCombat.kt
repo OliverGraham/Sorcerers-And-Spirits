@@ -33,8 +33,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
@@ -173,7 +173,6 @@ private fun BoxScope.OverlayContent(
         modifier = Modifier.align(alignment = Alignment.BottomCenter).navigationBarsPadding(),
     )
 
-
     MessageLogOverlay(
         messageGroups = arenaScreenState.messageGroups,
         isExpanded = isMessageLogExpanded,
@@ -187,7 +186,10 @@ private fun BoxScope.OverlayContent(
     }
 
     if (animatingMessage?.isFlash() == true) {
-        FlashMessageOverlay(message = animatingMessage, avatarBoundsStateHolder = avatarBoundsStateHolder)
+        FlashMessageOverlay(
+            message = animatingMessage,
+            avatarBoundsStateHolder = avatarBoundsStateHolder,
+        )
     }
 
     InspectDrawer(

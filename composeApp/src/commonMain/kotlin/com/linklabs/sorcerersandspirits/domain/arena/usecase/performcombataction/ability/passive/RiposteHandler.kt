@@ -56,7 +56,7 @@ internal class RiposteHandler(
 
         if (isSuccessful) {
             if (result.isDoubles) {
-                addMessage(message = ArenaMessage.Doubles(userId = defenderUserId))
+                addMessage(message = ArenaMessage.Doubles(className = defender.className))
             }
             handleSuccess()
         } else {

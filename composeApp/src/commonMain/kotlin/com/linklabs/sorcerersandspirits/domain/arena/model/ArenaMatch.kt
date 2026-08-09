@@ -1,7 +1,5 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-
 sealed interface ArenaMatch {
     val messages: List<IncomingArenaMessage>
     val playerMap: Map<String, ArenaPlayer>
@@ -30,13 +28,11 @@ sealed interface ArenaMatch {
         val isNewRound: Boolean,
         val isMatchOver: Boolean,
         val diceRoll: DiceRoll?,
-        val participants: Map<String, CharacterClassType>,
     ) : ArenaMatch
 
     data class Finished(
         override val messages: List<IncomingArenaMessage>,
         override val playerMap: Map<String, ArenaPlayer>,
         override val matchNumberInGauntlet: Int = 1,
-        val participants: Map<String, CharacterClassType>,
     ) : ArenaMatch
 }

@@ -18,7 +18,12 @@ internal class SummonMinionActivated(
                 .total
 
         addMessage(
-            message = ArenaMessage.SummonMinion(necromancerUserId = attackerUserId, singleDie = result)
+            message =
+                ArenaMessage.SummonMinion(
+                    necromancerUserId = attackerUserId,
+                    className = attacker.className,
+                    singleDie = result,
+                )
         )
 
         updateAttackerClass { attacker ->

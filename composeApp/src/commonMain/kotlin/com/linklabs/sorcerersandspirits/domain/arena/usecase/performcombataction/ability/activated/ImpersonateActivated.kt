@@ -22,6 +22,7 @@ internal class ImpersonateActivated(
             message =
                 ArenaMessage.Impersonate(
                     illusionistUserId = attackerUserId,
+                    illusionistName = attacker.className,
                     impersonateAbility = copiedBehavior,
                 )
         )

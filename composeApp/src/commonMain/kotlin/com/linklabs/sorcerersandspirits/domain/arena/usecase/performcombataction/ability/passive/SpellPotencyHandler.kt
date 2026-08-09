@@ -57,7 +57,9 @@ internal class SpellPotencyHandler(
             message =
                 ArenaMessage.SpellPotency(
                     mageUserId = attackerUserId,
+                    mageName = attacker.className,
                     mainTargetUserId = defenderUserId,
+                    mainTargetClassName = defender.className,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     mainDamage = diceTotal,

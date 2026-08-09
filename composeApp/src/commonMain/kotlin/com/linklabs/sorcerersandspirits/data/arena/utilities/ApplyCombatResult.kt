@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.data.arena.utilities
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import dev.gitlive.firebase.database.DatabaseReference
@@ -43,6 +42,5 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
             isMatchOver = result.isMatchFinished,
             matchNumberInGauntlet = matchNumberInGauntlet,
             diceRoll = result.diceRoll?.toEntity(),
-            participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
         )
 }

@@ -21,7 +21,6 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter.Companion.tint
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -35,15 +34,13 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toBustResource
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -103,16 +100,12 @@ internal fun ImpersonateOverlay(
     }
 
     val selfImage = imageResource(resource = CharacterClassType.Illusionist.toBustResource())
-    val impersonatedImage = imageResource(resource = animatingMessage.impersonatedClassType.toBustResource())
+    val impersonatedImage =
+        imageResource(resource = animatingMessage.impersonatedClassType.toBustResource())
     Canvas(modifier = modifier) {
-        drawImpersonate(
-            state = state,
-            selfImage = selfImage,
-            impersonatedImage = impersonatedImage,
-        )
+        drawImpersonate(state = state, selfImage = selfImage, impersonatedImage = impersonatedImage)
     }
 }
-
 
 private suspend fun ImpersonateEffectState.play(scene: ImpersonateScene) {
     rise.snapTo(targetValue = 0f)

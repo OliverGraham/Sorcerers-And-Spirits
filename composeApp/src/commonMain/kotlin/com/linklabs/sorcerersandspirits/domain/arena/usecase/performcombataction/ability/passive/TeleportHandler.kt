@@ -107,6 +107,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 unrolledTeleportDie = rollingDie,
                 bonus = bonus,
                 mageUserId = teleport.defenderRoll.userId,
+                className = if (isAttackerRolling) attacker.className else defender.className,
             )
         return if (isAttackerRolling) {
             teleport.copy(attackerRoll = rolledDie)
@@ -119,6 +120,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         unrolledTeleportDie: TeleportDie,
         bonus: Int,
         mageUserId: String,
+        className: String,
     ): TeleportDie {
         val userId = unrolledTeleportDie.userId
         val result =
@@ -137,6 +139,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                     userId = userId,
                     singleDie = result,
                     mageUserId = mageUserId,
+                    className = className,
                 )
         )
 

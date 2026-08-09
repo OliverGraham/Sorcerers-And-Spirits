@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -51,13 +52,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.com
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-import androidx.compose.ui.graphics.lerp as lerpColor
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val RAISE_MILLIS = 620
 internal const val HOLY_SHIELD_PRAY_GLOW_MILLIS = 560
@@ -111,9 +111,7 @@ internal fun PaladinHolyShieldOverlay(
                 style = TextStyle(fontSize = PLUS_ONE_MEASURE_SP.sp, fontWeight = FontWeight.Black),
             )
         }
-    Canvas(modifier = modifier) {
-        drawHolyShield(state = state, plusOneLayout = plusOneLayout)
-    }
+    Canvas(modifier = modifier) { drawHolyShield(state = state, plusOneLayout = plusOneLayout) }
 }
 
 private const val PLUS_ONE_MEASURE_SP = 64
@@ -146,13 +144,17 @@ private suspend fun HolyShieldState.play(
 
     when (message) {
         is ArenaMessageState.HolyShield.Trigger -> raise(paladin = paladinBounds)
-        is ArenaMessageState.HolyShield.Prayer -> if (message.didSurvive) {
-            praySuccess(paladin = paladinBounds)
-        } else {
-            prayFail(paladin = paladinBounds)
-        }
+
+        is ArenaMessageState.HolyShield.Prayer ->
+            if (message.didSurvive) {
+                praySuccess(paladin = paladinBounds)
+            } else {
+                prayFail(paladin = paladinBounds)
+            }
+
         is ArenaMessageState.HolyShield.Wrath -> {
-            val attackerBounds = avatarBoundsStateHolder.boundsFor(userId = message.attackerUserId) ?: return
+            val attackerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = message.attackerUserId) ?: return
             wrath(
                 paladin = paladinBounds,
                 attacker = attackerBounds,
@@ -312,9 +314,8 @@ private suspend fun HolyShieldState.resetAll() {
     blast.snapTo(targetValue = 0f)
 }
 
-private fun wrathIntensity(die: Int): Float {
-    return lerp(start = WRATH_MIN_INTENSITY, stop = 1f, fraction = (die - 1) / 5f)
-}
+private fun wrathIntensity(die: Int): Float =
+    lerp(start = WRATH_MIN_INTENSITY, stop = 1f, fraction = (die - 1) / 5f)
 
 private fun DrawScope.drawHolyShield(state: HolyShieldState, plusOneLayout: TextLayoutResult) {
     val scene = state.scene ?: return

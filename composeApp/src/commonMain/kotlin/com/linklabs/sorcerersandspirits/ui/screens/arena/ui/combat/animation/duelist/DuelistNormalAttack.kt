@@ -28,11 +28,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.IMPACT_BURST_TAIL_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -49,11 +47,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.sla
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.smoothstep
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
+import kotlin.math.PI
+import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
-import kotlin.math.atan2
 
 internal const val SLASH_SWEEP_MILLIS = 300
 internal const val TWIN_SLASH_STAGGER_MILLIS = 500
@@ -101,9 +99,7 @@ internal fun DuelistNormalAttackOverlay(
         onAvatarAnimationComplete()
     }
 
-    Canvas(modifier = modifier) {
-        drawTwinSwordSlash(state = duelistStrikeState)
-    }
+    Canvas(modifier = modifier) { drawTwinSwordSlash(state = duelistStrikeState) }
 }
 
 internal suspend fun DuelistStrikeState.play(

@@ -46,7 +46,6 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_r
 import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_miss
 import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_charm
 import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_charm_activation
-import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_lull
 import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_strum_lute_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_strum_lute_success
 import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_trigger
@@ -94,36 +93,36 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.NormalRoll.Attack -> ""
 
         is ArenaMessageState.NormalRoll.Outcome ->
-            when (type) {
+            when (normalRollMessageType) {
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_hit,
-                        attackerName,
-                        defenderName,
+                        attackerClassName,
+                        defenderClassName,
                         rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_miss,
-                        attackerName,
-                        defenderName,
+                        attackerClassName,
+                        defenderClassName,
                         rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.Damage ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_damage,
-                        attackerName,
-                        defenderName,
+                        attackerClassName,
+                        defenderClassName,
                         rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
 
                 NormalRollMessageType.Knockout ->
                     stringResource(
                         resource = Res.string.arena_message_normal_roll_knockout,
-                        attackerName,
-                        defenderName,
+                        attackerClassName,
+                        defenderClassName,
                         rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     )
             }
@@ -142,7 +141,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
             stringResource(resource = Res.string.arena_message_teleport_trigger)
 
         is ArenaMessageState.Teleport.Roll ->
-            stringResource(resource = Res.string.arena_message_teleport_roll, playerName, singleDie)
+            stringResource(resource = Res.string.arena_message_teleport_roll, className, singleDie)
 
         is ArenaMessageState.Teleport.Tie ->
             stringResource(resource = Res.string.arena_message_teleport_tie)
@@ -173,7 +172,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_high_roller_trigger,
-                targetName,
+                attackerClassName,
             )
 
         is ArenaMessageState.LuckyCoin.HighRollerDamage ->
@@ -212,28 +211,28 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 SummonMinionOutcome.Fizzle ->
                     stringResource(
                         resource = Res.string.arena_message_summon_minion_fizzle,
-                        necroName,
+                        className,
                         singleDie,
                     )
 
                 SummonMinionOutcome.Skeleton ->
                     stringResource(
                         resource = Res.string.arena_message_summon_minion_skeleton,
-                        necroName,
+                        className,
                         singleDie,
                     )
 
                 SummonMinionOutcome.SkeletonAndHeal ->
                     stringResource(
                         resource = Res.string.arena_message_summon_minion_skeleton_heal,
-                        necroName,
+                        className,
                         singleDie,
                     )
 
                 SummonMinionOutcome.Golem ->
                     stringResource(
                         resource = Res.string.arena_message_summon_minion_golem,
-                        necroName,
+                        className,
                         singleDie,
                     )
             }
@@ -257,14 +256,11 @@ internal fun ArenaMessageState.getDisplayString(): String =
         is ArenaMessageState.Persuade.CharmActivation ->
             stringResource(resource = Res.string.arena_message_persuade_charm_activation)
 
-        is ArenaMessageState.Persuade.Lull ->
-            stringResource(resource = Res.string.arena_message_persuade_lull)
-
         is ArenaMessageState.Persuade.Charm ->
             stringResource(
                 resource = Res.string.arena_message_persuade_charm,
-                attackerName,
-                defenderName,
+                attackerClassName,
+                defenderClassName,
             )
 
         is ArenaMessageState.Encore.Trigger ->
@@ -292,25 +288,25 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 NormalRollMessageType.ArmorClassHit ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_pass_armor_broke,
-                        attackerName,
+                        attackerClassName,
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_pass_armor_held,
-                        attackerName,
+                        attackerClassName,
                     )
 
                 NormalRollMessageType.Damage ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_pass_damage,
-                        attackerName,
+                        attackerClassName,
                     )
 
                 NormalRollMessageType.Knockout ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_pass_knockout,
-                        attackerName,
+                        attackerClassName,
                     )
             }
 
@@ -320,28 +316,28 @@ internal fun ArenaMessageState.getDisplayString(): String =
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_armor_broke,
                         rerollDisplay,
-                        attackerName,
+                        attackerClassName,
                     )
 
                 NormalRollMessageType.ArmorClassMiss ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_armor_held,
                         rerollDisplay,
-                        attackerName,
+                        attackerClassName,
                     )
 
                 NormalRollMessageType.Damage ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_damage,
                         rerollDisplay,
-                        attackerName,
+                        attackerClassName,
                     )
 
                 NormalRollMessageType.Knockout ->
                     stringResource(
                         resource = Res.string.arena_message_mirror_image_tempt_fate_knockout,
                         rerollDisplay,
-                        attackerName,
+                        attackerClassName,
                     )
             }
 
@@ -350,7 +346,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 stringResource(
                     resource = Res.string.arena_message_spell_potency,
                     mageName,
-                    mainTargetName,
+                    mainTargetClassName,
                     mainDamage,
                     splashDamage,
                 )
@@ -358,7 +354,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 stringResource(
                     resource = Res.string.arena_message_spell_potency_no_splash,
                     mageName,
-                    mainTargetName,
+                    mainTargetClassName,
                     mainDamage,
                 )
             }
@@ -385,7 +381,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
             stringResource(
                 resource = Res.string.arena_message_holy_shield_wrath,
                 paladinName,
-                attackerName,
+                attackerClassName,
                 singleDie,
             )
 
@@ -414,14 +410,14 @@ internal fun ArenaMessageState.getDisplayString(): String =
             }
 
         is ArenaMessageState.Doubles ->
-            stringResource(resource = Res.string.arena_message_doubles, playerName)
+            stringResource(resource = Res.string.arena_message_doubles, className)
 
         is ArenaMessageState.PrepareAttack ->
             if (isSuccessful) {
                 stringResource(
                     resource = Res.string.arena_message_prepare_attack_success,
                     duelistName,
-                    targetName,
+                    targetClassName,
                     firstDie,
                     secondDie,
                 )
@@ -429,7 +425,7 @@ internal fun ArenaMessageState.getDisplayString(): String =
                 stringResource(
                     resource = Res.string.arena_message_prepare_attack_failed,
                     duelistName,
-                    targetName,
+                    targetClassName,
                     firstDie,
                     secondDie,
                 )

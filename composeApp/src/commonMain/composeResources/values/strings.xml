@@ -230,7 +230,6 @@
     <string name="arena_flash_teleport_roll">Rolled %1$s!</string>
     <string name="arena_flash_teleport_tie">Tie — roll again!</string>
     <string name="arena_flash_high_roller">High Roller!</string>
-    <string name="arena_flash_lulled">Lulled!</string>
     <string name="arena_flash_encore_again">Again!</string>
     <string name="arena_flash_no_encore">No encore!</string>
     <string name="arena_flash_mirror_holds">Holds!</string>

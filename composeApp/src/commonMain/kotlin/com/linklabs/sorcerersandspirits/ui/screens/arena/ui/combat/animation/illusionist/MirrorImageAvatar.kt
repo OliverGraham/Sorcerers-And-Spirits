@@ -18,7 +18,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.com
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.applyGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.feetPivot
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.collapse
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.defenderReactionBodyMillis
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flinch
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flinchHeavy
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.sidestep
@@ -100,28 +99,6 @@ internal suspend fun AvatarGestureState.playMirrorImage(
         is ArenaMessageState.MirrorImage.Trigger -> mirrorSplitOut()
     }
 }
-
-// TODO: make DRY
-internal fun ArenaMessageState.MirrorImage.mirrorImageBodyMillis(): Long =
-    when (this) {
-        is ArenaMessageState.MirrorImage.Trigger -> MIRROR_SPLIT_MILLIS + MIRROR_SPLIT_HOLD_MILLIS
-
-        is ArenaMessageState.MirrorImage.Pass -> {
-            val reactionMillis =
-                REACTION_DELAY_MILLIS +
-                    defenderReactionBodyMillis(normalRollMessageType = messageType)
-
-            maxOf(MIRROR_POOF_MILLIS.toLong(), MIRROR_RETURN_MILLIS.toLong(), reactionMillis)
-        }
-
-        is ArenaMessageState.MirrorImage.TemptFate -> {
-            val reactionMillis =
-                REACTION_DELAY_MILLIS +
-                    defenderReactionBodyMillis(normalRollMessageType = messageType)
-
-            maxOf(MIRROR_POOF_MILLIS.toLong(), MIRROR_RETURN_MILLIS.toLong(), reactionMillis)
-        }
-    }
 
 private suspend fun AvatarGestureState.mirrorSplitOut() {
     snapToRest()

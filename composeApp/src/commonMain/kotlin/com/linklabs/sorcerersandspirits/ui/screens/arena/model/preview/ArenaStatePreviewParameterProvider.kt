@@ -11,7 +11,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ParticipantClass
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenState> {
@@ -53,13 +52,6 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             arenaState = arenaState,
-            participants =
-                getExamplePlayers().mapValues {
-                    ParticipantClass(
-                        className = it.value.characterClass.className,
-                        type = it.value.characterClass.type,
-                    )
-                },
         )
 
     private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers

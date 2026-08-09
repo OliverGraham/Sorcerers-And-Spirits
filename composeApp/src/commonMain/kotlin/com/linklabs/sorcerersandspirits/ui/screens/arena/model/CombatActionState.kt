@@ -137,7 +137,6 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
                 defenderUserId = targetedOpponentUserId,
             )
 
-
         is CombatActionState.NormalAttack ->
             CurrentCombatAction.NormalAttack(
                 roll = combatActionState.roll,
@@ -145,7 +144,6 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
                 defenderUserId = combatActionState.defenderUserId,
             )
     }
-
 
 // TODO: What is going on here?
 internal fun UseAbilityArguments.toDomain(): CurrentCombatAction.AbilityRoll? {

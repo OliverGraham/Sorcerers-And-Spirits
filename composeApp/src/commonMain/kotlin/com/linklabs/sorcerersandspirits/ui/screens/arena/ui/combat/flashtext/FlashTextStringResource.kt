@@ -37,7 +37,6 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin
-import sorcerersandspirits.composeapp.generated.resources.arena_flash_lulled
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_holds
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_image
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_miss
@@ -64,7 +63,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_turn_start
 internal fun ArenaMessageState.toStringResource(): String =
     when (this) {
         is ArenaMessageState.NormalRoll.Outcome ->
-            when (type) {
+            when (normalRollMessageType) {
                 NormalRollMessageType.ArmorClassHit ->
                     if (bonus > 0) {
                         stringResource(
@@ -228,10 +227,7 @@ internal fun ArenaMessageState.toStringResource(): String =
             stringResource(resource = Res.string.arena_flash_charmed)
 
         is ArenaMessageState.Persuade.Charm ->
-            stringResource(resource = Res.string.arena_flash_redirected, defenderName)
-
-        is ArenaMessageState.Persuade.Lull ->
-            stringResource(resource = Res.string.arena_flash_lulled)
+            stringResource(resource = Res.string.arena_flash_redirected, defenderClassName)
 
         is ArenaMessageState.MirrorImage.Trigger ->
             stringResource(resource = Res.string.arena_flash_mirror_image)

@@ -34,10 +34,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.imp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.sin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 private const val ATMOSPHERE_IN_MILLIS = 420
 private const val ATMOSPHERE_OUT_MILLIS = 420
@@ -114,9 +114,7 @@ internal fun MageSpellPotencyOverlay(
         onAvatarAnimationComplete()
     }
 
-   Canvas(modifier = modifier) {
-       drawSpellPotency(state = state)
-   }
+    Canvas(modifier = modifier) { drawSpellPotency(state = state) }
 }
 
 internal suspend fun SpellPotencyState.play(
@@ -169,9 +167,9 @@ internal suspend fun SpellPotencyState.play(
 
 private fun mageSpellPotencyDurationMillis(mainDamage: Int): Long =
     ATMOSPHERE_IN_MILLIS +
-            barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
-            IMPACT_BURST_TAIL_MILLIS +
-            ATMOSPHERE_OUT_MILLIS
+        barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
+        IMPACT_BURST_TAIL_MILLIS +
+        ATMOSPHERE_OUT_MILLIS
 
 internal fun DrawScope.drawSpellPotency(state: SpellPotencyState) {
     val geometry = state.scene ?: return

@@ -60,18 +60,21 @@ private fun CombatAnimationOverlaysWithBounds(
     modifier: Modifier = Modifier,
 ) {
     when (animatingMessage) {
-        is ArenaMessageState.NormalRoll.Attack -> AnimateNormalAttack(
-            animatingMessage = animatingMessage,
-            avatarBoundsStateHolder = avatarBoundsStateHolder,
-            modifier = modifier,
-        )
+        is ArenaMessageState.NormalRoll.Attack ->
+            AnimateNormalAttack(
+                animatingMessage = animatingMessage,
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
+                modifier = modifier,
+            )
 
         is ArenaMessageState.KillingMomentum -> {
             // TODO: should probably be something
         }
+
         is ArenaMessageState.Dodge -> {
             // TODO: no sure where this one is. So weird
         }
+
         is ArenaMessageState.AllIn -> {
             val avatarBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.gamblerUserId) ?: return
@@ -82,14 +85,19 @@ private fun CombatAnimationOverlaysWithBounds(
                 modifier = modifier,
             )
         }
-        is ArenaMessageState.LuckyCoin -> LuckyCoinOverlay(
-            animatingMessage = animatingMessage,
-            avatarBoundsStateHolder = avatarBoundsStateHolder,
-            modifier = modifier,
-        )
+
+        is ArenaMessageState.LuckyCoin ->
+            LuckyCoinOverlay(
+                animatingMessage = animatingMessage,
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
+                modifier = modifier,
+            )
+
         is ArenaMessageState.PrepareAttack -> {
-            val duelistBounds = avatarBoundsStateHolder.boundsFor(userId = animatingMessage.duelistUserId) ?: return
-            val targetBounds = avatarBoundsStateHolder.boundsFor(userId = animatingMessage.targetUserId) ?: return
+            val duelistBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.duelistUserId) ?: return
+            val targetBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.targetUserId) ?: return
 
             PrepareAttackOverlay(
                 animatingMessage = animatingMessage,
@@ -103,7 +111,8 @@ private fun CombatAnimationOverlaysWithBounds(
             val duelistBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.duelistUserId) ?: return
             val attackerBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId) ?: return
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId)
+                    ?: return
 
             RiposteOverlay(
                 riposteMessage = animatingMessage,
@@ -115,7 +124,8 @@ private fun CombatAnimationOverlaysWithBounds(
 
         is ArenaMessageState.SummonMinion -> {
             val avatarBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.necromancerUserId) ?: return
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.necromancerUserId)
+                    ?: return
 
             NecromancerSummonMinionOverlay(
                 animatingMessage = animatingMessage,
@@ -123,8 +133,10 @@ private fun CombatAnimationOverlaysWithBounds(
                 modifier = modifier,
             )
         }
+
         is ArenaMessageState.Encore ->
             EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier)
+
         is ArenaMessageState.Persuade -> {
             val avatarBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.bardUserId) ?: return
@@ -135,9 +147,11 @@ private fun CombatAnimationOverlaysWithBounds(
                 modifier = modifier,
             )
         }
+
         is ArenaMessageState.Impersonate -> {
             val avatarBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.illusionistUserId) ?: return
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.illusionistUserId)
+                    ?: return
 
             ImpersonateOverlay(
                 animatingMessage = animatingMessage,
@@ -149,11 +163,13 @@ private fun CombatAnimationOverlaysWithBounds(
         is ArenaMessageState.MirrorImage -> {
             // TODO: Where is it?
         }
+
         is ArenaMessageState.SpellPotency -> {
             val mageBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.mageUserId) ?: return
             val defenderBounds =
-                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.mainTargetUserId) ?: return
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.mainTargetUserId)
+                    ?: return
 
             MageSpellPotencyOverlay(
                 animatingMessage = animatingMessage,
@@ -180,6 +196,7 @@ private fun CombatAnimationOverlaysWithBounds(
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 modifier = modifier,
             )
+
         else -> {}
     }
 }
@@ -223,34 +240,42 @@ private fun AnimateNormalAttack(
                 modifier = modifier,
             )
 
-        CharacterClassType.Gambler -> GamblerNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            accentColor = accentColor,
-            modifier = modifier,
-        )
-        CharacterClassType.Duelist -> DuelistNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            accentColor = accentColor,
-            modifier = modifier,
-        )
-        CharacterClassType.Necromancer -> NecromancerNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            scythePalette = scythePalette,
-            modifier = modifier,
-        )
-        CharacterClassType.Bard -> BardNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            accentColor = accentColor,
-            modifier = modifier,
-        )
+        CharacterClassType.Gambler ->
+            GamblerNormalAttackOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = accentColor,
+                modifier = modifier,
+            )
+
+        CharacterClassType.Duelist ->
+            DuelistNormalAttackOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = accentColor,
+                modifier = modifier,
+            )
+
+        CharacterClassType.Necromancer ->
+            NecromancerNormalAttackOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                scythePalette = scythePalette,
+                modifier = modifier,
+            )
+
+        CharacterClassType.Bard ->
+            BardNormalAttackOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = accentColor,
+                modifier = modifier,
+            )
+
         CharacterClassType.Illusionist ->
             AnimateNormalAttack(
                 animatingMessage = animatingMessage,
@@ -262,19 +287,23 @@ private fun AnimateNormalAttack(
                 accentColor = CharacterClassType.Illusionist.toColor(),
             )
 
-        CharacterClassType.Mage -> MageNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            modifier = modifier,
-        )
-        CharacterClassType.Paladin -> PaladinNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            attackerBounds = attackerBounds,
-            defenderBounds = defenderBounds,
-            accentColor = accentColor,
-            modifier = modifier,
-        )
+        CharacterClassType.Mage ->
+            MageNormalAttackOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
+
+        CharacterClassType.Paladin ->
+            PaladinNormalAttackOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = accentColor,
+                modifier = modifier,
+            )
+
         CharacterClassType.None -> {
             // TODO: Should never happen - maybe need a new type or something?
         }
@@ -283,9 +312,9 @@ private fun AnimateNormalAttack(
 
 private fun ArenaMessageState.NormalRoll.Attack.getImpersonatedAttackTypeOrRandom() =
     if (impersonatedClassType == null || impersonatedClassType == CharacterClassType.Illusionist) {
-        CharacterClassType.entries.filterNot {
-            it == CharacterClassType.Illusionist || it == CharacterClassType.None
-        }.random()
+        CharacterClassType.entries
+            .filterNot { it == CharacterClassType.Illusionist || it == CharacterClassType.None }
+            .random()
     } else {
         impersonatedClassType
     }

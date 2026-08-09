@@ -83,7 +83,10 @@ internal fun FlashMessageOverlay(
                 .onSizeChanged { overlaySize = it }
     ) {
         val point =
-            message.flashAnchor.resolvePoint(avatarBoundsStateHolder = avatarBoundsStateHolder, overlaySize = overlaySize)
+            message.flashAnchor.resolvePoint(
+                avatarBoundsStateHolder = avatarBoundsStateHolder,
+                overlaySize = overlaySize,
+            )
 
         ConfettiBurst(triggerKey = message, origin = point, modifier = Modifier.fillMaxSize())
 

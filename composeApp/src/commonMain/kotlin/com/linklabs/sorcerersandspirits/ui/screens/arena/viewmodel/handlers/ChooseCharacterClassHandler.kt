@@ -20,7 +20,7 @@ internal class ChooseCharacterClassHandler(
 ) {
     fun selectCharacterClass(
         screenState: ArenaScreenState,
-        characterClassState: CharacterClassState
+        characterClassState: CharacterClassState,
     ): ArenaScreenState {
         val arenaState = screenState.arenaState.asChoosingClassesOrNull() ?: return screenState
 
@@ -63,8 +63,7 @@ internal class ChooseCharacterClassHandler(
         chooseCharacterClassUseCase(
             arenaId = arenaId,
             selectedArenaPlayer = selectedArenaPlayer,
-            allPlayers =
-                arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
+            allPlayers = arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
         )
 
         val recordedStat =
@@ -73,7 +72,7 @@ internal class ChooseCharacterClassHandler(
             pendingStatsStore.save(delta = sessionStats.peekDelta())
         }
 
-        return screenState.copy(arenaState =  arenaState.copy(selectedClass = null))
+        return screenState.copy(arenaState = arenaState.copy(selectedClass = null))
     }
 
     private fun ArenaState.asChoosingClassesOrNull() = this as? ArenaState.ChoosingClasses

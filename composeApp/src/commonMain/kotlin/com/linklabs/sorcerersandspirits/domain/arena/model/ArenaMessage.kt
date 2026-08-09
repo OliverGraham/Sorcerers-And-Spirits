@@ -16,7 +16,7 @@ sealed interface ArenaMessage {
 
     data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : ArenaMessage
 
-    data class Doubles(val userId: String) : ArenaMessage
+    data class Doubles(val className: String) : ArenaMessage
 
     sealed interface NormalRoll : ArenaMessage {
         val attackerUserId: String
@@ -25,6 +25,7 @@ sealed interface ArenaMessage {
         data class Attack(
             override val attackerUserId: String,
             override val defenderUserId: String,
+            val attackerClassType: CharacterClassType,
             val impersonatedCharacterType: CharacterClassType,
             val normalRollMessageType: NormalRollMessageType,
         ) : NormalRoll
@@ -32,6 +33,8 @@ sealed interface ArenaMessage {
         data class Outcome(
             override val attackerUserId: String,
             override val defenderUserId: String,
+            val attackerClassName: String,
+            val defenderClassName: String,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
@@ -48,8 +51,12 @@ sealed interface ArenaMessage {
 
         data class Trigger(override val mageUserId: String) : Teleport
 
-        data class Roll(override val mageUserId: String, val userId: String, val singleDie: Int) :
-            Teleport
+        data class Roll(
+            override val mageUserId: String,
+            val userId: String,
+            val className: String,
+            val singleDie: Int,
+        ) : Teleport
 
         data class Tie(override val mageUserId: String) : Teleport
 
@@ -70,7 +77,7 @@ sealed interface ArenaMessage {
 
         data class HighRollerTrigger(
             override val gamblerUserId: String,
-            val attackerUserId: String,
+            val attackerClassName: String,
         ) : LuckyCoin
 
         data class HighRollerDamage(
@@ -93,7 +100,11 @@ sealed interface ArenaMessage {
         ) : Riposte
     }
 
-    data class SummonMinion(val necromancerUserId: String, val singleDie: Int) : ArenaMessage
+    data class SummonMinion(
+        val necromancerUserId: String,
+        val className: String,
+        val singleDie: Int,
+    ) : ArenaMessage
 
     sealed interface Persuade : ArenaMessage {
 
@@ -107,7 +118,9 @@ sealed interface ArenaMessage {
         data class Charm(
             val bardUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val defenderUserId: String,
+            val defenderClassName: String,
         ) : Persuade
     }
 
@@ -125,6 +138,7 @@ sealed interface ArenaMessage {
 
     data class Impersonate(
         val illusionistUserId: String,
+        val illusionistName: String,
         val impersonateAbility: OffensiveAbility.Impersonate,
     ) : ArenaMessage
 
@@ -140,6 +154,8 @@ sealed interface ArenaMessage {
         data class Pass(
             override val illusionistUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val messageType: NormalRollMessageType,
             val baseRoll: Int,
             val doublesBonus: Int,
@@ -149,13 +165,16 @@ sealed interface ArenaMessage {
             override val illusionistUserId: String,
             val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie,
             val attackerUserId: String,
+            val attackerClassName: String,
             val messageType: NormalRollMessageType,
         ) : MirrorImage
     }
 
     data class SpellPotency(
         val mageUserId: String,
+        val mageName: String,
         val mainTargetUserId: String,
+        val mainTargetClassName: String,
         val firstDie: Int,
         val secondDie: Int,
         val mainDamage: Int,
@@ -178,17 +197,22 @@ sealed interface ArenaMessage {
 
         data class Wrath(
             override val paladinUserId: String,
+            val paladinName: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isAttackerKnockedOut: Boolean,
         ) : HolyShield
     }
 
-    data class AllIn(val gamblerUserId: String, val singleDie: Int) : ArenaMessage
+    data class AllIn(val gamblerUserId: String, val gamblerName: String, val singleDie: Int) :
+        ArenaMessage
 
     data class PrepareAttack(
         val duelistUserId: String,
+        val duelistName: String,
         val targetUserId: String,
+        val targetClassName: String,
         val firstDie: Int,
         val secondDie: Int,
         val isSuccessful: Boolean,

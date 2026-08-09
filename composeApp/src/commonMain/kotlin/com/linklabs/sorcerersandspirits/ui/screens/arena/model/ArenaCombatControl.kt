@@ -9,7 +9,8 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttac
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 
 // TODO: Refactor this file - move functions into the files they belong in. Also, think of reducing
-//       the unnecessary mapping here. Rename it, if properties can't simply be used in ArenaState.Combat
+//       the unnecessary mapping here. Rename it, if properties can't simply be used in
+//       ArenaState.Combat
 //
 
 /**

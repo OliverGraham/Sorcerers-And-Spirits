@@ -65,7 +65,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
         if (didSurvive) {
             if (result.isDoubles) {
-                addMessage(message = ArenaMessage.Doubles(userId = defenderUserId))
+                addMessage(message = ArenaMessage.Doubles(className = defender.className))
             }
             prayerSuccess()
         } else {
@@ -107,7 +107,9 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             message =
                 ArenaMessage.HolyShield.Wrath(
                     paladinUserId = defenderUserId,
+                    paladinName = defender.className,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attacker.className,
                     singleDie = result,
                     isAttackerKnockedOut = !attacker.isConscious(),
                 )

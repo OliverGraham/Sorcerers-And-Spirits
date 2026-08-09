@@ -91,7 +91,13 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
                 ArenaMessage.Persuade.Charm(
                     bardUserId = defenderUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attacker.className,
                     defenderUserId = selectedCharmTargetUserId,
+                    defenderClassName =
+                        consciousPlayers
+                            .first { it.userId == selectedCharmTargetUserId }
+                            .characterClass
+                            .className,
                 )
         )
 

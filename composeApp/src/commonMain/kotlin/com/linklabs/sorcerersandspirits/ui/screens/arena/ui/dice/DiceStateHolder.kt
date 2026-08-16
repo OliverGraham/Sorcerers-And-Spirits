@@ -105,19 +105,7 @@ internal class DiceStateHolder {
             DiePosition.Second -> secondDieState
         }
 
-    // TODO: Likely not necessary - maybe call if diceRollState is null???
-
-    /**
-     * Stop awaiting a committed roll whose turn already resolved without a roll-bearing result:
-     * newer messages have landed since the roll was released but none rolled the dice, so tumbling
-     * on to the safety cap would only stall on a stale value. A whole turn's messages arrive in one
-     * batch, so a batch that carries no roll is a turn that produced none for this device.
-     */
-    internal fun settleIfResolvedWithoutResult() {
-        val hasTurnResolvedWithoutRoll = isUserRolling
-        if (hasTurnResolvedWithoutRoll) finishAwaiting()
-    }
-
+    // TODO: Here, commitRoll which comes from update, which is first
     internal fun commitRoll(
         diceRollState: DiceRollState,
         diceBadge: DiceBadgeState?,
@@ -195,8 +183,6 @@ private fun DieState.applying(diceRollState: DiceRollState, diePosition: DiePosi
 @Composable
 internal fun rememberDiceStateHolder(): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
-
-    diceStateHolder.settleIfResolvedWithoutResult()
 
     ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
     ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder)

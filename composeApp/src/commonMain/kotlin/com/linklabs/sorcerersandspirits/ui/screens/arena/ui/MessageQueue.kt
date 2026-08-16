@@ -1,27 +1,40 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitAll
 
+// TODO: ArenaMatchStateQueue?
+//       Takes in new ArenaMatch, plays messages and then the finally the update
 internal class MessageQueue(
     private val onAnimationTriggered: (ArenaMessageState?) -> Unit,
     private val onMessageCommitted: (ArenaMessageState) -> Unit,
-    private val onSequenceComplete: () -> Unit,
+    private val onAnimationsComplete: (ArenaMatch.Combat) -> Unit,
 ) {
-    private val queue = ArrayDeque<ArenaMessageState>()
+    // TODO: Queue is ArenaMatch updates. Queue the entire object, dequeue based on type
+    //       If Combat, do by messages
+    //       else, just update immediately
+    //       combat -> dequeue messages from ArenaMatch and then send out updated ArenaMatchState
+    //                 with messages in correct spot (groups, no animating message), then copy
+    //                 over any timer and open dialog or box states, etc.
+    private val queue = ArrayDeque<ArenaMatch>()
     private var flashSignal: CompletableDeferred<Unit>? = null
     private var avatarSignal: CompletableDeferred<Unit>? = null
 
-    fun enqueue(newMessages: List<ArenaMessageState>) {
-        queue.addAll(elements = newMessages)
+    fun enqueue(arenaMatchUpdate: ArenaMatch) {
+        queue.add(element = arenaMatchUpdate)
     }
 
-    suspend fun onActionResolved() {
-        while (queue.isNotEmpty()) {
-            val message = queue.removeFirst()
+    // TODO: Happens AFTER first update, which only puts out diceRoll
+    suspend fun onCombatActionResolved() {
+        // TODO: Figure out if handling other ArenaMatch types is necessary
+        val arenaMatchCombatUpdate = queue.removeFirst() as? ArenaMatch.Combat ?: return
+        val messages = arenaMatchCombatUpdate.messages.toMessageStates()
 
+        messages.forEach { message ->
             onAnimationTriggered(/* arenaMessageState= */ message)
 
             val animationSignals = message.animation.toAnimationSignals()
@@ -30,7 +43,9 @@ internal class MessageQueue(
             onMessageCommitted(/* arenaMessageState= */ message)
         }
 
-        onSequenceComplete()
+        // TODO: Just needs final update parts. What are they? CharacterStates?
+
+        onAnimationsComplete(arenaMatchCombatUpdate)
     }
 
     fun onFlashComplete() {

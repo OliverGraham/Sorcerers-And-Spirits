@@ -23,6 +23,8 @@ sealed interface PlayerState {
         PlayerState
 }
 
+internal fun Map<String, ArenaPlayer>.toState() = mapValues { it.value.toState() }
+
 internal fun ArenaPlayer.toState() =
     when (this) {
         is ArenaPlayer.Selected ->

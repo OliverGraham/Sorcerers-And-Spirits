@@ -12,13 +12,13 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.toState
 
-private const val TIMER_VISIBLE_THRESHOLD_SECONDS = 15
-private const val TIMER_URGENT_THRESHOLD_SECONDS = 10
-private const val WAITING_TIMER_DURATION_SECONDS = 30
-private const val CHOOSING_CLASSES_TIMER_DURATION_SECONDS = 30
-private const val COMBAT_TIMER_DURATION_SECONDS = 45
-private const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
-private const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
+internal const val TIMER_VISIBLE_THRESHOLD_SECONDS = 15
+internal const val TIMER_URGENT_THRESHOLD_SECONDS = 10
+internal const val WAITING_TIMER_DURATION_SECONDS = 30
+internal const val CHOOSING_CLASSES_TIMER_DURATION_SECONDS = 30
+internal const val COMBAT_TIMER_DURATION_SECONDS = 45
+internal const val MATCH_FINISHED_TIMER_DURATION_SECONDS = 30
+internal const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 
 // TODO: Can this massive data class be reduced in some way?
 //       Rework how ArenaState.Combat gets updated after the MessageQueue dequeues everything
@@ -35,13 +35,12 @@ data class ArenaScreenState(
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
-    val arenaState: ArenaState, // TODO: rename currentArenaState
+    val arenaState: ArenaState,
     val messageGroups: List<ArenaMessageGroupState> = messages.toMessageGroups(),
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
     val animatingMessage: ArenaMessageState? = null,
-    val pendingArenaState: ArenaState? = null, // TODO: rename to postAnimationsArenaState
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
@@ -63,6 +62,7 @@ private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMe
 
 // TODO(SS-031): Need to refactor this badly
 
+// TODO: This should only be used for non ArenaMatch.Combat updates?
 internal fun ArenaMatch.toUpdatedState(
     previousState: ArenaScreenState?,
     userId: String,
@@ -117,7 +117,6 @@ internal fun ArenaMatch.toUpdatedState(
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
-            pendingArenaState = computedArenaState,
         )
 
     return ArenaStateUpdate(
@@ -127,7 +126,7 @@ internal fun ArenaMatch.toUpdatedState(
     )
 }
 
-private fun ArenaMatch.toState(
+internal fun ArenaMatch.toState(
     userId: String,
     previousClassSelection: CharacterClassState?,
     characterClasses: List<CharacterClassState>,
@@ -152,14 +151,11 @@ private fun ArenaMatch.toState(
             )
         }
 
-        is ArenaMatch.Combat -> {
-            val selectedPlayerMap = playerMap.mapValues { it.value.toSelectedState() }
-            val combatActionState = nextCombatAction.toCombatActionState()
-
+        is ArenaMatch.Combat ->
             ArenaState.Combat(
-                playerMap = selectedPlayerMap,
+                playerMap = playerMap.mapValues { it.value.toSelectedState() },
                 userPlayerId = userId,
-                combatActionState = combatActionState,
+                combatActionState = nextCombatAction.toCombatActionState(),
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
                 isMatchOver = isMatchOver,
@@ -168,7 +164,6 @@ private fun ArenaMatch.toState(
                 diceRollState = diceRoll?.toState(),
                 isActionInFlight = false,
             )
-        }
 
         is ArenaMatch.Finished ->
             ArenaState.Finished(
@@ -178,22 +173,8 @@ private fun ArenaMatch.toState(
             )
     }
 
-private fun List<CharacterClassState>.defaultSelectedClass(
-    unavailableClasses: Set<CharacterClassType>
-): CharacterClassState? {
-    val rogue = firstOrNull { it.type == CharacterClassType.Rogue }
-    val isRogueAvailable = rogue != null && rogue.type !in unavailableClasses
 
-    return if (isRogueAvailable) rogue else firstOrNull { it.type !in unavailableClasses }
-}
-
-internal fun List<CharacterClassState>.resolveSelectedClass(
-    previousSelection: CharacterClassState?,
-    unavailableClasses: Set<CharacterClassType>,
-): CharacterClassState? =
-    previousSelection ?: defaultSelectedClass(unavailableClasses = unavailableClasses)
-
-private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
+internal fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     userId: String
 ): Pair<Set<CharacterClassType>, Map<CharacterClassType, String>> {
     val allPlayers = values.map { player -> player.toState() }
@@ -214,6 +195,24 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
 
     return unavailableClasses to classSelections
 }
+
+// TODO: This shit isn't even working correctly, Claude. Can still get duplicate classes, for example
+internal fun List<CharacterClassState>.resolveSelectedClass(
+    previousSelection: CharacterClassState?,
+    unavailableClasses: Set<CharacterClassType>,
+): CharacterClassState? =
+    previousSelection ?: defaultSelectedClass(unavailableClasses = unavailableClasses)
+
+
+private fun List<CharacterClassState>.defaultSelectedClass(
+    unavailableClasses: Set<CharacterClassType>
+): CharacterClassState? {
+    val rogue = firstOrNull { it.type == CharacterClassType.Rogue }
+    val isRogueAvailable = rogue != null && rogue.type !in unavailableClasses
+
+    return if (isRogueAvailable) rogue else firstOrNull { it.type !in unavailableClasses }
+}
+
 
 // TODO: Group similar code into separate files when it grows like this. 3 timer-related functions.
 internal fun determineTimerAction(
@@ -259,6 +258,7 @@ internal fun determineTimerAction(
             }
     }
 
+// TODO: WTF is this?
 private fun ArenaState.Combat.hasActivePlayerActedWhileStillActive(
     next: ArenaState.Combat
 ): Boolean {

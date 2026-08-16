@@ -240,7 +240,8 @@ private fun SharedTransitionScope.CombatContent(
     }
 }
 
-// TODO: Should be DiceStateHolder. Also, see if it's correct
+// TODO: Should be DiceStateHolder. Also, see if it's correct.
+//       Seems like it could be drastically simplified
 @Composable
 private fun CommitDiceRolls(state: ArenaState.Combat, diceStateHolder: DiceStateHolder) {
     val onDiceSettled = ArenaActionsProvider.current.onDiceSettled

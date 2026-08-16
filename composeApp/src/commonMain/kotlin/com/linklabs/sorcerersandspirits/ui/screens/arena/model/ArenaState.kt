@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
@@ -11,6 +12,7 @@ private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
 private val DEFAULT_DOUBLES_DIE_POSITION = DiePosition.Second
 
+// TODO: Call it ArenaMatchState
 @Immutable
 sealed interface ArenaState {
 
@@ -94,6 +96,23 @@ sealed interface ArenaState {
     }
 }
 
+@Immutable
+sealed interface ActiveState : ArenaState {
+    val playerMap: Map<UserId, PlayerState>
+    val userPlayerId: String
+}
+
+internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
+    userPlayerId: String
+) = ArenaState.ChoosingClasses(
+    playerMap = playerMap.toState(),
+    userPlayerId = userPlayerId,
+    activePlayerUserId = activePlayerUserId,
+    selectedClass = null,
+    unavailableClasses = emptySet(),
+    classSelections = emptyMap()
+)
+
 private fun ArenaState.Combat.getTargetedPlayerUserId() =
     lockedTargetUserId
         ?: selectedOpponentUserId
@@ -103,12 +122,6 @@ private fun ArenaState.Combat.getTargetedPlayerUserId() =
 
 private fun ArenaState.Combat.getPlayersInTheStands(targetedUserId: String?) =
     playerMap.filterKeys { it != turnOwnerUserId && it != targetedUserId }.values.toList()
-
-@Immutable
-sealed interface ActiveState : ArenaState {
-    val playerMap: Map<UserId, PlayerState>
-    val userPlayerId: String
-}
 
 private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     if (isMatchOver) return null

@@ -331,7 +331,7 @@ class CombatSeatingTest {
         )
     }
 
-    private fun seatingOf(state: ArenaState.Combat, isMatchEnding: Boolean = false): CombatSeating {
+    private fun seatingOf(state: ArenaMatchState.Combat, isMatchEnding: Boolean = false): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
         return state.seatingFor(
             targetUserId = targetUserId,
@@ -344,7 +344,7 @@ class CombatSeatingTest {
         combatActionState: CombatActionState,
         playerMap: Map<String, PlayerState.Selected> = twoPlayers(),
     ) =
-        ArenaState.Combat(
+        ArenaMatchState.Combat(
             playerMap = playerMap,
             userPlayerId = USER_ID,
             combatActionState = combatActionState,

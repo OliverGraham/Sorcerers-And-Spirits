@@ -23,7 +23,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.ArenaCombat
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -67,7 +67,7 @@ private fun ScreenContent(screenState: ArenaScreenState, modifier: Modifier = Mo
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)) {
         val transition =
             updateTransition(
-                targetState = screenState.arenaState,
+                targetState = screenState.arenaMatchState,
                 label = ARENA_STATE_TRANSITION_LABEL,
             )
 
@@ -79,7 +79,7 @@ private fun ScreenContent(screenState: ArenaScreenState, modifier: Modifier = Mo
 @Composable
 private fun ArenaStateContent(
     screenState: ArenaScreenState,
-    transitionState: Transition<ArenaState>,
+    transitionState: Transition<ArenaMatchState>,
     modifier: Modifier = Modifier,
 ) {
     // TODO: Make crossfade animation more dramatic
@@ -88,14 +88,14 @@ private fun ArenaStateContent(
         modifier = modifier.fillMaxSize(),
     ) { arenaState ->
         when (arenaState) {
-            is ArenaState.ChoosingClasses ->
+            is ArenaMatchState.ChoosingClasses ->
                 arenaState.ArenaChoosingClasses(characterClasses = screenState.characterClasses)
 
-            is ArenaState.Combat -> ArenaCombat(screenState = screenState, arenaState = arenaState)
+            is ArenaMatchState.Combat -> ArenaCombat(screenState = screenState, arenaMatchState = arenaState)
 
-            is ArenaState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
+            is ArenaMatchState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
-            is ArenaState.Finished ->
+            is ArenaMatchState.Finished ->
                 MatchFinishedContent(
                     finishedState = arenaState,
                     gauntletProgress = screenState.gauntletProgress,

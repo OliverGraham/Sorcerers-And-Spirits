@@ -14,7 +14,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isUserTheRoller
@@ -45,17 +45,17 @@ internal class ComputerOpponentHandler(
     private var actionJob: Job? = null
     private var scheduledActionSignature: String? = null
 
-    fun onArenaState(arenaState: ArenaState, characterClasses: List<CharacterClassState>) {
+    fun onArenaState(arenaMatchState: ArenaMatchState, characterClasses: List<CharacterClassState>) {
         if (computerOpponentIds.isEmpty()) return
 
-        val pendingComputerId = arenaState.pendingComputerActorId()
+        val pendingComputerId = arenaMatchState.pendingComputerActorId()
         if (pendingComputerId == null) {
             scheduledActionSignature = null
             actionJob?.cancel()
             return
         }
 
-        val signature = arenaState.computerActionSignature(actorId = pendingComputerId)
+        val signature = arenaMatchState.computerActionSignature(actorId = pendingComputerId)
         if (signature == scheduledActionSignature) return
 
         scheduledActionSignature = signature
@@ -64,7 +64,7 @@ internal class ComputerOpponentHandler(
             coroutineScope.launch {
                 delay(timeMillis = thinkingDelayMillis())
                 performAction(
-                    arenaState = arenaState,
+                    arenaMatchState = arenaMatchState,
                     computerId = pendingComputerId,
                     characterClasses = characterClasses,
                 )
@@ -83,36 +83,36 @@ internal class ComputerOpponentHandler(
     }
 
     private suspend fun performAction(
-        arenaState: ArenaState,
+        arenaMatchState: ArenaMatchState,
         computerId: String,
         characterClasses: List<CharacterClassState>,
     ) {
-        when (arenaState) {
-            is ArenaState.ChoosingClasses ->
+        when (arenaMatchState) {
+            is ArenaMatchState.ChoosingClasses ->
                 chooseClass(
-                    arenaState = arenaState,
+                    arenaMatchState = arenaMatchState,
                     computerId = computerId,
                     characterClasses = characterClasses,
                 )
 
-            is ArenaState.Combat -> resolveCombat(arenaState = arenaState, computerId = computerId)
+            is ArenaMatchState.Combat -> resolveCombat(arenaMatchState = arenaMatchState, computerId = computerId)
 
-            is ArenaState.WaitingForAllPlayers,
-            is ArenaState.Finished -> Unit
+            is ArenaMatchState.WaitingForAllPlayers,
+            is ArenaMatchState.Finished -> Unit
         }
     }
 
     private suspend fun chooseClass(
-        arenaState: ArenaState.ChoosingClasses,
+        arenaMatchState: ArenaMatchState.ChoosingClasses,
         computerId: String,
         characterClasses: List<CharacterClassState>,
     ) {
-        if (arenaState.activePlayerUserId != computerId) return
+        if (arenaMatchState.activePlayerUserId != computerId) return
 
         val availableClasses =
-            characterClasses.filterNot { it.type in arenaState.unavailableClasses }
+            characterClasses.filterNot { it.type in arenaMatchState.unavailableClasses }
         val chosenClass = availableClasses.randomOrNull() ?: return
-        val computerPlayer = arenaState.playerMap.getValue(key = computerId)
+        val computerPlayer = arenaMatchState.playerMap.getValue(key = computerId)
 
         val selectedArenaPlayer =
             ArenaPlayer.Selected(
@@ -124,18 +124,18 @@ internal class ComputerOpponentHandler(
         chooseCharacterClassUseCase(
             arenaId = arenaId,
             selectedArenaPlayer = selectedArenaPlayer,
-            allPlayers = arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
+            allPlayers = arenaMatchState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
         )
     }
 
-    private suspend fun resolveCombat(arenaState: ArenaState.Combat, computerId: String) {
-        if (arenaState.isMatchOver) return
-        if (computerId !in arenaState.combatActionState.activeUserIds) return
+    private suspend fun resolveCombat(arenaMatchState: ArenaMatchState.Combat, computerId: String) {
+        if (arenaMatchState.isMatchOver) return
+        if (computerId !in arenaMatchState.combatActionState.activeUserIds) return
 
         val currentAction =
-            when (val actionState = arenaState.combatActionState) {
+            when (val actionState = arenaMatchState.combatActionState) {
                 is CombatActionState.Idle ->
-                    chooseTurnAction(arenaState = arenaState, computerId = computerId)
+                    chooseTurnAction(arenaMatchState = arenaMatchState, computerId = computerId)
 
                 is CombatActionState.NormalAttack ->
                     AttackArguments(
@@ -153,14 +153,14 @@ internal class ComputerOpponentHandler(
                         .toDomain(combatActionState = actionState)
             } ?: return
 
-        arenaState.dispatchCombatAction(currentAction = currentAction)
+        arenaMatchState.dispatchCombatAction(currentAction = currentAction)
     }
 
     private fun chooseTurnAction(
-        arenaState: ArenaState.Combat,
+        arenaMatchState: ArenaMatchState.Combat,
         computerId: String,
     ): CurrentCombatAction? {
-        val computerPlayer = arenaState.playerMap.getValue(key = computerId)
+        val computerPlayer = arenaMatchState.playerMap.getValue(key = computerId)
         val favorableAbility = computerPlayer.characterClass.favorableOffensiveAbility()
 
         if (favorableAbility != null) {
@@ -169,18 +169,18 @@ internal class ComputerOpponentHandler(
                     targetedOpponentUserId = "",
                     userPlayerId = computerId,
                 )
-                .toDomain(combatActionState = arenaState.combatActionState)
+                .toDomain(combatActionState = arenaMatchState.combatActionState)
         }
 
         val target =
-            weakestLivingOpponent(arenaState = arenaState, excludingPlayerId = computerId)
+            weakestLivingOpponent(arenaMatchState = arenaMatchState, excludingPlayerId = computerId)
                 ?: return null
 
         return AttackArguments(targetedOpponentUserId = target.userId, userPlayerId = computerId)
-            .toDomain(combatActionState = arenaState.combatActionState)
+            .toDomain(combatActionState = arenaMatchState.combatActionState)
     }
 
-    private suspend fun ArenaState.Combat.dispatchCombatAction(currentAction: CurrentCombatAction) {
+    private suspend fun ArenaMatchState.Combat.dispatchCombatAction(currentAction: CurrentCombatAction) {
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arenaId,
@@ -218,11 +218,11 @@ internal class ComputerOpponentHandler(
     }
 
     private fun weakestLivingOpponent(
-        arenaState: ArenaState.Combat,
+        arenaMatchState: ArenaMatchState.Combat,
         excludingPlayerId: String,
     ): PlayerState.Selected? {
         val opponents =
-            arenaState.playerMap.values.filter { player ->
+            arenaMatchState.playerMap.values.filter { player ->
                 player.userId != excludingPlayerId && player.characterClass.hitPoints > 0
             }
         val lowestHitPoints = opponents.minOfOrNull { it.characterClass.hitPoints } ?: return null
@@ -238,11 +238,11 @@ internal class ComputerOpponentHandler(
             ?.randomOrNull()
             .orEmpty()
 
-    private fun ArenaState.pendingComputerActorId(): String? =
+    private fun ArenaMatchState.pendingComputerActorId(): String? =
         when (this) {
-            is ArenaState.ChoosingClasses -> activePlayerUserId.takeIf { it in computerOpponentIds }
+            is ArenaMatchState.ChoosingClasses -> activePlayerUserId.takeIf { it in computerOpponentIds }
 
-            is ArenaState.Combat ->
+            is ArenaMatchState.Combat ->
                 combatActionState.activeUserIds.firstOrNull { userId ->
                     val isComputer = userId in computerOpponentIds
                     val isAwaitingRoll =
@@ -251,18 +251,18 @@ internal class ComputerOpponentHandler(
                     isComputer && isAwaitingRoll
                 }
 
-            is ArenaState.WaitingForAllPlayers,
-            is ArenaState.Finished -> null
+            is ArenaMatchState.WaitingForAllPlayers,
+            is ArenaMatchState.Finished -> null
         }
 
-    private fun ArenaState.computerActionSignature(actorId: String): String =
+    private fun ArenaMatchState.computerActionSignature(actorId: String): String =
         when (this) {
-            is ArenaState.ChoosingClasses -> "choosing:$actorId"
+            is ArenaMatchState.ChoosingClasses -> "choosing:$actorId"
 
-            is ArenaState.Combat -> "combat:$roundNumber:$actorId:$combatActionState"
+            is ArenaMatchState.Combat -> "combat:$roundNumber:$actorId:$combatActionState"
 
-            is ArenaState.WaitingForAllPlayers,
-            is ArenaState.Finished -> "none"
+            is ArenaMatchState.WaitingForAllPlayers,
+            is ArenaMatchState.Finished -> "none"
         }
 
     private fun thinkingDelayMillis(): Long =

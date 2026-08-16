@@ -25,14 +25,14 @@ import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 @Composable
 internal fun MatchFinishedContent(
-    finishedState: ArenaState.Finished,
+    finishedState: ArenaMatchState.Finished,
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: Int,
@@ -256,11 +256,11 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
     }
 }
 
-private fun exampleFinishedState(): ArenaState.Finished {
+private fun exampleFinishedState(): ArenaMatchState.Finished {
     val mage = previewCharacterClassState(type = CharacterClassType.Mage)
     val rogue = previewCharacterClassState(type = CharacterClassType.Rogue)
 
-    return ArenaState.Finished(
+    return ArenaMatchState.Finished(
         players =
             listOf(
                 PlayerState.Selected(

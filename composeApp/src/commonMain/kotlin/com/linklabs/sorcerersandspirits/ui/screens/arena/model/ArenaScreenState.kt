@@ -25,17 +25,15 @@ internal const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 //       Can messages be an ordered map? Also, why is there messages and messageGroups? should only
 //       be messageGroups
 //       Remove:
-//       - totalMessageCount
-//       - revealedMessageCount
-//       - all default arguments
+//       - all default arguments?
 @Immutable
 data class ArenaScreenState(
-    val messages: List<ArenaMessageState>,
+    val messages: List<ArenaMessageState>, // TODO: Yeah, can remove this and only have groups
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
-    val arenaState: ArenaState,
+    val arenaMatchState: ArenaMatchState,
     val messageGroups: List<ArenaMessageGroupState> = messages.toMessageGroups(),
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
@@ -44,7 +42,7 @@ data class ArenaScreenState(
 ) {
     val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
     val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
-    val isMatchEnding: Boolean = (arenaState as? ArenaState.Combat)?.isMatchOver == true
+    val isMatchEnding: Boolean = (arenaMatchState as? ArenaMatchState.Combat)?.isMatchOver == true
 
     val latestCombatHeaderMessage = messageGroups.getLatestCombatHeaderMessage()
 }
@@ -73,11 +71,11 @@ internal fun ArenaMatch.toUpdatedState(
     val previousSeconds = previousState?.secondsRemaining ?: 0
     val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
 
-    val computedArenaState =
+    val computedArenaMatchState =
         toState(
             userId = userId,
             previousClassSelection =
-                (previousState?.arenaState as? ArenaState.ChoosingClasses)?.selectedClass,
+                (previousState?.arenaMatchState as? ArenaMatchState.ChoosingClasses)?.selectedClass,
             characterClasses = characterClasses,
         )
 
@@ -86,14 +84,14 @@ internal fun ArenaMatch.toUpdatedState(
     val userPlayer = playerMap.getValue(key = userId)
 
     // TODO: CLAUDE YOU ASSHOLE!!!!! MAKE FUNCTIONS FOR TIMER-LOGIC
-    val isMatchOver = (computedArenaState as? ArenaState.Combat)?.isMatchOver == true
+    val isMatchOver = (computedArenaMatchState as? ArenaMatchState.Combat)?.isMatchOver == true
     val timerAction =
         if (isMatchOver) {
             TimerAction.Stop
         } else {
             determineTimerAction(
-                previous = previousState?.arenaState,
-                next = computedArenaState,
+                previous = previousState?.arenaMatchState,
+                next = computedArenaMatchState,
                 isFinalMatch = gauntletProgress.isFinalMatch,
             )
         }
@@ -113,7 +111,7 @@ internal fun ArenaMatch.toUpdatedState(
             showForfeitDialog = previousShowForfeitDialog,
             isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
             hasReadiedForNextMatch = userPlayer.isReadyForNextMatch,
-            arenaState = previousState?.arenaState ?: computedArenaState, // TODO: weird
+            arenaMatchState = previousState?.arenaMatchState ?: computedArenaMatchState, // TODO: weird
             gauntletProgress = gauntletProgress,
             characterClasses = characterClasses,
             classCopy = classCopy,
@@ -132,12 +130,12 @@ internal fun ArenaMatch.toState(
     characterClasses: List<CharacterClassState>,
 ) =
     when (this) {
-        is ArenaMatch.WaitingForAllPlayers -> ArenaState.WaitingForAllPlayers
+        is ArenaMatch.WaitingForAllPlayers -> ArenaMatchState.WaitingForAllPlayers
 
         is ArenaMatch.ChoosingClasses -> {
             val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
 
-            ArenaState.ChoosingClasses(
+            ArenaMatchState.ChoosingClasses(
                 playerMap = playerMap.mapValues { it.value.toState() },
                 activePlayerUserId = activePlayer.userId,
                 userPlayerId = userId,
@@ -152,7 +150,7 @@ internal fun ArenaMatch.toState(
         }
 
         is ArenaMatch.Combat ->
-            ArenaState.Combat(
+            ArenaMatchState.Combat(
                 playerMap = playerMap.mapValues { it.value.toSelectedState() },
                 userPlayerId = userId,
                 combatActionState = nextCombatAction.toCombatActionState(),
@@ -166,7 +164,7 @@ internal fun ArenaMatch.toState(
             )
 
         is ArenaMatch.Finished ->
-            ArenaState.Finished(
+            ArenaMatchState.Finished(
                 players =
                     playerMap.values.map { it.toState() }.filterIsInstance<PlayerState.Selected>(),
                 hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
@@ -216,21 +214,21 @@ private fun List<CharacterClassState>.defaultSelectedClass(
 
 // TODO: Group similar code into separate files when it grows like this. 3 timer-related functions.
 internal fun determineTimerAction(
-    previous: ArenaState?,
-    next: ArenaState,
+    previous: ArenaMatchState?,
+    next: ArenaMatchState,
     isFinalMatch: Boolean,
 ): TimerAction =
     when (next) {
-        is ArenaState.WaitingForAllPlayers ->
+        is ArenaMatchState.WaitingForAllPlayers ->
             if (previous == null) {
                 TimerAction.Start(timerDuration = WAITING_TIMER_DURATION_SECONDS)
             } else {
                 TimerAction.None
             }
 
-        is ArenaState.ChoosingClasses ->
+        is ArenaMatchState.ChoosingClasses ->
             if (
-                previous !is ArenaState.ChoosingClasses ||
+                previous !is ArenaMatchState.ChoosingClasses ||
                     previous.activePlayerUserId != next.activePlayerUserId
             ) {
                 TimerAction.Start(timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS)
@@ -238,9 +236,9 @@ internal fun determineTimerAction(
                 TimerAction.None
             }
 
-        is ArenaState.Combat -> {
+        is ArenaMatchState.Combat -> {
             val isNewCombatInteraction =
-                previous !is ArenaState.Combat ||
+                previous !is ArenaMatchState.Combat ||
                     previous.combatActionState != next.combatActionState ||
                     previous.hasActivePlayerActedWhileStillActive(next = next)
             if (isNewCombatInteraction) {
@@ -250,7 +248,7 @@ internal fun determineTimerAction(
             }
         }
 
-        is ArenaState.Finished ->
+        is ArenaMatchState.Finished ->
             if (isFinalMatch) {
                 determineGauntletFinishedTimerAction(previous = previous, next = next)
             } else {
@@ -259,8 +257,8 @@ internal fun determineTimerAction(
     }
 
 // TODO: WTF is this?
-private fun ArenaState.Combat.hasActivePlayerActedWhileStillActive(
-    next: ArenaState.Combat
+private fun ArenaMatchState.Combat.hasActivePlayerActedWhileStillActive(
+    next: ArenaMatchState.Combat
 ): Boolean {
     val previousIdle = combatActionState as? CombatActionState.Idle ?: return false
     val nextIdle = next.combatActionState as? CombatActionState.Idle ?: return false
@@ -270,20 +268,20 @@ private fun ArenaState.Combat.hasActivePlayerActedWhileStillActive(
 }
 
 private fun determineMatchFinishedTimerAction(
-    previous: ArenaState?,
-    next: ArenaState.Finished,
+    previous: ArenaMatchState?,
+    next: ArenaMatchState.Finished,
 ): TimerAction =
     when {
         !next.canStartNextMatch -> TimerAction.Stop
-        previous is ArenaState.Finished -> TimerAction.None
+        previous is ArenaMatchState.Finished -> TimerAction.None
         else -> TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
     }
 
 private fun determineGauntletFinishedTimerAction(
-    previous: ArenaState?,
-    next: ArenaState.Finished,
+    previous: ArenaMatchState?,
+    next: ArenaMatchState.Finished,
 ): TimerAction {
-    val wasAlreadyCountingDown = previous is ArenaState.Finished && previous.hasAnyPlayerReadied
+    val wasAlreadyCountingDown = previous is ArenaMatchState.Finished && previous.hasAnyPlayerReadied
     return when {
         !next.hasAnyPlayerReadied -> TimerAction.Stop
         wasAlreadyCountingDown -> TimerAction.None

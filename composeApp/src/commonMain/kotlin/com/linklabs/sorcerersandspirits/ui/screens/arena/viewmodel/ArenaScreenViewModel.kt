@@ -28,7 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOppone
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CHOOSING_CLASSES_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
@@ -205,8 +205,8 @@ class ArenaScreenViewModel(
         }
 
         // TODO: Should be done automatically, when MessageQueue is working. Somehow
-        val target = _uiStateFlow.getLoadedStateOrNull()?.arenaState
-        if (target is ArenaState.Finished) finishMatchAfterPlayback()
+        val target = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState
+        if (target is ArenaMatchState.Finished) finishMatchAfterPlayback()
     }
 
     // TODO: Should be done automatically, when MessageQueue is working
@@ -219,7 +219,7 @@ class ArenaScreenViewModel(
         currentScreenState: ArenaScreenState,
         arenaMatchCombatUpdate: ArenaMatch.Combat,
     ): ArenaScreenState {
-        val currentArenaCombatState = currentScreenState.arenaState as? ArenaState.Combat ?: return currentScreenState
+        val currentArenaCombatState = currentScreenState.arenaMatchState as? ArenaMatchState.Combat ?: return currentScreenState
 
         val userId = currentArenaCombatState.userPlayerId
         val finalArenaMatchUpdate = currentArenaCombatState.copy(
@@ -235,7 +235,7 @@ class ArenaScreenViewModel(
         )
 
         return currentScreenState.copy(
-            arenaState = finalArenaMatchUpdate,
+            arenaMatchState = finalArenaMatchUpdate,
             animatingMessage = null,
         )
     }
@@ -265,7 +265,7 @@ class ArenaScreenViewModel(
         viewModelScope.launch {
             combatHandler.onNormalAttack(
                 attackArguments = attackArguments,
-                arenaState = _uiStateFlow.getLoadedStateOrNull()?.arenaState,
+                arenaMatchState = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState,
             )
         }
     }
@@ -278,7 +278,7 @@ class ArenaScreenViewModel(
         viewModelScope.launch {
             combatHandler.onUseAbility(
                 useAbilityArguments = useAbilityArguments,
-                arenaState = _uiStateFlow.getLoadedStateOrNull()?.arenaState,
+                arenaMatchState = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState,
             )
         }
     }
@@ -353,8 +353,8 @@ class ArenaScreenViewModel(
 
         notifyDepartedOpponents(userId = userId)
 
-        val currentArenaState = currentScreenState.arenaState
-        if (currentArenaState is ArenaState.WaitingForAllPlayers && this is ArenaMatch.ChoosingClasses) {
+        val currentArenaState = currentScreenState.arenaMatchState
+        if (currentArenaState is ArenaMatchState.WaitingForAllPlayers && this is ArenaMatch.ChoosingClasses) {
             // TODO: This is a transition for all people joining, so no copy() of ArenaState
             val newArenaState = toChoosingClassesState(userPlayerId = userId)
             currentScreenState.copy(
@@ -364,14 +364,14 @@ class ArenaScreenViewModel(
 
         // TODO: ONLY COMBAT TO COMBAT USES THE QUEUE
 
-        val updatedArenaState =     when (this) {
+        val updatedArenaMatchState =     when (this) {
             is ArenaMatch.ChoosingClasses -> {
                 // TODO: if currentScreenState is finished, clear messages
                 val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
-                val previousClassSelection = (currentScreenState.arenaState as? ArenaState.ChoosingClasses)?.selectedClass
+                val previousClassSelection = (currentScreenState.arenaMatchState as? ArenaMatchState.ChoosingClasses)?.selectedClass
 
 
-                ArenaState.ChoosingClasses(
+                ArenaMatchState.ChoosingClasses(
                     playerMap = playerMap.mapValues { it.value.toState() },
                     activePlayerUserId = activePlayer.userId,
                     userPlayerId = userId,
@@ -390,10 +390,10 @@ class ArenaScreenViewModel(
 
                 _uiStateFlow.updateLoaded { screenState ->
                     val arenaCombatState =
-                        screenState.arenaState as? ArenaState.Combat ?: return@updateLoaded screenState
+                        screenState.arenaMatchState as? ArenaMatchState.Combat ?: return@updateLoaded screenState
 
                     screenState.copy(
-                        arenaState = arenaCombatState.copy(
+                        arenaMatchState = arenaCombatState.copy(
                             diceRollState = this.diceRoll?.toState()
                         )
                     )
@@ -440,7 +440,7 @@ class ArenaScreenViewModel(
         // TODO: Adjust computer as necessary
         val nextState = updatedArenaStateUpdate.nextState
         computerOpponentHandler.onArenaState(
-            arenaState = nextState.arenaState,
+            arenaMatchState = nextState.arenaMatchState,
             characterClasses = nextState.characterClasses,
         )
     }
@@ -465,9 +465,9 @@ class ArenaScreenViewModel(
 
         val (arenaState, timerAction) = when (this) {
             is ArenaMatch.WaitingForAllPlayers ->
-                ArenaState.WaitingForAllPlayers to TimerAction.Start(timerDuration = WAITING_TIMER_DURATION_SECONDS)
+                ArenaMatchState.WaitingForAllPlayers to TimerAction.Start(timerDuration = WAITING_TIMER_DURATION_SECONDS)
             is ArenaMatch.ChoosingClasses ->
-                ArenaState.ChoosingClasses(
+                ArenaMatchState.ChoosingClasses(
                     playerMap = playerMap.mapValues { it.value.toState() },
                     userPlayerId = userId,
                     activePlayerUserId = activePlayerUserId,
@@ -485,7 +485,7 @@ class ArenaScreenViewModel(
 
         // TODO: determine timer better
         val newArenaScreenState = ArenaScreenState(
-            arenaState = arenaState,
+            arenaMatchState = arenaState,
             secondsRemaining = timerAction.timerDuration,
             messages = messages.toMessageStates(), // TODO: unnecessary? Maybe just for now. Wasn't used before
             showForfeitDialog = false,
@@ -564,22 +564,22 @@ class ArenaScreenViewModel(
     private suspend fun onTimerExpiration() {
         val loadedState = _uiStateFlow.getLoadedStateOrNull() ?: return
 
-        when (val arenaState = loadedState.arenaState) {
-            is ArenaState.WaitingForAllPlayers -> leaveTimedOutMatch()
+        when (val arenaState = loadedState.arenaMatchState) {
+            is ArenaMatchState.WaitingForAllPlayers -> leaveTimedOutMatch()
 
-            is ArenaState.ChoosingClasses -> {
+            is ArenaMatchState.ChoosingClasses -> {
                 val afterClassSelectedArenaScreenState =
                     chooseCharacterClassHandler.autoChooseCharacterClassForUser(
                         screenState = loadedState,
-                        arenaState = arenaState,
+                        arenaMatchState = arenaState,
                     ) ?: return
 
                 _uiStateFlow.updateLoaded { afterClassSelectedArenaScreenState }
             }
 
-            is ArenaState.Combat -> autoResolveCombatForUser(arenaState = arenaState)
+            is ArenaMatchState.Combat -> autoResolveCombatForUser(arenaMatchState = arenaState)
 
-            is ArenaState.Finished ->
+            is ArenaMatchState.Finished ->
                 if (!loadedState.hasReadiedForNextMatch) onStayForAnotherMatch()
         }
     }
@@ -596,13 +596,13 @@ class ArenaScreenViewModel(
         _eventChannelFlow.send(element = ArenaEvent.MatchTimedOut)
     }
 
-    private fun autoResolveCombatForUser(arenaState: ArenaState.Combat) {
-        val userPlayerId = arenaState.userPlayerId
-        if (userPlayerId !in arenaState.combatActionState.activeUserIds) return
+    private fun autoResolveCombatForUser(arenaMatchState: ArenaMatchState.Combat) {
+        val userPlayerId = arenaMatchState.userPlayerId
+        if (userPlayerId !in arenaMatchState.combatActionState.activeUserIds) return
 
-        when (val actionState = arenaState.combatActionState) {
+        when (val actionState = arenaMatchState.combatActionState) {
             is CombatActionState.Idle ->
-                autoAttackRandomOpponent(arenaState = arenaState, attackerId = userPlayerId)
+                autoAttackRandomOpponent(arenaMatchState = arenaMatchState, attackerId = userPlayerId)
 
             is CombatActionState.NormalAttack ->
                 onAttack(
@@ -631,9 +631,9 @@ class ArenaScreenViewModel(
         }
     }
 
-    private fun autoAttackRandomOpponent(arenaState: ArenaState.Combat, attackerId: String) {
+    private fun autoAttackRandomOpponent(arenaMatchState: ArenaMatchState.Combat, attackerId: String) {
         val target =
-            arenaState.playerMap.values
+            arenaMatchState.playerMap.values
                 .filter { player ->
                     player.userId != attackerId && player.characterClass.hitPoints > 0
                 }
@@ -644,7 +644,7 @@ class ArenaScreenViewModel(
                 AttackArguments(
                     targetedOpponentUserId = target.userId,
                     userPlayerId = attackerId,
-                    combatActionState = arenaState.combatActionState,
+                    combatActionState = arenaMatchState.combatActionState,
                 )
         )
     }

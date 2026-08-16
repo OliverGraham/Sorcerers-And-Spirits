@@ -14,7 +14,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 //
 
 /**
- * A combat action the user can currently take, derived from [ArenaState.Combat] by
+ * A combat action the user can currently take, derived from [ArenaMatchState.Combat] by
  * [deriveCombatControls].
  */
 @Immutable
@@ -136,7 +136,7 @@ private fun AbilityActionState.getNumberOfDice() =
  * Determines which combat controls the user can act on right now. An empty list means the user
  * cannot act and no action buttons should be shown.
  */
-internal fun ArenaState.Combat.deriveCombatControls(): List<ArenaCombatControl> {
+internal fun ArenaMatchState.Combat.deriveCombatControls(): List<ArenaCombatControl> {
     if (isMatchOver) return emptyList()
 
     return when (val actionState = combatActionState) {

@@ -4,9 +4,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 
-internal fun ArenaState.Combat.rollActionFor(
+internal fun ArenaMatchState.Combat.rollActionFor(
     control: ArenaCombatControl,
     targetedOpponentUserId: String?,
     onAttack: (AttackArguments) -> Unit,
@@ -44,7 +44,7 @@ internal fun ArenaState.Combat.rollActionFor(
     }
 }
 
-private fun ArenaState.Combat.abilityAction(
+private fun ArenaMatchState.Combat.abilityAction(
     action: AbilityActionState,
     targetedOpponentUserId: String,
     onUseAbility: (UseAbilityArguments) -> Unit,

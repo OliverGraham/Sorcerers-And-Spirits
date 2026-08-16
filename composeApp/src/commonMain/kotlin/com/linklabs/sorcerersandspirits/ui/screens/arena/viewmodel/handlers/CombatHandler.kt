@@ -9,7 +9,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 
@@ -19,10 +19,10 @@ internal class CombatHandler(
 ) {
 
     fun targetOpponent(screenState: ArenaScreenState, opponentUserId: String): ArenaScreenState {
-        val arenaState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
+        val arenaState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
 
         return screenState.copy(
-            arenaState = arenaState.copy(selectedOpponentUserId = opponentUserId)
+            arenaMatchState = arenaState.copy(selectedOpponentUserId = opponentUserId)
         )
     }
 
@@ -32,7 +32,7 @@ internal class CombatHandler(
         screenState: ArenaScreenState,
         lockedTargetUserId: String,
     ): ArenaScreenState {
-        val arenaCombatState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
+        val arenaCombatState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
 
         return updateLockedTargetUserId(
             screenState = screenState,
@@ -41,17 +41,17 @@ internal class CombatHandler(
         )
     }
 
-    suspend fun onNormalAttack(attackArguments: AttackArguments, arenaState: ArenaState?) {
-        val arenaCombatState = arenaState?.asCombatStateOrNull() ?: return
+    suspend fun onNormalAttack(attackArguments: AttackArguments, arenaMatchState: ArenaMatchState?) {
+        val arenaCombatState = arenaMatchState?.asCombatStateOrNull() ?: return
         val currentCombatAction = attackArguments.toDomain() ?: return
 
         arenaCombatState.performCombatAction(currentAction = currentCombatAction)
     }
 
-    suspend fun onUseAbility(useAbilityArguments: UseAbilityArguments, arenaState: ArenaState?) {
-        val arenaCombatState = arenaState?.asCombatStateOrNull() ?: return
+    suspend fun onUseAbility(useAbilityArguments: UseAbilityArguments, arenaMatchState: ArenaMatchState?) {
+        val arenaCombatState = arenaMatchState?.asCombatStateOrNull() ?: return
         val argumentsWithImpersonateUpdatedIfApplicable =
-            useAbilityArguments.withImpersonatedTarget(arenaState = arenaCombatState)
+            useAbilityArguments.withImpersonatedTarget(arenaMatchState = arenaCombatState)
 
         val currentCombatAction = argumentsWithImpersonateUpdatedIfApplicable.toDomain() ?: return
 
@@ -59,25 +59,25 @@ internal class CombatHandler(
     }
 
     fun updateIsActionInFlight(screenState: ArenaScreenState): ArenaScreenState {
-        val arenaCombatState = screenState.arenaState.asCombatStateOrNull() ?: return screenState
+        val arenaCombatState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
 
-        return screenState.copy(arenaState = arenaCombatState.copy(isActionInFlight = true))
+        return screenState.copy(arenaMatchState = arenaCombatState.copy(isActionInFlight = true))
     }
 
     private fun updateLockedTargetUserId(
         screenState: ArenaScreenState,
-        arenaCombatState: ArenaState.Combat,
+        arenaCombatState: ArenaMatchState.Combat,
         lockedTargetUserId: String,
     ): ArenaScreenState =
         screenState.copy(
-            arenaState =
+            arenaMatchState =
                 arenaCombatState.copy(
                     lockedTargetUserId = lockedTargetUserId,
                     isActionInFlight = true,
                 )
         )
 
-    private suspend fun ArenaState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
+    private suspend fun ArenaMatchState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
         // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it
         val combatActionArguments =
             CombatActionArguments(
@@ -91,11 +91,11 @@ internal class CombatHandler(
     }
 
     private fun UseAbilityArguments.withImpersonatedTarget(
-        arenaState: ArenaState.Combat
+        arenaMatchState: ArenaMatchState.Combat
     ): UseAbilityArguments {
         if (abilityActionState !is AbilityActionState.Activated.Impersonate) return this
 
-        val target = arenaState.playerMap[targetedOpponentUserId] ?: return this
+        val target = arenaMatchState.playerMap[targetedOpponentUserId] ?: return this
         val copiedAbility = target.characterClass.offensiveAbility.toDomain()
 
         return copy(
@@ -107,5 +107,5 @@ internal class CombatHandler(
         )
     }
 
-    private fun ArenaState.asCombatStateOrNull() = this as? ArenaState.Combat
+    private fun ArenaMatchState.asCombatStateOrNull() = this as? ArenaMatchState.Combat
 }

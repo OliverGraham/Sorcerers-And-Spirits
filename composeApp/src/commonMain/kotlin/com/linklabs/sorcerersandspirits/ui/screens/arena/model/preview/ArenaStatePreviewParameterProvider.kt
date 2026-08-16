@@ -8,7 +8,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -21,7 +21,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     override val values: Sequence<ArenaScreenState> =
         sequenceOf(
             getExampleScreenState(
-                arenaState = getExampleArenaState(),
+                arenaMatchState = getExampleArenaState(),
                 messages =
                     listOf(
                         ArenaMessageState.ChoseCharacterClass(
@@ -31,14 +31,14 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
                         )
                     ),
             ),
-            getExampleScreenState(arenaState = getExampleArenaState()),
-            getExampleScreenState(arenaState = getExampleChoosingClassesState()),
-            getExampleScreenState(arenaState = getExampleCombatState()),
-            getExampleScreenState(arenaState = getExampleFinishedState()),
+            getExampleScreenState(arenaMatchState = getExampleArenaState()),
+            getExampleScreenState(arenaMatchState = getExampleChoosingClassesState()),
+            getExampleScreenState(arenaMatchState = getExampleCombatState()),
+            getExampleScreenState(arenaMatchState = getExampleFinishedState()),
         )
 
     private fun getExampleScreenState(
-        arenaState: ArenaState,
+        arenaMatchState: ArenaMatchState,
         messages: List<ArenaMessageState> = getExampleMessages(),
         secondsRemaining: Int = 20,
         showForfeitDialog: Boolean = false,
@@ -51,13 +51,13 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             showForfeitDialog = showForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
-            arenaState = arenaState,
+            arenaMatchState = arenaMatchState,
         )
 
-    private fun getExampleArenaState() = ArenaState.WaitingForAllPlayers
+    private fun getExampleArenaState() = ArenaMatchState.WaitingForAllPlayers
 
     private fun getExampleFinishedState() =
-        ArenaState.Finished(
+        ArenaMatchState.Finished(
             players =
                 listOf(
                     PlayerState.Selected(
@@ -78,7 +78,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         userPlayerId: String = "player1",
         activePlayerUserId: String = "player1",
     ) =
-        ArenaState.ChoosingClasses(
+        ArenaMatchState.ChoosingClasses(
             playerMap = playerMap,
             userPlayerId = userPlayerId,
             activePlayerUserId = activePlayerUserId,
@@ -98,7 +98,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
                 activeUserIds = setOf("player1"),
             ),
     ) =
-        ArenaState.Combat(
+        ArenaMatchState.Combat(
             playerMap = playerMap,
             userPlayerId = userPlayerId,
             combatActionState = combatActionState,

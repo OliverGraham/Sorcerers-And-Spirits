@@ -33,7 +33,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTraveler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
@@ -127,7 +127,7 @@ class ArenaScreenViewModelTest {
 
     /**
      * Seeds [arenaMatchFlow] with a combat match, creates the ViewModel, and advances the
-     * dispatcher so the loaded [ArenaState.Combat] is available via [requireCombatState].
+     * dispatcher so the loaded [ArenaMatchState.Combat] is available via [requireCombatState].
      */
     private fun TestScope.combatViewModel(
         nextCombatAction: NextCombatAction,
@@ -138,12 +138,12 @@ class ArenaScreenViewModelTest {
         return createViewModel().also { runCurrent() }
     }
 
-    /** Two-player convenience wrapper that also returns the loaded [ArenaState.Combat]. */
+    /** Two-player convenience wrapper that also returns the loaded [ArenaMatchState.Combat]. */
     private fun TestScope.createViewModelWithCombatState(
         nextCombatAction: NextCombatAction,
         userClass: CharacterClass,
         opponentClass: CharacterClass = TestCharacterClasses.mage(),
-    ): Pair<ArenaScreenViewModel, ArenaState.Combat> {
+    ): Pair<ArenaScreenViewModel, ArenaMatchState.Combat> {
         val viewModel =
             combatViewModel(
                 nextCombatAction = nextCombatAction,
@@ -152,26 +152,26 @@ class ArenaScreenViewModelTest {
         return viewModel to viewModel.requireCombatState()
     }
 
-    private fun ArenaScreenViewModel.requireCombatState(): ArenaState.Combat {
+    private fun ArenaScreenViewModel.requireCombatState(): ArenaMatchState.Combat {
         val uiState = uiStateFlow.value
         assertIs<UiState.Loaded<ArenaScreenState>>(uiState)
-        return assertIs<ArenaState.Combat>(uiState.data.arenaState)
+        return assertIs<ArenaMatchState.Combat>(uiState.data.arenaMatchState)
     }
 
-    private fun ArenaState.Combat.attackControl(): ArenaCombatControl.NormalAttack =
+    private fun ArenaMatchState.Combat.attackControl(): ArenaCombatControl.NormalAttack =
         combatControls.filterIsInstance<ArenaCombatControl.NormalAttack>().single()
 
-    private fun ArenaState.Combat.abilityRollControl(): ArenaCombatControl.AbilityRoll =
+    private fun ArenaMatchState.Combat.abilityRollControl(): ArenaCombatControl.AbilityRoll =
         combatControls.filterIsInstance<ArenaCombatControl.AbilityRoll>().single()
 
-    private inline fun <reified T : AbilityActionState> ArenaState.Combat.activatedControlFor():
+    private inline fun <reified T : AbilityActionState> ArenaMatchState.Combat.activatedControlFor():
         ArenaCombatControl.ActivatedAbility =
         combatControls.filterIsInstance<ArenaCombatControl.ActivatedAbility>().single {
             it.action is T
         }
 
     /** Asserts the user can only make a normal attack on their turn (no activated ability). */
-    private fun ArenaState.Combat.assertOnlyAttackOffered() {
+    private fun ArenaMatchState.Combat.assertOnlyAttackOffered() {
         assertTrue(actual = isItThisUsersTurn)
         assertTrue(actual = attackControl().requiresTarget)
         assertTrue(actual = combatControls.none { it is ArenaCombatControl.ActivatedAbility })
@@ -586,7 +586,7 @@ class ArenaScreenViewModelTest {
             runCurrent()
 
             val heldState = (viewModel.uiStateFlow.value as UiState.Loaded).data
-            assertIs<ArenaState.Combat>(heldState.arenaState)
+            assertIs<ArenaMatchState.Combat>(heldState.arenaMatchState)
             assertTrue(heldState.isMatchEnding)
 
             // The hold is clocked entirely by the ViewModel (SS-154): once the flash has played
@@ -606,7 +606,7 @@ class ArenaScreenViewModelTest {
             runCurrent()
 
             val finishedState = (viewModel.uiStateFlow.value as UiState.Loaded).data
-            assertIs<ArenaState.Finished>(finishedState.arenaState)
+            assertIs<ArenaMatchState.Finished>(finishedState.arenaMatchState)
         }
 
     @Test

@@ -16,7 +16,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharac
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -194,7 +194,7 @@ private fun InspectDrawerPreview() {
 
 @Composable
 private fun PreviewArenaCombat(
-    state: ArenaState.Combat,
+    state: ArenaMatchState.Combat,
     messages: List<ArenaMessageState> = previewMessages(),
     flashMessage: ArenaMessageState? = null,
     secondsRemaining: Int = 8,
@@ -207,7 +207,7 @@ private fun PreviewArenaCombat(
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = false,
-            arenaState = state,
+            arenaMatchState = state,
             participants = emptyMap(),
         )
 
@@ -245,10 +245,10 @@ private fun previewCombatPlayer(
 private fun previewCombatState(
     players: List<PlayerState.Selected>,
     combatActionState: CombatActionState? = null,
-): ArenaState.Combat {
+): ArenaMatchState.Combat {
     val userId = players.first().userId
 
-    return ArenaState.Combat(
+    return ArenaMatchState.Combat(
         playerMap = players.associateBy { it.userId },
         userPlayerId = userId,
         combatActionState =

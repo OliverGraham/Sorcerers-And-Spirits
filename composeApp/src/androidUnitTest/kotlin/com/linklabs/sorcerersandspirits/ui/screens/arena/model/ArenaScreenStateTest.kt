@@ -83,7 +83,7 @@ class ArenaScreenStateTest {
         val nextState =
             endingCombatMatch().toUpdatedState(previousState = null, userId = USER_ID).nextState
 
-        assertTrue(actual = nextState.arenaState is ArenaState.Combat)
+        assertTrue(actual = nextState.arenaMatchState is ArenaMatchState.Combat)
         assertTrue(actual = nextState.isMatchEnding)
     }
 
@@ -103,7 +103,7 @@ class ArenaScreenStateTest {
         val nextState =
             finishedMatch.toUpdatedState(previousState = null, userId = USER_ID).nextState
 
-        assertTrue(actual = nextState.arenaState is ArenaState.Finished)
+        assertTrue(actual = nextState.arenaMatchState is ArenaMatchState.Finished)
         assertFalse(actual = nextState.isMatchEnding)
     }
 
@@ -132,7 +132,7 @@ class ArenaScreenStateTest {
     fun `Given the gauntlet finishes with nobody readied, then the finished screen has no countdown`() {
         val previousState =
             screenState(
-                arenaState =
+                arenaMatchState =
                     combatState(
                         combatActionState =
                             CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
@@ -152,7 +152,7 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given the first player readies on the gauntlet finished screen, then a one-minute countdown starts`() {
-        val previousState = screenState(arenaState = ArenaState.Finished(players = emptyList()))
+        val previousState = screenState(arenaMatchState = ArenaMatchState.Finished(players = emptyList()))
         val finishedMatch =
             finishedMatch(
                 messageCount = 0,
@@ -169,7 +169,7 @@ class ArenaScreenStateTest {
     fun `Given the gauntlet countdown is already running, then another player readying does not restart it`() {
         val previousState =
             screenState(
-                arenaState = ArenaState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
+                arenaMatchState = ArenaMatchState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
             )
         val finishedMatch =
             finishedMatch(
@@ -192,7 +192,7 @@ class ArenaScreenStateTest {
                         combatActionState =
                             CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
                     ),
-                next = ArenaState.Finished(players = players().values.toList()),
+                next = ArenaMatchState.Finished(players = players().values.toList()),
                 isFinalMatch = false,
             )
 
@@ -203,8 +203,8 @@ class ArenaScreenStateTest {
     fun `Given a non-final match countdown is already running, then a later update does not restart it`() {
         val timerAction =
             determineTimerAction(
-                previous = ArenaState.Finished(players = players().values.toList()),
-                next = ArenaState.Finished(players = players().values.toList()),
+                previous = ArenaMatchState.Finished(players = players().values.toList()),
+                next = ArenaMatchState.Finished(players = players().values.toList()),
                 isFinalMatch = false,
             )
 
@@ -220,7 +220,7 @@ class ArenaScreenStateTest {
                         combatActionState =
                             CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
                     ),
-                next = ArenaState.Finished(players = players().values.take(n = 1)),
+                next = ArenaMatchState.Finished(players = players().values.take(n = 1)),
                 isFinalMatch = false,
             )
 
@@ -277,9 +277,9 @@ class ArenaScreenStateTest {
             )
 
         val nextState =
-            match.toUpdatedState(previousState = null, userId = USER_ID).nextState.arenaState
+            match.toUpdatedState(previousState = null, userId = USER_ID).nextState.arenaMatchState
 
-        assertTrue(actual = nextState is ArenaState.ChoosingClasses)
+        assertTrue(actual = nextState is ArenaMatchState.ChoosingClasses)
         assertEquals(
             expected = setOf(CharacterClassType.Gambler),
             actual = nextState.unavailableClasses,
@@ -288,14 +288,14 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given two players remain in a finished match, then the next match can start`() {
-        val finished = ArenaState.Finished(players = players().values.toList())
+        val finished = ArenaMatchState.Finished(players = players().values.toList())
 
         assertTrue(actual = finished.canStartNextMatch)
     }
 
     @Test
     fun `Given only one player remains in a finished match, then the next match cannot start`() {
-        val finished = ArenaState.Finished(players = players().values.take(1))
+        val finished = ArenaMatchState.Finished(players = players().values.take(1))
 
         assertFalse(actual = finished.canStartNextMatch)
     }
@@ -506,7 +506,7 @@ class ArenaScreenStateTest {
         playerMap: Map<String, PlayerState.Selected> = players(),
         diceRollState: DiceRollState? = null,
     ) =
-        ArenaState.Combat(
+        ArenaMatchState.Combat(
             playerMap = playerMap,
             userPlayerId = USER_ID,
             combatActionState = combatActionState,
@@ -535,7 +535,7 @@ class ArenaScreenStateTest {
         )
 
     private fun screenState(
-        arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
+        arenaMatchState: ArenaMatchState = ArenaMatchState.Finished(players = emptyList()),
         hasReadiedForNextMatch: Boolean = false,
         messages: List<ArenaMessageState> = emptyList(),
     ) =
@@ -545,7 +545,7 @@ class ArenaScreenStateTest {
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
-            arenaState = arenaState,
+            arenaMatchState = arenaMatchState,
             participants = emptyMap(),
         )
 

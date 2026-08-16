@@ -12,11 +12,10 @@ private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
 
 private val DEFAULT_DOUBLES_DIE_POSITION = DiePosition.Second
 
-// TODO: Call it ArenaMatchState
 @Immutable
-sealed interface ArenaState {
+sealed interface ArenaMatchState {
 
-    @Immutable data object WaitingForAllPlayers : ArenaState
+    @Immutable data object WaitingForAllPlayers : ArenaMatchState
 
     @Immutable
     data class ChoosingClasses(
@@ -26,7 +25,7 @@ sealed interface ArenaState {
         val selectedClass: CharacterClassState?,
         val unavailableClasses: Set<CharacterClassType>,
         val classSelections: Map<CharacterClassType, String>,
-    ) : ActiveState {
+    ) : ActiveMatchState {
         val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
         val isItThisUsersTurn = activePlayerUserId == userPlayerId
     }
@@ -44,7 +43,7 @@ sealed interface ArenaState {
         val diceRollState: DiceRollState?,
         val selectedOpponentUserId: String? = null,
         val isActionInFlight: Boolean = false,
-    ) : ActiveState {
+    ) : ActiveMatchState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
         val activeUserIds = combatActionState.activeUserIds
         val isItThisUsersTurn = userPlayerId in activeUserIds
@@ -89,7 +88,7 @@ sealed interface ArenaState {
     data class Finished(
         val players: List<PlayerState.Selected>,
         val hasAnyPlayerReadied: Boolean = false,
-    ) : ArenaState {
+    ) : ArenaMatchState {
         val survivors = players.filter { it.characterClass.isConscious }
         val winner = survivors.singleOrNull()
         val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
@@ -97,14 +96,14 @@ sealed interface ArenaState {
 }
 
 @Immutable
-sealed interface ActiveState : ArenaState {
+sealed interface ActiveMatchState : ArenaMatchState {
     val playerMap: Map<UserId, PlayerState>
     val userPlayerId: String
 }
 
 internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
     userPlayerId: String
-) = ArenaState.ChoosingClasses(
+) = ArenaMatchState.ChoosingClasses(
     playerMap = playerMap.toState(),
     userPlayerId = userPlayerId,
     activePlayerUserId = activePlayerUserId,
@@ -113,17 +112,17 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
     classSelections = emptyMap()
 )
 
-private fun ArenaState.Combat.getTargetedPlayerUserId() =
+private fun ArenaMatchState.Combat.getTargetedPlayerUserId() =
     lockedTargetUserId
         ?: selectedOpponentUserId
         ?: playerMap.values
             .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
             ?.userId
 
-private fun ArenaState.Combat.getPlayersInTheStands(targetedUserId: String?) =
+private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) =
     playerMap.filterKeys { it != turnOwnerUserId && it != targetedUserId }.values.toList()
 
-private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
+private fun ArenaMatchState.Combat.deriveDiceBadge(): DiceBadgeState? {
     if (isMatchOver) return null
 
     val hasDoublesRoll = diceRollState?.doublesBonus != null
@@ -137,7 +136,7 @@ private fun ArenaState.Combat.deriveDiceBadge(): DiceBadgeState? {
     return DiceBadgeState.MirrorImageBonus(diePosition = currentRoll.diePosition)
 }
 
-private fun ArenaState.Combat.doublesBonusDiePosition(): DiePosition {
+private fun ArenaMatchState.Combat.doublesBonusDiePosition(): DiePosition {
     val teleport = combatActionState.teleportAction() ?: return DEFAULT_DOUBLES_DIE_POSITION
     return teleport.attackerRoll.diePosition
 }

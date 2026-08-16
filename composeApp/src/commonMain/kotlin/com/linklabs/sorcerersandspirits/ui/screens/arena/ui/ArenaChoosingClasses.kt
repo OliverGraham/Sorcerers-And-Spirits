@@ -22,7 +22,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacte
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
@@ -32,7 +32,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes
 import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_waiting
 
 @Composable
-internal fun ArenaState.ChoosingClasses.ArenaChoosingClasses(
+internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
 ) {
@@ -81,7 +81,7 @@ private fun ChoosingClassesTitle(isItThisUsersTurn: Boolean, activePlayerName: S
 }
 
 @Composable
-private fun ArenaState.ChoosingClasses.ChoosingClassesCards(
+private fun ArenaMatchState.ChoosingClasses.ChoosingClassesCards(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
 ) {
@@ -99,7 +99,7 @@ private fun ArenaState.ChoosingClasses.ChoosingClassesCards(
 }
 
 @Composable
-private fun ArenaState.ChoosingClasses.ConfirmSelectionButton() {
+private fun ArenaMatchState.ChoosingClasses.ConfirmSelectionButton() {
     val onClassConfirmed = ArenaActionsProvider.current.onChooseCharacterClass
     val confirmableClass = selectedClass?.takeIf { it.type !in unavailableClasses }
 
@@ -124,7 +124,7 @@ private fun ArenaChoosingClassesPreview() {
     SorcerersAndSpiritsTheme {
         val mockPlayer = PlayerState.Unselected(userId = "1", displayName = "Player")
         val mockState =
-            ArenaState.ChoosingClasses(
+            ArenaMatchState.ChoosingClasses(
                 playerMap = emptyMap(),
                 activePlayerUserId = mockPlayer.userId,
                 userPlayerId = mockPlayer.userId,

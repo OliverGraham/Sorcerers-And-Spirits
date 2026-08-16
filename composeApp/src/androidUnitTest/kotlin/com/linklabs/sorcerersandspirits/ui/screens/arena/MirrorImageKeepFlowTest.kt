@@ -23,11 +23,10 @@ import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatSeating
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.seatingFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import io.mockk.every
@@ -224,7 +223,7 @@ class MirrorImageKeepFlowTest {
      * mapped to the domain action against the live combat action state.
      */
     private fun keepRollDispatch(
-        illusionistPhoneState: ArenaState.Combat
+        illusionistPhoneState: ArenaMatchState.Combat
     ): CurrentCombatAction.AbilityRoll {
         val keepRollControl =
             illusionistPhoneState.combatControls
@@ -283,7 +282,7 @@ class MirrorImageKeepFlowTest {
         nextAction: NextCombatAction,
         players: Map<String, ArenaPlayer.Selected>,
         userPlayerId: String,
-    ): ArenaState.Combat {
+    ): ArenaMatchState.Combat {
         val entityJson = Json.encodeToString(value = nextAction.toEntity())
         val roundTrippedAction =
             Json.decodeFromString<
@@ -293,7 +292,7 @@ class MirrorImageKeepFlowTest {
                 )
                 .toDomain()
 
-        return ArenaState.Combat(
+        return ArenaMatchState.Combat(
             playerMap = players.mapValues { it.value.toSelectedState() },
             userPlayerId = userPlayerId,
             combatActionState = roundTrippedAction.toCombatActionState(),
@@ -309,14 +308,14 @@ class MirrorImageKeepFlowTest {
     private fun idleState(
         activeUserId: String,
         players: Map<String, ArenaPlayer.Selected>,
-    ): ArenaState.Combat =
+    ): ArenaMatchState.Combat =
         combatStateAfterRoundTrip(
             nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = activeUserId)),
             players = players,
             userPlayerId = activeUserId,
         )
 
-    private fun seatingOf(state: ArenaState.Combat): CombatSeating {
+    private fun seatingOf(state: ArenaMatchState.Combat): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
         return state.seatingFor(
             targetUserId = targetUserId,

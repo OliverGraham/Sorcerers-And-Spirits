@@ -38,7 +38,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.rollActionFor
@@ -62,7 +62,7 @@ private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
 // TODO: Move state to view model layer. Goddamn you Claude
 @Composable
 internal fun CombatButtons(
-    state: ArenaState.Combat,
+    state: ArenaMatchState.Combat,
     diceStateHolder: DiceStateHolder,
     areControlsVisible: Boolean,
     isPlayingBack: Boolean,
@@ -320,7 +320,7 @@ private fun ArenaCombatControl.toButtonIcon(): DrawableResource =
     }
 
 // TODO: Move to view model layer - in ArenaState.Combat itself
-private fun ArenaState.Combat.isControlEnabled(
+private fun ArenaMatchState.Combat.isControlEnabled(
     control: ArenaCombatControl,
     targetedOpponentUserId: String?,
 ): Boolean {
@@ -333,7 +333,7 @@ private fun ArenaState.Combat.isControlEnabled(
 
 // TODO: Can likely be GREATLY simplified (is it the Illusionist's turn? have they impersonated?
 //       can they? done.)
-internal fun ArenaState.Combat.isImpersonateRedundant(
+internal fun ArenaMatchState.Combat.isImpersonateRedundant(
     control: ArenaCombatControl,
     targetedOpponentUserId: String?,
 ): Boolean {
@@ -358,7 +358,7 @@ internal fun ArenaState.Combat.isImpersonateRedundant(
     return targetOffensiveAbility::class == copiedAbility::class
 }
 
-private fun ArenaState.Combat.impersonateLabel(): String {
+private fun ArenaMatchState.Combat.impersonateLabel(): String {
     val ability = userPlayer.characterClass.offensiveAbility
     val isImpersonating =
         ability is OffensiveAbilityState.Impersonate &&

@@ -16,25 +16,39 @@ sealed interface ArenaMessageGroupState {
         ArenaMessageGroupState
 }
 
-// TODO: Have two sets of functions - one for appending a list all at once, and another
-//       for appending a single message to a group (to be used for Combat)
+// TODO: Use when NOT Combat
 internal fun appendNewMessages(
     incomingMessages: List<IncomingArenaMessage>,
     currentMessageGroups: List<ArenaMessageGroupState>,
 ): List<ArenaMessageGroupState> {
-    val messageGroups = currentMessageGroups.ifEmpty {
-        ArenaMessageGroupState.Round(
-            roundNumber = 1,
-            messages = emptyList()
-        )
+    var messageGroups = currentMessageGroups.ifEmpty {
+        listOf(element = ArenaMessageGroupState.Round(roundNumber = 1, messages = emptyList()))
     }
 
-    val incomingMessageStates = incomingMessages.toMessageStates()
+    val pendingMessages = mutableListOf<ArenaMessageState>()
+    val newMessages = incomingMessages.toMessageStates()
+    newMessages.forEach { message ->
+        if (message is ArenaMessageState.NewRound) {
+            messageGroups = messageGroups.appendToGroup(messages = pendingMessages)
+            pendingMessages.clear()
+            messageGroups = messageGroups.addNewGroup(newRoundMessage = message)
+        } else {
+            pendingMessages.add(element = message)
+        }
+    }
 
-    return currentMessageGroups
+    return messageGroups.appendToGroup(messages = pendingMessages)
 }
 
-
+// TODO: Use when Combat ONLY
+internal fun List<ArenaMessageGroupState>.addNewMessage(
+    message: ArenaMessageState
+): List<ArenaMessageGroupState> =
+    if (message is ArenaMessageState.NewRound) {
+        addNewGroup(newRoundMessage = message)
+    } else {
+        appendToGroup(message = message)
+    }
 
 private fun List<ArenaMessageGroupState>.addNewGroup(
     newRoundMessage: ArenaMessageState.NewRound
@@ -67,7 +81,8 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
 private fun List<ArenaMessageGroupState>.appendToGroup(
     messages: List<ArenaMessageState>
 ): List<ArenaMessageGroupState> {
-    if (isEmpty()) return this
+    val hasNothingToAppend = isEmpty() || messages.isEmpty()
+    if (hasNothingToAppend) return this
 
     val mutableMessageGroups = toMutableList()
     val lastGroup = mutableMessageGroups.last()

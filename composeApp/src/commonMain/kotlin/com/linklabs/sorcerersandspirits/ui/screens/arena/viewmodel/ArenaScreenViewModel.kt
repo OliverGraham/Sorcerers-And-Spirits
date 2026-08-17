@@ -276,25 +276,27 @@ class ArenaScreenViewModel(
     private suspend fun ArenaMatch?.updateScreenState(userId: String) {
         val currentScreenState = _uiStateFlow.getLoadedStateOrNull()
 
-        when {
-            this == null -> {
-                handleScreenStateUpdateError()
-                return
-            }
-            currentScreenState == null -> handleNewArenaScreen(userId = userId)
-            else -> handleScreenUpdate(userId = userId, currentScreenState = currentScreenState)
+        if (this == null) {
+            handleScreenStateUpdateError()
+            return
+        }
+
+        // TODO: Refactor sessionStats
+        val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
+        if (recordedStat) {
+            persistPendingStats()
+        }
+
+        if (currentScreenState == null) {
+            handleNewArenaScreen(userId = userId)
+        } else {
+            handleScreenUpdate(userId = userId, currentScreenState = currentScreenState)
         }
 
         coordinateComputerOpponents()
     }
 
     private suspend fun ArenaMatch.handleNewArenaScreen(userId: String) {
-        // TODO: See where this fits in new branching organization
-        val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
-        if (recordedStat) {
-            persistPendingStats()
-        }
-
         val newScreenStateUpdate =
             when (this) {
                 is ArenaMatch.WaitingForAllPlayers ->
@@ -341,16 +343,10 @@ class ArenaScreenViewModel(
             messageQueueUpdate = null,
         )
 
-    private suspend fun ArenaMatch.handleScreenUpdate(
+    private fun ArenaMatch.handleScreenUpdate(
         userId: String,
         currentScreenState: ArenaScreenState,
     ) {
-        // TODO: See where this fits in new branching organization
-        val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
-        if (recordedStat) {
-            persistPendingStats()
-        }
-
         notifyDepartedOpponents(userId = userId, currentScreenState = currentScreenState)
 
         val screenStateUpdate = toUpdatedScreenState(userId = userId, currentScreenState = currentScreenState)

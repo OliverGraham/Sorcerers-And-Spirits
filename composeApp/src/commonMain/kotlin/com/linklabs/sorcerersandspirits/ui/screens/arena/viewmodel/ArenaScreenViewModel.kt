@@ -27,6 +27,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CHOOSING_CLASSES_TIMER_DURATION_SECONDS
@@ -36,6 +37,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.WAITING_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.addNewMessageDuringCombat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.appendNewMessages
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.prepareClassSelectionInfo
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveSelectedClass
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toChoosingClassesState
@@ -341,6 +343,8 @@ class ArenaScreenViewModel(
     //       but those can just be considered an error state I guess. The big benefit will be that
     //       only things that are really changing will be changed, instead brand-new object creation
     //       all the time.
+    //  TODO August 17th:
+    //       Keep going, make functions for the different types of updates (copy(), new state, non-op (what to do there exactly))
     private suspend fun ArenaMatch.handleScreenUpdate(
         userId: String,
         currentScreenState: ArenaScreenState,
@@ -353,14 +357,87 @@ class ArenaScreenViewModel(
 
         notifyDepartedOpponents(userId = userId)
 
-        val currentArenaState = currentScreenState.arenaMatchState
-        if (currentArenaState is ArenaMatchState.WaitingForAllPlayers && this is ArenaMatch.ChoosingClasses) {
-            // TODO: This is a transition for all people joining, so no copy() of ArenaState
-            val newArenaState = toChoosingClassesState(userPlayerId = userId)
-            currentScreenState.copy(
+        // TODO: There's either a change of states, or an update where a copy can be used
 
-            )
+        when (val currentArenaMatchState = currentScreenState.arenaMatchState) {
+            is ArenaMatchState.WaitingForAllPlayers -> {
+                if (this is ArenaMatch.ChoosingClasses) {
+                    // TODO: This is a transition for all people joining, so no copy() of ArenaState
+                    val newArenaMatchState = toChoosingClassesState(userPlayerId = userId)
+                    currentScreenState.copy(
+                        messageGroups = currentScreenState.messageGroups.appendNewMessages(
+                            incomingMessages = messages
+                        ),
+                        arenaMatchState = newArenaMatchState,
+                    )
+                } else {
+                    currentScreenState.copy(
+                        arenaMatchState = ArenaMatchState.WaitingForAllPlayers,
+                    )
+                }
+            }
+            is ArenaMatchState.ChoosingClasses -> {
+                when (this) {
+                    is ArenaMatch.ChoosingClasses -> {
+                        // TODO copy()
+                        choosingClassesUpdate(
+                            currentArenaMatchState = currentArenaMatchState,
+                        )
+                    }
+                    is ArenaMatch.Combat -> {
+                        // TODO: transition to Combat()
+                    }
+                    is ArenaMatch.Finished -> {
+                        // TODO: Can happen if someone leaves during choosing??? Just kick everyone out?
+                    }
+                    is ArenaMatch.WaitingForAllPlayers -> {
+                        // shouldn't happen
+                    }
+                }
+            }
+            is ArenaMatchState.Combat -> {
+                when (this) {
+                    is ArenaMatch.ChoosingClasses -> {
+                        // shouldn't happen
+                    }
+                    is ArenaMatch.Combat -> {
+                        // TODO: update
+                        messageQueue.enqueue(arenaMatchUpdate = this)
+
+                        _uiStateFlow.updateLoaded { screenState ->
+                            screenState.copy(
+                                arenaMatchState = currentArenaMatchState.copy(
+                                    diceRollState = this.diceRoll?.toState()
+                                )
+                            )
+                        }
+                    }
+                    is ArenaMatch.Finished -> {
+                        // TODO: transition to Finished()
+                    }
+                    is ArenaMatch.WaitingForAllPlayers -> {
+                        // shouldn't happen
+                    }
+                }
+            }
+            is ArenaMatchState.Finished -> {
+                when (this) {
+                    is ArenaMatch.ChoosingClasses -> {
+                        // TODO: Clear messages from last match. transition to ChoosingClasses()
+                    }
+                    is ArenaMatch.Combat -> {
+                        // shouldn't happen
+                    }
+                    is ArenaMatch.Finished -> {
+                        // TODO: update
+                    }
+                    is ArenaMatch.WaitingForAllPlayers -> {
+                        // shouldn't happen
+                    }
+                }
+            }
         }
+
 
         // TODO: ONLY COMBAT TO COMBAT USES THE QUEUE
 
@@ -412,6 +489,27 @@ class ArenaScreenViewModel(
         }
     }
 
+    private suspend fun ArenaMatch.handleNewArenaMatchState(
+        userId: String,
+        currentScreenState: ArenaScreenState,
+    ) {
+
+    }
+
+    private suspend fun ArenaMatch.handleArenaMatchStateUpdate(
+        userId: String,
+        currentScreenState: ArenaScreenState,
+    ) {
+
+    }
+
+    private suspend fun ArenaMatch.ChoosingClasses.choosingClassesUpdate(
+        currentScreenState: ArenaScreenState,
+        currentArenaMatchState: ArenaMatchState.ChoosingClasses,
+    ) {
+
+    }
+
     // TODO: Refactor:
     //       If previous ScreenState is null
     private suspend fun ArenaMatch?.updateScreenState(userId: String) {
@@ -423,7 +521,8 @@ class ArenaScreenViewModel(
             else -> handleScreenUpdate(userId = userId, currentScreenState = currentScreenState)
         }
 
-
+        // TODO: This commented out code should be handled in the above "handle*" functions
+        /*
         val previousState = _uiStateFlow.getLoadedStateOrNull()
 
         val updatedArenaStateUpdate =
@@ -443,6 +542,7 @@ class ArenaScreenViewModel(
             arenaMatchState = nextState.arenaMatchState,
             characterClasses = nextState.characterClasses,
         )
+        */
     }
 
     // TODO: if there's one match error, just kill the whole thing? Or determine what to do if
@@ -483,11 +583,11 @@ class ArenaScreenViewModel(
         }
 
 
-        // TODO: determine timer better
+        // TODO: determine timer better, and messageGroups
         val newArenaScreenState = ArenaScreenState(
             arenaMatchState = arenaState,
             secondsRemaining = timerAction.timerDuration,
-            messages = messages.toMessageStates(), // TODO: unnecessary? Maybe just for now. Wasn't used before
+            messageGroups = emptyList<ArenaMessageGroupState>().appendNewMessages(incomingMessages = messages),
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = false,

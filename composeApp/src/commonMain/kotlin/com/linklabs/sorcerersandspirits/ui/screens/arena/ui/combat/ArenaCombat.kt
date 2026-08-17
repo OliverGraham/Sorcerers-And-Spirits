@@ -39,6 +39,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceSta
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
 
 // TODO: ArenaScreenState is causing a recomposition for the entire screen from the timer. Why?
+//       Should only be the places that actually use the timer properties
 
 @Composable
 internal fun ArenaCombat(

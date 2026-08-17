@@ -3,8 +3,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
-import com.linklabs.sorcerersandspirits.domain.arena.model.isKnockedOut
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
@@ -104,6 +102,13 @@ internal fun ArenaMatch.toState(
             )
     }
 
+
+internal fun ArenaMatchState.players(): List<PlayerState> =
+    when (this) {
+        is ActiveMatchState -> playerMap.values.toList()
+        is ArenaMatchState.Finished -> players
+        is ArenaMatchState.WaitingForAllPlayers -> emptyList()
+    }
 
 // TODO: Look at update playerMap. See what classes are taken - those are unavailable
 internal fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
@@ -222,9 +227,3 @@ private fun determineGauntletFinishedTimerAction(
         else -> TimerAction.Start(timerDuration = GAUNTLET_FINISHED_TIMER_DURATION_SECONDS)
     }
 }
-
-data class ArenaStateUpdate(
-    val nextState: ArenaScreenState,
-    val timerAction: TimerAction,
-    val newMessages: List<ArenaMessageState>,
-)

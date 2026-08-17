@@ -7,31 +7,21 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitAll
 
-// TODO: ArenaMatchStateQueue?
-//       Takes in new ArenaMatch, plays messages and then the finally the update
-internal class MessageQueue(
+internal class ArenaMatchCombatQueue(
     private val triggerAnimation: (ArenaMessageState?) -> Unit,
     private val addMessageToScreenState: (ArenaMessageState) -> Unit,
     private val onAnimationsComplete: (ArenaMatch.Combat) -> Unit,
 ) {
-    // TODO: Queue is ArenaMatch updates. Queue the entire object, dequeue based on type
-    //       If Combat, do by messages
-    //       else, just update immediately
-    //       combat -> dequeue messages from ArenaMatch and then send out updated ArenaMatchState
-    //                 with messages in correct spot (groups, no animating message), then copy
-    //                 over any timer and open dialog or box states, etc.
-    private val queue = ArrayDeque<ArenaMatch>()
+    private val queue = ArrayDeque<ArenaMatch.Combat>()
     private var flashSignal: CompletableDeferred<Unit>? = null
     private var avatarSignal: CompletableDeferred<Unit>? = null
 
-    fun enqueue(arenaMatchUpdate: ArenaMatch) {
+    fun enqueue(arenaMatchUpdate: ArenaMatch.Combat) {
         queue.add(element = arenaMatchUpdate)
     }
 
-    // TODO: Happens AFTER first update, which only puts out diceRoll
     suspend fun onCombatActionResolved() {
-        // TODO: Figure out if handling other ArenaMatch types is necessary
-        val arenaMatchCombatUpdate = queue.removeFirst() as? ArenaMatch.Combat ?: return
+        val arenaMatchCombatUpdate = queue.removeFirst()
         val messages = arenaMatchCombatUpdate.messages.toMessageStates()
 
         messages.forEach { message ->
@@ -42,8 +32,6 @@ internal class MessageQueue(
 
             addMessageToScreenState(/* arenaMessageState= */ message)
         }
-
-        // TODO: Just needs final update parts. What are they? CharacterStates?
 
         onAnimationsComplete(arenaMatchCombatUpdate)
     }
@@ -61,13 +49,13 @@ internal class MessageQueue(
     private fun ArenaAnimationState.toAnimationSignals() = buildList {
         if (isFlash()) {
             val flashSignal = CompletableDeferred<Unit>()
-            this@MessageQueue.flashSignal = flashSignal
+            this@ArenaMatchCombatQueue.flashSignal = flashSignal
             add(element = flashSignal)
         }
 
         if (isAvatar()) {
             val avatarSignal = CompletableDeferred<Unit>()
-            this@MessageQueue.avatarSignal = avatarSignal
+            this@ArenaMatchCombatQueue.avatarSignal = avatarSignal
             add(element = avatarSignal)
         }
     }

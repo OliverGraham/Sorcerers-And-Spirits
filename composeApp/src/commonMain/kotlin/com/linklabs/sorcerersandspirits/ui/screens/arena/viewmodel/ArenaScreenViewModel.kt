@@ -44,7 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toChoosingClasses
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaMatchCombatQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.CombatHandler
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
@@ -83,8 +83,8 @@ class ArenaScreenViewModel(
     private val _uiStateFlow = MutableStateFlow<UiState<ArenaScreenState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
 
-    private val messageQueue =
-        MessageQueue(
+    private val arenaMatchCombatQueue =
+        ArenaMatchCombatQueue(
             triggerAnimation = ::triggerAnimation,
             addMessageToScreenState = ::addMessageToScreenState,
             onAnimationsComplete = ::onAnimationsComplete,
@@ -142,11 +142,11 @@ class ArenaScreenViewModel(
     }
 
     fun onFlashComplete() {
-        messageQueue.onFlashComplete()
+        arenaMatchCombatQueue.onFlashComplete()
     }
 
     fun onAvatarComplete() {
-        messageQueue.onAvatarComplete()
+        arenaMatchCombatQueue.onAvatarComplete()
     }
 
     fun onTargetOpponent(opponentUserId: String) {
@@ -232,7 +232,7 @@ class ArenaScreenViewModel(
     }
 
     fun onDiceSettled() {
-        viewModelScope.launch { messageQueue.onCombatActionResolved() }
+        viewModelScope.launch { arenaMatchCombatQueue.onCombatActionResolved() }
     }
 
     fun onDismissForfeitDialog() {
@@ -359,7 +359,7 @@ class ArenaScreenViewModel(
 
         val messageQueueUpdate = screenStateUpdate.messageQueueUpdate
         if (messageQueueUpdate != null) {
-            messageQueue.enqueue(arenaMatchUpdate = messageQueueUpdate)
+            arenaMatchCombatQueue.enqueue(arenaMatchUpdate = messageQueueUpdate)
         }
 
         _uiStateFlow.updateLoaded { screenStateUpdate.screenState }

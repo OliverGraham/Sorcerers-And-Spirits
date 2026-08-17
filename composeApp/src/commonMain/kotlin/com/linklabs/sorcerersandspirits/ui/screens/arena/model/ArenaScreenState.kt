@@ -36,6 +36,8 @@ data class ArenaScreenState(
     val isMatchEnding: Boolean = (arenaMatchState as? ArenaMatchState.Combat)?.isMatchOver == true
 
     val latestCombatHeaderMessage = messageGroups.getLatestCombatHeaderMessage()
+
+    val displayedMessageCount = messageGroups.sumOf { it.messages.size }
 }
 
 private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMessageState? {

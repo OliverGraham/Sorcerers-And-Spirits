@@ -30,29 +30,6 @@ sealed interface DiceRollState {
     ) : DiceRollState
 }
 
-internal fun DiceRollState.dieColorAt(diePosition: DiePosition): DieColor? =
-    when (this) {
-        is DiceRollState.OneDie ->
-            when {
-                diePosition == this.diePosition -> dieColor
-                isSiblingDisabled -> DieColor.Disabled
-                else -> null
-            }
-
-        is DiceRollState.TwoDice -> dieColor
-    }
-
-internal fun DiceRollState.rolledValueAt(diePosition: DiePosition): Int? =
-    when (this) {
-        is DiceRollState.OneDie -> value.takeIf { diePosition == this.diePosition }
-
-        is DiceRollState.TwoDice ->
-            when (diePosition) {
-                DiePosition.First -> firstDie
-                DiePosition.Second -> secondDie
-            }
-    }
-
 internal fun DiceRoll.toState(): DiceRollState =
     when (this) {
         is DiceRoll.OneDie ->

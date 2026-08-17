@@ -15,6 +15,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.Die3d
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DieState
@@ -54,13 +55,14 @@ internal fun DiceOverlay(
             Offset(x = constraints.maxWidth / 2f, y = homeBounds.center.y - overlayOrigin.y)
         val shakeTick = diceStateHolder.shakeTick
 
+        val onDiceSettled = ArenaActionsProvider.current.onDiceSettled
         SingleDie(
             dieState = diceStateHolder.firstDieState,
             isRolling = diceStateHolder.isDieRolling(diePosition = DiePosition.First),
             diePosition = DiePosition.First,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
-            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.First) },
+            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.First, onDiceSettled = onDiceSettled) },
         )
         SingleDie(
             dieState = diceStateHolder.secondDieState,
@@ -68,7 +70,7 @@ internal fun DiceOverlay(
             diePosition = DiePosition.Second,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
-            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.Second) },
+            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.Second, onDiceSettled = onDiceSettled) },
         )
 
         DiceBadgeOverlay(

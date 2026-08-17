@@ -21,25 +21,20 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
-import kotlinx.coroutines.flow.first
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
 
@@ -51,19 +46,14 @@ internal fun ArenaCombat(
     arenaMatchState: ArenaMatchState.Combat,
     modifier: Modifier = Modifier,
 ) {
-    // TODO: Encapsulate all dice-rolling state DiceStateHolder
     val diceStateHolder = rememberDiceStateHolder()
-
-    // TODO: Yep, refactor this BS
-    CommitDiceRolls(state = arenaMatchState, diceStateHolder = diceStateHolder)
 
     val inspectedUserId =
         remember(key1 = arenaMatchState.activeUserIds) { mutableStateOf<String?>(value = null) }
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
 
-    // TODO: At least half of this can be contained in ScreenContent
-    val displayedMessageCount = screenState.messages.size
+    val displayedMessageCount = screenState.displayedMessageCount
     var isMessageLogExpanded by remember { mutableStateOf(value = false) }
     var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
     LaunchedEffect(key1 = isMessageLogExpanded, key2 = displayedMessageCount) {
@@ -237,32 +227,6 @@ private fun SharedTransitionScope.CombatContent(
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
             )
         }
-    }
-}
-
-// TODO: Should be DiceStateHolder. Also, see if it's correct.
-//       Seems like it could be drastically simplified
-@Composable
-private fun CommitDiceRolls(state: ArenaMatchState.Combat, diceStateHolder: DiceStateHolder) {
-    val onDiceSettled = ArenaActionsProvider.current.onDiceSettled
-    val latestState by rememberUpdatedState(newValue = state)
-
-    LaunchedEffect(key1 = Unit) {
-        var lastRoll: DiceRollState? = latestState.diceRollState
-        snapshotFlow { latestState.diceRollState }
-            .collect { roll ->
-                val isNewRoll = roll != null && roll != lastRoll
-                if (!isNewRoll) return@collect
-                lastRoll = roll
-
-                diceStateHolder.commitRoll(
-                    diceRollState = roll,
-                    diceBadge = latestState.diceBadgeState,
-                    isBadgeBonusSpent = latestState.isTeleportDoublesBonusSpent,
-                )
-                snapshotFlow { diceStateHolder.isSettled }.first { it }
-                onDiceSettled()
-            }
     }
 }
 

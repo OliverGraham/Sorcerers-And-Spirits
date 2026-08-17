@@ -37,7 +37,7 @@ sealed interface ArenaMessageState {
     data class NewRound(
         override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
         override val id: String,
-        val roundNumber: String,
+        val roundNumber: Int,
     ) : ArenaMessageState
 
     @Immutable
@@ -594,7 +594,7 @@ internal fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageStat
 private fun ArenaMessage.toState(id: String): ArenaMessageState =
     when (this) {
         is ArenaMessage.NewRound ->
-            ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
+            ArenaMessageState.NewRound(id = id, roundNumber = roundNumber)
 
         is ArenaMessage.ChoseCharacterClass ->
             ArenaMessageState.ChoseCharacterClass(

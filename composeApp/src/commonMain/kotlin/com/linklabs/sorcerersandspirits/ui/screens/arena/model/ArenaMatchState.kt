@@ -109,7 +109,7 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
     activePlayerUserId = activePlayerUserId,
     selectedClass = null,
     unavailableClasses = emptySet(),
-    classSelections = emptyMap()
+    classSelections = emptyMap(),
 )
 
 private fun ArenaMatchState.Combat.getTargetedPlayerUserId() =

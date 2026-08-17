@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
@@ -342,22 +343,24 @@ private fun ArenaMessageLogPreview() {
                         roundNumber = 1,
                         messages =
                             listOf(
-                                ArenaMessageState.NewRound(id = "3", roundNumber = "1"),
+                                ArenaMessageState.NewRound(id = "3", roundNumber = 1),
                                 ArenaMessageState.NewTurn(
                                     id = "4",
                                     characterClassInfo = duelistInfo,
                                 ),
                                 ArenaMessageState.KillingMomentum(
                                     id = "5",
+                                    gestures = emptyMap(),
                                     attackerUserId = "duelist",
-                                ),
-                            ),
+                                    animation = ArenaAnimationState.FlashAndAvatar,
+                                )
+                            )
                     ),
                     ArenaMessageGroupState.Round(
                         roundNumber = 2,
                         messages =
                             listOf(
-                                ArenaMessageState.NewRound(id = "6", roundNumber = "2"),
+                                ArenaMessageState.NewRound(id = "6", roundNumber = 2),
                                 ArenaMessageState.NewTurn(id = "7", characterClassInfo = rogueInfo),
                             ),
                     ),

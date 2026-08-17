@@ -17,11 +17,10 @@ sealed interface ArenaMessageGroupState {
 
 // TODO: Use when NOT Combat
 //        try to clean up - just so ugly and weird
-internal fun appendNewMessages(
+internal fun List<ArenaMessageGroupState>.appendNewMessages(
     incomingMessages: List<IncomingArenaMessage>,
-    currentMessageGroups: List<ArenaMessageGroupState>,
 ): List<ArenaMessageGroupState> {
-    var messageGroups = currentMessageGroups
+    var messageGroups = this
 
     val pendingMessages = mutableListOf<ArenaMessageState>()
     val newMessages = incomingMessages.toMessageStates()

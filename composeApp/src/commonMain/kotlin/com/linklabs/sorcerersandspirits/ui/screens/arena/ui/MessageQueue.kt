@@ -10,8 +10,8 @@ import kotlinx.coroutines.awaitAll
 // TODO: ArenaMatchStateQueue?
 //       Takes in new ArenaMatch, plays messages and then the finally the update
 internal class MessageQueue(
-    private val onAnimationTriggered: (ArenaMessageState?) -> Unit,
-    private val onMessageCommitted: (ArenaMessageState) -> Unit,
+    private val triggerAnimation: (ArenaMessageState?) -> Unit,
+    private val addMessageToScreenState: (ArenaMessageState) -> Unit,
     private val onAnimationsComplete: (ArenaMatch.Combat) -> Unit,
 ) {
     // TODO: Queue is ArenaMatch updates. Queue the entire object, dequeue based on type
@@ -35,12 +35,12 @@ internal class MessageQueue(
         val messages = arenaMatchCombatUpdate.messages.toMessageStates()
 
         messages.forEach { message ->
-            onAnimationTriggered(/* arenaMessageState= */ message)
+            triggerAnimation(/* arenaMessageState= */ message)
 
             val animationSignals = message.animation.toAnimationSignals()
             animationSignals.awaitAll()
 
-            onMessageCommitted(/* arenaMessageState= */ message)
+            addMessageToScreenState(/* arenaMessageState= */ message)
         }
 
         // TODO: Just needs final update parts. What are they? CharacterStates?

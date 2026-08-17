@@ -28,13 +28,12 @@ internal const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 //       - all default arguments?
 @Immutable
 data class ArenaScreenState(
-    val messages: List<ArenaMessageState>, // TODO: Yeah, can remove this and only have groups
     val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
     val arenaMatchState: ArenaMatchState,
-    val messageGroups: List<ArenaMessageGroupState> = messages.toMessageGroups(),
+    val messageGroups: List<ArenaMessageGroupState>,
     val gauntletProgress: GauntletProgress = GauntletProgress(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
@@ -56,72 +55,6 @@ private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMe
             it !is ArenaMessageState.NewTurn &&
             it !is ArenaMessageState.NormalRoll.Attack
     }
-}
-
-// TODO(SS-031): Need to refactor this badly
-
-// TODO: This should only be used for non ArenaMatch.Combat updates?
-internal fun ArenaMatch.toUpdatedState(
-    previousState: ArenaScreenState?,
-    userId: String,
-    newMessages: List<IncomingArenaMessage> = messages,
-    characterClasses: List<CharacterClassState> = emptyList(),
-    classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
-): ArenaStateUpdate {
-    val previousSeconds = previousState?.secondsRemaining ?: 0
-    val previousShowForfeitDialog = previousState?.showForfeitDialog ?: false
-
-    val computedArenaMatchState =
-        toState(
-            userId = userId,
-            previousClassSelection =
-                (previousState?.arenaMatchState as? ArenaMatchState.ChoosingClasses)?.selectedClass,
-            characterClasses = characterClasses,
-        )
-
-    val gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet)
-
-    val userPlayer = playerMap.getValue(key = userId)
-
-    // TODO: CLAUDE YOU ASSHOLE!!!!! MAKE FUNCTIONS FOR TIMER-LOGIC
-    val isMatchOver = (computedArenaMatchState as? ArenaMatchState.Combat)?.isMatchOver == true
-    val timerAction =
-        if (isMatchOver) {
-            TimerAction.Stop
-        } else {
-            determineTimerAction(
-                previous = previousState?.arenaMatchState,
-                next = computedArenaMatchState,
-                isFinalMatch = gauntletProgress.isFinalMatch,
-            )
-        }
-
-    val secondsRemaining =
-        when (timerAction) {
-            is TimerAction.Start -> timerAction.timerDuration
-            TimerAction.Stop -> 0
-            TimerAction.None -> previousSeconds
-        }
-
-    val finalState =
-        ArenaScreenState(
-            messages = previousState?.messages ?: emptyList(),
-            messageGroups = previousState?.messageGroups ?: emptyList(),
-            secondsRemaining = secondsRemaining,
-            showForfeitDialog = previousShowForfeitDialog,
-            isUserPlayerKnockedOut = userPlayer.isKnockedOut(),
-            hasReadiedForNextMatch = userPlayer.isReadyForNextMatch,
-            arenaMatchState = previousState?.arenaMatchState ?: computedArenaMatchState, // TODO: weird
-            gauntletProgress = gauntletProgress,
-            characterClasses = characterClasses,
-            classCopy = classCopy,
-        )
-
-    return ArenaStateUpdate(
-        nextState = finalState,
-        timerAction = timerAction,
-        newMessages = newMessages.toMessageStates(),
-    )
 }
 
 internal fun ArenaMatch.toState(
@@ -172,6 +105,7 @@ internal fun ArenaMatch.toState(
     }
 
 
+// TODO: Look at update playerMap. See what classes are taken - those are unavailable
 internal fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
     userId: String
 ): Pair<Set<CharacterClassType>, Map<CharacterClassType, String>> {

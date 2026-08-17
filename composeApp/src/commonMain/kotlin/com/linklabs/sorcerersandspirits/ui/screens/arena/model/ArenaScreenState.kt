@@ -1,14 +1,8 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
-import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
-import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.toState
 
 internal const val TIMER_VISIBLE_THRESHOLD_SECONDS = 15
 internal const val TIMER_URGENT_THRESHOLD_SECONDS = 10
@@ -55,100 +49,12 @@ private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMe
     }
 }
 
-internal fun ArenaMatch.toState(
-    userId: String,
-    previousClassSelection: CharacterClassState?,
-    characterClasses: List<CharacterClassState>,
-) =
-    when (this) {
-        is ArenaMatch.WaitingForAllPlayers -> ArenaMatchState.WaitingForAllPlayers
-
-        is ArenaMatch.ChoosingClasses -> {
-            val (unavailable, selections) = playerMap.prepareClassSelectionInfo(userId = userId)
-
-            ArenaMatchState.ChoosingClasses(
-                playerMap = playerMap.mapValues { it.value.toState() },
-                activePlayerUserId = activePlayer.userId,
-                userPlayerId = userId,
-                unavailableClasses = unavailable,
-                classSelections = selections,
-                selectedClass =
-                    characterClasses.resolveSelectedClass(
-                        previousSelection = previousClassSelection,
-                        unavailableClasses = unavailable,
-                    ),
-            )
-        }
-
-        is ArenaMatch.Combat ->
-            ArenaMatchState.Combat(
-                playerMap = playerMap.mapValues { it.value.toSelectedState() },
-                userPlayerId = userId,
-                combatActionState = nextCombatAction.toCombatActionState(),
-                roundNumber = roundNumber,
-                isNewRound = isNewRound,
-                isMatchOver = isMatchOver,
-                turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
-                lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
-                diceRollState = diceRoll?.toState(),
-                isActionInFlight = false,
-            )
-
-        is ArenaMatch.Finished ->
-            ArenaMatchState.Finished(
-                players =
-                    playerMap.values.map { it.toState() }.filterIsInstance<PlayerState.Selected>(),
-                hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
-            )
-    }
-
-
 internal fun ArenaMatchState.players(): List<PlayerState> =
     when (this) {
         is ActiveMatchState -> playerMap.values.toList()
         is ArenaMatchState.Finished -> players
         is ArenaMatchState.WaitingForAllPlayers -> emptyList()
     }
-
-// TODO: Look at update playerMap. See what classes are taken - those are unavailable
-internal fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
-    userId: String
-): Pair<Set<CharacterClassType>, Map<CharacterClassType, String>> {
-    val allPlayers = values.map { player -> player.toState() }
-    // Keyed on class type, not the full CharacterClassState: the no-duplicate-class rule and the
-    // "chosen by" labels are about class identity, and a player's selected state can differ from
-    // the master template by mutable fields (HP, ability counters), so value equality would let a
-    // duplicate slip through (SS-122).
-    val unavailableClasses =
-        allPlayers
-            .filter { player -> player.userId != userId }
-            .mapNotNull { player -> (player as? PlayerState.Selected)?.characterClass?.type }
-            .toSet()
-
-    val classSelections =
-        allPlayers.filterIsInstance<PlayerState.Selected>().associate { player ->
-            player.characterClass.type to player.displayName
-        }
-
-    return unavailableClasses to classSelections
-}
-
-// TODO: This shit isn't even working correctly, Claude. Can still get duplicate classes, for example
-internal fun List<CharacterClassState>.resolveSelectedClass(
-    previousSelection: CharacterClassState?,
-    unavailableClasses: Set<CharacterClassType>,
-): CharacterClassState? =
-    previousSelection ?: defaultSelectedClass(unavailableClasses = unavailableClasses)
-
-
-private fun List<CharacterClassState>.defaultSelectedClass(
-    unavailableClasses: Set<CharacterClassType>
-): CharacterClassState? {
-    val rogue = firstOrNull { it.type == CharacterClassType.Rogue }
-    val isRogueAvailable = rogue != null && rogue.type !in unavailableClasses
-
-    return if (isRogueAvailable) rogue else firstOrNull { it.type !in unavailableClasses }
-}
 
 
 // TODO: Group similar code into separate files when it grows like this. 3 timer-related functions.

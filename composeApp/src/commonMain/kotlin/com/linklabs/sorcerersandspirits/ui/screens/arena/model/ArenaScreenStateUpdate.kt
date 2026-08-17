@@ -1,8 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.toState
 
 internal data class ArenaScreenStateUpdate(
@@ -110,11 +112,6 @@ private fun ArenaMatch.ChoosingClasses.updateChoosingClasses(
             activePlayerUserId = activePlayerUserId,
             unavailableClasses = unavailableClasses,
             classSelections = classSelections,
-            selectedClass =
-                currentScreenState.characterClasses.resolveSelectedClass(
-                    previousSelection = currentArenaMatchState.selectedClass,
-                    unavailableClasses = unavailableClasses,
-                ),
         )
 
     val hasActivePlayerChanged = currentArenaMatchState.activePlayerUserId != activePlayerUserId
@@ -244,3 +241,19 @@ private fun ArenaMatch.Finished.toFinishedState() =
         players = playerMap.values.map { it.toState() }.filterIsInstance<PlayerState.Selected>(),
         hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
     )
+
+private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
+    userId: String
+): Pair<Set<CharacterClassType>, Map<CharacterClassType, String>> {
+    val selectedPlayers = values.filterIsInstance<ArenaPlayer.Selected>()
+    val unavailableClasses =
+        selectedPlayers
+            .filter { player -> player.userId != userId }
+            .map { player -> player.characterClass.type }
+            .toSet()
+
+    val classSelections =
+        selectedPlayers.associate { player -> player.characterClass.type to player.displayName }
+
+    return unavailableClasses to classSelections
+}

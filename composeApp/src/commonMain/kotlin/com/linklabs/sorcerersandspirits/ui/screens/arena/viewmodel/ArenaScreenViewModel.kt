@@ -26,16 +26,16 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CHOOSING_CLASSES_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.WAITING_TIMER_DURATION_SECONDS
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.plusMessage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.addNewMessageDuringCombat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.prepareClassSelectionInfo
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.resolveSelectedClass
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toChoosingClassesState
@@ -43,7 +43,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionSta
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.MessageQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
@@ -86,8 +85,8 @@ class ArenaScreenViewModel(
 
     private val messageQueue =
         MessageQueue(
-            onAnimationTriggered = ::onAnimationTriggered,
-            onMessageCommitted = ::addMessageToScreenState,
+            triggerAnimation = ::triggerAnimation,
+            addMessageToScreenState = ::addMessageToScreenState,
             onAnimationsComplete = ::onAnimationsComplete,
         )
 
@@ -142,102 +141,6 @@ class ArenaScreenViewModel(
     fun retry() {
         _uiStateFlow.value = UiState.Loading
         loadArenaMatch()
-    }
-
-    private fun loadArenaMatch() {
-        screenStateFlowJob?.cancel()
-        finishWriteJob?.cancel()
-        screenStateFlowJob =
-            viewModelScope.launch {
-                val userId = getUserIdUseCase()
-                if (userId == null) {
-                    _uiStateFlow.value = UiState.Error
-                    return@launch
-                }
-
-                coordinateArenaMatchUseCase(
-                        arenaId = arguments.arenaId,
-                        expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
-                        computerOpponents = arguments.computerOpponents,
-                    )
-                    .catch { _uiStateFlow.value = UiState.Error }
-                    .collect { updatedArenaMatch ->
-                        updatedArenaMatch.updateScreenState(userId = userId)
-                    }
-            }
-    }
-
-    fun onSelectCharacterClass(characterClassState: CharacterClassState) {
-        _uiStateFlow.updateLoaded { screenState ->
-            chooseCharacterClassHandler.selectCharacterClass(
-                screenState = screenState,
-                characterClassState = characterClassState,
-            )
-        }
-    }
-
-    fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
-        viewModelScope.launch {
-            val beforeClassSelectedArenaScreenState =
-                _uiStateFlow.getLoadedStateOrNull() ?: return@launch
-
-            val afterClassSelectedArenaScreenState =
-                chooseCharacterClassHandler.chooseCharacterClass(
-                    screenState = beforeClassSelectedArenaScreenState,
-                    playerState = playerState,
-                    characterClassState = characterClassState,
-                ) ?: return@launch
-
-            _uiStateFlow.updateLoaded { afterClassSelectedArenaScreenState }
-        }
-    }
-
-    fun onDiceSettled() {
-        viewModelScope.launch { messageQueue.onCombatActionResolved() }
-    }
-
-    private fun onAnimationsComplete(arenaMatchCombatUpdate: ArenaMatch.Combat) {
-        _uiStateFlow.updateLoaded { screenState ->
-            updateCombatState(
-                currentScreenState = screenState,
-                arenaMatchCombatUpdate = arenaMatchCombatUpdate,
-            )
-        }
-
-        // TODO: Should be done automatically, when MessageQueue is working. Somehow
-        val target = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState
-        if (target is ArenaMatchState.Finished) finishMatchAfterPlayback()
-    }
-
-    // TODO: Should be done automatically, when MessageQueue is working
-    private fun finishMatchAfterPlayback() {
-        if (finishWriteJob?.isActive == true) return
-        finishWriteJob = viewModelScope.launch { finishMatchUseCase(arenaId = arguments.arenaId) }
-    }
-
-    private fun updateCombatState(
-        currentScreenState: ArenaScreenState,
-        arenaMatchCombatUpdate: ArenaMatch.Combat,
-    ): ArenaScreenState {
-        val currentArenaCombatState = currentScreenState.arenaMatchState as? ArenaMatchState.Combat ?: return currentScreenState
-
-        val userId = currentArenaCombatState.userPlayerId
-        val finalArenaMatchUpdate = currentArenaCombatState.copy(
-            playerMap = arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
-            combatActionState = arenaMatchCombatUpdate.nextCombatAction.toCombatActionState(),
-            roundNumber = arenaMatchCombatUpdate.roundNumber,
-            isNewRound = arenaMatchCombatUpdate.isNewRound,
-            isMatchOver = arenaMatchCombatUpdate.isMatchOver,
-            turnOwnerUserId = arenaMatchCombatUpdate.nextCombatAction.turnOwnerUserId(),
-            lockedTargetUserId = arenaMatchCombatUpdate.nextCombatAction.lockedTargetUserId(userId = userId),
-            selectedOpponentUserId = currentArenaCombatState.selectedOpponentUserId, // TODO: Correct?
-            isActionInFlight = false,
-        )
-
-        return currentScreenState.copy(
-            arenaMatchState = finalArenaMatchUpdate,
-            animatingMessage = null,
-        )
     }
 
     fun onFlashComplete() {
@@ -305,18 +208,33 @@ class ArenaScreenViewModel(
         }
     }
 
-    private suspend fun flushSessionStats() {
-        val delta = sessionStats.consumeDelta()
-        val wasWritten = updateProfileStatsUseCase(delta = delta)
-        if (wasWritten || delta.isEmpty) {
-            pendingStatsStore.clear()
-        } else {
-            pendingStatsStore.save(delta)
+    fun onSelectCharacterClass(characterClassState: CharacterClassState) {
+        _uiStateFlow.updateLoaded { screenState ->
+            chooseCharacterClassHandler.selectCharacterClass(
+                screenState = screenState,
+                characterClassState = characterClassState,
+            )
         }
     }
 
-    private suspend fun persistPendingStats() {
-        pendingStatsStore.save(delta = sessionStats.peekDelta())
+    fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
+        viewModelScope.launch {
+            val beforeClassSelectedArenaScreenState =
+                _uiStateFlow.getLoadedStateOrNull() ?: return@launch
+
+            val afterClassSelectedArenaScreenState =
+                chooseCharacterClassHandler.chooseCharacterClass(
+                    screenState = beforeClassSelectedArenaScreenState,
+                    playerState = playerState,
+                    characterClassState = characterClassState,
+                ) ?: return@launch
+
+            _uiStateFlow.updateLoaded { afterClassSelectedArenaScreenState }
+        }
+    }
+
+    fun onDiceSettled() {
+        viewModelScope.launch { messageQueue.onCombatActionResolved() }
     }
 
     fun onDismissForfeitDialog() {
@@ -332,6 +250,88 @@ class ArenaScreenViewModel(
                 screenState.copy(hasReadiedForNextMatch = true)
             }
         }
+    }
+
+    private fun loadArenaMatch() {
+        screenStateFlowJob?.cancel()
+        finishWriteJob?.cancel()
+        screenStateFlowJob =
+            viewModelScope.launch {
+                val userId = getUserIdUseCase()
+                if (userId == null) {
+                    _uiStateFlow.value = UiState.Error
+                    return@launch
+                }
+
+                coordinateArenaMatchUseCase(
+                    arenaId = arguments.arenaId,
+                    expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
+                    computerOpponents = arguments.computerOpponents,
+                )
+                    .catch { _uiStateFlow.value = UiState.Error }
+                    .collect { updatedArenaMatch ->
+                        updatedArenaMatch.updateScreenState(userId = userId)
+                    }
+            }
+    }
+
+    private fun onAnimationsComplete(arenaMatchCombatUpdate: ArenaMatch.Combat) {
+        _uiStateFlow.updateLoaded { screenState ->
+            updateCombatState(
+                currentScreenState = screenState,
+                arenaMatchCombatUpdate = arenaMatchCombatUpdate,
+            )
+        }
+
+        // TODO: Should be done automatically, when MessageQueue is working. Somehow
+        val target = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState
+        if (target is ArenaMatchState.Finished) finishMatchAfterPlayback()
+    }
+
+    // TODO: Should be done automatically, when MessageQueue is working
+    private fun finishMatchAfterPlayback() {
+        if (finishWriteJob?.isActive == true) return
+        finishWriteJob = viewModelScope.launch { finishMatchUseCase(arenaId = arguments.arenaId) }
+    }
+
+    private fun updateCombatState(
+        currentScreenState: ArenaScreenState,
+        arenaMatchCombatUpdate: ArenaMatch.Combat,
+    ): ArenaScreenState {
+        val currentArenaCombatState = currentScreenState.arenaMatchState as? ArenaMatchState.Combat ?: return currentScreenState
+
+        val userId = currentArenaCombatState.userPlayerId
+        val finalArenaMatchUpdate = currentArenaCombatState.copy(
+            playerMap = arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
+            combatActionState = arenaMatchCombatUpdate.nextCombatAction.toCombatActionState(),
+            roundNumber = arenaMatchCombatUpdate.roundNumber,
+            isNewRound = arenaMatchCombatUpdate.isNewRound,
+            isMatchOver = arenaMatchCombatUpdate.isMatchOver,
+            turnOwnerUserId = arenaMatchCombatUpdate.nextCombatAction.turnOwnerUserId(),
+            lockedTargetUserId = arenaMatchCombatUpdate.nextCombatAction.lockedTargetUserId(userId = userId),
+            selectedOpponentUserId = currentArenaCombatState.selectedOpponentUserId, // TODO: Correct?
+            isActionInFlight = false,
+        )
+
+        return currentScreenState.copy(
+            arenaMatchState = finalArenaMatchUpdate,
+            animatingMessage = null,
+        )
+    }
+
+
+    private suspend fun flushSessionStats() {
+        val delta = sessionStats.consumeDelta()
+        val wasWritten = updateProfileStatsUseCase(delta = delta)
+        if (wasWritten || delta.isEmpty) {
+            pendingStatsStore.clear()
+        } else {
+            pendingStatsStore.save(delta)
+        }
+    }
+
+    private suspend fun persistPendingStats() {
+        pendingStatsStore.save(delta = sessionStats.peekDelta())
     }
 
     // TODO August 14th:
@@ -501,21 +501,15 @@ class ArenaScreenViewModel(
         )
     }
 
-    private fun onAnimationTriggered(message: ArenaMessageState?) {
+    private fun triggerAnimation(message: ArenaMessageState?) {
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(animatingMessage = message) }
     }
 
     private fun addMessageToScreenState(message: ArenaMessageState) {
         _uiStateFlow.updateLoaded { screenState ->
-            val isAlreadyShown = screenState.messages.any { it.id == message.id }
-            if (isAlreadyShown) {
-                screenState
-            } else {
-                screenState.copy(
-                    messages = screenState.messages + message,
-                    messageGroups = screenState.messageGroups.plusMessage(message = message),
-                )
-            }
+            screenState.copy(
+                messageGroups = screenState.messageGroups.addNewMessageDuringCombat(message = message)
+            )
         }
     }
 

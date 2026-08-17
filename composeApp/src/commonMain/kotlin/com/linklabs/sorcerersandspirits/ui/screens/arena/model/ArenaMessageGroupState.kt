@@ -7,7 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 sealed interface ArenaMessageGroupState {
     val messages: List<ArenaMessageState>
 
-    // TODO: Is Setup needed?
     @Immutable
     data class Setup(override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
 
@@ -17,13 +16,12 @@ sealed interface ArenaMessageGroupState {
 }
 
 // TODO: Use when NOT Combat
+//        try to clean up - just so ugly and weird
 internal fun appendNewMessages(
     incomingMessages: List<IncomingArenaMessage>,
     currentMessageGroups: List<ArenaMessageGroupState>,
 ): List<ArenaMessageGroupState> {
-    var messageGroups = currentMessageGroups.ifEmpty {
-        listOf(element = ArenaMessageGroupState.Round(roundNumber = 1, messages = emptyList()))
-    }
+    var messageGroups = currentMessageGroups
 
     val pendingMessages = mutableListOf<ArenaMessageState>()
     val newMessages = incomingMessages.toMessageStates()
@@ -41,7 +39,7 @@ internal fun appendNewMessages(
 }
 
 // TODO: Use when Combat ONLY
-internal fun List<ArenaMessageGroupState>.addNewMessage(
+internal fun List<ArenaMessageGroupState>.addNewMessageDuringCombat(
     message: ArenaMessageState
 ): List<ArenaMessageGroupState> =
     if (message is ArenaMessageState.NewRound) {
@@ -78,11 +76,12 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
     return mutableMessageGroups
 }
 
+// TODO: Look at this Setup part
 private fun List<ArenaMessageGroupState>.appendToGroup(
     messages: List<ArenaMessageState>
 ): List<ArenaMessageGroupState> {
-    val hasNothingToAppend = isEmpty() || messages.isEmpty()
-    if (hasNothingToAppend) return this
+    if (messages.isEmpty()) return this
+    if (isEmpty()) return this + ArenaMessageGroupState.Setup(messages = messages.toList())
 
     val mutableMessageGroups = toMutableList()
     val lastGroup = mutableMessageGroups.last()

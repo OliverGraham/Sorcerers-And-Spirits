@@ -371,7 +371,7 @@ class ArenaScreenStateTest {
 
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -391,7 +391,7 @@ class ArenaScreenStateTest {
 
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -417,12 +417,12 @@ class ArenaScreenStateTest {
             )
 
         assertEquals(
-            expected = whileRollerActive.diceBadgeState,
-            actual = afterTurnPassed.diceBadgeState,
+            expected = whileRollerActive.diceRollState?.diceBadge,
+            actual = afterTurnPassed.diceRollState?.diceBadge,
         )
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
-            actual = afterTurnPassed.diceBadgeState,
+            actual = afterTurnPassed.diceRollState?.diceBadge,
         )
     }
 
@@ -443,7 +443,7 @@ class ArenaScreenStateTest {
 
         assertEquals(
             expected = DiceBadgeState.MirrorImageBonus(diePosition = DiePosition.First),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -481,7 +481,7 @@ class ArenaScreenStateTest {
 
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.First),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -500,7 +500,7 @@ class ArenaScreenStateTest {
                     ),
             )
 
-        assertNull(actual = state.diceBadgeState)
+        assertNull(actual = state.diceRollState?.diceBadge)
     }
 
     private fun combatState(

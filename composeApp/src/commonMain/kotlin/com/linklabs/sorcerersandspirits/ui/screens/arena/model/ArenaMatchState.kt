@@ -3,14 +3,11 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
-
-private val DEFAULT_DOUBLES_DIE_POSITION = DiePosition.Second
 
 @Immutable
 sealed interface ArenaMatchState {
@@ -61,8 +58,6 @@ sealed interface ArenaMatchState {
                 it is ArenaCombatControl.AbilityRoll &&
                     it.action is AbilityActionState.Passive.Teleport
             }
-
-        val diceBadgeState = deriveDiceBadge()
 
         val isTeleportDoublesBonusSpent =
             combatActionState.teleportAction()?.let { it.attackerDoublesBonus == 0 } ?: false
@@ -120,25 +115,6 @@ private fun ArenaMatchState.Combat.getTargetedPlayerUserId() =
 
 private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) =
     playerMap.filterKeys { it != turnOwnerUserId && it != targetedUserId }.values.toList()
-
-private fun ArenaMatchState.Combat.deriveDiceBadge(): DiceBadgeState? {
-    if (isMatchOver) return null
-
-    val hasDoublesRoll = diceRollState?.doublesBonus != null
-    if (hasDoublesRoll) {
-        return DiceBadgeState.DoublesBonus(diePosition = doublesBonusDiePosition())
-    }
-
-    val currentRoll = diceRollState as? DiceRollState.OneDie ?: return null
-    if (!currentRoll.isMirrorImageReroll) return null
-
-    return DiceBadgeState.MirrorImageBonus(diePosition = currentRoll.diePosition)
-}
-
-private fun ArenaMatchState.Combat.doublesBonusDiePosition(): DiePosition {
-    val teleport = combatActionState.teleportAction() ?: return DEFAULT_DOUBLES_DIE_POSITION
-    return teleport.attackerRoll.diePosition
-}
 
 internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Teleport? {
     val abilityRoll = this as? CombatActionState.AbilityRoll ?: return null

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.DiceRoll
 import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.DoublesBonusState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toState
 import kotlin.concurrent.atomics.AtomicInt
@@ -19,6 +20,7 @@ private fun nextDiceRollStateId(): Int = diceRollStateIdCounter.incrementAndFetc
 sealed interface DiceRollState {
     val doublesBonus: DoublesBonusState?
     val id: Int
+    val diceBadge: DiceBadgeState?
 
     @Immutable
     data class OneDie(
@@ -29,7 +31,14 @@ sealed interface DiceRollState {
         val isMirrorImageReroll: Boolean = false,
         override val doublesBonus: DoublesBonusState? = null,
         override val id: Int = nextDiceRollStateId(),
-    ) : DiceRollState
+    ) : DiceRollState {
+        override val diceBadge =
+            when {
+                doublesBonus != null -> DiceBadgeState.DoublesBonus(diePosition = diePosition)
+                isMirrorImageReroll -> DiceBadgeState.MirrorImageBonus(diePosition = diePosition)
+                else -> null
+            }
+    }
 
     @Immutable
     data class TwoDice(
@@ -38,7 +47,14 @@ sealed interface DiceRollState {
         val dieColor: DieColor = DieColor.NormalAttack,
         override val doublesBonus: DoublesBonusState? = null,
         override val id: Int = nextDiceRollStateId(),
-    ) : DiceRollState
+    ) : DiceRollState {
+        override val diceBadge =
+            if (doublesBonus != null) {
+                DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second)
+            } else {
+                null
+            }
+    }
 }
 
 internal fun DiceRoll.toState(): DiceRollState =

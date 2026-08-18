@@ -178,8 +178,7 @@ private fun ShakeDiceWhileWaitingForResult(
         }
 
         delay(timeMillis = MINIMUM_ROLL_DURATION_MILLIS)
-        snapshotFlow { diceRollStateIdWhenRollStarted }
-            .first { it != diceRollStateIdWhenRollStarted }
+        snapshotFlow { diceRollStateId }.first { it != diceRollStateIdWhenRollStarted }
 
         shakeJob.cancel()
         diceStateHolder.setIsUserRollingToFalse()

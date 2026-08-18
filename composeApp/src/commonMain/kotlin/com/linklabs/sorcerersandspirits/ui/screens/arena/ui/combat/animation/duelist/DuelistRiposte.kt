@@ -31,7 +31,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -39,8 +39,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.lerpAngle
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -301,43 +300,43 @@ private data class RiposteScene(
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun DuelistRiposteLandedPreview() {
-    DuelistRipostePreview(resolution = RipostePhase.Landed)
+    DuelistRipostePreview(isSuccessful = true)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun DuelistRiposteMissedPreview() {
-    DuelistRipostePreview(resolution = RipostePhase.Missed)
+    DuelistRipostePreview(isSuccessful = false)
 }
 
-// TODO: Fix previews
 @Composable
-private fun DuelistRipostePreview(resolution: RipostePhase) {
-    val seats = rememberDuoSeats()
-    val riposteMessage =
-        rememberReplayingCues(replayKey = resolution) { iteration ->
-            listOf(
-                ArenaMessageState.Riposte.Trigger(
-                    id = "riposte-ready-$iteration",
-                    duelistUserId = PREVIEW_ACTOR_ID,
-                    attackerUserId = PREVIEW_TARGET_ID,
-                ),
-                ArenaMessageState.Riposte.EnGarde(
-                    id = "riposte-resolve-$iteration",
-                    duelistUserId = PREVIEW_ACTOR_ID,
-                    attackerUserId = PREVIEW_TARGET_ID,
-                    animation = ArenaAnimationState.FlashAndAvatar,
-                    firstDie = 4,
-                    secondDie = 2,
-                    isSuccessful = true,
-                    gestures = emptyMap(),
-                ),
+private fun DuelistRipostePreview(isSuccessful: Boolean) {
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Duelist,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Riposte.EnGarde(
+                id = id,
+                duelistUserId = PREVIEW_ACTOR_ID,
+                attackerUserId = PREVIEW_TARGET_ID,
+                animation =
+                    if (isSuccessful) {
+                        ArenaAnimationState.FlashAndAvatar
+                    } else {
+                        ArenaAnimationState.Flash
+                    },
+                firstDie = if (isSuccessful) 4 else 6,
+                secondDie = if (isSuccessful) 3 else 6,
+                isSuccessful = isSuccessful,
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Duelist, seats = seats) {
+        },
+    ) { message ->
         RiposteOverlay(
-            riposteMessage = riposteMessage,
-            avatarBoundsFor = seats.boundsFor,
+            riposteMessage = message,
+            duelistBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            attackerBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }

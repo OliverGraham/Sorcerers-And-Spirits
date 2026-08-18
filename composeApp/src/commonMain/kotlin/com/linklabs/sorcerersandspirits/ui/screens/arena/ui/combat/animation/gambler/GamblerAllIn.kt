@@ -45,13 +45,13 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -705,19 +705,30 @@ private fun GamblerAllInNoEffectPreview() {
 
 @Composable
 private fun GamblerAllInPreview(outcome: AllInOutcome) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
-            CombatAnimationCue.AllIn(
-                id = "all-in-$iteration",
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Gambler,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.AllIn(
+                id = id,
                 gamblerUserId = PREVIEW_ACTOR_ID,
+                gamblerName = "Gambler",
+                singleDie =
+                    when (outcome) {
+                        AllInOutcome.SelfKnockout -> 1
+                        AllInOutcome.NoEffect -> 3
+                        AllInOutcome.DoubleAttack -> 6
+                    },
                 outcome = outcome,
+                animation = ArenaAnimationState.FlashAndAvatar,
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         AllInOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }

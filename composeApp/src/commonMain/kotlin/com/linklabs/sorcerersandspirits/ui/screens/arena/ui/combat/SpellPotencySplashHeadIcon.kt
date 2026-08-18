@@ -34,9 +34,9 @@ import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlin.math.PI
 import kotlin.math.sin
@@ -165,16 +165,22 @@ private fun SpellPotencySplashPreview() {
                 characterClass = previewCharacterClassState(type = CharacterClassType.Bard),
             ),
         )
-    val animationCue =
-        rememberReplayingCue(replayKey = Unit) { iteration ->
+    val animatingMessage =
+        remember {
             ArenaMessageState.SpellPotency(
-                id = "splash-$iteration",
+                id = "splash",
                 mageUserId = "mage",
+                mageName = "Mage",
                 mainTargetUserId = "target",
+                mainTargetClassName = "Rogue",
+                firstDie = 6,
+                secondDie = 6,
                 mainDamage = 8,
                 splashDamage = 3,
                 splashTargetUserIds = headIconPlayers.map { it.userId },
                 isMainTargetKnockedOut = false,
+                animation = ArenaAnimationState.FlashAndAvatar,
+                gestures = emptyMap(),
             )
         }
     SorcerersAndSpiritsTheme {
@@ -191,7 +197,6 @@ private fun SpellPotencySplashPreview() {
                             headIconPlayers = headIconPlayers,
                             userPlayerId = "rogue",
                             isTargetable = false,
-                            onSelectTarget = {},
                             onInspect = {},
                             animatingMessage = animatingMessage,
                             modifier = Modifier.size(width = 140.dp, height = 520.dp),

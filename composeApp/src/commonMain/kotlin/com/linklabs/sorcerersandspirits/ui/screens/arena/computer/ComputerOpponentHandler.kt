@@ -141,16 +141,18 @@ internal class ComputerOpponentHandler(
                     AttackArguments(
                             targetedOpponentUserId = actionState.defenderUserId,
                             userPlayerId = computerId,
+                            combatActionState = actionState,
                         )
-                        .toDomain(combatActionState = actionState)
+                        .toDomain()
 
                 is CombatActionState.AbilityRoll ->
                     UseAbilityArguments(
                             abilityActionState = actionState.action,
                             targetedOpponentUserId = randomCharmTarget(action = actionState.action),
                             userPlayerId = computerId,
+                            combatActionState = actionState,
                         )
-                        .toDomain(combatActionState = actionState)
+                        .toDomain()
             } ?: return
 
         arenaMatchState.dispatchCombatAction(currentAction = currentAction)
@@ -168,16 +170,21 @@ internal class ComputerOpponentHandler(
                     abilityActionState = favorableAbility,
                     targetedOpponentUserId = "",
                     userPlayerId = computerId,
+                    combatActionState = arenaMatchState.combatActionState,
                 )
-                .toDomain(combatActionState = arenaMatchState.combatActionState)
+                .toDomain()
         }
 
         val target =
             weakestLivingOpponent(arenaMatchState = arenaMatchState, excludingPlayerId = computerId)
                 ?: return null
 
-        return AttackArguments(targetedOpponentUserId = target.userId, userPlayerId = computerId)
-            .toDomain(combatActionState = arenaMatchState.combatActionState)
+        return AttackArguments(
+                targetedOpponentUserId = target.userId,
+                userPlayerId = computerId,
+                combatActionState = arenaMatchState.combatActionState,
+            )
+            .toDomain()
     }
 
     private suspend fun ArenaMatchState.Combat.dispatchCombatAction(currentAction: CurrentCombatAction) {

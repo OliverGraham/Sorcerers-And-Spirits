@@ -14,6 +14,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
@@ -163,13 +165,14 @@ private fun ArenaCombatFlashPreview() {
             ArenaMessageState.NormalRoll.Outcome(
                 id = "ko",
                 attackerUserId = "player1",
-                attackerName = "Mage",
+                attackerClassName = "Mage",
                 defenderUserId = "player2",
-                defenderName = "Rogue",
+                defenderClassName = "Rogue",
                 firstDie = 6,
                 secondDie = 6,
                 bonus = 0,
-                type = NormalRollMessageType.Knockout,
+                normalRollMessageType = NormalRollMessageType.Knockout,
+                animation = ArenaAnimationState.Flash,
             ),
     )
 }
@@ -202,20 +205,19 @@ private fun PreviewArenaCombat(
     val allMessages = if (flashMessage != null) messages + flashMessage else messages
     val screenState =
         ArenaScreenState(
-            messages = allMessages,
+            messageGroups = listOf(ArenaMessageGroupState.Setup(messages = allMessages)),
             secondsRemaining = secondsRemaining,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = false,
             arenaMatchState = state,
-            participants = emptyMap(),
         )
 
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
             ArenaCombat(
                 screenState = screenState,
-                state = state,
+                arenaMatchState = state,
                 modifier =
                     Modifier.fillMaxSize()
                         .paint(
@@ -271,7 +273,7 @@ private fun previewCombatState(
 private fun previewMessages(): List<ArenaMessageState> =
     listOf(
         ArenaMessageState.ConnectedToArena(id = "1", displayName = "The battle begins!"),
-        ArenaMessageState.NewRound(id = "2", roundNumber = "1"),
+        ArenaMessageState.NewRound(id = "2", roundNumber = 1),
         ArenaMessageState.NewTurn(
             id = "3",
             characterClassInfo =

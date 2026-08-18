@@ -26,13 +26,11 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.EncorePhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.imageResource
@@ -250,33 +248,30 @@ private fun DrawScope.drawEncore(
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardEncoreSuccessPreview() {
-    BardEncorePreview(resolution = EncorePhase.Success)
+    BardEncorePreview(isSuccessful = true)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardEncoreFailurePreview() {
-    BardEncorePreview(resolution = EncorePhase.Failure)
+    BardEncorePreview(isSuccessful = false)
 }
 
 @Composable
-private fun BardEncorePreview(resolution: EncorePhase) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCues(replayKey = resolution) { iteration ->
-            listOf(
-                encoreCue(iteration = iteration, phase = EncorePhase.SetStage),
-                encoreCue(iteration = iteration, phase = resolution),
+private fun BardEncorePreview(isSuccessful: Boolean) {
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Bard,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Encore.Roll(
+                id = id,
+                bardUserId = PREVIEW_ACTOR_ID,
+                encoreDie = if (isSuccessful) 6 else 2,
+                isSuccessful = isSuccessful,
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Bard, seats = seats) {
-        EncoreOverlay(animationCue = cue, modifier = Modifier.fillMaxSize())
+        },
+    ) { message ->
+        EncoreOverlay(animatingMessage = message, modifier = Modifier.fillMaxSize())
     }
 }
-
-private fun encoreCue(iteration: Int, phase: EncorePhase): CombatAnimationCue.Encore =
-    CombatAnimationCue.Encore(
-        id = "encore-$phase-$iteration",
-        bardUserId = "bardUserId",
-        phase = phase,
-    )

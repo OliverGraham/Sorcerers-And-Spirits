@@ -23,16 +23,12 @@ internal fun mageElementFor(messageId: String): MageSpellElement {
     return elements[index]
 }
 
-/**
- * A cue id that [mageElementFor] resolves to [element], so an interactive preview can lock onto one
- * element while still varying its id each [iteration] to replay the effect.
- */
-internal fun mageElementPreviewCueId(element: MageSpellElement, iteration: Int): String {
-    var candidate = iteration * 101
-    while (mageElementFor(cueId = "mage-preview-$element-$candidate") != element) {
-        candidate++
+internal fun mageElementPreviewMessageId(element: MageSpellElement, seedId: String): String {
+    var candidate = seedId
+    while (mageElementFor(messageId = candidate) != element) {
+        candidate += "-x"
     }
-    return "mage-preview-$element-$candidate"
+    return candidate
 }
 
 /**

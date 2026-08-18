@@ -32,14 +32,14 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -354,20 +354,29 @@ private fun DuelistPrepareAttackWhiffPreview() {
 
 @Composable
 private fun DuelistPrepareAttackPreview(isSuccessful: Boolean) {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCue(replayKey = isSuccessful) { iteration ->
-            CombatAnimationCue.PrepareAttack(
-                id = "prepare-attack-$iteration",
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Duelist,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.PrepareAttack(
+                id = id,
                 duelistUserId = PREVIEW_ACTOR_ID,
+                duelistName = "Duelist",
                 targetUserId = PREVIEW_TARGET_ID,
+                targetClassName = "Rogue",
+                firstDie = if (isSuccessful) 6 else 3,
+                secondDie = if (isSuccessful) 5 else 2,
                 isSuccessful = isSuccessful,
+                animation = ArenaAnimationState.FlashAndAvatar,
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Duelist, seats = seats) {
+        },
+    ) { message ->
         PrepareAttackOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            duelistBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            targetBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }

@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -42,10 +42,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -734,20 +732,22 @@ private fun LuckyCoinFlipArmorBrokenPreview() {
 
 @Composable
 private fun LuckyCoinFlipPreview(didStopAttack: Boolean) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCue(replayKey = didStopAttack) { iteration ->
-            CombatAnimationCue.LuckyCoinFlip(
-                id = "lucky-coin-flip-$iteration",
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Gambler,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.LuckyCoin.Flip(
+                id = id,
                 gamblerUserId = PREVIEW_ACTOR_ID,
-                faceValue = PREVIEW_FLIP_FACE,
+                singleDie = PREVIEW_FLIP_FACE,
                 didStopAttack = didStopAttack,
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         LuckyCoinOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBoundsStateHolder = avatars.boundsStateHolder,
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -756,27 +756,25 @@ private fun LuckyCoinFlipPreview(didStopAttack: Boolean) {
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun LuckyCoinHighRollerPaybackPreview() {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCues(replayKey = "high-roller") { iteration ->
-            listOf(
-                CombatAnimationCue.LuckyCoinHighRoller(
-                    id = "high-roller-$iteration",
-                    gamblerUserId = PREVIEW_ACTOR_ID,
-                ),
-                CombatAnimationCue.LuckyCoinHighRollerThrow(
-                    id = "high-roller-throw-$iteration",
-                    gamblerUserId = PREVIEW_ACTOR_ID,
-                    attackerUserId = PREVIEW_TARGET_ID,
-                    damage = PREVIEW_THROW_DAMAGE,
-                    isKnockout = true,
-                ),
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Gambler,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.LuckyCoin.HighRollerDamage(
+                id = id,
+                gamblerUserId = PREVIEW_ACTOR_ID,
+                attackerUserId = PREVIEW_TARGET_ID,
+                singleDie = PREVIEW_THROW_DAMAGE,
+                isKnockout = true,
+                animation = ArenaAnimationState.FlashAndAvatar,
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         LuckyCoinOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBoundsStateHolder = avatars.boundsStateHolder,
             modifier = Modifier.fillMaxSize(),
         )
     }

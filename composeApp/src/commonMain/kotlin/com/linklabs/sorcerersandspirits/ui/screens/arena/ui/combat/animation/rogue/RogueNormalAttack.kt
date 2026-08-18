@@ -28,7 +28,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -37,8 +38,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
 import kotlin.math.PI
@@ -350,11 +350,13 @@ private fun RogueNormalAttackArmorClassMissPreview() {
 
 @Composable
 private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
-    val seats = rememberDuoSeats()
-    val animatingMessage =
-        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Rogue,
+        avatars = avatars,
+        buildMessage = { id ->
             ArenaMessageState.NormalRoll.Attack(
-                id = "rogue-attack-$iteration",
+                id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
@@ -363,12 +365,13 @@ private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageTyp
                 animation = ArenaAnimationState.Avatar,
                 gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Rogue, seats = seats) {
-        // TODO: Fix animations
+        },
+    ) { message ->
         RogueNormalAttackOverlay(
-            animatingMessage = animatingMessage,
-            avatarBounds = seats.boundsFor,
+            animatingMessage = message,
+            attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
+            accentColor = CharacterClassType.Rogue.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

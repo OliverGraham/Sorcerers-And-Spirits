@@ -29,12 +29,11 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -295,58 +294,58 @@ private fun DrawScope.drawPersuade(state: PersuadeEffectState) {
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardPersuadeFailedPreview() {
-    BardPersuadePreview(resolution = PersuadePhase.StrumFailed)
+    BardPersuadeStrumPreview(isSuccessful = false)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardPersuadeStoppedPreview() {
-    BardPersuadePreview(resolution = PersuadePhase.StrumStopped)
+    BardPersuadeStrumPreview(isSuccessful = true)
 }
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun BardPersuadeCharmPreview() {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCues(replayKey = "charm") { iteration ->
-            listOf(
-                persuadeCue(iteration = iteration, phase = PersuadePhase.Summon),
-                persuadeCue(iteration = iteration, phase = PersuadePhase.CharmSummon),
-                persuadeCue(iteration = iteration, phase = PersuadePhase.CharmComplete),
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Bard,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Persuade.Charm(
+                id = id,
+                bardUserId = PREVIEW_ACTOR_ID,
+                attackerClassName = "Rogue",
+                defenderClassName = "Mage",
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Bard, seats = seats) {
+        },
+    ) { message ->
         PersuadeOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            bardBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }
 }
 
 @Composable
-private fun BardPersuadePreview(resolution: PersuadePhase) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCues(replayKey = resolution) { iteration ->
-            listOf(
-                persuadeCue(iteration = iteration, phase = PersuadePhase.Summon),
-                persuadeCue(iteration = iteration, phase = resolution),
+private fun BardPersuadeStrumPreview(isSuccessful: Boolean) {
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Bard,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Persuade.StrumLute(
+                id = id,
+                bardUserId = PREVIEW_ACTOR_ID,
+                diceRoll = if (isSuccessful) 5 else 2,
+                isSuccessful = isSuccessful,
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Bard, seats = seats) {
+        },
+    ) { message ->
         PersuadeOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            bardBounds = avatars.boundsFor(userId = PREVIEW_ACTOR_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }
 }
-
-private fun persuadeCue(iteration: Int, phase: PersuadePhase): CombatAnimationCue.Persuade =
-    CombatAnimationCue.Persuade(
-        id = "persuade-$phase-$iteration",
-        bardUserId = PREVIEW_ACTOR_ID,
-        phase = phase,
-    )

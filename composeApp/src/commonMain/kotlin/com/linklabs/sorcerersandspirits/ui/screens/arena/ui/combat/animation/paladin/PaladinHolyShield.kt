@@ -40,18 +40,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.HolyShieldPhase
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -868,59 +865,31 @@ private fun PaladinHolyShieldStruckDownPreview() {
 
 @Composable
 private fun PaladinHolyShieldPreview(didSurvive: Boolean) {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCues(replayKey = didSurvive) { iteration ->
-            buildList {
-                add(
-                    element =
-                        holyShieldPreviewCue(iteration = iteration, phase = HolyShieldPhase.Raise)
-                )
-                add(
-                    element =
-                        holyShieldPreviewCue(
-                            iteration = iteration,
-                            phase = HolyShieldPhase.Pray,
-                            didSurvive = didSurvive,
-                        )
-                )
-                if (didSurvive) {
-                    add(
-                        element =
-                            holyShieldPreviewCue(
-                                iteration = iteration,
-                                phase = HolyShieldPhase.Wrath,
-                                didSurvive = true,
-                                attackerUserId = PREVIEW_TARGET_ID,
-                                wrathIntensity = iteration % 6 + 1,
-                            )
-                    )
-                }
-            }
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Paladin, seats = seats) {
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Paladin,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.HolyShield.Prayer(
+                id = id,
+                paladinUserId = PREVIEW_ACTOR_ID,
+                firstDie = if (didSurvive) 6 else 2,
+                secondDie = if (didSurvive) 5 else 2,
+                didSurvive = didSurvive,
+                animation =
+                    if (didSurvive) {
+                        ArenaAnimationState.Flash
+                    } else {
+                        ArenaAnimationState.FlashAndAvatar
+                    },
+                gestures = emptyMap(),
+            )
+        },
+    ) { message ->
         PaladinHolyShieldOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBoundsStateHolder = avatars.boundsStateHolder,
             modifier = Modifier.fillMaxSize(),
         )
     }
 }
-
-private fun holyShieldPreviewCue(
-    iteration: Int,
-    phase: HolyShieldPhase,
-    didSurvive: Boolean? = null,
-    attackerUserId: String? = null,
-    wrathIntensity: Int? = null,
-    isAttackerKnockedOut: Boolean = false,
-): CombatAnimationCue.HolyShield =
-    CombatAnimationCue.HolyShield(
-        id = "holy-shield-$phase-$didSurvive-$iteration",
-        paladinUserId = PREVIEW_ACTOR_ID,
-        phase = phase,
-        didSurvive = didSurvive,
-        attackerUserId = attackerUserId,
-        wrathIntensity = wrathIntensity,
-        isAttackerKnockedOut = isAttackerKnockedOut,
-    )

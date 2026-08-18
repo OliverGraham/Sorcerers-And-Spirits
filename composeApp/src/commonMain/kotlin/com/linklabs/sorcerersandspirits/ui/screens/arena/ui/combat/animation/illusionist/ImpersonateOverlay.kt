@@ -34,13 +34,12 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toBustResource
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -374,19 +373,23 @@ private fun ImpersonateDuelistPreview() {
 
 @Composable
 private fun ImpersonatePreview(impersonatedClassType: CharacterClassType) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCue(replayKey = impersonatedClassType) { iteration ->
-            CombatAnimationCue.Impersonate(
-                id = "impersonate-$iteration",
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Illusionist,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Impersonate(
+                id = id,
                 illusionistUserId = PREVIEW_ACTOR_ID,
+                illusionistName = "Illusionist",
                 impersonatedClassType = impersonatedClassType,
+                impersonatedAbilityName = impersonatedClassType.name,
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Illusionist, seats = seats) {
+        },
+    ) { message ->
         ImpersonateOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }

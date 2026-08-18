@@ -21,9 +21,9 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.IMPACT_BURST_TAIL_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -31,8 +31,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
 import kotlin.math.PI
 import kotlin.math.sin
@@ -284,23 +283,32 @@ private fun MageSpellPotencyLargeVolleyPreview() {
 
 @Composable
 private fun MageSpellPotencyPreview(element: MageSpellElement, mainDamage: Int) {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCue(replayKey = element to mainDamage) { iteration ->
-            CombatAnimationCue.SpellPotency(
-                id = mageElementPreviewCueId(element = element, iteration = iteration),
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Mage,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.SpellPotency(
+                id = mageElementPreviewMessageId(element = element, seedId = id),
                 mageUserId = PREVIEW_ACTOR_ID,
+                mageName = "Mage",
                 mainTargetUserId = PREVIEW_TARGET_ID,
+                mainTargetClassName = "Rogue",
+                firstDie = 6,
+                secondDie = 6,
                 mainDamage = mainDamage,
                 splashDamage = mainDamage / 2,
                 splashTargetUserIds = emptyList(),
                 isMainTargetKnockedOut = false,
+                animation = ArenaAnimationState.FlashAndAvatar,
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Mage, seats = seats) {
+        },
+    ) { message ->
         MageSpellPotencyOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            mageBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }

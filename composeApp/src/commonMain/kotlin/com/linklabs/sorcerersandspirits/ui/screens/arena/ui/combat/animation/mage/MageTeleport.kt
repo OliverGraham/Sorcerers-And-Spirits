@@ -6,7 +6,6 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -19,7 +18,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.paint
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
@@ -28,31 +26,26 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.scale
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.GestureClassAvatar
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.rememberAvatarGesture
-import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.painterResource
-import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.arena_background
 
 private const val PORTAL_OPEN_MILLIS = 420
 private const val SWIRL_PERIOD_MILLIS = 2600
@@ -356,79 +349,41 @@ private fun MageTeleportFailPreview() {
 
 @Composable
 private fun MageTeleportPreview(didEscape: Boolean) {
-    val seats = rememberSoloSeat()
-    val bounds = seats.boundsFor(PREVIEW_ACTOR_ID)
+    val avatars = rememberSoloAvatar()
+    val bounds = avatars.boundsFor(PREVIEW_ACTOR_ID)
     val density = LocalDensity.current
     val classState = previewCharacterClassState(type = CharacterClassType.Mage)
-    val cue =
-        rememberReplayingCues(replayKey = didEscape) { iteration ->
-            listOf(
-                teleportPreviewCue(
-                    iteration = iteration,
-                    phase = TeleportPhase.Open,
-                    didEscape = null,
-                ),
-                teleportPreviewCue(
-                    iteration = iteration,
-                    phase = TeleportPhase.Hold,
-                    didEscape = null,
-                ),
-                teleportPreviewCue(
-                    iteration = iteration,
-                    phase = TeleportPhase.Hold,
-                    didEscape = null,
-                ),
-                teleportPreviewCue(
-                    iteration = iteration,
-                    phase = TeleportPhase.Resolve,
-                    didEscape = didEscape,
-                ),
+    AnimationPreview(
+        accentClass = CharacterClassType.Mage,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Teleport.Result(
+                id = id,
+                mageUserId = PREVIEW_ACTOR_ID,
+                didDefenderEscape = didEscape,
+                animation = ArenaAnimationState.FlashAndAvatar,
             )
-        }
-    val gestureState =
-        rememberAvatarGesture(animationCue = cue, userId = PREVIEW_ACTOR_ID, isTopSeat = false)
-
-    SorcerersAndSpiritsTheme {
-        Box(
+        },
+    ) { message ->
+        GestureClassAvatar(
+            animatingMessage = message,
+            isTopSeat = false,
+            userId = PREVIEW_ACTOR_ID,
+            characterClass = classState,
             modifier =
-                Modifier.fillMaxSize()
-                    .paint(
-                        painter = painterResource(resource = Res.drawable.arena_background),
-                        contentScale = ContentScale.Crop,
+                Modifier.offset(
+                        x = with(density) { bounds.left.toDp() },
+                        y = with(density) { bounds.top.toDp() },
                     )
-        ) {
-            if (bounds != null) {
-                GestureClassAvatar(
-                    characterClass = classState,
-                    gestureState = gestureState,
-                    modifier =
-                        Modifier.offset(
-                                x = with(density) { bounds.left.toDp() },
-                                y = with(density) { bounds.top.toDp() },
-                            )
-                            .size(
-                                width = with(density) { bounds.width.toDp() },
-                                height = with(density) { bounds.height.toDp() },
-                            ),
-                )
-            }
-            MageTeleportOverlay(
-                animationCue = cue,
-                avatarBoundsFor = seats.boundsFor,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+                    .size(
+                        width = with(density) { bounds.width.toDp() },
+                        height = with(density) { bounds.height.toDp() },
+                    ),
+        )
+        MageTeleportOverlay(
+            animatingMessage = message,
+            mageBounds = bounds,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
-
-private fun teleportPreviewCue(
-    iteration: Int,
-    phase: TeleportPhase,
-    didEscape: Boolean?,
-): CombatAnimationCue.Teleport =
-    CombatAnimationCue.Teleport(
-        id = "teleport-$phase-$didEscape-$iteration",
-        mageUserId = PREVIEW_ACTOR_ID,
-        phase = phase,
-        didEscape = didEscape,
-    )

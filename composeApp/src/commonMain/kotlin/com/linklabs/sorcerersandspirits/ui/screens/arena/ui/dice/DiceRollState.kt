@@ -6,10 +6,19 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.DoublesBonusState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toState
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.concurrent.atomics.incrementAndFetch
+
+@OptIn(ExperimentalAtomicApi::class) private val diceRollStateIdCounter = AtomicInt(value = 0)
+
+@OptIn(ExperimentalAtomicApi::class)
+private fun nextDiceRollStateId(): Int = diceRollStateIdCounter.incrementAndFetch()
 
 @Immutable
 sealed interface DiceRollState {
     val doublesBonus: DoublesBonusState?
+    val id: Int
 
     @Immutable
     data class OneDie(
@@ -19,6 +28,7 @@ sealed interface DiceRollState {
         val isSiblingDisabled: Boolean = true,
         val isMirrorImageReroll: Boolean = false,
         override val doublesBonus: DoublesBonusState? = null,
+        override val id: Int = nextDiceRollStateId(),
     ) : DiceRollState
 
     @Immutable
@@ -27,6 +37,7 @@ sealed interface DiceRollState {
         val secondDie: Int,
         val dieColor: DieColor = DieColor.NormalAttack,
         override val doublesBonus: DoublesBonusState? = null,
+        override val id: Int = nextDiceRollStateId(),
     ) : DiceRollState
 }
 

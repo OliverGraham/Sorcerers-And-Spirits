@@ -32,13 +32,13 @@ internal class ChooseCharacterClassHandler(
     suspend fun autoChooseCharacterClassForUser(
         screenState: ArenaScreenState,
         arenaMatchState: ArenaMatchState.ChoosingClasses,
-    ): ArenaScreenState? {
-        if (!arenaMatchState.isItThisUsersTurn) return null
+    ): Boolean {
+        if (!arenaMatchState.isItThisUsersTurn) return false
 
         val availableClasses =
             screenState.characterClasses.filterNot { it.type in arenaMatchState.unavailableClasses }
         val chosenClass =
-            arenaMatchState.selectedClass ?: availableClasses.randomOrNull() ?: return null
+            arenaMatchState.selectedClass ?: availableClasses.randomOrNull() ?: return false
 
         val userPlayer = arenaMatchState.playerMap.getValue(key = arenaMatchState.userPlayerId)
 
@@ -53,8 +53,8 @@ internal class ChooseCharacterClassHandler(
         screenState: ArenaScreenState,
         playerState: PlayerState,
         characterClassState: CharacterClassState,
-    ): ArenaScreenState? {
-        val arenaState = screenState.arenaMatchState.asChoosingClassesOrNull() ?: return null
+    ): Boolean {
+        val arenaState = screenState.arenaMatchState.asChoosingClassesOrNull() ?: return false
 
         val selectedArenaPlayer =
             ArenaPlayer.Selected(
@@ -75,6 +75,11 @@ internal class ChooseCharacterClassHandler(
             pendingStatsStore.save(delta = sessionStats.peekDelta())
         }
 
+        return true
+    }
+
+    fun clearSelectedClass(screenState: ArenaScreenState): ArenaScreenState {
+        val arenaState = screenState.arenaMatchState.asChoosingClassesOrNull() ?: return screenState
         return screenState.copy(arenaMatchState = arenaState.copy(selectedClass = null))
     }
 

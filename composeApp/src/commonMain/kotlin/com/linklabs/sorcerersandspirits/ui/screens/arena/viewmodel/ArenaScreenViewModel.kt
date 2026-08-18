@@ -217,17 +217,19 @@ class ArenaScreenViewModel(
 
     fun onChooseCharacterClass(playerState: PlayerState, characterClassState: CharacterClassState) {
         viewModelScope.launch {
-            val beforeClassSelectedArenaScreenState =
-                _uiStateFlow.getLoadedStateOrNull() ?: return@launch
+            val currentScreenState = _uiStateFlow.getLoadedStateOrNull() ?: return@launch
 
-            val afterClassSelectedArenaScreenState =
+            val didChooseClass =
                 chooseCharacterClassHandler.chooseCharacterClass(
-                    screenState = beforeClassSelectedArenaScreenState,
+                    screenState = currentScreenState,
                     playerState = playerState,
                     characterClassState = characterClassState,
-                ) ?: return@launch
+                )
+            if (!didChooseClass) return@launch
 
-            _uiStateFlow.updateLoaded { afterClassSelectedArenaScreenState }
+            _uiStateFlow.updateLoaded { screenState ->
+                chooseCharacterClassHandler.clearSelectedClass(screenState = screenState)
+            }
         }
     }
 
@@ -511,13 +513,16 @@ class ArenaScreenViewModel(
             is ArenaMatchState.WaitingForAllPlayers -> leaveTimedOutMatch()
 
             is ArenaMatchState.ChoosingClasses -> {
-                val afterClassSelectedArenaScreenState =
+                val didChooseClass =
                     chooseCharacterClassHandler.autoChooseCharacterClassForUser(
                         screenState = loadedState,
                         arenaMatchState = arenaState,
-                    ) ?: return
+                    )
+                if (!didChooseClass) return
 
-                _uiStateFlow.updateLoaded { afterClassSelectedArenaScreenState }
+                _uiStateFlow.updateLoaded { screenState ->
+                    chooseCharacterClassHandler.clearSelectedClass(screenState = screenState)
+                }
             }
 
             is ArenaMatchState.Combat -> autoResolveCombatForUser(arenaMatchState = arenaState)

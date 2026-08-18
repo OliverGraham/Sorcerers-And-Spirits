@@ -152,7 +152,8 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given the first player readies on the gauntlet finished screen, then a one-minute countdown starts`() {
-        val previousState = screenState(arenaMatchState = ArenaMatchState.Finished(players = emptyList()))
+        val previousState =
+            screenState(arenaMatchState = ArenaMatchState.Finished(players = emptyList()))
         val finishedMatch =
             finishedMatch(
                 messageCount = 0,
@@ -169,7 +170,8 @@ class ArenaScreenStateTest {
     fun `Given the gauntlet countdown is already running, then another player readying does not restart it`() {
         val previousState =
             screenState(
-                arenaMatchState = ArenaMatchState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
+                arenaMatchState =
+                    ArenaMatchState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
             )
         val finishedMatch =
             finishedMatch(

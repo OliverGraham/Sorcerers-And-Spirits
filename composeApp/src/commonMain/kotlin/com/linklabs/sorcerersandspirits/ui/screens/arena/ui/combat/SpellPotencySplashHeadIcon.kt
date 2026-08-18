@@ -165,24 +165,23 @@ private fun SpellPotencySplashPreview() {
                 characterClass = previewCharacterClassState(type = CharacterClassType.Bard),
             ),
         )
-    val animatingMessage =
-        remember {
-            ArenaMessageState.SpellPotency(
-                id = "splash",
-                mageUserId = "mage",
-                mageName = "Mage",
-                mainTargetUserId = "target",
-                mainTargetClassName = "Rogue",
-                firstDie = 6,
-                secondDie = 6,
-                mainDamage = 8,
-                splashDamage = 3,
-                splashTargetUserIds = headIconPlayers.map { it.userId },
-                isMainTargetKnockedOut = false,
-                animation = ArenaAnimationState.FlashAndAvatar,
-                gestures = emptyMap(),
-            )
-        }
+    val animatingMessage = remember {
+        ArenaMessageState.SpellPotency(
+            id = "splash",
+            mageUserId = "mage",
+            mageName = "Mage",
+            mainTargetUserId = "target",
+            mainTargetClassName = "Rogue",
+            firstDie = 6,
+            secondDie = 6,
+            mainDamage = 8,
+            splashDamage = 3,
+            splashTargetUserIds = headIconPlayers.map { it.userId },
+            isMainTargetKnockedOut = false,
+            animation = ArenaAnimationState.FlashAndAvatar,
+            gestures = emptyMap(),
+        )
+    }
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(
             value = LocalCharacterClassCopy provides previewCharacterClassCopy()

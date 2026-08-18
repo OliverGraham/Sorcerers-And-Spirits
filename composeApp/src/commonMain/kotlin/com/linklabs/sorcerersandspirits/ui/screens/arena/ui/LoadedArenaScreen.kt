@@ -22,8 +22,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.ArenaCombat
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -91,7 +91,8 @@ private fun ArenaStateContent(
             is ArenaMatchState.ChoosingClasses ->
                 arenaState.ArenaChoosingClasses(characterClasses = screenState.characterClasses)
 
-            is ArenaMatchState.Combat -> ArenaCombat(screenState = screenState, arenaMatchState = arenaState)
+            is ArenaMatchState.Combat ->
+                ArenaCombat(screenState = screenState, arenaMatchState = arenaState)
 
             is ArenaMatchState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 

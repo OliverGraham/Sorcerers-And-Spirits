@@ -90,10 +90,7 @@ internal class DiceStateHolder {
         isUserRolling = false
     }
 
-    internal fun markDieSettled(
-        diePosition: DiePosition,
-        onDiceSettled: () -> Unit,
-    ) {
+    internal fun markDieSettled(diePosition: DiePosition, onDiceSettled: () -> Unit) {
         when (diePosition) {
             DiePosition.First -> firstDieState = firstDieState.copy(isSettling = false)
             DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)
@@ -119,7 +116,6 @@ private fun DieState.startingHold(isRolling: Boolean): DieState =
     } else {
         copy(isRollingLocally = false)
     }
-
 
 @Composable
 internal fun rememberDiceStateHolder(): DiceStateHolder {

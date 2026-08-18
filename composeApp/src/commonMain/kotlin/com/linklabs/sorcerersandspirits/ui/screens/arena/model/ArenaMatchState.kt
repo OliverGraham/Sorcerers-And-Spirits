@@ -101,16 +101,15 @@ sealed interface ActiveMatchState : ArenaMatchState {
     val userPlayerId: String
 }
 
-internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
-    userPlayerId: String
-) = ArenaMatchState.ChoosingClasses(
-    playerMap = playerMap.toState(),
-    userPlayerId = userPlayerId,
-    activePlayerUserId = activePlayerUserId,
-    selectedClass = null,
-    unavailableClasses = emptySet(),
-    classSelections = emptyMap(),
-)
+internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(userPlayerId: String) =
+    ArenaMatchState.ChoosingClasses(
+        playerMap = playerMap.toState(),
+        userPlayerId = userPlayerId,
+        activePlayerUserId = activePlayerUserId,
+        selectedClass = null,
+        unavailableClasses = emptySet(),
+        classSelections = emptyMap(),
+    )
 
 private fun ArenaMatchState.Combat.getTargetedPlayerUserId() =
     lockedTargetUserId

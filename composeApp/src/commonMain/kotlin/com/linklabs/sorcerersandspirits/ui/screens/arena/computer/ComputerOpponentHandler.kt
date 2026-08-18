@@ -45,7 +45,10 @@ internal class ComputerOpponentHandler(
     private var actionJob: Job? = null
     private var scheduledActionSignature: String? = null
 
-    fun onArenaState(arenaMatchState: ArenaMatchState, characterClasses: List<CharacterClassState>) {
+    fun onArenaState(
+        arenaMatchState: ArenaMatchState,
+        characterClasses: List<CharacterClassState>,
+    ) {
         if (computerOpponentIds.isEmpty()) return
 
         val pendingComputerId = arenaMatchState.pendingComputerActorId()
@@ -95,7 +98,8 @@ internal class ComputerOpponentHandler(
                     characterClasses = characterClasses,
                 )
 
-            is ArenaMatchState.Combat -> resolveCombat(arenaMatchState = arenaMatchState, computerId = computerId)
+            is ArenaMatchState.Combat ->
+                resolveCombat(arenaMatchState = arenaMatchState, computerId = computerId)
 
             is ArenaMatchState.WaitingForAllPlayers,
             is ArenaMatchState.Finished -> Unit
@@ -124,7 +128,8 @@ internal class ComputerOpponentHandler(
         chooseCharacterClassUseCase(
             arenaId = arenaId,
             selectedArenaPlayer = selectedArenaPlayer,
-            allPlayers = arenaMatchState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
+            allPlayers =
+                arenaMatchState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
         )
     }
 
@@ -187,7 +192,9 @@ internal class ComputerOpponentHandler(
             .toDomain()
     }
 
-    private suspend fun ArenaMatchState.Combat.dispatchCombatAction(currentAction: CurrentCombatAction) {
+    private suspend fun ArenaMatchState.Combat.dispatchCombatAction(
+        currentAction: CurrentCombatAction
+    ) {
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arenaId,
@@ -247,7 +254,8 @@ internal class ComputerOpponentHandler(
 
     private fun ArenaMatchState.pendingComputerActorId(): String? =
         when (this) {
-            is ArenaMatchState.ChoosingClasses -> activePlayerUserId.takeIf { it in computerOpponentIds }
+            is ArenaMatchState.ChoosingClasses ->
+                activePlayerUserId.takeIf { it in computerOpponentIds }
 
             is ArenaMatchState.Combat ->
                 combatActionState.activeUserIds.firstOrNull { userId ->

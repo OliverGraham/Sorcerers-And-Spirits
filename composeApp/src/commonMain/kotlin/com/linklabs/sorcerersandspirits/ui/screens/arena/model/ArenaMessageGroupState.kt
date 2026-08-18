@@ -18,7 +18,7 @@ sealed interface ArenaMessageGroupState {
 // TODO: Use when NOT Combat
 //        try to clean up - just so ugly and weird
 internal fun List<ArenaMessageGroupState>.appendNewMessages(
-    incomingMessages: List<IncomingArenaMessage>,
+    incomingMessages: List<IncomingArenaMessage>
 ): List<ArenaMessageGroupState> {
     var messageGroups = this
 
@@ -53,7 +53,7 @@ private fun List<ArenaMessageGroupState>.addNewGroup(
     val newGroupMessageState =
         ArenaMessageGroupState.Round(
             roundNumber = newRoundMessage.roundNumber,
-            messages = listOf(element = newRoundMessage)
+            messages = listOf(element = newRoundMessage),
         )
 
     return this + newGroupMessageState
@@ -67,10 +67,14 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
     val mutableMessageGroups = toMutableList()
     val lastGroup = mutableMessageGroups.last()
 
-    mutableMessageGroups[lastIndex] = when (lastGroup) {
-        is ArenaMessageGroupState.Round -> lastGroup.copy(messages = lastGroup.messages + message)
-        is ArenaMessageGroupState.Setup -> lastGroup.copy(messages = lastGroup.messages + message)
-    }
+    mutableMessageGroups[lastIndex] =
+        when (lastGroup) {
+            is ArenaMessageGroupState.Round ->
+                lastGroup.copy(messages = lastGroup.messages + message)
+
+            is ArenaMessageGroupState.Setup ->
+                lastGroup.copy(messages = lastGroup.messages + message)
+        }
 
     return mutableMessageGroups
 }
@@ -85,10 +89,14 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
     val mutableMessageGroups = toMutableList()
     val lastGroup = mutableMessageGroups.last()
 
-    mutableMessageGroups[lastIndex] = when (lastGroup) {
-        is ArenaMessageGroupState.Round -> lastGroup.copy(messages = lastGroup.messages + messages)
-        is ArenaMessageGroupState.Setup -> lastGroup.copy(messages = lastGroup.messages + messages)
-    }
+    mutableMessageGroups[lastIndex] =
+        when (lastGroup) {
+            is ArenaMessageGroupState.Round ->
+                lastGroup.copy(messages = lastGroup.messages + messages)
+
+            is ArenaMessageGroupState.Setup ->
+                lastGroup.copy(messages = lastGroup.messages + messages)
+        }
 
     return mutableMessageGroups
 }

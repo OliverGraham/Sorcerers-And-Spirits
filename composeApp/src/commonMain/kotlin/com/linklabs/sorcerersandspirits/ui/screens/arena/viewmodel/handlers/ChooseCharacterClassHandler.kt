@@ -6,8 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaSessionStats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 
@@ -24,7 +24,9 @@ internal class ChooseCharacterClassHandler(
     ): ArenaScreenState {
         val arenaState = screenState.arenaMatchState.asChoosingClassesOrNull() ?: return screenState
 
-        return screenState.copy(arenaMatchState = arenaState.copy(selectedClass = characterClassState))
+        return screenState.copy(
+            arenaMatchState = arenaState.copy(selectedClass = characterClassState)
+        )
     }
 
     suspend fun autoChooseCharacterClassForUser(
@@ -35,7 +37,8 @@ internal class ChooseCharacterClassHandler(
 
         val availableClasses =
             screenState.characterClasses.filterNot { it.type in arenaMatchState.unavailableClasses }
-        val chosenClass = arenaMatchState.selectedClass ?: availableClasses.randomOrNull() ?: return null
+        val chosenClass =
+            arenaMatchState.selectedClass ?: availableClasses.randomOrNull() ?: return null
 
         val userPlayer = arenaMatchState.playerMap.getValue(key = arenaMatchState.userPlayerId)
 

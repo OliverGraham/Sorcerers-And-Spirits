@@ -32,8 +32,8 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileStat
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SetCurrentTravelerAvailableUseCase
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
@@ -164,8 +164,8 @@ class ArenaScreenViewModelTest {
     private fun ArenaMatchState.Combat.abilityRollControl(): ArenaCombatControl.AbilityRoll =
         combatControls.filterIsInstance<ArenaCombatControl.AbilityRoll>().single()
 
-    private inline fun <reified T : AbilityActionState> ArenaMatchState.Combat.activatedControlFor():
-        ArenaCombatControl.ActivatedAbility =
+    private inline fun <reified T : AbilityActionState> ArenaMatchState.Combat
+        .activatedControlFor(): ArenaCombatControl.ActivatedAbility =
         combatControls.filterIsInstance<ArenaCombatControl.ActivatedAbility>().single {
             it.action is T
         }

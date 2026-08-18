@@ -62,7 +62,12 @@ internal fun DiceOverlay(
             diePosition = DiePosition.First,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
-            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.First, onDiceSettled = onDiceSettled) },
+            onSettled = {
+                diceStateHolder.markDieSettled(
+                    diePosition = DiePosition.First,
+                    onDiceSettled = onDiceSettled,
+                )
+            },
         )
         SingleDie(
             dieState = diceStateHolder.secondDieState,
@@ -70,7 +75,12 @@ internal fun DiceOverlay(
             diePosition = DiePosition.Second,
             homeCenter = homeCenter,
             shakeTick = shakeTick,
-            onSettled = { diceStateHolder.markDieSettled(diePosition = DiePosition.Second, onDiceSettled = onDiceSettled) },
+            onSettled = {
+                diceStateHolder.markDieSettled(
+                    diePosition = DiePosition.Second,
+                    onDiceSettled = onDiceSettled,
+                )
+            },
         )
 
         DiceBadgeOverlay(

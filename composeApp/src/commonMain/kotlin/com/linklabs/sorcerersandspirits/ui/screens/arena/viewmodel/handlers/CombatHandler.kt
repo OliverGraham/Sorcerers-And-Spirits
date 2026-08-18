@@ -8,8 +8,8 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 
@@ -32,7 +32,8 @@ internal class CombatHandler(
         screenState: ArenaScreenState,
         lockedTargetUserId: String,
     ): ArenaScreenState {
-        val arenaCombatState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
+        val arenaCombatState =
+            screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
 
         return updateLockedTargetUserId(
             screenState = screenState,
@@ -41,14 +42,20 @@ internal class CombatHandler(
         )
     }
 
-    suspend fun onNormalAttack(attackArguments: AttackArguments, arenaMatchState: ArenaMatchState?) {
+    suspend fun onNormalAttack(
+        attackArguments: AttackArguments,
+        arenaMatchState: ArenaMatchState?,
+    ) {
         val arenaCombatState = arenaMatchState?.asCombatStateOrNull() ?: return
         val currentCombatAction = attackArguments.toDomain() ?: return
 
         arenaCombatState.performCombatAction(currentAction = currentCombatAction)
     }
 
-    suspend fun onUseAbility(useAbilityArguments: UseAbilityArguments, arenaMatchState: ArenaMatchState?) {
+    suspend fun onUseAbility(
+        useAbilityArguments: UseAbilityArguments,
+        arenaMatchState: ArenaMatchState?,
+    ) {
         val arenaCombatState = arenaMatchState?.asCombatStateOrNull() ?: return
         val argumentsWithImpersonateUpdatedIfApplicable =
             useAbilityArguments.withImpersonatedTarget(arenaMatchState = arenaCombatState)
@@ -59,7 +66,8 @@ internal class CombatHandler(
     }
 
     fun updateIsActionInFlight(screenState: ArenaScreenState): ArenaScreenState {
-        val arenaCombatState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
+        val arenaCombatState =
+            screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
 
         return screenState.copy(arenaMatchState = arenaCombatState.copy(isActionInFlight = true))
     }
@@ -77,7 +85,9 @@ internal class CombatHandler(
                 )
         )
 
-    private suspend fun ArenaMatchState.Combat.performCombatAction(currentAction: CurrentCombatAction) {
+    private suspend fun ArenaMatchState.Combat.performCombatAction(
+        currentAction: CurrentCombatAction
+    ) {
         // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it
         val combatActionArguments =
             CombatActionArguments(

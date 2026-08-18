@@ -35,11 +35,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CHOOSING_CLASSES_
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.players
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.WAITING_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.addNewMessageDuringCombat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.appendNewMessages
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.players
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toChoosingClassesState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
@@ -262,10 +262,10 @@ class ArenaScreenViewModel(
                 }
 
                 coordinateArenaMatchUseCase(
-                    arenaId = arguments.arenaId,
-                    expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
-                    computerOpponents = arguments.computerOpponents,
-                )
+                        arenaId = arguments.arenaId,
+                        expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
+                        computerOpponents = arguments.computerOpponents,
+                    )
                     .catch { _uiStateFlow.value = UiState.Error }
                     .collect { updatedArenaMatch ->
                         updatedArenaMatch.updateScreenState(userId = userId)
@@ -304,11 +304,13 @@ class ArenaScreenViewModel(
                         arenaMatchState = ArenaMatchState.WaitingForAllPlayers,
                         timerDuration = WAITING_TIMER_DURATION_SECONDS,
                     )
+
                 is ArenaMatch.ChoosingClasses ->
                     getNewArenaScreenState(
                         arenaMatchState = toChoosingClassesState(userPlayerId = userId),
                         timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS,
                     )
+
                 is ArenaMatch.Combat,
                 is ArenaMatch.Finished -> null
             }
@@ -327,18 +329,21 @@ class ArenaScreenViewModel(
         timerDuration: Int,
     ): ArenaScreenStateUpdate =
         ArenaScreenStateUpdate(
-            screenState = ArenaScreenState(
-                arenaMatchState = arenaMatchState,
-                secondsRemaining = timerDuration,
-                showForfeitDialog = false,
-                isUserPlayerKnockedOut = false,
-                hasReadiedForNextMatch = false,
-                messageGroups = emptyList<ArenaMessageGroupState>().appendNewMessages(incomingMessages = messages),
-                gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
-                characterClasses = characterClasses,
-                classCopy = classCopy,
-                animatingMessage = null,
-            ),
+            screenState =
+                ArenaScreenState(
+                    arenaMatchState = arenaMatchState,
+                    secondsRemaining = timerDuration,
+                    showForfeitDialog = false,
+                    isUserPlayerKnockedOut = false,
+                    hasReadiedForNextMatch = false,
+                    messageGroups =
+                        emptyList<ArenaMessageGroupState>()
+                            .appendNewMessages(incomingMessages = messages),
+                    gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+                    characterClasses = characterClasses,
+                    classCopy = classCopy,
+                    animatingMessage = null,
+                ),
             timerAction = TimerAction.Start(timerDuration = timerDuration),
             messageQueueUpdate = null,
         )
@@ -349,7 +354,8 @@ class ArenaScreenViewModel(
     ) {
         notifyDepartedOpponents(userId = userId, currentScreenState = currentScreenState)
 
-        val screenStateUpdate = toUpdatedScreenState(userId = userId, currentScreenState = currentScreenState)
+        val screenStateUpdate =
+            toUpdatedScreenState(userId = userId, currentScreenState = currentScreenState)
 
         applyScreenStateUpdate(screenStateUpdate = screenStateUpdate)
     }
@@ -383,20 +389,25 @@ class ArenaScreenViewModel(
         arenaMatchCombatUpdate: ArenaMatch.Combat,
     ): ArenaScreenState {
         val currentArenaCombatState =
-            currentScreenState.arenaMatchState as? ArenaMatchState.Combat ?: return currentScreenState
+            currentScreenState.arenaMatchState as? ArenaMatchState.Combat
+                ?: return currentScreenState
 
         val userId = currentArenaCombatState.userPlayerId
-        val finalArenaMatchUpdate = currentArenaCombatState.copy(
-            playerMap = arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
-            combatActionState = arenaMatchCombatUpdate.nextCombatAction.toCombatActionState(),
-            roundNumber = arenaMatchCombatUpdate.roundNumber,
-            isNewRound = arenaMatchCombatUpdate.isNewRound,
-            isMatchOver = arenaMatchCombatUpdate.isMatchOver,
-            turnOwnerUserId = arenaMatchCombatUpdate.nextCombatAction.turnOwnerUserId(),
-            lockedTargetUserId = arenaMatchCombatUpdate.nextCombatAction.lockedTargetUserId(userId = userId),
-            selectedOpponentUserId = currentArenaCombatState.selectedOpponentUserId, // TODO: Correct?
-            isActionInFlight = false,
-        )
+        val finalArenaMatchUpdate =
+            currentArenaCombatState.copy(
+                playerMap =
+                    arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
+                combatActionState = arenaMatchCombatUpdate.nextCombatAction.toCombatActionState(),
+                roundNumber = arenaMatchCombatUpdate.roundNumber,
+                isNewRound = arenaMatchCombatUpdate.isNewRound,
+                isMatchOver = arenaMatchCombatUpdate.isMatchOver,
+                turnOwnerUserId = arenaMatchCombatUpdate.nextCombatAction.turnOwnerUserId(),
+                lockedTargetUserId =
+                    arenaMatchCombatUpdate.nextCombatAction.lockedTargetUserId(userId = userId),
+                selectedOpponentUserId =
+                    currentArenaCombatState.selectedOpponentUserId, // TODO: Correct?
+                isActionInFlight = false,
+            )
 
         return currentScreenState.copy(
             arenaMatchState = finalArenaMatchUpdate,
@@ -443,7 +454,6 @@ class ArenaScreenViewModel(
         _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
     }
 
-
     private fun triggerAnimation(message: ArenaMessageState?) {
         _uiStateFlow.updateLoaded { screenState -> screenState.copy(animatingMessage = message) }
     }
@@ -451,19 +461,27 @@ class ArenaScreenViewModel(
     private fun addMessageToScreenState(message: ArenaMessageState) {
         _uiStateFlow.updateLoaded { screenState ->
             screenState.copy(
-                messageGroups = screenState.messageGroups.addNewMessageDuringCombat(message = message)
+                messageGroups =
+                    screenState.messageGroups.addNewMessageDuringCombat(message = message)
             )
         }
     }
 
     // TODO: Maybe the actual arenaMatchState can be passed in during a branching update?
-    private fun ArenaMatch.notifyDepartedOpponents(userId: String, currentScreenState: ArenaScreenState) {
+    private fun ArenaMatch.notifyDepartedOpponents(
+        userId: String,
+        currentScreenState: ArenaScreenState,
+    ) {
         val currentPlayerIds = playerMap.keys
-        currentScreenState.arenaMatchState.players()
+        currentScreenState.arenaMatchState
+            .players()
             .filter { it.userId != userId && it.userId !in currentPlayerIds }
             .forEach { departedOpponent ->
                 viewModelScope.launch {
-                    _eventChannelFlow.send(element = ArenaEvent.OpponentLeft(displayName = departedOpponent.displayName))
+                    _eventChannelFlow.send(
+                        element =
+                            ArenaEvent.OpponentLeft(displayName = departedOpponent.displayName)
+                    )
                 }
             }
     }
@@ -527,7 +545,10 @@ class ArenaScreenViewModel(
 
         when (val actionState = arenaMatchState.combatActionState) {
             is CombatActionState.Idle ->
-                autoAttackRandomOpponent(arenaMatchState = arenaMatchState, attackerId = userPlayerId)
+                autoAttackRandomOpponent(
+                    arenaMatchState = arenaMatchState,
+                    attackerId = userPlayerId,
+                )
 
             is CombatActionState.NormalAttack ->
                 onAttack(
@@ -556,7 +577,10 @@ class ArenaScreenViewModel(
         }
     }
 
-    private fun autoAttackRandomOpponent(arenaMatchState: ArenaMatchState.Combat, attackerId: String) {
+    private fun autoAttackRandomOpponent(
+        arenaMatchState: ArenaMatchState.Combat,
+        attackerId: String,
+    ) {
         val target =
             arenaMatchState.playerMap.values
                 .filter { player ->

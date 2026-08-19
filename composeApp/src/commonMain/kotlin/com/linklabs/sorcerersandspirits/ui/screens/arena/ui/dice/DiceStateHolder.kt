@@ -54,6 +54,8 @@ internal class DiceStateHolder {
     var firstDieState by mutableStateOf(value = DieState())
     var secondDieState by mutableStateOf(value = DieState())
 
+    private var hasReportedSettleForRoll = true
+
     val isRolling: Boolean
         get() = isHolding || isUserRolling
 
@@ -79,6 +81,7 @@ internal class DiceStateHolder {
     }
 
     fun applyRoll(diceRollState: DiceRollState) {
+        hasReportedSettleForRoll = false
         firstDieState = firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
         secondDieState =
             secondDieState.applying(roll = diceRollState, diePosition = DiePosition.Second)
@@ -106,7 +109,9 @@ internal class DiceStateHolder {
         // TODO: Need to make sure this works with Impersonate and whatever else. This kicks off the
         //       ArenaMatchCombatQueue's onCombatActionResolved()
 
-        if (!firstDieState.isSettling && !secondDieState.isSettling) {
+        val isAnyDieStillSettling = firstDieState.isSettling || secondDieState.isSettling
+        if (!isAnyDieStillSettling && !hasReportedSettleForRoll) {
+            hasReportedSettleForRoll = true
             onDiceSettled()
         }
     }
@@ -134,12 +139,14 @@ internal class DiceStateHolder {
                         tint = roll.dieColor.toColor(),
                         badge = roll.diceBadge.forPosition(diePosition = diePosition),
                         settleGeneration = settleGeneration + 1,
+                        isSettling = true,
                     )
                 } else {
                     copy(
                         isEnabled = !roll.isSiblingDisabled,
                         tint = if (roll.isSiblingDisabled) null else roll.dieColor.toColor(),
                         badge = null,
+                        isSettling = false,
                     )
                 }
 
@@ -150,6 +157,7 @@ internal class DiceStateHolder {
                     tint = roll.dieColor.toColor(),
                     badge = roll.diceBadge.forPosition(diePosition = diePosition),
                     settleGeneration = settleGeneration + 1,
+                    isSettling = true,
                 )
         }
 

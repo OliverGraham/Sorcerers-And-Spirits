@@ -12,6 +12,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
@@ -77,6 +78,12 @@ internal class DiceStateHolder {
         }
     }
 
+    fun applyRoll(diceRollState: DiceRollState) {
+        firstDieState = firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
+        secondDieState =
+            secondDieState.applying(roll = diceRollState, diePosition = DiePosition.Second)
+    }
+
     internal fun registerShake() {
         isArmed = true
         shakeTick++
@@ -98,6 +105,7 @@ internal class DiceStateHolder {
 
         // TODO: Need to make sure this works with Impersonate and whatever else. This kicks off the
         //       ArenaMatchCombatQueue's onCombatActionResolved()
+
         if (!firstDieState.isSettling && !secondDieState.isSettling) {
             onDiceSettled()
         }
@@ -108,23 +116,61 @@ internal class DiceStateHolder {
             DiePosition.First -> firstDieState
             DiePosition.Second -> secondDieState
         }
+
+    private fun DieState.startingHold(isRolling: Boolean): DieState =
+        if (isRolling) {
+            copy(isRollingLocally = true, isEnabled = true, isSettling = true)
+        } else {
+            copy(isRollingLocally = false, isSettling = false)
+        }
+
+    private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState =
+        when (roll) {
+            is DiceRollState.OneDie ->
+                if (diePosition == roll.diePosition) {
+                    copy(
+                        value = roll.value,
+                        isEnabled = true,
+                        tint = roll.dieColor.toColor(),
+                        badge = roll.diceBadge.forPosition(diePosition = diePosition),
+                        settleGeneration = settleGeneration + 1,
+                    )
+                } else {
+                    copy(
+                        isEnabled = !roll.isSiblingDisabled,
+                        tint = if (roll.isSiblingDisabled) null else roll.dieColor.toColor(),
+                        badge = null,
+                    )
+                }
+
+            is DiceRollState.TwoDice ->
+                copy(
+                    value = if (diePosition == DiePosition.First) roll.firstDie else roll.secondDie,
+                    isEnabled = true,
+                    tint = roll.dieColor.toColor(),
+                    badge = roll.diceBadge.forPosition(diePosition = diePosition),
+                    settleGeneration = settleGeneration + 1,
+                )
+        }
+
+    private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? =
+        this?.takeIf { it.diePosition == diePosition }
 }
 
-private fun DieState.startingHold(isRolling: Boolean): DieState =
-    if (isRolling) {
-        copy(isRollingLocally = true, isEnabled = true, isSettling = true)
-    } else {
-        copy(isRollingLocally = false, isSettling = false)
-    }
-
 @Composable
-internal fun rememberDiceStateHolder(diceRollStateId: Int?): DiceStateHolder {
+internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
+
+    LaunchedEffect(key1 = diceRollState?.id) {
+        if (diceRollState != null) {
+            diceStateHolder.applyRoll(diceRollState = diceRollState)
+        }
+    }
 
     ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
     ShakeDiceWhileWaitingForResult(
         diceStateHolder = diceStateHolder,
-        diceRollStateId = diceRollStateId,
+        diceRollStateId = diceRollState?.id,
     )
 
     return diceStateHolder

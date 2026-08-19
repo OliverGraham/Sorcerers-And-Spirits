@@ -47,8 +47,7 @@ internal fun ArenaCombat(
     arenaMatchState: ArenaMatchState.Combat,
     modifier: Modifier = Modifier,
 ) {
-    val diceStateHolder =
-        rememberDiceStateHolder(diceRollStateId = arenaMatchState.diceRollState?.id)
+    val diceStateHolder = rememberDiceStateHolder(diceRollState = arenaMatchState.diceRollState)
 
     val inspectedUserId =
         remember(key1 = arenaMatchState.activeUserIds) { mutableStateOf<String?>(value = null) }

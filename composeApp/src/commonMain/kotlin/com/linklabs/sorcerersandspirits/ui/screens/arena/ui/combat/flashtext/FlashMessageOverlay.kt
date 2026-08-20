@@ -1,17 +1,11 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,6 +44,8 @@ import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 private val flashFontSize = 46.sp
 private const val FLASH_OUTLINE_FRACTION = 0.09f
@@ -65,6 +61,9 @@ private const val CONFETTI_MAX_RADIUS = 6f
 
 private const val AVATAR_HEAD_FRACTION = 0.28f
 private const val CENTER_BANNER_FRACTION = 0.2f
+private const val FLASH_ENTER_SCALE = 0.3f
+private const val FLASH_EXIT_SCALE = 1.5f
+private const val FLASH_FADE_MILLIS = 300
 
 @Composable
 internal fun FlashMessageOverlay(
@@ -72,9 +71,12 @@ internal fun FlashMessageOverlay(
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
-    if (animatingMessage == null || !animatingMessage.isFlash()) return
-
+    val onFlashComplete = ArenaActionsProvider.current.onFlashComplete
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
+
+    var shownMessage by remember { mutableStateOf<ArenaMessageState?>(value = null) }
+    val flashMessage = animatingMessage?.takeIf { it.isFlash() }
+    if (flashMessage != null) shownMessage = flashMessage
 
     Box(
         modifier =
@@ -85,40 +87,67 @@ internal fun FlashMessageOverlay(
                 }
                 .onSizeChanged { overlaySize = it }
     ) {
+        val message = shownMessage ?: return@Box
         val point =
-            animatingMessage.flashAnchor.resolvePoint(
+            message.flashAnchor.resolvePoint(
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 overlaySize = overlaySize,
             )
 
-        ConfettiBurst(
-            triggerKey = animatingMessage,
-            origin = point,
-            modifier = Modifier.fillMaxSize(),
-        )
+        val scale = remember(message.id) { Animatable(initialValue = FLASH_ENTER_SCALE) }
+        val alpha = remember(message.id) { Animatable(initialValue = 0f) }
+        val swingDegrees = remember(message.id) { Animatable(initialValue = 0f) }
 
-        AnimatedVisibility(
-            visible = true,
-            enter =
-                scaleIn(
-                    initialScale = 0.3f,
+        LaunchedEffect(message.id) {
+            coroutineScope {
+                launch { alpha.animateTo(targetValue = 1f) }
+                scale.animateTo(
+                    targetValue = 1f,
                     animationSpec =
                         spring(
                             dampingRatio = Spring.DampingRatioMediumBouncy,
                             stiffness = Spring.StiffnessLow,
                         ),
-                ) + fadeIn(),
-            exit = scaleOut(targetScale = 1.5f) + fadeOut(),
-            modifier = Modifier.centeredAt(point = { point }),
-        ) {
-            FlashText(message = animatingMessage)
+                )
+            }
+
+            swingDegrees.animateTo(targetValue = 0f, animationSpec = swingSpec())
+
+            coroutineScope {
+                launch {
+                    alpha.animateTo(
+                        targetValue = 0f,
+                        animationSpec = tween(durationMillis = FLASH_FADE_MILLIS),
+                    )
+                }
+                scale.animateTo(
+                    targetValue = FLASH_EXIT_SCALE,
+                    animationSpec = tween(durationMillis = FLASH_FADE_MILLIS),
+                )
+            }
+
+            onFlashComplete()
         }
+
+        ConfettiBurst(triggerKey = message, origin = point, modifier = Modifier.fillMaxSize())
+
+        FlashText(
+            message = message,
+            swingDegrees = swingDegrees.value,
+            modifier =
+                Modifier.centeredAt(point = { point }).graphicsLayer {
+                    this.alpha = alpha.value
+                    scaleX = scale.value
+                    scaleY = scale.value
+                },
+        )
     }
 }
 
 @Composable
 private fun FlashText(
     message: ArenaMessageState,
+    swingDegrees: Float,
     modifier: Modifier = Modifier,
 ) {
     val baseStyle =
@@ -135,8 +164,7 @@ private fun FlashText(
     val text = message.toStringResource()
     val fillColor = message.actingClassType?.toColor() ?: Color.White
 
-    val swingAnimation = getSwingAnimation(messageId = message.id)
-    Box(modifier = modifier.graphicsLayer { rotationZ = swingAnimation.value }) {
+    Box(modifier = modifier.graphicsLayer { rotationZ = swingDegrees }) {
         Text(
             text = text,
             style =
@@ -155,32 +183,14 @@ private fun FlashText(
     }
 }
 
-@Composable
-private fun getSwingAnimation(
-    messageId: String,
-): Animatable<Float, AnimationVector1D> {
-    val swing = remember { Animatable(initialValue = 0f) }
-    val onFlashComplete = ArenaActionsProvider.current.onFlashComplete
-
-    LaunchedEffect(key1 = messageId) {
-        swing.snapTo(targetValue = 0f)
-        swing.animateTo(
-            targetValue = 0f,
-            animationSpec =
-                keyframes {
-                    durationMillis = FLASH_SWING_MILLIS
-                    0f at 0
-                    FLASH_SWING_DEGREES at 130
-                    FLASH_SWING_DEGREES at 320
-                    FLASH_SWING_DEGREES * 0.6f at 500
-                    FLASH_SWING_DEGREES * 0.35f at 680
-                    0f at FLASH_SWING_MILLIS
-                },
-        )
-        onFlashComplete()
-    }
-
-    return swing
+private fun swingSpec() = keyframes {
+    durationMillis = FLASH_SWING_MILLIS
+    0f at 0
+    FLASH_SWING_DEGREES at 130
+    FLASH_SWING_DEGREES at 320
+    FLASH_SWING_DEGREES * 0.6f at 500
+    FLASH_SWING_DEGREES * 0.35f at 680
+    0f at FLASH_SWING_MILLIS
 }
 
 @Composable

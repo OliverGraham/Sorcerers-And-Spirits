@@ -6,6 +6,9 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+
+private const val MATCH_OVER_PAUSE_MILLIS = 1500L
 
 internal class ArenaMatchCombatQueue(
     private val triggerAnimation: (ArenaMessageState?) -> Unit,
@@ -31,6 +34,10 @@ internal class ArenaMatchCombatQueue(
             animationSignals.awaitAll()
 
             addMessageToScreenState(/* arenaMessageState= */ message)
+        }
+
+        if (arenaMatchCombatUpdate.isMatchOver) {
+            delay(timeMillis = MATCH_OVER_PAUSE_MILLIS)
         }
 
         onAnimationsComplete(arenaMatchCombatUpdate)

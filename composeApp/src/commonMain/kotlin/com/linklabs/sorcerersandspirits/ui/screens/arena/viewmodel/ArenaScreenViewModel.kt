@@ -377,16 +377,17 @@ class ArenaScreenViewModel(
     }
 
     private fun onAnimationsComplete(arenaMatchCombatUpdate: ArenaMatch.Combat) {
+        if (arenaMatchCombatUpdate.isMatchOver) {
+            finishMatchAfterPlayback()
+            return
+        }
+
         _uiStateFlow.updateLoaded { screenState ->
             updateCombatState(
                 currentScreenState = screenState,
                 arenaMatchCombatUpdate = arenaMatchCombatUpdate,
             )
         }
-
-        // TODO(SS-256): Should be done automatically, when MessageQueue is working. Somehow
-        val target = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState
-        if (target is ArenaMatchState.Finished) finishMatchAfterPlayback()
     }
 
     private fun updateCombatState(

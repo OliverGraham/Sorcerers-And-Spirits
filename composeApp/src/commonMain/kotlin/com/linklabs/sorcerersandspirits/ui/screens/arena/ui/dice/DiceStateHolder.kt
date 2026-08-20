@@ -6,9 +6,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
@@ -18,14 +16,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.Lo
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 // Before any roll lands the two dice rest on ones, as a normal attack would show them.
 private const val DIE_RESTING_FACE = 1
 private const val BUZZ_LINGER_MILLIS = 200L
 private const val ROLL_SHAKE_INTERVAL_MILLIS = 220L
-private const val MINIMUM_ROLL_DURATION_MILLIS = 1_000L
+private const val ROLL_SHAKE_COUNT = 7
 
 data class DieState(
     val value: Int = DIE_RESTING_FACE,
@@ -78,6 +75,14 @@ internal class DiceStateHolder {
             isUserRolling = true
             commit()
         }
+    }
+
+    fun startRolling(diceRollState: DiceRollState) {
+        isUserRolling = true
+        firstDieState =
+            firstDieState.startingHold(isRolling = diceRollState.rolls(diePosition = DiePosition.First))
+        secondDieState =
+            secondDieState.startingHold(isRolling = diceRollState.rolls(diePosition = DiePosition.Second))
     }
 
     fun applyRoll(diceRollState: DiceRollState) {
@@ -163,22 +168,22 @@ internal class DiceStateHolder {
 
     private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? =
         this?.takeIf { it.diePosition == diePosition }
+
+    private fun DiceRollState.rolls(diePosition: DiePosition): Boolean =
+        when (this) {
+            is DiceRollState.OneDie -> this.diePosition == diePosition
+            is DiceRollState.TwoDice -> true
+        }
 }
 
 @Composable
 internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
 
-    LaunchedEffect(key1 = diceRollState?.id) {
-        if (diceRollState != null) {
-            diceStateHolder.applyRoll(diceRollState = diceRollState)
-        }
-    }
-
     ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
     ShakeDiceWhileWaitingForResult(
         diceStateHolder = diceStateHolder,
-        diceRollStateId = diceRollState?.id,
+        diceRollState = diceRollState,
     )
 
     return diceStateHolder
@@ -213,28 +218,22 @@ private fun ShakeDiceWhileHeld(diceStateHolder: DiceStateHolder) {
 @Composable
 private fun ShakeDiceWhileWaitingForResult(
     diceStateHolder: DiceStateHolder,
-    diceRollStateId: Int?,
+    diceRollState: DiceRollState?,
 ) {
     val haptics = LocalHaptics.current
-    val diceRollStateId by rememberUpdatedState(newValue = diceRollStateId)
 
-    LaunchedEffect(key1 = diceStateHolder.isUserRolling) {
-        if (!diceStateHolder.isUserRolling) return@LaunchedEffect
+    LaunchedEffect(key1 = diceRollState?.id) {
+        if (diceRollState == null) return@LaunchedEffect
 
-        val diceRollStateIdWhenRollStarted = diceRollStateId
+        diceStateHolder.startRolling(diceRollState = diceRollState)
         haptics.vibrate(strength = HapticStrength.HEAVY)
 
-        val shakeJob = launch {
-            while (true) {
-                delay(timeMillis = ROLL_SHAKE_INTERVAL_MILLIS)
-                diceStateHolder.tick()
-            }
+        repeat(times = ROLL_SHAKE_COUNT) {
+            delay(timeMillis = ROLL_SHAKE_INTERVAL_MILLIS)
+            diceStateHolder.tick()
         }
 
-        delay(timeMillis = MINIMUM_ROLL_DURATION_MILLIS)
-        snapshotFlow { diceRollStateId }.first { it != diceRollStateIdWhenRollStarted }
-
-        shakeJob.cancel()
+        diceStateHolder.applyRoll(diceRollState = diceRollState)
         diceStateHolder.setIsUserRollingToFalse()
     }
 }

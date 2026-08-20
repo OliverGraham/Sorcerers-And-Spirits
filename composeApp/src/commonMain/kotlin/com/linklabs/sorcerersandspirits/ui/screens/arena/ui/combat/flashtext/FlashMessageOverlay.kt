@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
@@ -67,10 +68,12 @@ private const val CENTER_BANNER_FRACTION = 0.2f
 
 @Composable
 internal fun FlashMessageOverlay(
-    message: ArenaMessageState,
+    animatingMessage: ArenaMessageState?,
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
+    if (animatingMessage == null || !animatingMessage.isFlash()) return
+
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
 
     Box(
@@ -83,12 +86,16 @@ internal fun FlashMessageOverlay(
                 .onSizeChanged { overlaySize = it }
     ) {
         val point =
-            message.flashAnchor.resolvePoint(
+            animatingMessage.flashAnchor.resolvePoint(
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 overlaySize = overlaySize,
             )
 
-        ConfettiBurst(triggerKey = message, origin = point, modifier = Modifier.fillMaxSize())
+        ConfettiBurst(
+            triggerKey = animatingMessage,
+            origin = point,
+            modifier = Modifier.fillMaxSize(),
+        )
 
         AnimatedVisibility(
             visible = true,
@@ -104,13 +111,16 @@ internal fun FlashMessageOverlay(
             exit = scaleOut(targetScale = 1.5f) + fadeOut(),
             modifier = Modifier.centeredAt(point = { point }),
         ) {
-            FlashText(message = message)
+            FlashText(message = animatingMessage)
         }
     }
 }
 
 @Composable
-private fun FlashText(message: ArenaMessageState, modifier: Modifier = Modifier) {
+private fun FlashText(
+    message: ArenaMessageState,
+    modifier: Modifier = Modifier,
+) {
     val baseStyle =
         TextStyle(
             fontSize = flashFontSize,
@@ -125,7 +135,7 @@ private fun FlashText(message: ArenaMessageState, modifier: Modifier = Modifier)
     val text = message.toStringResource()
     val fillColor = message.actingClassType?.toColor() ?: Color.White
 
-    val swingAnimation = getSwingAnimation()
+    val swingAnimation = getSwingAnimation(messageId = message.id)
     Box(modifier = modifier.graphicsLayer { rotationZ = swingAnimation.value }) {
         Text(
             text = text,
@@ -146,10 +156,13 @@ private fun FlashText(message: ArenaMessageState, modifier: Modifier = Modifier)
 }
 
 @Composable
-private fun getSwingAnimation(): Animatable<Float, AnimationVector1D> {
+private fun getSwingAnimation(
+    messageId: String,
+): Animatable<Float, AnimationVector1D> {
     val swing = remember { Animatable(initialValue = 0f) }
+    val onFlashComplete = ArenaActionsProvider.current.onFlashComplete
 
-    LaunchedEffect(key1 = Unit) {
+    LaunchedEffect(key1 = messageId) {
         swing.snapTo(targetValue = 0f)
         swing.animateTo(
             targetValue = 0f,
@@ -164,6 +177,7 @@ private fun getSwingAnimation(): Animatable<Float, AnimationVector1D> {
                     0f at FLASH_SWING_MILLIS
                 },
         )
+        onFlashComplete()
     }
 
     return swing

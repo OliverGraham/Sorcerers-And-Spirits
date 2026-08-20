@@ -176,12 +176,10 @@ private fun BoxScope.OverlayContent(
         DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = diceHomeBounds)
     }
 
-    if (animatingMessage?.isFlash() == true) {
-        FlashMessageOverlay(
-            message = animatingMessage,
-            avatarBoundsStateHolder = avatarBoundsStateHolder,
-        )
-    }
+    FlashMessageOverlay(
+        animatingMessage = animatingMessage,
+        avatarBoundsStateHolder = avatarBoundsStateHolder,
+    )
 
     InspectDrawer(
         player = inspectedUserId?.let { arenaMatchState.playerMap[it] },
@@ -201,6 +199,7 @@ private fun SharedTransitionScope.CombatContent(
     Box(modifier = modifier) {
         AnimatedContent(
             targetState = arenaMatchState,
+            contentKey = { "${it.turnOwnerUserId}|${it.targetedUserId}" },
             label = AVATAR_SEATING_TRANSITION_LABEL,
             modifier = Modifier.fillMaxSize(),
         ) { animatingState ->

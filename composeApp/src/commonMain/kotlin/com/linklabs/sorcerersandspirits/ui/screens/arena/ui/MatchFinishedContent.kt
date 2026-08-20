@@ -145,10 +145,7 @@ private fun MatchDecisionControls(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (isCountdownRunning) {
-            CountdownText(
-                prefix = "The $nextStepName starts in",
-                secondsRemaining = currentSeconds,
-            )
+            CountdownText(prefix = "The $nextStepName starts in", secondsRemaining = currentSeconds)
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),

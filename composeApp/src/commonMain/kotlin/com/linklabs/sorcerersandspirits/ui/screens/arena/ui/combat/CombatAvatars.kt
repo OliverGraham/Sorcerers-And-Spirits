@@ -69,7 +69,8 @@ private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
 private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 
-// TODO: Continue renaming, refactoring CombatAnimationCue. Move things into separate files and such
+// TODO(SS-258): Continue renaming, refactoring CombatAnimationCue. Move things into separate files
+// and such
 @Composable
 internal fun CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
@@ -110,7 +111,8 @@ internal fun CombatAvatarColumn(
     }
 }
 
-// TODO: Refactor data that's passed in. Confusing the pass in userPlayerId for the purpose its used
+// TODO(SS-258): Refactor data that's passed in. Confusing the pass in userPlayerId for the purpose
+// its used
 // for
 @Composable
 private fun ColumnScope.SeatedAvatar(
@@ -136,7 +138,8 @@ private fun ColumnScope.SeatedAvatar(
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
         )
     } else {
-        // TODO: If the player is null, then show the not-yet-created "Choose your target" avatar
+        // TODO(SS-234): If the player is null, then show the not-yet-created "Choose your target"
+        // avatar
         Spacer(modifier = Modifier.weight(weight = 1f))
     }
 }

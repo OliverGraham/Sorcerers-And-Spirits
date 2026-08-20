@@ -171,7 +171,6 @@ private suspend fun PersuadeEffectState.strumLute(scene: PersuadeScene, isSucces
 private suspend fun PersuadeEffectState.readyFlute(scene: PersuadeScene) {
     beginLuteResolve(scene = scene)
 
-    // TODO: Why is ringStrings() here? Should it be something else?
     ringStrings()
     flourish.animateTo(
         targetValue = 1f,

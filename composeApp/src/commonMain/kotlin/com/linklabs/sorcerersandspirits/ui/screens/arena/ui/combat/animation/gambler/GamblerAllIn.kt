@@ -113,7 +113,8 @@ internal fun AllInOverlay(
     animatingMessage: ArenaMessageState.AllIn,
     avatarBounds: Rect,
     modifier: Modifier = Modifier,
-    accentColor: Color = animatingMessage.actingClassType.toColor(), // TODO: Illusionist color?
+    accentColor: Color =
+        animatingMessage.actingClassType.toColor(), // TODO(SS-262): Illusionist color?
 ) {
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current

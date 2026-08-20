@@ -3,7 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 
-// TODO: Which are used by more than one thing?
+// TODO(SS-258): Which are used by more than one thing?
 enum class AvatarGesture {
     Lunge,
     LungeStrong,
@@ -49,7 +49,7 @@ private fun randomBuiltWeaponFor(id: String): CharacterClassType {
     return characterClassTypes[index]
 }
 
-// TODO: Common
+// TODO(SS-258): Common
 internal fun attackerStrike(
     weaponClassType: CharacterClassType,
     messageType: NormalRollMessageType,

@@ -10,7 +10,7 @@ private const val HURT_TINT_CHANNEL_DAMP = 0.45f
 private const val ARMOR_TINT_MAX_BLUE_OFFSET = 110f
 private const val ARMOR_TINT_CHANNEL_DAMP = 0.3f
 
-// TODO: Should be named "AvatarGestureStateHolder"
+// TODO(SS-258): Should be named "AvatarGestureStateHolder"
 @Stable
 internal class AvatarGestureState {
     val offsetX = Animatable(initialValue = 0f)

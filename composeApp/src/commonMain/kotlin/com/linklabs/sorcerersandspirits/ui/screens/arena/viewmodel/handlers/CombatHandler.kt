@@ -26,7 +26,7 @@ internal class CombatHandler(
         )
     }
 
-    // TODO: Need to refactor ArenaCombatControl, CombatButtons and AttackArguments and
+    // TODO(SS-257): Need to refactor ArenaCombatControl, CombatButtons and AttackArguments and
     // UseAbilityArguments
     fun updateLockedTargetUserId(
         screenState: ArenaScreenState,
@@ -88,7 +88,8 @@ internal class CombatHandler(
     private suspend fun ArenaMatchState.Combat.performCombatAction(
         currentAction: CurrentCombatAction
     ) {
-        // TODO: CombatActionArguments needs a refactor - likely currentAction should be part of it
+        // TODO(SS-257): CombatActionArguments needs a refactor - likely currentAction should be
+        // part of it
         val combatActionArguments =
             CombatActionArguments(
                 arenaId = arenaId,

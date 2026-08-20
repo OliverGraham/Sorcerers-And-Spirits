@@ -7,7 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 
-// TODO: Refactor all this, of course.
+// TODO(SS-260): Refactor all this, of course.
 
 /**
  * Accumulates the local player's stat deltas across a single Arena session, which can span several

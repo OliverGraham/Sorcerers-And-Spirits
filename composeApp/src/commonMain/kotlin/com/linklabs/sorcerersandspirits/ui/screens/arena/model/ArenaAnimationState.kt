@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 
-// TODO: Is this now just an enum?
+// TODO(SS-258): Is this now just an enum?
 @Immutable
 sealed interface ArenaAnimationState {
     data object None : ArenaAnimationState

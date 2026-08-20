@@ -12,9 +12,8 @@ sealed interface ArenaMessageState {
     val animation: ArenaAnimationState
     val id: String
 
-    // TODO: Maybe Claude can do this:
-    //  gestures can be fully built into the message itself. top and bottom players are known
-    //       at this time. Don't need to query from the composable
+    // TODO(SS-258): gestures can be fully built into the message itself. top and bottom players are
+    //       known at this time. Don't need to query from the composable
     val gestures: Map<String, AvatarGesture>
         get() = emptyMap()
 
@@ -70,7 +69,7 @@ sealed interface ArenaMessageState {
     sealed interface NormalRoll : ArenaMessageState {
         val attackerUserId: String
         val defenderUserId: String
-        val attackerClassType: CharacterClassType // TODO: Change to Color?
+        val attackerClassType: CharacterClassType
         val normalRollMessageType: NormalRollMessageType
 
         override val actingClassType: CharacterClassType
@@ -98,7 +97,7 @@ sealed interface ArenaMessageState {
                 }
         }
 
-        // TODO: Does this need to be used for Avatar Animations???
+        // TODO(SS-258): Does this need to be used for Avatar Animations???
         @Immutable
         data class Outcome(
             override val animation: ArenaAnimationState,
@@ -542,7 +541,7 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState
 }
 
-// TODO: Back to domain, and passed through
+// TODO(SS-259): Back to domain, and passed through
 enum class SummonMinionOutcome {
     Fizzle,
     Skeleton,
@@ -550,7 +549,7 @@ enum class SummonMinionOutcome {
     Golem,
 }
 
-// TODO: Back to domain, and passed through
+// TODO(SS-259): Back to domain, and passed through
 enum class AllInOutcome {
     SelfKnockout,
     NoEffect,
@@ -583,7 +582,7 @@ private fun allInOutcomeFor(singleDie: Int): AllInOutcome =
 @Immutable
 data class CharacterClassMessageInfoState(val className: String, val type: CharacterClassType)
 
-// TODO: figure out how to do this better
+// TODO(SS-259): figure out how to do this better (dedupe with CharacterClassMessageInfoState)
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
 internal fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> =
@@ -791,9 +790,6 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState =
             )
         }
 
-        // TODO: This does know if it's a hit or miss - it animates it. Part of the sequencing is
-        //       that the flash message and message display doesn't happen until after, so that's
-        //       the reason for outcome
         is ArenaMessage.NormalRoll.Attack -> {
             val gestures = buildMap {
                 put(
@@ -827,7 +823,6 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState =
             )
         }
 
-        // TODO: Flash message and display in log
         is ArenaMessage.NormalRoll.Outcome ->
             ArenaMessageState.NormalRoll.Outcome(
                 id = id,

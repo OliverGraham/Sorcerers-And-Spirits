@@ -45,7 +45,7 @@ sealed interface ArenaMatchState {
         val activeUserIds = combatActionState.activeUserIds
         val isItThisUsersTurn = userPlayerId in activeUserIds
 
-        // TODO: Obviously, this was supposed to simply come from the domain
+        // TODO(SS-029): Obviously, this was supposed to simply come from the domain
         val combatControls = deriveCombatControls()
         val arenaCombatControl =
             combatControls.firstOrNull { it is ArenaCombatControl.NormalAttack }
@@ -67,7 +67,7 @@ sealed interface ArenaMatchState {
 
         val targetedUserId = getTargetedPlayerUserId()
 
-        // TODO: For "Choose your target avatar" if this is null, then show it
+        // TODO(SS-234): For "Choose your target avatar" if this is null, then show it
         val targetedPlayer = playerMap[targetedUserId]
         val playersInTheStands = getPlayersInTheStands(targetedUserId = targetedUserId)
         val areTherePlayersInTheStands = playersInTheStands.isNotEmpty()

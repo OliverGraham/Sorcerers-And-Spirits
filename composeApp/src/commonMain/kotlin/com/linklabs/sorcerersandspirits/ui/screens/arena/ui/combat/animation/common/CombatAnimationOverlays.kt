@@ -68,11 +68,11 @@ private fun CombatAnimationOverlaysWithBounds(
             )
 
         is ArenaMessageState.KillingMomentum -> {
-            // TODO: should probably be something
+            // TODO(SS-258): should probably be something
         }
 
         is ArenaMessageState.Dodge -> {
-            // TODO: no sure where this one is. So weird
+            // TODO(SS-258): no sure where this one is. So weird
         }
 
         is ArenaMessageState.AllIn -> {
@@ -161,7 +161,7 @@ private fun CombatAnimationOverlaysWithBounds(
         }
 
         is ArenaMessageState.MirrorImage -> {
-            // TODO: Where is it?
+            // TODO(SS-258): Where is it?
         }
 
         is ArenaMessageState.SpellPotency -> {
@@ -305,7 +305,7 @@ private fun AnimateNormalAttack(
             )
 
         CharacterClassType.None -> {
-            // TODO: Should never happen - maybe need a new type or something?
+            // TODO(SS-258): Should never happen - maybe need a new type or something?
         }
     }
 }

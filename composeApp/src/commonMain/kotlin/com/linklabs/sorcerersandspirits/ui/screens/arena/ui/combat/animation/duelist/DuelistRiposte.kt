@@ -65,7 +65,7 @@ private val upright = Offset(x = 0f, y = -1f)
 
 internal const val RIPOSTE_STRIKE_MILLIS = (RIPOSTE_PARRY_MILLIS + RIPOSTE_STAB_MILLIS).toLong()
 
-// TODO: Riposte Animation needs some work, visually
+// TODO(SS-263): Riposte Animation needs some work, visually
 
 @Composable
 internal fun RiposteOverlay(

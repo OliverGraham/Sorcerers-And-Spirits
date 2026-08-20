@@ -41,6 +41,109 @@ are archived in [COMPLETED.md](COMPLETED.md).
   unify the two "last roll" trackers (`CombatPlaybackSequencer.lastDiceRoll` vs the UI's
   `CommitDiceRolls.lastRoll`), and close the CONFLATED `diceSettled` stale-signal race.
 
+### SS-257 — Move combat button/control state into the ViewModel; consolidate the control + argument types
+
+- [ ] Not completed
+- **Problem:** Combat button *view* state is computed inside composables instead of the VM, and the
+  control/argument types are tangled. TODOs tagged `SS-257`.
+- **Move to VM (`ArenaMatchState.Combat` / VM mapping), out of composables:**
+    - `CombatButtons.kt` — the whole button-visibility/enablement derivation, incl. the teleport
+      per-user roll-suppression latch (`hasReachedTeleportRollBeat`); a user must not be able to roll
+      twice for a roll-off. (`// TODO: Move state to view model layer`, teleport note.)
+- **Consolidate types (they overlap and confuse):** `ArenaCombatControl`, `CombatButtons`,
+  `AttackArguments`, `CombatActionArguments`/`UseAbilityArguments`, and the two
+  `*.toDomain()` `when`s in `CombatActionState.kt` (likely collapsible to one). `CombatControlActions`
+  suggests `ArenaCombatControl` may be removable entirely.
+- **Sources:** `model/ArenaCombatControl.kt`, `ui/CombatControlActions.kt`,
+  `ui/combat/CombatButtons.kt`, `viewmodel/handlers/CombatHandler.kt`, `model/CombatActionState.kt`.
+- **Related:** SS-029 is the sibling piece (move combat-action *availability* derivation
+  `deriveCombatControls` into the domain + string resources). Do them together.
+  [[derived-ui-state-in-state-model]].
+
+### SS-258 — Refactor CombatAnimationCue + AvatarGesture (build gestures at map time, split files, dedupe shared gestures)
+
+- [ ] Not completed
+- **Core idea:** gestures are known at VM/message-mapping time (top & bottom seats are known) — build
+  them into the message instead of querying from the composable. TODOs tagged `SS-258`.
+- **Do:**
+    - Compute the per-message `gestures` map when mapping `ArenaMessage → ArenaMessageState`, not in
+      `CombatAvatarGesture`/composables. (`ArenaMessageState.gestures` TODO;
+      `CombatAvatarGesture.rememberAvatarGesture` "determined at VM mapping time".)
+    - Split `CombatAvatarGesture.kt` into a package: a shared/utilities file + per-class files. The
+      bare `// TODO(SS-258): Common` / `Duelist` markers in `CombatAvatarGesture.kt` and
+      `AvatarGesture.kt` tag which gestures are shared vs class-specific — dedupe the shared ones.
+    - Rename misleading APIs: `rememberAvatarGesture` also *plays* the animation (should just
+      remember); rename `AvatarGestureState` → `AvatarGestureStateHolder`; continue the
+      `CombatAnimationCue` rename/move started in `CombatAvatars.kt`; clarify the confusing
+      `userPlayerId` pass-through there.
+    - Fill the missing/uncertain cue→overlay branches in `animation/common/CombatAnimationOverlays.kt`
+      (KillingMomentum, Dodge, the "Where is it?" / "should never happen" cases).
+    - Consider collapsing `ArenaAnimationState` to a plain enum if it now carries no data.
+- **Sources:** `ui/combat/CombatAvatarGesture.kt`, `ui/combat/CombatAvatars.kt`,
+  `model/AvatarGesture.kt`, `model/ArenaAnimationState.kt`,
+  `animation/common/AvatarGestureState.kt`, `animation/common/CombatAnimationOverlays.kt`,
+  `model/ArenaMessageState.kt`. [[sequence-animations-from-domain-data]], [[file-size-and-organization]].
+
+### SS-259 — Message pipeline: move UI-computed message values + grouping into the domain (display-ready)
+
+- [ ] Not completed
+- **Rule:** the domain provides display-ready values; the UI must not re-derive them
+  ([[message-pipeline-layering]], [[domain-provides-display-ready-values]]). TODOs tagged `SS-259`.
+- **Do:**
+    - `SummonMinionOutcome` / `AllInOutcome` are recomputed from the single die in
+      `ArenaMessageState.kt` (`summonMinionOutcomeFor` / `allInOutcomeFor`) — move these back to the
+      domain and pass them through on the message.
+    - Message *grouping* (`ArenaMessageGroupState.appendNewMessages` "not-combat" vs
+      `addNewMessageDuringCombat` "combat-only", + the Setup handling) belongs in a domain MessageLog,
+      not two ugly UI functions.
+    - Dedupe `CharacterClassMessageInfoState` vs `ParticipantClass` (same shape) in
+      `ArenaMessageState.kt`.
+    - Rename the domain `NormalRoll` outcome type → `NormalRollOutcomeType` (`domain/.../ArenaMessage.kt`).
+- **Sources:** `model/ArenaMessageState.kt`, `model/ArenaMessageGroupState.kt`,
+  `domain/arena/model/ArenaMessage.kt`.
+
+### SS-260 — Extract ArenaScreenViewModel responsibilities into handlers; tidy the combat-update flow
+
+- [ ] Not completed
+- **Do (TODOs tagged `SS-260`):**
+    - Pull `sessionStats` (`ArenaSessionStats`) into its own handler and refactor
+      `ArenaSessionStats.kt` ("refactor all this").
+    - Pull all timer operations (the `Timer` wiring + tick/expire callbacks) into a timer handler.
+    - `updateCombatState`: confirm `selectedOpponentUserId` is carried correctly across a combat
+      update (`// TODO: Correct?`); consider passing the resolved `arenaMatchState` into
+      `notifyDepartedOpponents` during a branching update.
+    - `handleScreenStateUpdateError`: decide mid-match error behavior (currently: show error + leave).
+- **Sources:** `viewmodel/ArenaScreenViewModel.kt`, `ArenaSessionStats.kt`.
+
+### SS-261 — ArenaScreenStateUpdate finished-transition gaps
+
+- [ ] Not completed
+- **Gaps (TODOs tagged `SS-261`, all in `model/ArenaScreenStateUpdate.kt`):**
+    - `transitionCombatToFinished` uses `MATCH_FINISHED_TIMER_DURATION_SECONDS` unconditionally —
+      the final match of a Gauntlet should use a GAUNTLET_FINISHED duration. Distinguish them.
+    - `transitionChoosingClassesToFinished` fires when someone leaves *during class selection* —
+      decide whether that should kick everyone out.
+    - `handleImpossibleScreenUpdate` is a no-op for ArenaMatch/ArenaScreenState combos that should
+      never occur — decide the real error behavior.
+
+### SS-262 — Illusionist Impersonate: accent color + dice flow for copied abilities
+
+- [ ] Not completed
+- **Do (TODOs tagged `SS-262`):**
+    - When the Illusionist impersonates an ability, overlays use the *acted class's* color; the accent
+      should be the **Illusionist's** color instead (`gambler/GamblerAllIn.kt` accentColor default is
+      the tell — every borrowed ability overlay has the same issue).
+    - Verify the dice-kickoff path in `DiceStateHolder.kt` works for Impersonate (and other
+      dice-consuming abilities). [[illusionist-borrows-weapons]], [[dice-roll-must-be-roll-bearing]].
+
+### SS-263 — Duelist Riposte animation visual polish
+
+- [ ] Not completed
+- **Goal:** the Riposte animation "needs some work, visually" — polish pass on the reversal overlay.
+- **Source:** `animation/duelist/DuelistRiposte.kt`. Parent: SS-191. Domain Riposte work is done
+  (SS-165, SS-216); this is the animation-only follow-up. Ship interactive previews
+  ([[combat-animation-previews]]).
+
 ### SS-185 — Pare back which messages flash
 
 - [ ] Not completed

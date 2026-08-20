@@ -8,7 +8,8 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbil
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttackInProgress
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 
-// TODO: Refactor this file - move functions into the files they belong in. Also, think of reducing
+// TODO(SS-257): Refactor this file - move functions into the files they belong in. Also, think of
+// reducing
 //       the unnecessary mapping here. Rename it, if properties can't simply be used in
 //       ArenaState.Combat
 //

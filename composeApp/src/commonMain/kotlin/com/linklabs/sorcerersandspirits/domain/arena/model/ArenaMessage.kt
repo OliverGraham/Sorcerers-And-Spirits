@@ -219,7 +219,8 @@ sealed interface ArenaMessage {
     ) : ArenaMessage
 }
 
-// TODO: This should be renamed to NormalRollOutcomeType or if there's another type that is already
+// TODO(SS-259): This should be renamed to NormalRollOutcomeType or if there's another type that is
+// already
 //       doing this then it should be used
 enum class NormalRollMessageType {
     ArmorClassHit,

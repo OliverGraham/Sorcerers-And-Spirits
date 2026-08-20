@@ -54,7 +54,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-// TODO: Break out into separate package and files. One new package with utilities file and
+// TODO(SS-258): Break out into separate package and files. One new package with utilities file and
 //       per-class files - do this later, Claude
 
 internal const val REACTION_DELAY_MILLIS = 170L
@@ -64,12 +64,7 @@ private const val SLASH_RECOVER_MILLIS = 240
 
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 
-private const val FLINCH_BODY_MILLIS = 380L
-private const val FLINCH_HEAVY_BODY_MILLIS = 470L
-private const val SIDESTEP_BODY_MILLIS = 520L
-private const val COLLAPSE_BODY_MILLIS = 650L
-
-// TODO: This function is set up so weird
+// TODO(SS-258): This function is set up so weird
 
 /** The seated avatar art with its gesture transforms applied. */
 @Composable
@@ -80,7 +75,7 @@ internal fun GestureClassAvatar(
     characterClass: CharacterClassState,
     modifier: Modifier = Modifier,
 ) {
-    // TODO: This is playing the avatar gesture animation. Should indicate that
+    // TODO(SS-258): This is playing the avatar gesture animation. Should indicate that
     val gestureState =
         rememberAvatarGesture(
             animatingMessage = animatingMessage,
@@ -105,7 +100,8 @@ internal fun GestureClassAvatar(
     )
 }
 
-// TODO: This naming is wrong. It does return a remembered value, but it plays the animation as
+// TODO(SS-258): This naming is wrong. It does return a remembered value, but it plays the animation
+// as
 // well. I believe it should just remember something if needed, then return it.
 // This is the refactor idea:
 //    remember state
@@ -137,7 +133,8 @@ internal fun rememberAvatarGesture(
             return@LaunchedEffect
         }
 
-        // TODO: gestures can be entirely determined at view model mapping time, for top and bottom
+        // TODO(SS-258): gestures can be entirely determined at view model mapping time, for top and
+        // bottom
         val gesture = animatingMessage.gestureFor(userId = userId) ?: return@LaunchedEffect
         gestureState.play(
             gesture = gesture,
@@ -150,7 +147,7 @@ internal fun rememberAvatarGesture(
     return gestureState
 }
 
-// TODO: Common
+// TODO(SS-258): Common
 private fun ArenaMessageState.defenderReactionDelayMillis(): Long =
     when (this) {
         is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
@@ -171,7 +168,7 @@ private fun ArenaMessageState.defenderReactionDelayMillis(): Long =
         else -> REACTION_DELAY_MILLIS
     }
 
-// TODO: Common
+// TODO(SS-258): Common
 private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long =
     when (attackerClassType) {
         CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
@@ -184,11 +181,11 @@ private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long
         else -> REACTION_DELAY_MILLIS
     }
 
-// TODO: Duelist
+// TODO(SS-258): Duelist
 private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
     if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
-// TODO: Common
+// TODO(SS-258): Common
 private suspend fun AvatarGestureState.play(
     gesture: AvatarGesture,
     strikeDirection: Float,
@@ -266,13 +263,13 @@ private suspend fun AvatarGestureState.play(
     }
 }
 
-// TODO: Common
+// TODO(SS-258): Common
 private suspend fun AvatarGestureState.cast(reachPx: Float) {
     offsetY.animateTo(targetValue = reachPx, animationSpec = tween(durationMillis = 180))
     offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
 }
 
-// TODO: Common
+// TODO(SS-258): Common
 private suspend fun AvatarGestureState.lunge(distancePx: Float, peakScale: Float) {
     coroutineScope {
         launch {
@@ -286,7 +283,7 @@ private suspend fun AvatarGestureState.lunge(distancePx: Float, peakScale: Float
     }
 }
 
-// TODO: Common
+// TODO(SS-258): Common
 private suspend fun AvatarGestureState.lungeOvershoot(distancePx: Float) {
     coroutineScope {
         launch {

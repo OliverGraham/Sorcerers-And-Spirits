@@ -89,7 +89,6 @@ private fun avatarBounds(density: Density, centerYFraction: Float): Rect =
         )
     }
 
-// TODO: accentColor
 @Composable
 internal fun <MessageState : ArenaMessageState> AnimationPreview(
     accentClass: CharacterClassType,

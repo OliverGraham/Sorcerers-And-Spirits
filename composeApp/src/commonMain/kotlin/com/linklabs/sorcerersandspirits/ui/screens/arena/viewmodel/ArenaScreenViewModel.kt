@@ -94,7 +94,7 @@ class ArenaScreenViewModel(
             onAnimationsComplete = ::onAnimationsComplete,
         )
 
-    // TODO: Probably a handler for this
+    // TODO(SS-260): Probably a handler for this
     private val sessionStats = ArenaSessionStats()
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
@@ -124,7 +124,7 @@ class ArenaScreenViewModel(
             performCombatActionUseCase = performCombatActionUseCase,
         )
 
-    // TODO: Handler for all timer-related operations
+    // TODO(SS-260): Handler for all timer-related operations
     private val arenaTimer =
         Timer(
             coroutineScope = viewModelScope,
@@ -287,7 +287,7 @@ class ArenaScreenViewModel(
             return
         }
 
-        // TODO: Refactor sessionStats
+        // TODO(SS-260): Refactor sessionStats
         val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
         if (recordedStat) {
             persistPendingStats()
@@ -384,7 +384,7 @@ class ArenaScreenViewModel(
             )
         }
 
-        // TODO: Should be done automatically, when MessageQueue is working. Somehow
+        // TODO(SS-256): Should be done automatically, when MessageQueue is working. Somehow
         val target = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState
         if (target is ArenaMatchState.Finished) finishMatchAfterPlayback()
     }
@@ -410,7 +410,7 @@ class ArenaScreenViewModel(
                 lockedTargetUserId =
                     arenaMatchCombatUpdate.nextCombatAction.lockedTargetUserId(userId = userId),
                 selectedOpponentUserId =
-                    currentArenaCombatState.selectedOpponentUserId, // TODO: Correct?
+                    currentArenaCombatState.selectedOpponentUserId, // TODO(SS-260): Correct?
                 isActionInFlight = false,
             )
 
@@ -420,7 +420,7 @@ class ArenaScreenViewModel(
         )
     }
 
-    // TODO: Should be done automatically, when MessageQueue is working
+    // TODO(SS-256): Should be done automatically, when MessageQueue is working
     private fun finishMatchAfterPlayback() {
         if (finishWriteJob?.isActive == true) return
         finishWriteJob = viewModelScope.launch { finishMatchUseCase(arenaId = arguments.arenaId) }
@@ -448,7 +448,8 @@ class ArenaScreenViewModel(
         )
     }
 
-    // TODO: if there's one match error, just kill the whole thing? Or determine what to do if
+    // TODO(SS-260): if there's one match error, just kill the whole thing? Or determine what to do
+    // if
     //       happens in the middle of a match? For now, probably just show an error then leave.
     private suspend fun handleScreenStateUpdateError() {
         screenStateFlowJob?.cancel()
@@ -472,7 +473,7 @@ class ArenaScreenViewModel(
         }
     }
 
-    // TODO: Maybe the actual arenaMatchState can be passed in during a branching update?
+    // TODO(SS-260): Maybe the actual arenaMatchState can be passed in during a branching update?
     private fun ArenaMatch.notifyDepartedOpponents(
         userId: String,
         currentScreenState: ArenaScreenState,

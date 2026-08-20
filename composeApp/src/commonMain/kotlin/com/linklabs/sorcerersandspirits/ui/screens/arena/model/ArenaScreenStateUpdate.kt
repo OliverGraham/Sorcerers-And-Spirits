@@ -183,7 +183,8 @@ private fun ArenaMatch.Combat.updateCombat(
 
 private fun ArenaMatch.Finished.transitionCombatToFinished(
     currentScreenState: ArenaScreenState
-): ArenaScreenStateUpdate = // TODO: MATCH_FINISHED vs GAUNTLET_FINISHED timer depends on whether
+): ArenaScreenStateUpdate = // TODO(SS-261): MATCH_FINISHED vs GAUNTLET_FINISHED timer depends on
+    // whether
     // this is the final match
     ArenaScreenStateUpdate(
         screenState =
@@ -195,7 +196,7 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
         timerAction = TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS),
     )
 
-// TODO: Can happen if someone leaves during choosing. Decide whether to kick everyone out.
+// TODO(SS-261): Can happen if someone leaves during choosing. Decide whether to kick everyone out.
 private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
     currentScreenState: ArenaScreenState
 ): ArenaScreenStateUpdate =
@@ -234,7 +235,8 @@ private fun ArenaMatch.Finished.updateFinished(
         timerAction = TimerAction.None,
     )
 
-// TODO: Reserved for ArenaMatch/ArenaScreenState combinations that should never occur. Likely an
+// TODO(SS-261): Reserved for ArenaMatch/ArenaScreenState combinations that should never occur.
+// Likely an
 //       error state; behavior to be decided.
 private fun ArenaMatch.handleImpossibleScreenUpdate(
     currentScreenState: ArenaScreenState

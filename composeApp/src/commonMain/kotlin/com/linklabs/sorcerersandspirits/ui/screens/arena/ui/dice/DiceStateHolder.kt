@@ -80,14 +80,19 @@ internal class DiceStateHolder {
     fun startRolling(diceRollState: DiceRollState) {
         isUserRolling = true
         firstDieState =
-            firstDieState.startingHold(isRolling = diceRollState.rolls(diePosition = DiePosition.First))
+            firstDieState.startingHold(
+                isRolling = diceRollState.rolls(diePosition = DiePosition.First)
+            )
         secondDieState =
-            secondDieState.startingHold(isRolling = diceRollState.rolls(diePosition = DiePosition.Second))
+            secondDieState.startingHold(
+                isRolling = diceRollState.rolls(diePosition = DiePosition.Second)
+            )
     }
 
     fun applyRoll(diceRollState: DiceRollState) {
         hasReportedSettleForRoll = false
-        firstDieState = firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
+        firstDieState =
+            firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
         secondDieState =
             secondDieState.applying(roll = diceRollState, diePosition = DiePosition.Second)
     }
@@ -111,7 +116,8 @@ internal class DiceStateHolder {
             DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)
         }
 
-        // TODO: Need to make sure this works with Impersonate and whatever else. This kicks off the
+        // TODO(SS-262): Need to make sure this works with Impersonate and whatever else. This kicks
+        // off the
         //       ArenaMatchCombatQueue's onCombatActionResolved()
 
         val isAnyDieStillSettling = firstDieState.isSettling || secondDieState.isSettling
@@ -181,10 +187,7 @@ internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHo
     val diceStateHolder = remember { DiceStateHolder() }
 
     ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
-    ShakeDiceWhileWaitingForResult(
-        diceStateHolder = diceStateHolder,
-        diceRollState = diceRollState,
-    )
+    ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder, diceRollState = diceRollState)
 
     return diceStateHolder
 }

@@ -125,7 +125,7 @@ internal val AbilityActionState.requiresTarget: Boolean
             else -> false
         }
 
-// TODO: What is going on here? Refactor right? One when statement necessary?
+// TODO(SS-257): What is going on here? Refactor right? One when statement necessary?
 internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
     when (combatActionState) {
         is CombatActionState.AbilityRoll -> null
@@ -145,7 +145,7 @@ internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
             )
     }
 
-// TODO: What is going on here?
+// TODO(SS-257): What is going on here?
 internal fun UseAbilityArguments.toDomain(): CurrentCombatAction.AbilityRoll? {
     val purpose = abilityActionState.withSelectedCharmTarget(targetUserId = targetedOpponentUserId)
 

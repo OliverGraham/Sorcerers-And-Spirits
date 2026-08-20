@@ -15,7 +15,7 @@ sealed interface ArenaMessageGroupState {
         ArenaMessageGroupState
 }
 
-// TODO: Use when NOT Combat
+// TODO(SS-259): Use when NOT Combat
 //        try to clean up - just so ugly and weird
 internal fun List<ArenaMessageGroupState>.appendNewMessages(
     incomingMessages: List<IncomingArenaMessage>
@@ -37,7 +37,7 @@ internal fun List<ArenaMessageGroupState>.appendNewMessages(
     return messageGroups.appendToGroup(messages = pendingMessages)
 }
 
-// TODO: Use when Combat ONLY
+// TODO(SS-259): Use when Combat ONLY
 internal fun List<ArenaMessageGroupState>.addNewMessageDuringCombat(
     message: ArenaMessageState
 ): List<ArenaMessageGroupState> =
@@ -79,7 +79,7 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
     return mutableMessageGroups
 }
 
-// TODO: Look at this Setup part
+// TODO(SS-259): Look at this Setup part
 private fun List<ArenaMessageGroupState>.appendToGroup(
     messages: List<ArenaMessageState>
 ): List<ArenaMessageGroupState> {

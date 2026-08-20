@@ -12,7 +12,7 @@ internal fun ArenaMatchState.Combat.rollActionFor(
     onAttack: (AttackArguments) -> Unit,
     onUseAbility: (UseAbilityArguments) -> Unit,
 ): () -> Unit {
-    // TODO: Refactor. Likely remove ArenaCombatControl
+    // TODO(SS-257): Refactor. Likely remove ArenaCombatControl
     val targetedOpponentUserId = targetedOpponentUserId ?: return {}
 
     return when (control) {

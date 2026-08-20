@@ -21,8 +21,8 @@ import kotlinx.coroutines.launch
 // Before any roll lands the two dice rest on ones, as a normal attack would show them.
 private const val DIE_RESTING_FACE = 1
 private const val BUZZ_LINGER_MILLIS = 200L
-private const val ROLL_SHAKE_INTERVAL_MILLIS = 220L
-private const val ROLL_SHAKE_COUNT = 7
+private const val ROLL_TUMBLE_IMPULSE_MILLIS = 220L
+private const val MAX_ROLL_TUMBLE_IMPULSES = 27
 
 data class DieState(
     val value: Int = DIE_RESTING_FACE,
@@ -75,18 +75,6 @@ internal class DiceStateHolder {
             isUserRolling = true
             commit()
         }
-    }
-
-    fun startRolling(diceRollState: DiceRollState) {
-        isUserRolling = true
-        firstDieState =
-            firstDieState.startingHold(
-                isRolling = diceRollState.rolls(diePosition = DiePosition.First)
-            )
-        secondDieState =
-            secondDieState.startingHold(
-                isRolling = diceRollState.rolls(diePosition = DiePosition.Second)
-            )
     }
 
     fun applyRoll(diceRollState: DiceRollState) {
@@ -150,6 +138,7 @@ internal class DiceStateHolder {
                         tint = roll.dieColor.toColor(),
                         badge = roll.diceBadge.forPosition(diePosition = diePosition),
                         settleGeneration = settleGeneration + 1,
+                        isRollingLocally = false,
                         isSettling = true,
                     )
                 } else {
@@ -157,6 +146,7 @@ internal class DiceStateHolder {
                         isEnabled = !roll.isSiblingDisabled,
                         tint = if (roll.isSiblingDisabled) null else roll.dieColor.toColor(),
                         badge = null,
+                        isRollingLocally = false,
                         isSettling = false,
                     )
                 }
@@ -168,18 +158,13 @@ internal class DiceStateHolder {
                     tint = roll.dieColor.toColor(),
                     badge = roll.diceBadge.forPosition(diePosition = diePosition),
                     settleGeneration = settleGeneration + 1,
+                    isRollingLocally = false,
                     isSettling = true,
                 )
         }
 
     private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? =
         this?.takeIf { it.diePosition == diePosition }
-
-    private fun DiceRollState.rolls(diePosition: DiePosition): Boolean =
-        when (this) {
-            is DiceRollState.OneDie -> this.diePosition == diePosition
-            is DiceRollState.TwoDice -> true
-        }
 }
 
 @Composable
@@ -187,7 +172,8 @@ internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHo
     val diceStateHolder = remember { DiceStateHolder() }
 
     ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
-    ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder, diceRollState = diceRollState)
+    ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder)
+    ApplyRollWhenResolved(diceStateHolder = diceStateHolder, diceRollState = diceRollState)
 
     return diceStateHolder
 }
@@ -219,22 +205,29 @@ private fun ShakeDiceWhileHeld(diceStateHolder: DiceStateHolder) {
 }
 
 @Composable
-private fun ShakeDiceWhileWaitingForResult(
+private fun ShakeDiceWhileWaitingForResult(diceStateHolder: DiceStateHolder) {
+    val haptics = LocalHaptics.current
+
+    LaunchedEffect(key1 = diceStateHolder.isUserRolling) {
+        if (!diceStateHolder.isUserRolling) return@LaunchedEffect
+
+        haptics.vibrate(strength = HapticStrength.HEAVY)
+        repeat(times = MAX_ROLL_TUMBLE_IMPULSES) {
+            delay(timeMillis = ROLL_TUMBLE_IMPULSE_MILLIS)
+            diceStateHolder.tick()
+        }
+
+        diceStateHolder.setIsUserRollingToFalse()
+    }
+}
+
+@Composable
+private fun ApplyRollWhenResolved(
     diceStateHolder: DiceStateHolder,
     diceRollState: DiceRollState?,
 ) {
-    val haptics = LocalHaptics.current
-
     LaunchedEffect(key1 = diceRollState?.id) {
         if (diceRollState == null) return@LaunchedEffect
-
-        diceStateHolder.startRolling(diceRollState = diceRollState)
-        haptics.vibrate(strength = HapticStrength.HEAVY)
-
-        repeat(times = ROLL_SHAKE_COUNT) {
-            delay(timeMillis = ROLL_SHAKE_INTERVAL_MILLIS)
-            diceStateHolder.tick()
-        }
 
         diceStateHolder.applyRoll(diceRollState = diceRollState)
         diceStateHolder.setIsUserRollingToFalse()

@@ -20,6 +20,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
@@ -65,9 +66,11 @@ internal fun ArenaScreen(
             snackbarHostState = snackbarHostState,
         )
         val uiState by viewModel.uiStateFlow.collectAsState()
+        val timerState = viewModel.timerStateFlow.collectAsState()
 
         ArenaScreen(
             uiState = uiState,
+            timerState = { timerState.value },
             onRetry = viewModel::retry,
             snackbarHostState = snackbarHostState,
             modifier = modifier,
@@ -79,6 +82,7 @@ internal fun ArenaScreen(
 @Composable
 private fun ArenaScreen(
     uiState: UiState<ArenaScreenState>,
+    timerState: () -> ArenaTimerState,
     onRetry: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -89,6 +93,7 @@ private fun ArenaScreen(
         is UiState.Loaded ->
             LoadedArenaScreen(
                 screenState = uiState.data,
+                timerState = timerState,
                 snackbarHostState = snackbarHostState,
                 modifier = modifier,
             )

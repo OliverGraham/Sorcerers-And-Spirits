@@ -19,6 +19,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -206,7 +207,6 @@ private fun PreviewArenaCombat(
     val screenState =
         ArenaScreenState(
             messageGroups = listOf(ArenaMessageGroupState.Setup(messages = allMessages)),
-            secondsRemaining = secondsRemaining,
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = false,
@@ -218,6 +218,7 @@ private fun PreviewArenaCombat(
             ArenaCombat(
                 screenState = screenState,
                 arenaMatchState = state,
+                timerState = { ArenaTimerState(secondsRemaining = secondsRemaining) },
                 modifier =
                     Modifier.fillMaxSize()
                         .paint(

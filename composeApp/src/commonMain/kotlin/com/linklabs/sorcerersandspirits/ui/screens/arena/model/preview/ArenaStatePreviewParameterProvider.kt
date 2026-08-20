@@ -41,14 +41,12 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     private fun getExampleScreenState(
         arenaMatchState: ArenaMatchState,
         messages: List<ArenaMessageState> = getExampleMessages(),
-        secondsRemaining: Int = 20,
         showForfeitDialog: Boolean = false,
         isUserPlayerKnockedOut: Boolean = false,
         hasReadiedForNextMatch: Boolean = false,
     ) =
         ArenaScreenState(
             messageGroups = listOf(ArenaMessageGroupState.Setup(messages = messages)),
-            secondsRemaining = secondsRemaining,
             showForfeitDialog = showForfeitDialog,
             isUserPlayerKnockedOut = isUserPlayerKnockedOut,
             hasReadiedForNextMatch = hasReadiedForNextMatch,

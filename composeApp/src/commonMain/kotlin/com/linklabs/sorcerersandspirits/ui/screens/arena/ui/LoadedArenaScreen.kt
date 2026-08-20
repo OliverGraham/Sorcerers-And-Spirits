@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.preview.ArenaStatePreviewParameterProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.ArenaCombat
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -37,6 +38,7 @@ private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
 @Composable
 internal fun LoadedArenaScreen(
     screenState: ArenaScreenState,
+    timerState: () -> ArenaTimerState,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -52,7 +54,7 @@ internal fun LoadedArenaScreen(
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { _ ->
-            ScreenContent(screenState = screenState)
+            ScreenContent(screenState = screenState, timerState = timerState)
         }
 
         if (screenState.showForfeitDialog) {
@@ -62,7 +64,11 @@ internal fun LoadedArenaScreen(
 }
 
 @Composable
-private fun ScreenContent(screenState: ArenaScreenState, modifier: Modifier = Modifier) {
+private fun ScreenContent(
+    screenState: ArenaScreenState,
+    timerState: () -> ArenaTimerState,
+    modifier: Modifier = Modifier,
+) {
     // TODO: Remove this column and have each ArenaState composable invoke its own container
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)) {
         val transition =
@@ -71,7 +77,11 @@ private fun ScreenContent(screenState: ArenaScreenState, modifier: Modifier = Mo
                 label = ARENA_STATE_TRANSITION_LABEL,
             )
 
-        ArenaStateContent(screenState = screenState, transitionState = transition)
+        ArenaStateContent(
+            screenState = screenState,
+            timerState = timerState,
+            transitionState = transition,
+        )
     }
 }
 
@@ -79,6 +89,7 @@ private fun ScreenContent(screenState: ArenaScreenState, modifier: Modifier = Mo
 @Composable
 private fun ArenaStateContent(
     screenState: ArenaScreenState,
+    timerState: () -> ArenaTimerState,
     transitionState: Transition<ArenaMatchState>,
     modifier: Modifier = Modifier,
 ) {
@@ -92,7 +103,11 @@ private fun ArenaStateContent(
                 arenaState.ArenaChoosingClasses(characterClasses = screenState.characterClasses)
 
             is ArenaMatchState.Combat ->
-                ArenaCombat(screenState = screenState, arenaMatchState = arenaState)
+                ArenaCombat(
+                    screenState = screenState,
+                    arenaMatchState = arenaState,
+                    timerState = timerState,
+                )
 
             is ArenaMatchState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
@@ -101,7 +116,7 @@ private fun ArenaStateContent(
                     finishedState = arenaState,
                     gauntletProgress = screenState.gauntletProgress,
                     hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
-                    secondsRemaining = screenState.secondsRemaining,
+                    secondsRemaining = { timerState().secondsRemaining },
                 )
         }
     }
@@ -113,5 +128,10 @@ private fun ArenaStateContent(
 private fun LoadedArenaScreenCollapsedPreview(
     @PreviewParameter(ArenaStatePreviewParameterProvider::class) screenState: ArenaScreenState
 ) {
-    SorcerersAndSpiritsTheme { LoadedArenaScreen(screenState = screenState) }
+    SorcerersAndSpiritsTheme {
+        LoadedArenaScreen(
+            screenState = screenState,
+            timerState = { ArenaTimerState(secondsRemaining = 0) },
+        )
+    }
 }

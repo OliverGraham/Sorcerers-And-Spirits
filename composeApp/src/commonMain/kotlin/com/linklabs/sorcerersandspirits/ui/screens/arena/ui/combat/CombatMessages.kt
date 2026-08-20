@@ -52,6 +52,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyCo
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.getDisplayString
 import org.jetbrains.compose.resources.painterResource
@@ -86,9 +87,7 @@ internal fun MessagesBar(
     roundNumber: Int,
     turnOwnerCharacterClass: CharacterClassState,
     latestMessage: ArenaMessageState?,
-    secondsRemaining: Int,
-    isTimerVisible: Boolean,
-    isTimerUrgent: Boolean,
+    timerState: () -> ArenaTimerState,
     unreadMessageCount: Int,
     diceHomeBoundsTop: Float?,
     onToggleExpanded: () -> Unit,
@@ -138,9 +137,7 @@ internal fun MessagesBar(
             }
 
             TurnTimer(
-                secondsRemaining = secondsRemaining,
-                isVisible = isTimerVisible,
-                isUrgent = isTimerUrgent,
+                timerState = timerState,
                 modifier = Modifier.align(alignment = Alignment.CenterEnd),
             )
         }

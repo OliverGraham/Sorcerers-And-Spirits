@@ -30,6 +30,7 @@ import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
@@ -38,13 +39,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceSta
 
 private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
 
-// TODO: ArenaScreenState is causing a recomposition for the entire screen from the timer. Why?
-//       Should only be the places that actually use the timer properties
-
 @Composable
 internal fun ArenaCombat(
     screenState: ArenaScreenState,
     arenaMatchState: ArenaMatchState.Combat,
+    timerState: () -> ArenaTimerState,
     modifier: Modifier = Modifier,
 ) {
     val diceStateHolder = rememberDiceStateHolder(diceRollState = arenaMatchState.diceRollState)
@@ -70,6 +69,7 @@ internal fun ArenaCombat(
             ScreenContent(
                 arenaScreenState = screenState,
                 arenaMatchState = arenaMatchState,
+                timerState = timerState,
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 unreadMessageCount =
                     (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0),
@@ -101,6 +101,7 @@ internal fun ArenaCombat(
 private fun SharedTransitionScope.ScreenContent(
     arenaScreenState: ArenaScreenState,
     arenaMatchState: ArenaMatchState.Combat,
+    timerState: () -> ArenaTimerState,
     unreadMessageCount: Int,
     diceHomeBoundsTop: Float?,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
@@ -114,9 +115,7 @@ private fun SharedTransitionScope.ScreenContent(
             roundNumber = arenaMatchState.roundNumber,
             turnOwnerCharacterClass = arenaMatchState.turnOwnerCharacterClass,
             latestMessage = arenaScreenState.latestCombatHeaderMessage,
-            secondsRemaining = arenaScreenState.secondsRemaining,
-            isTimerVisible = arenaScreenState.isTimerVisible,
-            isTimerUrgent = arenaScreenState.isTimerUrgent,
+            timerState = timerState,
             unreadMessageCount = unreadMessageCount,
             diceHomeBoundsTop = diceHomeBoundsTop,
             onToggleExpanded = onToggleExpanded,

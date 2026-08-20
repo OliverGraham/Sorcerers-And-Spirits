@@ -31,6 +31,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroup
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenStateUpdate
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CHOOSING_CLASSES_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
@@ -82,6 +83,9 @@ class ArenaScreenViewModel(
 
     private val _uiStateFlow = MutableStateFlow<UiState<ArenaScreenState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
+
+    private val _timerStateFlow = MutableStateFlow(value = ArenaTimerState(secondsRemaining = 0))
+    val timerStateFlow = _timerStateFlow.asStateFlow()
 
     private val arenaMatchCombatQueue =
         ArenaMatchCombatQueue(
@@ -334,7 +338,6 @@ class ArenaScreenViewModel(
             screenState =
                 ArenaScreenState(
                     arenaMatchState = arenaMatchState,
-                    secondsRemaining = timerDuration,
                     showForfeitDialog = false,
                     isUserPlayerKnockedOut = false,
                     hasReadiedForNextMatch = false,
@@ -490,7 +493,11 @@ class ArenaScreenViewModel(
 
     private fun handleTimerAction(timerAction: TimerAction) {
         when (timerAction) {
-            is TimerAction.Start -> arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
+            is TimerAction.Start -> {
+                _timerStateFlow.value =
+                    ArenaTimerState(secondsRemaining = timerAction.timerDuration)
+                arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
+            }
 
             is TimerAction.Stop -> arenaTimer.stopTimer()
 
@@ -501,9 +508,7 @@ class ArenaScreenViewModel(
     }
 
     private fun updateArenaStateSeconds(secondsRemaining: Int) {
-        _uiStateFlow.updateLoaded { screenState ->
-            screenState.copy(secondsRemaining = secondsRemaining)
-        }
+        _timerStateFlow.value = ArenaTimerState(secondsRemaining = secondsRemaining)
     }
 
     private suspend fun onTimerExpiration() {

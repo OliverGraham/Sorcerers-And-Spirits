@@ -114,7 +114,6 @@ private fun ArenaMatch.ChoosingClasses.transitionWaitingToChoosingClasses(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toChoosingClassesState(userPlayerId = userId),
-                secondsRemaining = CHOOSING_CLASSES_TIMER_DURATION_SECONDS,
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
             ),
@@ -163,7 +162,6 @@ private fun ArenaMatch.Combat.transitionChoosingClassesToCombat(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toCombatState(userId = userId),
-                secondsRemaining = COMBAT_TIMER_DURATION_SECONDS,
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
             ),
@@ -191,7 +189,6 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toFinishedState(),
-                secondsRemaining = MATCH_FINISHED_TIMER_DURATION_SECONDS,
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
             ),
@@ -206,7 +203,6 @@ private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toFinishedState(),
-                secondsRemaining = MATCH_FINISHED_TIMER_DURATION_SECONDS,
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
             ),
@@ -221,7 +217,6 @@ private fun ArenaMatch.ChoosingClasses.transitionFinishedToChoosingClasses(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toChoosingClassesState(userPlayerId = userId),
-                secondsRemaining = CHOOSING_CLASSES_TIMER_DURATION_SECONDS,
                 hasReadiedForNextMatch = false,
                 messageGroups =
                     emptyList<ArenaMessageGroupState>()

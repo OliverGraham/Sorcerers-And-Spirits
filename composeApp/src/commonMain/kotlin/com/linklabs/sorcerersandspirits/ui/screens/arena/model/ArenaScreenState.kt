@@ -20,7 +20,6 @@ internal const val GAUNTLET_FINISHED_TIMER_DURATION_SECONDS = 60
 //       - all default arguments?
 @Immutable
 data class ArenaScreenState(
-    val secondsRemaining: Int,
     val showForfeitDialog: Boolean,
     val isUserPlayerKnockedOut: Boolean,
     val hasReadiedForNextMatch: Boolean,
@@ -31,8 +30,6 @@ data class ArenaScreenState(
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
     val animatingMessage: ArenaMessageState? = null,
 ) {
-    val isTimerVisible: Boolean = secondsRemaining in 1..TIMER_VISIBLE_THRESHOLD_SECONDS
-    val isTimerUrgent: Boolean = secondsRemaining in 1..TIMER_URGENT_THRESHOLD_SECONDS
     val isMatchEnding: Boolean = (arenaMatchState as? ArenaMatchState.Combat)?.isMatchOver == true
 
     val latestCombatHeaderMessage = messageGroups.getLatestCombatHeaderMessage()

@@ -35,7 +35,7 @@ internal fun MatchFinishedContent(
     finishedState: ArenaMatchState.Finished,
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
-    secondsRemaining: Int,
+    secondsRemaining: () -> Int,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -84,7 +84,7 @@ private fun MatchDecisionControls(
     canStartNextMatch: Boolean,
     isFinalMatch: Boolean,
     hasReadiedForNextMatch: Boolean,
-    secondsRemaining: Int,
+    secondsRemaining: () -> Int,
     modifier: Modifier = Modifier,
 ) {
     val actions = ArenaActionsProvider.current
@@ -111,7 +111,8 @@ private fun MatchDecisionControls(
         return
     }
 
-    val isCountdownRunning = secondsRemaining > 0
+    val currentSeconds = secondsRemaining()
+    val isCountdownRunning = currentSeconds > 0
     val nextStepName = if (isFinalMatch) "new gauntlet" else "next match"
 
     if (hasReadiedForNextMatch) {
@@ -129,7 +130,7 @@ private fun MatchDecisionControls(
             if (isCountdownRunning) {
                 CountdownText(
                     prefix = "Starting the $nextStepName in",
-                    secondsRemaining = secondsRemaining,
+                    secondsRemaining = currentSeconds,
                 )
             }
         }
@@ -146,7 +147,7 @@ private fun MatchDecisionControls(
         if (isCountdownRunning) {
             CountdownText(
                 prefix = "The $nextStepName starts in",
-                secondsRemaining = secondsRemaining,
+                secondsRemaining = currentSeconds,
             )
         }
         Row(
@@ -285,7 +286,7 @@ private fun MatchFinishedContentPreview() {
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 0,
+            secondsRemaining = { 0 },
         )
     }
 }
@@ -298,7 +299,7 @@ private fun MatchFinishedContentFinalPreview() {
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 3),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 0,
+            secondsRemaining = { 0 },
         )
     }
 }
@@ -311,7 +312,7 @@ private fun MatchFinishedContentCountdownPreview() {
             finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 45,
+            secondsRemaining = { 45 },
         )
     }
 }
@@ -324,7 +325,7 @@ private fun MatchFinishedContentWaitingPreview() {
             finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = true,
-            secondsRemaining = 45,
+            secondsRemaining = { 45 },
         )
     }
 }
@@ -338,7 +339,7 @@ private fun MatchFinishedContentLoneSurvivorPreview() {
                 exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 0,
+            secondsRemaining = { 0 },
         )
     }
 }

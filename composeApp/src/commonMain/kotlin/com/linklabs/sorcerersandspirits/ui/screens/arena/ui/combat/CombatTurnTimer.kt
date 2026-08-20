@@ -17,6 +17,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 
 private const val TIMER_PULSE_TRANSITION_LABEL = "TurnTimerPulseTransition"
 private const val TIMER_PULSE_SCALE_LABEL = "TurnTimerPulseScale"
@@ -25,26 +26,18 @@ private const val TIMER_PULSE_MAX_SCALE = 1.3f
 private val TIMER_FONT_SIZE = 28.sp
 private val TIMER_CORNER_PADDING = 12.dp
 
-/**
- * The combat turn clock, pinned in the top-end corner. It shows only in the final stretch of a turn
- * ([isVisible], the last ~15s) and pulses in the player's [error] color as it runs out ([isUrgent],
- * the last ~10s). Presentation only — the 45s turn timer itself ticks in the ViewModel (SS-155).
- */
 @Composable
-internal fun TurnTimer(
-    secondsRemaining: Int,
-    isVisible: Boolean,
-    isUrgent: Boolean,
-    modifier: Modifier = Modifier,
-) {
-    if (!isVisible) return
+internal fun TurnTimer(timerState: () -> ArenaTimerState, modifier: Modifier = Modifier) {
+    val timer = timerState()
+    if (!timer.isVisible) return
 
+    val isUrgent = timer.isUrgent
     val pulseScale = if (isUrgent) timerPulseScale() else 1f
     val color =
         if (isUrgent) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
     AnimatedSeconds(
-        seconds = secondsRemaining,
+        seconds = timer.secondsRemaining,
         modifier = modifier.padding(all = TIMER_CORNER_PADDING),
     ) { seconds ->
         Text(

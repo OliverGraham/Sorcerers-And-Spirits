@@ -193,6 +193,7 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toFinishedState(),
+                hasReadiedForNextMatch = false,
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
                 animatingMessage = null,
@@ -208,6 +209,7 @@ private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
         screenState =
             currentScreenState.copy(
                 arenaMatchState = toFinishedState(),
+                hasReadiedForNextMatch = false,
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
             ),

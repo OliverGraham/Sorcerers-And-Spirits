@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,7 +72,6 @@ internal fun FlashMessageOverlay(
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
-    val onFlashComplete = ArenaActionsProvider.current.onFlashComplete
     var overlaySize by remember { mutableStateOf(value = IntSize.Zero) }
 
     var shownMessage by remember { mutableStateOf<ArenaMessageState?>(value = null) }
@@ -94,103 +94,59 @@ internal fun FlashMessageOverlay(
                 overlaySize = overlaySize,
             )
 
-        val scale = remember(message.id) { Animatable(initialValue = FLASH_ENTER_SCALE) }
-        val alpha = remember(message.id) { Animatable(initialValue = 0f) }
-        val swingDegrees = remember(message.id) { Animatable(initialValue = 0f) }
-
-        LaunchedEffect(message.id) {
-            coroutineScope {
-                launch { alpha.animateTo(targetValue = 1f) }
-                scale.animateTo(
-                    targetValue = 1f,
-                    animationSpec =
-                        spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow,
-                        ),
-                )
-            }
-
-            swingDegrees.animateTo(targetValue = 0f, animationSpec = swingSpec())
-
-            coroutineScope {
-                launch {
-                    alpha.animateTo(
-                        targetValue = 0f,
-                        animationSpec = tween(durationMillis = FLASH_FADE_MILLIS),
-                    )
-                }
-                scale.animateTo(
-                    targetValue = FLASH_EXIT_SCALE,
-                    animationSpec = tween(durationMillis = FLASH_FADE_MILLIS),
-                )
-            }
-
-            onFlashComplete()
-        }
+        val messageId = message.id
+        val textAnimation = TextAnimation.rememberTextAnimation(messageId = messageId)
+        AnimateText(messageId = messageId, textAnimation = textAnimation)
 
         ConfettiBurst(triggerKey = message, origin = point, modifier = Modifier.fillMaxSize())
 
         FlashText(
             message = message,
-            swingDegrees = swingDegrees.value,
+            swingDegrees = textAnimation.swingDegrees.value,
             modifier =
                 Modifier.centeredAt(point = { point }).graphicsLayer {
-                    this.alpha = alpha.value
-                    scaleX = scale.value
-                    scaleY = scale.value
+                    alpha = textAnimation.alpha.value
+                    scaleX = textAnimation.scale.value
+                    scaleY = textAnimation.scale.value
                 },
         )
     }
 }
 
 @Composable
-private fun FlashText(
-    message: ArenaMessageState,
-    swingDegrees: Float,
-    modifier: Modifier = Modifier,
-) {
-    val baseStyle =
-        TextStyle(
-            fontSize = flashFontSize,
-            fontWeight = FontWeight.Black,
-            fontStyle = FontStyle.Italic,
-            letterSpacing = 1.sp,
-            textAlign = TextAlign.Center,
-        )
-    val outlineWidthPx =
-        with(LocalDensity.current) { flashFontSize.toPx() } * FLASH_OUTLINE_FRACTION
+private fun AnimateText(messageId: String, textAnimation: TextAnimation) {
+    val onFlashComplete = ArenaActionsProvider.current.onFlashComplete
 
-    val text = message.toStringResource()
-    val fillColor = message.actingClassType?.toColor() ?: Color.White
+    LaunchedEffect(key1 = messageId) {
+        coroutineScope {
+            launch { textAnimation.alpha.animateTo(targetValue = 1f) }
+            textAnimation.scale.animateTo(
+                targetValue = 1f,
+                animationSpec =
+                    spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow,
+                    ),
+            )
+        }
 
-    Box(modifier = modifier.graphicsLayer { rotationZ = swingDegrees }) {
-        Text(
-            text = text,
-            style =
-                baseStyle.copy(
-                    color = Color.Black,
-                    drawStyle = Stroke(width = outlineWidthPx),
-                    shadow =
-                        Shadow(
-                            color = Color.Black,
-                            offset = Offset(x = 0f, y = 4f),
-                            blurRadius = 12f,
-                        ),
-                ),
-        )
-        Text(text = text, style = baseStyle.copy(color = fillColor))
+        textAnimation.swingDegrees.animateTo(targetValue = 0f, animationSpec = swingSpec())
+
+        coroutineScope {
+            launch {
+                textAnimation.alpha.animateTo(
+                    targetValue = 0f,
+                    animationSpec = tween(durationMillis = FLASH_FADE_MILLIS),
+                )
+            }
+            textAnimation.scale.animateTo(
+                targetValue = FLASH_EXIT_SCALE,
+                animationSpec = tween(durationMillis = FLASH_FADE_MILLIS),
+            )
+        }
+
+        onFlashComplete()
     }
-}
-
-private fun swingSpec() = keyframes {
-    durationMillis = FLASH_SWING_MILLIS
-    0f at 0
-    FLASH_SWING_DEGREES at 130
-    FLASH_SWING_DEGREES at 320
-    FLASH_SWING_DEGREES * 0.6f at 500
-    FLASH_SWING_DEGREES * 0.35f at 680
-    0f at FLASH_SWING_MILLIS
 }
 
 @Composable
@@ -225,6 +181,45 @@ private fun ConfettiBurst(triggerKey: Any, origin: Offset, modifier: Modifier = 
     }
 }
 
+@Composable
+private fun FlashText(
+    message: ArenaMessageState,
+    swingDegrees: Float,
+    modifier: Modifier = Modifier,
+) {
+    val baseStyle =
+        TextStyle(
+            fontSize = flashFontSize,
+            fontWeight = FontWeight.Black,
+            fontStyle = FontStyle.Italic,
+            letterSpacing = 1.sp,
+            textAlign = TextAlign.Center,
+        )
+    val outlineWidthPx =
+        with(receiver = LocalDensity.current) { flashFontSize.toPx() } * FLASH_OUTLINE_FRACTION
+
+    val text = message.toStringResource()
+    val fillColor = message.actingClassType?.toColor() ?: Color.White
+
+    Box(modifier = modifier.graphicsLayer { rotationZ = swingDegrees }) {
+        Text(
+            text = text,
+            style =
+                baseStyle.copy(
+                    color = Color.Black,
+                    drawStyle = Stroke(width = outlineWidthPx),
+                    shadow =
+                        Shadow(
+                            color = Color.Black,
+                            offset = Offset(x = 0f, y = 4f),
+                            blurRadius = 12f,
+                        ),
+                ),
+        )
+        Text(text = text, style = baseStyle.copy(color = fillColor))
+    }
+}
+
 private fun FlashAnchor.resolvePoint(
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     overlaySize: IntSize,
@@ -245,6 +240,29 @@ private fun Modifier.centeredAt(point: () -> Offset): Modifier = layout { measur
             y = (target.y - placeable.height / 2f).roundToInt(),
         )
     }
+}
+
+@Stable
+private class TextAnimation {
+    val scale = Animatable(initialValue = FLASH_ENTER_SCALE)
+    val alpha = Animatable(initialValue = 0f)
+    val swingDegrees = Animatable(initialValue = 0f)
+
+    companion object {
+        @Composable
+        fun rememberTextAnimation(messageId: String): TextAnimation =
+            remember(key1 = messageId) { TextAnimation() }
+    }
+}
+
+private fun swingSpec() = keyframes {
+    durationMillis = FLASH_SWING_MILLIS
+    0f at 0
+    FLASH_SWING_DEGREES at 130
+    FLASH_SWING_DEGREES at 320
+    FLASH_SWING_DEGREES * 0.6f at 500
+    FLASH_SWING_DEGREES * 0.35f at 680
+    0f at FLASH_SWING_MILLIS
 }
 
 private class ConfettiParticle(

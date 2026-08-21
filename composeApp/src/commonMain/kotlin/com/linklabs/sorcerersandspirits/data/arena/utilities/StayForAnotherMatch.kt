@@ -109,20 +109,25 @@ internal class StayForAnotherMatch(private val userId: String) {
         )
     }
 
+    // TODO: add messages?
     private fun ArenaMatchEntity.withUpdatedPlayers(
         updatedPlayers: Map<String, ArenaPlayerEntity>
     ): ArenaMatchEntity =
         when (this) {
-            is ArenaMatchEntity.WaitingForAllPlayers -> copy(playerEntitiesMap = updatedPlayers)
+            is ArenaMatchEntity.WaitingForAllPlayers ->
+                copy(playerEntitiesMap = updatedPlayers, newMessages = emptyList())
 
-            is ArenaMatchEntity.ChoosingClasses -> copy(playerEntitiesMap = updatedPlayers)
+            is ArenaMatchEntity.ChoosingClasses ->
+                copy(playerEntitiesMap = updatedPlayers, newMessages = emptyList())
 
             is ArenaMatchEntity.Combat ->
                 copy(
                     playerEntitiesMap =
-                        updatedPlayers.mapValues { it.value as ArenaPlayerEntity.Selected }
+                        updatedPlayers.mapValues { it.value as ArenaPlayerEntity.Selected },
+                    newMessages = emptyList(),
                 )
 
-            is ArenaMatchEntity.Finished -> copy(playerEntitiesMap = updatedPlayers)
+            is ArenaMatchEntity.Finished ->
+                copy(playerEntitiesMap = updatedPlayers, newMessages = emptyList())
         }
 }

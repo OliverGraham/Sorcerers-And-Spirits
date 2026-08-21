@@ -55,22 +55,23 @@ internal class ConnectToArena(
             ArenaPlayerEntity.Unselected(displayName = displayName, userId = userId)
 
         val connectedMessage =
-            ArenaMessageEntity.ConnectedToArena(
-                id = messagesReference.addNewKey(),
-                displayName = displayName,
+            listOf(
+                element =
+                    ArenaMessageEntity.ConnectedToArena(
+                        id = messagesReference.addNewKey(),
+                        displayName = displayName,
+                    )
             )
-        val updatedMessages =
-            newMessages.appendCapped(newMessages = listOf(element = connectedMessage))
 
         return if (updatedPlayers.size == expectedNumberOfPlayers) {
             ArenaMatchEntity.ChoosingClasses(
                 playerEntitiesMap = updatedPlayers,
                 activePlayerUserId = userId,
-                newMessages = updatedMessages,
+                newMessages = connectedMessage,
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
-            copy(playerEntitiesMap = updatedPlayers, newMessages = updatedMessages)
+            copy(playerEntitiesMap = updatedPlayers, newMessages = connectedMessage)
         }
     }
 }

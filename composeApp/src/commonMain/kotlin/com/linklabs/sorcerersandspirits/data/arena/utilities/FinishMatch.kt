@@ -14,8 +14,9 @@ internal class FinishMatch {
         if (this !is ArenaMatchEntity.Combat) return this
         if (!isMatchOver) return this
 
+        // TODO: add messages?
         return ArenaMatchEntity.Finished(
-            newMessages = newMessages,
+            newMessages = emptyList(),
             playerEntitiesMap = playerEntitiesMap,
             matchNumberInGauntlet = matchNumberInGauntlet,
         )

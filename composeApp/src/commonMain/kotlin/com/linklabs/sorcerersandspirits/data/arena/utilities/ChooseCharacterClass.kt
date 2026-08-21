@@ -36,8 +36,7 @@ internal class ChooseCharacterClass(
         ArenaMatchEntity {
         val messageGenerator =
             ChooseCharacterClassMessageGenerator(
-                messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName),
-                previousMessages = newMessages,
+                messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
             )
 
         val updatedPlayers = playerEntitiesMap.toMutableMap()
@@ -101,15 +100,10 @@ internal class ChooseCharacterClass(
     }
 
     private inner class ChooseCharacterClassMessageGenerator(
-        private val messagesReference: DatabaseReference,
-        private val previousMessages: List<ArenaMessageEntity>,
+        private val messagesReference: DatabaseReference
     ) {
-        fun generateCharacterSelectionMessage(): List<ArenaMessageEntity> {
-            val selectionMessage =
-                listOf(element = messagesReference.generateCharacterSelectionMessage())
-
-            return previousMessages.appendCapped(newMessages = selectionMessage)
-        }
+        fun generateCharacterSelectionMessage(): List<ArenaMessageEntity> =
+            listOf(element = messagesReference.generateCharacterSelectionMessage())
 
         fun generateCombatStartingMessages(
             startingCharacterClass: CharacterClassEntity

@@ -6,12 +6,6 @@ import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
-internal const val MAX_RETAINED_MESSAGES = 30
-
-internal fun List<ArenaMessageEntity>.appendCapped(
-    newMessages: List<ArenaMessageEntity>
-): List<ArenaMessageEntity> = (this + newMessages).takeLast(n = MAX_RETAINED_MESSAGES)
-
 internal fun DatabaseReference.addNewKey(): String =
     push().key ?: error("Failed to generate Firebase push key")
 

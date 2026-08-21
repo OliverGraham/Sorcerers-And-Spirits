@@ -26,6 +26,9 @@ sealed interface ArenaMessageState {
     val flashAnchor: FlashAnchor
         get() = FlashAnchor.Center
 
+    val isAvatarCompletedByGesture: Boolean
+        get() = false
+
     fun isFlash() = animation.isFlash()
 
     fun isAvatar() = animation.isAvatar()
@@ -133,6 +136,7 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = attackerUserId)
+        override val isAvatarCompletedByGesture: Boolean = true
     }
 
     @Immutable
@@ -145,6 +149,7 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = dodgerUserId)
+        override val isAvatarCompletedByGesture: Boolean = true
     }
 
     @Immutable
@@ -408,6 +413,7 @@ sealed interface ArenaMessageState {
             override val collapsingUserId: String? =
                 if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
             override val actingClassType: CharacterClassType = attackerClassType
+            override val isAvatarCompletedByGesture: Boolean = true
         }
 
         @Immutable
@@ -426,6 +432,7 @@ sealed interface ArenaMessageState {
 
             override val collapsingUserId: String? =
                 if (messageType == NormalRollMessageType.Knockout) illusionistUserId else null
+            override val isAvatarCompletedByGesture: Boolean = true
         }
     }
 

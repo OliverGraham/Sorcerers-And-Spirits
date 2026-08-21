@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
@@ -119,11 +120,13 @@ internal fun rememberAvatarGesture(
     if (animatingMessage == null || !animatingMessage.isAvatar()) return gestureState
 
     val density = LocalDensity.current
+    val onAvatarComplete = ArenaActionsProvider.current.onAvatarComplete
 
     LaunchedEffect(key1 = animatingMessage) {
         val mirrorImageMessage = animatingMessage.getMirrorImageMessageOrNull(userId = userId)
         if (mirrorImageMessage != null) {
             gestureState.playMirrorImage(message = mirrorImageMessage, density = density)
+            if (animatingMessage.isAvatarCompletedByGesture) onAvatarComplete()
             return@LaunchedEffect
         }
 
@@ -142,6 +145,7 @@ internal fun rememberAvatarGesture(
             density = density,
             reactionDelayMillis = animatingMessage.defenderReactionDelayMillis(),
         )
+        if (animatingMessage.isAvatarCompletedByGesture) onAvatarComplete()
     }
 
     return gestureState

@@ -222,10 +222,7 @@ private fun ShakeDiceWhileWaitingForResult(diceStateHolder: DiceStateHolder) {
 }
 
 @Composable
-private fun ApplyRollWhenResolved(
-    diceStateHolder: DiceStateHolder,
-    diceRollState: DiceRollState?,
-) {
+private fun ApplyRollWhenResolved(diceStateHolder: DiceStateHolder, diceRollState: DiceRollState?) {
     LaunchedEffect(key1 = diceRollState?.id) {
         if (diceRollState == null) return@LaunchedEffect
 

@@ -87,7 +87,10 @@ internal fun ArenaMatch.toUpdatedScreenState(
                 is ArenaMatch.Finished -> updateFinished(currentScreenState = currentScreenState)
 
                 is ArenaMatch.Combat ->
-                    handleImpossibleScreenUpdate(currentScreenState = currentScreenState)
+                    transitionFinishedToCombat(
+                        userId = userId,
+                        currentScreenState = currentScreenState,
+                    )
 
                 is ArenaMatch.WaitingForAllPlayers ->
                     handleImpossibleScreenUpdate(currentScreenState = currentScreenState)
@@ -192,6 +195,7 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
                 arenaMatchState = toFinishedState(),
                 messageGroups =
                     currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
+                animatingMessage = null,
             ),
         timerAction = TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS),
     )
@@ -225,6 +229,23 @@ private fun ArenaMatch.ChoosingClasses.transitionFinishedToChoosingClasses(
                 gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
             ),
         timerAction = TimerAction.Start(timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS),
+    )
+
+private fun ArenaMatch.Combat.transitionFinishedToCombat(
+    userId: String,
+    currentScreenState: ArenaScreenState,
+): ArenaScreenStateUpdate =
+    ArenaScreenStateUpdate(
+        screenState =
+            currentScreenState.copy(
+                arenaMatchState = toCombatState(userId = userId),
+                hasReadiedForNextMatch = false,
+                messageGroups =
+                    emptyList<ArenaMessageGroupState>()
+                        .appendNewMessages(incomingMessages = messages),
+                gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+            ),
+        timerAction = TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS),
     )
 
 private fun ArenaMatch.Finished.updateFinished(

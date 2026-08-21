@@ -44,13 +44,15 @@ internal class ArenaMatchCombatQueue(
     }
 
     fun onFlashComplete() {
-        flashSignal?.complete(value = Unit)
+        val signal = flashSignal
         flashSignal = null
+        signal?.complete(value = Unit)
     }
 
     fun onAvatarComplete() {
-        avatarSignal?.complete(value = Unit)
+        val signal = avatarSignal
         avatarSignal = null
+        signal?.complete(value = Unit)
     }
 
     private fun ArenaAnimationState.toAnimationSignals() = buildList {

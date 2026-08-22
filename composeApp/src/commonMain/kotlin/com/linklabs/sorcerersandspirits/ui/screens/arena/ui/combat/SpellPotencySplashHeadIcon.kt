@@ -178,7 +178,7 @@ private fun SpellPotencySplashPreview() {
             splashDamage = 3,
             splashTargetUserIds = headIconPlayers.map { it.userId },
             isMainTargetKnockedOut = false,
-            animation = ArenaAnimationState.FlashAndAvatar,
+            animation = ArenaAnimationState.FlashAndAvatar(),
             gestures = emptyMap(),
         )
     }

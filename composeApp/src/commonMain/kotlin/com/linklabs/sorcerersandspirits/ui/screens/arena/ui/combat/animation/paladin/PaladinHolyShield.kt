@@ -880,7 +880,7 @@ private fun PaladinHolyShieldPreview(didSurvive: Boolean) {
                     if (didSurvive) {
                         ArenaAnimationState.Flash
                     } else {
-                        ArenaAnimationState.FlashAndAvatar
+                        ArenaAnimationState.FlashAndAvatar()
                     },
                 gestures = emptyMap(),
             )

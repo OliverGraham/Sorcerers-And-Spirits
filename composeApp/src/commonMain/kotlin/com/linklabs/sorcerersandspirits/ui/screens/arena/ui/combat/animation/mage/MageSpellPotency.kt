@@ -300,7 +300,7 @@ private fun MageSpellPotencyPreview(element: MageSpellElement, mainDamage: Int) 
                 splashDamage = mainDamage / 2,
                 splashTargetUserIds = emptyList(),
                 isMainTargetKnockedOut = false,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )
         },

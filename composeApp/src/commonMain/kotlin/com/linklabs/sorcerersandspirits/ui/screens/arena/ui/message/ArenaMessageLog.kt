@@ -352,7 +352,7 @@ private fun ArenaMessageLogPreview() {
                                     id = "5",
                                     gestures = emptyMap(),
                                     attackerUserId = "duelist",
-                                    animation = ArenaAnimationState.FlashAndAvatar,
+                                    animation = ArenaAnimationState.FlashAndAvatar(),
                                 ),
                             ),
                     ),

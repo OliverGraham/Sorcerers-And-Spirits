@@ -329,7 +329,7 @@ private fun DuelistNormalAttackPreview(normalRollMessageType: NormalRollMessageT
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
-                animation = ArenaAnimationState.Avatar,
+                animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
             )
         },

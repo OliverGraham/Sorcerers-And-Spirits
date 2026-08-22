@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
+// TODO: name onFlashAnimationComplete and onAvatarAnimationComplete
 internal data class ArenaActions(
     val onSelectCharacterClass: (CharacterClassState) -> Unit = {},
     val onChooseCharacterClass: (PlayerState, CharacterClassState) -> Unit = EmptyTwoArgumentLambda,

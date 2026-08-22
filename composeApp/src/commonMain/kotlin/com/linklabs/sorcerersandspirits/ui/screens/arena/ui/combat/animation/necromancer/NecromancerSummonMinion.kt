@@ -417,7 +417,7 @@ private fun NecromancerSummonMinionPreview(outcome: SummonMinionOutcome) {
                         SummonMinionOutcome.Golem -> 6
                     },
                 outcome = outcome,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )
         },

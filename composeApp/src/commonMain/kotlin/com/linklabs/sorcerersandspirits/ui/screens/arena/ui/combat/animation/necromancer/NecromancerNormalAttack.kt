@@ -377,7 +377,7 @@ private fun NecromancerNormalAttackPreview(normalRollMessageType: NormalRollMess
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
-                animation = ArenaAnimationState.Avatar,
+                animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
             )
         },

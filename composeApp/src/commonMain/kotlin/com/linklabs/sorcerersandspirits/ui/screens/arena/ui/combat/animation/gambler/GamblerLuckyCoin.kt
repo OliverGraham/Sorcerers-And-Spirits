@@ -767,7 +767,7 @@ private fun LuckyCoinHighRollerPaybackPreview() {
                 attackerUserId = PREVIEW_TARGET_ID,
                 singleDie = PREVIEW_THROW_DAMAGE,
                 isKnockout = true,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )
         },

@@ -415,9 +415,12 @@ class ArenaScreenViewModel(
                 isActionInFlight = false,
             )
 
+        val continuouslyAnimatingMessage =
+            currentScreenState.animatingMessage?.takeIf { it.isContinuous() }
+
         return currentScreenState.copy(
             arenaMatchState = finalArenaMatchUpdate,
-            animatingMessage = null,
+            animatingMessage = continuouslyAnimatingMessage,
         )
     }
 

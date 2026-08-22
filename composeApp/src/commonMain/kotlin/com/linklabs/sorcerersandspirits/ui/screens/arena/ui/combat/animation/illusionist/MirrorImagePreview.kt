@@ -54,7 +54,7 @@ private fun MirrorImageSeatPreview(outcome: NormalRollMessageType) {
                 messageType = outcome,
                 baseRoll = 8,
                 doublesBonus = 0,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )
         },

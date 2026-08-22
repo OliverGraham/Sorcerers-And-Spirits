@@ -361,7 +361,7 @@ private fun MageTeleportPreview(didEscape: Boolean) {
                 id = id,
                 mageUserId = PREVIEW_ACTOR_ID,
                 didDefenderEscape = didEscape,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
             )
         },
     ) { message ->

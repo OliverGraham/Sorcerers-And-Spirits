@@ -9,11 +9,21 @@ sealed interface ArenaAnimationState {
 
     data object Flash : ArenaAnimationState
 
-    data object Avatar : ArenaAnimationState
+    data class Avatar(val isContinuous: Boolean = false) : ArenaAnimationState
 
-    data object FlashAndAvatar : ArenaAnimationState
+    data class FlashAndAvatar(val isContinuous: Boolean = false) : ArenaAnimationState
 
-    fun isFlash() = this == Flash || this == FlashAndAvatar
+    fun isFlash() = this == Flash || this is FlashAndAvatar
 
-    fun isAvatar() = this == Avatar || this == FlashAndAvatar
+    fun isAvatar() = this is Avatar || this is FlashAndAvatar
+
+    fun isAnimationContinuous() =
+        when (this) {
+            is Avatar -> isContinuous
+
+            is FlashAndAvatar -> isContinuous
+
+            is None,
+            is Flash -> false
+        }
 }

@@ -368,7 +368,7 @@ private fun DuelistPrepareAttackPreview(isSuccessful: Boolean) {
                 firstDie = if (isSuccessful) 6 else 3,
                 secondDie = if (isSuccessful) 5 else 2,
                 isSuccessful = isSuccessful,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )
         },

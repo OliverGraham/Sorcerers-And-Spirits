@@ -153,8 +153,8 @@ private fun BoxScope.OverlayContent(
 ) {
     val animatingMessage = arenaScreenState.animatingMessage
 
-    // TODO(SS-256): is this it?
-    val isPlayingBack = animatingMessage != null
+    // TODO(SS-256): is this it? - maybe is done now, Claude
+    val isPlayingBack = animatingMessage != null && !animatingMessage.isContinuous()
     CombatButtons(
         state = arenaMatchState,
         diceStateHolder = diceStateHolder,
@@ -212,7 +212,8 @@ private fun SharedTransitionScope.CombatContent(
                     onInspect = onInspect,
                     isTargetable =
                         arenaMatchState.canTurnOwnerTargetAnOpponent(
-                            isAnAnimationActive = animatingMessage != null
+                            isAnAnimationActive =
+                                animatingMessage != null && !animatingMessage.isContinuous()
                         ),
                     onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
                     onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,

@@ -722,7 +722,7 @@ private fun GamblerAllInPreview(outcome: AllInOutcome) {
                         AllInOutcome.DoubleAttack -> 6
                     },
                 outcome = outcome,
-                animation = ArenaAnimationState.FlashAndAvatar,
+                animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )
         },

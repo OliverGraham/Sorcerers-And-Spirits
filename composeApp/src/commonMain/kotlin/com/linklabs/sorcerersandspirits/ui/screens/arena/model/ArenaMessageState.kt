@@ -189,7 +189,7 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class Trigger(
-            override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
+            override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
             override val id: String,
             override val gamblerUserId: String,
         ) : LuckyCoin

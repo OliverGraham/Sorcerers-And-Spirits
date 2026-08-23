@@ -25,8 +25,6 @@ internal class DiceStateHolder {
     var firstDieState by mutableStateOf(value = DieState())
     var secondDieState by mutableStateOf(value = DieState())
 
-    private var hasReportedSettleForRoll = true
-
     val isRolling: Boolean
         get() = isHolding || isUserRolling
 
@@ -52,7 +50,6 @@ internal class DiceStateHolder {
     }
 
     fun applyRoll(diceRollState: DiceRollState) {
-        hasReportedSettleForRoll = false
         firstDieState =
             firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
         secondDieState =
@@ -73,18 +70,17 @@ internal class DiceStateHolder {
     }
 
     internal fun markDieSettled(diePosition: DiePosition, onDiceSettled: () -> Unit) {
+        if (!dieStateAt(diePosition = diePosition).isSettling) return
+
         when (diePosition) {
             DiePosition.First -> firstDieState = firstDieState.copy(isSettling = false)
             DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)
         }
 
         // TODO(SS-262): Need to make sure this works with Impersonate and whatever else. This kicks
-        // off the
-        //       ArenaMatchCombatQueue's onCombatActionResolved()
-
+        //  off the ArenaMatchCombatQueue's onCombatActionResolved()
         val isAnyDieStillSettling = firstDieState.isSettling || secondDieState.isSettling
-        if (!isAnyDieStillSettling && !hasReportedSettleForRoll) {
-            hasReportedSettleForRoll = true
+        if (!isAnyDieStillSettling) {
             onDiceSettled()
         }
     }

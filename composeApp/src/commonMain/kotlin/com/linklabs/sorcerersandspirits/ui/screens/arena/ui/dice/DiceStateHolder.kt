@@ -144,7 +144,7 @@ internal class DiceStateHolder {
                 } else {
                     copy(
                         isEnabled = !roll.isSiblingDisabled,
-                        tint = if (roll.isSiblingDisabled) null else roll.dieColor.toColor(),
+                        tint = if (roll.isSiblingDisabled) null else tint,
                         badge = null,
                         isRollingLocally = false,
                         isSettling = false,

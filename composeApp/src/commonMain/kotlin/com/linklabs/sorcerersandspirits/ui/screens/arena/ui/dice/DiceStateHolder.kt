@@ -131,24 +131,28 @@ internal class DiceStateHolder {
     private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState =
         when (roll) {
             is DiceRollState.OneDie ->
-                if (diePosition == roll.diePosition) {
-                    copy(
-                        value = roll.value,
-                        isEnabled = true,
-                        tint = roll.dieColor.toColor(),
-                        badge = roll.diceBadge.forPosition(diePosition = diePosition),
-                        settleGeneration = settleGeneration + 1,
-                        isRollingLocally = false,
-                        isSettling = true,
-                    )
-                } else {
-                    copy(
-                        isEnabled = !roll.isSiblingDisabled,
-                        tint = if (roll.isSiblingDisabled) null else tint,
-                        badge = null,
-                        isRollingLocally = false,
-                        isSettling = false,
-                    )
+                when {
+                    diePosition == roll.diePosition ->
+                        copy(
+                            value = roll.value,
+                            isEnabled = true,
+                            tint = roll.dieColor.toColor(),
+                            badge = roll.diceBadge.forPosition(diePosition = diePosition),
+                            settleGeneration = settleGeneration + 1,
+                            isRollingLocally = false,
+                            isSettling = true,
+                        )
+
+                    roll.isSiblingDisabled ->
+                        copy(
+                            isEnabled = false,
+                            tint = null,
+                            badge = null,
+                            isRollingLocally = false,
+                            isSettling = false,
+                        )
+
+                    else -> this
                 }
 
             is DiceRollState.TwoDice ->

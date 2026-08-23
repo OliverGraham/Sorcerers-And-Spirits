@@ -100,6 +100,8 @@ class ArenaScreenViewModel(
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
     private val classCopy by lazy { getCharacterClassCopyUseCase() }
 
+    // TODO: Reinstate computerOpponentHandler later
+    /*
     private val computerOpponentHandler =
         ComputerOpponentHandler(
             arenaId = arguments.arenaId,
@@ -109,6 +111,7 @@ class ArenaScreenViewModel(
             performCombatActionUseCase = performCombatActionUseCase,
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
         )
+    */
 
     private val chooseCharacterClassHandler =
         ChooseCharacterClassHandler(
@@ -195,8 +198,7 @@ class ArenaScreenViewModel(
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
-        computerOpponentHandler.cancel()
-        // playbackSequencer.cancel()
+        // computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -248,7 +250,7 @@ class ArenaScreenViewModel(
     fun onStayForAnotherMatch() {
         viewModelScope.launch {
             stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
-            computerOpponentHandler.readyUpForNextMatch()
+            // computerOpponentHandler.readyUpForNextMatch()
 
             _uiStateFlow.updateLoaded { screenState ->
                 screenState.copy(hasReadiedForNextMatch = true)
@@ -299,7 +301,7 @@ class ArenaScreenViewModel(
             handleScreenUpdate(userId = userId, currentScreenState = currentScreenState)
         }
 
-        coordinateComputerOpponents()
+        // coordinateComputerOpponents()
     }
 
     private suspend fun ArenaMatch.handleNewArenaScreen(userId: String) {
@@ -444,6 +446,7 @@ class ArenaScreenViewModel(
         pendingStatsStore.save(delta = sessionStats.peekDelta())
     }
 
+    /*
     private fun coordinateComputerOpponents() {
         val updatedScreenState = _uiStateFlow.getLoadedStateOrNull() ?: return
         computerOpponentHandler.onArenaState(
@@ -451,6 +454,7 @@ class ArenaScreenViewModel(
             characterClasses = updatedScreenState.characterClasses,
         )
     }
+    */
 
     // TODO(SS-260): if there's one match error, just kill the whole thing? Or determine what to do
     // if
@@ -545,8 +549,7 @@ class ArenaScreenViewModel(
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
         finishWriteJob?.cancel()
-        computerOpponentHandler.cancel()
-        // playbackSequencer.cancel()
+        // computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()

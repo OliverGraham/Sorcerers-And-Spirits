@@ -85,6 +85,10 @@ internal fun MageTeleportOverlay(
         state.play(scene = scene, message = animatingMessage)
 
         onAvatarAnimationComplete()
+
+        if (animatingMessage.isContinuous()) {
+            state.swirlForever()
+        }
     }
 
     Canvas(modifier = modifier) { drawTeleport(state = state) }
@@ -132,13 +136,13 @@ private suspend fun TeleportPortalState.open(scene: TeleportScene) {
         targetValue = 1f,
         animationSpec = tween(durationMillis = PORTAL_OPEN_MILLIS, easing = FastOutSlowInEasing),
     )
-    swirlForever()
 }
 
 private suspend fun TeleportPortalState.hold(scene: TeleportScene) {
     this.scene = scene
-    if (open.value == 0f) open.snapTo(targetValue = 1f)
-    swirlForever()
+    if (open.value == 0f) {
+        open.snapTo(targetValue = 1f)
+    }
 }
 
 private suspend fun TeleportPortalState.swirlForever() {

@@ -70,8 +70,6 @@ internal class DiceStateHolder {
     }
 
     internal fun markDieSettled(diePosition: DiePosition, onDiceSettled: () -> Unit) {
-        if (!dieStateAt(diePosition = diePosition).isSettling) return
-
         when (diePosition) {
             DiePosition.First -> firstDieState = firstDieState.copy(isSettling = false)
             DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)

@@ -224,7 +224,9 @@ internal fun Die3d(
                 )
             }
 
-            currentOnSettled()
+            if (enabled) {
+                currentOnSettled()
+            }
 
             if (center.value != homeCenter) {
                 if (shouldGlideHome) {

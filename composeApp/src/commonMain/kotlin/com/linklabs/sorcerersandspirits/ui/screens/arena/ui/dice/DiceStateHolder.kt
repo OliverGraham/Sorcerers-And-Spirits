@@ -1,38 +1,12 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
-import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-// Before any roll lands the two dice rest on ones, as a normal attack would show them.
-private const val DIE_RESTING_FACE = 1
-private const val BUZZ_LINGER_MILLIS = 200L
-private const val ROLL_TUMBLE_IMPULSE_MILLIS = 220L
-private const val MAX_ROLL_TUMBLE_IMPULSES = 27
-
-data class DieState(
-    val value: Int = DIE_RESTING_FACE,
-    val isEnabled: Boolean = true,
-    val tint: Color? = null,
-    val badge: DiceBadgeState? = null,
-    val settleGeneration: Int = 0,
-    val isRollingLocally: Boolean = false,
-    val isSettling: Boolean = false,
-)
 
 @Stable
 internal class DiceStateHolder {
@@ -169,68 +143,4 @@ internal class DiceStateHolder {
 
     private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? =
         this?.takeIf { it.diePosition == diePosition }
-}
-
-@Composable
-internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHolder {
-    val diceStateHolder = remember { DiceStateHolder() }
-
-    ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
-    ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder)
-    ApplyRollWhenResolved(diceStateHolder = diceStateHolder, diceRollState = diceRollState)
-
-    return diceStateHolder
-}
-
-@Composable
-private fun ShakeDiceWhileHeld(diceStateHolder: DiceStateHolder) {
-    val shakeDetector = LocalShakeDetector.current
-    val haptics = LocalHaptics.current
-
-    LaunchedEffect(key1 = diceStateHolder.isHolding) {
-        if (!diceStateHolder.isHolding) return@LaunchedEffect
-
-        var stopBuzzJob: Job? = null
-        try {
-            shakeDetector.shakes.collect {
-                diceStateHolder.registerShake()
-                haptics.startContinuous(strength = HapticStrength.MEDIUM)
-                stopBuzzJob?.cancel()
-                stopBuzzJob = launch {
-                    delay(timeMillis = BUZZ_LINGER_MILLIS)
-                    haptics.stopContinuous()
-                }
-            }
-        } finally {
-            stopBuzzJob?.cancel()
-            haptics.stopContinuous()
-        }
-    }
-}
-
-@Composable
-private fun ShakeDiceWhileWaitingForResult(diceStateHolder: DiceStateHolder) {
-    val haptics = LocalHaptics.current
-
-    LaunchedEffect(key1 = diceStateHolder.isUserRolling) {
-        if (!diceStateHolder.isUserRolling) return@LaunchedEffect
-
-        haptics.vibrate(strength = HapticStrength.HEAVY)
-        repeat(times = MAX_ROLL_TUMBLE_IMPULSES) {
-            delay(timeMillis = ROLL_TUMBLE_IMPULSE_MILLIS)
-            diceStateHolder.tick()
-        }
-
-        diceStateHolder.setIsUserRollingToFalse()
-    }
-}
-
-@Composable
-private fun ApplyRollWhenResolved(diceStateHolder: DiceStateHolder, diceRollState: DiceRollState?) {
-    LaunchedEffect(key1 = diceRollState?.id) {
-        if (diceRollState == null) return@LaunchedEffect
-
-        diceStateHolder.applyRoll(diceRollState = diceRollState)
-        diceStateHolder.setIsUserRollingToFalse()
-    }
 }

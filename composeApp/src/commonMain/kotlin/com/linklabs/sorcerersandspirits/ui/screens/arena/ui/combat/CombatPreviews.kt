@@ -265,7 +265,8 @@ private fun previewCombatState(
         roundNumber = 1,
         isNewRound = true,
         isMatchOver = false,
-        turnOwnerUserId = userId,
+        attackerUserId = userId,
+        turnOwnerClassType = players.first().characterClass.type,
         lockedTargetUserId = null,
         diceRollState = null,
     )

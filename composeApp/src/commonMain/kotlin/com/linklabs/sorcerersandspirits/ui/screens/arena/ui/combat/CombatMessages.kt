@@ -47,7 +47,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
@@ -85,7 +85,7 @@ private val headerBookendReserve = 60.dp
 @Composable
 internal fun MessagesBar(
     roundNumber: Int,
-    turnOwnerCharacterClass: CharacterClassState,
+    turnOwnerClassType: CharacterClassType,
     latestMessage: ArenaMessageState?,
     timerState: () -> ArenaTimerState,
     unreadMessageCount: Int,
@@ -112,7 +112,7 @@ internal fun MessagesBar(
             )
 
             AnimatedContent(
-                targetState = roundNumber to turnOwnerCharacterClass,
+                targetState = roundNumber to turnOwnerClassType,
                 transitionSpec = {
                     (slideInVertically { height -> height } + fadeIn()) togetherWith
                         (slideOutVertically { height -> -height } + fadeOut())
@@ -122,10 +122,9 @@ internal fun MessagesBar(
                     Modifier.align(alignment = Alignment.Center)
                         .fillMaxWidth()
                         .padding(horizontal = headerBookendReserve),
-            ) { (round, characterClass) ->
+            ) { (round, classType) ->
                 Text(
-                    text =
-                        roundTurnHeaderText(roundNumber = round, characterClass = characterClass),
+                    text = roundTurnHeaderText(roundNumber = round, classType = classType),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -173,11 +172,8 @@ internal fun MessagesBar(
  * color. Falls back to just the round when no turn owner is known (e.g. between matches).
  */
 @Composable
-private fun roundTurnHeaderText(
-    roundNumber: Int,
-    characterClass: CharacterClassState,
-): AnnotatedString {
-    val className = characterClass.className
+private fun roundTurnHeaderText(roundNumber: Int, classType: CharacterClassType): AnnotatedString {
+    val className = classType.name
     val fullText =
         stringResource(resource = Res.string.arena_log_header, roundNumber.toString(), className)
     val classNameStart = fullText.lastIndexOf(string = className)
@@ -189,9 +185,7 @@ private fun roundTurnHeaderText(
         }
 
         append(text = fullText.substring(startIndex = 0, endIndex = classNameStart))
-        withStyle(style = SpanStyle(color = characterClass.type.toColor())) {
-            append(text = className)
-        }
+        withStyle(style = SpanStyle(color = classType.toColor())) { append(text = className) }
         append(text = fullText.substring(startIndex = classNameStart + className.length))
     }
 }

@@ -78,7 +78,7 @@ internal fun CombatAvatarColumn(
     animatingMessage: ArenaMessageState?,
     userPlayerId: String,
     activeUserIds: Set<String>,
-    turnOwnerUserId: String,
+    attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
@@ -91,7 +91,7 @@ internal fun CombatAvatarColumn(
             isTopSeat = true,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
-            turnOwnerUserId = turnOwnerUserId,
+            attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
         )
@@ -104,7 +104,7 @@ internal fun CombatAvatarColumn(
             isTopSeat = false,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
-            turnOwnerUserId = turnOwnerUserId,
+            attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
         )
@@ -121,7 +121,7 @@ private fun ColumnScope.SeatedAvatar(
     isTopSeat: Boolean,
     userPlayerId: String,
     activeUserIds: Set<String>,
-    turnOwnerUserId: String,
+    attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
 ) {
@@ -132,7 +132,7 @@ private fun ColumnScope.SeatedAvatar(
             isTopSeat = isTopSeat,
             isUserPlayer = player.userId == userPlayerId,
             isActiveRoller = player.userId in activeUserIds,
-            isTurnOwner = player.userId == turnOwnerUserId,
+            isAttacker = player.userId == attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
@@ -161,7 +161,7 @@ private fun LargeAvatar(
     isTopSeat: Boolean,
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
-    isTurnOwner: Boolean,
+    isAttacker: Boolean,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
@@ -173,7 +173,7 @@ private fun LargeAvatar(
         AvatarStatsBar(
             characterClass = player.characterClass,
             isUserPlayer = isUserPlayer,
-            isTurnOwner = isTurnOwner,
+            isAttacker = isAttacker,
             classColor = player.characterClass.type.toColor(),
             modifier = Modifier.sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
         )
@@ -204,7 +204,7 @@ private fun LargeAvatar(
 private fun AvatarStatsBar(
     characterClass: CharacterClassState,
     isUserPlayer: Boolean,
-    isTurnOwner: Boolean,
+    isAttacker: Boolean,
     classColor: Color,
     modifier: Modifier = Modifier,
 ) {
@@ -233,7 +233,7 @@ private fun AvatarStatsBar(
             classColor = classColor,
         )
 
-        AnimatedVisibility(visible = isTurnOwner) {
+        AnimatedVisibility(visible = isAttacker) {
             AttacksStatPill(count = characterClass.attacksRemaining, classColor = classColor)
         }
     }

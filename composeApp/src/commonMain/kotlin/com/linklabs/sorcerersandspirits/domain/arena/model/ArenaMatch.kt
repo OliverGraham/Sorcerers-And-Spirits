@@ -1,5 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+
 sealed interface ArenaMatch {
     val messages: List<IncomingArenaMessage>
     val playerMap: Map<String, ArenaPlayer>
@@ -35,4 +37,16 @@ sealed interface ArenaMatch {
         override val playerMap: Map<String, ArenaPlayer>,
         override val matchNumberInGauntlet: Int = 1,
     ) : ArenaMatch
+}
+
+// TODO: I don't like this, but it's not a priority. The Messages Header needs this for name and
+//  color of whose turn it is. This isn't a clear, direct way of doing it - so can be refactored.
+fun ArenaMatch.Combat.turnOwnerClassType(): CharacterClassType {
+    val turnOwnerUserId =
+        when (val action = nextCombatAction) {
+            is NextCombatAction.Idle -> action.activeUserIds.first()
+            is NextCombatAction.NormalAttack -> action.attackTurn.turnOwnerUserId
+            is NextCombatAction.AbilityRoll -> action.attackTurn.turnOwnerUserId
+        }
+    return playerMap.getValue(key = turnOwnerUserId).characterClass.type
 }

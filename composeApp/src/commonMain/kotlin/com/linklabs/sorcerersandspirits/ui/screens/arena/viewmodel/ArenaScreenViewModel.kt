@@ -3,8 +3,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.attackerUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
-import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
+import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerClassType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
@@ -24,7 +25,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaSessionStats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
-import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
@@ -111,7 +111,7 @@ class ArenaScreenViewModel(
             performCombatActionUseCase = performCombatActionUseCase,
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
         )
-    */
+     */
 
     private val chooseCharacterClassHandler =
         ChooseCharacterClassHandler(
@@ -400,18 +400,21 @@ class ArenaScreenViewModel(
             currentScreenState.arenaMatchState as? ArenaMatchState.Combat
                 ?: return currentScreenState
 
-        val userId = currentArenaCombatState.userPlayerId
+        val nextCombatAction = arenaMatchCombatUpdate.nextCombatAction
         val finalArenaMatchUpdate =
             currentArenaCombatState.copy(
                 playerMap =
                     arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
-                combatActionState = arenaMatchCombatUpdate.nextCombatAction.toCombatActionState(),
+                combatActionState = nextCombatAction.toCombatActionState(),
                 roundNumber = arenaMatchCombatUpdate.roundNumber,
                 isNewRound = arenaMatchCombatUpdate.isNewRound,
                 isMatchOver = arenaMatchCombatUpdate.isMatchOver,
-                turnOwnerUserId = arenaMatchCombatUpdate.nextCombatAction.turnOwnerUserId(),
+                attackerUserId = nextCombatAction.attackerUserId(),
+                turnOwnerClassType = arenaMatchCombatUpdate.turnOwnerClassType(),
                 lockedTargetUserId =
-                    arenaMatchCombatUpdate.nextCombatAction.lockedTargetUserId(userId = userId),
+                    nextCombatAction.lockedTargetUserId(
+                        userId = currentArenaCombatState.userPlayerId
+                    ),
                 selectedOpponentUserId =
                     currentArenaCombatState.selectedOpponentUserId, // TODO(SS-260): Correct?
                 isActionInFlight = false,
@@ -454,7 +457,7 @@ class ArenaScreenViewModel(
             characterClasses = updatedScreenState.characterClasses,
         )
     }
-    */
+     */
 
     // TODO(SS-260): if there's one match error, just kill the whole thing? Or determine what to do
     // if

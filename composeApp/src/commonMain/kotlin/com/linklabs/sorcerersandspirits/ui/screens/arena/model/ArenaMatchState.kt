@@ -35,7 +35,8 @@ sealed interface ArenaMatchState {
         val roundNumber: Int,
         val isNewRound: Boolean,
         val isMatchOver: Boolean,
-        val turnOwnerUserId: String,
+        val attackerUserId: String,
+        val turnOwnerClassType: CharacterClassType,
         val lockedTargetUserId: String?,
         val diceRollState: DiceRollState?,
         val selectedOpponentUserId: String? = null,
@@ -62,8 +63,7 @@ sealed interface ArenaMatchState {
         val isTeleportDoublesBonusSpent =
             combatActionState.teleportAction()?.let { it.attackerDoublesBonus == 0 } ?: false
 
-        val turnOwner = playerMap.getValue(key = turnOwnerUserId)
-        val turnOwnerCharacterClass = turnOwner.characterClass
+        val attacker = playerMap.getValue(key = attackerUserId)
 
         val targetedUserId = getTargetedPlayerUserId()
 
@@ -110,11 +110,11 @@ private fun ArenaMatchState.Combat.getTargetedPlayerUserId() =
     lockedTargetUserId
         ?: selectedOpponentUserId
         ?: playerMap.values
-            .singleOrNull { it.userId != turnOwnerUserId && it.characterClass.isConscious }
+            .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
             ?.userId
 
 private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) =
-    playerMap.filterKeys { it != turnOwnerUserId && it != targetedUserId }.values.toList()
+    playerMap.filterKeys { it != attackerUserId && it != targetedUserId }.values.toList()
 
 internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Teleport? {
     val abilityRoll = this as? CombatActionState.AbilityRoll ?: return null

@@ -2,8 +2,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.attackerUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
-import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerUserId
+import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerClassType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.toState
 
@@ -274,7 +275,8 @@ private fun ArenaMatch.Combat.toCombatState(userId: String) =
         roundNumber = roundNumber,
         isNewRound = isNewRound,
         isMatchOver = isMatchOver,
-        turnOwnerUserId = nextCombatAction.turnOwnerUserId(),
+        attackerUserId = nextCombatAction.attackerUserId(),
+        turnOwnerClassType = turnOwnerClassType(),
         lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
         diceRollState = diceRoll?.toState(),
         isActionInFlight = false,

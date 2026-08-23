@@ -113,7 +113,7 @@ private fun SharedTransitionScope.ScreenContent(
     Column(modifier = modifier.fillMaxSize()) {
         MessagesBar(
             roundNumber = arenaMatchState.roundNumber,
-            turnOwnerCharacterClass = arenaMatchState.turnOwnerCharacterClass,
+            turnOwnerClassType = arenaMatchState.turnOwnerClassType,
             latestMessage = arenaScreenState.latestCombatHeaderMessage,
             timerState = timerState,
             unreadMessageCount = unreadMessageCount,
@@ -198,7 +198,7 @@ private fun SharedTransitionScope.CombatContent(
     Box(modifier = modifier) {
         AnimatedContent(
             targetState = arenaMatchState,
-            contentKey = { "${it.turnOwnerUserId}|${it.targetedUserId}" },
+            contentKey = { "${it.attackerUserId}|${it.targetedUserId}" },
             label = AVATAR_SEATING_TRANSITION_LABEL,
             modifier = Modifier.fillMaxSize(),
         ) { animatingState ->
@@ -245,11 +245,11 @@ private fun CombatStage(
     Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
             topPlayer = arenaMatchState.targetedPlayer,
-            bottomPlayer = arenaMatchState.turnOwner,
+            bottomPlayer = arenaMatchState.attacker,
             animatingMessage = animatingMessage,
             userPlayerId = arenaMatchState.userPlayerId,
             activeUserIds = arenaMatchState.activeUserIds,
-            turnOwnerUserId = arenaMatchState.turnOwnerUserId,
+            attackerUserId = arenaMatchState.attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,

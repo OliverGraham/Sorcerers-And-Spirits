@@ -135,8 +135,7 @@ internal fun Die3d(
     // The die rests on its current face the first time it lays out, then tumbles for every change
     // after that: while held, and on any value change once a roll (by any player) lands (SS-112).
     var isFirstLayout by remember { mutableStateOf(value = true) }
-    // The value the die last settled on, so a later change can be told apart from a release.
-    var previousValue by remember { mutableStateOf(value = value) }
+    var previousSettleKey by remember { mutableStateOf(value = settleKey) }
     // The die's live velocity is handed from the held shake-physics loop to the release settle, so
     // releasing continues the motion the shaking built up rather than starting over.
     val velocity = remember { mutableStateOf(value = Offset.Zero) }
@@ -173,14 +172,14 @@ internal fun Die3d(
             )
         } else if (isFirstLayout) {
             isFirstLayout = false
-            previousValue = value
+            previousSettleKey = settleKey
             velocity.value = Offset.Zero
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
             center.snapTo(targetValue = homeCenter)
         } else {
-            val hasValueChanged = value != previousValue
-            previousValue = value
+            val hasSettled = settleKey != previousSettleKey
+            previousSettleKey = settleKey
             val heldVelocity = velocity.value
             velocity.value = Offset.Zero
 
@@ -188,7 +187,7 @@ internal fun Die3d(
                 when {
                     !enabled -> Offset.Zero
                     heldVelocity.getDistance() > restSpeed -> heldVelocity
-                    hasValueChanged -> randomThrowVelocity(density = density.density)
+                    hasSettled -> randomThrowVelocity(density = density.density)
                     else -> Offset.Zero
                 }
 

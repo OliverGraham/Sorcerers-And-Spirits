@@ -399,7 +399,9 @@ sealed interface ArenaMessageState {
             override val illusionistUserId: String,
             val firstDie: Int?,
             val secondDie: Int?,
-        ) : MirrorImage
+        ) : MirrorImage {
+            override val isAvatarCompletedByGesture: Boolean = true
+        }
 
         @Immutable
         data class Pass(

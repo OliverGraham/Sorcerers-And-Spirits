@@ -23,6 +23,7 @@ internal class AllInActivated(
                 ArenaMessage.AllIn(
                     gamblerUserId = attackerUserId,
                     gamblerName = attacker.className,
+                    classType = attacker.type,
                     singleDie = result,
                 )
         )

@@ -58,6 +58,7 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                 ArenaMessage.PrepareAttack(
                     duelistUserId = attackerUserId,
                     duelistName = attacker.className,
+                    classType = attacker.type,
                     targetUserId = defenderUserId,
                     targetClassName = defender.className,
                     firstDie = result.firstDie,

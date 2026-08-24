@@ -75,6 +75,7 @@ internal class EncoreEffectState {
 internal fun EncoreOverlay(
     animatingMessage: ArenaMessageState.Encore,
     modifier: Modifier = Modifier,
+    accentColor: Color = animatingMessage.actingClassType.toColor(),
 ) {
     val state = remember { EncoreEffectState() }
     val crowd = remember { encoreCrowd() }
@@ -83,10 +84,7 @@ internal fun EncoreOverlay(
     val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
-        state.play(
-            message = animatingMessage,
-            accentColor = animatingMessage.actingClassType.toColor(),
-        )
+        state.play(message = animatingMessage, accentColor = accentColor)
         onAvatarAnimationComplete()
     }
 
@@ -257,21 +255,35 @@ private fun BardEncoreFailurePreview() {
     BardEncorePreview(isSuccessful = false)
 }
 
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun BardEncorePreview(isSuccessful: Boolean) {
+private fun IllusionistEncorePreview() {
+    BardEncorePreview(isSuccessful = true, accentClass = CharacterClassType.Illusionist)
+}
+
+@Composable
+private fun BardEncorePreview(
+    isSuccessful: Boolean,
+    accentClass: CharacterClassType = CharacterClassType.Bard,
+) {
     val avatars = rememberSoloAvatar()
     AnimationPreview(
-        accentClass = CharacterClassType.Bard,
+        accentClass = accentClass,
         avatars = avatars,
         buildMessage = { id ->
             ArenaMessageState.Encore.Roll(
                 id = id,
                 bardUserId = PREVIEW_ACTOR_ID,
+                actingClassType = accentClass,
                 encoreDie = if (isSuccessful) 6 else 2,
                 isSuccessful = isSuccessful,
             )
         },
     ) { message ->
-        EncoreOverlay(animatingMessage = message, modifier = Modifier.fillMaxSize())
+        EncoreOverlay(
+            animatingMessage = message,
+            accentColor = accentClass.toColor(),
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }

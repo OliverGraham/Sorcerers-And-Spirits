@@ -144,6 +144,28 @@ are archived in [COMPLETED.md](COMPLETED.md).
   (SS-165, SS-216); this is the animation-only follow-up. Ship interactive previews
   ([[combat-animation-previews]]).
 
+### SS-265 — SpellPotency: possible accent/color palette update when impersonated
+
+- [ ] Not completed
+- **Goal:** SpellPotency's overlay tints from a random *elemental* palette (`element.palette().glow`
+  in `animation/mage/MageSpellPotency.kt`), not the acting class color, so the borrowed-ability
+  accent fix (SS-262) does not touch it. Decide whether an impersonating Illusionist should get a
+  distinct palette (e.g. Illusionist-blue elemental variant) instead of the standard Mage elements.
+- **Source:** `animation/mage/MageSpellPotency.kt` (`mageElementFor`, `MageSpellElement.palette()`).
+  The actor's real class is now available on the message via `actingClassType` (SS-262). Related:
+  SS-262, [[illusionist-borrows-weapons]]. Ship interactive previews ([[combat-animation-previews]]).
+
+### SS-266 — SummonMinion: Illusionist portal should be illusionist blue, not green
+
+- [ ] Not completed
+- **Goal:** When the Illusionist impersonates Summon Minion, the summoning portal should render in
+  Illusionist blue rather than the Necromancer green. Currently the portal color is baked to the
+  necromancer palette regardless of the actor.
+- **Source:** `animation/necromancer/NecromancerSummonMinion.kt` (`summonMinionScene` / portal
+  draw). The actor's real class is available on the message via `actingClassType` (SS-262); thread a
+  portal color off it (necro green vs illusionist blue). Related: SS-262,
+  [[illusionist-borrows-weapons]]. Ship interactive previews ([[combat-animation-previews]]).
+
 ### SS-185 — Pare back which messages flash
 
 - [ ] Not completed

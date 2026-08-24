@@ -98,6 +98,7 @@ internal fun PrepareAttackOverlay(
     animatingMessage: ArenaMessageState.PrepareAttack,
     duelistBounds: Rect,
     targetBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { PrepareAttackEffectState() }
@@ -109,7 +110,7 @@ internal fun PrepareAttackOverlay(
             prepareAttackScene(
                 duelistBounds = duelistBounds,
                 targetBounds = targetBounds,
-                accentColor = CharacterClassType.Duelist.toColor(),
+                accentColor = accentColor,
                 density = density,
             ) ?: return@LaunchedEffect
 
@@ -352,15 +353,25 @@ private fun DuelistPrepareAttackWhiffPreview() {
     DuelistPrepareAttackPreview(isSuccessful = false)
 }
 
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun DuelistPrepareAttackPreview(isSuccessful: Boolean) {
+private fun IllusionistPrepareAttackPreview() {
+    DuelistPrepareAttackPreview(isSuccessful = true, accentClass = CharacterClassType.Illusionist)
+}
+
+@Composable
+private fun DuelistPrepareAttackPreview(
+    isSuccessful: Boolean,
+    accentClass: CharacterClassType = CharacterClassType.Duelist,
+) {
     val avatars = rememberDuoAvatars()
     AnimationPreview(
-        accentClass = CharacterClassType.Duelist,
+        accentClass = accentClass,
         avatars = avatars,
         buildMessage = { id ->
             ArenaMessageState.PrepareAttack(
                 id = id,
+                actingClassType = accentClass,
                 duelistUserId = PREVIEW_ACTOR_ID,
                 duelistName = "Duelist",
                 targetUserId = PREVIEW_TARGET_ID,
@@ -377,6 +388,7 @@ private fun DuelistPrepareAttackPreview(isSuccessful: Boolean) {
             animatingMessage = message,
             duelistBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             targetBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
+            accentColor = accentClass.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

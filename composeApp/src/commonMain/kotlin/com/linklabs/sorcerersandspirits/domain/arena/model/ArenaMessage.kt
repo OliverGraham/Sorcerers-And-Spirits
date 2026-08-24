@@ -126,11 +126,16 @@ sealed interface ArenaMessage {
 
     sealed interface Encore : ArenaMessage {
         val bardUserId: String
+        val classType: CharacterClassType
 
-        data class Trigger(override val bardUserId: String) : Encore
+        data class Trigger(
+            override val bardUserId: String,
+            override val classType: CharacterClassType,
+        ) : Encore
 
         data class Roll(
             override val bardUserId: String,
+            override val classType: CharacterClassType,
             val encoreDie: Int,
             val isSuccessful: Boolean,
         ) : Encore
@@ -205,12 +210,17 @@ sealed interface ArenaMessage {
         ) : HolyShield
     }
 
-    data class AllIn(val gamblerUserId: String, val gamblerName: String, val singleDie: Int) :
-        ArenaMessage
+    data class AllIn(
+        val gamblerUserId: String,
+        val gamblerName: String,
+        val classType: CharacterClassType,
+        val singleDie: Int,
+    ) : ArenaMessage
 
     data class PrepareAttack(
         val duelistUserId: String,
         val duelistName: String,
+        val classType: CharacterClassType,
         val targetUserId: String,
         val targetClassName: String,
         val firstDie: Int,

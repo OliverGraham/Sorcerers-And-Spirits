@@ -165,6 +165,7 @@ sealed interface ArenaMessageState {
     data class AllIn(
         override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
         override val id: String,
+        override val actingClassType: CharacterClassType,
         val gamblerUserId: String,
         val gamblerName: String,
         val singleDie: Int,
@@ -173,7 +174,6 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState {
         override val collapsingUserId: String? =
             if (outcome == AllInOutcome.SelfKnockout) gamblerUserId else null
-        override val actingClassType: CharacterClassType = CharacterClassType.Gambler
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = gamblerUserId)
     }
 
@@ -230,6 +230,7 @@ sealed interface ArenaMessageState {
     data class PrepareAttack(
         override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
         override val id: String,
+        override val actingClassType: CharacterClassType,
         val duelistUserId: String,
         val duelistName: String,
         val targetUserId: String,
@@ -240,7 +241,6 @@ sealed interface ArenaMessageState {
         override val gestures: Map<String, AvatarGesture>,
     ) : ArenaMessageState {
         override val collapsingUserId: String? = if (isSuccessful) targetUserId else null
-        override val actingClassType: CharacterClassType = CharacterClassType.Duelist
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = duelistUserId)
     }
 
@@ -297,7 +297,6 @@ sealed interface ArenaMessageState {
         val bardUserId: String
 
         override val actingClassType: CharacterClassType
-            get() = CharacterClassType.Bard
 
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = bardUserId)
@@ -308,6 +307,7 @@ sealed interface ArenaMessageState {
                 ArenaAnimationState.FlashAndAvatar(isContinuous = true),
             override val id: String,
             override val bardUserId: String,
+            override val actingClassType: CharacterClassType,
         ) : Encore
 
         @Immutable
@@ -315,6 +315,7 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
             override val id: String,
             override val bardUserId: String,
+            override val actingClassType: CharacterClassType,
             val encoreDie: Int,
             val isSuccessful: Boolean,
         ) : Encore
@@ -666,6 +667,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState =
                 id = id,
                 gamblerUserId = gamblerUserId,
                 gamblerName = gamblerName,
+                actingClassType = classType,
                 singleDie = singleDie,
                 outcome = outcome,
                 gestures = gestures,
@@ -725,6 +727,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState =
             }
             ArenaMessageState.PrepareAttack(
                 id = id,
+                actingClassType = classType,
                 duelistUserId = duelistUserId,
                 duelistName = duelistName,
                 targetUserId = targetUserId,
@@ -774,12 +777,17 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState =
         }
 
         is ArenaMessage.Encore.Trigger ->
-            ArenaMessageState.Encore.Trigger(id = id, bardUserId = bardUserId)
+            ArenaMessageState.Encore.Trigger(
+                id = id,
+                bardUserId = bardUserId,
+                actingClassType = classType,
+            )
 
         is ArenaMessage.Encore.Roll ->
             ArenaMessageState.Encore.Roll(
                 id = id,
                 bardUserId = bardUserId,
+                actingClassType = classType,
                 encoreDie = encoreDie,
                 isSuccessful = isSuccessful,
             )

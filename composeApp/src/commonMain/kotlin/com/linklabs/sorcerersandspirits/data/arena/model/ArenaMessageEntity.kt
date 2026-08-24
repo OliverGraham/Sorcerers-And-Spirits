@@ -215,16 +215,22 @@ sealed interface ArenaMessageEntity {
     @SerialName(value = ENCORE)
     sealed interface Encore : ArenaMessageEntity {
         val bardUserId: String
+        val classType: CharacterClassType
 
         @Serializable
         @SerialName(value = ENCORE_TRIGGER)
-        data class Trigger(override val id: String, override val bardUserId: String) : Encore
+        data class Trigger(
+            override val id: String,
+            override val bardUserId: String,
+            override val classType: CharacterClassType,
+        ) : Encore
 
         @Serializable
         @SerialName(value = ENCORE_ROLL)
         data class Roll(
             override val id: String,
             override val bardUserId: String,
+            override val classType: CharacterClassType,
             val encoreDie: Int,
             val isSuccessful: Boolean,
         ) : Encore
@@ -333,6 +339,7 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val gamblerUserId: String,
         val gamblerName: String,
+        val classType: CharacterClassType,
         val singleDie: Int,
     ) : ArenaMessageEntity
 
@@ -342,6 +349,7 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val duelistUserId: String,
         val duelistName: String,
+        val classType: CharacterClassType,
         val targetUserId: String,
         val targetClassName: String,
         val firstDie: Int,
@@ -535,11 +543,12 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.Encore.Trigger ->
-                ArenaMessage.Encore.Trigger(bardUserId = bardUserId)
+                ArenaMessage.Encore.Trigger(bardUserId = bardUserId, classType = classType)
 
             is ArenaMessageEntity.Encore.Roll ->
                 ArenaMessage.Encore.Roll(
                     bardUserId = bardUserId,
+                    classType = classType,
                     encoreDie = encoreDie,
                     isSuccessful = isSuccessful,
                 )
@@ -622,6 +631,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.AllIn(
                     gamblerUserId = gamblerUserId,
                     gamblerName = gamblerName,
+                    classType = classType,
                     singleDie = singleDie,
                 )
 
@@ -629,6 +639,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.PrepareAttack(
                     duelistUserId = duelistUserId,
                     duelistName = duelistName,
+                    classType = classType,
                     targetUserId = targetUserId,
                     targetClassName = targetClassName,
                     firstDie = firstDie,
@@ -807,12 +818,17 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
             )
 
         is ArenaMessage.Encore.Trigger ->
-            ArenaMessageEntity.Encore.Trigger(id = id, bardUserId = bardUserId)
+            ArenaMessageEntity.Encore.Trigger(
+                id = id,
+                bardUserId = bardUserId,
+                classType = classType,
+            )
 
         is ArenaMessage.Encore.Roll ->
             ArenaMessageEntity.Encore.Roll(
                 id = id,
                 bardUserId = bardUserId,
+                classType = classType,
                 encoreDie = encoreDie,
                 isSuccessful = isSuccessful,
             )
@@ -900,6 +916,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 gamblerUserId = gamblerUserId,
                 gamblerName = gamblerName,
+                classType = classType,
                 singleDie = singleDie,
             )
 
@@ -908,6 +925,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 duelistUserId = duelistUserId,
                 duelistName = duelistName,
+                classType = classType,
                 targetUserId = targetUserId,
                 targetClassName = targetClassName,
                 firstDie = firstDie,

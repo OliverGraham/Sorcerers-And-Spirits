@@ -113,8 +113,7 @@ internal fun AllInOverlay(
     animatingMessage: ArenaMessageState.AllIn,
     avatarBounds: Rect,
     modifier: Modifier = Modifier,
-    accentColor: Color =
-        animatingMessage.actingClassType.toColor(), // TODO(SS-262): Illusionist color?
+    accentColor: Color = animatingMessage.actingClassType.toColor(),
 ) {
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current
@@ -704,15 +703,28 @@ private fun GamblerAllInNoEffectPreview() {
     GamblerAllInPreview(outcome = AllInOutcome.NoEffect)
 }
 
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun GamblerAllInPreview(outcome: AllInOutcome) {
+private fun IllusionistAllInPreview() {
+    GamblerAllInPreview(
+        outcome = AllInOutcome.DoubleAttack,
+        accentClass = CharacterClassType.Illusionist,
+    )
+}
+
+@Composable
+private fun GamblerAllInPreview(
+    outcome: AllInOutcome,
+    accentClass: CharacterClassType = CharacterClassType.Gambler,
+) {
     val avatars = rememberSoloAvatar()
     AnimationPreview(
-        accentClass = CharacterClassType.Gambler,
+        accentClass = accentClass,
         avatars = avatars,
         buildMessage = { id ->
             ArenaMessageState.AllIn(
                 id = id,
+                actingClassType = accentClass,
                 gamblerUserId = PREVIEW_ACTOR_ID,
                 gamblerName = "Gambler",
                 singleDie =
@@ -730,6 +742,7 @@ private fun GamblerAllInPreview(outcome: AllInOutcome) {
         AllInOverlay(
             animatingMessage = message,
             avatarBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            accentColor = accentClass.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

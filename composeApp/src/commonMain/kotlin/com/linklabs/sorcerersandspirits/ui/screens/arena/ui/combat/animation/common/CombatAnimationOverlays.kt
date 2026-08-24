@@ -82,6 +82,7 @@ private fun CombatAnimationOverlaysWithBounds(
             AllInOverlay(
                 animatingMessage = animatingMessage,
                 avatarBounds = avatarBounds,
+                accentColor = animatingMessage.actingClassType.toColor(),
                 modifier = modifier,
             )
         }
@@ -103,6 +104,7 @@ private fun CombatAnimationOverlaysWithBounds(
                 animatingMessage = animatingMessage,
                 duelistBounds = duelistBounds,
                 targetBounds = targetBounds,
+                accentColor = animatingMessage.actingClassType.toColor(),
                 modifier = modifier,
             )
         }
@@ -135,7 +137,11 @@ private fun CombatAnimationOverlaysWithBounds(
         }
 
         is ArenaMessageState.Encore ->
-            EncoreOverlay(animatingMessage = animatingMessage, modifier = modifier)
+            EncoreOverlay(
+                animatingMessage = animatingMessage,
+                accentColor = animatingMessage.actingClassType.toColor(),
+                modifier = modifier,
+            )
 
         is ArenaMessageState.Persuade -> {
             val avatarBounds =

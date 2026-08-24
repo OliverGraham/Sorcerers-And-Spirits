@@ -65,6 +65,10 @@ internal class CombatHandler(
         arenaCombatState.performCombatAction(currentAction = currentCombatAction)
     }
 
+    suspend fun resolveTeleportRollOff(teleportRollsArguments: TeleportRollsArguments) {
+        teleportRollsArguments.resolveTeleportRolls()
+    }
+
     fun updateIsActionInFlight(screenState: ArenaScreenState): ArenaScreenState {
         val arenaCombatState =
             screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
@@ -115,6 +119,29 @@ internal class CombatHandler(
                     impersonateAbility =
                         OffensiveAbility.Impersonate(impersonatedAbility = copiedAbility)
                 )
+        )
+    }
+
+    private suspend fun TeleportRollsArguments.resolveTeleportRolls() {
+        val combatActionArguments =
+            CombatActionArguments(
+                arenaId = arenaId,
+                playerMap = playerMap,
+                roundNumber = roundNumber,
+                doublesBonus = null,
+            )
+
+        val currentCombatAction =
+            CurrentCombatAction.AbilityRoll(
+                purpose = nextCombatAction.purpose,
+                attackTurn = nextCombatAction.attackTurn,
+                defenderUserId = mageUserId,
+                rollingUserId = mageUserId,
+            )
+
+        performCombatActionUseCase(
+            arguments = combatActionArguments,
+            currentAction = currentCombatAction,
         )
     }
 

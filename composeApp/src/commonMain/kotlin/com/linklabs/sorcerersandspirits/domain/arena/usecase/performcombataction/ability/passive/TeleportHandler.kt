@@ -34,6 +34,13 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleTeleport(teleport: AbilityAction.Passive.Teleport) {
+        val areBothRollsIn =
+            teleport.attackerRoll.roll != null && teleport.defenderRoll.roll != null
+        if (areBothRollsIn) {
+            handleUpdatedTeleport(updatedTeleport = teleport)
+            return
+        }
+
         val updatedTeleport = rollActingUserDieOrNull(teleport = teleport)
         if (updatedTeleport == null) {
             setBothCombatantsRolling(teleport = teleport)

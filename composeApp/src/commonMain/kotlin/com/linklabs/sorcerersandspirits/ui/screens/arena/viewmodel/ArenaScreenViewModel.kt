@@ -45,9 +45,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toChoosingClasses
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaMatchCombatQueue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ArenaMatchCombatQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.CombatHandler
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.TeleportRollsArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
@@ -92,6 +93,7 @@ class ArenaScreenViewModel(
             triggerAnimation = ::triggerAnimation,
             addMessageToScreenState = ::addMessageToScreenState,
             onAnimationsComplete = ::onAnimationsComplete,
+            onTeleportRollOffComplete = ::onTeleportRollOffComplete,
         )
 
     // TODO(SS-260): Probably a handler for this
@@ -239,8 +241,8 @@ class ArenaScreenViewModel(
         }
     }
 
-    fun onDiceSettled() {
-        viewModelScope.launch { arenaMatchCombatQueue.onCombatActionResolved() }
+    fun onDiceSettled(userId: String) {
+        viewModelScope.launch { arenaMatchCombatQueue.onCombatActionResolved(userId = userId) }
     }
 
     fun onDismissForfeitDialog() {
@@ -364,15 +366,23 @@ class ArenaScreenViewModel(
         val screenStateUpdate =
             toUpdatedScreenState(userId = userId, currentScreenState = currentScreenState)
 
-        applyScreenStateUpdate(screenStateUpdate = screenStateUpdate)
+        applyScreenStateUpdate(screenStateUpdate = screenStateUpdate, userId = userId)
     }
 
-    private fun applyScreenStateUpdate(screenStateUpdate: ArenaScreenStateUpdate) {
+    private fun applyScreenStateUpdate(screenStateUpdate: ArenaScreenStateUpdate, userId: String) {
         handleTimerAction(timerAction = screenStateUpdate.timerAction)
 
         val messageQueueUpdate = screenStateUpdate.messageQueueUpdate
         if (messageQueueUpdate != null) {
             arenaMatchCombatQueue.enqueue(arenaMatchUpdate = messageQueueUpdate)
+
+            // TODO: Update this to be better than enqueueing then immediately dequeue-ing
+            val hasNoDiceToSettle = messageQueueUpdate.diceRoll == null
+            if (hasNoDiceToSettle) {
+                viewModelScope.launch {
+                    arenaMatchCombatQueue.onCombatActionResolved(userId = userId)
+                }
+            }
         }
 
         _uiStateFlow.updateLoaded { screenStateUpdate.screenState }
@@ -389,6 +399,12 @@ class ArenaScreenViewModel(
                 currentScreenState = screenState,
                 arenaMatchCombatUpdate = arenaMatchCombatUpdate,
             )
+        }
+    }
+
+    private fun onTeleportRollOffComplete(teleportRollsArguments: TeleportRollsArguments) {
+        viewModelScope.launch {
+            combatHandler.resolveTeleportRollOff(teleportRollsArguments = teleportRollsArguments)
         }
     }
 

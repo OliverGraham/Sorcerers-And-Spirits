@@ -13,9 +13,9 @@ sealed interface DiceRollEntity {
     @Serializable
     @SerialName(value = ONE_DIE)
     data class OneDie(
+        override val doublesBonusEntity: DoublesBonusEntity? = null,
         val value: Int,
         val diePosition: DiePosition,
-        override val doublesBonusEntity: DoublesBonusEntity? = null,
         val isMirrorImageReroll: Boolean = false,
         val dieColor: DieColor = DieColor.NormalAttack,
         val disablesSibling: Boolean = true,
@@ -24,9 +24,9 @@ sealed interface DiceRollEntity {
     @Serializable
     @SerialName(value = TWO_DICE)
     data class TwoDice(
+        override val doublesBonusEntity: DoublesBonusEntity? = null,
         val firstDie: Int,
         val secondDie: Int,
-        override val doublesBonusEntity: DoublesBonusEntity? = null,
         val dieColor: DieColor = DieColor.NormalAttack,
     ) : DiceRollEntity
 

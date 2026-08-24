@@ -13,5 +13,4 @@ data class DieState(
     val badge: DiceBadgeState? = null,
     val settleGeneration: Int = 0,
     val isRollingLocally: Boolean = false,
-    val isSettling: Boolean = false,
 )

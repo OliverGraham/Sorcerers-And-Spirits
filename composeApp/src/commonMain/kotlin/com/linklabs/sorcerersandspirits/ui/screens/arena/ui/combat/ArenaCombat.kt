@@ -172,7 +172,11 @@ private fun BoxScope.OverlayContent(
     )
 
     if (diceHomeBounds != null) {
-        DiceOverlay(diceStateHolder = diceStateHolder, homeBounds = diceHomeBounds)
+        DiceOverlay(
+            diceStateHolder = diceStateHolder,
+            homeBounds = diceHomeBounds,
+            userId = arenaMatchState.userPlayerId,
+        )
     }
 
     FlashMessageOverlay(

@@ -41,6 +41,7 @@ internal fun dieRestCenterX(
 internal fun DiceOverlay(
     diceStateHolder: DiceStateHolder,
     homeBounds: Rect,
+    userId: String,
     modifier: Modifier = Modifier,
 ) {
     var overlayOrigin by remember { mutableStateOf(value = Offset.Zero) }
@@ -65,7 +66,7 @@ internal fun DiceOverlay(
             onSettled = {
                 diceStateHolder.markDieSettled(
                     diePosition = DiePosition.First,
-                    onDiceSettled = onDiceSettled,
+                    onDiceSettled = { onDiceSettled(userId) },
                 )
             },
         )
@@ -78,7 +79,7 @@ internal fun DiceOverlay(
             onSettled = {
                 diceStateHolder.markDieSettled(
                     diePosition = DiePosition.Second,
-                    onDiceSettled = onDiceSettled,
+                    onDiceSettled = { onDiceSettled(userId) },
                 )
             },
         )

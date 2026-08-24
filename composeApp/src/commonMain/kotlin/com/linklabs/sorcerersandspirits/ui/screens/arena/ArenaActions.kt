@@ -15,7 +15,7 @@ internal data class ArenaActions(
     val onChooseCharacterClass: (PlayerState, CharacterClassState) -> Unit = EmptyTwoArgumentLambda,
     val onAttack: (arguments: AttackArguments) -> Unit = {},
     val onUseAbility: (arguments: UseAbilityArguments) -> Unit = {},
-    val onDiceSettled: () -> Unit = {},
+    val onDiceSettled: (userId: String) -> Unit = {},
     val onFlashComplete: () -> Unit = {},
     val onAvatarComplete: () -> Unit = {},
     val onTryLeaveArena: () -> Unit = {},

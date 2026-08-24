@@ -5,12 +5,12 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
-import com.linklabs.sorcerersandspirits.data.arena.utilities.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.FinishMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
+import com.linklabs.sorcerersandspirits.data.arena.utilities.applycombatresult.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer

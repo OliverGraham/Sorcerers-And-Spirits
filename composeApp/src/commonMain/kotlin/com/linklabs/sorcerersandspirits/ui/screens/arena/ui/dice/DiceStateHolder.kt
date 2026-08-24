@@ -25,6 +25,8 @@ internal class DiceStateHolder {
     var firstDieState by mutableStateOf(value = DieState())
     var secondDieState by mutableStateOf(value = DieState())
 
+    private val pendingSettleGroups = ArrayDeque<MutableSet<DiePosition>>()
+
     val isRolling: Boolean
         get() = isHolding || isUserRolling
 
@@ -50,11 +52,18 @@ internal class DiceStateHolder {
     }
 
     fun applyRoll(diceRollState: DiceRollState) {
+        pendingSettleGroups.add(element = diceRollState.settlingPositions())
         firstDieState =
             firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
         secondDieState =
             secondDieState.applying(roll = diceRollState, diePosition = DiePosition.Second)
     }
+
+    private fun DiceRollState.settlingPositions(): MutableSet<DiePosition> =
+        when (this) {
+            is DiceRollState.OneDie -> mutableSetOf(diePosition)
+            is DiceRollState.TwoDice -> mutableSetOf(DiePosition.First, DiePosition.Second)
+        }
 
     internal fun registerShake() {
         isArmed = true
@@ -70,17 +79,14 @@ internal class DiceStateHolder {
     }
 
     internal fun markDieSettled(diePosition: DiePosition, onDiceSettled: () -> Unit) {
-        when (diePosition) {
-            DiePosition.First -> firstDieState = firstDieState.copy(isSettling = false)
-            DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)
-        }
-
         // TODO(SS-262): Need to make sure this works with Impersonate and whatever else. This kicks
         //  off the ArenaMatchCombatQueue's onCombatActionResolved()
-        val isAnyDieStillSettling = firstDieState.isSettling || secondDieState.isSettling
-        if (!isAnyDieStillSettling) {
-            onDiceSettled()
-        }
+        val settleGroup = pendingSettleGroups.firstOrNull { it.contains(diePosition) } ?: return
+        settleGroup.remove(element = diePosition)
+        if (settleGroup.isNotEmpty()) return
+
+        pendingSettleGroups.remove(element = settleGroup)
+        onDiceSettled()
     }
 
     private fun dieStateAt(diePosition: DiePosition): DieState =
@@ -91,9 +97,9 @@ internal class DiceStateHolder {
 
     private fun DieState.startingHold(isRolling: Boolean): DieState =
         if (isRolling) {
-            copy(isRollingLocally = true, isEnabled = true, isSettling = true)
+            copy(isRollingLocally = true, isEnabled = true)
         } else {
-            copy(isRollingLocally = false, isSettling = false)
+            copy(isRollingLocally = false)
         }
 
     private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState =
@@ -108,17 +114,10 @@ internal class DiceStateHolder {
                             badge = roll.diceBadge.forPosition(diePosition = diePosition),
                             settleGeneration = settleGeneration + 1,
                             isRollingLocally = false,
-                            isSettling = true,
                         )
 
                     roll.isSiblingDisabled ->
-                        copy(
-                            isEnabled = false,
-                            tint = null,
-                            badge = null,
-                            isRollingLocally = false,
-                            isSettling = false,
-                        )
+                        copy(isEnabled = false, tint = null, badge = null, isRollingLocally = false)
 
                     else -> this
                 }
@@ -131,7 +130,6 @@ internal class DiceStateHolder {
                     badge = roll.diceBadge.forPosition(diePosition = diePosition),
                     settleGeneration = settleGeneration + 1,
                     isRollingLocally = false,
-                    isSettling = true,
                 )
         }
 

@@ -77,16 +77,25 @@ internal fun CombatButtons(
     val isActionInFlight = state.isActionInFlight
     val isBusy = isPlayingBack || isActionInFlight
 
-    // TODO(SS-257): What is this Teleport nonsense? Looks like the cause of the bug I've been
-    // seeing.
-    //       Need to hide the button per user, so a user can't roll twice (for teleport here).
+    // TODO: refactor all this Teleport stuff here
     val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
+
     var hasReachedTeleportRollBeat by
         remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
-    val hasReachedRollBeatNow = hasPendingTeleportRoll && !isBusy
-    if (hasReachedRollBeatNow) hasReachedTeleportRollBeat = true
+    if (hasPendingTeleportRoll && !isBusy) hasReachedTeleportRollBeat = true
 
-    val isSuppressedByAnimation = isBusy && !hasReachedTeleportRollBeat
+    var hasSubmittedTeleportRoll by
+        remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
+    if (hasPendingTeleportRoll && isActionInFlight) hasSubmittedTeleportRoll = true
+
+    val isTeleportRollButtonHeld = hasReachedTeleportRollBeat && !hasSubmittedTeleportRoll
+
+    val isSuppressedByAnimation =
+        when {
+            hasSubmittedTeleportRoll -> true
+            isTeleportRollButtonHeld -> false
+            else -> isBusy
+        }
 
     // TODO: Very, very rarely are nested functions allowable (these are not)
     fun isEnabled(control: ArenaCombatControl): Boolean =

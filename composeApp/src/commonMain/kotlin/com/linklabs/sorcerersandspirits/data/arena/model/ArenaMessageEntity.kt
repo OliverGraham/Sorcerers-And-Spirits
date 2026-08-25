@@ -176,6 +176,7 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val necromancerUserId: String,
         val className: String,
+        val classType: CharacterClassType,
         val singleDie: Int,
     ) : ArenaMessageEntity
 
@@ -517,6 +518,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.SummonMinion(
                     necromancerUserId = necromancerUserId,
                     className = className,
+                    classType = classType,
                     singleDie = singleDie,
                 )
 
@@ -790,6 +792,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
                 id = id,
                 necromancerUserId = necromancerUserId,
                 className = className,
+                classType = classType,
                 singleDie = singleDie,
             )
 

@@ -103,6 +103,7 @@ sealed interface ArenaMessage {
     data class SummonMinion(
         val necromancerUserId: String,
         val className: String,
+        val classType: CharacterClassType,
         val singleDie: Int,
     ) : ArenaMessage
 

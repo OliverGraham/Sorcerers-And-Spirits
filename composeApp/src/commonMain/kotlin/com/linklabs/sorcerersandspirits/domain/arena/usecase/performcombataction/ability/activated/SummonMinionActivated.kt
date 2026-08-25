@@ -22,6 +22,7 @@ internal class SummonMinionActivated(
                 ArenaMessage.SummonMinion(
                     necromancerUserId = attackerUserId,
                     className = attacker.className,
+                    classType = attacker.type,
                     singleDie = result,
                 )
         )

@@ -86,6 +86,8 @@ internal fun NecromancerSummonMinionOverlay(
                     outcome = animatingMessage.outcome,
                     density = density,
                     seed = animatingMessage.id.hashCode(),
+                    portalPalette =
+                        summonPortalPaletteFor(actorClass = animatingMessage.actingClassType),
                 ),
             outcome = animatingMessage.outcome,
         )
@@ -177,11 +179,19 @@ private suspend fun SummonMinionEffectState.raiseMinion(heals: Boolean) {
     }
 }
 
+private fun summonPortalPaletteFor(actorClass: CharacterClassType): ScythePalette =
+    if (actorClass == CharacterClassType.Illusionist) {
+        illusionistScythePalette
+    } else {
+        necroScythePalette
+    }
+
 private fun summonMinionScene(
     bounds: Rect,
     outcome: SummonMinionOutcome,
     density: Density,
     seed: Int,
+    portalPalette: ScythePalette,
 ): SummonMinionScene {
     val center = bounds.center
     val portalCenter = Offset(x = center.x, y = bounds.bottom - bounds.height * 0.05f)
@@ -221,6 +231,7 @@ private fun summonMinionScene(
 
     return SummonMinionScene(
         portalCenter = portalCenter,
+        portalPalette = portalPalette,
         portalRadiusPx = bounds.width * 0.42f,
         minionType = minionType,
         minionHeightPx = minionHeight,
@@ -257,6 +268,7 @@ private fun DrawScope.drawSummonMinion(
         open = open,
         gray = state.gray.value,
         alpha = 1f,
+        palette = scene.portalPalette,
     )
 
     val rise = state.minion.value
@@ -354,6 +366,7 @@ private class SummonMinionEffectState {
 @Immutable
 private data class SummonMinionScene(
     val portalCenter: Offset,
+    val portalPalette: ScythePalette,
     val portalRadiusPx: Float,
     val minionType: MinionType,
     val minionHeightPx: Float,
@@ -398,17 +411,39 @@ private fun NecromancerSummonMinionGolemPreview() {
     NecromancerSummonMinionPreview(outcome = SummonMinionOutcome.Golem)
 }
 
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun NecromancerSummonMinionPreview(outcome: SummonMinionOutcome) {
+private fun IllusionistSummonMinionSkeletonPreview() {
+    NecromancerSummonMinionPreview(
+        outcome = SummonMinionOutcome.Skeleton,
+        actorClass = CharacterClassType.Illusionist,
+    )
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun IllusionistSummonMinionGolemPreview() {
+    NecromancerSummonMinionPreview(
+        outcome = SummonMinionOutcome.Golem,
+        actorClass = CharacterClassType.Illusionist,
+    )
+}
+
+@Composable
+private fun NecromancerSummonMinionPreview(
+    outcome: SummonMinionOutcome,
+    actorClass: CharacterClassType = CharacterClassType.Necromancer,
+) {
     val avatars = rememberSoloAvatar()
     AnimationPreview(
-        accentClass = CharacterClassType.Necromancer,
+        accentClass = actorClass,
         avatars = avatars,
         buildMessage = { id ->
             ArenaMessageState.SummonMinion(
                 id = id,
                 necromancerUserId = PREVIEW_ACTOR_ID,
-                className = "Necromancer",
+                className = actorClass.name,
+                actingClassType = CharacterClassType.Necromancer,
                 singleDie =
                     when (outcome) {
                         SummonMinionOutcome.Fizzle -> 1

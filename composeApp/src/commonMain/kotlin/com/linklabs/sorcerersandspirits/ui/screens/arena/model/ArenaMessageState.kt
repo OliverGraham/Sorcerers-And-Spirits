@@ -282,13 +282,13 @@ sealed interface ArenaMessageState {
     data class SummonMinion(
         override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
         override val id: String,
+        override val actingClassType: CharacterClassType,
         val necromancerUserId: String,
         val className: String,
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
         override val gestures: Map<String, AvatarGesture>,
     ) : ArenaMessageState {
-        override val actingClassType: CharacterClassType = CharacterClassType.Necromancer
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
     }
 
@@ -772,6 +772,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState =
                 id = id,
                 necromancerUserId = necromancerUserId,
                 className = className,
+                actingClassType = classType,
                 singleDie = singleDie,
                 outcome = summonMinionOutcomeFor(singleDie = singleDie),
                 gestures = mapOf(necromancerUserId to AvatarGesture.Cast),

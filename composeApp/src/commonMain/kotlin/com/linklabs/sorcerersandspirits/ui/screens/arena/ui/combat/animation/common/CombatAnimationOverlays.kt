@@ -1,13 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
@@ -35,26 +31,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rog
 
 @Composable
 internal fun CombatAnimationOverlays(
-    animatingMessage: ArenaMessageState,
-    avatarBoundsStateHolder: AvatarBoundsStateHolder,
-    modifier: Modifier = Modifier,
-) {
-    Box(
-        modifier =
-        modifier.fillMaxSize().onGloballyPositioned {
-            avatarBoundsStateHolder.reportOverlayBounds(boundsInRoot = it.boundsInRoot())
-        },
-    ) {
-        CombatAnimationOverlaysWithBounds(
-            animatingMessage = animatingMessage,
-            avatarBoundsStateHolder = avatarBoundsStateHolder,
-            modifier = Modifier.fillMaxSize(),
-        )
-    }
-}
-
-@Composable
-private fun CombatAnimationOverlaysWithBounds(
     animatingMessage: ArenaMessageState,
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
@@ -316,10 +292,11 @@ private fun AnimateNormalAttack(
     }
 }
 
-private fun ArenaMessageState.NormalRoll.Attack.getImpersonatedAttackTypeOrRandom() = if (impersonatedClassType == null || impersonatedClassType == CharacterClassType.Illusionist) {
-    CharacterClassType.entries
-        .filterNot { it == CharacterClassType.Illusionist || it == CharacterClassType.None }
-        .random()
-} else {
-    impersonatedClassType
-}
+private fun ArenaMessageState.NormalRoll.Attack.getImpersonatedAttackTypeOrRandom() =
+    if (impersonatedClassType == null || impersonatedClassType == CharacterClassType.Illusionist) {
+        CharacterClassType.entries
+            .filterNot { it == CharacterClassType.Illusionist || it == CharacterClassType.None }
+            .random()
+    } else {
+        impersonatedClassType
+    }

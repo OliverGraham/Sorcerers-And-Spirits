@@ -72,7 +72,7 @@ internal fun ArenaCombat(
                 timerState = timerState,
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 unreadMessageCount =
-                (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0),
+                    (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0),
                 diceHomeBoundsTop = diceHomeBounds?.top,
                 onDiceHomeBoundsChanged = { diceHomeBounds = it },
                 onToggleExpanded = {
@@ -134,8 +134,8 @@ private fun SharedTransitionScope.ScreenContent(
 
     Spacer(
         modifier =
-        Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
-            .height(height = BOTTOM_CONTROLS_HEIGHT),
+            Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
+                .height(height = BOTTOM_CONTROLS_HEIGHT)
     )
 }
 
@@ -152,6 +152,14 @@ private fun BoxScope.OverlayContent(
     onCloseMessageLog: () -> Unit,
 ) {
     val animatingMessage = arenaScreenState.animatingMessage
+
+    if (animatingMessage != null && animatingMessage.isAvatar()) {
+        CombatAnimationOverlays(
+            animatingMessage = animatingMessage,
+            avatarBoundsStateHolder = avatarBoundsStateHolder,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 
     // TODO(SS-256): is this it? - maybe is done now, Claude
     val isPlayingBack = animatingMessage != null && !animatingMessage.isContinuous()
@@ -215,21 +223,14 @@ private fun SharedTransitionScope.CombatContent(
                     animatingMessage = animatingMessage,
                     onInspect = onInspect,
                     isTargetable =
-                    arenaMatchState.canTurnOwnerTargetAnOpponent(
-                        isAnAnimationActive =
-                        animatingMessage != null && !animatingMessage.isContinuous(),
-                    ),
+                        arenaMatchState.canTurnOwnerTargetAnOpponent(
+                            isAnAnimationActive =
+                                animatingMessage != null && !animatingMessage.isContinuous()
+                        ),
                     onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
                     onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
                 )
             }
-        }
-
-        if (animatingMessage != null && animatingMessage.isAvatar()) {
-            CombatAnimationOverlays(
-                animatingMessage = animatingMessage,
-                avatarBoundsStateHolder = avatarBoundsStateHolder,
-            )
         }
     }
 }

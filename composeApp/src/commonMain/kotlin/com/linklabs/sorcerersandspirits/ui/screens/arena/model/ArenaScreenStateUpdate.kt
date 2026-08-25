@@ -176,7 +176,7 @@ private fun ArenaMatch.Combat.updateCombat(
     currentScreenState.copy(
         arenaMatchState = currentArenaMatchState.copy(diceRollState = diceRoll?.toState()),
     ),
-    timerAction = TimerAction.None,
+    timerAction = TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS),
     messageQueueUpdate = this,
 )
 

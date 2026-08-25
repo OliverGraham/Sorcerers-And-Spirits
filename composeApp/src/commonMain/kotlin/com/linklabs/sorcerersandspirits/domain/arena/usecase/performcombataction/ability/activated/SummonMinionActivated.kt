@@ -19,12 +19,12 @@ internal class SummonMinionActivated(
 
         addMessage(
             message =
-                ArenaMessage.SummonMinion(
-                    necromancerUserId = attackerUserId,
-                    className = attacker.className,
-                    classType = attacker.type,
-                    singleDie = result,
-                )
+            ArenaMessage.SummonMinion(
+                necromancerUserId = attackerUserId,
+                className = attacker.className,
+                classType = attacker.type,
+                singleDie = result,
+            ),
         )
 
         updateAttackerClass { attacker ->
@@ -57,7 +57,7 @@ internal class SummonMinionActivated(
             attacker.copy(
                 hitPoints = newHp,
                 offensiveAbility =
-                    attacker.offensiveAbility.withEffective(updatedSummonMinionAbility),
+                attacker.offensiveAbility.withEffective(updatedSummonMinionAbility),
             )
         }
 

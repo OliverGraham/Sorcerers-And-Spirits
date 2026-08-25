@@ -34,7 +34,7 @@ class CombatControlDiceCountTest {
         assertEquals(
             expected = NumberOfDice.Two,
             actual =
-                abilityRoll(AbilityActionState.Passive.Riposte(attackerRollTotal = 7)).numberOfDice,
+            abilityRoll(AbilityActionState.Passive.Riposte(attackerRollTotal = 7)).numberOfDice,
         )
         assertEquals(
             expected = NumberOfDice.Two,
@@ -47,7 +47,7 @@ class CombatControlDiceCountTest {
         val allIn =
             AbilityActionState.Activated.AllIn(
                 allInAbility =
-                    OffensiveAbility.AllIn(hasAnotherAttack = false, usedThisTurn = false)
+                OffensiveAbility.AllIn(hasAnotherAttack = false, usedThisTurn = false),
             )
 
         assertEquals(expected = NumberOfDice.One, actual = activatedAbility(allIn).numberOfDice)
@@ -67,7 +67,7 @@ class CombatControlDiceCountTest {
         val impersonate =
             AbilityActionState.Activated.Impersonate(
                 impersonateAbility =
-                    OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.Encore)
+                OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.Encore),
             )
 
         assertEquals(expected = NumberOfDice.None, actual = abilityRoll(charm).numberOfDice)
@@ -77,19 +77,17 @@ class CombatControlDiceCountTest {
         )
     }
 
-    private fun abilityRoll(action: AbilityActionState) =
-        ArenaCombatControl.AbilityRoll(
-            action = action,
-            label = "",
-            requiresTarget = false,
-            rollingDiePositions = emptySet(),
-        )
+    private fun abilityRoll(action: AbilityActionState) = ArenaCombatControl.AbilityRoll(
+        action = action,
+        label = "",
+        requiresTarget = false,
+        rollingDiePositions = emptySet(),
+    )
 
-    private fun activatedAbility(action: AbilityActionState.Activated) =
-        ArenaCombatControl.ActivatedAbility(
-            action = action,
-            label = "",
-            requiresTarget = false,
-            enabled = true,
-        )
+    private fun activatedAbility(action: AbilityActionState.Activated) = ArenaCombatControl.ActivatedAbility(
+        action = action,
+        label = "",
+        requiresTarget = false,
+        enabled = true,
+    )
 }

@@ -6,17 +6,17 @@ import com.linklabs.sorcerersandspirits.domain.leaderboard.usecase.GetLeaderboar
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
 import io.mockk.mockk
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LeaderboardScreenViewModelTest {
@@ -35,8 +35,7 @@ class LeaderboardScreenViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() =
-        LeaderboardScreenViewModel(getLeaderboardUseCase = getLeaderboardUseCase)
+    private fun createViewModel() = LeaderboardScreenViewModel(getLeaderboardUseCase = getLeaderboardUseCase)
 
     @Test
     fun `Given the leaderboard loads, then the screen shows the ranked rows`() = runTest {

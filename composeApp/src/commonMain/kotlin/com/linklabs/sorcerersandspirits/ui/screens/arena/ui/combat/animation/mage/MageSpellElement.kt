@@ -44,29 +44,28 @@ internal data class MageElementPalette(
     val atmosphere: Color,
 )
 
-internal fun MageSpellElement.palette(): MageElementPalette =
-    when (this) {
-        MageSpellElement.Ice ->
-            MageElementPalette(
-                core = Color(color = 0xFFF2FBFF),
-                glow = Color(color = 0xFF7FD8FF),
-                trail = Color(color = 0xFFBEE9FF),
-                atmosphere = Color(color = 0xFFAEE3FF),
-            )
+internal fun MageSpellElement.palette(): MageElementPalette = when (this) {
+    MageSpellElement.Ice ->
+        MageElementPalette(
+            core = Color(color = 0xFFF2FBFF),
+            glow = Color(color = 0xFF7FD8FF),
+            trail = Color(color = 0xFFBEE9FF),
+            atmosphere = Color(color = 0xFFAEE3FF),
+        )
 
-        MageSpellElement.Lightning ->
-            MageElementPalette(
-                core = Color(color = 0xFFF7F1FF),
-                glow = Color(color = 0xFF9B6BFF),
-                trail = Color(color = 0xFFCBB6FF),
-                atmosphere = Color(color = 0xFF2B2740),
-            )
+    MageSpellElement.Lightning ->
+        MageElementPalette(
+            core = Color(color = 0xFFF7F1FF),
+            glow = Color(color = 0xFF9B6BFF),
+            trail = Color(color = 0xFFCBB6FF),
+            atmosphere = Color(color = 0xFF2B2740),
+        )
 
-        MageSpellElement.Fire ->
-            MageElementPalette(
-                core = Color(color = 0xFFFFF1B8),
-                glow = Color(color = 0xFFFF832B),
-                trail = Color(color = 0xFFFF4E28),
-                atmosphere = Color(color = 0xFFFF3A1C),
-            )
-    }
+    MageSpellElement.Fire ->
+        MageElementPalette(
+            core = Color(color = 0xFFFFF1B8),
+            glow = Color(color = 0xFFFF832B),
+            trail = Color(color = 0xFFFF4E28),
+            atmosphere = Color(color = 0xFFFF3A1C),
+        )
+}

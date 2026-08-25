@@ -6,10 +6,10 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import com.linklabs.sorcerersandspirits.domain.sensor.ShakeDetector
-import kotlin.math.sqrt
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlin.math.sqrt
 
 private const val SHAKE_G_FORCE_THRESHOLD = 1.2f
 private const val SHAKE_DEBOUNCE_MILLIS = 80L

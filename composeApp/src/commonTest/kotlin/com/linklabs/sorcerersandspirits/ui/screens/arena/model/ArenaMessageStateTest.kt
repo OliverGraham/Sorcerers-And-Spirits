@@ -17,7 +17,7 @@ class ArenaMessageStateTest {
             ArenaMessage.MirrorImage.TemptFate(
                 illusionistUserId = DEFENDER_ID,
                 rerolledMirrorImageDie =
-                    AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 5, reroll = 4),
+                AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 5, reroll = 4),
                 attackerUserId = ATTACKER_ID,
                 messageType = NormalRollMessageType.ArmorClassMiss,
             )
@@ -36,7 +36,7 @@ class ArenaMessageStateTest {
             ArenaMessage.MirrorImage.TemptFate(
                 illusionistUserId = DEFENDER_ID,
                 rerolledMirrorImageDie =
-                    AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6, reroll = 1),
+                AbilityAction.Passive.MirrorImage.MirrorImageDie(originalRoll = 6, reroll = 1),
                 attackerUserId = ATTACKER_ID,
                 messageType = NormalRollMessageType.ArmorClassMiss,
             )
@@ -64,11 +64,11 @@ class ArenaMessageStateTest {
 
         assertEquals(
             expected =
-                FlashCallout.Damage(
-                    baseRoll = 7,
-                    actingClassType = CharacterClassType.Mage,
-                    doublesBonus = 1,
-                ),
+            FlashCallout.Damage(
+                baseRoll = 7,
+                actingClassType = CharacterClassType.Mage,
+                doublesBonus = 1,
+            ),
             actual = callout,
         )
     }
@@ -77,18 +77,18 @@ class ArenaMessageStateTest {
     fun `Given a Killing Momentum trigger, then it carries the attacker of the knockout roll`() {
         val states =
             listOf(
-                    incomingNormalRoll(id = "roll", type = NormalRollMessageType.Knockout),
-                    IncomingArenaMessage(
-                        id = "trigger",
-                        roundNumber = 1,
-                        message = ArenaMessage.KillingMomentum(attackerUserId = ATTACKER_ID),
-                    ),
-                )
+                incomingNormalRoll(id = "roll", type = NormalRollMessageType.Knockout),
+                IncomingArenaMessage(
+                    id = "trigger",
+                    roundNumber = 1,
+                    message = ArenaMessage.KillingMomentum(attackerUserId = ATTACKER_ID),
+                ),
+            )
                 .toMessageStates()
 
         assertEquals(
             expected =
-                ArenaMessageState.KillingMomentum(id = "trigger", attackerUserId = ATTACKER_ID),
+            ArenaMessageState.KillingMomentum(id = "trigger", attackerUserId = ATTACKER_ID),
             actual = states.last(),
         )
     }
@@ -97,23 +97,23 @@ class ArenaMessageStateTest {
     fun `Given a Dodge trigger, then it carries the defender of the missed roll`() {
         val states =
             listOf(
-                    incomingNormalRoll(id = "roll", type = NormalRollMessageType.ArmorClassMiss),
-                    IncomingArenaMessage(
-                        id = "trigger",
-                        roundNumber = 1,
-                        message =
-                            ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = DEFENDER_ID),
-                    ),
-                )
+                incomingNormalRoll(id = "roll", type = NormalRollMessageType.ArmorClassMiss),
+                IncomingArenaMessage(
+                    id = "trigger",
+                    roundNumber = 1,
+                    message =
+                    ArenaMessage.Dodge(didArmorIncrease = true, dodgerUserId = DEFENDER_ID),
+                ),
+            )
                 .toMessageStates()
 
         assertEquals(
             expected =
-                ArenaMessageState.Dodge(
-                    id = "trigger",
-                    didArmorIncrease = true,
-                    dodgerUserId = DEFENDER_ID,
-                ),
+            ArenaMessageState.Dodge(
+                id = "trigger",
+                didArmorIncrease = true,
+                dodgerUserId = DEFENDER_ID,
+            ),
             actual = states.last(),
         )
     }
@@ -134,11 +134,11 @@ class ArenaMessageStateTest {
 
         assertEquals(
             expected =
-                FlashCallout.Damage(
-                    baseRoll = 8,
-                    actingClassType = CharacterClassType.Mage,
-                    doublesBonus = 1,
-                ),
+            FlashCallout.Damage(
+                baseRoll = 8,
+                actingClassType = CharacterClassType.Mage,
+                doublesBonus = 1,
+            ),
             actual = callout,
         )
     }
@@ -159,11 +159,11 @@ class ArenaMessageStateTest {
 
         assertEquals(
             expected =
-                FlashCallout.Knockout(
-                    actingClassType = CharacterClassType.Mage,
-                    baseRoll = 8,
-                    doublesBonus = 1,
-                ),
+            FlashCallout.Knockout(
+                actingClassType = CharacterClassType.Mage,
+                baseRoll = 8,
+                doublesBonus = 1,
+            ),
             actual = callout,
         )
     }
@@ -184,37 +184,34 @@ class ArenaMessageStateTest {
 
         assertEquals(
             expected =
-                FlashCallout.Miss(
-                    baseRoll = 8,
-                    actingClassType = CharacterClassType.Mage,
-                    doublesBonus = 1,
-                ),
+            FlashCallout.Miss(
+                baseRoll = 8,
+                actingClassType = CharacterClassType.Mage,
+                doublesBonus = 1,
+            ),
             actual = callout,
         )
     }
 
-    private fun ArenaMessage.toSingleState(): ArenaMessageState =
-        listOf(IncomingArenaMessage(id = MESSAGE_ID, roundNumber = 1, message = this))
-            .toMessageStates()
-            .single()
+    private fun ArenaMessage.toSingleState(): ArenaMessageState = listOf(IncomingArenaMessage(id = MESSAGE_ID, roundNumber = 1, message = this))
+        .toMessageStates()
+        .single()
 
-    private fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> =
-        toMessageStates(participants = participants)
+    private fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> = toMessageStates(participants = participants)
 
-    private fun incomingNormalRoll(id: String, type: NormalRollMessageType) =
-        IncomingArenaMessage(
-            id = id,
-            roundNumber = 1,
-            message =
-                ArenaMessage.NormalRoll.Outcome(
-                    attackerUserId = ATTACKER_ID,
-                    defenderUserId = DEFENDER_ID,
-                    firstDie = 2,
-                    secondDie = 3,
-                    bonus = 0,
-                    type = type,
-                ),
-        )
+    private fun incomingNormalRoll(id: String, type: NormalRollMessageType) = IncomingArenaMessage(
+        id = id,
+        roundNumber = 1,
+        message =
+        ArenaMessage.NormalRoll.Outcome(
+            attackerUserId = ATTACKER_ID,
+            defenderUserId = DEFENDER_ID,
+            firstDie = 2,
+            secondDie = 3,
+            bonus = 0,
+            type = type,
+        ),
+    )
 
     private val participants =
         mapOf(

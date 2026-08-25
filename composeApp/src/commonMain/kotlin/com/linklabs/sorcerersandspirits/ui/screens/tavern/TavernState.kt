@@ -73,49 +73,45 @@ internal fun TavernData.toState(
     return TavernState(
         userTraveler = userTraveler,
         otherTravelers =
-            computerTravelers +
-                otherTravelers.map { traveler ->
-                    traveler.toTravelerState(isThisTravelerTheUser = false)
-                },
+        computerTravelers +
+            otherTravelers.map { traveler ->
+                traveler.toTravelerState(isThisTravelerTheUser = false)
+            },
         characterClasses = characterClasses,
         classCopy = classCopy,
     )
 }
 
-private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean): TravelerState =
-    TravelerState(
-        userId = userId,
-        displayName = displayName,
-        isThisTravelerTheUser = isThisTravelerTheUser,
-        tavernStatus = tavernStatus,
-        rating = rating,
-    )
+private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean): TravelerState = TravelerState(
+    userId = userId,
+    displayName = displayName,
+    isThisTravelerTheUser = isThisTravelerTheUser,
+    tavernStatus = tavernStatus,
+    rating = rating,
+)
 
-internal fun TravelerState.toChallenger(isInstigator: Boolean, status: ChallengerStatus) =
-    Challenger(
-        userId = userId,
-        displayName = displayName,
-        isInstigator = isInstigator,
-        status = status,
-    )
+internal fun TravelerState.toChallenger(isInstigator: Boolean, status: ChallengerStatus) = Challenger(
+    userId = userId,
+    displayName = displayName,
+    isInstigator = isInstigator,
+    status = status,
+)
 
 internal fun Challenge.toChallengeState(
     isUserInstigator: Boolean,
     secondsRemaining: Int = 0,
     showChallengeDialog: Boolean = false,
-) =
-    ChallengeState(
-        challengeId = challengeId,
-        challengerStates = challengers.values.map { challenger -> challenger.toChallengerState() },
-        isThisUserTheInstigator = isUserInstigator,
-        showChallengeDialog = showChallengeDialog,
-        secondsRemaining = secondsRemaining,
-    )
+) = ChallengeState(
+    challengeId = challengeId,
+    challengerStates = challengers.values.map { challenger -> challenger.toChallengerState() },
+    isThisUserTheInstigator = isUserInstigator,
+    showChallengeDialog = showChallengeDialog,
+    secondsRemaining = secondsRemaining,
+)
 
-internal fun Challenger.toChallengerState() =
-    ChallengerState(
-        userId = userId,
-        displayName = displayName,
-        isInstigator = isInstigator,
-        status = status,
-    )
+internal fun Challenger.toChallengerState() = ChallengerState(
+    userId = userId,
+    displayName = displayName,
+    isInstigator = isInstigator,
+    status = status,
+)

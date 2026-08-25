@@ -17,13 +17,13 @@ sealed interface ArenaAnimationState {
 
     fun isAvatar() = this is Avatar || this is FlashAndAvatar
 
-    fun isAnimationContinuous() =
-        when (this) {
-            is Avatar -> isContinuous
+    fun isAnimationContinuous() = when (this) {
+        is Avatar -> isContinuous
 
-            is FlashAndAvatar -> isContinuous
+        is FlashAndAvatar -> isContinuous
 
-            is None,
-            is Flash -> false
-        }
+        is None,
+        is Flash,
+        -> false
+    }
 }

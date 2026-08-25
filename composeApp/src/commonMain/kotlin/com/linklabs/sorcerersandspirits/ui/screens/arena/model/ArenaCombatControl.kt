@@ -65,73 +65,68 @@ enum class NumberOfDice {
     None,
 }
 
-private fun NumberOfDice.toDiePositions(): Set<DiePosition> =
-    when (this) {
-        NumberOfDice.None -> emptySet()
-        NumberOfDice.One -> setOf(DiePosition.First)
-        NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
-    }
+private fun NumberOfDice.toDiePositions(): Set<DiePosition> = when (this) {
+    NumberOfDice.None -> emptySet()
+    NumberOfDice.One -> setOf(DiePosition.First)
+    NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
+}
 
-private fun AbilityActionState.resolveRollingDiePositions(userPlayerId: String): Set<DiePosition> =
-    when (getNumberOfDice()) {
-        NumberOfDice.None -> emptySet()
-        NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
-        NumberOfDice.One -> setOf(singleRollDiePosition(userPlayerId = userPlayerId))
-    }
+private fun AbilityActionState.resolveRollingDiePositions(userPlayerId: String): Set<DiePosition> = when (getNumberOfDice()) {
+    NumberOfDice.None -> emptySet()
+    NumberOfDice.Two -> setOf(DiePosition.First, DiePosition.Second)
+    NumberOfDice.One -> setOf(singleRollDiePosition(userPlayerId = userPlayerId))
+}
 
-private fun AbilityActionState.singleRollDiePosition(userPlayerId: String): DiePosition =
-    when (this) {
-        is AbilityActionState.Passive.Teleport ->
-            localRollerDiePosition(userPlayerId = userPlayerId)
+private fun AbilityActionState.singleRollDiePosition(userPlayerId: String): DiePosition = when (this) {
+    is AbilityActionState.Passive.Teleport ->
+        localRollerDiePosition(userPlayerId = userPlayerId)
 
-        is AbilityActionState.Passive.MirrorImage ->
-            if (mirrorImageRerollSelection == MirrorImageRerollSelection.Second) {
-                DiePosition.Second
-            } else {
-                DiePosition.First
-            }
+    is AbilityActionState.Passive.MirrorImage ->
+        if (mirrorImageRerollSelection == MirrorImageRerollSelection.Second) {
+            DiePosition.Second
+        } else {
+            DiePosition.First
+        }
 
-        else -> DiePosition.First
-    }
+    else -> DiePosition.First
+}
 
 private fun AbilityActionState.Passive.Teleport.localRollerDiePosition(
-    userPlayerId: String
-): DiePosition =
-    if (attackerRoll.userId == userPlayerId) attackerRoll.diePosition else defenderRoll.diePosition
+    userPlayerId: String,
+): DiePosition = if (attackerRoll.userId == userPlayerId) attackerRoll.diePosition else defenderRoll.diePosition
 
-private fun AbilityActionState.getNumberOfDice() =
-    when (this) {
-        is AbilityActionState.Activated.AllIn -> NumberOfDice.One
+private fun AbilityActionState.getNumberOfDice() = when (this) {
+    is AbilityActionState.Activated.AllIn -> NumberOfDice.One
 
-        is AbilityActionState.Activated.SummonMinion -> NumberOfDice.One
+    is AbilityActionState.Activated.SummonMinion -> NumberOfDice.One
 
-        is AbilityActionState.Activated.PrepareAttack -> NumberOfDice.Two
+    is AbilityActionState.Activated.PrepareAttack -> NumberOfDice.Two
 
-        is AbilityActionState.Activated.Impersonate -> NumberOfDice.None
+    is AbilityActionState.Activated.Impersonate -> NumberOfDice.None
 
-        is AbilityActionState.Passive.LuckyCoin -> NumberOfDice.One
+    is AbilityActionState.Passive.LuckyCoin -> NumberOfDice.One
 
-        is AbilityActionState.Passive.Riposte -> NumberOfDice.Two
+    is AbilityActionState.Passive.Riposte -> NumberOfDice.Two
 
-        is AbilityActionState.Passive.Persuade.StrumLute -> NumberOfDice.One
+    is AbilityActionState.Passive.Persuade.StrumLute -> NumberOfDice.One
 
-        is AbilityActionState.Passive.Persuade.Charm -> NumberOfDice.None
+    is AbilityActionState.Passive.Persuade.Charm -> NumberOfDice.None
 
-        is AbilityActionState.Passive.Encore -> NumberOfDice.One
+    is AbilityActionState.Passive.Encore -> NumberOfDice.One
 
-        is AbilityActionState.Passive.Teleport -> NumberOfDice.One
+    is AbilityActionState.Passive.Teleport -> NumberOfDice.One
 
-        is AbilityActionState.Passive.MirrorImage ->
-            if (mirrorImageRerollSelection == MirrorImageRerollSelection.None) {
-                NumberOfDice.None
-            } else {
-                NumberOfDice.One
-            }
+    is AbilityActionState.Passive.MirrorImage ->
+        if (mirrorImageRerollSelection == MirrorImageRerollSelection.None) {
+            NumberOfDice.None
+        } else {
+            NumberOfDice.One
+        }
 
-        is AbilityActionState.Passive.HolyShield.Prayer -> NumberOfDice.Two
+    is AbilityActionState.Passive.HolyShield.Prayer -> NumberOfDice.Two
 
-        is AbilityActionState.Passive.HolyShield.Wrath -> NumberOfDice.One
-    }
+    is AbilityActionState.Passive.HolyShield.Wrath -> NumberOfDice.One
+}
 
 /**
  * Determines which combat controls the user can act on right now. An empty list means the user
@@ -173,124 +168,117 @@ internal fun ArenaMatchState.Combat.deriveCombatControls(): List<ArenaCombatCont
 }
 
 private fun AbilityActionState.toAbilityRollControls(
-    userPlayerId: String
-): List<ArenaCombatControl> =
-    when (this) {
-        is AbilityActionState.Passive.MirrorImage ->
-            mirrorImageControls(userPlayerId = userPlayerId)
+    userPlayerId: String,
+): List<ArenaCombatControl> = when (this) {
+    is AbilityActionState.Passive.MirrorImage ->
+        mirrorImageControls(userPlayerId = userPlayerId)
 
-        else ->
-            listOf(
-                element =
-                    ArenaCombatControl.AbilityRoll(
-                        action = this,
-                        label = label,
-                        requiresTarget = requiresTarget,
-                        rollingDiePositions =
-                            resolveRollingDiePositions(userPlayerId = userPlayerId),
-                    )
-            )
-    }
+    else ->
+        listOf(
+            element =
+            ArenaCombatControl.AbilityRoll(
+                action = this,
+                label = label,
+                requiresTarget = requiresTarget,
+                rollingDiePositions =
+                resolveRollingDiePositions(userPlayerId = userPlayerId),
+            ),
+        )
+}
 
 private fun AbilityActionState.Passive.MirrorImage.mirrorImageControls(
-    userPlayerId: String
-): List<ArenaCombatControl> =
-    listOf(
-            MirrorImageRerollSelection.First,
-            MirrorImageRerollSelection.Second,
-            MirrorImageRerollSelection.None,
+    userPlayerId: String,
+): List<ArenaCombatControl> = listOf(
+    MirrorImageRerollSelection.First,
+    MirrorImageRerollSelection.Second,
+    MirrorImageRerollSelection.None,
+)
+    .map { selection -> copy(mirrorImageRerollSelection = selection) }
+    .map { action ->
+        ArenaCombatControl.AbilityRoll(
+            action = action,
+            label = action.mirrorImageControlLabel(),
+            requiresTarget = false,
+            rollingDiePositions = action.resolveRollingDiePositions(userPlayerId = userPlayerId),
         )
-        .map { selection -> copy(mirrorImageRerollSelection = selection) }
-        .map { action ->
-            ArenaCombatControl.AbilityRoll(
-                action = action,
-                label = action.mirrorImageControlLabel(),
-                requiresTarget = false,
-                rollingDiePositions = action.resolveRollingDiePositions(userPlayerId = userPlayerId),
+    }
+
+private fun AbilityActionState.Passive.MirrorImage.mirrorImageControlLabel(): String = when (mirrorImageRerollSelection) {
+    MirrorImageRerollSelection.First -> "Reroll the ${firstDie.originalRoll}"
+    MirrorImageRerollSelection.Second -> "Reroll the ${secondDie.originalRoll}"
+    MirrorImageRerollSelection.None -> "Keep roll"
+}
+
+internal fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean = when (this) {
+    is AbilityActionState.Passive.Teleport ->
+        (attackerRoll.userId == userPlayerId && attackerRoll.roll == null) ||
+            (defenderRoll.userId == userPlayerId && defenderRoll.roll == null)
+
+    else -> true
+}
+
+private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl.ActivatedAbility> = when (this) {
+    is OffensiveAbilityState.AllIn ->
+        listOf(
+            element =
+            AbilityActionState.Activated.AllIn(
+                allInAbility =
+                OffensiveAbility.AllIn(
+                    hasAnotherAttack = hasAnotherAttack,
+                    usedThisTurn = usedThisTurn,
+                ),
             )
-        }
+                .toControl(enabled = !usedThisTurn),
+        )
 
-private fun AbilityActionState.Passive.MirrorImage.mirrorImageControlLabel(): String =
-    when (mirrorImageRerollSelection) {
-        MirrorImageRerollSelection.First -> "Reroll the ${firstDie.originalRoll}"
-        MirrorImageRerollSelection.Second -> "Reroll the ${secondDie.originalRoll}"
-        MirrorImageRerollSelection.None -> "Keep roll"
-    }
+    is OffensiveAbilityState.PrepareAttack ->
+        listOf(element = AbilityActionState.Activated.PrepareAttack.toControl())
 
-internal fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
-    when (this) {
-        is AbilityActionState.Passive.Teleport ->
-            (attackerRoll.userId == userPlayerId && attackerRoll.roll == null) ||
-                (defenderRoll.userId == userPlayerId && defenderRoll.roll == null)
-
-        else -> true
-    }
-
-private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl.ActivatedAbility> =
-    when (this) {
-        is OffensiveAbilityState.AllIn ->
-            listOf(
-                element =
-                    AbilityActionState.Activated.AllIn(
-                            allInAbility =
-                                OffensiveAbility.AllIn(
-                                    hasAnotherAttack = hasAnotherAttack,
-                                    usedThisTurn = usedThisTurn,
-                                )
-                        )
-                        .toControl(enabled = !usedThisTurn)
+    is OffensiveAbilityState.SummonMinion ->
+        listOf(
+            element =
+            AbilityActionState.Activated.SummonMinion(
+                summonMinionAbility =
+                OffensiveAbility.SummonMinion(
+                    skeletonCount = skeletonCount,
+                    golemCount = golemCount,
+                ),
             )
+                .toControl(),
+        )
 
-        is OffensiveAbilityState.PrepareAttack ->
-            listOf(element = AbilityActionState.Activated.PrepareAttack.toControl())
-
-        is OffensiveAbilityState.SummonMinion ->
-            listOf(
-                element =
-                    AbilityActionState.Activated.SummonMinion(
-                            summonMinionAbility =
-                                OffensiveAbility.SummonMinion(
-                                    skeletonCount = skeletonCount,
-                                    golemCount = golemCount,
-                                )
-                        )
-                        .toControl()
+    is OffensiveAbilityState.Impersonate ->
+        listOf(
+            element =
+            AbilityActionState.Activated.Impersonate(
+                impersonateAbility =
+                OffensiveAbility.Impersonate(
+                    impersonatedAbility = impersonatedAbility.toDomain(),
+                ),
             )
+                .toControl(),
+        ) + impersonatedAbility.toImpersonatedControls()
 
-        is OffensiveAbilityState.Impersonate ->
-            listOf(
-                element =
-                    AbilityActionState.Activated.Impersonate(
-                            impersonateAbility =
-                                OffensiveAbility.Impersonate(
-                                    impersonatedAbility = impersonatedAbility.toDomain()
-                                )
-                        )
-                        .toControl()
-            ) + impersonatedAbility.toImpersonatedControls()
+    is OffensiveAbilityState.KillingMomentum,
+    is OffensiveAbilityState.Encore,
+    is OffensiveAbilityState.SpellPotency,
+    is OffensiveAbilityState.None,
+    -> emptyList()
+}
 
-        is OffensiveAbilityState.KillingMomentum,
-        is OffensiveAbilityState.Encore,
-        is OffensiveAbilityState.SpellPotency,
-        is OffensiveAbilityState.None -> emptyList()
-    }
+private fun OffensiveAbilityState.toImpersonatedControls(): List<ArenaCombatControl.ActivatedAbility> = when (this) {
+    // Impersonate cannot copy itself
+    is OffensiveAbilityState.Impersonate -> emptyList()
 
-private fun OffensiveAbilityState.toImpersonatedControls():
-    List<ArenaCombatControl.ActivatedAbility> =
-    when (this) {
-        // Impersonate cannot copy itself
-        is OffensiveAbilityState.Impersonate -> emptyList()
+    else -> toActivatedControls()
+}
 
-        else -> toActivatedControls()
-    }
-
-private fun AbilityActionState.Activated.toControl(enabled: Boolean = true) =
-    ArenaCombatControl.ActivatedAbility(
-        action = this,
-        label = label,
-        requiresTarget = requiresTarget,
-        enabled = enabled,
-    )
+private fun AbilityActionState.Activated.toControl(enabled: Boolean = true) = ArenaCombatControl.ActivatedAbility(
+    action = this,
+    label = label,
+    requiresTarget = requiresTarget,
+    enabled = enabled,
+)
 
 // TODO(SS-029): Always StringResources
 private val AbilityActionState.label: String

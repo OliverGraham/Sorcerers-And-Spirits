@@ -5,8 +5,8 @@ import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.test.Test
 import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
 
 class DeleteProfileUseCaseTest {
 

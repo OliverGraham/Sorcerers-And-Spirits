@@ -26,44 +26,38 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     private val mailboxChallengesReference = root.child(path = CHALLENGE_MAILBOXES_PATH)
     private val challengesReference = root.child(path = CHALLENGES_PATH)
 
-    override fun travelerEntitiesFlow(): Flow<List<TravelerEntity>> =
-        tavernTravelersReference
-            .childEvents(ChildEvent.Type.ADDED, ChildEvent.Type.CHANGED, ChildEvent.Type.REMOVED)
-            .scan(initial = emptyMap<String, TravelerEntity>()) { travelersByUserId, childEvent ->
-                val userId = childEvent.snapshot.key ?: return@scan travelersByUserId
+    override fun travelerEntitiesFlow(): Flow<List<TravelerEntity>> = tavernTravelersReference
+        .childEvents(ChildEvent.Type.ADDED, ChildEvent.Type.CHANGED, ChildEvent.Type.REMOVED)
+        .scan(initial = emptyMap<String, TravelerEntity>()) { travelersByUserId, childEvent ->
+            val userId = childEvent.snapshot.key ?: return@scan travelersByUserId
 
-                if (childEvent.type == ChildEvent.Type.REMOVED) {
-                    travelersByUserId - userId
+            if (childEvent.type == ChildEvent.Type.REMOVED) {
+                travelersByUserId - userId
+            } else {
+                val traveler =
+                    childEvent.snapshot.value(strategy = TravelerEntity.serializer().nullable)
+                if (traveler != null) {
+                    travelersByUserId + (userId to traveler)
                 } else {
-                    val traveler =
-                        childEvent.snapshot.value(strategy = TravelerEntity.serializer().nullable)
-                    if (traveler != null) {
-                        travelersByUserId + (userId to traveler)
-                    } else {
-                        travelersByUserId
-                    }
+                    travelersByUserId
                 }
             }
-            .map { travelersByUserId -> travelersByUserId.values.toList() }
-
-    override fun mailboxChallengeIdFlow(userId: String): Flow<String?> =
-        mailboxChallengesReference.child(path = userId).valueEvents.map { snapshot ->
-            if (snapshot.exists) snapshot.value(strategy = String.serializer().nullable) else null
         }
+        .map { travelersByUserId -> travelersByUserId.values.toList() }
 
-    override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> =
-        challengesReference.child(path = challengeId).valueEvents.map { snapshot ->
-            snapshot.value(strategy = ChallengeEntity.serializer().nullable)
-        }
+    override fun mailboxChallengeIdFlow(userId: String): Flow<String?> = mailboxChallengesReference.child(path = userId).valueEvents.map { snapshot ->
+        if (snapshot.exists) snapshot.value(strategy = String.serializer().nullable) else null
+    }
 
-    override fun connectedFlow(): Flow<Boolean> =
-        connectedReference.valueEvents.map { snapshot -> snapshot.value<Boolean?>() ?: false }
+    override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> = challengesReference.child(path = challengeId).valueEvents.map { snapshot ->
+        snapshot.value(strategy = ChallengeEntity.serializer().nullable)
+    }
 
-    override suspend fun getMailboxChallengeId(userId: String): String? =
-        mailboxChallengesReference.child(path = userId).awaitNullableValue<String>()
+    override fun connectedFlow(): Flow<Boolean> = connectedReference.valueEvents.map { snapshot -> snapshot.value<Boolean?>() ?: false }
 
-    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? =
-        challengesReference.child(path = challengeId).awaitNullableValue<ChallengeEntity>()
+    override suspend fun getMailboxChallengeId(userId: String): String? = mailboxChallengesReference.child(path = userId).awaitNullableValue<String>()
+
+    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? = challengesReference.child(path = challengeId).awaitNullableValue<ChallengeEntity>()
 
     override fun generateChallengeId(): String? = challengesReference.push().key
 
@@ -74,16 +68,16 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     ) {
         root.updateChildren(
             update =
-                buildMap {
-                    this[challengeId.toChallengesPath()] =
-                        ChallengeWriteEntity(
-                            challengeId = challengeId,
-                            challengerEntitiesMap = challengers,
-                        )
-                    participantUserIds.forEach { userId ->
-                        this[userId.toChallengeMailBoxesPath()] = challengeId
-                    }
+            buildMap {
+                this[challengeId.toChallengesPath()] =
+                    ChallengeWriteEntity(
+                        challengeId = challengeId,
+                        challengerEntitiesMap = challengers,
+                    )
+                participantUserIds.forEach { userId ->
+                    this[userId.toChallengeMailBoxesPath()] = challengeId
                 }
+            },
         )
     }
 
@@ -98,7 +92,7 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         rating: Long,
     ) {
         tavernTravelersReference.child(path = userId).runTransaction(
-            strategy = TravelerEntity.serializer().nullable
+            strategy = TravelerEntity.serializer().nullable,
         ) { currentTraveler ->
             currentTraveler?.copy(
                 userId = userId,
@@ -115,28 +109,27 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         }
     }
 
-    override suspend fun markTravelerBusyIfAvailable(userId: String): Boolean =
-        try {
-            tavernTravelersReference.child(path = userId).runTransaction(
-                strategy = TravelerEntity.serializer().nullable
-            ) { traveler ->
-                traveler ?: throw AbortTransactionException()
+    override suspend fun markTravelerBusyIfAvailable(userId: String): Boolean = try {
+        tavernTravelersReference.child(path = userId).runTransaction(
+            strategy = TravelerEntity.serializer().nullable,
+        ) { traveler ->
+            traveler ?: throw AbortTransactionException()
 
-                if (traveler.tavernStatus != TavernStatus.Available) {
-                    throw AbortTransactionException()
-                }
-
-                traveler.copy(tavernStatus = TavernStatus.Busy)
+            if (traveler.tavernStatus != TavernStatus.Available) {
+                throw AbortTransactionException()
             }
 
-            true
-        } catch (_: AbortTransactionException) {
-            false
+            traveler.copy(tavernStatus = TavernStatus.Busy)
         }
+
+        true
+    } catch (_: AbortTransactionException) {
+        false
+    }
 
     override suspend fun setTravelerStatusIfPresent(userId: String, tavernStatus: TavernStatus) {
         tavernTravelersReference.child(path = userId).runTransaction(
-            strategy = TravelerEntity.serializer().nullable
+            strategy = TravelerEntity.serializer().nullable,
         ) { traveler ->
             traveler?.copy(tavernStatus = tavernStatus) ?: traveler
         }
@@ -144,7 +137,7 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
 
     override suspend fun releaseTravelerIfBusy(userId: String) {
         tavernTravelersReference.child(path = userId).runTransaction(
-            strategy = TravelerEntity.serializer().nullable
+            strategy = TravelerEntity.serializer().nullable,
         ) { traveler ->
             when {
                 traveler == null -> null

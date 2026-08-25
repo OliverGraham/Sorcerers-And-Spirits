@@ -48,9 +48,9 @@ internal fun DiceOverlay(
 
     BoxWithConstraints(
         modifier =
-            modifier.fillMaxSize().onGloballyPositioned {
-                overlayOrigin = it.localToRoot(relativeToLocal = Offset.Zero)
-            }
+        modifier.fillMaxSize().onGloballyPositioned {
+            overlayOrigin = it.localToRoot(relativeToLocal = Offset.Zero)
+        },
     ) {
         val homeCenter =
             Offset(x = constraints.maxWidth / 2f, y = homeBounds.center.y - overlayOrigin.y)
@@ -86,7 +86,7 @@ internal fun DiceOverlay(
 
         DiceBadgeOverlay(
             diceBadgeState =
-                diceStateHolder.firstDieState.badge ?: diceStateHolder.secondDieState.badge,
+            diceStateHolder.firstDieState.badge ?: diceStateHolder.secondDieState.badge,
             homeCenter = homeCenter,
         )
     }

@@ -19,48 +19,43 @@ sealed interface PlayerState {
     ) : PlayerState
 
     @Immutable
-    data class Unselected(override val userId: String, override val displayName: String) :
-        PlayerState
+    data class Unselected(override val userId: String, override val displayName: String) : PlayerState
 }
 
 internal fun Map<String, ArenaPlayer>.toState() = mapValues { it.value.toState() }
 
-internal fun ArenaPlayer.toState() =
-    when (this) {
-        is ArenaPlayer.Selected ->
-            PlayerState.Selected(
-                userId = userId,
-                displayName = displayName,
-                characterClass = characterClass.toState(),
-            )
+internal fun ArenaPlayer.toState() = when (this) {
+    is ArenaPlayer.Selected ->
+        PlayerState.Selected(
+            userId = userId,
+            displayName = displayName,
+            characterClass = characterClass.toState(),
+        )
 
-        is ArenaPlayer.Unselected ->
-            PlayerState.Unselected(userId = userId, displayName = displayName)
-    }
+    is ArenaPlayer.Unselected ->
+        PlayerState.Unselected(userId = userId, displayName = displayName)
+}
 
-internal fun ArenaPlayer.Selected.toSelectedState() =
-    PlayerState.Selected(
-        userId = userId,
-        displayName = displayName,
-        characterClass = characterClass.toState(),
-    )
+internal fun ArenaPlayer.Selected.toSelectedState() = PlayerState.Selected(
+    userId = userId,
+    displayName = displayName,
+    characterClass = characterClass.toState(),
+)
 
-internal fun PlayerState.toDomain() =
-    when (this) {
-        is PlayerState.Selected ->
-            ArenaPlayer.Selected(
-                userId = userId,
-                displayName = displayName,
-                characterClass = characterClass.toDomain(),
-            )
+internal fun PlayerState.toDomain() = when (this) {
+    is PlayerState.Selected ->
+        ArenaPlayer.Selected(
+            userId = userId,
+            displayName = displayName,
+            characterClass = characterClass.toDomain(),
+        )
 
-        is PlayerState.Unselected ->
-            ArenaPlayer.Unselected(userId = userId, displayName = displayName)
-    }
+    is PlayerState.Unselected ->
+        ArenaPlayer.Unselected(userId = userId, displayName = displayName)
+}
 
-internal fun PlayerState.Selected.toDomain() =
-    ArenaPlayer.Selected(
-        userId = userId,
-        displayName = displayName,
-        characterClass = characterClass.toDomain(),
-    )
+internal fun PlayerState.Selected.toDomain() = ArenaPlayer.Selected(
+    userId = userId,
+    displayName = displayName,
+    characterClass = characterClass.toDomain(),
+)

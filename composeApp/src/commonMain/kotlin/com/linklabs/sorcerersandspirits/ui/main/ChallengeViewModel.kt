@@ -33,11 +33,11 @@ class ChallengeViewModel(
     private val challengeHandler =
         ChallengeHandler(
             challengeTimer =
-                Timer(
-                    coroutineScope = viewModelScope,
-                    onTimerTick = ::updateChallengeStateSeconds,
-                    onTimerExpiration = ::declineChallenge,
-                ),
+            Timer(
+                coroutineScope = viewModelScope,
+                onTimerTick = ::updateChallengeStateSeconds,
+                onTimerExpiration = ::declineChallenge,
+            ),
             updateChallengerStatusUseCase = updateChallengerStatusUseCase,
         )
 

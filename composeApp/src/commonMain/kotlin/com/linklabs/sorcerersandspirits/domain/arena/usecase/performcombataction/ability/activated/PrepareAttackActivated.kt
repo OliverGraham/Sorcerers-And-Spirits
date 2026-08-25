@@ -55,16 +55,16 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
     ) {
         addMessage(
             message =
-                ArenaMessage.PrepareAttack(
-                    duelistUserId = attackerUserId,
-                    duelistName = attacker.className,
-                    classType = attacker.type,
-                    targetUserId = defenderUserId,
-                    targetClassName = defender.className,
-                    firstDie = result.firstDie,
-                    secondDie = result.secondDie,
-                    isSuccessful = isSuccessful,
-                )
+            ArenaMessage.PrepareAttack(
+                duelistUserId = attackerUserId,
+                duelistName = attacker.className,
+                classType = attacker.type,
+                targetUserId = defenderUserId,
+                targetClassName = defender.className,
+                firstDie = result.firstDie,
+                secondDie = result.secondDie,
+                isSuccessful = isSuccessful,
+            ),
         )
     }
 }

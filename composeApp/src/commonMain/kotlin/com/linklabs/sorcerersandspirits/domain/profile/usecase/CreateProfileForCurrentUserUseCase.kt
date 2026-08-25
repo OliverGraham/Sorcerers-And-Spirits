@@ -18,7 +18,7 @@ class CreateProfileForCurrentUserUseCase(
         val userId = authenticationRepository.getUserId() ?: return DisplayNameResult.ERROR
 
         return profileRepository.createProfile(
-            profile = Profile(userId = userId, displayName = displayName)
+            profile = Profile(userId = userId, displayName = displayName),
         )
     }
 }

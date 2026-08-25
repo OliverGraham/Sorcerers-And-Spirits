@@ -109,10 +109,10 @@ internal fun ArenaMessageLog(
 
             items(
                 items =
-                    group.messages.filterNot {
-                        it is ArenaMessageState.NewRound ||
-                            it is ArenaMessageState.NormalRoll.Attack
-                    },
+                group.messages.filterNot {
+                    it is ArenaMessageState.NewRound ||
+                        it is ArenaMessageState.NormalRoll.Attack
+                },
                 key = { it.id },
             ) { message ->
                 ArenaMessageItem(messageState = message, modifier = Modifier.animateItem())
@@ -121,40 +121,38 @@ internal fun ArenaMessageLog(
     }
 }
 
-private fun ArenaMessageGroupState.groupKey(): Int =
-    when (this) {
-        is ArenaMessageGroupState.Setup -> SETUP_GROUP_KEY
-        is ArenaMessageGroupState.Round -> roundNumber
-    }
+private fun ArenaMessageGroupState.groupKey(): Int = when (this) {
+    is ArenaMessageGroupState.Setup -> SETUP_GROUP_KEY
+    is ArenaMessageGroupState.Round -> roundNumber
+}
 
 @Composable
 private fun rememberOverscrollDismissConnection(
     listState: LazyListState,
     onDismiss: () -> Unit,
-): NestedScrollConnection =
-    remember(key1 = listState, key2 = onDismiss) {
-        object : NestedScrollConnection {
-            private var accumulatedOverscroll = 0f
+): NestedScrollConnection = remember(key1 = listState, key2 = onDismiss) {
+    object : NestedScrollConnection {
+        private var accumulatedOverscroll = 0f
 
-            override fun onPostScroll(
-                consumed: Offset,
-                available: Offset,
-                source: NestedScrollSource,
-            ): Offset {
-                val isPullingPastEnd = available.y < 0f && !listState.canScrollForward
-                if (isPullingPastEnd) {
-                    accumulatedOverscroll += available.y
-                    if (accumulatedOverscroll <= -OVERSCROLL_DISMISS_THRESHOLD_PX) {
-                        accumulatedOverscroll = 0f
-                        onDismiss()
-                    }
-                } else {
+        override fun onPostScroll(
+            consumed: Offset,
+            available: Offset,
+            source: NestedScrollSource,
+        ): Offset {
+            val isPullingPastEnd = available.y < 0f && !listState.canScrollForward
+            if (isPullingPastEnd) {
+                accumulatedOverscroll += available.y
+                if (accumulatedOverscroll <= -OVERSCROLL_DISMISS_THRESHOLD_PX) {
                     accumulatedOverscroll = 0f
+                    onDismiss()
                 }
-                return Offset.Zero
+            } else {
+                accumulatedOverscroll = 0f
             }
+            return Offset.Zero
         }
     }
+}
 
 @Composable
 private fun GroupHeader(
@@ -251,14 +249,14 @@ private fun DefaultMessage(state: ArenaMessageState, modifier: Modifier = Modifi
 private fun TurnMessage(state: ArenaMessageState.NewTurn, modifier: Modifier = Modifier) {
     Text(
         text =
-            classHighlightedText(
-                fullText =
-                    stringResource(
-                        resource = Res.string.arena_log_turn,
-                        state.characterClassInfo.className,
-                    ),
-                characterClassInfo = state.characterClassInfo,
+        classHighlightedText(
+            fullText =
+            stringResource(
+                resource = Res.string.arena_log_turn,
+                state.characterClassInfo.className,
             ),
+            characterClassInfo = state.characterClassInfo,
+        ),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
         modifier = modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
@@ -272,10 +270,10 @@ private fun ChoseCharacterClassMessage(
 ) {
     Text(
         text =
-            classHighlightedText(
-                fullText = state.getDisplayString(),
-                characterClassInfo = state.characterClassInfo,
-            ),
+        classHighlightedText(
+            fullText = state.getDisplayString(),
+            characterClassInfo = state.characterClassInfo,
+        ),
         style = MaterialTheme.typography.bodyLarge,
         modifier = modifier.padding(vertical = 2.dp),
     )
@@ -324,47 +322,47 @@ private fun ArenaMessageLogPreview() {
         ArenaMessageLog(
             onDismiss = {},
             messageGroups =
-                listOf(
-                    ArenaMessageGroupState.Setup(
-                        messages =
-                            listOf(
-                                ArenaMessageState.ConnectedToArena(
-                                    id = "1",
-                                    displayName = "A Traveler",
-                                ),
-                                ArenaMessageState.ChoseCharacterClass(
-                                    id = "2",
-                                    displayName = "A Traveler",
-                                    characterClassInfo = duelistInfo,
-                                ),
-                            )
-                    ),
-                    ArenaMessageGroupState.Round(
-                        roundNumber = 1,
-                        messages =
-                            listOf(
-                                ArenaMessageState.NewRound(id = "3", roundNumber = 1),
-                                ArenaMessageState.NewTurn(
-                                    id = "4",
-                                    characterClassInfo = duelistInfo,
-                                ),
-                                ArenaMessageState.KillingMomentum(
-                                    id = "5",
-                                    gestures = emptyMap(),
-                                    attackerUserId = "duelist",
-                                    animation = ArenaAnimationState.FlashAndAvatar(),
-                                ),
-                            ),
-                    ),
-                    ArenaMessageGroupState.Round(
-                        roundNumber = 2,
-                        messages =
-                            listOf(
-                                ArenaMessageState.NewRound(id = "6", roundNumber = 2),
-                                ArenaMessageState.NewTurn(id = "7", characterClassInfo = rogueInfo),
-                            ),
+            listOf(
+                ArenaMessageGroupState.Setup(
+                    messages =
+                    listOf(
+                        ArenaMessageState.ConnectedToArena(
+                            id = "1",
+                            displayName = "A Traveler",
+                        ),
+                        ArenaMessageState.ChoseCharacterClass(
+                            id = "2",
+                            displayName = "A Traveler",
+                            characterClassInfo = duelistInfo,
+                        ),
                     ),
                 ),
+                ArenaMessageGroupState.Round(
+                    roundNumber = 1,
+                    messages =
+                    listOf(
+                        ArenaMessageState.NewRound(id = "3", roundNumber = 1),
+                        ArenaMessageState.NewTurn(
+                            id = "4",
+                            characterClassInfo = duelistInfo,
+                        ),
+                        ArenaMessageState.KillingMomentum(
+                            id = "5",
+                            gestures = emptyMap(),
+                            attackerUserId = "duelist",
+                            animation = ArenaAnimationState.FlashAndAvatar(),
+                        ),
+                    ),
+                ),
+                ArenaMessageGroupState.Round(
+                    roundNumber = 2,
+                    messages =
+                    listOf(
+                        ArenaMessageState.NewRound(id = "6", roundNumber = 2),
+                        ArenaMessageState.NewTurn(id = "7", characterClassInfo = rogueInfo),
+                    ),
+                ),
+            ),
         )
     }
 }

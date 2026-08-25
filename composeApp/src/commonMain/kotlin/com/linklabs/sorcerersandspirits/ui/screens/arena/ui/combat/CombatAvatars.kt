@@ -148,9 +148,9 @@ private fun ColumnScope.SeatedAvatar(
 private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier =
-            modifier.fillMaxWidth().height(height = 56.dp).onGloballyPositioned {
-                onBoundsChanged(it.boundsInRoot())
-            }
+        modifier.fillMaxWidth().height(height = 56.dp).onGloballyPositioned {
+            onBoundsChanged(it.boundsInRoot())
+        },
     )
 }
 
@@ -180,9 +180,9 @@ private fun LargeAvatar(
 
         Box(
             modifier =
-                Modifier.weight(weight = 1f).fillMaxWidth().onGloballyPositioned {
-                    onAvatarBoundsChanged(player.userId, it.boundsInRoot())
-                },
+            Modifier.weight(weight = 1f).fillMaxWidth().onGloballyPositioned {
+                onAvatarBoundsChanged(player.userId, it.boundsInRoot())
+            },
             contentAlignment = Alignment.BottomCenter,
         ) {
             if (isActiveRoller) {
@@ -273,10 +273,10 @@ private fun StatPillFrame(
 ) {
     Row(
         modifier =
-            modifier
-                .clip(shape = statPillShape)
-                .background(color = classColor)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+        modifier
+            .clip(shape = statPillShape)
+            .background(color = classColor)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -307,27 +307,27 @@ private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
             initialValue = 0f,
             targetValue = HALO_SWEEP_WIDTH_PX,
             animationSpec =
-                infiniteRepeatable(
-                    animation =
-                        tween(durationMillis = HALO_SWEEP_DURATION_MILLIS, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart,
-                ),
+            infiniteRepeatable(
+                animation =
+                tween(durationMillis = HALO_SWEEP_DURATION_MILLIS, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
             label = HALO_SWEEP_TRANSLATE_LABEL,
         )
 
     Box(
         modifier =
-            modifier
-                .size(width = haloWidth, height = haloHeight)
-                .clip(shape = haloShape)
-                .background(
-                    brush =
-                        Brush.linearGradient(
-                            colors = haloSweepColors,
-                            start = Offset(x = translate, y = 0f),
-                            end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
-                            tileMode = TileMode.Repeated,
-                        )
-                )
+        modifier
+            .size(width = haloWidth, height = haloHeight)
+            .clip(shape = haloShape)
+            .background(
+                brush =
+                Brush.linearGradient(
+                    colors = haloSweepColors,
+                    start = Offset(x = translate, y = 0f),
+                    end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
+                    tileMode = TileMode.Repeated,
+                ),
+            ),
     )
 }

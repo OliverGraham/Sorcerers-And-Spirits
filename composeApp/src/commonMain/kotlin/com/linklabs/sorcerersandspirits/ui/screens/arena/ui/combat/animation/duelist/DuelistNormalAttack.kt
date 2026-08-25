@@ -48,11 +48,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.sla
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.smoothstep
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.PI
-import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.atan2
 
 internal const val SLASH_SWEEP_MILLIS = 300
 internal const val TWIN_SLASH_STAGGER_MILLIS = 500
@@ -88,12 +88,12 @@ internal fun DuelistNormalAttackOverlay(
 
         duelistStrikeState.play(
             geometry =
-                weaponStrikeGeometry(
-                    attackerBounds = attackerBounds,
-                    target = defenderBounds.center,
-                    accentColor = accentColor,
-                    density = density,
-                ),
+            weaponStrikeGeometry(
+                attackerBounds = attackerBounds,
+                target = defenderBounds.center,
+                accentColor = accentColor,
+                density = density,
+            ),
             normalRollMessageType = messageType,
         )
 
@@ -177,7 +177,7 @@ private suspend fun DuelistStrikeState.sweepBlade(
             blade.sweep.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = SLASH_SWEEP_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = SLASH_SWEEP_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         launch {
@@ -240,24 +240,24 @@ private fun DrawScope.drawBladeSlash(
     if (engage > 0f) {
         drawPath(
             path =
-                slashTrailPath(
-                    start = start,
-                    end = end,
-                    perp = bowNormal,
-                    bow = bow,
-                    progress = sweep,
-                ),
+            slashTrailPath(
+                start = start,
+                end = end,
+                perp = bowNormal,
+                bow = bow,
+                progress = sweep,
+            ),
             brush =
-                Brush.linearGradient(
-                    colors =
-                        listOf(
-                            Color.Transparent,
-                            geometry.accentColor.copy(alpha = 0.55f),
-                            steelBright,
-                        ),
-                    start = start,
-                    end = arcPoint,
+            Brush.linearGradient(
+                colors =
+                listOf(
+                    Color.Transparent,
+                    geometry.accentColor.copy(alpha = 0.55f),
+                    steelBright,
                 ),
+                start = start,
+                end = arcPoint,
+            ),
             style = Stroke(width = 8.dp.toPx(), cap = StrokeCap.Round),
             alpha = alpha * 0.8f * engage,
         )

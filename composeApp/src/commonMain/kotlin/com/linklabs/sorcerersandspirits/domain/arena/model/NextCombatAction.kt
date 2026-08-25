@@ -22,12 +22,11 @@ sealed interface NextCombatAction {
 }
 
 // TODO: Refactor this
-fun NextCombatAction.attackerUserId(): String =
-    when (this) {
-        is NextCombatAction.Idle -> activeUserIds.first()
-        is NextCombatAction.NormalAttack -> attackTurn.attackerUserId
-        is NextCombatAction.AbilityRoll -> attackTurn.attackerUserId
-    }
+fun NextCombatAction.attackerUserId(): String = when (this) {
+    is NextCombatAction.Idle -> activeUserIds.first()
+    is NextCombatAction.NormalAttack -> attackTurn.attackerUserId
+    is NextCombatAction.AbilityRoll -> attackTurn.attackerUserId
+}
 
 fun NextCombatAction.lockedTargetUserId(userId: String): String? {
     val attack = this as? NextCombatAction.NormalAttack ?: return null

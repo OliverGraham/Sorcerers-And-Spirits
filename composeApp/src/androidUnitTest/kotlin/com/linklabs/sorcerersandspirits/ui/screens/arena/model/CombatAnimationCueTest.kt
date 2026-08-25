@@ -14,14 +14,14 @@ class CombatAnimationCueTest {
 
         assertEquals(
             expected =
-                CombatAnimationCue.NormalAttack(
-                    id = MESSAGE_ID,
-                    attackerUserId = ATTACKER_ID,
-                    attackerClassType = CharacterClassType.Mage,
-                    defenderUserId = DEFENDER_ID,
-                    normalRollMessageType = NormalRollMessageType.ArmorClassHit,
-                    impersonatedClassType = CharacterClassType.None,
-                ),
+            CombatAnimationCue.NormalAttack(
+                id = MESSAGE_ID,
+                attackerUserId = ATTACKER_ID,
+                attackerClassType = CharacterClassType.Mage,
+                defenderUserId = DEFENDER_ID,
+                normalRollMessageType = NormalRollMessageType.ArmorClassHit,
+                impersonatedClassType = CharacterClassType.None,
+            ),
             actual = message.combatAnimationCue,
         )
     }
@@ -270,15 +270,15 @@ class CombatAnimationCueTest {
 
         assertEquals(
             expected =
-                CombatAnimationCue.SpellPotency(
-                    id = MESSAGE_ID,
-                    mageUserId = ATTACKER_ID,
-                    mainTargetUserId = DEFENDER_ID,
-                    mainDamage = 8,
-                    splashDamage = 4,
-                    splashTargetUserIds = listOf(SPECTATOR_ID),
-                    isMainTargetKnockedOut = false,
-                ),
+            CombatAnimationCue.SpellPotency(
+                id = MESSAGE_ID,
+                mageUserId = ATTACKER_ID,
+                mainTargetUserId = DEFENDER_ID,
+                mainDamage = 8,
+                splashDamage = 4,
+                splashTargetUserIds = listOf(SPECTATOR_ID),
+                isMainTargetKnockedOut = false,
+            ),
             actual = cue,
         )
         assertEquals(expected = AvatarGesture.Cast, actual = cue?.gestureFor(userId = ATTACKER_ID))
@@ -332,7 +332,7 @@ class CombatAnimationCueTest {
 
         assertEquals(
             expected =
-                CombatAnimationCue.KillingMomentum(id = MESSAGE_ID, attackerUserId = ATTACKER_ID),
+            CombatAnimationCue.KillingMomentum(id = MESSAGE_ID, attackerUserId = ATTACKER_ID),
             actual = cue,
         )
         assertEquals(expected = AvatarGesture.ReArm, actual = cue?.gestureFor(userId = ATTACKER_ID))
@@ -364,21 +364,21 @@ class CombatAnimationCueTest {
     fun `Given a Mirror Image split, then it holds still with no seat reaction`() {
         val cue =
             ArenaMessageState.MirrorImage.Trigger(
-                    id = MESSAGE_ID,
-                    illusionistUserId = DEFENDER_ID,
-                    firstDie = 3,
-                    secondDie = 4,
-                )
+                id = MESSAGE_ID,
+                illusionistUserId = DEFENDER_ID,
+                firstDie = 3,
+                secondDie = 4,
+            )
                 .combatAnimationCue
 
         assertEquals(
             expected =
-                CombatAnimationCue.MirrorImage(
-                    id = MESSAGE_ID,
-                    illusionistUserId = DEFENDER_ID,
-                    phase = MirrorImagePhase.Split,
-                    messageType = null,
-                ),
+            CombatAnimationCue.MirrorImage(
+                id = MESSAGE_ID,
+                illusionistUserId = DEFENDER_ID,
+                phase = MirrorImagePhase.Split,
+                messageType = null,
+            ),
             actual = cue,
         )
         assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
@@ -408,17 +408,16 @@ class CombatAnimationCueTest {
         assertEquals(expected = DEFENDER_ID, actual = cue?.toCollapsingUserId())
     }
 
-    private fun mirrorImageResolveCue(outcome: NormalRollMessageType) =
-        ArenaMessageState.MirrorImage.Pass(
-                id = MESSAGE_ID,
-                illusionistUserId = DEFENDER_ID,
-                attackerName = "Mage",
-                attackerClassType = CharacterClassType.Mage,
-                messageType = outcome,
-                baseRoll = 8,
-                doublesBonus = 0,
-            )
-            .combatAnimationCue
+    private fun mirrorImageResolveCue(outcome: NormalRollMessageType) = ArenaMessageState.MirrorImage.Pass(
+        id = MESSAGE_ID,
+        illusionistUserId = DEFENDER_ID,
+        attackerName = "Mage",
+        attackerClassType = CharacterClassType.Mage,
+        messageType = outcome,
+        baseRoll = 8,
+        doublesBonus = 0,
+    )
+        .combatAnimationCue
 
     @Test
     fun `Given a Teleport trigger, then the portal opens with no seat gesture`() {
@@ -428,12 +427,12 @@ class CombatAnimationCueTest {
 
         assertEquals(
             expected =
-                CombatAnimationCue.Teleport(
-                    id = MESSAGE_ID,
-                    mageUserId = DEFENDER_ID,
-                    phase = TeleportPhase.Open,
-                    didEscape = null,
-                ),
+            CombatAnimationCue.Teleport(
+                id = MESSAGE_ID,
+                mageUserId = DEFENDER_ID,
+                phase = TeleportPhase.Open,
+                didEscape = null,
+            ),
             actual = cue,
         )
         assertNull(actual = cue?.gestureFor(userId = DEFENDER_ID))
@@ -444,23 +443,23 @@ class CombatAnimationCueTest {
     fun `Given a Teleport roll-off die, then the portal holds without re-opening`() {
         val cue =
             ArenaMessageState.Teleport.Roll(
-                    id = MESSAGE_ID,
-                    mageUserId = DEFENDER_ID,
-                    rollerUserId = DEFENDER_ID,
-                    rollerClassType = CharacterClassType.Mage,
-                    playerName = "Mage",
-                    singleDie = 5,
-                )
+                id = MESSAGE_ID,
+                mageUserId = DEFENDER_ID,
+                rollerUserId = DEFENDER_ID,
+                rollerClassType = CharacterClassType.Mage,
+                playerName = "Mage",
+                singleDie = 5,
+            )
                 .combatAnimationCue
 
         assertEquals(
             expected =
-                CombatAnimationCue.Teleport(
-                    id = MESSAGE_ID,
-                    mageUserId = DEFENDER_ID,
-                    phase = TeleportPhase.Hold,
-                    didEscape = null,
-                ),
+            CombatAnimationCue.Teleport(
+                id = MESSAGE_ID,
+                mageUserId = DEFENDER_ID,
+                phase = TeleportPhase.Hold,
+                didEscape = null,
+            ),
             actual = cue,
         )
     }
@@ -476,80 +475,72 @@ class CombatAnimationCueTest {
         assertNull(actual = failed?.toCollapsingUserId())
     }
 
-    private fun teleportResultCue(didDefenderEscape: Boolean) =
-        ArenaMessageState.Teleport.Result(
-                id = MESSAGE_ID,
-                mageUserId = DEFENDER_ID,
-                didDefenderEscape = didDefenderEscape,
-            )
-            .combatAnimationCue
+    private fun teleportResultCue(didDefenderEscape: Boolean) = ArenaMessageState.Teleport.Result(
+        id = MESSAGE_ID,
+        mageUserId = DEFENDER_ID,
+        didDefenderEscape = didDefenderEscape,
+    )
+        .combatAnimationCue
 
-    private fun normalRollMessage(type: NormalRollMessageType) =
-        ArenaMessageState.NormalRoll.Attack(
-            id = MESSAGE_ID,
-            attackerUserId = ATTACKER_ID,
-            defenderUserId = DEFENDER_ID,
-            attackerClassType = CharacterClassType.Mage,
-            impersonatedClassType = CharacterClassType.None,
-            normalRollMessageType = type,
-        )
+    private fun normalRollMessage(type: NormalRollMessageType) = ArenaMessageState.NormalRoll.Attack(
+        id = MESSAGE_ID,
+        attackerUserId = ATTACKER_ID,
+        defenderUserId = DEFENDER_ID,
+        attackerClassType = CharacterClassType.Mage,
+        impersonatedClassType = CharacterClassType.None,
+        normalRollMessageType = type,
+    )
 
-    private fun normalAttackCue(outcome: NormalRollMessageType) =
-        CombatAnimationCue.NormalAttack(
-            id = MESSAGE_ID,
-            attackerUserId = ATTACKER_ID,
-            attackerClassType = CharacterClassType.None,
-            defenderUserId = DEFENDER_ID,
-            normalRollMessageType = outcome,
-            impersonatedClassType = CharacterClassType.None,
-        )
+    private fun normalAttackCue(outcome: NormalRollMessageType) = CombatAnimationCue.NormalAttack(
+        id = MESSAGE_ID,
+        attackerUserId = ATTACKER_ID,
+        attackerClassType = CharacterClassType.None,
+        defenderUserId = DEFENDER_ID,
+        normalRollMessageType = outcome,
+        impersonatedClassType = CharacterClassType.None,
+    )
 
-    private fun mageAttackCue(outcome: NormalRollMessageType) =
-        CombatAnimationCue.NormalAttack(
-            id = MESSAGE_ID,
-            attackerUserId = ATTACKER_ID,
-            attackerClassType = CharacterClassType.Mage,
-            defenderUserId = DEFENDER_ID,
-            normalRollMessageType = outcome,
-            impersonatedClassType = CharacterClassType.None,
-        )
+    private fun mageAttackCue(outcome: NormalRollMessageType) = CombatAnimationCue.NormalAttack(
+        id = MESSAGE_ID,
+        attackerUserId = ATTACKER_ID,
+        attackerClassType = CharacterClassType.Mage,
+        defenderUserId = DEFENDER_ID,
+        normalRollMessageType = outcome,
+        impersonatedClassType = CharacterClassType.None,
+    )
 
-    private fun rogueAttackCue(outcome: NormalRollMessageType) =
-        CombatAnimationCue.NormalAttack(
-            id = MESSAGE_ID,
-            attackerUserId = ATTACKER_ID,
-            attackerClassType = CharacterClassType.Rogue,
-            defenderUserId = DEFENDER_ID,
-            normalRollMessageType = outcome,
-            impersonatedClassType = CharacterClassType.None,
-        )
+    private fun rogueAttackCue(outcome: NormalRollMessageType) = CombatAnimationCue.NormalAttack(
+        id = MESSAGE_ID,
+        attackerUserId = ATTACKER_ID,
+        attackerClassType = CharacterClassType.Rogue,
+        defenderUserId = DEFENDER_ID,
+        normalRollMessageType = outcome,
+        impersonatedClassType = CharacterClassType.None,
+    )
 
-    private fun duelistAttackCue(outcome: NormalRollMessageType) =
-        CombatAnimationCue.NormalAttack(
-            id = MESSAGE_ID,
-            attackerUserId = ATTACKER_ID,
-            attackerClassType = CharacterClassType.Duelist,
-            defenderUserId = DEFENDER_ID,
-            normalRollMessageType = outcome,
-            impersonatedClassType = CharacterClassType.None,
-        )
+    private fun duelistAttackCue(outcome: NormalRollMessageType) = CombatAnimationCue.NormalAttack(
+        id = MESSAGE_ID,
+        attackerUserId = ATTACKER_ID,
+        attackerClassType = CharacterClassType.Duelist,
+        defenderUserId = DEFENDER_ID,
+        normalRollMessageType = outcome,
+        impersonatedClassType = CharacterClassType.None,
+    )
 
-    private fun paladinAttackCue(outcome: NormalRollMessageType) =
-        CombatAnimationCue.NormalAttack(
-            id = MESSAGE_ID,
-            attackerUserId = ATTACKER_ID,
-            attackerClassType = CharacterClassType.Paladin,
-            defenderUserId = DEFENDER_ID,
-            normalRollMessageType = outcome,
-            impersonatedClassType = CharacterClassType.None,
-        )
+    private fun paladinAttackCue(outcome: NormalRollMessageType) = CombatAnimationCue.NormalAttack(
+        id = MESSAGE_ID,
+        attackerUserId = ATTACKER_ID,
+        attackerClassType = CharacterClassType.Paladin,
+        defenderUserId = DEFENDER_ID,
+        normalRollMessageType = outcome,
+        impersonatedClassType = CharacterClassType.None,
+    )
 
-    private fun dodgeMessage(didArmorIncrease: Boolean) =
-        ArenaMessageState.Dodge(
-            id = MESSAGE_ID,
-            didArmorIncrease = didArmorIncrease,
-            dodgerUserId = DEFENDER_ID,
-        )
+    private fun dodgeMessage(didArmorIncrease: Boolean) = ArenaMessageState.Dodge(
+        id = MESSAGE_ID,
+        didArmorIncrease = didArmorIncrease,
+        dodgerUserId = DEFENDER_ID,
+    )
 
     private companion object {
         const val MESSAGE_ID = "message-1"

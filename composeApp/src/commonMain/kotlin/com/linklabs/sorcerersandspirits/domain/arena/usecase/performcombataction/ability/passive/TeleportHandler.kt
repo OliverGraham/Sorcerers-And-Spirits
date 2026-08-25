@@ -10,8 +10,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
     fun triggerTeleport() = combatMutator.triggerTeleport()
 
-    fun handleTeleport(teleport: AbilityAction.Passive.Teleport) =
-        combatMutator.handleTeleport(teleport = teleport)
+    fun handleTeleport(teleport: AbilityAction.Passive.Teleport) = combatMutator.handleTeleport(teleport = teleport)
 
     private fun CombatMutator.triggerTeleport() {
         addMessage(message = ArenaMessage.Teleport.Trigger(mageUserId = defenderUserId))
@@ -19,9 +18,9 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         val purpose =
             AbilityAction.Passive.Teleport(
                 attackerRoll =
-                    TeleportDie(userId = attackerUserId, diePosition = DiePosition.First),
+                TeleportDie(userId = attackerUserId, diePosition = DiePosition.First),
                 defenderRoll =
-                    TeleportDie(userId = defenderUserId, diePosition = DiePosition.Second),
+                TeleportDie(userId = defenderUserId, diePosition = DiePosition.Second),
                 attackerDoublesBonus = attackerDoublesBonus(),
             )
 
@@ -51,7 +50,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.handleUpdatedTeleport(
-        updatedTeleport: AbilityAction.Passive.Teleport
+        updatedTeleport: AbilityAction.Passive.Teleport,
     ) {
         val attackerRoll = updatedTeleport.attackerRoll.roll
         val defenderRoll = updatedTeleport.defenderRoll.roll
@@ -101,7 +100,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.rollActingUserDieOrNull(
-        teleport: AbilityAction.Passive.Teleport
+        teleport: AbilityAction.Passive.Teleport,
     ): AbilityAction.Passive.Teleport? {
         val isAttackerRolling = teleport.attackerRoll.userId == rollingUserId
         val rollingDie = if (isAttackerRolling) teleport.attackerRoll else teleport.defenderRoll
@@ -142,12 +141,12 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-                ArenaMessage.Teleport.Roll(
-                    userId = userId,
-                    singleDie = result,
-                    mageUserId = mageUserId,
-                    className = className,
-                )
+            ArenaMessage.Teleport.Roll(
+                userId = userId,
+                singleDie = result,
+                mageUserId = mageUserId,
+                className = className,
+            ),
         )
 
         return unrolledTeleportDie.copy(roll = result)
@@ -156,7 +155,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.handleTeleportSuccess(mageUserId: String) {
         addMessage(
             message =
-                ArenaMessage.Teleport.Result(didDefenderEscape = true, mageUserId = mageUserId)
+            ArenaMessage.Teleport.Result(didDefenderEscape = true, mageUserId = mageUserId),
         )
 
         resolveTurnEnd()
@@ -165,7 +164,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.handleTeleportFailure(mageUserId: String) {
         addMessage(
             message =
-                ArenaMessage.Teleport.Result(didDefenderEscape = false, mageUserId = mageUserId)
+            ArenaMessage.Teleport.Result(didDefenderEscape = false, mageUserId = mageUserId),
         )
 
         continueAttackWithHealthRoll()

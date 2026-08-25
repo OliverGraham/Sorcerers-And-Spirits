@@ -8,11 +8,11 @@ import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlinx.coroutines.test.runTest
 
 class GetLeaderboardUseCaseTest {
 
@@ -69,13 +69,12 @@ class GetLeaderboardUseCaseTest {
         assertFalse(actual = entries.single().isCurrentUser)
     }
 
-    private fun profile(userId: String, displayName: String, gauntletsWon: Long, matchesWon: Long) =
-        Profile(
-            userId = userId,
-            displayName = displayName,
-            stats =
-                ProfileStats(
-                    overall = GameStats(gauntletsWon = gauntletsWon, matchesWon = matchesWon)
-                ),
-        )
+    private fun profile(userId: String, displayName: String, gauntletsWon: Long, matchesWon: Long) = Profile(
+        userId = userId,
+        displayName = displayName,
+        stats =
+        ProfileStats(
+            overall = GameStats(gauntletsWon = gauntletsWon, matchesWon = matchesWon),
+        ),
+    )
 }

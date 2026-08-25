@@ -55,26 +55,26 @@ val exampleInstigatorChallengeState =
     ChallengeState(
         challengeId = "preview_challenge",
         challengerStates =
-            listOf(
-                ChallengerState(
-                    userId = exampleUserTraveler.userId,
-                    displayName = exampleUserTraveler.displayName,
-                    isInstigator = true,
-                    status = ChallengerStatus.Accepted,
-                ),
-                ChallengerState(
-                    userId = "user_1",
-                    displayName = "Merlin",
-                    isInstigator = false,
-                    status = ChallengerStatus.Pending,
-                ),
-                ChallengerState(
-                    userId = "user_2",
-                    displayName = "Morgana",
-                    isInstigator = false,
-                    status = ChallengerStatus.Accepted,
-                ),
+        listOf(
+            ChallengerState(
+                userId = exampleUserTraveler.userId,
+                displayName = exampleUserTraveler.displayName,
+                isInstigator = true,
+                status = ChallengerStatus.Accepted,
             ),
+            ChallengerState(
+                userId = "user_1",
+                displayName = "Merlin",
+                isInstigator = false,
+                status = ChallengerStatus.Pending,
+            ),
+            ChallengerState(
+                userId = "user_2",
+                displayName = "Morgana",
+                isInstigator = false,
+                status = ChallengerStatus.Accepted,
+            ),
+        ),
         secondsRemaining = 45,
         showChallengeDialog = true,
         isThisUserTheInstigator = true,
@@ -84,20 +84,20 @@ val exampleRecipientChallengeState =
     ChallengeState(
         challengeId = "preview_challenge",
         challengerStates =
-            listOf(
-                ChallengerState(
-                    userId = "user_1",
-                    displayName = "Merlin",
-                    isInstigator = true,
-                    status = ChallengerStatus.Accepted,
-                ),
-                ChallengerState(
-                    userId = exampleUserTraveler.userId,
-                    displayName = exampleUserTraveler.displayName,
-                    isInstigator = false,
-                    status = ChallengerStatus.Pending,
-                ),
+        listOf(
+            ChallengerState(
+                userId = "user_1",
+                displayName = "Merlin",
+                isInstigator = true,
+                status = ChallengerStatus.Accepted,
             ),
+            ChallengerState(
+                userId = exampleUserTraveler.userId,
+                displayName = exampleUserTraveler.displayName,
+                isInstigator = false,
+                status = ChallengerStatus.Pending,
+            ),
+        ),
         secondsRemaining = 9,
         showChallengeDialog = true,
         isThisUserTheInstigator = false,

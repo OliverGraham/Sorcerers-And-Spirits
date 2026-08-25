@@ -25,7 +25,7 @@ internal class ChooseCharacterClassHandler(
         val arenaState = screenState.arenaMatchState.asChoosingClassesOrNull() ?: return screenState
 
         return screenState.copy(
-            arenaMatchState = arenaState.copy(selectedClass = characterClassState)
+            arenaMatchState = arenaState.copy(selectedClass = characterClassState),
         )
     }
 

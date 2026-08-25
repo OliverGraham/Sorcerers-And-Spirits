@@ -38,11 +38,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.sin
 
 private const val DRUM_APPEAR_MILLIS = 220
 private const val STICK_APPEAR_MILLIS = 180
@@ -83,12 +83,12 @@ internal fun BardNormalAttackOverlay(
 
         bardStrikeState.play(
             geometry =
-                weaponStrikeGeometry(
-                    attackerBounds = attackerBounds,
-                    target = defenderBounds.center,
-                    accentColor = accentColor,
-                    density = density,
-                ),
+            weaponStrikeGeometry(
+                attackerBounds = attackerBounds,
+                target = defenderBounds.center,
+                accentColor = accentColor,
+                density = density,
+            ),
             normalRollMessageType = messageType,
         )
 
@@ -169,7 +169,7 @@ internal suspend fun BardStrikeState.play(
             stickSwing.animateTo(
                 targetValue = 0f,
                 animationSpec =
-                    tween(durationMillis = STICK_LIFT_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = STICK_LIFT_MILLIS, easing = FastOutSlowInEasing),
             )
         }
     }
@@ -223,7 +223,7 @@ internal fun DrawScope.drawBardDrumStrike(state: BardStrikeState) {
         drawDrumstick(
             fulcrum = drumstickFulcrum(drumCenter = drumCenter),
             angleRadians =
-                drumstickAngle(swing = state.stickSwing.value, depress = state.headDepress.value),
+            drumstickAngle(swing = state.stickSwing.value, depress = state.headDepress.value),
             alpha = state.stickAlpha.value,
         )
     }
@@ -238,13 +238,11 @@ internal fun DrawScope.drawBardDrumStrike(state: BardStrikeState) {
     }
 }
 
-private fun DrawScope.drumstickFulcrum(drumCenter: Offset): Offset =
-    drumCenter -
-        Offset(x = cos(x = STICK_STRIKE_ANGLE), y = sin(x = STICK_STRIKE_ANGLE)) *
-            drumstickLength.toPx()
+private fun DrawScope.drumstickFulcrum(drumCenter: Offset): Offset = drumCenter -
+    Offset(x = cos(x = STICK_STRIKE_ANGLE), y = sin(x = STICK_STRIKE_ANGLE)) *
+    drumstickLength.toPx()
 
-private fun drumstickAngle(swing: Float, depress: Float): Float =
-    STICK_REST_ANGLE + (STICK_STRIKE_ANGLE - STICK_REST_ANGLE) * swing + depress * STICK_PRESS_ANGLE
+private fun drumstickAngle(swing: Float, depress: Float): Float = STICK_REST_ANGLE + (STICK_STRIKE_ANGLE - STICK_REST_ANGLE) * swing + depress * STICK_PRESS_ANGLE
 
 @Stable
 internal class BardStrikeState {

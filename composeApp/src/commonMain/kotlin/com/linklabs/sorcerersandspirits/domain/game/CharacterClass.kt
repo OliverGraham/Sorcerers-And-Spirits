@@ -38,8 +38,7 @@ data class CharacterClass(
     }
 
     companion object {
-        fun playableTypes(): List<CharacterClassType> =
-            CharacterClassType.entries.filter { type -> type != CharacterClassType.None }
+        fun playableTypes(): List<CharacterClassType> = CharacterClassType.entries.filter { type -> type != CharacterClassType.None }
 
         fun create(
             type: CharacterClassType,
@@ -47,43 +46,40 @@ data class CharacterClass(
             maxHitPoints: Int,
             armorClass: Int,
             speed: Int,
-        ): CharacterClass =
-            CharacterClass(
-                type = type,
-                hitPoints = hitPoints,
-                maxHitPoints = maxHitPoints,
-                armorClass = armorClass,
-                speed = speed,
-                offensiveAbility = offensiveAbilityFor(type = type),
-                defensiveAbility = defensiveAbilityFor(type = type),
-                hasActedThisRound = false,
-            )
+        ): CharacterClass = CharacterClass(
+            type = type,
+            hitPoints = hitPoints,
+            maxHitPoints = maxHitPoints,
+            armorClass = armorClass,
+            speed = speed,
+            offensiveAbility = offensiveAbilityFor(type = type),
+            defensiveAbility = defensiveAbilityFor(type = type),
+            hasActedThisRound = false,
+        )
 
-        private fun offensiveAbilityFor(type: CharacterClassType): OffensiveAbility =
-            when (type) {
-                CharacterClassType.Rogue -> OffensiveAbility.KillingMomentum
-                CharacterClassType.Gambler -> OffensiveAbility.AllIn()
-                CharacterClassType.Duelist -> OffensiveAbility.PrepareAttack
-                CharacterClassType.Necromancer -> OffensiveAbility.SummonMinion()
-                CharacterClassType.Bard -> OffensiveAbility.Encore
-                CharacterClassType.Illusionist -> OffensiveAbility.Impersonate()
-                CharacterClassType.Mage -> OffensiveAbility.SpellPotency
-                CharacterClassType.Paladin -> OffensiveAbility.None
-                CharacterClassType.None -> OffensiveAbility.None
-            }
+        private fun offensiveAbilityFor(type: CharacterClassType): OffensiveAbility = when (type) {
+            CharacterClassType.Rogue -> OffensiveAbility.KillingMomentum
+            CharacterClassType.Gambler -> OffensiveAbility.AllIn()
+            CharacterClassType.Duelist -> OffensiveAbility.PrepareAttack
+            CharacterClassType.Necromancer -> OffensiveAbility.SummonMinion()
+            CharacterClassType.Bard -> OffensiveAbility.Encore
+            CharacterClassType.Illusionist -> OffensiveAbility.Impersonate()
+            CharacterClassType.Mage -> OffensiveAbility.SpellPotency
+            CharacterClassType.Paladin -> OffensiveAbility.None
+            CharacterClassType.None -> OffensiveAbility.None
+        }
 
-        private fun defensiveAbilityFor(type: CharacterClassType): DefensiveAbility =
-            when (type) {
-                CharacterClassType.Rogue -> DefensiveAbility.Dodge()
-                CharacterClassType.Gambler -> DefensiveAbility.LuckyCoin
-                CharacterClassType.Duelist -> DefensiveAbility.Riposte
-                CharacterClassType.Necromancer -> DefensiveAbility.None
-                CharacterClassType.Bard -> DefensiveAbility.Persuade
-                CharacterClassType.Illusionist -> DefensiveAbility.MirrorImage()
-                CharacterClassType.Mage -> DefensiveAbility.Teleport
-                CharacterClassType.Paladin -> DefensiveAbility.HolyShield()
-                CharacterClassType.None -> DefensiveAbility.None
-            }
+        private fun defensiveAbilityFor(type: CharacterClassType): DefensiveAbility = when (type) {
+            CharacterClassType.Rogue -> DefensiveAbility.Dodge()
+            CharacterClassType.Gambler -> DefensiveAbility.LuckyCoin
+            CharacterClassType.Duelist -> DefensiveAbility.Riposte
+            CharacterClassType.Necromancer -> DefensiveAbility.None
+            CharacterClassType.Bard -> DefensiveAbility.Persuade
+            CharacterClassType.Illusionist -> DefensiveAbility.MirrorImage()
+            CharacterClassType.Mage -> DefensiveAbility.Teleport
+            CharacterClassType.Paladin -> DefensiveAbility.HolyShield()
+            CharacterClassType.None -> DefensiveAbility.None
+        }
     }
 }
 

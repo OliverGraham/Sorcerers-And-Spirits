@@ -27,12 +27,11 @@ enum class ForwardScreenTransition {
     SlideAndFade,
 }
 
-fun ForwardScreenTransition.toContentTransform(): ContentTransform =
-    when (this) {
-        ForwardScreenTransition.Portal -> portalTransform()
-        ForwardScreenTransition.FadeThrough -> fadeThroughTransform()
-        ForwardScreenTransition.SlideAndFade -> slideAndFadeTransform()
-    }
+fun ForwardScreenTransition.toContentTransform(): ContentTransform = when (this) {
+    ForwardScreenTransition.Portal -> portalTransform()
+    ForwardScreenTransition.FadeThrough -> fadeThroughTransform()
+    ForwardScreenTransition.SlideAndFade -> slideAndFadeTransform()
+}
 
 private fun portalTransform(): ContentTransform {
     val spec = tween<Float>(durationMillis = FORWARD_DURATION_MILLIS, easing = FastOutSlowInEasing)
@@ -56,7 +55,7 @@ private fun fadeThroughTransform(): ContentTransform {
         )
     return fadeIn(animationSpec = enterSpec)
         .plus(
-            scaleIn(animationSpec = enterSpec, initialScale = FADE_THROUGH_ENTER_SCALE)
+            scaleIn(animationSpec = enterSpec, initialScale = FADE_THROUGH_ENTER_SCALE),
         ) togetherWith fadeOut(animationSpec = exitSpec)
 }
 
@@ -65,13 +64,13 @@ private fun slideAndFadeTransform(): ContentTransform {
     val offsetSpec =
         tween<IntOffset>(durationMillis = FORWARD_DURATION_MILLIS, easing = FastOutSlowInEasing)
     return slideInHorizontally(
-            animationSpec = offsetSpec,
-            initialOffsetX = { width -> width / SLIDE_FRACTION },
-        )
+        animationSpec = offsetSpec,
+        initialOffsetX = { width -> width / SLIDE_FRACTION },
+    )
         .plus(fadeIn(animationSpec = spec)) togetherWith
         slideOutHorizontally(
-                animationSpec = offsetSpec,
-                targetOffsetX = { width -> -width / SLIDE_FRACTION },
-            )
+            animationSpec = offsetSpec,
+            targetOffsetX = { width -> -width / SLIDE_FRACTION },
+        )
             .plus(fadeOut(animationSpec = spec))
 }

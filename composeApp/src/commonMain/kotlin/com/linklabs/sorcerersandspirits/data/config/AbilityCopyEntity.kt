@@ -14,5 +14,4 @@ data class AbilityCopyEntity(val name: String, val long: String, val short: Stri
 }
 
 // TODO: Why a map? Using hardcoded keys is wrong
-fun Map<String, AbilityCopyEntity>.toCharacterClassCopy() =
-    CharacterClassCopy(entries = mapValues { (_, entity) -> entity.toDomain() })
+fun Map<String, AbilityCopyEntity>.toCharacterClassCopy() = CharacterClassCopy(entries = mapValues { (_, entity) -> entity.toDomain() })

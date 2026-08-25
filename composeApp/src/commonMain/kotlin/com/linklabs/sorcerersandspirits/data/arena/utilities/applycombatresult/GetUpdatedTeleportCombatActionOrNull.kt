@@ -9,7 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 
 /** Add incoming teleport roll into existing entry in database, if applicable. */
 internal fun ArenaMatchEntity.Combat.getUpdatedTeleportCombatActionOrNull(
-    nextCombatAction: NextCombatAction
+    nextCombatAction: NextCombatAction,
 ): NextCombatActionEntity? {
     val currentTeleportEntity = getCurrentTeleportOrNull() ?: return null
     val nextActionAndTeleport = nextCombatAction.getNextActionAndTeleportOrNull() ?: return null
@@ -35,7 +35,7 @@ private fun NextCombatAction.getNextActionAndTeleportOrNull(): AbilityRollAndTel
 }
 
 private fun AbilityAction.Passive.Teleport.isOnlyOneTeleportRollIn(
-    currentTeleportEntity: AbilityActionEntity.PassiveEntity.TeleportEntity
+    currentTeleportEntity: AbilityActionEntity.PassiveEntity.TeleportEntity,
 ): Boolean {
     val isAttackerRollMissing = attackerRoll.roll == null
     val isDefenderRollMissing = defenderRoll.roll == null
@@ -48,22 +48,20 @@ private fun AbilityAction.Passive.Teleport.isOnlyOneTeleportRollIn(
     }
 }
 
-private fun ArenaMatchEntity.Combat.getCurrentTeleportOrNull():
-    AbilityActionEntity.PassiveEntity.TeleportEntity? {
+private fun ArenaMatchEntity.Combat.getCurrentTeleportOrNull(): AbilityActionEntity.PassiveEntity.TeleportEntity? {
     if (nextCombatActionEntity !is NextCombatActionEntity.AbilityRollEntity) return null
 
     return nextCombatActionEntity.purpose as? AbilityActionEntity.PassiveEntity.TeleportEntity
 }
 
 private fun AbilityAction.Passive.Teleport.mergeWithCurrent(
-    currentTeleportEntity: AbilityActionEntity.PassiveEntity.TeleportEntity
-) =
-    copy(
-        attackerRoll =
-            attackerRoll.copy(roll = attackerRoll.roll ?: currentTeleportEntity.attackerRoll.roll),
-        defenderRoll =
-            defenderRoll.copy(roll = defenderRoll.roll ?: currentTeleportEntity.defenderRoll.roll),
-    )
+    currentTeleportEntity: AbilityActionEntity.PassiveEntity.TeleportEntity,
+) = copy(
+    attackerRoll =
+    attackerRoll.copy(roll = attackerRoll.roll ?: currentTeleportEntity.attackerRoll.roll),
+    defenderRoll =
+    defenderRoll.copy(roll = defenderRoll.roll ?: currentTeleportEntity.defenderRoll.roll),
+)
 
 private data class AbilityRollAndTeleport(
     val nextCombatAction: NextCombatAction.AbilityRoll,

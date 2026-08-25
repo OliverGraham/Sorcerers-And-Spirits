@@ -15,15 +15,14 @@ enum class DieColor {
     Paladin,
 }
 
-fun CharacterClassType.toDieColor(): DieColor =
-    when (this) {
-        CharacterClassType.Rogue -> DieColor.Rogue
-        CharacterClassType.Gambler -> DieColor.Gambler
-        CharacterClassType.Duelist -> DieColor.Duelist
-        CharacterClassType.Necromancer -> DieColor.Necromancer
-        CharacterClassType.Bard -> DieColor.Bard
-        CharacterClassType.Illusionist -> DieColor.Illusionist
-        CharacterClassType.Mage -> DieColor.Mage
-        CharacterClassType.Paladin -> DieColor.Paladin
-        CharacterClassType.None -> DieColor.NormalAttack
-    }
+fun CharacterClassType.toDieColor(): DieColor = when (this) {
+    CharacterClassType.Rogue -> DieColor.Rogue
+    CharacterClassType.Gambler -> DieColor.Gambler
+    CharacterClassType.Duelist -> DieColor.Duelist
+    CharacterClassType.Necromancer -> DieColor.Necromancer
+    CharacterClassType.Bard -> DieColor.Bard
+    CharacterClassType.Illusionist -> DieColor.Illusionist
+    CharacterClassType.Mage -> DieColor.Mage
+    CharacterClassType.Paladin -> DieColor.Paladin
+    CharacterClassType.None -> DieColor.NormalAttack
+}

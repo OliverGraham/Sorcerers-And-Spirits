@@ -7,24 +7,25 @@ import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
 import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
 
-internal fun CombatMutator.shouldMessageDoublesAfterArmorClassHit(): Boolean =
-    when (val defensiveAbility = defender.defensiveAbility) {
-        is DefensiveAbility.Teleport,
-        is DefensiveAbility.Dodge,
-        is DefensiveAbility.HolyShield,
-        is DefensiveAbility.None -> true
+internal fun CombatMutator.shouldMessageDoublesAfterArmorClassHit(): Boolean = when (val defensiveAbility = defender.defensiveAbility) {
+    is DefensiveAbility.Teleport,
+    is DefensiveAbility.Dodge,
+    is DefensiveAbility.HolyShield,
+    is DefensiveAbility.None,
+    -> true
 
-        is DefensiveAbility.Riposte,
-        is DefensiveAbility.Persuade,
-        is DefensiveAbility.LuckyCoin -> false
+    is DefensiveAbility.Riposte,
+    is DefensiveAbility.Persuade,
+    is DefensiveAbility.LuckyCoin,
+    -> false
 
-        is DefensiveAbility.MirrorImage -> defensiveAbility.usedThisAttack
-    }
+    is DefensiveAbility.MirrorImage -> defensiveAbility.usedThisAttack
+}
 
 internal fun CombatMutator.shouldMessageDoublesAfterKnockout(): Boolean {
     val isHolyShieldPending =
         HolyShieldHandler.isHolyShieldAvailable(
-            defenderDefensiveAbility = defender.defensiveAbility
+            defenderDefensiveAbility = defender.defensiveAbility,
         )
     if (isHolyShieldPending) return false
 

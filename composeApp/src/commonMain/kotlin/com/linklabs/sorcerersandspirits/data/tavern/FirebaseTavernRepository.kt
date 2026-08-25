@@ -7,7 +7,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.traveler.Traveler
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +23,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformLatest
+import kotlin.time.ExperimentalTime
 
 class FirebaseTavernRepository(
     private val dataSource: TavernDataSource,
@@ -33,21 +33,18 @@ class FirebaseTavernRepository(
     private var travelerPresenceJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> =
-        dataSource.mailboxChallengeIdFlow(userId = userId).distinctUntilChanged().transformLatest {
-            challengeId ->
-            if (challengeId.isNullOrBlank()) {
-                emit(value = null)
-            } else {
-                emitAll(flow = getChallengeFlow(challengeId = challengeId))
-            }
+    override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> = dataSource.mailboxChallengeIdFlow(userId = userId).distinctUntilChanged().transformLatest { challengeId ->
+        if (challengeId.isNullOrBlank()) {
+            emit(value = null)
+        } else {
+            emitAll(flow = getChallengeFlow(challengeId = challengeId))
         }
+    }
 
-    override fun getTavernTravelersFlow(): Flow<List<Traveler>> =
-        dataSource
-            .travelerEntitiesFlow()
-            .map { entities -> entities.map(transform = TravelerEntity::toDomain) }
-            .distinctUntilChanged()
+    override fun getTavernTravelersFlow(): Flow<List<Traveler>> = dataSource
+        .travelerEntitiesFlow()
+        .map { entities -> entities.map(transform = TravelerEntity::toDomain) }
+        .distinctUntilChanged()
 
     override suspend fun connectTravelerPresence(
         userId: String,
@@ -89,7 +86,7 @@ class FirebaseTavernRepository(
                 challengeId = challengeId,
             )
             return SendChallengeResult.NotEnoughChallengersAvailable(
-                unavailableChallengers = unclaimedChallengers.map { it.challenger }
+                unavailableChallengers = unclaimedChallengers.map { it.challenger },
             )
         }
 
@@ -203,14 +200,14 @@ class FirebaseTavernRepository(
     }
 
     private suspend fun claimChallengers(
-        challengers: List<Challenger>
+        challengers: List<Challenger>,
     ): Pair<List<ClaimChallengerResult>, List<ClaimChallengerResult>> = coroutineScope {
         challengers
             .map { challenger ->
                 async(context = Dispatchers.IO) {
                     ClaimChallengerResult(
                         isClaimed =
-                            dataSource.markTravelerBusyIfAvailable(userId = challenger.userId),
+                        dataSource.markTravelerBusyIfAvailable(userId = challenger.userId),
                         challenger = challenger,
                     )
                 }
@@ -249,11 +246,10 @@ class FirebaseTavernRepository(
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    private fun getChallengeFlow(challengeId: String): Flow<Challenge?> =
-        dataSource
-            .challengeEntityFlow(challengeId = challengeId)
-            .map { entity -> entity?.toDomain() }
-            .distinctUntilChanged()
+    private fun getChallengeFlow(challengeId: String): Flow<Challenge?> = dataSource
+        .challengeEntityFlow(challengeId = challengeId)
+        .map { entity -> entity?.toDomain() }
+        .distinctUntilChanged()
 
     private suspend fun reconcileChallengeState(challengeId: String) {
         val challengeEntity = dataSource.getChallengeEntity(challengeId = challengeId) ?: return
@@ -311,10 +307,10 @@ class FirebaseTavernRepository(
     ) {
         dataSource.applyUpdates(
             updates =
-                buildMap {
-                    removeChallenge(challengeId)
-                    clearMailboxes(participantUserIds)
-                }
+            buildMap {
+                removeChallenge(challengeId)
+                clearMailboxes(participantUserIds)
+            },
         )
     }
 

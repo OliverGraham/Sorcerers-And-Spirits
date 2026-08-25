@@ -63,13 +63,13 @@ internal fun MageNormalAttackOverlay(
 
         mageBoltState.play(
             geometry =
-                projectileStrikeGeometry(
-                    messageType = messageType,
-                    attackerBounds = attackerBounds,
-                    defenderBounds = defenderBounds,
-                    accentColor = element.palette().glow,
-                    density = density,
-                ),
+            projectileStrikeGeometry(
+                messageType = messageType,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = element.palette().glow,
+                density = density,
+            ),
             element = element,
             normalRollMessageType = messageType,
         )
@@ -96,7 +96,7 @@ internal suspend fun MageBoltState.play(
     travel.animateTo(
         targetValue = 1f,
         animationSpec =
-            tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
+        tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
     )
 
     if (normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {
@@ -128,13 +128,12 @@ internal suspend fun MageBoltState.play(
     this.scene = null
 }
 
-private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float =
-    when (normalRollMessageType) {
-        NormalRollMessageType.ArmorClassHit -> 0.8f
-        NormalRollMessageType.Damage -> 1f
-        NormalRollMessageType.Knockout -> 1.35f
-        NormalRollMessageType.ArmorClassMiss -> 0f
-    }
+private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
+    NormalRollMessageType.ArmorClassHit -> 0.8f
+    NormalRollMessageType.Damage -> 1f
+    NormalRollMessageType.Knockout -> 1.35f
+    NormalRollMessageType.ArmorClassMiss -> 0f
+}
 
 internal fun DrawScope.drawMageCast(state: MageBoltState) {
     val geometry = state.scene ?: return

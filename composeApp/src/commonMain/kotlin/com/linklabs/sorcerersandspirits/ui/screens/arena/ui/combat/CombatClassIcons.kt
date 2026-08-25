@@ -75,13 +75,13 @@ private fun ClassIcon(
             width = headWidth,
             hitPointsEmphasis = splash.hitPointsEmphasis,
             modifier =
-                Modifier.sharedBounds(key = player.userId).clickable {
-                    if (isTargetingTap) {
-                        onTargetOpponent(player.userId)
-                    } else {
-                        onInspect(player.userId)
-                    }
-                },
+            Modifier.sharedBounds(key = player.userId).clickable {
+                if (isTargetingTap) {
+                    onTargetOpponent(player.userId)
+                } else {
+                    onInspect(player.userId)
+                }
+            },
         )
 
         SpellPotencySplashIndicator(
@@ -95,9 +95,9 @@ private fun ClassIcon(
                 painter = painterResource(resource = Res.drawable.ic_user_player),
                 contentDescription = null,
                 modifier =
-                    Modifier.align(alignment = Alignment.BottomCenter)
-                        .padding(bottom = USER_MARKER_ICON_INSET)
-                        .size(size = USER_MARKER_ICON_SIZE),
+                Modifier.align(alignment = Alignment.BottomCenter)
+                    .padding(bottom = USER_MARKER_ICON_INSET)
+                    .size(size = USER_MARKER_ICON_SIZE),
             )
         }
     }

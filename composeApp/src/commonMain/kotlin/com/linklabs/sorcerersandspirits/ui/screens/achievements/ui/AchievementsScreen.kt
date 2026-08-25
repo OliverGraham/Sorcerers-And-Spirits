@@ -71,11 +71,11 @@ private fun AchievementsContent(state: AchievementsState, modifier: Modifier = M
                 )
                 Text(
                     text =
-                        stringResource(
-                            resource = Res.string.achievements_progress,
-                            state.unlockedCount,
-                            state.totalCount,
-                        ),
+                    stringResource(
+                        resource = Res.string.achievements_progress,
+                        state.unlockedCount,
+                        state.totalCount,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -150,32 +150,32 @@ private fun AchievementsScreenPreview() {
     SorcerersAndSpiritsTheme {
         AchievementsScreen(
             uiState =
-                UiState.Loaded(
-                    data =
-                        AchievementsState(
-                            achievements =
-                                listOf(
-                                    AchievementRowState(
-                                        id = AchievementId.WinAMatch,
-                                        isUnlocked = true,
-                                    ),
-                                    AchievementRowState(
-                                        id = AchievementId.WinAGauntlet,
-                                        isUnlocked = true,
-                                    ),
-                                    AchievementRowState(
-                                        id = AchievementId.WinAMatchWithEveryClass,
-                                        isUnlocked = false,
-                                    ),
-                                    AchievementRowState(
-                                        id = AchievementId.WinAGauntletWithEveryClass,
-                                        isUnlocked = false,
-                                    ),
-                                ),
-                            unlockedCount = 2,
-                            totalCount = 4,
-                        )
-                )
+            UiState.Loaded(
+                data =
+                AchievementsState(
+                    achievements =
+                    listOf(
+                        AchievementRowState(
+                            id = AchievementId.WinAMatch,
+                            isUnlocked = true,
+                        ),
+                        AchievementRowState(
+                            id = AchievementId.WinAGauntlet,
+                            isUnlocked = true,
+                        ),
+                        AchievementRowState(
+                            id = AchievementId.WinAMatchWithEveryClass,
+                            isUnlocked = false,
+                        ),
+                        AchievementRowState(
+                            id = AchievementId.WinAGauntletWithEveryClass,
+                            isUnlocked = false,
+                        ),
+                    ),
+                    unlockedCount = 2,
+                    totalCount = 4,
+                ),
+            ),
         )
     }
 }

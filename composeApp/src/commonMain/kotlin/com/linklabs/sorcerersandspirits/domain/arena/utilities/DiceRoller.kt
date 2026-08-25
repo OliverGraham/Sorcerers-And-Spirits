@@ -52,12 +52,14 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
         dieColor: DieColor,
     ): RollResult.OneDie {
         val roll = getRandom1D6Value()
-        val result = RollResult.OneDie(die = roll, bonus = consumeBonus(userId = userId))
+        val bonus = consumeBonus(userId = userId)
+        val result = RollResult.OneDie(die = roll, bonus = bonus)
         diceRoll =
             DiceRoll.OneDie(
                 value = roll,
                 diePosition = diePosition,
                 doublesBonus = doublesBonus,
+                wasDoublesBonusConsumed = bonus > 0,
                 isMirrorImageReroll = isMirrorImageReroll,
                 dieColor = dieColor,
                 disablesSibling = disablesSibling,
@@ -81,12 +83,8 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
     override fun roll2D6(userId: String, dieColor: DieColor): RollResult.TwoDice {
         val firstDie = getRandom1D6Value()
         val secondDie = getRandom1D6Value()
-        val result =
-            RollResult.TwoDice(
-                firstDie = firstDie,
-                secondDie = secondDie,
-                bonus = consumeBonus(userId = userId),
-            )
+        val bonus = consumeBonus(userId = userId)
+        val result = RollResult.TwoDice(firstDie = firstDie, secondDie = secondDie, bonus = bonus)
 
         if (result.isDoubles) {
             setDoublesBonus(userId = userId)
@@ -96,6 +94,7 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
                 firstDie = firstDie,
                 secondDie = secondDie,
                 doublesBonus = doublesBonus,
+                wasDoublesBonusConsumed = bonus > 0,
                 dieColor = dieColor,
             )
 

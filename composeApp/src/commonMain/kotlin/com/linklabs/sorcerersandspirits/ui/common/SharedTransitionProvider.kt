@@ -25,7 +25,8 @@ private val LocalSharedTransitionScopes =
 
 private object SharedTransitionScopesProvider {
     val current: SharedTransitionScopes
-        @Composable @ReadOnlyComposable get() = LocalSharedTransitionScopes.current
+        @Composable @ReadOnlyComposable
+        get() = LocalSharedTransitionScopes.current
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -40,7 +41,7 @@ fun SharedTransitionProvider(
             SharedTransitionScopes(
                 sharedTransitionScope = sharedTransitionScope,
                 animatedVisibilityScope = animatedVisibilityScope,
-            )
+            ),
     ) {
         content()
     }

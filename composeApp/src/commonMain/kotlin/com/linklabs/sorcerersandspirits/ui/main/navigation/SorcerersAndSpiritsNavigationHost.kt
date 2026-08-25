@@ -91,24 +91,25 @@ internal fun SorcerersAndSpiritsNavigationHost(
 }
 
 @Composable
-private fun linkErrorMessage(result: LinkAccountResult?): String? =
-    when (result) {
-        LinkAccountResult.CREDENTIAL_IN_USE ->
-            stringResource(resource = Res.string.link_account_error_credential_in_use)
+private fun linkErrorMessage(result: LinkAccountResult?): String? = when (result) {
+    LinkAccountResult.CREDENTIAL_IN_USE ->
+        stringResource(resource = Res.string.link_account_error_credential_in_use)
 
-        LinkAccountResult.INVALID_CREDENTIAL ->
-            stringResource(resource = Res.string.link_account_error_invalid_credential)
+    LinkAccountResult.INVALID_CREDENTIAL ->
+        stringResource(resource = Res.string.link_account_error_invalid_credential)
 
-        LinkAccountResult.NOT_AVAILABLE ->
-            stringResource(resource = Res.string.link_account_error_unavailable)
+    LinkAccountResult.NOT_AVAILABLE ->
+        stringResource(resource = Res.string.link_account_error_unavailable)
 
-        LinkAccountResult.NO_CURRENT_USER,
-        LinkAccountResult.ERROR -> stringResource(resource = Res.string.link_account_error_generic)
+    LinkAccountResult.NO_CURRENT_USER,
+    LinkAccountResult.ERROR,
+    -> stringResource(resource = Res.string.link_account_error_generic)
 
-        LinkAccountResult.SUCCESS,
-        LinkAccountResult.CANCELLED,
-        null -> null
-    }
+    LinkAccountResult.SUCCESS,
+    LinkAccountResult.CANCELLED,
+    null,
+    -> null
+}
 
 @Composable
 private fun SorcerersAndSpirits(
@@ -163,11 +164,11 @@ private fun AppContent(
             val isEdgeToEdgeRoute = backStack.lastOrNull() is Route.ArenaScreen
             Column(
                 modifier =
-                    if (isEdgeToEdgeRoute) {
-                        Modifier
-                    } else {
-                        Modifier.padding(paddingValues = innerPadding)
-                    }
+                if (isEdgeToEdgeRoute) {
+                    Modifier
+                } else {
+                    Modifier.padding(paddingValues = innerPadding)
+                },
             ) {
                 OfflineBanner(isOffline = isOffline)
 

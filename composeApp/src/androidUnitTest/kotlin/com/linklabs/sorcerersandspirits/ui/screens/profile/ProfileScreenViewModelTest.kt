@@ -19,11 +19,6 @@ import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.test.AfterTest
-import kotlin.test.BeforeTest
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +27,11 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertIs
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProfileScreenViewModelTest {
@@ -60,70 +60,66 @@ class ProfileScreenViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() =
-        ProfileScreenViewModel(
-            getProfileFlowUseCase = getProfileFlowUseCase,
-            updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
-            deleteProfileUseCase = deleteProfileUseCase,
-            createProfileUseCase = createProfileUseCase,
-            getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
-            linkAccountUseCase = linkAccountUseCase,
-        )
+    private fun createViewModel() = ProfileScreenViewModel(
+        getProfileFlowUseCase = getProfileFlowUseCase,
+        updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
+        deleteProfileUseCase = deleteProfileUseCase,
+        createProfileUseCase = createProfileUseCase,
+        getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
+        linkAccountUseCase = linkAccountUseCase,
+    )
 
-    private fun UiState<ProfileState>.loaded(): ProfileState =
-        assertIs<UiState.Loaded<ProfileState>>(value = this).data
+    private fun UiState<ProfileState>.loaded(): ProfileState = assertIs<UiState.Loaded<ProfileState>>(value = this).data
 
     @Test
-    fun `Given the profile flow emits, then the screen shows the profile's display name`() =
-        runTest {
-            val viewModel = createViewModel()
+    fun `Given the profile flow emits, then the screen shows the profile's display name`() = runTest {
+        val viewModel = createViewModel()
 
-            viewModel.uiStateFlow.test {
-                assertEquals(expected = UiState.Loading, actual = awaitItem())
+        viewModel.uiStateFlow.test {
+            assertEquals(expected = UiState.Loading, actual = awaitItem())
 
-                profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
-                assertEquals(expected = DISPLAY_NAME, actual = awaitItem().loaded().displayName)
+            profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
+            assertEquals(expected = DISPLAY_NAME, actual = awaitItem().loaded().displayName)
 
-                cancelAndIgnoreRemainingEvents()
-            }
+            cancelAndIgnoreRemainingEvents()
         }
+    }
 
     @Test
-    fun `Given the profile has stats, then the state exposes rating, achievement progress and per-class records`() =
-        runTest {
-            val viewModel = createViewModel()
+    fun `Given the profile has stats, then the state exposes rating, achievement progress and per-class records`() = runTest {
+        val viewModel = createViewModel()
 
-            viewModel.uiStateFlow.test {
-                assertEquals(expected = UiState.Loading, actual = awaitItem())
+        viewModel.uiStateFlow.test {
+            assertEquals(expected = UiState.Loading, actual = awaitItem())
 
-                profileFlow.value =
-                    Profile(
-                        userId = USER_ID,
-                        displayName = DISPLAY_NAME,
-                        stats =
-                            ProfileStats(
-                                overall = GameStats(matchesWon = 3, gauntletsWon = 1),
-                                perClass =
-                                    mapOf(
-                                        CharacterClassType.Mage to
-                                            GameStats(matchesWon = 3, gauntletsWon = 1)
-                                    ),
-                            ),
-                        unlockedAchievements = mapOf(AchievementId.WinAMatch to 1L),
-                    )
-
-                val state = awaitItem().loaded()
-                assertEquals(expected = 175L, actual = state.rating)
-                assertEquals(expected = 1, actual = state.achievementsUnlocked)
-                assertEquals(expected = 4, actual = state.achievementsTotal)
-                assertEquals(
-                    expected = listOf(CharacterClassType.Mage),
-                    actual = state.perClass.map { it.classType },
+            profileFlow.value =
+                Profile(
+                    userId = USER_ID,
+                    displayName = DISPLAY_NAME,
+                    stats =
+                    ProfileStats(
+                        overall = GameStats(matchesWon = 3, gauntletsWon = 1),
+                        perClass =
+                        mapOf(
+                            CharacterClassType.Mage to
+                                GameStats(matchesWon = 3, gauntletsWon = 1),
+                        ),
+                    ),
+                    unlockedAchievements = mapOf(AchievementId.WinAMatch to 1L),
                 )
 
-                cancelAndIgnoreRemainingEvents()
-            }
+            val state = awaitItem().loaded()
+            assertEquals(expected = 175L, actual = state.rating)
+            assertEquals(expected = 1, actual = state.achievementsUnlocked)
+            assertEquals(expected = 4, actual = state.achievementsTotal)
+            assertEquals(
+                expected = listOf(CharacterClassType.Mage),
+                actual = state.perClass.map { it.classType },
+            )
+
+            cancelAndIgnoreRemainingEvents()
         }
+    }
 
     @Test
     fun `When the display name is saved, then the update use case is invoked`() = runTest {
@@ -136,41 +132,39 @@ class ProfileScreenViewModelTest {
     }
 
     @Test
-    fun `When the display name update finishes, then its result is emitted as an event`() =
-        runTest {
-            coEvery { updateProfileDisplayNameUseCase(displayName = NEW_NAME) } returns
-                DisplayNameResult.NAME_TAKEN
-            val viewModel = createViewModel()
+    fun `When the display name update finishes, then its result is emitted as an event`() = runTest {
+        coEvery { updateProfileDisplayNameUseCase(displayName = NEW_NAME) } returns
+            DisplayNameResult.NAME_TAKEN
+        val viewModel = createViewModel()
 
-            viewModel.eventChannelFlow.test {
-                viewModel.onUpdateDisplayName(newDisplayName = NEW_NAME)
-                assertEquals(
-                    expected =
-                        ProfileEvent.DisplayNameUpdated(result = DisplayNameResult.NAME_TAKEN),
-                    actual = awaitItem(),
-                )
+        viewModel.eventChannelFlow.test {
+            viewModel.onUpdateDisplayName(newDisplayName = NEW_NAME)
+            assertEquals(
+                expected =
+                ProfileEvent.DisplayNameUpdated(result = DisplayNameResult.NAME_TAKEN),
+                actual = awaitItem(),
+            )
 
-                cancelAndIgnoreRemainingEvents()
-            }
+            cancelAndIgnoreRemainingEvents()
         }
+    }
 
     @Test
-    fun `When the profile is deleted, then a fresh one is provisioned and the deleted event is emitted`() =
-        runTest {
-            val viewModel = createViewModel()
+    fun `When the profile is deleted, then a fresh one is provisioned and the deleted event is emitted`() = runTest {
+        val viewModel = createViewModel()
 
-            viewModel.eventChannelFlow.test {
-                profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
+        viewModel.eventChannelFlow.test {
+            profileFlow.value = Profile(userId = USER_ID, displayName = DISPLAY_NAME)
 
-                viewModel.onDeleteProfile()
-                assertEquals(expected = ProfileEvent.ProfileDeleted, actual = awaitItem())
+            viewModel.onDeleteProfile()
+            assertEquals(expected = ProfileEvent.ProfileDeleted, actual = awaitItem())
 
-                cancelAndIgnoreRemainingEvents()
-            }
-
-            coVerify(exactly = 1) { deleteProfileUseCase() }
-            coVerify(exactly = 1) { createProfileUseCase(displayName = RANDOM_NAME) }
+            cancelAndIgnoreRemainingEvents()
         }
+
+        coVerify(exactly = 1) { deleteProfileUseCase() }
+        coVerify(exactly = 1) { createProfileUseCase(displayName = RANDOM_NAME) }
+    }
 
     @Test
     fun `When linking the account succeeds, then the link result is published`() = runTest {

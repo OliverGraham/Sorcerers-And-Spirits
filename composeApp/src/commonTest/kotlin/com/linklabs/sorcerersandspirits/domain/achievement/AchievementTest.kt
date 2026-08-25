@@ -15,7 +15,7 @@ class AchievementTest {
         assertFalse(actual = WinAMatch.isUnlockedBy(stats = ProfileStats()))
         assertTrue(
             actual =
-                WinAMatch.isUnlockedBy(stats = ProfileStats(overall = GameStats(matchesWon = 1)))
+            WinAMatch.isUnlockedBy(stats = ProfileStats(overall = GameStats(matchesWon = 1))),
         )
     }
 
@@ -23,13 +23,13 @@ class AchievementTest {
     fun `WinAGauntlet unlocks on the first Gauntlet win`() {
         assertFalse(
             actual =
-                WinAGauntlet.isUnlockedBy(stats = ProfileStats(overall = GameStats(matchesWon = 5)))
+            WinAGauntlet.isUnlockedBy(stats = ProfileStats(overall = GameStats(matchesWon = 5))),
         )
         assertTrue(
             actual =
-                WinAGauntlet.isUnlockedBy(
-                    stats = ProfileStats(overall = GameStats(gauntletsWon = 1))
-                )
+            WinAGauntlet.isUnlockedBy(
+                stats = ProfileStats(overall = GameStats(gauntletsWon = 1)),
+            ),
         )
     }
 
@@ -39,13 +39,13 @@ class AchievementTest {
             CharacterClass.playableTypes().drop(1).associateWith { GameStats(matchesWon = 1) }
         assertFalse(
             actual =
-                WinAMatchWithEveryClass.isUnlockedBy(stats = ProfileStats(perClass = missingOne))
+            WinAMatchWithEveryClass.isUnlockedBy(stats = ProfileStats(perClass = missingOne)),
         )
 
         val allClasses = CharacterClass.playableTypes().associateWith { GameStats(matchesWon = 1) }
         assertTrue(
             actual =
-                WinAMatchWithEveryClass.isUnlockedBy(stats = ProfileStats(perClass = allClasses))
+            WinAMatchWithEveryClass.isUnlockedBy(stats = ProfileStats(perClass = allClasses)),
         )
     }
 
@@ -57,9 +57,9 @@ class AchievementTest {
         assertFalse(actual = playableOnly.containsKey(CharacterClassType.None))
         assertTrue(
             actual =
-                WinAGauntletWithEveryClass.isUnlockedBy(
-                    stats = ProfileStats(perClass = playableOnly)
-                )
+            WinAGauntletWithEveryClass.isUnlockedBy(
+                stats = ProfileStats(perClass = playableOnly),
+            ),
         )
     }
 }

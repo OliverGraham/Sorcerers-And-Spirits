@@ -38,11 +38,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationSta
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-import kotlin.math.PI
-import kotlin.math.sin
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val SPLASH_DURATION_MILLIS = 900
 private const val SPLASH_RISE_FRACTION = 0.45f
@@ -120,7 +120,7 @@ internal fun SpellPotencySplashIndicator(
 
     Row(
         modifier =
-            modifier.offset(y = -rise).alpha(alpha = splashIndicatorAlpha(progress = progress)),
+        modifier.offset(y = -rise).alpha(alpha = splashIndicatorAlpha(progress = progress)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -138,15 +138,14 @@ internal fun SpellPotencySplashIndicator(
     }
 }
 
-private fun splashIndicatorAlpha(progress: Float): Float =
-    when {
-        progress < SPLASH_FADE_IN_FRACTION -> progress / SPLASH_FADE_IN_FRACTION
+private fun splashIndicatorAlpha(progress: Float): Float = when {
+    progress < SPLASH_FADE_IN_FRACTION -> progress / SPLASH_FADE_IN_FRACTION
 
-        progress > SPLASH_FADE_OUT_START ->
-            ((1f - progress) / (1f - SPLASH_FADE_OUT_START)).coerceAtLeast(minimumValue = 0f)
+    progress > SPLASH_FADE_OUT_START ->
+        ((1f - progress) / (1f - SPLASH_FADE_OUT_START)).coerceAtLeast(minimumValue = 0f)
 
-        else -> 1f
-    }
+    else -> 1f
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
@@ -184,7 +183,7 @@ private fun SpellPotencySplashPreview() {
     }
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(
-            value = LocalCharacterClassCopy provides previewCharacterClassCopy()
+            value = LocalCharacterClassCopy provides previewCharacterClassCopy(),
         ) {
             SharedTransitionLayout {
                 AnimatedVisibility(visible = true) {

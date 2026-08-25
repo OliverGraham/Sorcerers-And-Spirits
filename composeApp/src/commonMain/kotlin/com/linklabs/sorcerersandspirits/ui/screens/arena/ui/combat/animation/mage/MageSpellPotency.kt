@@ -33,10 +33,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.PI
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val ATMOSPHERE_IN_MILLIS = 420
 private const val ATMOSPHERE_OUT_MILLIS = 420
@@ -53,13 +53,11 @@ private const val GATHER_BAND_FRACTION = 0.36f
 private const val IMPACT_BAND_FRACTION = 0.24f
 private const val BOLT_BOW_FRACTION = 0.05f
 
-internal fun spellPotencyBoltCount(mainDamage: Int): Int =
-    mainDamage.coerceIn(minimumValue = 1, maximumValue = MAX_BOLTS)
+internal fun spellPotencyBoltCount(mainDamage: Int): Int = mainDamage.coerceIn(minimumValue = 1, maximumValue = MAX_BOLTS)
 
 private fun waveCount(boltCount: Int): Int = (boltCount + BOLTS_PER_WAVE - 1) / BOLTS_PER_WAVE
 
-private fun waveSize(boltCount: Int, wave: Int): Int =
-    minOf(BOLTS_PER_WAVE, boltCount - wave * BOLTS_PER_WAVE)
+private fun waveSize(boltCount: Int, wave: Int): Int = minOf(BOLTS_PER_WAVE, boltCount - wave * BOLTS_PER_WAVE)
 
 private fun barrageWindowMillis(boltCount: Int): Int {
     val lastWave = waveCount(boltCount = boltCount) - 1
@@ -100,12 +98,12 @@ internal fun MageSpellPotencyOverlay(
         val element = mageElementFor(messageId = animatingMessage.id)
         state.play(
             geometry =
-                weaponStrikeGeometry(
-                    attackerBounds = mageBounds,
-                    target = defenderBounds.center,
-                    accentColor = element.palette().glow,
-                    density = density,
-                ),
+            weaponStrikeGeometry(
+                attackerBounds = mageBounds,
+                target = defenderBounds.center,
+                accentColor = element.palette().glow,
+                density = density,
+            ),
             element = element,
             boltCount = spellPotencyBoltCount(mainDamage = animatingMessage.mainDamage),
         )
@@ -164,11 +162,10 @@ internal suspend fun SpellPotencyState.play(
     this.scene = null
 }
 
-private fun mageSpellPotencyDurationMillis(mainDamage: Int): Long =
-    ATMOSPHERE_IN_MILLIS +
-        barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
-        IMPACT_BURST_TAIL_MILLIS +
-        ATMOSPHERE_OUT_MILLIS
+private fun mageSpellPotencyDurationMillis(mainDamage: Int): Long = ATMOSPHERE_IN_MILLIS +
+    barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
+    IMPACT_BURST_TAIL_MILLIS +
+    ATMOSPHERE_OUT_MILLIS
 
 internal fun DrawScope.drawSpellPotency(state: SpellPotencyState) {
     val geometry = state.scene ?: return

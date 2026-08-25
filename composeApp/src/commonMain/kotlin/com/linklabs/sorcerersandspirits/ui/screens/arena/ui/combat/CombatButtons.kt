@@ -98,17 +98,15 @@ internal fun CombatButtons(
         }
 
     // TODO: Very, very rarely are nested functions allowable (these are not)
-    fun isEnabled(control: ArenaCombatControl): Boolean =
-        !isActionInFlight &&
-            state.isControlEnabled(control = control, targetedOpponentUserId = state.targetedUserId)
+    fun isEnabled(control: ArenaCombatControl): Boolean = !isActionInFlight &&
+        state.isControlEnabled(control = control, targetedOpponentUserId = state.targetedUserId)
 
-    fun rollAction(control: ArenaCombatControl): () -> Unit =
-        state.rollActionFor(
-            control = control,
-            targetedOpponentUserId = state.targetedUserId,
-            onAttack = onAttack,
-            onUseAbility = onUseAbility,
-        )
+    fun rollAction(control: ArenaCombatControl): () -> Unit = state.rollActionFor(
+        control = control,
+        targetedOpponentUserId = state.targetedUserId,
+        onAttack = onAttack,
+        onUseAbility = onUseAbility,
+    )
 
     val areButtonsShown = areControlsVisible && !isSuppressedByAnimation && controls.isNotEmpty()
     Box(modifier = modifier.fillMaxWidth().height(height = BOTTOM_CONTROLS_HEIGHT)) {
@@ -257,44 +255,44 @@ private fun ArenaButton(
     ) {
         Box(
             modifier =
-                Modifier.size(width = arenaButtonSize, height = arenaButtonSize + arenaButtonLift)
-                    .alpha(alpha = if (isEnabled) 1f else 0.4f)
+            Modifier.size(width = arenaButtonSize, height = arenaButtonSize + arenaButtonLift)
+                .alpha(alpha = if (isEnabled) 1f else 0.4f),
         ) {
             Box(
                 modifier =
-                    Modifier.align(alignment = Alignment.BottomCenter)
-                        .size(size = arenaButtonSize)
-                        .clip(shape = arenaButtonShape)
-                        .background(color = baseColor)
+                Modifier.align(alignment = Alignment.BottomCenter)
+                    .size(size = arenaButtonSize)
+                    .clip(shape = arenaButtonShape)
+                    .background(color = baseColor),
             )
 
             Box(
                 modifier =
-                    Modifier.align(alignment = Alignment.TopCenter)
-                        .offset(y = pressDrop)
-                        .size(size = arenaButtonSize)
-                        .clip(shape = arenaButtonShape)
-                        .background(color = arenaButtonFaceColor)
-                        .border(width = 2.dp, color = borderColor, shape = arenaButtonShape)
-                        .holdToRollGesture(
-                            enabled = isEnabled,
-                            onHoldStart = {
-                                isPressed.value = true
-                                if (rollingDiePositions.isNotEmpty()) {
-                                    diceStateHolder.startHold(
-                                        rollingPositions = rollingDiePositions
-                                    )
-                                }
-                            },
-                            onRelease = { isDoubleTap ->
-                                isPressed.value = false
-                                if (rollingDiePositions.isNotEmpty()) {
-                                    diceStateHolder.release(isDoubleTap = isDoubleTap) { onRoll() }
-                                } else {
-                                    onRoll()
-                                }
-                            },
-                        ),
+                Modifier.align(alignment = Alignment.TopCenter)
+                    .offset(y = pressDrop)
+                    .size(size = arenaButtonSize)
+                    .clip(shape = arenaButtonShape)
+                    .background(color = arenaButtonFaceColor)
+                    .border(width = 2.dp, color = borderColor, shape = arenaButtonShape)
+                    .holdToRollGesture(
+                        enabled = isEnabled,
+                        onHoldStart = {
+                            isPressed.value = true
+                            if (rollingDiePositions.isNotEmpty()) {
+                                diceStateHolder.startHold(
+                                    rollingPositions = rollingDiePositions,
+                                )
+                            }
+                        },
+                        onRelease = { isDoubleTap ->
+                            isPressed.value = false
+                            if (rollingDiePositions.isNotEmpty()) {
+                                diceStateHolder.release(isDoubleTap = isDoubleTap) { onRoll() }
+                            } else {
+                                onRoll()
+                            }
+                        },
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -315,19 +313,18 @@ private fun ArenaButton(
     }
 }
 
-private fun ArenaCombatControl.toButtonIcon(): DrawableResource =
-    when (this) {
-        is ArenaCombatControl.NormalAttack -> Res.drawable.ic_attack_button
+private fun ArenaCombatControl.toButtonIcon(): DrawableResource = when (this) {
+    is ArenaCombatControl.NormalAttack -> Res.drawable.ic_attack_button
 
-        is ArenaCombatControl.ActivatedAbility -> Res.drawable.ic_offensive_ability
+    is ArenaCombatControl.ActivatedAbility -> Res.drawable.ic_offensive_ability
 
-        is ArenaCombatControl.AbilityRoll ->
-            if (action is AbilityActionState.Passive.Teleport) {
-                Res.drawable.ic_teleport_button
-            } else {
-                Res.drawable.ic_defensive_ability
-            }
-    }
+    is ArenaCombatControl.AbilityRoll ->
+        if (action is AbilityActionState.Passive.Teleport) {
+            Res.drawable.ic_teleport_button
+        } else {
+            Res.drawable.ic_defensive_ability
+        }
+}
 
 // TODO(SS-257): Move to view model layer - in ArenaState.Combat itself
 private fun ArenaMatchState.Combat.isControlEnabled(

@@ -16,15 +16,15 @@ class ProfileStatsRatingTest {
         val stats =
             ProfileStats(
                 overall =
-                    GameStats(
-                        gauntletsWon = 2, // 200
-                        matchesWon = 5, // 125
-                        knockoutsDealt = 10, // 20
-                        gauntletsLost = 1, // -15
-                        matchesLost = 3, // -15
-                        matchesForfeited = 1, // -20
-                        gauntletsForfeited = 0,
-                    )
+                GameStats(
+                    gauntletsWon = 2, // 200
+                    matchesWon = 5, // 125
+                    knockoutsDealt = 10, // 20
+                    gauntletsLost = 1, // -15
+                    matchesLost = 3, // -15
+                    matchesForfeited = 1, // -20
+                    gauntletsForfeited = 0,
+                ),
             )
 
         assertEquals(expected = 295L, actual = stats.rating)

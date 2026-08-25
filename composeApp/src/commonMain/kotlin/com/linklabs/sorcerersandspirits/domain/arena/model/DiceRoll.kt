@@ -9,6 +9,7 @@ sealed interface DiceRoll {
         val value: Int,
         val diePosition: DiePosition,
         override val doublesBonus: DoublesBonus? = null,
+        val wasDoublesBonusConsumed: Boolean = false,
         val isMirrorImageReroll: Boolean = false,
         val dieColor: DieColor = DieColor.NormalAttack,
         val disablesSibling: Boolean = true,
@@ -18,6 +19,7 @@ sealed interface DiceRoll {
         val firstDie: Int,
         val secondDie: Int,
         override val doublesBonus: DoublesBonus? = null,
+        val wasDoublesBonusConsumed: Boolean = false,
         val dieColor: DieColor = DieColor.NormalAttack,
     ) : DiceRoll
 }

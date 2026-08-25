@@ -40,82 +40,76 @@ data class GameStatsEntity(
     val timesSelected: Long = 0,
 )
 
-internal fun ProfileEntity.toDomain() =
-    Profile(
-        userId = userId,
-        displayName = displayName,
-        stats = stats.toDomain(),
-        unlockedAchievements =
-            unlockedAchievements
-                .mapNotNull { (idName, unlockedAt) ->
-                    val achievementId =
-                        AchievementId.entries.find { it.name == idName } ?: return@mapNotNull null
-                    achievementId to unlockedAt
-                }
-                .toMap(),
-    )
+internal fun ProfileEntity.toDomain() = Profile(
+    userId = userId,
+    displayName = displayName,
+    stats = stats.toDomain(),
+    unlockedAchievements =
+    unlockedAchievements
+        .mapNotNull { (idName, unlockedAt) ->
+            val achievementId =
+                AchievementId.entries.find { it.name == idName } ?: return@mapNotNull null
+            achievementId to unlockedAt
+        }
+        .toMap(),
+)
 
-internal fun Profile.toEntity() =
-    ProfileEntity(
-        userId = userId,
-        displayName = displayName,
-        stats = stats.toEntity(),
-        unlockedAchievements =
-            unlockedAchievements.entries.associate { (achievementId, unlockedAt) ->
-                achievementId.name to unlockedAt
-            },
-    )
+internal fun Profile.toEntity() = ProfileEntity(
+    userId = userId,
+    displayName = displayName,
+    stats = stats.toEntity(),
+    unlockedAchievements =
+    unlockedAchievements.entries.associate { (achievementId, unlockedAt) ->
+        achievementId.name to unlockedAt
+    },
+)
 
-internal fun ProfileStatsEntity.toDomain() =
-    ProfileStats(
-        overall = overall.toDomain(),
-        perClass =
-            perClass
-                .mapNotNull { (className, entity) ->
-                    val classType = CharacterClassType.entries.find { it.name == className }
-                    if (classType == null) null else classType to entity.toDomain()
-                }
-                .toMap(),
-    )
+internal fun ProfileStatsEntity.toDomain() = ProfileStats(
+    overall = overall.toDomain(),
+    perClass =
+    perClass
+        .mapNotNull { (className, entity) ->
+            val classType = CharacterClassType.entries.find { it.name == className }
+            if (classType == null) null else classType to entity.toDomain()
+        }
+        .toMap(),
+)
 
-internal fun ProfileStats.toEntity() =
-    ProfileStatsEntity(
-        overall = overall.toEntity(),
-        perClass =
-            perClass.entries.associate { (classType, stats) -> classType.name to stats.toEntity() },
-    )
+internal fun ProfileStats.toEntity() = ProfileStatsEntity(
+    overall = overall.toEntity(),
+    perClass =
+    perClass.entries.associate { (classType, stats) -> classType.name to stats.toEntity() },
+)
 
-internal fun GameStatsEntity.toDomain() =
-    GameStats(
-        matchesPlayed = matchesPlayed,
-        matchesWon = matchesWon,
-        matchesLost = matchesLost,
-        matchesForfeited = matchesForfeited,
-        gauntletsPlayed = gauntletsPlayed,
-        gauntletsWon = gauntletsWon,
-        gauntletsLost = gauntletsLost,
-        gauntletsForfeited = gauntletsForfeited,
-        knockoutsDealt = knockoutsDealt,
-        attacksMade = attacksMade,
-        abilitiesUsed = abilitiesUsed,
-        timesSelected = timesSelected,
-    )
+internal fun GameStatsEntity.toDomain() = GameStats(
+    matchesPlayed = matchesPlayed,
+    matchesWon = matchesWon,
+    matchesLost = matchesLost,
+    matchesForfeited = matchesForfeited,
+    gauntletsPlayed = gauntletsPlayed,
+    gauntletsWon = gauntletsWon,
+    gauntletsLost = gauntletsLost,
+    gauntletsForfeited = gauntletsForfeited,
+    knockoutsDealt = knockoutsDealt,
+    attacksMade = attacksMade,
+    abilitiesUsed = abilitiesUsed,
+    timesSelected = timesSelected,
+)
 
-internal fun GameStats.toEntity() =
-    GameStatsEntity(
-        matchesPlayed = matchesPlayed,
-        matchesWon = matchesWon,
-        matchesLost = matchesLost,
-        matchesForfeited = matchesForfeited,
-        gauntletsPlayed = gauntletsPlayed,
-        gauntletsWon = gauntletsWon,
-        gauntletsLost = gauntletsLost,
-        gauntletsForfeited = gauntletsForfeited,
-        knockoutsDealt = knockoutsDealt,
-        attacksMade = attacksMade,
-        abilitiesUsed = abilitiesUsed,
-        timesSelected = timesSelected,
-    )
+internal fun GameStats.toEntity() = GameStatsEntity(
+    matchesPlayed = matchesPlayed,
+    matchesWon = matchesWon,
+    matchesLost = matchesLost,
+    matchesForfeited = matchesForfeited,
+    gauntletsPlayed = gauntletsPlayed,
+    gauntletsWon = gauntletsWon,
+    gauntletsLost = gauntletsLost,
+    gauntletsForfeited = gauntletsForfeited,
+    knockoutsDealt = knockoutsDealt,
+    attacksMade = attacksMade,
+    abilitiesUsed = abilitiesUsed,
+    timesSelected = timesSelected,
+)
 
 internal fun ProfileStats.toStatIncrements(): Map<List<String>, Int> = buildMap {
     overall.toFieldIncrements().forEach { (statKey, amount) ->

@@ -35,12 +35,12 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 4,
-                    diePosition = DiePosition.First,
-                    dieColor = DieColor.Bard,
-                    isSiblingDisabled = true,
-                ),
+            DiceRollState.OneDie(
+                value = 4,
+                diePosition = DiePosition.First,
+                dieColor = DieColor.Bard,
+                isSiblingDisabled = true,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
@@ -57,12 +57,12 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 4,
-                    diePosition = DiePosition.First,
-                    dieColor = DieColor.Rogue,
-                    isSiblingDisabled = false,
-                ),
+            DiceRollState.OneDie(
+                value = 4,
+                diePosition = DiePosition.First,
+                dieColor = DieColor.Rogue,
+                isSiblingDisabled = false,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
@@ -79,24 +79,24 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 4,
-                    diePosition = DiePosition.First,
-                    dieColor = DieColor.Rogue,
-                    isSiblingDisabled = false,
-                ),
+            DiceRollState.OneDie(
+                value = 4,
+                diePosition = DiePosition.First,
+                dieColor = DieColor.Rogue,
+                isSiblingDisabled = false,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 2,
-                    diePosition = DiePosition.Second,
-                    dieColor = DieColor.Mage,
-                    isSiblingDisabled = false,
-                ),
+            DiceRollState.OneDie(
+                value = 2,
+                diePosition = DiePosition.Second,
+                dieColor = DieColor.Mage,
+                isSiblingDisabled = false,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
@@ -114,24 +114,24 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 4,
-                    diePosition = DiePosition.First,
-                    dieColor = DieColor.Rogue,
-                    isSiblingDisabled = false,
-                ),
+            DiceRollState.OneDie(
+                value = 4,
+                diePosition = DiePosition.First,
+                dieColor = DieColor.Rogue,
+                isSiblingDisabled = false,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 6,
-                    diePosition = DiePosition.Second,
-                    dieColor = DieColor.Mage,
-                    isSiblingDisabled = false,
-                ),
+            DiceRollState.OneDie(
+                value = 6,
+                diePosition = DiePosition.Second,
+                dieColor = DieColor.Mage,
+                isSiblingDisabled = false,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
@@ -199,11 +199,11 @@ class DiceRollTest {
 
         holder.commitRoll(
             diceRollState =
-                DiceRollState.OneDie(
-                    value = 3,
-                    diePosition = DiePosition.First,
-                    isSiblingDisabled = true,
-                ),
+            DiceRollState.OneDie(
+                value = 3,
+                diePosition = DiePosition.First,
+                isSiblingDisabled = true,
+            ),
             diceBadge = null,
             isBadgeBonusSpent = false,
         )
@@ -241,6 +241,5 @@ class DiceRollTest {
         return holder
     }
 
-    private fun rollOffDie(value: Int, diePosition: DiePosition) =
-        DiceRollState.OneDie(value = value, diePosition = diePosition, isSiblingDisabled = false)
+    private fun rollOffDie(value: Int, diePosition: DiePosition) = DiceRollState.OneDie(value = value, diePosition = diePosition, isSiblingDisabled = false)
 }

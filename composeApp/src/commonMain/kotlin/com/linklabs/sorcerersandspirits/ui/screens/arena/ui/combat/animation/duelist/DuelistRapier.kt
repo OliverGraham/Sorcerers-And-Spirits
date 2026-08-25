@@ -45,11 +45,11 @@ internal fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
     drawPath(
         path = blade,
         brush =
-            Brush.linearGradient(
-                colors = listOf(Color.White, steelBright, steelShade),
-                start = Offset(x = 0f, y = 0f),
-                end = Offset(x = 0f, y = guardY),
-            ),
+        Brush.linearGradient(
+            colors = listOf(Color.White, steelBright, steelShade),
+            start = Offset(x = 0f, y = 0f),
+            end = Offset(x = 0f, y = guardY),
+        ),
         alpha = alpha,
     )
 

@@ -25,15 +25,15 @@ class AndroidSocialSignInProvider(
     private val currentActivityHolder: CurrentActivityHolder,
 ) : SocialSignInProvider {
 
-    override suspend fun requestToken(method: SignInMethod): SocialTokenResult =
-        when (method) {
-            SignInMethod.GOOGLE -> requestGoogleToken()
+    override suspend fun requestToken(method: SignInMethod): SocialTokenResult = when (method) {
+        SignInMethod.GOOGLE -> requestGoogleToken()
 
-            // Apple on Android needs a web OAuth flow (gitlive OAuthProvider), not Credential
-            // Manager — out of scope for SS-086. Email never routes through this provider.
-            SignInMethod.APPLE,
-            SignInMethod.EMAIL -> SocialTokenResult.NotAvailable
-        }
+        // Apple on Android needs a web OAuth flow (gitlive OAuthProvider), not Credential
+        // Manager — out of scope for SS-086. Email never routes through this provider.
+        SignInMethod.APPLE,
+        SignInMethod.EMAIL,
+        -> SocialTokenResult.NotAvailable
+    }
 
     private suspend fun requestGoogleToken(): SocialTokenResult {
         // The account-picker UI must be hosted by an Activity, not the application context.

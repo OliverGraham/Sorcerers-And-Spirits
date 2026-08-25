@@ -45,17 +45,17 @@ internal fun MirrorSplitClassAvatar(
         AvatarImage(
             characterClass = characterClass,
             modifier =
-                Modifier.matchParentSize().graphicsLayer {
-                    applyMirrorFake(gestureState = gestureState)
-                },
+            Modifier.matchParentSize().graphicsLayer {
+                applyMirrorFake(gestureState = gestureState)
+            },
         )
         AvatarImage(
             characterClass = characterClass,
             colorFilter = gestureState.colorFilter,
             modifier =
-                Modifier.matchParentSize().graphicsLayer {
-                    applyMirrorReal(gestureState = gestureState)
-                },
+            Modifier.matchParentSize().graphicsLayer {
+                applyMirrorReal(gestureState = gestureState)
+            },
         )
     }
 }
@@ -81,9 +81,8 @@ private fun GraphicsLayerScope.applyMirrorReal(gestureState: AvatarGestureState)
 }
 
 internal fun ArenaMessageState.getMirrorImageMessageOrNull(
-    userId: String
-): ArenaMessageState.MirrorImage? =
-    (this as? ArenaMessageState.MirrorImage)?.takeIf { it.illusionistUserId == userId }
+    userId: String,
+): ArenaMessageState.MirrorImage? = (this as? ArenaMessageState.MirrorImage)?.takeIf { it.illusionistUserId == userId }
 
 internal suspend fun AvatarGestureState.playMirrorImage(
     message: ArenaMessageState.MirrorImage,
@@ -127,7 +126,7 @@ private suspend fun AvatarGestureState.mirrorResolve(
             mirrorReturn.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = MIRROR_RETURN_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = MIRROR_RETURN_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         if (messageType != null) {
@@ -143,22 +142,21 @@ private suspend fun AvatarGestureState.mirrorResolve(
 private suspend fun AvatarGestureState.playDefenderReaction(
     messageType: NormalRollMessageType,
     density: Density,
-) =
-    with(density) {
-        when (messageType) {
-            NormalRollMessageType.ArmorClassHit ->
-                flinch(
-                    shakePx = 10.dp.toPx(),
-                    tintPeak = 0.7f,
-                    reactionDelayMillis = REACTION_DELAY_MILLIS,
-                )
+) = with(density) {
+    when (messageType) {
+        NormalRollMessageType.ArmorClassHit ->
+            flinch(
+                shakePx = 10.dp.toPx(),
+                tintPeak = 0.7f,
+                reactionDelayMillis = REACTION_DELAY_MILLIS,
+            )
 
-            NormalRollMessageType.ArmorClassMiss ->
-                sidestep(distancePx = 40.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
+        NormalRollMessageType.ArmorClassMiss ->
+            sidestep(distancePx = 40.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
 
-            NormalRollMessageType.Damage ->
-                flinchHeavy(shakePx = 16.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
+        NormalRollMessageType.Damage ->
+            flinchHeavy(shakePx = 16.dp.toPx(), reactionDelayMillis = REACTION_DELAY_MILLIS)
 
-            NormalRollMessageType.Knockout -> collapse(reactionDelayMillis = REACTION_DELAY_MILLIS)
-        }
+        NormalRollMessageType.Knockout -> collapse(reactionDelayMillis = REACTION_DELAY_MILLIS)
     }
+}

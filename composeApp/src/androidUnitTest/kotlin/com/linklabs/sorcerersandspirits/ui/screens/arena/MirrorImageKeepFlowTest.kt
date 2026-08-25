@@ -31,12 +31,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toSelectedState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlinx.serialization.json.Json
 
 /**
  * Reproduces the exact two-phone SS-181 flow end to end: the Rogue's phone rolls an armor hit on
@@ -80,15 +80,15 @@ class MirrorImageKeepFlowTest {
             performAction(
                 players = players,
                 currentAction =
-                    AttackArguments(
-                            targetedOpponentUserId = ILLUSIONIST_ID,
-                            userPlayerId = ROGUE_ID,
-                        )
-                        .toDomain(
-                            combatActionState =
-                                idleState(activeUserId = ROGUE_ID, players = players)
-                                    .combatActionState
-                        )!!,
+                AttackArguments(
+                    targetedOpponentUserId = ILLUSIONIST_ID,
+                    userPlayerId = ROGUE_ID,
+                )
+                    .toDomain(
+                        combatActionState =
+                        idleState(activeUserId = ROGUE_ID, players = players)
+                            .combatActionState,
+                    )!!,
             )
 
         val mirrorAction = assertIs<NextCombatAction.AbilityRoll>(value = armorRollOutcome)
@@ -149,24 +149,23 @@ class MirrorImageKeepFlowTest {
 
         val staleSecondKeepTap =
             UseAbilityArguments(
-                    abilityActionState = keepRollPayload(),
-                    targetedOpponentUserId =
-                        illusionistPhoneAfterKeep.resolveTargetUserId(selectedOpponentUserId = ""),
-                    userPlayerId = ILLUSIONIST_ID,
-                )
+                abilityActionState = keepRollPayload(),
+                targetedOpponentUserId =
+                illusionistPhoneAfterKeep.resolveTargetUserId(selectedOpponentUserId = ""),
+                userPlayerId = ILLUSIONIST_ID,
+            )
                 .toDomain(combatActionState = illusionistPhoneAfterKeep.combatActionState)
 
         assertNull(actual = staleSecondKeepTap)
     }
 
-    private fun keepRollPayload() =
-        AbilityActionState.Passive.MirrorImage(
-            firstDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 3),
-            secondDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 4),
-            attackType = NormalAttackType.ArmorClass,
-            existingDoublesBonus = 0,
-            mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-        )
+    private fun keepRollPayload() = AbilityActionState.Passive.MirrorImage(
+        firstDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 3),
+        secondDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 4),
+        attackType = NormalAttackType.ArmorClass,
+        existingDoublesBonus = 0,
+        mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+    )
 
     @Test
     fun `Given Mirror Image interrupts the Health roll, then the trigger carries the new dice so the table matches the reroll labels`() {
@@ -185,20 +184,20 @@ class MirrorImageKeepFlowTest {
         val outcome =
             performOutcome(
                 players =
-                    mapOf(
-                        ROGUE_ID to
-                            ArenaPlayer.Selected(
-                                userId = ROGUE_ID,
-                                displayName = "Rogue",
-                                characterClass = TestCharacterClasses.rogue(),
-                            ),
-                        ILLUSIONIST_ID to
-                            ArenaPlayer.Selected(
-                                userId = ILLUSIONIST_ID,
-                                displayName = "Illusionist",
-                                characterClass = TestCharacterClasses.illusionist(),
-                            ),
-                    ),
+                mapOf(
+                    ROGUE_ID to
+                        ArenaPlayer.Selected(
+                            userId = ROGUE_ID,
+                            displayName = "Rogue",
+                            characterClass = TestCharacterClasses.rogue(),
+                        ),
+                    ILLUSIONIST_ID to
+                        ArenaPlayer.Selected(
+                            userId = ILLUSIONIST_ID,
+                            displayName = "Illusionist",
+                            characterClass = TestCharacterClasses.illusionist(),
+                        ),
+                ),
                 currentAction = healthRollAction,
             )
 
@@ -223,7 +222,7 @@ class MirrorImageKeepFlowTest {
      * mapped to the domain action against the live combat action state.
      */
     private fun keepRollDispatch(
-        illusionistPhoneState: ArenaMatchState.Combat
+        illusionistPhoneState: ArenaMatchState.Combat,
     ): CurrentCombatAction.AbilityRoll {
         val keepRollControl =
             illusionistPhoneState.combatControls
@@ -239,10 +238,10 @@ class MirrorImageKeepFlowTest {
 
         val dispatchedAction =
             UseAbilityArguments(
-                    abilityActionState = keepRollControl.action,
-                    targetedOpponentUserId = targetedOpponentUserId,
-                    userPlayerId = ILLUSIONIST_ID,
-                )
+                abilityActionState = keepRollControl.action,
+                targetedOpponentUserId = targetedOpponentUserId,
+                userPlayerId = ILLUSIONIST_ID,
+            )
                 .toDomain(combatActionState = illusionistPhoneState.combatActionState)
 
         return assertNotNull(actual = dispatchedAction)
@@ -251,8 +250,7 @@ class MirrorImageKeepFlowTest {
     private fun performAction(
         players: Map<String, ArenaPlayer.Selected>,
         currentAction: CurrentCombatAction,
-    ): NextCombatAction =
-        performOutcome(players = players, currentAction = currentAction).nextCombatAction
+    ): NextCombatAction = performOutcome(players = players, currentAction = currentAction).nextCombatAction
 
     private fun performOutcome(
         players: Map<String, ArenaPlayer.Selected>,
@@ -261,12 +259,12 @@ class MirrorImageKeepFlowTest {
         val performCombatAction =
             PerformCombatAction(
                 arguments =
-                    CombatActionArguments(
-                        arenaId = "arenaId",
-                        playerMap = players,
-                        roundNumber = 1,
-                        doublesBonus = null,
-                    ),
+                CombatActionArguments(
+                    arenaId = "arenaId",
+                    playerMap = players,
+                    roundNumber = 1,
+                    doublesBonus = null,
+                ),
                 diceRoller = diceRoller,
                 abilityConfig = AbilityConfig.DEFAULT,
             )
@@ -286,10 +284,10 @@ class MirrorImageKeepFlowTest {
         val entityJson = Json.encodeToString(value = nextAction.toEntity())
         val roundTrippedAction =
             Json.decodeFromString<
-                    com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
+                com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity,
                 >(
-                    string = entityJson
-                )
+                string = entityJson,
+            )
                 .toDomain()
 
         return ArenaMatchState.Combat(
@@ -308,12 +306,11 @@ class MirrorImageKeepFlowTest {
     private fun idleState(
         activeUserId: String,
         players: Map<String, ArenaPlayer.Selected>,
-    ): ArenaMatchState.Combat =
-        combatStateAfterRoundTrip(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = activeUserId)),
-            players = players,
-            userPlayerId = activeUserId,
-        )
+    ): ArenaMatchState.Combat = combatStateAfterRoundTrip(
+        nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = activeUserId)),
+        players = players,
+        userPlayerId = activeUserId,
+    )
 
     private fun seatingOf(state: ArenaMatchState.Combat): CombatSeating {
         val targetUserId = state.resolveTargetUserId(selectedOpponentUserId = "")
@@ -324,12 +321,11 @@ class MirrorImageKeepFlowTest {
         )
     }
 
-    private fun bothSeated(userPlayerId: String, opponentUserId: String) =
-        CombatSeating(
-            topSeatUserId = opponentUserId,
-            bottomSeatUserId = userPlayerId,
-            headIconUserIds = emptyList(),
-        )
+    private fun bothSeated(userPlayerId: String, opponentUserId: String) = CombatSeating(
+        topSeatUserId = opponentUserId,
+        bottomSeatUserId = userPlayerId,
+        headIconUserIds = emptyList(),
+    )
 
     private companion object {
         const val ROGUE_ID = "rogueId"

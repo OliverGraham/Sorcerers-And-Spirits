@@ -61,20 +61,20 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
 private fun ChoosingClassesTitle(isItThisUsersTurn: Boolean, activePlayerName: String) {
     Text(
         text =
-            if (isItThisUsersTurn) {
-                stringResource(resource = Res.string.arena_choosing_classes_title)
-            } else {
-                stringResource(
-                    resource = Res.string.arena_choosing_classes_waiting,
-                    activePlayerName,
-                )
-            },
+        if (isItThisUsersTurn) {
+            stringResource(resource = Res.string.arena_choosing_classes_title)
+        } else {
+            stringResource(
+                resource = Res.string.arena_choosing_classes_waiting,
+                activePlayerName,
+            )
+        },
         style =
-            if (isItThisUsersTurn) {
-                MaterialTheme.typography.headlineMedium
-            } else {
-                MaterialTheme.typography.headlineSmall
-            },
+        if (isItThisUsersTurn) {
+            MaterialTheme.typography.headlineMedium
+        } else {
+            MaterialTheme.typography.headlineSmall
+        },
         textAlign = TextAlign.Center,
         modifier = Modifier.padding(bottom = 24.dp).padding(horizontal = 32.dp),
     )

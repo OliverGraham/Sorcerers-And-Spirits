@@ -53,62 +53,55 @@ private fun randomBuiltWeaponFor(id: String): CharacterClassType {
 internal fun attackerStrike(
     weaponClassType: CharacterClassType,
     messageType: NormalRollMessageType,
-): AvatarGesture =
-    when (weaponClassType) {
-        CharacterClassType.Rogue -> rogueStrike(messageType = messageType)
-        CharacterClassType.Gambler -> gamblerStrike(messageType = messageType)
-        CharacterClassType.Duelist -> duelistStrike(messageType = messageType)
-        CharacterClassType.Necromancer -> AvatarGesture.Cast
-        CharacterClassType.Bard -> AvatarGesture.Cast
-        CharacterClassType.Mage -> AvatarGesture.Cast
-        CharacterClassType.Paladin -> paladinStrike(messageType = messageType)
-        else -> genericStrike(messageType = messageType)
-    }
+): AvatarGesture = when (weaponClassType) {
+    CharacterClassType.Rogue -> rogueStrike(messageType = messageType)
+    CharacterClassType.Gambler -> gamblerStrike(messageType = messageType)
+    CharacterClassType.Duelist -> duelistStrike(messageType = messageType)
+    CharacterClassType.Necromancer -> AvatarGesture.Cast
+    CharacterClassType.Bard -> AvatarGesture.Cast
+    CharacterClassType.Mage -> AvatarGesture.Cast
+    CharacterClassType.Paladin -> paladinStrike(messageType = messageType)
+    else -> genericStrike(messageType = messageType)
+}
 
-private fun paladinStrike(messageType: NormalRollMessageType): AvatarGesture =
-    when (messageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
-        NormalRollMessageType.Damage -> AvatarGesture.Slash
-        NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
-    }
+private fun paladinStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
+    NormalRollMessageType.Damage -> AvatarGesture.Slash
+    NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
+}
 
-private fun rogueStrike(messageType: NormalRollMessageType): AvatarGesture =
-    when (messageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Stab
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.StabOvershoot
-        NormalRollMessageType.Damage -> AvatarGesture.Stab
-        NormalRollMessageType.Knockout -> AvatarGesture.StabFlurry
-    }
+private fun rogueStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Stab
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.StabOvershoot
+    NormalRollMessageType.Damage -> AvatarGesture.Stab
+    NormalRollMessageType.Knockout -> AvatarGesture.StabFlurry
+}
 
-private fun gamblerStrike(messageType: NormalRollMessageType): AvatarGesture =
-    when (messageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Throw
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.ThrowOvershoot
-        NormalRollMessageType.Damage -> AvatarGesture.Throw
-        NormalRollMessageType.Knockout -> AvatarGesture.ThrowStrong
-    }
+private fun gamblerStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Throw
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.ThrowOvershoot
+    NormalRollMessageType.Damage -> AvatarGesture.Throw
+    NormalRollMessageType.Knockout -> AvatarGesture.ThrowStrong
+}
 
-private fun duelistStrike(messageType: NormalRollMessageType): AvatarGesture =
-    when (messageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
-        NormalRollMessageType.Damage -> AvatarGesture.Slash
-        NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
-    }
+private fun duelistStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
+    NormalRollMessageType.Damage -> AvatarGesture.Slash
+    NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
+}
 
-private fun genericStrike(messageType: NormalRollMessageType): AvatarGesture =
-    when (messageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Lunge
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.LungeOvershoot
-        NormalRollMessageType.Damage -> AvatarGesture.Lunge
-        NormalRollMessageType.Knockout -> AvatarGesture.LungeStrong
-    }
+private fun genericStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Lunge
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.LungeOvershoot
+    NormalRollMessageType.Damage -> AvatarGesture.Lunge
+    NormalRollMessageType.Knockout -> AvatarGesture.LungeStrong
+}
 
-internal fun defenderReactionGesture(normalRollMessageType: NormalRollMessageType): AvatarGesture =
-    when (normalRollMessageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep
-        NormalRollMessageType.Damage -> AvatarGesture.FlinchHeavy
-        NormalRollMessageType.Knockout -> AvatarGesture.Collapse
-    }
+internal fun defenderReactionGesture(normalRollMessageType: NormalRollMessageType): AvatarGesture = when (normalRollMessageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep
+    NormalRollMessageType.Damage -> AvatarGesture.FlinchHeavy
+    NormalRollMessageType.Knockout -> AvatarGesture.Collapse
+}

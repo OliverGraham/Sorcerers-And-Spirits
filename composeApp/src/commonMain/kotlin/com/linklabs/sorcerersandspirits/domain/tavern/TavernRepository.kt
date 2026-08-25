@@ -30,6 +30,5 @@ sealed interface SendChallengeResult {
 
     data class Failure(val errorMessage: String) : SendChallengeResult
 
-    data class NotEnoughChallengersAvailable(val unavailableChallengers: List<Challenger>) :
-        SendChallengeResult
+    data class NotEnoughChallengersAvailable(val unavailableChallengers: List<Challenger>) : SendChallengeResult
 }

@@ -108,11 +108,11 @@ class AppViewModel(
                 _uiStateFlow.value =
                     UiState.Loaded(
                         data =
-                            AppState(
-                                displayName = newDisplayName,
-                                showSignInDialog = true,
-                                isOffline = true,
-                            )
+                        AppState(
+                            displayName = newDisplayName,
+                            showSignInDialog = true,
+                            isOffline = true,
+                        ),
                     )
                 return@launch
             }
@@ -137,17 +137,17 @@ class AppViewModel(
                     _uiStateFlow.value =
                         UiState.Loaded(
                             data =
-                                AppState(
-                                    displayName = newDisplayName,
-                                    showSignInDialog = true,
-                                    isNameTaken = true,
-                                )
+                            AppState(
+                                displayName = newDisplayName,
+                                showSignInDialog = true,
+                                isNameTaken = true,
+                            ),
                         )
 
                 DisplayNameResult.ERROR ->
                     _uiStateFlow.value =
                         UiState.Loaded(
-                            data = AppState(displayName = newDisplayName, showSignInDialog = true)
+                            data = AppState(displayName = newDisplayName, showSignInDialog = true),
                         )
             }
         }
@@ -169,11 +169,11 @@ class AppViewModel(
                 _uiStateFlow.value =
                     UiState.Loaded(
                         data =
-                            AppState(
-                                displayName = displayName,
-                                showSignInDialog = true,
-                                isOffline = true,
-                            )
+                        AppState(
+                            displayName = displayName,
+                            showSignInDialog = true,
+                            isOffline = true,
+                        ),
                     )
                 return@launch
             }
@@ -187,11 +187,11 @@ class AppViewModel(
                 _uiStateFlow.value =
                     UiState.Loaded(
                         data =
-                            AppState(
-                                displayName = displayName,
-                                showSignInDialog = true,
-                                linkResult = signInResult,
-                            )
+                        AppState(
+                            displayName = displayName,
+                            showSignInDialog = true,
+                            linkResult = signInResult,
+                        ),
                     )
             }
         }
@@ -215,17 +215,17 @@ class AppViewModel(
                 _uiStateFlow.value =
                     UiState.Loaded(
                         data =
-                            AppState(
-                                displayName = displayName,
-                                showSignInDialog = true,
-                                isNameTaken = true,
-                            )
+                        AppState(
+                            displayName = displayName,
+                            showSignInDialog = true,
+                            isNameTaken = true,
+                        ),
                     )
 
             DisplayNameResult.ERROR ->
                 _uiStateFlow.value =
                     UiState.Loaded(
-                        data = AppState(displayName = displayName, showSignInDialog = true)
+                        data = AppState(displayName = displayName, showSignInDialog = true),
                     )
         }
     }
@@ -238,7 +238,7 @@ class AppViewModel(
         _uiStateFlow.value =
             UiState.Loaded(
                 data =
-                    AppState(displayName = getRandomTravelerNameUseCase(), showSignInDialog = true)
+                AppState(displayName = getRandomTravelerNameUseCase(), showSignInDialog = true),
             )
     }
 
@@ -247,9 +247,10 @@ class AppViewModel(
 
         combine(flow = getProfileFlowUseCase(), flow2 = connectivityObserver.isOnline) {
                 profile,
-                isOnline ->
-                profile to isOnline
-            }
+                isOnline,
+            ->
+            profile to isOnline
+        }
             .catch { _uiStateFlow.value = UiState.Error }
             .collectLatest { (profile, isOnline) ->
                 when {
@@ -259,10 +260,10 @@ class AppViewModel(
                         _uiStateFlow.value =
                             UiState.Loaded(
                                 data =
-                                    AppState(
-                                        displayName = profile.displayName,
-                                        isOffline = !isOnline,
-                                    )
+                                AppState(
+                                    displayName = profile.displayName,
+                                    isOffline = !isOnline,
+                                ),
                             )
                     }
 
@@ -270,7 +271,7 @@ class AppViewModel(
                         _uiStateFlow.value =
                             UiState.Loaded(
                                 data =
-                                    AppState(displayName = displayNameWhenOffline, isOffline = true)
+                                AppState(displayName = displayNameWhenOffline, isOffline = true),
                             )
                 }
             }

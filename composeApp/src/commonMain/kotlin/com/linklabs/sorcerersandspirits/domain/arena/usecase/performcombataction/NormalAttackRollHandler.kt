@@ -53,31 +53,30 @@ internal class NormalAttackRollHandler(
 
         if (isSpellPotencyRoll) {
             SpellPotencyHandler(
-                    combatMutator = this,
-                    firstDie = firstDie,
-                    secondDie = secondDie,
-                    diceTotal = diceTotal,
-                )
+                combatMutator = this,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                diceTotal = diceTotal,
+            )
                 .handleSpellPotency()
         }
 
         return isSpellPotencyRoll
     }
 
-    private fun CombatMutator.handleArmorClassRoll() =
-        if (diceTotal >= defender.armorClass) {
-            addNormalRoll(
-                type = NormalRollMessageType.ArmorClassHit,
-                shouldMessageDoubles = shouldMessageDoublesAfterArmorClassHit(),
-            )
-            resolveArmorClassHit()
-        } else {
-            addNormalRoll(
-                type = NormalRollMessageType.ArmorClassMiss,
-                shouldMessageDoubles = hasPendingExtraAttack(),
-            )
-            resolveArmorClassMiss()
-        }
+    private fun CombatMutator.handleArmorClassRoll() = if (diceTotal >= defender.armorClass) {
+        addNormalRoll(
+            type = NormalRollMessageType.ArmorClassHit,
+            shouldMessageDoubles = shouldMessageDoublesAfterArmorClassHit(),
+        )
+        resolveArmorClassHit()
+    } else {
+        addNormalRoll(
+            type = NormalRollMessageType.ArmorClassMiss,
+            shouldMessageDoubles = hasPendingExtraAttack(),
+        )
+        resolveArmorClassMiss()
+    }
 
     private fun CombatMutator.handleHealthRoll() {
         val mirrorImage =
@@ -112,16 +111,15 @@ internal class NormalAttackRollHandler(
         }
     }
 
-    private fun CombatMutator.knockoutMessageType(): NormalRollMessageType =
-        if (
-            HolyShieldHandler.isHolyShieldAvailable(
-                defenderDefensiveAbility = defender.defensiveAbility
-            )
-        ) {
-            NormalRollMessageType.Damage
-        } else {
-            NormalRollMessageType.Knockout
-        }
+    private fun CombatMutator.knockoutMessageType(): NormalRollMessageType = if (
+        HolyShieldHandler.isHolyShieldAvailable(
+            defenderDefensiveAbility = defender.defensiveAbility,
+        )
+    ) {
+        NormalRollMessageType.Damage
+    } else {
+        NormalRollMessageType.Knockout
+    }
 
     private fun CombatMutator.resolveKnockout() {
         val wasHolyShieldTriggered =
@@ -195,7 +193,8 @@ internal class NormalAttackRollHandler(
 
             is DefensiveAbility.Dodge,
             is DefensiveAbility.HolyShield,
-            is DefensiveAbility.None -> continueAttackWithHealthRoll()
+            is DefensiveAbility.None,
+            -> continueAttackWithHealthRoll()
         }
     }
 
@@ -220,16 +219,16 @@ internal class NormalAttackRollHandler(
 
         addMessage(
             message =
-                ArenaMessage.NormalRoll.Outcome(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
-                    attackerClassName = attacker.className,
-                    defenderClassName = defender.className,
-                    firstDie = firstDie,
-                    secondDie = secondDie,
-                    bonus = bonus,
-                    type = type,
-                )
+            ArenaMessage.NormalRoll.Outcome(
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                attackerClassName = attacker.className,
+                defenderClassName = defender.className,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                bonus = bonus,
+                type = type,
+            ),
         )
 
         val isDoubles = firstDie == secondDie
@@ -242,18 +241,18 @@ internal class NormalAttackRollHandler(
     private fun CombatMutator.addAttackMessage(normalRollMessageType: NormalRollMessageType) {
         addMessage(
             message =
-                ArenaMessage.NormalRoll.Attack(
-                    attackerUserId = attackerUserId,
-                    defenderUserId = defenderUserId,
-                    attackerClassType = attacker.type,
-                    impersonatedCharacterType = getImpersonatedCharacterTypeOrNone(),
-                    normalRollMessageType = normalRollMessageType,
-                )
+            ArenaMessage.NormalRoll.Attack(
+                attackerUserId = attackerUserId,
+                defenderUserId = defenderUserId,
+                attackerClassType = attacker.type,
+                impersonatedCharacterType = getImpersonatedCharacterTypeOrNone(),
+                normalRollMessageType = normalRollMessageType,
+            ),
         )
     }
 
     private fun CombatMutator.triggerMirrorImageIfApplicable(
-        attackType: NormalAttackType
+        attackType: NormalAttackType,
     ): Boolean {
         val mirrorImage =
             MirrorImageHandler.getUnusedMirrorImageAbility(ability = defender.defensiveAbility)

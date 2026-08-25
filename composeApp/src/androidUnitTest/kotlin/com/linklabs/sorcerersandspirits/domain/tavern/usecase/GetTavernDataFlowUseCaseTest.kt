@@ -9,12 +9,12 @@ import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import io.mockk.every
 import io.mockk.mockk
-import kotlin.test.Test
-import kotlin.test.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class GetTavernDataFlowUseCaseTest {
@@ -30,13 +30,12 @@ class GetTavernDataFlowUseCaseTest {
         every { profileRepository.getProfileFlow(userId = USER_ID) } returns profileFlow
     }
 
-    private fun TestScope.useCase() =
-        GetTavernDataFlowUseCase(
-            authenticationRepository = authenticationRepository,
-            profileRepository = profileRepository,
-            tavernRepository =
-                FirebaseTavernRepository(dataSource = dataSource, coroutineScope = backgroundScope),
-        )
+    private fun TestScope.useCase() = GetTavernDataFlowUseCase(
+        authenticationRepository = authenticationRepository,
+        profileRepository = profileRepository,
+        tavernRepository =
+        FirebaseTavernRepository(dataSource = dataSource, coroutineScope = backgroundScope),
+    )
 
     @Test
     fun `emits mapped travelers`() = runTest {

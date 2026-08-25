@@ -70,11 +70,6 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.roundToInt
-import kotlin.math.sin
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
@@ -84,6 +79,11 @@ import sorcerersandspirits.composeapp.generated.resources.ic_armor
 import sorcerersandspirits.composeapp.generated.resources.ic_health
 import sorcerersandspirits.composeapp.generated.resources.ic_spc
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.roundToInt
+import kotlin.math.sin
 
 private const val DEGREES_PER_CLASS = 45f
 private const val QUARTER_TURN_DEGREES = 90f
@@ -157,7 +157,7 @@ fun CharacterClassWheel(
 
     fun select(index: Int) {
         animateRotationTo(
-            targetDegrees = nearestRotationForIndex(index = index, fromDegrees = rotationDegrees)
+            targetDegrees = nearestRotationForIndex(index = index, fromDegrees = rotationDegrees),
         )
         val targetClass = characterClasses[index]
         if (targetClass.type !in unavailableClasses) onClassSelected(targetClass)
@@ -171,7 +171,7 @@ fun CharacterClassWheel(
         if (isElsewhere) {
             animateRotationTo(
                 targetDegrees =
-                    nearestRotationForIndex(index = targetIndex, fromDegrees = rotationDegrees)
+                nearestRotationForIndex(index = targetIndex, fromDegrees = rotationDegrees),
             )
         }
     }
@@ -191,49 +191,49 @@ fun CharacterClassWheel(
         ) {
             Box(
                 modifier =
-                    Modifier.size(size = wheelSize).pointerInput(key1 = count) {
-                        detectDragGestures(
-                            onDragStart = { animationJob?.cancel() },
-                            onDragEnd = {
-                                select(
-                                    index =
-                                        centeredIndex(
-                                            rotationDegrees = rotationDegrees,
-                                            count = count,
-                                        )
+                Modifier.size(size = wheelSize).pointerInput(key1 = count) {
+                    detectDragGestures(
+                        onDragStart = { animationJob?.cancel() },
+                        onDragEnd = {
+                            select(
+                                index =
+                                centeredIndex(
+                                    rotationDegrees = rotationDegrees,
+                                    count = count,
+                                ),
+                            )
+                        },
+                        onDragCancel = {
+                            select(
+                                index =
+                                centeredIndex(
+                                    rotationDegrees = rotationDegrees,
+                                    count = count,
+                                ),
+                            )
+                        },
+                        onDrag = { change, _ ->
+                            change.consume()
+                            val centerX = size.width / 2f
+                            val centerY = size.height / 2f
+                            val previousAngle =
+                                atan2(
+                                    y = change.previousPosition.y - centerY,
+                                    x = change.previousPosition.x - centerX,
                                 )
-                            },
-                            onDragCancel = {
-                                select(
-                                    index =
-                                        centeredIndex(
-                                            rotationDegrees = rotationDegrees,
-                                            count = count,
-                                        )
+                            val currentAngle =
+                                atan2(
+                                    y = change.position.y - centerY,
+                                    x = change.position.x - centerX,
                                 )
-                            },
-                            onDrag = { change, _ ->
-                                change.consume()
-                                val centerX = size.width / 2f
-                                val centerY = size.height / 2f
-                                val previousAngle =
-                                    atan2(
-                                        y = change.previousPosition.y - centerY,
-                                        x = change.previousPosition.x - centerX,
-                                    )
-                                val currentAngle =
-                                    atan2(
-                                        y = change.position.y - centerY,
-                                        x = change.position.x - centerX,
-                                    )
-                                var sweptDegrees =
-                                    (currentAngle - previousAngle) * 180f / PI.toFloat()
-                                if (sweptDegrees > 180f) sweptDegrees -= 360f
-                                if (sweptDegrees < -180f) sweptDegrees += 360f
-                                rotationDegrees += sweptDegrees
-                            },
-                        )
-                    },
+                            var sweptDegrees =
+                                (currentAngle - previousAngle) * 180f / PI.toFloat()
+                            if (sweptDegrees > 180f) sweptDegrees -= 360f
+                            if (sweptDegrees < -180f) sweptDegrees += 360f
+                            rotationDegrees += sweptDegrees
+                        },
+                    )
+                },
                 contentAlignment = Alignment.Center,
             ) {
                 RotatingWheel(
@@ -250,7 +250,7 @@ fun CharacterClassWheel(
                 characterClass = centeredClass,
                 selectedBy = classSelections[centeredClass.type],
                 modifier =
-                    if (isHeightBounded) Modifier.weight(weight = 1f, fill = false) else Modifier,
+                if (isHeightBounded) Modifier.weight(weight = 1f, fill = false) else Modifier,
             )
         }
     }
@@ -317,7 +317,7 @@ private fun WheelSpokes(characterClasses: List<CharacterClassState>, hubColor: C
                 drawRoundRect(
                     color = characterClass.type.toColor(),
                     topLeft =
-                        Offset(x = center.x - spokeThickness / 2f, y = center.y - spokeLength),
+                    Offset(x = center.x - spokeThickness / 2f, y = center.y - spokeLength),
                     size = Size(width = spokeThickness, height = spokeLength),
                     cornerRadius = spokeCorner,
                 )
@@ -349,25 +349,25 @@ private fun BoxScope.ClassAvatar(
 
     Box(
         modifier =
-            Modifier.size(size = avatarSize)
-                .align(Alignment.Center)
-                .offset {
-                    val radius = (wheelSize * AVATAR_RADIUS_FRACTION).toPx()
-                    IntOffset(
-                        x = (radius * sinAngle).roundToInt(),
-                        y = (-radius * cosAngle).roundToInt(),
-                    )
-                }
-                .graphicsLayer { rotationZ = -wheelRotationDegrees() }
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication =
-                        ripple(bounded = false, radius = avatarSize * AURA_SIZE_FRACTION / 2f),
-                    onClickLabel = type.name,
-                ) {
-                    onClick()
-                }
-                .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
+        Modifier.size(size = avatarSize)
+            .align(Alignment.Center)
+            .offset {
+                val radius = (wheelSize * AVATAR_RADIUS_FRACTION).toPx()
+                IntOffset(
+                    x = (radius * sinAngle).roundToInt(),
+                    y = (-radius * cosAngle).roundToInt(),
+                )
+            }
+            .graphicsLayer { rotationZ = -wheelRotationDegrees() }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication =
+                ripple(bounded = false, radius = avatarSize * AURA_SIZE_FRACTION / 2f),
+                onClickLabel = type.name,
+            ) {
+                onClick()
+            }
+            .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
         contentAlignment = Alignment.Center,
     ) {
         if (isSelected) {
@@ -408,25 +408,25 @@ private fun ClassAura(color: Color, diameter: Dp, modifier: Modifier = Modifier)
 
     Box(
         modifier =
-            modifier
-                .size(size = diameter)
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
-                    alpha = glowAlpha
-                }
-                .background(
-                    brush =
-                        Brush.radialGradient(
-                            colorStops =
-                                arrayOf(
-                                    0f to glowColor,
-                                    AURA_SOLID_STOP to glowColor,
-                                    1f to Color.Transparent,
-                                )
-                        ),
-                    shape = CircleShape,
-                )
+        modifier
+            .size(size = diameter)
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+                alpha = glowAlpha
+            }
+            .background(
+                brush =
+                Brush.radialGradient(
+                    colorStops =
+                    arrayOf(
+                        0f to glowColor,
+                        AURA_SOLID_STOP to glowColor,
+                        1f to Color.Transparent,
+                    ),
+                ),
+                shape = CircleShape,
+            ),
     )
 }
 
@@ -447,16 +447,16 @@ private fun BoxScope.ClassLabel(
         fontWeight = FontWeight.Bold,
         color = Color.White,
         modifier =
-            Modifier.align(Alignment.Center)
-                .offset {
-                    val radius = (wheelSize * LABEL_RADIUS_FRACTION).toPx()
-                    IntOffset(
-                        x = (radius * sinAngle).roundToInt(),
-                        y = (-radius * cosAngle).roundToInt(),
-                    )
-                }
-                .graphicsLayer { rotationZ = baseAngle - QUARTER_TURN_DEGREES }
-                .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
+        Modifier.align(Alignment.Center)
+            .offset {
+                val radius = (wheelSize * LABEL_RADIUS_FRACTION).toPx()
+                IntOffset(
+                    x = (radius * sinAngle).roundToInt(),
+                    y = (-radius * cosAngle).roundToInt(),
+                )
+            }
+            .graphicsLayer { rotationZ = baseAngle - QUARTER_TURN_DEGREES }
+            .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
     )
 }
 
@@ -476,10 +476,10 @@ private fun ClassStatBar(
     ) {
         Column(
             modifier =
-                Modifier.fillMaxWidth()
-                    .verticalScroll(state = rememberScrollState())
-                    .animateContentSize()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+            Modifier.fillMaxWidth()
+                .verticalScroll(state = rememberScrollState())
+                .animateContentSize()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(space = 4.dp),
         ) {
@@ -521,11 +521,11 @@ private fun ClassStatBar(
             ) {
                 AbilityChip(
                     abilityName =
-                        classCopy.forAbility(ability = characterClass.offensiveAbility).name
+                    classCopy.forAbility(ability = characterClass.offensiveAbility).name,
                 )
                 AbilityChip(
                     abilityName =
-                        classCopy.forAbility(ability = characterClass.defensiveAbility).name
+                    classCopy.forAbility(ability = characterClass.defensiveAbility).name,
                 )
             }
 

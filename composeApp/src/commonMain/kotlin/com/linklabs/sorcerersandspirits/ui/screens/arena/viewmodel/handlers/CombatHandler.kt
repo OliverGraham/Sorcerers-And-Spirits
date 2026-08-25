@@ -22,7 +22,7 @@ internal class CombatHandler(
         val arenaState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
 
         return screenState.copy(
-            arenaMatchState = arenaState.copy(selectedOpponentUserId = opponentUserId)
+            arenaMatchState = arenaState.copy(selectedOpponentUserId = opponentUserId),
         )
     }
 
@@ -80,17 +80,16 @@ internal class CombatHandler(
         screenState: ArenaScreenState,
         arenaCombatState: ArenaMatchState.Combat,
         lockedTargetUserId: String,
-    ): ArenaScreenState =
-        screenState.copy(
-            arenaMatchState =
-                arenaCombatState.copy(
-                    lockedTargetUserId = lockedTargetUserId,
-                    isActionInFlight = true,
-                )
-        )
+    ): ArenaScreenState = screenState.copy(
+        arenaMatchState =
+        arenaCombatState.copy(
+            lockedTargetUserId = lockedTargetUserId,
+            isActionInFlight = true,
+        ),
+    )
 
     private suspend fun ArenaMatchState.Combat.performCombatAction(
-        currentAction: CurrentCombatAction
+        currentAction: CurrentCombatAction,
     ) {
         // TODO(SS-257): CombatActionArguments needs a refactor - likely currentAction should be
         // part of it
@@ -106,7 +105,7 @@ internal class CombatHandler(
     }
 
     private fun UseAbilityArguments.withImpersonatedTarget(
-        arenaMatchState: ArenaMatchState.Combat
+        arenaMatchState: ArenaMatchState.Combat,
     ): UseAbilityArguments {
         if (abilityActionState !is AbilityActionState.Activated.Impersonate) return this
 
@@ -115,10 +114,10 @@ internal class CombatHandler(
 
         return copy(
             abilityActionState =
-                AbilityActionState.Activated.Impersonate(
-                    impersonateAbility =
-                        OffensiveAbility.Impersonate(impersonatedAbility = copiedAbility)
-                )
+            AbilityActionState.Activated.Impersonate(
+                impersonateAbility =
+                OffensiveAbility.Impersonate(impersonatedAbility = copiedAbility),
+            ),
         )
     }
 

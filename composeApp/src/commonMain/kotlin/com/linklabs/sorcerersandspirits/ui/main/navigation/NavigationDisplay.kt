@@ -72,10 +72,10 @@ internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifi
             popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
             predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
             modifier =
-                Modifier.fillMaxSize().drawWithContent {
-                    screenLayer.record { this@drawWithContent.drawContent() }
-                    drawLayer(graphicsLayer = screenLayer)
-                },
+            Modifier.fillMaxSize().drawWithContent {
+                screenLayer.record { this@drawWithContent.drawContent() }
+                drawLayer(graphicsLayer = screenLayer)
+            },
         )
 
         val snapshot = dustSnapshot
@@ -93,51 +93,49 @@ private fun NavKey.toScreen(
     backStack: NavBackStack<NavKey>,
     popWithDust: () -> Unit,
     leaveArenaWithDust: () -> Unit,
-): NavEntry<NavKey> =
-    when (this) {
-        Route.TavernScreen ->
-            NavEntry(key = this) {
-                TavernScreen(
-                    onNavigateToArena = { arenaScreenViewModelArguments ->
-                        backStack.add(
-                            element =
-                                Route.ArenaScreen(
-                                    arguments = arenaScreenViewModelArguments.toSerializable()
-                                )
-                        )
-                    }
-                )
-            }
+): NavEntry<NavKey> = when (this) {
+    Route.TavernScreen ->
+        NavEntry(key = this) {
+            TavernScreen(
+                onNavigateToArena = { arenaScreenViewModelArguments ->
+                    backStack.add(
+                        element =
+                        Route.ArenaScreen(
+                            arguments = arenaScreenViewModelArguments.toSerializable(),
+                        ),
+                    )
+                },
+            )
+        }
 
-        is Route.ArenaScreen ->
-            NavEntry(key = this) {
-                ArenaScreen(arguments = arguments.toDomain(), onBack = leaveArenaWithDust)
-            }
+    is Route.ArenaScreen ->
+        NavEntry(key = this) {
+            ArenaScreen(arguments = arguments.toDomain(), onBack = leaveArenaWithDust)
+        }
 
-        Route.ProfileScreen ->
-            NavEntry(key = this) {
-                ProfileScreen(
-                    onProfileDeleted = popWithDust,
-                    onNavigateToAchievements = { backStack.add(element = Route.AchievementsScreen) },
-                )
-            }
+    Route.ProfileScreen ->
+        NavEntry(key = this) {
+            ProfileScreen(
+                onProfileDeleted = popWithDust,
+                onNavigateToAchievements = { backStack.add(element = Route.AchievementsScreen) },
+            )
+        }
 
-        Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }
+    Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }
 
-        Route.AchievementsScreen -> NavEntry(key = this) { AchievementsScreen() }
+    Route.AchievementsScreen -> NavEntry(key = this) { AchievementsScreen() }
 
-        Route.GameRulesScreen -> NavEntry(key = this) { GameRulesScreen() }
+    Route.GameRulesScreen -> NavEntry(key = this) { GameRulesScreen() }
 
-        else -> throw IllegalArgumentException("Unknown key: $this")
-    }
+    else -> throw IllegalArgumentException("Unknown key: $this")
+}
 
 /**
  * View models and state-savers are scoped to their respective [Route]s. If popped off the back
  * stack, then these will be destroyed.
  */
 @Composable
-private fun <T : Any> getRouteScopedEntryDecorators(): List<NavEntryDecorator<T>> =
-    listOf(
-        rememberSaveableStateHolderNavEntryDecorator(),
-        rememberViewModelStoreNavEntryDecorator(),
-    )
+private fun <T : Any> getRouteScopedEntryDecorators(): List<NavEntryDecorator<T>> = listOf(
+    rememberSaveableStateHolderNavEntryDecorator(),
+    rememberViewModelStoreNavEntryDecorator(),
+)

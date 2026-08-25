@@ -9,11 +9,11 @@ import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
-import kotlinx.coroutines.test.runTest
 
 @OptIn(ExperimentalTime::class)
 class UnlockAchievementsUseCaseTest {
@@ -58,10 +58,10 @@ class UnlockAchievementsUseCaseTest {
                 userId = USER_ID,
                 displayName = "Name",
                 stats =
-                    ProfileStats(
-                        overall = GameStats(matchesWon = 1, gauntletsWon = 1),
-                        perClass = perClassMatchWins,
-                    ),
+                ProfileStats(
+                    overall = GameStats(matchesWon = 1, gauntletsWon = 1),
+                    perClass = perClassMatchWins,
+                ),
             )
 
         useCase(userId = USER_ID)
@@ -70,12 +70,12 @@ class UnlockAchievementsUseCaseTest {
             profileRepository.unlockAchievements(
                 userId = USER_ID,
                 achievementIds =
-                    listOf(
-                        AchievementId.WinAMatch,
-                        AchievementId.WinAGauntlet,
-                        AchievementId.WinAMatchWithEveryClass,
-                        AchievementId.WinAGauntletWithEveryClass,
-                    ),
+                listOf(
+                    AchievementId.WinAMatch,
+                    AchievementId.WinAGauntlet,
+                    AchievementId.WinAMatchWithEveryClass,
+                    AchievementId.WinAGauntletWithEveryClass,
+                ),
                 unlockedAt = NOW_MILLIS,
             )
         }

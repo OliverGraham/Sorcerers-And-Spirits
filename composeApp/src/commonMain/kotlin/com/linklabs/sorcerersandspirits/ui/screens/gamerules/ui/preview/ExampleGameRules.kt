@@ -9,17 +9,17 @@ import com.linklabs.sorcerersandspirits.ui.screens.gamerules.toRulesState
 val exampleGameRulesState =
     GameRulesState(
         combatRules =
-            listOf(
-                "An Arena match has 2 to 8 players, each playing a unique class.",
-                "Attack with 2d6 — first roll versus Armor Class, then versus Health.",
-            ),
+        listOf(
+            "An Arena match has 2 to 8 players, each playing a unique class.",
+            "Attack with 2d6 — first roll versus Armor Class, then versus Health.",
+        ),
         gameTerms =
-            listOf(
-                "Turn — one player attacking or using an ability.",
-                "Gauntlet — a run of 3 consecutive matches in the same Arena.",
-            ),
+        listOf(
+            "Turn — one player attacking or using an ability.",
+            "Gauntlet — a run of 3 consecutive matches in the same Arena.",
+        ),
         classes =
-            previewCharacterClassStates().map {
-                it.toRulesState(copy = previewCharacterClassCopy())
-            },
+        previewCharacterClassStates().map {
+            it.toRulesState(copy = previewCharacterClassCopy())
+        },
     )

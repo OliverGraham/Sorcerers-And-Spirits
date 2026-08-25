@@ -38,11 +38,11 @@ internal fun DrawScope.drawSummonPortal(
     scale(scaleX = 1f, scaleY = PORTAL_FLATTEN, pivot = center) {
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(core, mid, rim, Color.Transparent),
-                    center = center,
-                    radius = discRadius,
-                ),
+            Brush.radialGradient(
+                colors = listOf(core, mid, rim, Color.Transparent),
+                center = center,
+                radius = discRadius,
+            ),
             radius = discRadius,
             center = center,
             alpha = alpha,
@@ -98,10 +98,10 @@ private fun DrawScope.drawMinionImage(
     drawImage(
         image = image,
         dstOffset =
-            IntOffset(
-                x = (footCenter.x - drawWidth / 2f).roundToInt(),
-                y = (footCenter.y - drawHeight).roundToInt(),
-            ),
+        IntOffset(
+            x = (footCenter.x - drawWidth / 2f).roundToInt(),
+            y = (footCenter.y - drawHeight).roundToInt(),
+        ),
         dstSize = IntSize(width = drawWidth.roundToInt(), height = drawHeight.roundToInt()),
         alpha = alpha,
     )

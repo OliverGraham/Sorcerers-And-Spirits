@@ -31,8 +31,7 @@ internal class SpellPotencyHandler(
         }
     }
 
-    private fun CombatMutator.splashTargets() =
-        consciousPlayers.filter { it.userId != attackerUserId && it.userId != defenderUserId }
+    private fun CombatMutator.splashTargets() = consciousPlayers.filter { it.userId != attackerUserId && it.userId != defenderUserId }
 
     private fun CombatMutator.applyFullDamageToDefender() {
         updateDefenderClass { defender -> defender.takeDamage(damage = diceTotal) }
@@ -55,18 +54,18 @@ internal class SpellPotencyHandler(
     ) {
         addMessage(
             message =
-                ArenaMessage.SpellPotency(
-                    mageUserId = attackerUserId,
-                    mageName = attacker.className,
-                    mainTargetUserId = defenderUserId,
-                    mainTargetClassName = defender.className,
-                    firstDie = firstDie,
-                    secondDie = secondDie,
-                    mainDamage = diceTotal,
-                    splashDamage = splashDamage,
-                    splashTargetUserIds = splashTargets.map { it.userId },
-                    isMainTargetKnockedOut = !defender.isConscious(),
-                )
+            ArenaMessage.SpellPotency(
+                mageUserId = attackerUserId,
+                mageName = attacker.className,
+                mainTargetUserId = defenderUserId,
+                mainTargetClassName = defender.className,
+                firstDie = firstDie,
+                secondDie = secondDie,
+                mainDamage = diceTotal,
+                splashDamage = splashDamage,
+                splashTargetUserIds = splashTargets.map { it.userId },
+                isMainTargetKnockedOut = !defender.isConscious(),
+            ),
         )
     }
 

@@ -31,10 +31,10 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         nextPlayerId: String,
     ) {
         ChooseCharacterClass(
-                arenaReference = arenaMatchesReference.child(path = arenaId),
-                selectedArenaPlayer = selectedArenaPlayer.toSelectedEntity(),
-                nextPlayerId = nextPlayerId,
-            )
+            arenaReference = arenaMatchesReference.child(path = arenaId),
+            selectedArenaPlayer = selectedArenaPlayer.toSelectedEntity(),
+            nextPlayerId = nextPlayerId,
+        )
             .invoke()
     }
 
@@ -43,13 +43,12 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         expectedNumberOfPlayers: Int,
         userId: String,
         displayName: String,
-    ) =
-        ConnectToArena(
-                expectedNumberOfPlayers = expectedNumberOfPlayers,
-                userId = userId,
-                displayName = displayName,
-            )
-            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    ) = ConnectToArena(
+        expectedNumberOfPlayers = expectedNumberOfPlayers,
+        userId = userId,
+        displayName = displayName,
+    )
+        .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
 
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
@@ -64,14 +63,13 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 
-    override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
-        arenaMatchesReference
-            .child(path = arenaId)
-            .valueEvents
-            .map { snapshot ->
-                snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
-            }
-            .distinctUntilChanged()
+    override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> = arenaMatchesReference
+        .child(path = arenaId)
+        .valueEvents
+        .map { snapshot ->
+            snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
+        }
+        .distinctUntilChanged()
 
     override suspend fun exitArena(arenaId: String, userId: String) {
         ExitArena(userId = userId)

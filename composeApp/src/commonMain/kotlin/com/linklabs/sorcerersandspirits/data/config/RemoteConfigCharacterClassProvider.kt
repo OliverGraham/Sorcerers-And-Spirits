@@ -4,7 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
 
 class RemoteConfigCharacterClassProvider(
-    private val remoteConfigDataSource: RemoteConfigDataSource
+    private val remoteConfigDataSource: RemoteConfigDataSource,
 ) : CharacterClassProvider {
 
     override suspend fun refresh() = remoteConfigDataSource.initialize()

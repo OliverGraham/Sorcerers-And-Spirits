@@ -34,24 +34,22 @@ internal sealed interface ScreenSizeClass {
 }
 
 /** Multiplier applied to text so copy shrinks on small phones and grows on tablets. */
-internal fun ScreenSizeClass.textScale(): Float =
-    when (this) {
-        is ScreenSizeClass.Small -> SMALL_TEXT_SCALE
-        is ScreenSizeClass.Medium -> MEDIUM_TEXT_SCALE
-        is ScreenSizeClass.Large -> LARGE_TEXT_SCALE
-    }
+internal fun ScreenSizeClass.textScale(): Float = when (this) {
+    is ScreenSizeClass.Small -> SMALL_TEXT_SCALE
+    is ScreenSizeClass.Medium -> MEDIUM_TEXT_SCALE
+    is ScreenSizeClass.Large -> LARGE_TEXT_SCALE
+}
 
 /**
  * Multiplier applied to every dp in the app by bending the ambient density in
  * [SorcerersAndSpiritsTheme], so all fixed dimensions track the screen size. Gentler than
  * [textScale] because dp chrome doesn't need to shrink as hard as copy to stay legible.
  */
-internal fun ScreenSizeClass.dpScale(): Float =
-    when (this) {
-        is ScreenSizeClass.Small -> SMALL_DP_SCALE
-        is ScreenSizeClass.Medium -> MEDIUM_DP_SCALE
-        is ScreenSizeClass.Large -> LARGE_DP_SCALE
-    }
+internal fun ScreenSizeClass.dpScale(): Float = when (this) {
+    is ScreenSizeClass.Small -> SMALL_DP_SCALE
+    is ScreenSizeClass.Medium -> MEDIUM_DP_SCALE
+    is ScreenSizeClass.Large -> LARGE_DP_SCALE
+}
 
 internal val LocalScreenSizeClass =
     staticCompositionLocalOf<ScreenSizeClass> { ScreenSizeClass.Medium }
@@ -65,9 +63,8 @@ internal fun rememberScreenSizeClass(): ScreenSizeClass {
     return remember(key1 = widthDp) { screenSizeClassFor(width = widthDp) }
 }
 
-private fun screenSizeClassFor(width: Dp): ScreenSizeClass =
-    when {
-        width >= largeMinWidth -> ScreenSizeClass.Large
-        width >= mediumMinWidth -> ScreenSizeClass.Medium
-        else -> ScreenSizeClass.Small
-    }
+private fun screenSizeClassFor(width: Dp): ScreenSizeClass = when {
+    width >= largeMinWidth -> ScreenSizeClass.Large
+    width >= mediumMinWidth -> ScreenSizeClass.Medium
+    else -> ScreenSizeClass.Small
+}

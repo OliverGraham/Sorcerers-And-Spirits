@@ -48,9 +48,8 @@ private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMe
     }
 }
 
-internal fun ArenaMatchState.players(): List<PlayerState> =
-    when (this) {
-        is ActiveMatchState -> playerMap.values.toList()
-        is ArenaMatchState.Finished -> players
-        is ArenaMatchState.WaitingForAllPlayers -> emptyList()
-    }
+internal fun ArenaMatchState.players(): List<PlayerState> = when (this) {
+    is ActiveMatchState -> playerMap.values.toList()
+    is ArenaMatchState.Finished -> players
+    is ArenaMatchState.WaitingForAllPlayers -> emptyList()
+}

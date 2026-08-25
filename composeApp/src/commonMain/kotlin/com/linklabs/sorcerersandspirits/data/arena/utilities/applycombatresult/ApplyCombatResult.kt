@@ -14,14 +14,13 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         val messagesReference =
             arenaReference.child(path = ArenaMatchEntity.Companion.newMessagesName)
 
-        arenaReference.runTransaction(strategy = ArenaMatchEntity.Companion.serializer()) {
-            existingMatch ->
+        arenaReference.runTransaction(strategy = ArenaMatchEntity.Companion.serializer()) { existingMatch ->
             existingMatch.applyCombatResultTransaction(messagesReference = messagesReference)
         }
     }
 
     private fun ArenaMatchEntity.applyCombatResultTransaction(
-        messagesReference: DatabaseReference
+        messagesReference: DatabaseReference,
     ): ArenaMatchEntity {
         if (this !is ArenaMatchEntity.Combat) return this
 
@@ -35,18 +34,17 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
     }
 
     private fun ArenaMatchEntity.Combat.toUpdatedCombat(
-        updatedMessages: List<ArenaMessageEntity>
-    ): ArenaMatchEntity.Combat =
-        ArenaMatchEntity.Combat(
-            newMessages = updatedMessages,
-            playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
-            nextCombatActionEntity = mergedNextCombatActionEntity(),
-            roundNumber = result.roundNumber,
-            isNewRound = result.isNewRound,
-            isMatchOver = result.isMatchFinished,
-            matchNumberInGauntlet = matchNumberInGauntlet,
-            diceRoll = result.diceRoll?.toEntity(),
-        )
+        updatedMessages: List<ArenaMessageEntity>,
+    ): ArenaMatchEntity.Combat = ArenaMatchEntity.Combat(
+        newMessages = updatedMessages,
+        playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
+        nextCombatActionEntity = mergedNextCombatActionEntity(),
+        roundNumber = result.roundNumber,
+        isNewRound = result.isNewRound,
+        isMatchOver = result.isMatchFinished,
+        matchNumberInGauntlet = matchNumberInGauntlet,
+        diceRoll = result.diceRoll?.toEntity(),
+    )
 
     // TODO: Refactor. This should be named with Teleport in mind. And, is needed for anything else?
     private fun ArenaMatchEntity.Combat.mergedNextCombatActionEntity(): NextCombatActionEntity {

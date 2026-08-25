@@ -52,18 +52,17 @@ class CheckAppVersionUseCaseTest {
         currentVersion: Long,
         minimumSupportedVersion: Long,
         latestVersion: Long,
-    ): AppUpgradeStatus =
-        CheckAppVersionUseCase(
-                currentAppVersionProvider =
-                    object : CurrentAppVersionProvider {
-                        override fun versionCode() = currentVersion
-                    },
-                supportedAppVersionProvider =
-                    object : SupportedAppVersionProvider {
-                        override fun minimumSupportedVersionCode() = minimumSupportedVersion
+    ): AppUpgradeStatus = CheckAppVersionUseCase(
+        currentAppVersionProvider =
+        object : CurrentAppVersionProvider {
+            override fun versionCode() = currentVersion
+        },
+        supportedAppVersionProvider =
+        object : SupportedAppVersionProvider {
+            override fun minimumSupportedVersionCode() = minimumSupportedVersion
 
-                        override fun latestVersionCode() = latestVersion
-                    },
-            )
-            .invoke()
+            override fun latestVersionCode() = latestVersion
+        },
+    )
+        .invoke()
 }

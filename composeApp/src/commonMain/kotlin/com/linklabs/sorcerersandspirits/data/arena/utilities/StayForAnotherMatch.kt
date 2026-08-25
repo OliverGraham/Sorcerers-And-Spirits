@@ -21,7 +21,7 @@ internal class StayForAnotherMatch(private val userId: String) {
     }
 
     private fun ArenaMatchEntity?.stayForAnotherMatchTransaction(
-        messagesReference: DatabaseReference
+        messagesReference: DatabaseReference,
     ): ArenaMatchEntity? {
         val match = this ?: return null
         if (match !is ArenaMatchEntity.Finished) return match
@@ -75,16 +75,16 @@ internal class StayForAnotherMatch(private val userId: String) {
         val fastestPlayer = freshPlayers.getFastestPlayer()
         val newMessages =
             messagesReference.generateInitialCombatRoundMessages(
-                startingCharacterClass = fastestPlayer.characterClassEntity
+                startingCharacterClass = fastestPlayer.characterClassEntity,
             )
 
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = freshPlayers,
             newMessages = newMessages,
             nextCombatActionEntity =
-                NextCombatActionEntity.IdleEntity(
-                    activeUserIds = setOf(element = fastestPlayer.userId)
-                ),
+            NextCombatActionEntity.IdleEntity(
+                activeUserIds = setOf(element = fastestPlayer.userId),
+            ),
             roundNumber = 1,
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet + 1,
@@ -112,6 +112,6 @@ internal class StayForAnotherMatch(private val userId: String) {
 
     // TODO: add messages?
     private fun ArenaMatchEntity.Finished.withUpdatedPlayers(
-        updatedPlayers: Map<String, ArenaPlayerEntity>
+        updatedPlayers: Map<String, ArenaPlayerEntity>,
     ): ArenaMatchEntity = copy(playerEntitiesMap = updatedPlayers, newMessages = emptyList())
 }

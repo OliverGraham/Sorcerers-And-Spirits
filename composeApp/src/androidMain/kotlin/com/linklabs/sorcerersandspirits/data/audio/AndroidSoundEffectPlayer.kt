@@ -23,7 +23,7 @@ class AndroidSoundEffectPlayer(private val context: Context) : SoundEffectPlayer
                 AudioAttributes.Builder()
                     .setUsage(AudioAttributes.USAGE_GAME)
                     .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                    .build()
+                    .build(),
             )
             .build()
 

@@ -65,14 +65,14 @@ private fun MirrorImageSeatPreview(outcome: NormalRollMessageType) {
             userId = PREVIEW_ACTOR_ID,
             characterClass = classState,
             modifier =
-                Modifier.offset(
-                        x = with(density) { bounds.left.toDp() },
-                        y = with(density) { bounds.top.toDp() },
-                    )
-                    .size(
-                        width = with(density) { bounds.width.toDp() },
-                        height = with(density) { bounds.height.toDp() },
-                    ),
+            Modifier.offset(
+                x = with(density) { bounds.left.toDp() },
+                y = with(density) { bounds.top.toDp() },
+            )
+                .size(
+                    width = with(density) { bounds.width.toDp() },
+                    height = with(density) { bounds.height.toDp() },
+                ),
         )
     }
 }

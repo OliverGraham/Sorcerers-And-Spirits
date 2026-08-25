@@ -60,224 +60,223 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_teleport_t
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_turn_start
 
 @Composable
-internal fun ArenaMessageState.toStringResource(): String =
-    when (this) {
-        is ArenaMessageState.NormalRoll.Outcome ->
-            when (normalRollMessageType) {
-                NormalRollMessageType.ArmorClassHit ->
-                    if (bonus > 0) {
-                        stringResource(
-                            resource = Res.string.arena_flash_hit_doubles,
-                            baseRoll,
-                            bonus,
-                        )
-                    } else {
-                        stringResource(resource = Res.string.arena_flash_hit, baseRoll)
-                    }
+internal fun ArenaMessageState.toStringResource(): String = when (this) {
+    is ArenaMessageState.NormalRoll.Outcome ->
+        when (normalRollMessageType) {
+            NormalRollMessageType.ArmorClassHit ->
+                if (bonus > 0) {
+                    stringResource(
+                        resource = Res.string.arena_flash_hit_doubles,
+                        baseRoll,
+                        bonus,
+                    )
+                } else {
+                    stringResource(resource = Res.string.arena_flash_hit, baseRoll)
+                }
 
-                NormalRollMessageType.ArmorClassMiss ->
-                    if (bonus > 0) {
-                        stringResource(
-                            resource = Res.string.arena_flash_miss_doubles,
-                            baseRoll,
-                            bonus,
-                        )
-                    } else {
-                        stringResource(resource = Res.string.arena_flash_miss, baseRoll)
-                    }
+            NormalRollMessageType.ArmorClassMiss ->
+                if (bonus > 0) {
+                    stringResource(
+                        resource = Res.string.arena_flash_miss_doubles,
+                        baseRoll,
+                        bonus,
+                    )
+                } else {
+                    stringResource(resource = Res.string.arena_flash_miss, baseRoll)
+                }
 
-                NormalRollMessageType.Damage ->
-                    if (bonus > 0) {
-                        stringResource(
-                            resource = Res.string.arena_flash_damage_doubles,
-                            baseRoll,
-                            bonus,
-                        )
-                    } else {
-                        stringResource(resource = Res.string.arena_flash_damage, baseRoll)
-                    }
+            NormalRollMessageType.Damage ->
+                if (bonus > 0) {
+                    stringResource(
+                        resource = Res.string.arena_flash_damage_doubles,
+                        baseRoll,
+                        bonus,
+                    )
+                } else {
+                    stringResource(resource = Res.string.arena_flash_damage, baseRoll)
+                }
 
-                NormalRollMessageType.Knockout ->
-                    if (bonus > 0) {
-                        stringResource(
-                            resource = Res.string.arena_flash_knockout_total_doubles,
-                            baseRoll,
-                            bonus,
-                        )
-                    } else {
-                        stringResource(resource = Res.string.arena_flash_knockout_total, baseRoll)
-                    }
-            }
-
-        is ArenaMessageState.NormalRoll.Attack -> ""
-
-        is ArenaMessageState.KillingMomentum ->
-            stringResource(resource = Res.string.arena_flash_killing_momentum)
-
-        is ArenaMessageState.Dodge -> stringResource(resource = Res.string.arena_flash_dodge)
-
-        is ArenaMessageState.SpellPotency ->
-            stringResource(resource = Res.string.arena_flash_spell_potency)
-
-        is ArenaMessageState.Doubles -> stringResource(resource = Res.string.arena_flash_doubles)
-
-        is ArenaMessageState.Impersonate ->
-            stringResource(resource = Res.string.arena_flash_impersonate)
-
-        is ArenaMessageState.PrepareAttack ->
-            if (isSuccessful) {
-                stringResource(resource = Res.string.arena_flash_prepared_strike)
-            } else {
-                stringResource(resource = Res.string.arena_flash_attack_whiffed)
-            }
-
-        is ArenaMessageState.Encore.Trigger ->
-            stringResource(resource = Res.string.arena_flash_encore)
-
-        is ArenaMessageState.Encore.Roll ->
-            if (isSuccessful) {
-                stringResource(resource = Res.string.arena_flash_encore_again)
-            } else {
-                stringResource(resource = Res.string.arena_flash_no_encore)
-            }
-
-        is ArenaMessageState.AllIn ->
-            when (outcome) {
-                AllInOutcome.DoubleAttack ->
-                    stringResource(resource = Res.string.arena_flash_all_in_strike_twice)
-
-                AllInOutcome.NoEffect ->
-                    stringResource(resource = Res.string.arena_flash_all_in_no_effect)
-
-                AllInOutcome.SelfKnockout ->
-                    stringResource(resource = Res.string.arena_flash_knockout)
-            }
-
-        is ArenaMessageState.SummonMinion ->
-            when (outcome) {
-                SummonMinionOutcome.Fizzle ->
-                    stringResource(resource = Res.string.arena_flash_fizzle)
-
-                SummonMinionOutcome.Skeleton ->
-                    stringResource(resource = Res.string.arena_flash_skeleton)
-
-                SummonMinionOutcome.SkeletonAndHeal ->
-                    stringResource(resource = Res.string.arena_flash_skeleton_and_heal)
-
-                SummonMinionOutcome.Golem -> stringResource(resource = Res.string.arena_flash_golem)
-            }
-
-        is ArenaMessageState.Teleport.Trigger ->
-            stringResource(resource = Res.string.arena_flash_teleport)
-
-        is ArenaMessageState.Teleport.Result ->
-            if (didDefenderEscape) {
-                stringResource(resource = Res.string.arena_flash_escaped)
-            } else {
-                stringResource(resource = Res.string.arena_flash_caught)
-            }
-
-        is ArenaMessageState.Teleport.Roll ->
-            stringResource(resource = Res.string.arena_flash_teleport_roll, singleDie)
-
-        is ArenaMessageState.Teleport.Tie ->
-            stringResource(resource = Res.string.arena_flash_teleport_tie)
-
-        is ArenaMessageState.LuckyCoin.Trigger ->
-            stringResource(resource = Res.string.arena_flash_lucky_coin)
-
-        is ArenaMessageState.LuckyCoin.Flip ->
-            if (didStopAttack) {
-                stringResource(resource = Res.string.arena_flash_attack_stopped)
-            } else {
-                stringResource(resource = Res.string.arena_flash_attack_continues, singleDie)
-            }
-
-        is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
-            stringResource(resource = Res.string.arena_flash_high_roller)
-
-        is ArenaMessageState.LuckyCoin.HighRollerDamage ->
-            if (isKnockout) {
-                stringResource(resource = Res.string.arena_flash_knockout)
-            } else {
-                stringResource(resource = Res.string.arena_flash_damage, singleDie)
-            }
-
-        is ArenaMessageState.Riposte.Trigger ->
-            stringResource(resource = Res.string.arena_flash_riposte)
-
-        is ArenaMessageState.Riposte.EnGarde ->
-            if (isSuccessful) {
-                stringResource(resource = Res.string.arena_flash_reversed)
-            } else {
-                stringResource(resource = Res.string.arena_flash_counter_failed)
-            }
-
-        is ArenaMessageState.Persuade.Trigger ->
-            stringResource(resource = Res.string.arena_flash_persuade)
-
-        is ArenaMessageState.Persuade.StrumLute ->
-            if (isSuccessful) {
-                stringResource(resource = Res.string.arena_flash_attack_stopped)
-            } else {
-                stringResource(resource = Res.string.arena_flash_attack_continues, diceRoll)
-            }
-
-        is ArenaMessageState.Persuade.CharmActivation ->
-            stringResource(resource = Res.string.arena_flash_charmed)
-
-        is ArenaMessageState.Persuade.Charm ->
-            stringResource(resource = Res.string.arena_flash_redirected, defenderClassName)
-
-        is ArenaMessageState.MirrorImage.Trigger ->
-            stringResource(resource = Res.string.arena_flash_mirror_image)
-
-        is ArenaMessageState.MirrorImage.TemptFate ->
-            stringResource(resource = Res.string.arena_flash_reroll, rawReroll)
-
-        is ArenaMessageState.MirrorImage.Pass ->
-            if (messageType == NormalRollMessageType.Knockout) {
-                if (doublesBonus > 0) {
+            NormalRollMessageType.Knockout ->
+                if (bonus > 0) {
                     stringResource(
                         resource = Res.string.arena_flash_knockout_total_doubles,
                         baseRoll,
-                        doublesBonus,
+                        bonus,
                     )
                 } else {
                     stringResource(resource = Res.string.arena_flash_knockout_total, baseRoll)
                 }
+        }
+
+    is ArenaMessageState.NormalRoll.Attack -> ""
+
+    is ArenaMessageState.KillingMomentum ->
+        stringResource(resource = Res.string.arena_flash_killing_momentum)
+
+    is ArenaMessageState.Dodge -> stringResource(resource = Res.string.arena_flash_dodge)
+
+    is ArenaMessageState.SpellPotency ->
+        stringResource(resource = Res.string.arena_flash_spell_potency)
+
+    is ArenaMessageState.Doubles -> stringResource(resource = Res.string.arena_flash_doubles)
+
+    is ArenaMessageState.Impersonate ->
+        stringResource(resource = Res.string.arena_flash_impersonate)
+
+    is ArenaMessageState.PrepareAttack ->
+        if (isSuccessful) {
+            stringResource(resource = Res.string.arena_flash_prepared_strike)
+        } else {
+            stringResource(resource = Res.string.arena_flash_attack_whiffed)
+        }
+
+    is ArenaMessageState.Encore.Trigger ->
+        stringResource(resource = Res.string.arena_flash_encore)
+
+    is ArenaMessageState.Encore.Roll ->
+        if (isSuccessful) {
+            stringResource(resource = Res.string.arena_flash_encore_again)
+        } else {
+            stringResource(resource = Res.string.arena_flash_no_encore)
+        }
+
+    is ArenaMessageState.AllIn ->
+        when (outcome) {
+            AllInOutcome.DoubleAttack ->
+                stringResource(resource = Res.string.arena_flash_all_in_strike_twice)
+
+            AllInOutcome.NoEffect ->
+                stringResource(resource = Res.string.arena_flash_all_in_no_effect)
+
+            AllInOutcome.SelfKnockout ->
+                stringResource(resource = Res.string.arena_flash_knockout)
+        }
+
+    is ArenaMessageState.SummonMinion ->
+        when (outcome) {
+            SummonMinionOutcome.Fizzle ->
+                stringResource(resource = Res.string.arena_flash_fizzle)
+
+            SummonMinionOutcome.Skeleton ->
+                stringResource(resource = Res.string.arena_flash_skeleton)
+
+            SummonMinionOutcome.SkeletonAndHeal ->
+                stringResource(resource = Res.string.arena_flash_skeleton_and_heal)
+
+            SummonMinionOutcome.Golem -> stringResource(resource = Res.string.arena_flash_golem)
+        }
+
+    is ArenaMessageState.Teleport.Trigger ->
+        stringResource(resource = Res.string.arena_flash_teleport)
+
+    is ArenaMessageState.Teleport.Result ->
+        if (didDefenderEscape) {
+            stringResource(resource = Res.string.arena_flash_escaped)
+        } else {
+            stringResource(resource = Res.string.arena_flash_caught)
+        }
+
+    is ArenaMessageState.Teleport.Roll ->
+        stringResource(resource = Res.string.arena_flash_teleport_roll, singleDie)
+
+    is ArenaMessageState.Teleport.Tie ->
+        stringResource(resource = Res.string.arena_flash_teleport_tie)
+
+    is ArenaMessageState.LuckyCoin.Trigger ->
+        stringResource(resource = Res.string.arena_flash_lucky_coin)
+
+    is ArenaMessageState.LuckyCoin.Flip ->
+        if (didStopAttack) {
+            stringResource(resource = Res.string.arena_flash_attack_stopped)
+        } else {
+            stringResource(resource = Res.string.arena_flash_attack_continues, singleDie)
+        }
+
+    is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
+        stringResource(resource = Res.string.arena_flash_high_roller)
+
+    is ArenaMessageState.LuckyCoin.HighRollerDamage ->
+        if (isKnockout) {
+            stringResource(resource = Res.string.arena_flash_knockout)
+        } else {
+            stringResource(resource = Res.string.arena_flash_damage, singleDie)
+        }
+
+    is ArenaMessageState.Riposte.Trigger ->
+        stringResource(resource = Res.string.arena_flash_riposte)
+
+    is ArenaMessageState.Riposte.EnGarde ->
+        if (isSuccessful) {
+            stringResource(resource = Res.string.arena_flash_reversed)
+        } else {
+            stringResource(resource = Res.string.arena_flash_counter_failed)
+        }
+
+    is ArenaMessageState.Persuade.Trigger ->
+        stringResource(resource = Res.string.arena_flash_persuade)
+
+    is ArenaMessageState.Persuade.StrumLute ->
+        if (isSuccessful) {
+            stringResource(resource = Res.string.arena_flash_attack_stopped)
+        } else {
+            stringResource(resource = Res.string.arena_flash_attack_continues, diceRoll)
+        }
+
+    is ArenaMessageState.Persuade.CharmActivation ->
+        stringResource(resource = Res.string.arena_flash_charmed)
+
+    is ArenaMessageState.Persuade.Charm ->
+        stringResource(resource = Res.string.arena_flash_redirected, defenderClassName)
+
+    is ArenaMessageState.MirrorImage.Trigger ->
+        stringResource(resource = Res.string.arena_flash_mirror_image)
+
+    is ArenaMessageState.MirrorImage.TemptFate ->
+        stringResource(resource = Res.string.arena_flash_reroll, rawReroll)
+
+    is ArenaMessageState.MirrorImage.Pass ->
+        if (messageType == NormalRollMessageType.Knockout) {
+            if (doublesBonus > 0) {
+                stringResource(
+                    resource = Res.string.arena_flash_knockout_total_doubles,
+                    baseRoll,
+                    doublesBonus,
+                )
             } else {
-                stringResource(resource = Res.string.arena_flash_mirror_holds)
+                stringResource(resource = Res.string.arena_flash_knockout_total, baseRoll)
             }
+        } else {
+            stringResource(resource = Res.string.arena_flash_mirror_holds)
+        }
 
-        is ArenaMessageState.HolyShield.Trigger ->
-            stringResource(resource = Res.string.arena_flash_holy_shield)
+    is ArenaMessageState.HolyShield.Trigger ->
+        stringResource(resource = Res.string.arena_flash_holy_shield)
 
-        is ArenaMessageState.HolyShield.Prayer ->
-            if (didSurvive) {
-                stringResource(resource = Res.string.arena_flash_saved)
-            } else {
-                stringResource(resource = Res.string.arena_flash_struck_down)
-            }
+    is ArenaMessageState.HolyShield.Prayer ->
+        if (didSurvive) {
+            stringResource(resource = Res.string.arena_flash_saved)
+        } else {
+            stringResource(resource = Res.string.arena_flash_struck_down)
+        }
 
-        is ArenaMessageState.HolyShield.Wrath ->
-            stringResource(resource = Res.string.arena_flash_holy_wrath)
+    is ArenaMessageState.HolyShield.Wrath ->
+        stringResource(resource = Res.string.arena_flash_holy_wrath)
 
-        is ArenaMessageState.NewRound ->
-            stringResource(resource = Res.string.arena_flash_new_round, roundNumber)
+    is ArenaMessageState.NewRound ->
+        stringResource(resource = Res.string.arena_flash_new_round, roundNumber)
 
-        is ArenaMessageState.ChoseCharacterClass ->
-            stringResource(
-                resource = Res.string.arena_flash_chose_class,
-                characterClassInfo.className,
-            )
+    is ArenaMessageState.ChoseCharacterClass ->
+        stringResource(
+            resource = Res.string.arena_flash_chose_class,
+            characterClassInfo.className,
+        )
 
-        is ArenaMessageState.ConnectedToArena ->
-            stringResource(resource = Res.string.arena_flash_joined, displayName)
+    is ArenaMessageState.ConnectedToArena ->
+        stringResource(resource = Res.string.arena_flash_joined, displayName)
 
-        is ArenaMessageState.NewTurn ->
-            stringResource(
-                resource = Res.string.arena_flash_turn_start,
-                characterClassInfo.className,
-            )
-    }
+    is ArenaMessageState.NewTurn ->
+        stringResource(
+            resource = Res.string.arena_flash_turn_start,
+            characterClassInfo.className,
+        )
+}

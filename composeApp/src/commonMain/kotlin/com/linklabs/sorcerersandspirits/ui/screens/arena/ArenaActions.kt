@@ -42,5 +42,6 @@ internal val LocalArenaActions = staticCompositionLocalOf { ArenaActions() }
 
 internal object ArenaActionsProvider {
     val current: ArenaActions
-        @Composable @ReadOnlyComposable get() = LocalArenaActions.current
+        @Composable @ReadOnlyComposable
+        get() = LocalArenaActions.current
 }

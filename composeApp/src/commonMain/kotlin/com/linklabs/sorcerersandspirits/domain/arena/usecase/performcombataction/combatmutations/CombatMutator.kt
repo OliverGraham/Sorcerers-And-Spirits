@@ -45,8 +45,7 @@ internal class CombatMutator(
     val consciousPlayers
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
-    fun dieColorFor(userId: UserId): DieColor =
-        updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
+    fun dieColorFor(userId: UserId): DieColor = updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextCombatAction = nextAction
@@ -54,25 +53,24 @@ internal class CombatMutator(
 
     fun currentAttackTurn(): AttackTurn = attackTurnFor(attackerUserId = attackerUserId)
 
-    fun attackTurnFor(attackerUserId: UserId): AttackTurn =
-        if (attackerUserId == originalTurnUserId) {
-            AttackTurn.Standard(attackerUserId = attackerUserId)
-        } else {
-            AttackTurn.RiposteReversal(
-                attackerUserId = attackerUserId,
-                turnOwnerUserId = originalTurnUserId,
-            )
-        }
+    fun attackTurnFor(attackerUserId: UserId): AttackTurn = if (attackerUserId == originalTurnUserId) {
+        AttackTurn.Standard(attackerUserId = attackerUserId)
+    } else {
+        AttackTurn.RiposteReversal(
+            attackerUserId = attackerUserId,
+            turnOwnerUserId = originalTurnUserId,
+        )
+    }
 
     fun continueAttackWithHealthRoll() {
         setNextCombatAction(
             nextAction =
-                NextCombatAction.NormalAttack(
-                    roll = NormalAttackType.Health,
-                    attackTurn = currentAttackTurn(),
-                    defenderUserId = defenderUserId,
-                    activeUserIds = setOf(element = attackerUserId),
-                )
+            NextCombatAction.NormalAttack(
+                roll = NormalAttackType.Health,
+                attackTurn = currentAttackTurn(),
+                defenderUserId = defenderUserId,
+                activeUserIds = setOf(element = attackerUserId),
+            ),
         )
     }
 
@@ -84,25 +82,24 @@ internal class CombatMutator(
     ) {
         setNextCombatAction(
             nextAction =
-                NextCombatAction.AbilityRoll(
-                    purpose = purpose,
-                    attackTurn = attackTurn,
-                    defenderUserId = defenderUserId,
-                    activeUserIds = activeUserIds,
-                )
+            NextCombatAction.AbilityRoll(
+                purpose = purpose,
+                attackTurn = attackTurn,
+                defenderUserId = defenderUserId,
+                activeUserIds = activeUserIds,
+            ),
         )
     }
 
-    fun getOutcome() =
-        ActionOutcome(
-            updatedPlayerMap = updatedPlayerMap,
-            messages = messages,
-            nextCombatAction = nextCombatAction,
-            roundNumber = updatedRoundNumber ?: roundNumber,
-            isNewRound = updatedRoundNumber != null,
-            isMatchFinished = getIsMatchFinished(),
-            diceRoll = diceRoller.getDiceRoll(),
-        )
+    fun getOutcome() = ActionOutcome(
+        updatedPlayerMap = updatedPlayerMap,
+        messages = messages,
+        nextCombatAction = nextCombatAction,
+        roundNumber = updatedRoundNumber ?: roundNumber,
+        isNewRound = updatedRoundNumber != null,
+        isMatchFinished = getIsMatchFinished(),
+        diceRoll = diceRoller.getDiceRoll(),
+    )
 
     fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
         val current = updatedPlayerMap.getValue(key = userId)
@@ -135,7 +132,7 @@ internal class CombatMutator(
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
             characterClass.copy(
                 attacksRemaining =
-                    (characterClass.attacksRemaining - 1).coerceAtLeast(minimumValue = 0)
+                (characterClass.attacksRemaining - 1).coerceAtLeast(minimumValue = 0),
             )
         }
     }
@@ -154,7 +151,7 @@ internal class CombatMutator(
         if (consciousPlayers.size <= 1) {
             setNextCombatAction(
                 nextAction =
-                    NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId))
+                NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId)),
             )
             return
         }
@@ -175,7 +172,7 @@ internal class CombatMutator(
             resetAttacksRemaining(userId = nextPlayer.userId)
             nextPlayer.characterClass.addNewTurnMessage()
             setNextCombatAction(
-                nextAction = NextCombatAction.Idle(activeUserIds = setOf(nextPlayer.userId))
+                nextAction = NextCombatAction.Idle(activeUserIds = setOf(nextPlayer.userId)),
             )
         } else {
             goToNextRound()
@@ -196,11 +193,11 @@ internal class CombatMutator(
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
             val clearedAllIn = allIn.copy(hasAnotherAttack = false)
             characterClass.copy(
-                offensiveAbility = characterClass.offensiveAbility.withEffective(clearedAllIn)
+                offensiveAbility = characterClass.offensiveAbility.withEffective(clearedAllIn),
             )
         }
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(originalTurnUserId))
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(originalTurnUserId)),
         )
 
         return true
@@ -227,11 +224,11 @@ internal class CombatMutator(
                 minions.copy(attacksTakenThisTurn = minions.attacksTakenThisTurn + 1)
             characterClass.copy(
                 offensiveAbility =
-                    characterClass.offensiveAbility.withEffective(updated = updatedMinions)
+                characterClass.offensiveAbility.withEffective(updated = updatedMinions),
             )
         }
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId))
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = originalTurnUserId)),
         )
 
         return true
@@ -249,7 +246,7 @@ internal class CombatMutator(
         updatePlayerClass(userId = userId) { characterClass ->
             val resetMinions = minions.copy(attacksTakenThisTurn = 0)
             characterClass.copy(
-                offensiveAbility = characterClass.offensiveAbility.withEffective(resetMinions)
+                offensiveAbility = characterClass.offensiveAbility.withEffective(resetMinions),
             )
         }
     }
@@ -283,7 +280,7 @@ internal class CombatMutator(
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
 
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(fastestPlayerNextRound.userId))
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(fastestPlayerNextRound.userId)),
         )
     }
 

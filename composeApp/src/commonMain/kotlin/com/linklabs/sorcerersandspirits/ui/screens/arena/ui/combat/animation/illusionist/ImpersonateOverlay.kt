@@ -40,12 +40,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.imageResource
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
-import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.imageResource
 
 private const val RISE_MILLIS = 420
 private const val EMPTY_HOLD_MILLIS = 260L
@@ -203,10 +203,10 @@ private fun DrawScope.drawMirrorHandle(scene: ImpersonateScene, alpha: Float) {
     drawRoundRect(
         brush = Brush.horizontalGradient(colors = listOf(rimLight, rimDark)),
         topLeft =
-            Offset(
-                x = scene.glassCenter.x - collarWidth / 2f,
-                y = scene.handle.top - collarHeight * 0.5f,
-            ),
+        Offset(
+            x = scene.glassCenter.x - collarWidth / 2f,
+            y = scene.handle.top - collarHeight * 0.5f,
+        ),
         size = Size(width = collarWidth, height = collarHeight),
         cornerRadius = CornerRadius(x = collarHeight / 2f),
         alpha = alpha,
@@ -217,11 +217,11 @@ private fun DrawScope.drawMirrorGlass(scene: ImpersonateScene, alpha: Float) {
     clipPath(path = ovalPath(scene = scene)) {
         drawRect(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(glassCore, glassEdge),
-                    center = scene.glassCenter,
-                    radius = scene.glassRadiusY,
-                ),
+            Brush.radialGradient(
+                colors = listOf(glassCore, glassEdge),
+                center = scene.glassCenter,
+                radius = scene.glassRadiusY,
+            ),
             alpha = alpha,
         )
     }
@@ -304,11 +304,11 @@ private fun DrawScope.drawGlassSheen(scene: ImpersonateScene, alpha: Float) {
             )
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.28f), Color.Transparent),
-                    center = highlightCenter,
-                    radius = scene.glassRadiusX * 0.9f,
-                ),
+            Brush.radialGradient(
+                colors = listOf(Color.White.copy(alpha = 0.28f), Color.Transparent),
+                center = highlightCenter,
+                radius = scene.glassRadiusX * 0.9f,
+            ),
             radius = scene.glassRadiusX * 0.9f,
             center = highlightCenter,
             alpha = alpha,
@@ -338,20 +338,19 @@ private fun DrawScope.drawMirrorRim(scene: ImpersonateScene, alpha: Float) {
     )
 }
 
-private fun ovalPath(scene: ImpersonateScene): Path =
-    Path().apply {
-        addOval(
-            oval =
-                Rect(
-                    offset =
-                        Offset(
-                            x = scene.glassCenter.x - scene.glassRadiusX,
-                            y = scene.glassCenter.y - scene.glassRadiusY,
-                        ),
-                    size = Size(width = scene.glassRadiusX * 2f, height = scene.glassRadiusY * 2f),
-                )
-        )
-    }
+private fun ovalPath(scene: ImpersonateScene): Path = Path().apply {
+    addOval(
+        oval =
+        Rect(
+            offset =
+            Offset(
+                x = scene.glassCenter.x - scene.glassRadiusX,
+                y = scene.glassCenter.y - scene.glassRadiusY,
+            ),
+            size = Size(width = scene.glassRadiusX * 2f, height = scene.glassRadiusY * 2f),
+        ),
+    )
+}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable

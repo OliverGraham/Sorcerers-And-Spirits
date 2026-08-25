@@ -23,7 +23,7 @@ internal fun ArenaMatchState.Combat.rollActionFor(
                         targetedOpponentUserId = targetedOpponentUserId,
                         userPlayerId = userPlayerId,
                         combatActionState = combatActionState,
-                    )
+                    ),
                 )
             }
         }
@@ -55,6 +55,6 @@ private fun ArenaMatchState.Combat.abilityAction(
             targetedOpponentUserId = targetedOpponentUserId,
             userPlayerId = userPlayerId,
             combatActionState = combatActionState,
-        )
+        ),
     )
 }

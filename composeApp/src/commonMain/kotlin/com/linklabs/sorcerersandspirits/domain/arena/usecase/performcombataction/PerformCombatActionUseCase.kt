@@ -17,10 +17,10 @@ class PerformCombatActionUseCase(
         val diceRoller = RealDiceRoller(initialBonus = arguments.doublesBonus)
         val outcome =
             PerformCombatAction(
-                    arguments = arguments,
-                    diceRoller = diceRoller,
-                    abilityConfig = abilityConfigProvider.getAbilityConfig(),
-                )
+                arguments = arguments,
+                diceRoller = diceRoller,
+                abilityConfig = abilityConfigProvider.getAbilityConfig(),
+            )
                 .invoke(currentAction = currentAction)
 
         arenaRepository.applyCombatResult(arenaId = arguments.arenaId, result = outcome)

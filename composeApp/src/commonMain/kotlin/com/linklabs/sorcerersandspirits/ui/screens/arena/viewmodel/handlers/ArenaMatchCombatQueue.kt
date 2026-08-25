@@ -88,7 +88,7 @@ internal class ArenaMatchCombatQueue(
     }
 
     private fun ArenaMatch.Combat.isTeleportRollOffComplete(
-        userId: String
+        userId: String,
     ): TeleportRollsArguments? {
         val abilityRoll = nextCombatAction as? NextCombatAction.AbilityRoll ?: return null
         val teleport = abilityRoll.purpose as? AbilityAction.Passive.Teleport ?: return null

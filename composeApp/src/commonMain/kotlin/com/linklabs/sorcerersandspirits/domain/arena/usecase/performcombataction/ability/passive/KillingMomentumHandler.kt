@@ -13,7 +13,7 @@ internal class KillingMomentumHandler(private val combatMutator: CombatMutator) 
         grantBonusAttack()
 
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = attackerUserId))
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(element = attackerUserId)),
         )
     }
 }

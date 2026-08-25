@@ -18,34 +18,34 @@ class AndroidConnectivityObserver(context: Context) : ConnectivityObserver {
 
     override val isOnline: Flow<Boolean> =
         callbackFlow {
-                val callback =
-                    object : ConnectivityManager.NetworkCallback() {
-                        override fun onAvailable(network: Network) {
-                            trySend(element = true)
-                        }
-
-                        override fun onLost(network: Network) {
-                            // Another network may still be active (e.g. dropping Wi-Fi for
-                            // cellular).
-                            trySend(element = isCurrentlyConnected())
-                        }
-
-                        override fun onUnavailable() {
-                            trySend(element = false)
-                        }
+            val callback =
+                object : ConnectivityManager.NetworkCallback() {
+                    override fun onAvailable(network: Network) {
+                        trySend(element = true)
                     }
 
-                // Emit the current state up front so collectors don't wait for a change.
-                trySend(element = isCurrentlyConnected())
+                    override fun onLost(network: Network) {
+                        // Another network may still be active (e.g. dropping Wi-Fi for
+                        // cellular).
+                        trySend(element = isCurrentlyConnected())
+                    }
 
-                val request =
-                    NetworkRequest.Builder()
-                        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                        .build()
-                connectivityManager.registerNetworkCallback(request, callback)
+                    override fun onUnavailable() {
+                        trySend(element = false)
+                    }
+                }
 
-                awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
-            }
+            // Emit the current state up front so collectors don't wait for a change.
+            trySend(element = isCurrentlyConnected())
+
+            val request =
+                NetworkRequest.Builder()
+                    .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                    .build()
+            connectivityManager.registerNetworkCallback(request, callback)
+
+            awaitClose { connectivityManager.unregisterNetworkCallback(callback) }
+        }
             .distinctUntilChanged()
 
     private fun isCurrentlyConnected(): Boolean {

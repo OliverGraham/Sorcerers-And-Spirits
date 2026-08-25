@@ -15,9 +15,9 @@ class RemoteConfigCharacterClassCopyProviderTest {
         val provider =
             RemoteConfigCharacterClassCopyProvider(
                 remoteConfigDataSource =
-                    FakeRemoteConfigDataSource(
-                        copy = mapOf(ClassCopyKeys.HOLY_SHIELD to holyShield)
-                    )
+                FakeRemoteConfigDataSource(
+                    copy = mapOf(ClassCopyKeys.HOLY_SHIELD to holyShield),
+                ),
             )
 
         val resolved = provider.getCharacterClassCopy()[ClassCopyKeys.HOLY_SHIELD]
@@ -31,7 +31,7 @@ class RemoteConfigCharacterClassCopyProviderTest {
     fun `resolves an unknown key to empty copy rather than throwing`() {
         val provider =
             RemoteConfigCharacterClassCopyProvider(
-                remoteConfigDataSource = FakeRemoteConfigDataSource(copy = emptyMap())
+                remoteConfigDataSource = FakeRemoteConfigDataSource(copy = emptyMap()),
             )
 
         assertEquals(
@@ -40,15 +40,12 @@ class RemoteConfigCharacterClassCopyProviderTest {
         )
     }
 
-    private class FakeRemoteConfigDataSource(private val copy: Map<String, AbilityCopyEntity>) :
-        RemoteConfigDataSource {
+    private class FakeRemoteConfigDataSource(private val copy: Map<String, AbilityCopyEntity>) : RemoteConfigDataSource {
         override suspend fun initialize() = Unit
 
-        override fun characterClassStats() =
-            emptyMap<CharacterClassType, CharacterClassStatsEntity>()
+        override fun characterClassStats() = emptyMap<CharacterClassType, CharacterClassStatsEntity>()
 
-        override fun abilityConfig() =
-            AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
+        override fun abilityConfig() = AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
 
         override fun characterClassCopy() = copy
 

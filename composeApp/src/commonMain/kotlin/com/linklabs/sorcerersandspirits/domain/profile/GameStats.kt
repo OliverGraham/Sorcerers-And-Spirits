@@ -17,19 +17,18 @@ data class GameStats(
     val isEmpty: Boolean
         get() = this == GameStats()
 
-    operator fun plus(other: GameStats) =
-        GameStats(
-            matchesPlayed = matchesPlayed + other.matchesPlayed,
-            matchesWon = matchesWon + other.matchesWon,
-            matchesLost = matchesLost + other.matchesLost,
-            matchesForfeited = matchesForfeited + other.matchesForfeited,
-            gauntletsPlayed = gauntletsPlayed + other.gauntletsPlayed,
-            gauntletsWon = gauntletsWon + other.gauntletsWon,
-            gauntletsLost = gauntletsLost + other.gauntletsLost,
-            gauntletsForfeited = gauntletsForfeited + other.gauntletsForfeited,
-            knockoutsDealt = knockoutsDealt + other.knockoutsDealt,
-            attacksMade = attacksMade + other.attacksMade,
-            abilitiesUsed = abilitiesUsed + other.abilitiesUsed,
-            timesSelected = timesSelected + other.timesSelected,
-        )
+    operator fun plus(other: GameStats) = GameStats(
+        matchesPlayed = matchesPlayed + other.matchesPlayed,
+        matchesWon = matchesWon + other.matchesWon,
+        matchesLost = matchesLost + other.matchesLost,
+        matchesForfeited = matchesForfeited + other.matchesForfeited,
+        gauntletsPlayed = gauntletsPlayed + other.gauntletsPlayed,
+        gauntletsWon = gauntletsWon + other.gauntletsWon,
+        gauntletsLost = gauntletsLost + other.gauntletsLost,
+        gauntletsForfeited = gauntletsForfeited + other.gauntletsForfeited,
+        knockoutsDealt = knockoutsDealt + other.knockoutsDealt,
+        attacksMade = attacksMade + other.attacksMade,
+        abilitiesUsed = abilitiesUsed + other.abilitiesUsed,
+        timesSelected = timesSelected + other.timesSelected,
+    )
 }

@@ -10,23 +10,21 @@ import kotlin.test.assertTrue
 
 class ArenaMatchEntityExtensionsTest {
 
-    private fun createSelectedPlayer(userId: String, speed: Int) =
-        ArenaPlayerEntity.Selected(
-            userId = userId,
-            displayName = "Player $userId",
-            characterClassEntity =
-                CharacterClassEntity(
-                    type = CharacterClassType.Rogue,
-                    hitPoints = 10,
-                    armorClass = 10,
-                    speed = speed,
-                    offensiveAbility = OffensiveAbilityEntity.KillingMomentum,
-                    defensiveAbility = DefensiveAbilityEntity.Dodge(armorBonus = 0),
-                ),
-        )
+    private fun createSelectedPlayer(userId: String, speed: Int) = ArenaPlayerEntity.Selected(
+        userId = userId,
+        displayName = "Player $userId",
+        characterClassEntity =
+        CharacterClassEntity(
+            type = CharacterClassType.Rogue,
+            hitPoints = 10,
+            armorClass = 10,
+            speed = speed,
+            offensiveAbility = OffensiveAbilityEntity.KillingMomentum,
+            defensiveAbility = DefensiveAbilityEntity.Dodge(armorBonus = 0),
+        ),
+    )
 
-    private fun createUnselectedPlayer(userId: String) =
-        ArenaPlayerEntity.Unselected(userId = userId, displayName = "Player $userId")
+    private fun createUnselectedPlayer(userId: String) = ArenaPlayerEntity.Unselected(userId = userId, displayName = "Player $userId")
 
     @Test
     fun `getFastestPlayerId returns the player with highest speed`() {

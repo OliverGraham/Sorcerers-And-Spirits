@@ -17,7 +17,9 @@ interface HolyShieldAbility {
 }
 
 sealed interface DefensiveAbility : Ability {
-    data class Dodge(override val armorBonus: Int = 0) : DefensiveAbility, DodgeAbility
+    data class Dodge(override val armorBonus: Int = 0) :
+        DefensiveAbility,
+        DodgeAbility
 
     data object LuckyCoin : DefensiveAbility
 
@@ -26,12 +28,14 @@ sealed interface DefensiveAbility : Ability {
     data object Persuade : DefensiveAbility
 
     data class MirrorImage(override val usedThisAttack: Boolean = false) :
-        DefensiveAbility, MirrorImageAbility
+        DefensiveAbility,
+        MirrorImageAbility
 
     data object Teleport : DefensiveAbility
 
     data class HolyShield(override val usedThisMatch: Boolean = false) :
-        DefensiveAbility, HolyShieldAbility
+        DefensiveAbility,
+        HolyShieldAbility
 
     data object None : DefensiveAbility
 }
@@ -71,7 +75,9 @@ sealed interface OffensiveAbility : Ability {
     data class AllIn(
         override val hasAnotherAttack: Boolean = false,
         override val usedThisTurn: Boolean = false,
-    ) : OffensiveAbility, ActivatedAbility, AllInAbility
+    ) : OffensiveAbility,
+        ActivatedAbility,
+        AllInAbility
 
     data object PrepareAttack : OffensiveAbility, ActivatedAbility
 
@@ -79,12 +85,16 @@ sealed interface OffensiveAbility : Ability {
         override val skeletonCount: Int = 0,
         override val golemCount: Int = 0,
         override val attacksTakenThisTurn: Int = 0,
-    ) : OffensiveAbility, ActivatedAbility, SummonMinionAbility
+    ) : OffensiveAbility,
+        ActivatedAbility,
+        SummonMinionAbility
 
     data object Encore : OffensiveAbility
 
     data class Impersonate(override val impersonatedAbility: OffensiveAbility = None) :
-        OffensiveAbility, ActivatedAbility, ImpersonateAbility<OffensiveAbility> {
+        OffensiveAbility,
+        ActivatedAbility,
+        ImpersonateAbility<OffensiveAbility> {
         val impersonatedClassType = impersonatedAbility.effective.owningClassType()
     }
 
@@ -106,23 +116,23 @@ val OffensiveAbility.effective: OffensiveAbility
  * renders the weapon of the class whose offensive ability it copied (SS-197). Impersonate itself
  * and None are the Illusionist's own, with no opponent class to borrow from.
  */
-private fun OffensiveAbility.owningClassType(): CharacterClassType =
-    when (this) {
-        is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
+private fun OffensiveAbility.owningClassType(): CharacterClassType = when (this) {
+    is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
 
-        is OffensiveAbility.AllIn -> CharacterClassType.Gambler
+    is OffensiveAbility.AllIn -> CharacterClassType.Gambler
 
-        is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
+    is OffensiveAbility.PrepareAttack -> CharacterClassType.Duelist
 
-        is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
+    is OffensiveAbility.SummonMinion -> CharacterClassType.Necromancer
 
-        is OffensiveAbility.Encore -> CharacterClassType.Bard
+    is OffensiveAbility.Encore -> CharacterClassType.Bard
 
-        is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
+    is OffensiveAbility.SpellPotency -> CharacterClassType.Mage
 
-        is OffensiveAbility.Impersonate,
-        is OffensiveAbility.None -> CharacterClassType.Illusionist
-    }
+    is OffensiveAbility.Impersonate,
+    is OffensiveAbility.None,
+    -> CharacterClassType.Illusionist
+}
 
 /**
  * The ability stripped of any state it has accumulated this match, leaving only its behaviour. An
@@ -151,5 +161,4 @@ val OffensiveAbility.defaultState: OffensiveAbility
  * after it mutates rather than replacing the [OffensiveAbility.Impersonate]. For every other
  * ability this is simply [updated].
  */
-fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility =
-    if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated
+fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility = if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated

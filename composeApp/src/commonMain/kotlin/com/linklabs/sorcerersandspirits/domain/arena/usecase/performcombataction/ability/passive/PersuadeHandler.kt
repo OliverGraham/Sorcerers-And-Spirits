@@ -38,11 +38,11 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.handleStrumLuteFailure(persuadeDie: Int) {
         addMessage(
             message =
-                ArenaMessage.Persuade.StrumLute(
-                    bardUserId = defenderUserId,
-                    diceRoll = persuadeDie,
-                    isSuccessful = false,
-                )
+            ArenaMessage.Persuade.StrumLute(
+                bardUserId = defenderUserId,
+                diceRoll = persuadeDie,
+                isSuccessful = false,
+            ),
         )
 
         continueAttackWithHealthRoll()
@@ -55,7 +55,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
         if (isCharm) {
             strumLuteToCharm(
                 targetableUserIds =
-                    consciousPlayers.map { it.userId }.toSet() - attackerUserId - defenderUserId
+                consciousPlayers.map { it.userId }.toSet() - attackerUserId - defenderUserId,
             )
         } else {
             strumLuteToLull(persuadeDie = persuadeDie)
@@ -65,11 +65,11 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     private fun CombatMutator.strumLuteToLull(persuadeDie: Int) {
         addMessage(
             message =
-                ArenaMessage.Persuade.StrumLute(
-                    bardUserId = defenderUserId,
-                    diceRoll = persuadeDie,
-                    isSuccessful = true,
-                )
+            ArenaMessage.Persuade.StrumLute(
+                bardUserId = defenderUserId,
+                diceRoll = persuadeDie,
+                isSuccessful = true,
+            ),
         )
         resolveTurnEnd()
     }
@@ -88,27 +88,27 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-                ArenaMessage.Persuade.Charm(
-                    bardUserId = defenderUserId,
-                    attackerUserId = attackerUserId,
-                    attackerClassName = attacker.className,
-                    defenderUserId = selectedCharmTargetUserId,
-                    defenderClassName =
-                        consciousPlayers
-                            .first { it.userId == selectedCharmTargetUserId }
-                            .characterClass
-                            .className,
-                )
+            ArenaMessage.Persuade.Charm(
+                bardUserId = defenderUserId,
+                attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
+                defenderUserId = selectedCharmTargetUserId,
+                defenderClassName =
+                consciousPlayers
+                    .first { it.userId == selectedCharmTargetUserId }
+                    .characterClass
+                    .className,
+            ),
         )
 
         setNextCombatAction(
             nextAction =
-                NextCombatAction.NormalAttack(
-                    roll = NormalAttackType.ArmorClass,
-                    attackTurn = currentAttackTurn(),
-                    defenderUserId = selectedCharmTargetUserId,
-                    activeUserIds = setOf(element = attackerUserId),
-                )
+            NextCombatAction.NormalAttack(
+                roll = NormalAttackType.ArmorClass,
+                attackTurn = currentAttackTurn(),
+                defenderUserId = selectedCharmTargetUserId,
+                activeUserIds = setOf(element = attackerUserId),
+            ),
         )
     }
 

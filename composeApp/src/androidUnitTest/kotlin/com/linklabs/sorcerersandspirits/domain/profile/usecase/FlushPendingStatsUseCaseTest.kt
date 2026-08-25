@@ -8,9 +8,9 @@ import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertNull
-import kotlinx.coroutines.test.runTest
 
 class FlushPendingStatsUseCaseTest {
 
@@ -22,11 +22,11 @@ class FlushPendingStatsUseCaseTest {
         FlushPendingStatsUseCase(
             pendingStatsStore = pendingStatsStore,
             updateProfileStatsUseCase =
-                UpdateProfileStatsUseCase(
-                    authenticationRepository = authenticationRepository,
-                    profileRepository = profileRepository,
-                    unlockAchievementsUseCase = mockk(relaxed = true),
-                ),
+            UpdateProfileStatsUseCase(
+                authenticationRepository = authenticationRepository,
+                profileRepository = profileRepository,
+                unlockAchievementsUseCase = mockk(relaxed = true),
+            ),
         )
 
     @Test

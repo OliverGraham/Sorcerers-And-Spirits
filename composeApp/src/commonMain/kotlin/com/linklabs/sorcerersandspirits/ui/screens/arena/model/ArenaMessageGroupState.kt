@@ -11,14 +11,13 @@ sealed interface ArenaMessageGroupState {
     data class Setup(override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
 
     @Immutable
-    data class Round(val roundNumber: Int, override val messages: List<ArenaMessageState>) :
-        ArenaMessageGroupState
+    data class Round(val roundNumber: Int, override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
 }
 
 // TODO(SS-259): Use when NOT Combat
 //        try to clean up - just so ugly and weird
 internal fun List<ArenaMessageGroupState>.appendNewMessages(
-    incomingMessages: List<IncomingArenaMessage>
+    incomingMessages: List<IncomingArenaMessage>,
 ): List<ArenaMessageGroupState> {
     var messageGroups = this
 
@@ -39,16 +38,15 @@ internal fun List<ArenaMessageGroupState>.appendNewMessages(
 
 // TODO(SS-259): Use when Combat ONLY
 internal fun List<ArenaMessageGroupState>.addNewMessageDuringCombat(
-    message: ArenaMessageState
-): List<ArenaMessageGroupState> =
-    if (message is ArenaMessageState.NewRound) {
-        addNewGroup(newRoundMessage = message)
-    } else {
-        appendToGroup(message = message)
-    }
+    message: ArenaMessageState,
+): List<ArenaMessageGroupState> = if (message is ArenaMessageState.NewRound) {
+    addNewGroup(newRoundMessage = message)
+} else {
+    appendToGroup(message = message)
+}
 
 private fun List<ArenaMessageGroupState>.addNewGroup(
-    newRoundMessage: ArenaMessageState.NewRound
+    newRoundMessage: ArenaMessageState.NewRound,
 ): List<ArenaMessageGroupState> {
     val newGroupMessageState =
         ArenaMessageGroupState.Round(
@@ -60,7 +58,7 @@ private fun List<ArenaMessageGroupState>.addNewGroup(
 }
 
 private fun List<ArenaMessageGroupState>.appendToGroup(
-    message: ArenaMessageState
+    message: ArenaMessageState,
 ): List<ArenaMessageGroupState> {
     if (isEmpty()) return this
 
@@ -81,7 +79,7 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
 
 // TODO(SS-259): Look at this Setup part
 private fun List<ArenaMessageGroupState>.appendToGroup(
-    messages: List<ArenaMessageState>
+    messages: List<ArenaMessageState>,
 ): List<ArenaMessageGroupState> {
     if (messages.isEmpty()) return this
     if (isEmpty()) return this + ArenaMessageGroupState.Setup(messages = messages.toList())

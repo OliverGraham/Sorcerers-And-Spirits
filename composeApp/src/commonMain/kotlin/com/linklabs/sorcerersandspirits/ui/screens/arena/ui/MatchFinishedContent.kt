@@ -55,7 +55,7 @@ internal fun MatchFinishedContent(
 
         Text(
             text =
-                "Match ${gauntletProgress.currentMatch} of ${gauntletProgress.matchesPerGauntlet}",
+            "Match ${gauntletProgress.currentMatch} of ${gauntletProgress.matchesPerGauntlet}",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -216,14 +216,14 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
     Card(
         modifier = modifier.fillMaxWidth(),
         colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (isConscious) {
-                        MaterialTheme.colorScheme.secondaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    }
-            ),
+        CardDefaults.cardColors(
+            containerColor =
+            if (isConscious) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+        ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -244,11 +244,11 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color =
-                    if (isConscious) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
+                if (isConscious) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
             )
         }
     }
@@ -260,18 +260,18 @@ private fun exampleFinishedState(): ArenaMatchState.Finished {
 
     return ArenaMatchState.Finished(
         players =
-            listOf(
-                PlayerState.Selected(
-                    userId = "player1",
-                    displayName = "Sorcerer Supreme",
-                    characterClass = mage,
-                ),
-                PlayerState.Selected(
-                    userId = "player2",
-                    displayName = "Spirit Walker",
-                    characterClass = rogue.copy(hitPoints = 0),
-                ),
-            )
+        listOf(
+            PlayerState.Selected(
+                userId = "player1",
+                displayName = "Sorcerer Supreme",
+                characterClass = mage,
+            ),
+            PlayerState.Selected(
+                userId = "player2",
+                displayName = "Spirit Walker",
+                characterClass = rogue.copy(hitPoints = 0),
+            ),
+        ),
     )
 }
 
@@ -333,7 +333,7 @@ private fun MatchFinishedContentLoneSurvivorPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
             finishedState =
-                exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
+            exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },

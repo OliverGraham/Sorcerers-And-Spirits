@@ -46,10 +46,10 @@ internal fun TurnTimer(timerState: () -> ArenaTimerState, modifier: Modifier = M
             fontSize = TIMER_FONT_SIZE,
             fontWeight = if (isUrgent) FontWeight.Bold else FontWeight.SemiBold,
             modifier =
-                Modifier.graphicsLayer {
-                    scaleX = pulseScale
-                    scaleY = pulseScale
-                },
+            Modifier.graphicsLayer {
+                scaleX = pulseScale
+                scaleY = pulseScale
+            },
         )
     }
 }
@@ -63,10 +63,10 @@ private fun timerPulseScale(): Float {
             initialValue = 1f,
             targetValue = TIMER_PULSE_MAX_SCALE,
             animationSpec =
-                infiniteRepeatable(
-                    animation = tween(durationMillis = TIMER_PULSE_DURATION_MILLIS),
-                    repeatMode = RepeatMode.Reverse,
-                ),
+            infiniteRepeatable(
+                animation = tween(durationMillis = TIMER_PULSE_DURATION_MILLIS),
+                repeatMode = RepeatMode.Reverse,
+            ),
             label = TIMER_PULSE_SCALE_LABEL,
         )
         .value

@@ -20,11 +20,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isUserTheRoller
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
-import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.random.Random
 
 private const val MIN_THINKING_DELAY_MILLIS = 1600L
 private const val MAX_THINKING_DELAY_MILLIS = 3000L
@@ -102,7 +102,8 @@ internal class ComputerOpponentHandler(
                 resolveCombat(arenaMatchState = arenaMatchState, computerId = computerId)
 
             is ArenaMatchState.WaitingForAllPlayers,
-            is ArenaMatchState.Finished -> Unit
+            is ArenaMatchState.Finished,
+            -> Unit
         }
     }
 
@@ -129,7 +130,7 @@ internal class ComputerOpponentHandler(
             arenaId = arenaId,
             selectedArenaPlayer = selectedArenaPlayer,
             allPlayers =
-                arenaMatchState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
+            arenaMatchState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
         )
     }
 
@@ -144,19 +145,19 @@ internal class ComputerOpponentHandler(
 
                 is CombatActionState.NormalAttack ->
                     AttackArguments(
-                            targetedOpponentUserId = actionState.defenderUserId,
-                            userPlayerId = computerId,
-                            combatActionState = actionState,
-                        )
+                        targetedOpponentUserId = actionState.defenderUserId,
+                        userPlayerId = computerId,
+                        combatActionState = actionState,
+                    )
                         .toDomain()
 
                 is CombatActionState.AbilityRoll ->
                     UseAbilityArguments(
-                            abilityActionState = actionState.action,
-                            targetedOpponentUserId = randomCharmTarget(action = actionState.action),
-                            userPlayerId = computerId,
-                            combatActionState = actionState,
-                        )
+                        abilityActionState = actionState.action,
+                        targetedOpponentUserId = randomCharmTarget(action = actionState.action),
+                        userPlayerId = computerId,
+                        combatActionState = actionState,
+                    )
                         .toDomain()
             } ?: return
 
@@ -172,11 +173,11 @@ internal class ComputerOpponentHandler(
 
         if (favorableAbility != null) {
             return UseAbilityArguments(
-                    abilityActionState = favorableAbility,
-                    targetedOpponentUserId = "",
-                    userPlayerId = computerId,
-                    combatActionState = arenaMatchState.combatActionState,
-                )
+                abilityActionState = favorableAbility,
+                targetedOpponentUserId = "",
+                userPlayerId = computerId,
+                combatActionState = arenaMatchState.combatActionState,
+            )
                 .toDomain()
         }
 
@@ -185,15 +186,15 @@ internal class ComputerOpponentHandler(
                 ?: return null
 
         return AttackArguments(
-                targetedOpponentUserId = target.userId,
-                userPlayerId = computerId,
-                combatActionState = arenaMatchState.combatActionState,
-            )
+            targetedOpponentUserId = target.userId,
+            userPlayerId = computerId,
+            combatActionState = arenaMatchState.combatActionState,
+        )
             .toDomain()
     }
 
     private suspend fun ArenaMatchState.Combat.dispatchCombatAction(
-        currentAction: CurrentCombatAction
+        currentAction: CurrentCombatAction,
     ) {
         val combatActionArguments =
             CombatActionArguments(
@@ -217,10 +218,10 @@ internal class ComputerOpponentHandler(
                 if (hasNoMinions || isBelowMaxHp) {
                     AbilityActionState.Activated.SummonMinion(
                         summonMinionAbility =
-                            OffensiveAbility.SummonMinion(
-                                skeletonCount = ability.skeletonCount,
-                                golemCount = ability.golemCount,
-                            )
+                        OffensiveAbility.SummonMinion(
+                            skeletonCount = ability.skeletonCount,
+                            golemCount = ability.golemCount,
+                        ),
                     )
                 } else {
                     null
@@ -246,40 +247,38 @@ internal class ComputerOpponentHandler(
             .randomOrNull()
     }
 
-    private fun randomCharmTarget(action: AbilityActionState): String =
-        (action as? AbilityActionState.Passive.Persuade.Charm)
-            ?.targetableUserIds
-            ?.randomOrNull()
-            .orEmpty()
+    private fun randomCharmTarget(action: AbilityActionState): String = (action as? AbilityActionState.Passive.Persuade.Charm)
+        ?.targetableUserIds
+        ?.randomOrNull()
+        .orEmpty()
 
-    private fun ArenaMatchState.pendingComputerActorId(): String? =
-        when (this) {
-            is ArenaMatchState.ChoosingClasses ->
-                activePlayerUserId.takeIf { it in computerOpponentIds }
+    private fun ArenaMatchState.pendingComputerActorId(): String? = when (this) {
+        is ArenaMatchState.ChoosingClasses ->
+            activePlayerUserId.takeIf { it in computerOpponentIds }
 
-            is ArenaMatchState.Combat ->
-                combatActionState.activeUserIds.firstOrNull { userId ->
-                    val isComputer = userId in computerOpponentIds
-                    val isAwaitingRoll =
-                        combatActionState !is CombatActionState.AbilityRoll ||
-                            combatActionState.action.isUserTheRoller(userPlayerId = userId)
-                    isComputer && isAwaitingRoll
-                }
+        is ArenaMatchState.Combat ->
+            combatActionState.activeUserIds.firstOrNull { userId ->
+                val isComputer = userId in computerOpponentIds
+                val isAwaitingRoll =
+                    combatActionState !is CombatActionState.AbilityRoll ||
+                        combatActionState.action.isUserTheRoller(userPlayerId = userId)
+                isComputer && isAwaitingRoll
+            }
 
-            is ArenaMatchState.WaitingForAllPlayers,
-            is ArenaMatchState.Finished -> null
-        }
+        is ArenaMatchState.WaitingForAllPlayers,
+        is ArenaMatchState.Finished,
+        -> null
+    }
 
-    private fun ArenaMatchState.computerActionSignature(actorId: String): String =
-        when (this) {
-            is ArenaMatchState.ChoosingClasses -> "choosing:$actorId"
+    private fun ArenaMatchState.computerActionSignature(actorId: String): String = when (this) {
+        is ArenaMatchState.ChoosingClasses -> "choosing:$actorId"
 
-            is ArenaMatchState.Combat -> "combat:$roundNumber:$actorId:$combatActionState"
+        is ArenaMatchState.Combat -> "combat:$roundNumber:$actorId:$combatActionState"
 
-            is ArenaMatchState.WaitingForAllPlayers,
-            is ArenaMatchState.Finished -> "none"
-        }
+        is ArenaMatchState.WaitingForAllPlayers,
+        is ArenaMatchState.Finished,
+        -> "none"
+    }
 
-    private fun thinkingDelayMillis(): Long =
-        Random.nextLong(from = MIN_THINKING_DELAY_MILLIS, until = MAX_THINKING_DELAY_MILLIS)
+    private fun thinkingDelayMillis(): Long = Random.nextLong(from = MIN_THINKING_DELAY_MILLIS, until = MAX_THINKING_DELAY_MILLIS)
 }

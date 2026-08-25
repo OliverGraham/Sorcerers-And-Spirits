@@ -29,25 +29,22 @@ data class ChallengerEntity(
     }
 }
 
-fun Challenger.toEntity(): ChallengerEntity =
-    ChallengerEntity(
-        userId = userId,
-        displayName = displayName,
-        isInstigator = isInstigator,
-        status = status,
-    )
+fun Challenger.toEntity(): ChallengerEntity = ChallengerEntity(
+    userId = userId,
+    displayName = displayName,
+    isInstigator = isInstigator,
+    status = status,
+)
 
-fun ChallengerEntity.toDomain(): Challenger =
-    Challenger(
-        userId = userId,
-        displayName = displayName,
-        isInstigator = isInstigator,
-        status = status,
-    )
+fun ChallengerEntity.toDomain(): Challenger = Challenger(
+    userId = userId,
+    displayName = displayName,
+    isInstigator = isInstigator,
+    status = status,
+)
 
-fun ChallengeEntity.toDomain(): Challenge =
-    Challenge(
-        challengeId = challengeId,
-        challengers = challengerEntitiesMap.mapValues { (_, challenger) -> challenger.toDomain() },
-        endTimeMillis = startTimeMillis?.plus(other = CHALLENGE_DURATION_MILLIS),
-    )
+fun ChallengeEntity.toDomain(): Challenge = Challenge(
+    challengeId = challengeId,
+    challengers = challengerEntitiesMap.mapValues { (_, challenger) -> challenger.toDomain() },
+    endTimeMillis = startTimeMillis?.plus(other = CHALLENGE_DURATION_MILLIS),
+)

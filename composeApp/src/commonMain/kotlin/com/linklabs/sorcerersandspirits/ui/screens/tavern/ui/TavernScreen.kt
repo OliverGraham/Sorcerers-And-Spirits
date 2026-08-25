@@ -59,7 +59,7 @@ internal fun TavernScreen(
 ) {
     CompositionLocalProvider(
         LocalTavernActions provides
-            TavernActions(onSendChallengerNotifications = viewModel::onSendChallenge)
+            TavernActions(onSendChallengerNotifications = viewModel::onSendChallenge),
     ) {
         viewModel.eventChannelFlow.collectEvents(onNavigateToArena = onNavigateToArena)
         val uiState by viewModel.uiStateFlow.collectAsState()
@@ -155,7 +155,7 @@ private fun ScreenContent(
 @Suppress("ComposableNaming")
 @Composable
 private fun Flow<TavernEvent>.collectEvents(
-    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit
+    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         collect { event ->

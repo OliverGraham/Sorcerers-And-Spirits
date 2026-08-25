@@ -12,10 +12,9 @@ data class TravelerEntity(
     val rating: Long = 0,
 )
 
-fun TravelerEntity.toDomain(): Traveler =
-    Traveler(
-        userId = userId,
-        displayName = displayName,
-        tavernStatus = tavernStatus,
-        rating = rating,
-    )
+fun TravelerEntity.toDomain(): Traveler = Traveler(
+    userId = userId,
+    displayName = displayName,
+    tavernStatus = tavernStatus,
+    rating = rating,
+)

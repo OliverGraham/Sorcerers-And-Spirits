@@ -272,10 +272,10 @@ class ArenaScreenViewModel(
                 }
 
                 coordinateArenaMatchUseCase(
-                        arenaId = arguments.arenaId,
-                        expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
-                        computerOpponents = arguments.computerOpponents,
-                    )
+                    arenaId = arguments.arenaId,
+                    expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
+                    computerOpponents = arguments.computerOpponents,
+                )
                     .catch { _uiStateFlow.value = UiState.Error }
                     .collect { updatedArenaMatch ->
                         updatedArenaMatch.updateScreenState(userId = userId)
@@ -322,7 +322,8 @@ class ArenaScreenViewModel(
                     )
 
                 is ArenaMatch.Combat,
-                is ArenaMatch.Finished -> null
+                is ArenaMatch.Finished,
+                -> null
             }
 
         if (newScreenStateUpdate == null) {
@@ -337,25 +338,24 @@ class ArenaScreenViewModel(
     private fun ArenaMatch.getNewArenaScreenState(
         arenaMatchState: ArenaMatchState,
         timerDuration: Int,
-    ): ArenaScreenStateUpdate =
-        ArenaScreenStateUpdate(
-            screenState =
-                ArenaScreenState(
-                    arenaMatchState = arenaMatchState,
-                    showForfeitDialog = false,
-                    isUserPlayerKnockedOut = false,
-                    hasReadiedForNextMatch = false,
-                    messageGroups =
-                        emptyList<ArenaMessageGroupState>()
-                            .appendNewMessages(incomingMessages = messages),
-                    gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
-                    characterClasses = characterClasses,
-                    classCopy = classCopy,
-                    animatingMessage = null,
-                ),
-            timerAction = TimerAction.Start(timerDuration = timerDuration),
-            messageQueueUpdate = null,
-        )
+    ): ArenaScreenStateUpdate = ArenaScreenStateUpdate(
+        screenState =
+        ArenaScreenState(
+            arenaMatchState = arenaMatchState,
+            showForfeitDialog = false,
+            isUserPlayerKnockedOut = false,
+            hasReadiedForNextMatch = false,
+            messageGroups =
+            emptyList<ArenaMessageGroupState>()
+                .appendNewMessages(incomingMessages = messages),
+            gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+            characterClasses = characterClasses,
+            classCopy = classCopy,
+            animatingMessage = null,
+        ),
+        timerAction = TimerAction.Start(timerDuration = timerDuration),
+        messageQueueUpdate = null,
+    )
 
     private fun ArenaMatch.handleScreenUpdate(
         userId: String,
@@ -420,7 +420,7 @@ class ArenaScreenViewModel(
         val finalArenaMatchUpdate =
             currentArenaCombatState.copy(
                 playerMap =
-                    arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
+                arenaMatchCombatUpdate.playerMap.mapValues { it.value.toSelectedState() },
                 combatActionState = nextCombatAction.toCombatActionState(),
                 roundNumber = arenaMatchCombatUpdate.roundNumber,
                 isNewRound = arenaMatchCombatUpdate.isNewRound,
@@ -428,11 +428,11 @@ class ArenaScreenViewModel(
                 attackerUserId = nextCombatAction.attackerUserId(),
                 turnOwnerClassType = arenaMatchCombatUpdate.turnOwnerClassType(),
                 lockedTargetUserId =
-                    nextCombatAction.lockedTargetUserId(
-                        userId = currentArenaCombatState.userPlayerId
-                    ),
+                nextCombatAction.lockedTargetUserId(
+                    userId = currentArenaCombatState.userPlayerId,
+                ),
                 selectedOpponentUserId =
-                    currentArenaCombatState.selectedOpponentUserId, // TODO(SS-260): Correct?
+                currentArenaCombatState.selectedOpponentUserId, // TODO(SS-260): Correct?
                 isActionInFlight = false,
             )
 
@@ -495,7 +495,7 @@ class ArenaScreenViewModel(
         _uiStateFlow.updateLoaded { screenState ->
             screenState.copy(
                 messageGroups =
-                    screenState.messageGroups.addNewMessageDuringCombat(message = message)
+                screenState.messageGroups.addNewMessageDuringCombat(message = message),
             )
         }
     }
@@ -513,7 +513,7 @@ class ArenaScreenViewModel(
                 viewModelScope.launch {
                     _eventChannelFlow.send(
                         element =
-                            ArenaEvent.OpponentLeft(displayName = departedOpponent.displayName)
+                        ArenaEvent.OpponentLeft(displayName = departedOpponent.displayName),
                     )
                 }
             }
@@ -590,26 +590,26 @@ class ArenaScreenViewModel(
             is CombatActionState.NormalAttack ->
                 onAttack(
                     attackArguments =
-                        AttackArguments(
-                            targetedOpponentUserId = actionState.defenderUserId,
-                            userPlayerId = userPlayerId,
-                            combatActionState = actionState,
-                        )
+                    AttackArguments(
+                        targetedOpponentUserId = actionState.defenderUserId,
+                        userPlayerId = userPlayerId,
+                        combatActionState = actionState,
+                    ),
                 )
 
             is CombatActionState.AbilityRoll ->
                 onUseAbility(
                     useAbilityArguments =
-                        UseAbilityArguments(
-                            abilityActionState = actionState.action,
-                            targetedOpponentUserId =
-                                (actionState.action as? AbilityActionState.Passive.Persuade.Charm)
-                                    ?.targetableUserIds
-                                    ?.randomOrNull()
-                                    .orEmpty(),
-                            userPlayerId = userPlayerId,
-                            combatActionState = actionState,
-                        )
+                    UseAbilityArguments(
+                        abilityActionState = actionState.action,
+                        targetedOpponentUserId =
+                        (actionState.action as? AbilityActionState.Passive.Persuade.Charm)
+                            ?.targetableUserIds
+                            ?.randomOrNull()
+                            .orEmpty(),
+                        userPlayerId = userPlayerId,
+                        combatActionState = actionState,
+                    ),
                 )
         }
     }
@@ -627,11 +627,11 @@ class ArenaScreenViewModel(
 
         onAttack(
             attackArguments =
-                AttackArguments(
-                    targetedOpponentUserId = target.userId,
-                    userPlayerId = attackerId,
-                    combatActionState = arenaMatchState.combatActionState,
-                )
+            AttackArguments(
+                targetedOpponentUserId = target.userId,
+                userPlayerId = attackerId,
+                combatActionState = arenaMatchState.combatActionState,
+            ),
         )
     }
 }

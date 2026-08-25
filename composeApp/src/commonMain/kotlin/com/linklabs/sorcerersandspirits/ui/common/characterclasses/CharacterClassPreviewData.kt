@@ -29,23 +29,20 @@ private val PREVIEW_COPY_NAMES =
         ClassCopyKeys.HOLY_SHIELD to "Holy Shield",
     )
 
-internal fun previewCharacterClassCopy(): CharacterClassCopy =
-    CharacterClassCopy(
-        entries =
-            PREVIEW_COPY_NAMES.mapValues { (_, name) ->
-                AbilityCopy(name = name, long = "Sample description.", short = "Sample.")
-            }
-    )
+internal fun previewCharacterClassCopy(): CharacterClassCopy = CharacterClassCopy(
+    entries =
+    PREVIEW_COPY_NAMES.mapValues { (_, name) ->
+        AbilityCopy(name = name, long = "Sample description.", short = "Sample.")
+    },
+)
 
-internal fun previewCharacterClassState(type: CharacterClassType): CharacterClassState =
-    CharacterClass.create(
-            type = type,
-            hitPoints = PREVIEW_STAT,
-            maxHitPoints = PREVIEW_STAT,
-            armorClass = PREVIEW_STAT,
-            speed = PREVIEW_STAT,
-        )
-        .toState()
+internal fun previewCharacterClassState(type: CharacterClassType): CharacterClassState = CharacterClass.create(
+    type = type,
+    hitPoints = PREVIEW_STAT,
+    maxHitPoints = PREVIEW_STAT,
+    armorClass = PREVIEW_STAT,
+    speed = PREVIEW_STAT,
+)
+    .toState()
 
-internal fun previewCharacterClassStates(): List<CharacterClassState> =
-    CharacterClass.playableTypes().map { type -> previewCharacterClassState(type = type) }
+internal fun previewCharacterClassStates(): List<CharacterClassState> = CharacterClass.playableTypes().map { type -> previewCharacterClassState(type = type) }

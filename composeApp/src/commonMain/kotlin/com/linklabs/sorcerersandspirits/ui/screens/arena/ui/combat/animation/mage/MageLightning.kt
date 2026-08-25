@@ -58,11 +58,11 @@ internal fun DrawScope.drawLightningBolt(tail: Offset, position: Offset, alpha: 
     val haloRadius = 15.dp.toPx()
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(palette.core, palette.glow.copy(alpha = 0.5f), Color.Transparent),
-                center = position,
-                radius = haloRadius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(palette.core, palette.glow.copy(alpha = 0.5f), Color.Transparent),
+            center = position,
+            radius = haloRadius,
+        ),
         radius = haloRadius,
         center = position,
         alpha = alpha * 0.85f,
@@ -80,11 +80,11 @@ internal fun DrawScope.drawLightningBurst(center: Offset, scale: Float, alpha: F
 
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(palette.core, palette.glow.copy(alpha = 0.7f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(palette.core, palette.glow.copy(alpha = 0.7f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = alpha,
@@ -162,11 +162,11 @@ private fun DrawScope.drawStormClouds(swirl: Float, palette: MageElementPalette,
         val radius = size.width * (0.16f + mageNoise(seed = index + 7f) * 0.08f)
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(cloudColor, Color.Transparent),
-                    center = Offset(x = centerX, y = centerY),
-                    radius = radius,
-                ),
+            Brush.radialGradient(
+                colors = listOf(cloudColor, Color.Transparent),
+                center = Offset(x = centerX, y = centerY),
+                radius = radius,
+            ),
             radius = radius,
             center = Offset(x = centerX, y = centerY),
             alpha = alpha,

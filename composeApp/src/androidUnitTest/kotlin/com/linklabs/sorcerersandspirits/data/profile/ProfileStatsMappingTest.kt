@@ -16,7 +16,7 @@ class ProfileStatsMappingTest {
             ProfileStats(
                 overall = GameStats(matchesWon = 1, gauntletsWon = 1, knockoutsDealt = 3),
                 perClass =
-                    mapOf(CharacterClassType.Mage to GameStats(matchesWon = 1, timesSelected = 1)),
+                mapOf(CharacterClassType.Mage to GameStats(matchesWon = 1, timesSelected = 1)),
             )
 
         val increments = delta.toStatIncrements()
@@ -24,32 +24,32 @@ class ProfileStatsMappingTest {
         assertEquals(
             expected = 1,
             actual =
-                increments[
-                    listOf(FireStoreKeys.STATS, FireStoreKeys.OVERALL, FireStoreKeys.MATCHES_WON),
-                ],
+            increments[
+                listOf(FireStoreKeys.STATS, FireStoreKeys.OVERALL, FireStoreKeys.MATCHES_WON),
+            ],
         )
         assertEquals(
             expected = 3,
             actual =
-                increments[
-                    listOf(
-                        FireStoreKeys.STATS,
-                        FireStoreKeys.OVERALL,
-                        FireStoreKeys.KNOCKOUTS_DEALT,
-                    ),
-                ],
+            increments[
+                listOf(
+                    FireStoreKeys.STATS,
+                    FireStoreKeys.OVERALL,
+                    FireStoreKeys.KNOCKOUTS_DEALT,
+                ),
+            ],
         )
         assertEquals(
             expected = 1,
             actual =
-                increments[
-                    listOf(
-                        FireStoreKeys.STATS,
-                        FireStoreKeys.PER_CLASS,
-                        CharacterClassType.Mage.name,
-                        FireStoreKeys.TIMES_SELECTED,
-                    ),
-                ],
+            increments[
+                listOf(
+                    FireStoreKeys.STATS,
+                    FireStoreKeys.PER_CLASS,
+                    CharacterClassType.Mage.name,
+                    FireStoreKeys.TIMES_SELECTED,
+                ),
+            ],
         )
     }
 
@@ -74,10 +74,10 @@ class ProfileStatsMappingTest {
             ProfileStats(
                 overall = GameStats(matchesPlayed = 6, matchesWon = 4, gauntletsPlayed = 2),
                 perClass =
-                    mapOf(
-                        CharacterClassType.Rogue to GameStats(matchesWon = 2, knockoutsDealt = 5),
-                        CharacterClassType.Bard to GameStats(timesSelected = 1),
-                    ),
+                mapOf(
+                    CharacterClassType.Rogue to GameStats(matchesWon = 2, knockoutsDealt = 5),
+                    CharacterClassType.Bard to GameStats(timesSelected = 1),
+                ),
             )
 
         assertEquals(expected = stats, actual = stats.toEntity().toDomain())
@@ -88,10 +88,10 @@ class ProfileStatsMappingTest {
         val entity =
             ProfileStatsEntity(
                 perClass =
-                    mapOf(
-                        CharacterClassType.Mage.name to GameStatsEntity(matchesWon = 1),
-                        "RetiredClass" to GameStatsEntity(matchesWon = 9),
-                    )
+                mapOf(
+                    CharacterClassType.Mage.name to GameStatsEntity(matchesWon = 1),
+                    "RetiredClass" to GameStatsEntity(matchesWon = 9),
+                ),
             )
 
         val domain = entity.toDomain()

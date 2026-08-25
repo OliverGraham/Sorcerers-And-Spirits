@@ -20,12 +20,12 @@ internal class AllInActivated(
 
         addMessage(
             message =
-                ArenaMessage.AllIn(
-                    gamblerUserId = attackerUserId,
-                    gamblerName = attacker.className,
-                    classType = attacker.type,
-                    singleDie = result,
-                )
+            ArenaMessage.AllIn(
+                gamblerUserId = attackerUserId,
+                gamblerName = attacker.className,
+                classType = attacker.type,
+                singleDie = result,
+            ),
         )
 
         when (result) {
@@ -39,13 +39,13 @@ internal class AllInActivated(
                 updateAttackerClass { attacker ->
                     val updatedAllIn = allIn.copy(hasAnotherAttack = true, usedThisTurn = true)
                     attacker.copy(
-                        offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn)
+                        offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn),
                     )
                 }
                 grantBonusAttack()
 
                 setNextCombatAction(
-                    nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
+                    nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId)),
                 )
             }
 
@@ -53,12 +53,12 @@ internal class AllInActivated(
                 updateAttackerClass { attacker ->
                     val updatedAllIn = allIn.copy(usedThisTurn = true)
                     attacker.copy(
-                        offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn)
+                        offensiveAbility = attacker.offensiveAbility.withEffective(updatedAllIn),
                     )
                 }
 
                 setNextCombatAction(
-                    nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
+                    nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId)),
                 )
             }
         }

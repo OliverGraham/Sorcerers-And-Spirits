@@ -45,12 +45,12 @@ internal fun LoadedArenaScreen(
     CompositionLocalProvider(LocalCharacterClassCopy provides screenState.classCopy) {
         Scaffold(
             modifier =
-                modifier
-                    .fillMaxSize()
-                    .paint(
-                        painter = painterResource(resource = Res.drawable.arena_background),
-                        contentScale = ContentScale.Crop,
-                    ),
+            modifier
+                .fillMaxSize()
+                .paint(
+                    painter = painterResource(resource = Res.drawable.arena_background),
+                    contentScale = ContentScale.Crop,
+                ),
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { _ ->
@@ -126,7 +126,7 @@ private fun ArenaStateContent(
 @Preview
 @Composable
 private fun LoadedArenaScreenCollapsedPreview(
-    @PreviewParameter(ArenaStatePreviewParameterProvider::class) screenState: ArenaScreenState
+    @PreviewParameter(ArenaStatePreviewParameterProvider::class) screenState: ArenaScreenState,
 ) {
     SorcerersAndSpiritsTheme {
         LoadedArenaScreen(

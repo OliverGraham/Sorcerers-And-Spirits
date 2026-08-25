@@ -14,9 +14,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCa
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
-import kotlin.random.Random
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,6 +23,9 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
+import kotlin.random.Random
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @KoinViewModel
 class TavernScreenViewModel(
@@ -96,7 +96,7 @@ class TavernScreenViewModel(
 
             is SendChallengeResult.NotEnoughChallengersAvailable ->
                 TavernEvent.NotEnoughChallengersAvailable(
-                    challengerStates = result.unavailableChallengers.map { it.toChallengerState() }
+                    challengerStates = result.unavailableChallengers.map { it.toChallengerState() },
                 )
 
             is SendChallengeResult.Failure -> TavernEvent.ShowChallengeSendFailed
@@ -138,9 +138,8 @@ class TavernScreenViewModel(
     }
 
     @OptIn(ExperimentalTime::class)
-    private fun generateComputerMatchId(): String =
-        "${ComputerOpponents.ID_PREFIX}match-" +
-            "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(from = 0, until = 1_000_000)}"
+    private fun generateComputerMatchId(): String = "${ComputerOpponents.ID_PREFIX}match-" +
+        "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(from = 0, until = 1_000_000)}"
 
     private fun updateScreenState(data: TavernData) {
         val tavernState =

@@ -98,12 +98,12 @@ internal fun MessagesBar(
 
     Column(
         modifier =
-            modifier
-                .fillMaxWidth()
-                .height(height = messageBarHeight)
-                .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY))
-                .clickable(onClick = onToggleExpanded)
-                .padding(horizontal = 8.dp)
+        modifier
+            .fillMaxWidth()
+            .height(height = messageBarHeight)
+            .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY))
+            .clickable(onClick = onToggleExpanded)
+            .padding(horizontal = 8.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             MessagesIcon(
@@ -119,9 +119,9 @@ internal fun MessagesBar(
                 },
                 label = ROUND_HEADER_TRANSITION_LABEL,
                 modifier =
-                    Modifier.align(alignment = Alignment.Center)
-                        .fillMaxWidth()
-                        .padding(horizontal = headerBookendReserve),
+                Modifier.align(alignment = Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = headerBookendReserve),
             ) { (round, classType) ->
                 Text(
                     text = roundTurnHeaderText(roundNumber = round, classType = classType),
@@ -238,14 +238,14 @@ internal fun MessageLogOverlay(
             messageGroups = messageGroups,
             onDismiss = onDismiss,
             modifier =
-                Modifier.fillMaxWidth()
-                    .padding(top = messageBarHeight)
-                    .height(height = fullLogHeight * expandedFraction)
-                    .background(
-                        brush =
-                            messagesBackgroundBrush(startY = -barHeightPx, endY = fullLogHeightPx)
-                    )
-                    .clickable(onClick = onDismiss),
+            Modifier.fillMaxWidth()
+                .padding(top = messageBarHeight)
+                .height(height = fullLogHeight * expandedFraction)
+                .background(
+                    brush =
+                    messagesBackgroundBrush(startY = -barHeightPx, endY = fullLogHeightPx),
+                )
+                .clickable(onClick = onDismiss),
         )
     }
 }
@@ -257,20 +257,19 @@ internal fun MessageLogOverlay(
  * offsets into the shared bar-top-to-dice-home span, so the collapsed [MessagesBar] and the
  * unfurled [MessageLogOverlay] sample one continuous gradient rather than each restarting its own.
  */
-private fun messagesBackgroundBrush(startY: Float, endY: Float): Brush =
-    Brush.verticalGradient(
-        colorStops =
-            arrayOf(
-                MESSAGES_GRADIENT_TOP_STOP to
-                    messagesGradientTop.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-                MESSAGES_GRADIENT_MIDDLE_STOP to
-                    messagesGradientMiddle.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-                MESSAGES_GRADIENT_BOTTOM_STOP to
-                    messagesGradientBottom.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-            ),
-        startY = startY,
-        endY = endY,
-    )
+private fun messagesBackgroundBrush(startY: Float, endY: Float): Brush = Brush.verticalGradient(
+    colorStops =
+    arrayOf(
+        MESSAGES_GRADIENT_TOP_STOP to
+            messagesGradientTop.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
+        MESSAGES_GRADIENT_MIDDLE_STOP to
+            messagesGradientMiddle.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
+        MESSAGES_GRADIENT_BOTTOM_STOP to
+            messagesGradientBottom.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
+    ),
+    startY = startY,
+    endY = endY,
+)
 
 /**
  * The unread count, drawn so the four class colors continuously flow through its digits — a looping
@@ -285,13 +284,13 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
             initialValue = 0f,
             targetValue = UNREAD_COUNT_COLOR_TILE_WIDTH_PX,
             animationSpec =
-                infiniteRepeatable(
-                    animation =
-                        tween(
-                            durationMillis = UNREAD_COUNT_COLOR_CYCLE_MILLIS,
-                            easing = LinearEasing,
-                        )
+            infiniteRepeatable(
+                animation =
+                tween(
+                    durationMillis = UNREAD_COUNT_COLOR_CYCLE_MILLIS,
+                    easing = LinearEasing,
                 ),
+            ),
             label = UNREAD_COUNT_COLOR_SHIFT_LABEL,
         )
 
@@ -318,11 +317,11 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
         Text(
             text = value,
             style =
-                TextStyle(
-                    brush = flowingBrush,
-                    fontSize = unreadCountFontSize,
-                    fontWeight = FontWeight.Bold,
-                ),
+            TextStyle(
+                brush = flowingBrush,
+                fontSize = unreadCountFontSize,
+                fontWeight = FontWeight.Bold,
+            ),
         )
     }
 }

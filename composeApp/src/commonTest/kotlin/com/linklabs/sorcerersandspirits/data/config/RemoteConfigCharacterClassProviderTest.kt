@@ -16,9 +16,9 @@ class RemoteConfigCharacterClassProviderTest {
         val provider =
             RemoteConfigCharacterClassProvider(
                 remoteConfigDataSource =
-                    FakeRemoteConfigDataSource(
-                        stats = mapOf(CharacterClassType.Rogue to tunedRogue)
-                    )
+                FakeRemoteConfigDataSource(
+                    stats = mapOf(CharacterClassType.Rogue to tunedRogue),
+                ),
             )
 
         val rogue = provider.getAllClasses().single { it.type == CharacterClassType.Rogue }
@@ -36,7 +36,7 @@ class RemoteConfigCharacterClassProviderTest {
     fun `omits classes that have no remote stats`() {
         val provider =
             RemoteConfigCharacterClassProvider(
-                remoteConfigDataSource = FakeRemoteConfigDataSource(stats = emptyMap())
+                remoteConfigDataSource = FakeRemoteConfigDataSource(stats = emptyMap()),
             )
 
         assertEquals(expected = emptyList<CharacterClass>(), actual = provider.getAllClasses())
@@ -56,21 +56,20 @@ class RemoteConfigCharacterClassProviderTest {
             }
         val provider =
             RemoteConfigCharacterClassProvider(
-                remoteConfigDataSource = FakeRemoteConfigDataSource(stats = stats)
+                remoteConfigDataSource = FakeRemoteConfigDataSource(stats = stats),
             )
 
         assertEquals(expected = TestCharacterClasses.all(), actual = provider.getAllClasses())
     }
 
     private class FakeRemoteConfigDataSource(
-        private val stats: Map<CharacterClassType, CharacterClassStatsEntity>
+        private val stats: Map<CharacterClassType, CharacterClassStatsEntity>,
     ) : RemoteConfigDataSource {
         override suspend fun initialize() = Unit
 
         override fun characterClassStats() = stats
 
-        override fun abilityConfig() =
-            AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
+        override fun abilityConfig() = AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
 
         override fun characterClassCopy() = emptyMap<String, AbilityCopyEntity>()
 

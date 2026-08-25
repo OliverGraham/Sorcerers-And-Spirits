@@ -57,11 +57,11 @@ private fun DrawScope.drawIceTrail(
 ) {
     drawLine(
         brush =
-            Brush.linearGradient(
-                colors = listOf(Color.Transparent, palette.trail.copy(alpha = 0.7f), palette.core),
-                start = tail,
-                end = position,
-            ),
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, palette.trail.copy(alpha = 0.7f), palette.core),
+            start = tail,
+            end = position,
+        ),
         start = tail,
         end = position,
         strokeWidth = 7.dp.toPx(),
@@ -89,11 +89,11 @@ private fun DrawScope.drawIceShard(palette: MageElementPalette, alpha: Float) {
 
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(palette.core, palette.glow.copy(alpha = 0.5f), Color.Transparent),
-                center = Offset.Zero,
-                radius = length,
-            ),
+        Brush.radialGradient(
+            colors = listOf(palette.core, palette.glow.copy(alpha = 0.5f), Color.Transparent),
+            center = Offset.Zero,
+            radius = length,
+        ),
         radius = length,
         center = Offset.Zero,
         alpha = alpha * 0.7f,
@@ -110,11 +110,11 @@ private fun DrawScope.drawIceShard(palette: MageElementPalette, alpha: Float) {
     drawPath(
         path = shard,
         brush =
-            Brush.linearGradient(
-                colors = listOf(palette.core, palette.glow),
-                start = Offset(x = 0f, y = -length),
-                end = Offset(x = 0f, y = length * 0.4f),
-            ),
+        Brush.linearGradient(
+            colors = listOf(palette.core, palette.glow),
+            start = Offset(x = 0f, y = -length),
+            end = Offset(x = 0f, y = length * 0.4f),
+        ),
         alpha = alpha,
     )
 }
@@ -130,11 +130,11 @@ internal fun DrawScope.drawIceShatter(center: Offset, scale: Float, alpha: Float
 
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(palette.core, palette.glow.copy(alpha = 0.7f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(palette.core, palette.glow.copy(alpha = 0.7f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = alpha,
@@ -170,16 +170,16 @@ internal fun DrawScope.drawBlizzardDome(epicenter: Offset, swirl: Float, alpha: 
     val glowRadius = span * 0.95f
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors =
-                    listOf(
-                        palette.atmosphere.copy(alpha = 0.5f),
-                        palette.atmosphere.copy(alpha = 0.2f),
-                        Color.Transparent,
-                    ),
-                center = epicenter,
-                radius = glowRadius,
+        Brush.radialGradient(
+            colors =
+            listOf(
+                palette.atmosphere.copy(alpha = 0.5f),
+                palette.atmosphere.copy(alpha = 0.2f),
+                Color.Transparent,
             ),
+            center = epicenter,
+            radius = glowRadius,
+        ),
         radius = glowRadius,
         center = epicenter,
         alpha = alpha,
@@ -219,11 +219,11 @@ private fun DrawScope.drawBlizzardGusts(swirl: Float, palette: MageElementPalett
         val end = Offset(x = centerX + streakLength / 2f, y = centerY - size.height * 0.05f)
         drawLine(
             brush =
-                Brush.linearGradient(
-                    colors = listOf(Color.Transparent, palette.trail, Color.Transparent),
-                    start = start,
-                    end = end,
-                ),
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, palette.trail, Color.Transparent),
+                start = start,
+                end = end,
+            ),
             start = start,
             end = end,
             strokeWidth = 2.5.dp.toPx(),

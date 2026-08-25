@@ -28,8 +28,7 @@ private val micChromeDark = Color(color = 0xFF35383F)
 private val encoreAsh = Color(color = 0xFF8C8A85)
 private val encoreBooTint = Color(color = 0xFF9DA7C4)
 
-private fun Color.grayed(fraction: Float): Color =
-    lerp(start = this, stop = encoreAsh, fraction = fraction)
+private fun Color.grayed(fraction: Float): Color = lerp(start = this, stop = encoreAsh, fraction = fraction)
 
 internal class EncoreCrowdMember(
     val centerXFraction: Float,
@@ -64,7 +63,7 @@ internal fun encoreCrowd(): List<EncoreCrowdMember> {
                     depth = depth,
                     avatarIndex = (row * perRow + column) % 8,
                     phase = next(),
-                )
+                ),
             )
         }
     }
@@ -118,10 +117,10 @@ internal fun DrawScope.drawEncoreCrowd(
         drawImage(
             image = avatar,
             dstOffset =
-                IntOffset(
-                    x = (centerX - faceWidth / 2f).roundToInt(),
-                    y = (centerY - faceHeight / 2f).roundToInt(),
-                ),
+            IntOffset(
+                x = (centerX - faceWidth / 2f).roundToInt(),
+                y = (centerY - faceHeight / 2f).roundToInt(),
+            ),
             dstSize = IntSize(width = faceWidth.roundToInt(), height = faceHeight.roundToInt()),
             alpha = darkness * (0.55f + (1f - member.depth) * 0.3f),
             colorFilter = ColorFilter.tint(color = faceColor, blendMode = BlendMode.Modulate),
@@ -134,11 +133,11 @@ internal fun DrawScope.drawEncoreStage(alpha: Float) {
     val stageTop = size.height * 0.82f
     drawRect(
         brush =
-            Brush.verticalGradient(
-                colors = listOf(Color(color = 0xFF17141F), encoreDark),
-                startY = stageTop,
-                endY = size.height,
-            ),
+        Brush.verticalGradient(
+            colors = listOf(Color(color = 0xFF17141F), encoreDark),
+            startY = stageTop,
+            endY = size.height,
+        ),
         topLeft = Offset(x = 0f, y = stageTop),
         size = Size(width = size.width, height = size.height - stageTop),
         alpha = alpha,
@@ -152,8 +151,7 @@ internal fun DrawScope.drawEncoreStage(alpha: Float) {
     )
 }
 
-private fun DrawScope.micHeadCenter(): Offset =
-    Offset(x = size.width * 0.5f, y = size.height * 0.58f)
+private fun DrawScope.micHeadCenter(): Offset = Offset(x = size.width * 0.5f, y = size.height * 0.58f)
 
 internal fun DrawScope.drawEncoreSpotlight(spotlight: Float) {
     if (spotlight <= 0f) return
@@ -172,25 +170,25 @@ internal fun DrawScope.drawEncoreSpotlight(spotlight: Float) {
     drawPath(
         path = cone,
         brush =
-            Brush.verticalGradient(
-                colors =
-                    listOf(
-                        encoreSpotlight.copy(alpha = 0.16f),
-                        encoreSpotlight.copy(alpha = 0.04f),
-                        Color.Transparent,
-                    ),
-                startY = apex.y,
-                endY = baseY,
+        Brush.verticalGradient(
+            colors =
+            listOf(
+                encoreSpotlight.copy(alpha = 0.16f),
+                encoreSpotlight.copy(alpha = 0.04f),
+                Color.Transparent,
             ),
+            startY = apex.y,
+            endY = baseY,
+        ),
         alpha = spotlight,
     )
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(encoreSpotlight.copy(alpha = 0.35f), Color.Transparent),
-                center = head,
-                radius = spread * 1.1f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(encoreSpotlight.copy(alpha = 0.35f), Color.Transparent),
+            center = head,
+            radius = spread * 1.1f,
+        ),
         radius = spread * 1.1f,
         center = head,
         alpha = spotlight,
@@ -215,11 +213,11 @@ private fun DrawScope.drawMicStand(head: Offset, radius: Float, baseCenter: Offs
     val halfWidth = radius * 0.26f
     drawRect(
         brush =
-            Brush.horizontalGradient(
-                colors = listOf(micChromeDark, micChromeLight, micChromeMid, micChromeDark),
-                startX = head.x - halfWidth,
-                endX = head.x + halfWidth,
-            ),
+        Brush.horizontalGradient(
+            colors = listOf(micChromeDark, micChromeLight, micChromeMid, micChromeDark),
+            startX = head.x - halfWidth,
+            endX = head.x + halfWidth,
+        ),
         topLeft = Offset(x = head.x - halfWidth, y = neckTop.y),
         size = Size(width = halfWidth * 2f, height = baseCenter.y - neckTop.y),
         alpha = alpha,
@@ -232,11 +230,11 @@ private fun DrawScope.drawMicBase(center: Offset, radius: Float, alpha: Float) {
     val discHeight = radius * 0.7f
     drawOval(
         brush =
-            Brush.radialGradient(
-                colors = listOf(micChromeLight, micChromeMid, micChromeDark),
-                center = center - Offset(x = discWidth * 0.15f, y = discHeight * 0.2f),
-                radius = discWidth * 0.7f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(micChromeLight, micChromeMid, micChromeDark),
+            center = center - Offset(x = discWidth * 0.15f, y = discHeight * 0.2f),
+            radius = discWidth * 0.7f,
+        ),
         topLeft = Offset(x = center.x - discWidth / 2f, y = center.y - discHeight / 2f),
         size = Size(width = discWidth, height = discHeight),
         alpha = alpha,
@@ -253,11 +251,11 @@ private fun DrawScope.drawMicHead(
     val highlight = Offset(x = head.x - radius * 0.4f, y = head.y - radius * 0.4f)
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(micChromeLight, micChromeMid, micChromeDark),
-                center = highlight,
-                radius = radius * 1.5f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(micChromeLight, micChromeMid, micChromeDark),
+            center = highlight,
+            radius = radius * 1.5f,
+        ),
         radius = radius,
         center = head,
         alpha = alpha,
@@ -359,11 +357,11 @@ internal fun DrawScope.drawEncoreVignette(darkness: Float) {
     if (darkness <= 0f) return
     drawRect(
         brush =
-            Brush.radialGradient(
-                colors = listOf(Color.Transparent, encoreDark),
-                center = Offset(x = size.width * 0.5f, y = size.height * 0.55f),
-                radius = size.maxDimension * 0.62f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(Color.Transparent, encoreDark),
+            center = Offset(x = size.width * 0.5f, y = size.height * 0.55f),
+            radius = size.maxDimension * 0.62f,
+        ),
         alpha = darkness * 0.9f,
     )
 }

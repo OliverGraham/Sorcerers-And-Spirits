@@ -13,7 +13,8 @@ class AndroidCurrentAppVersionProvider(private val context: Context) : CurrentAp
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             packageInfo.longVersionCode
         } else {
-            @Suppress("DEPRECATION") packageInfo.versionCode.toLong()
+            @Suppress("DEPRECATION")
+            packageInfo.versionCode.toLong()
         }
     }
 }

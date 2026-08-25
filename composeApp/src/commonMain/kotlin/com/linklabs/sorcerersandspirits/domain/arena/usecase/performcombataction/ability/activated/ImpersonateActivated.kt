@@ -15,22 +15,22 @@ internal class ImpersonateActivated(
     private fun CombatMutator.impersonateOutcome() {
         val copiedBehavior =
             impersonateAbility.copy(
-                impersonatedAbility = impersonateAbility.impersonatedAbility.defaultState
+                impersonatedAbility = impersonateAbility.impersonatedAbility.defaultState,
             )
 
         addMessage(
             message =
-                ArenaMessage.Impersonate(
-                    illusionistUserId = attackerUserId,
-                    illusionistName = attacker.className,
-                    impersonateAbility = copiedBehavior,
-                )
+            ArenaMessage.Impersonate(
+                illusionistUserId = attackerUserId,
+                illusionistName = attacker.className,
+                impersonateAbility = copiedBehavior,
+            ),
         )
 
         updateAttackerClass { attacker -> attacker.copy(offensiveAbility = copiedBehavior) }
 
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId))
+            nextAction = NextCombatAction.Idle(activeUserIds = setOf(attackerUserId)),
         )
     }
 }

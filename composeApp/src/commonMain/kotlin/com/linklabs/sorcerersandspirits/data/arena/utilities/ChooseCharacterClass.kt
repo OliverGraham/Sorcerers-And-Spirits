@@ -23,20 +23,19 @@ internal class ChooseCharacterClass(
         }
     }
 
-    private fun ArenaMatchEntity.chooseCharacterClassTransaction() =
-        when (this) {
-            is ArenaMatchEntity.ChoosingClasses -> chooseCharacterClassTransaction()
+    private fun ArenaMatchEntity.chooseCharacterClassTransaction() = when (this) {
+        is ArenaMatchEntity.ChoosingClasses -> chooseCharacterClassTransaction()
 
-            is ArenaMatchEntity.WaitingForAllPlayers,
-            is ArenaMatchEntity.Combat,
-            is ArenaMatchEntity.Finished -> this
-        }
+        is ArenaMatchEntity.WaitingForAllPlayers,
+        is ArenaMatchEntity.Combat,
+        is ArenaMatchEntity.Finished,
+        -> this
+    }
 
-    private fun ArenaMatchEntity.ChoosingClasses.chooseCharacterClassTransaction():
-        ArenaMatchEntity {
+    private fun ArenaMatchEntity.ChoosingClasses.chooseCharacterClassTransaction(): ArenaMatchEntity {
         val messageGenerator =
             ChooseCharacterClassMessageGenerator(
-                messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
+                messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName),
             )
 
         val updatedPlayers = playerEntitiesMap.toMutableMap()
@@ -48,9 +47,9 @@ internal class ChooseCharacterClass(
             transitionToCombat(
                 messageGenerator = messageGenerator,
                 selectedPlayers =
-                    updatedPlayers.values.associate {
-                        it.userId to it as ArenaPlayerEntity.Selected
-                    },
+                updatedPlayers.values.associate {
+                    it.userId to it as ArenaPlayerEntity.Selected
+                },
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
@@ -69,7 +68,7 @@ internal class ChooseCharacterClass(
         val fastestPlayer = selectedPlayers.getFastestPlayer()
         val updatedMessages =
             messageGenerator.generateCombatStartingMessages(
-                startingCharacterClass = fastestPlayer.characterClassEntity
+                startingCharacterClass = fastestPlayer.characterClassEntity,
             )
 
         val fastestPlayerUserId = fastestPlayer.userId
@@ -77,9 +76,9 @@ internal class ChooseCharacterClass(
             playerEntitiesMap = selectedPlayers,
             newMessages = updatedMessages,
             nextCombatActionEntity =
-                NextCombatActionEntity.IdleEntity(
-                    activeUserIds = setOf(element = fastestPlayerUserId)
-                ),
+            NextCombatActionEntity.IdleEntity(
+                activeUserIds = setOf(element = fastestPlayerUserId),
+            ),
             roundNumber = 1,
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet,
@@ -100,29 +99,27 @@ internal class ChooseCharacterClass(
     }
 
     private inner class ChooseCharacterClassMessageGenerator(
-        private val messagesReference: DatabaseReference
+        private val messagesReference: DatabaseReference,
     ) {
-        fun generateCharacterSelectionMessage(): List<ArenaMessageEntity> =
-            listOf(element = messagesReference.generateCharacterSelectionMessage())
+        fun generateCharacterSelectionMessage(): List<ArenaMessageEntity> = listOf(element = messagesReference.generateCharacterSelectionMessage())
 
         fun generateCombatStartingMessages(
-            startingCharacterClass: CharacterClassEntity
+            startingCharacterClass: CharacterClassEntity,
         ): List<ArenaMessageEntity> {
             val selectionMessage = messagesReference.generateCharacterSelectionMessage()
             val combatStartingMessages =
                 messagesReference.generateInitialCombatRoundMessages(
-                    startingCharacterClass = startingCharacterClass
+                    startingCharacterClass = startingCharacterClass,
                 )
 
             return listOf(selectionMessage) + combatStartingMessages
         }
 
-        private fun DatabaseReference.generateCharacterSelectionMessage() =
-            ArenaMessageEntity.ChoseCharacterClass(
-                id = addNewKey(),
-                characterClassInfo =
-                    selectedArenaPlayer.characterClassEntity.toCharacterClassMessageInfoEntity(),
-                displayName = selectedArenaPlayer.displayName,
-            )
+        private fun DatabaseReference.generateCharacterSelectionMessage() = ArenaMessageEntity.ChoseCharacterClass(
+            id = addNewKey(),
+            characterClassInfo =
+            selectedArenaPlayer.characterClassEntity.toCharacterClassMessageInfoEntity(),
+            displayName = selectedArenaPlayer.displayName,
+        )
     }
 }

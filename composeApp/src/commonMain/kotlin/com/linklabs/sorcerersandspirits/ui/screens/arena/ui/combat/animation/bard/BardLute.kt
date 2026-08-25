@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ba
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.lerp as lerpOffset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -17,6 +16,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
+import androidx.compose.ui.geometry.lerp as lerpOffset
 
 /** The ash the whole instrument drains toward as a failed Persuade lets the attack press on. */
 private val persuadeAsh = Color(color = 0xFF8C8A85)
@@ -40,8 +40,7 @@ private const val STRING_VIBRATION_CYCLES = 3.5f
 private val stringVibrationAmplitude = 4.dp
 
 /** Lerp any colour toward the failure ash, so a whole scene grays out in step. */
-private fun Color.grayed(fraction: Float): Color =
-    lerp(start = this, stop = persuadeAsh, fraction = fraction)
+private fun Color.grayed(fraction: Float): Color = lerp(start = this, stop = persuadeAsh, fraction = fraction)
 
 /**
  * The Bard's lute (SS-207): a wood-bowled pear body with a bard-coloured rosette, a fretted neck
@@ -74,11 +73,9 @@ internal fun DrawScope.drawLute(
 }
 
 /** The neck joint at the top of the body, and the pegbox at the far end of the neck. */
-private fun DrawScope.luteNeckBase(anchor: Offset): Offset =
-    anchor - Offset(x = 0f, y = luteBodyHalfHeight.toPx())
+private fun DrawScope.luteNeckBase(anchor: Offset): Offset = anchor - Offset(x = 0f, y = luteBodyHalfHeight.toPx())
 
-private fun DrawScope.lutePegbox(anchor: Offset): Offset =
-    luteNeckBase(anchor = anchor) - Offset(x = 0f, y = luteNeckLength.toPx())
+private fun DrawScope.lutePegbox(anchor: Offset): Offset = luteNeckBase(anchor = anchor) - Offset(x = 0f, y = luteNeckLength.toPx())
 
 /**
  * The fretted neck: a tapered wooden bar running up to the pegbox, banded by pale frets and pegs.
@@ -100,11 +97,11 @@ private fun DrawScope.drawLuteNeck(anchor: Offset, accent: Color, alpha: Float) 
     drawPath(
         path = neck,
         brush =
-            Brush.horizontalGradient(
-                colors = listOf(bardStickDark, bardStickLight, bardStickDark),
-                startX = base.x - baseHalf,
-                endX = base.x + baseHalf,
-            ),
+        Brush.horizontalGradient(
+            colors = listOf(bardStickDark, bardStickLight, bardStickDark),
+            startX = base.x - baseHalf,
+            endX = base.x + baseHalf,
+        ),
         alpha = alpha,
     )
 
@@ -174,21 +171,21 @@ private fun DrawScope.drawLuteBody(anchor: Offset, wood: Color, woodDark: Color,
     drawPath(
         path = body,
         brush =
-            Brush.radialGradient(
-                colors = listOf(wood, woodDark),
-                center = Offset(x = anchor.x - halfWidth * 0.35f, y = anchor.y - halfHeight * 0.2f),
-                radius = halfHeight * 1.25f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(wood, woodDark),
+            center = Offset(x = anchor.x - halfWidth * 0.35f, y = anchor.y - halfHeight * 0.2f),
+            radius = halfHeight * 1.25f,
+        ),
         alpha = alpha,
     )
     drawPath(
         path = body,
         brush =
-            Brush.verticalGradient(
-                colors = listOf(Color.White.copy(alpha = 0.22f), Color.Transparent),
-                startY = top.y,
-                endY = anchor.y,
-            ),
+        Brush.verticalGradient(
+            colors = listOf(Color.White.copy(alpha = 0.22f), Color.Transparent),
+            startY = top.y,
+            endY = anchor.y,
+        ),
         alpha = alpha,
     )
 }
@@ -211,11 +208,11 @@ private fun DrawScope.drawLuteRosette(
     )
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(Color.Black, woodDark),
-                center = center,
-                radius = radius * 0.62f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(Color.Black, woodDark),
+            center = center,
+            radius = radius * 0.62f,
+        ),
         radius = radius * 0.6f,
         center = center,
         alpha = alpha,
@@ -250,8 +247,7 @@ private fun DrawScope.drawRoundRectBar(
 }
 
 /** The bridge and pegbox anchor points the strings run between, spread across the instrument. */
-private fun DrawScope.stringBridgeAnchor(anchor: Offset): Offset =
-    anchor + Offset(x = 0f, y = luteBodyHalfHeight.toPx() * 0.48f)
+private fun DrawScope.stringBridgeAnchor(anchor: Offset): Offset = anchor + Offset(x = 0f, y = luteBodyHalfHeight.toPx() * 0.48f)
 
 /**
  * The strings drawn taut from bridge to pegbox and, while [strum] rings, bowed side to side in a
@@ -313,11 +309,11 @@ internal fun DrawScope.drawFlute(anchor: Offset, accentColor: Color, alpha: Floa
 
         drawLine(
             brush =
-                Brush.verticalGradient(
-                    colors = listOf(bardFluteLight, bardFluteDark),
-                    startY = anchor.y - radius,
-                    endY = anchor.y + radius,
-                ),
+            Brush.verticalGradient(
+                colors = listOf(bardFluteLight, bardFluteDark),
+                startY = anchor.y - radius,
+                endY = anchor.y + radius,
+            ),
             start = head,
             end = foot,
             strokeWidth = radius * 2f,

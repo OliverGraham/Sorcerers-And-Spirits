@@ -152,42 +152,39 @@ internal fun rememberAvatarGesture(
 }
 
 // TODO(SS-258): Common
-private fun ArenaMessageState.defenderReactionDelayMillis(): Long =
-    when (this) {
-        is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
+private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) {
+    is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
 
-        is ArenaMessageState.PrepareAttack -> prepareAttackReactionDelayMillis()
+    is ArenaMessageState.PrepareAttack -> prepareAttackReactionDelayMillis()
 
-        is ArenaMessageState.Riposte -> RIPOSTE_STRIKE_MILLIS
+    is ArenaMessageState.Riposte -> RIPOSTE_STRIKE_MILLIS
 
-        is ArenaMessageState.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
+    is ArenaMessageState.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 
-        is ArenaMessageState.HolyShield ->
-            if (this is ArenaMessageState.HolyShield.Wrath) {
-                HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong()
-            } else {
-                HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
-            }
+    is ArenaMessageState.HolyShield ->
+        if (this is ArenaMessageState.HolyShield.Wrath) {
+            HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong()
+        } else {
+            HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
+        }
 
-        else -> REACTION_DELAY_MILLIS
-    }
+    else -> REACTION_DELAY_MILLIS
+}
 
 // TODO(SS-258): Common
-private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long =
-    when (attackerClassType) {
-        CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
-        CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
-        CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
-        CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
-        CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
-        CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
-        CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
-        else -> REACTION_DELAY_MILLIS
-    }
+private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long = when (attackerClassType) {
+    CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
+    CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
+    CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
+    CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
+    CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
+    CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
+    CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
+    else -> REACTION_DELAY_MILLIS
+}
 
 // TODO(SS-258): Duelist
-private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
-    if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
+private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long = if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
 // TODO(SS-258): Common
 private suspend fun AvatarGestureState.play(
@@ -382,8 +379,7 @@ private suspend fun AvatarGestureState.slashCombo(reachPx: Float, isFinisher: Bo
     }
 }
 
-private fun twinSlashPreambleMillis(): Long =
-    (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS).toLong()
+private fun twinSlashPreambleMillis(): Long = (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS).toLong()
 
 private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Float) {
     coroutineScope {
@@ -391,7 +387,7 @@ private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Fl
             offsetY.animateTo(
                 targetValue = reachPx,
                 animationSpec =
-                    tween(durationMillis = SLASH_LEAN_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = SLASH_LEAN_MILLIS, easing = FastOutSlowInEasing),
             )
             offsetY.animateTo(
                 targetValue = 0f,
@@ -450,7 +446,7 @@ private suspend fun AvatarGestureState.preparedThrust(reachPx: Float) {
             offsetY.animateTo(
                 targetValue = reachPx,
                 animationSpec =
-                    tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
             )
         }
         launch {
@@ -467,7 +463,7 @@ private suspend fun AvatarGestureState.preparedThrustWhiff(reachPx: Float) {
             offsetY.animateTo(
                 targetValue = reachPx * 1.3f,
                 animationSpec =
-                    tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
             )
             offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
         }
@@ -596,7 +592,7 @@ private suspend fun AvatarGestureState.allInBust(liftPx: Float) {
     allInToss(liftPx = liftPx)
     delay(
         timeMillis =
-            (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS - ALL_IN_TOSS_GESTURE_MILLIS).toLong()
+        (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS - ALL_IN_TOSS_GESTURE_MILLIS).toLong(),
     )
     coroutineScope {
         launch {

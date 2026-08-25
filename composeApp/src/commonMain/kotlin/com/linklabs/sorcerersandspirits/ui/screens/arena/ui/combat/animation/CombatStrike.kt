@@ -118,11 +118,11 @@ internal fun DrawScope.drawImpactBurst(
     val radius = 38.dp.toPx() * scale
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(steelBright, accentColor.copy(alpha = 0.8f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(steelBright, accentColor.copy(alpha = 0.8f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = alpha,

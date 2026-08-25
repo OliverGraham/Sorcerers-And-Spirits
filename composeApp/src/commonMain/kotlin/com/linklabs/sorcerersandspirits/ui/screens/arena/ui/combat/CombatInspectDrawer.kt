@@ -62,12 +62,12 @@ internal fun InspectDrawer(
         AnimatedVisibility(visible = isOpen, enter = fadeIn(), exit = fadeOut()) {
             Box(
                 modifier =
-                    Modifier.fillMaxSize().background(color = inspectScrimColor).clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {
-                        onClose()
-                    }
+                Modifier.fillMaxSize().background(color = inspectScrimColor).clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    onClose()
+                },
             )
         }
 
@@ -94,17 +94,17 @@ internal fun InspectContent(
 
     Column(
         modifier =
-            modifier
-                .fillMaxHeight()
-                .width(width = 280.dp)
-                .background(color = inspectDrawerColor)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClose,
-                )
-                .verticalScroll(state = rememberScrollState())
-                .padding(all = 16.dp),
+        modifier
+            .fillMaxHeight()
+            .width(width = 280.dp)
+            .background(color = inspectDrawerColor)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClose,
+            )
+            .verticalScroll(state = rememberScrollState())
+            .padding(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         Text(

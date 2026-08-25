@@ -39,15 +39,15 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.triggerHighRoller() {
         addMessage(
             message =
-                ArenaMessage.LuckyCoin.HighRollerTrigger(
-                    gamblerUserId = defenderUserId,
-                    attackerClassName = attacker.className,
-                )
+            ArenaMessage.LuckyCoin.HighRollerTrigger(
+                gamblerUserId = defenderUserId,
+                attackerClassName = attacker.className,
+            ),
         )
 
         setNextAbilityRoll(
             purpose =
-                AbilityAction.Passive.LuckyCoin.HighRoller(attackerRollTotal = attackerRollTotal),
+            AbilityAction.Passive.LuckyCoin.HighRoller(attackerRollTotal = attackerRollTotal),
             activeUserIds = setOf(element = defenderUserId),
         )
     }
@@ -63,12 +63,12 @@ internal class LuckyCoinHandler(
         val isKnockout = !attacker.isConscious()
         addMessage(
             message =
-                ArenaMessage.LuckyCoin.HighRollerDamage(
-                    gamblerUserId = defenderUserId,
-                    attackerUserId = attackerUserId,
-                    singleDie = result,
-                    isKnockout = isKnockout,
-                )
+            ArenaMessage.LuckyCoin.HighRollerDamage(
+                gamblerUserId = defenderUserId,
+                attackerUserId = attackerUserId,
+                singleDie = result,
+                isKnockout = isKnockout,
+            ),
         )
 
         if (isKnockout) {
@@ -103,11 +103,11 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.handleDefenderWins(luckyCoinArmorBonus: Int) {
         addMessage(
             message =
-                ArenaMessage.LuckyCoin.Flip(
-                    gamblerUserId = defenderUserId,
-                    singleDie = luckyCoinArmorBonus,
-                    didStopAttack = true,
-                )
+            ArenaMessage.LuckyCoin.Flip(
+                gamblerUserId = defenderUserId,
+                singleDie = luckyCoinArmorBonus,
+                didStopAttack = true,
+            ),
         )
 
         resolveTurnEnd()
@@ -116,11 +116,11 @@ internal class LuckyCoinHandler(
     private fun CombatMutator.handleAttackerWins(luckyCoinArmorBonus: Int) {
         addMessage(
             message =
-                ArenaMessage.LuckyCoin.Flip(
-                    gamblerUserId = defenderUserId,
-                    singleDie = luckyCoinArmorBonus,
-                    didStopAttack = false,
-                )
+            ArenaMessage.LuckyCoin.Flip(
+                gamblerUserId = defenderUserId,
+                singleDie = luckyCoinArmorBonus,
+                didStopAttack = false,
+            ),
         )
 
         continueAttackWithHealthRoll()

@@ -106,6 +106,7 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(userPlayerId: Str
 
 private fun ArenaMatchState.Combat.getTargetedPlayerUserId() = lockedTargetUserId
     ?: selectedOpponentUserId
+    ?: combatActionState.defenderUserId()
     ?: playerMap.values
         .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
         ?.userId

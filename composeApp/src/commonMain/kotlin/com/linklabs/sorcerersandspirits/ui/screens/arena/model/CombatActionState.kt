@@ -115,6 +115,12 @@ sealed interface AbilityActionState {
     }
 }
 
+internal fun CombatActionState.defenderUserId(): String? = when (this) {
+    is CombatActionState.NormalAttack -> defenderUserId
+    is CombatActionState.AbilityRoll -> defenderUserId
+    is CombatActionState.Idle -> null
+}
+
 internal val AbilityActionState.requiresTarget: Boolean
     get() =
         when (this) {

@@ -46,7 +46,11 @@ internal fun ArenaCombat(
     timerState: () -> ArenaTimerState,
     modifier: Modifier = Modifier,
 ) {
-    val diceStateHolder = rememberDiceStateHolder(diceRollState = arenaMatchState.diceRollState)
+    val diceStateHolder =
+        rememberDiceStateHolder(
+            diceRollState = arenaMatchState.diceRollState,
+            userId = arenaMatchState.userPlayerId,
+        )
 
     val inspectedUserId =
         remember(key1 = arenaMatchState.activeUserIds) { mutableStateOf<String?>(value = null) }

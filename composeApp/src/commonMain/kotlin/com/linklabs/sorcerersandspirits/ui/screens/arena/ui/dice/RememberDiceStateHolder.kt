@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
 import kotlinx.coroutines.Job
@@ -15,12 +16,19 @@ private const val ROLL_TUMBLE_IMPULSE_MILLIS = 220L
 private const val MAX_ROLL_TUMBLE_IMPULSES = 27
 
 @Composable
-internal fun rememberDiceStateHolder(diceRollState: DiceRollState?): DiceStateHolder {
+internal fun rememberDiceStateHolder(
+    diceRollState: DiceRollState?,
+    userId: String,
+): DiceStateHolder {
     val diceStateHolder = remember { DiceStateHolder() }
 
     ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
     ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder)
-    ApplyRollWhenResolved(diceStateHolder = diceStateHolder, diceRollState = diceRollState)
+    ApplyRollWhenResolved(
+        diceStateHolder = diceStateHolder,
+        diceRollState = diceRollState,
+        userId = userId,
+    )
 
     return diceStateHolder
 }
@@ -69,11 +77,20 @@ private fun ShakeDiceWhileWaitingForResult(diceStateHolder: DiceStateHolder) {
 }
 
 @Composable
-private fun ApplyRollWhenResolved(diceStateHolder: DiceStateHolder, diceRollState: DiceRollState?) {
+private fun ApplyRollWhenResolved(
+    diceStateHolder: DiceStateHolder,
+    diceRollState: DiceRollState?,
+    userId: String,
+) {
+    val onDiceSettled = ArenaActionsProvider.current.onDiceSettled
     LaunchedEffect(key1 = diceRollState?.id) {
         if (diceRollState == null) return@LaunchedEffect
 
+        if (diceRollState.doNotPerformDiceRollAnimation) {
+            onDiceSettled(/* userId= */ userId)
+            return@LaunchedEffect
+        }
+
         diceStateHolder.applyRoll(diceRollState = diceRollState)
-        diceStateHolder.setIsUserRollingToFalse()
     }
 }

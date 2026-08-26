@@ -11,8 +11,7 @@ import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 
-@OptIn(ExperimentalAtomicApi::class)
-private val diceRollStateIdCounter = AtomicInt(value = 0)
+@OptIn(ExperimentalAtomicApi::class) private val diceRollStateIdCounter = AtomicInt(value = 0)
 
 @OptIn(ExperimentalAtomicApi::class)
 private fun nextDiceRollStateId(): Int = diceRollStateIdCounter.incrementAndFetch()
@@ -22,6 +21,7 @@ sealed interface DiceRollState {
     val doublesBonus: DoublesBonusState?
     val id: Int
     val diceBadge: DiceBadgeState?
+    val doNotPerformDiceRollAnimation: Boolean
 
     @Immutable
     data class OneDie(
@@ -30,9 +30,10 @@ sealed interface DiceRollState {
         val dieColor: DieColor = DieColor.NormalAttack,
         val isSiblingDisabled: Boolean = true,
         val isMirrorImageReroll: Boolean = false,
-        override val doublesBonus: DoublesBonusState? = null,
         val wasDoublesBonusConsumed: Boolean = false,
         override val id: Int = nextDiceRollStateId(),
+        override val doublesBonus: DoublesBonusState? = null,
+        override val doNotPerformDiceRollAnimation: Boolean = false,
     ) : DiceRollState {
         override val diceBadge =
             when {
@@ -47,9 +48,10 @@ sealed interface DiceRollState {
         val firstDie: Int,
         val secondDie: Int,
         val dieColor: DieColor = DieColor.NormalAttack,
-        override val doublesBonus: DoublesBonusState? = null,
         val wasDoublesBonusConsumed: Boolean = false,
         override val id: Int = nextDiceRollStateId(),
+        override val doublesBonus: DoublesBonusState? = null,
+        override val doNotPerformDiceRollAnimation: Boolean = false,
     ) : DiceRollState {
         override val diceBadge =
             if (wasDoublesBonusConsumed) {
@@ -60,24 +62,30 @@ sealed interface DiceRollState {
     }
 }
 
-internal fun DiceRoll.toState(): DiceRollState = when (this) {
-    is DiceRoll.OneDie ->
-        DiceRollState.OneDie(
-            value = value,
-            diePosition = diePosition,
-            dieColor = dieColor,
-            isSiblingDisabled = disablesSibling,
-            isMirrorImageReroll = isMirrorImageReroll,
-            doublesBonus = doublesBonus?.toState(),
-            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-        )
+internal fun DiceRoll.toState(): DiceRollState =
+    when (this) {
+        is DiceRoll.OneDie ->
+            DiceRollState.OneDie(
+                value = value,
+                diePosition = diePosition,
+                dieColor = dieColor,
+                isSiblingDisabled = disablesSibling,
+                isMirrorImageReroll = isMirrorImageReroll,
+                doublesBonus = doublesBonus?.toState(),
+                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+            )
 
-    is DiceRoll.TwoDice ->
-        DiceRollState.TwoDice(
-            firstDie = firstDie,
-            secondDie = secondDie,
-            dieColor = dieColor,
-            doublesBonus = doublesBonus?.toState(),
-            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-        )
-}
+        is DiceRoll.TwoDice -> {
+            println(
+                "MIRROR IMAGE DEBUG: DiceRoll.toState called and isMirrorImagePass == $isMirrorImagePass"
+            )
+            DiceRollState.TwoDice(
+                firstDie = firstDie,
+                secondDie = secondDie,
+                dieColor = dieColor,
+                doublesBonus = doublesBonus?.toState(),
+                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+                doNotPerformDiceRollAnimation = isMirrorImagePass,
+            )
+        }
+    }

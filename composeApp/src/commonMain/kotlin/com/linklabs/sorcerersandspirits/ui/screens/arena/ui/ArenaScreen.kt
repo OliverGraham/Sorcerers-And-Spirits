@@ -47,8 +47,7 @@ internal fun ArenaScreen(
                 onAttack = viewModel::onAttack,
                 onUseAbility = viewModel::onUseAbility,
                 onDiceSettled = viewModel::onDiceSettled,
-                onFlashComplete = viewModel::onFlashComplete,
-                onAvatarComplete = viewModel::onAvatarComplete,
+                onAnimationComplete = viewModel::onAnimationComplete,
                 onTryLeaveArena = viewModel::onTryLeaveArena,
                 onConfirmLeaveArena = viewModel::onConfirmLeaveArena,
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
@@ -120,7 +119,7 @@ private fun Flow<ArenaEvent>.collectEvents(
                 is ArenaEvent.OpponentLeft ->
                     coroutineScope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "${event.displayName} left the arena",
+                            message = "${event.displayName} left the arena"
                         )
                     }
             }

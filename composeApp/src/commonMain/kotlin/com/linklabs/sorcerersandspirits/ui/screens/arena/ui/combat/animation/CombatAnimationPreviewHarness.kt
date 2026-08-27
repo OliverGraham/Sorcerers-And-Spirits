@@ -58,7 +58,7 @@ internal fun rememberSoloAvatar(): PreviewAvatars {
     return remember(key1 = density) {
         PreviewAvatars(
             boundsByUserId =
-            mapOf(PREVIEW_ACTOR_ID to avatarBounds(density = density, centerYFraction = 0.5f)),
+                mapOf(PREVIEW_ACTOR_ID to avatarBounds(density = density, centerYFraction = 0.5f))
         )
     }
 }
@@ -69,24 +69,25 @@ internal fun rememberDuoAvatars(): PreviewAvatars {
     return remember(key1 = density) {
         PreviewAvatars(
             boundsByUserId =
-            mapOf(
-                PREVIEW_ACTOR_ID to avatarBounds(density = density, centerYFraction = 0.66f),
-                PREVIEW_TARGET_ID to avatarBounds(density = density, centerYFraction = 0.2f),
-            ),
+                mapOf(
+                    PREVIEW_ACTOR_ID to avatarBounds(density = density, centerYFraction = 0.66f),
+                    PREVIEW_TARGET_ID to avatarBounds(density = density, centerYFraction = 0.2f),
+                )
         )
     }
 }
 
-private fun avatarBounds(density: Density, centerYFraction: Float): Rect = with(density) {
-    val width = 110.dp.toPx()
-    val height = 150.dp.toPx()
-    val centerX = PREVIEW_WIDTH_DP.dp.toPx() / 2f
-    val centerY = PREVIEW_HEIGHT_DP.dp.toPx() * centerYFraction
-    Rect(
-        offset = Offset(x = centerX - width / 2f, y = centerY - height / 2f),
-        size = Size(width = width, height = height),
-    )
-}
+private fun avatarBounds(density: Density, centerYFraction: Float): Rect =
+    with(density) {
+        val width = 110.dp.toPx()
+        val height = 150.dp.toPx()
+        val centerX = PREVIEW_WIDTH_DP.dp.toPx() / 2f
+        val centerY = PREVIEW_HEIGHT_DP.dp.toPx() * centerYFraction
+        Rect(
+            offset = Offset(x = centerX - width / 2f, y = centerY - height / 2f),
+            size = Size(width = width, height = height),
+        )
+    }
 
 @Composable
 internal fun <MessageState : ArenaMessageState> AnimationPreview(
@@ -97,18 +98,18 @@ internal fun <MessageState : ArenaMessageState> AnimationPreview(
 ) {
     var replay by remember { mutableIntStateOf(0) }
     val message = remember(key1 = replay) { buildMessage("preview-$replay") }
-    val actions = remember { ArenaActions(onAvatarComplete = { replay++ }) }
+    val actions = remember { ArenaActions(onAnimationComplete = { replay++ }) }
     val markerColor = accentClass.toColor()
 
     CompositionLocalProvider(LocalArenaActions provides actions) {
         SorcerersAndSpiritsTheme {
             Box(
                 modifier =
-                Modifier.fillMaxSize()
-                    .paint(
-                        painter = painterResource(resource = Res.drawable.arena_background),
-                        contentScale = ContentScale.Crop,
-                    ),
+                    Modifier.fillMaxSize()
+                        .paint(
+                            painter = painterResource(resource = Res.drawable.arena_background),
+                            contentScale = ContentScale.Crop,
+                        )
             ) {
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     avatars.userIds.forEach { userId ->

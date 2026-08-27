@@ -27,8 +27,10 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -75,7 +77,7 @@ internal fun PersuadeOverlay(
 ) {
     val state = remember { PersuadeEffectState() }
     val density = LocalDensity.current
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         val scene =
@@ -86,7 +88,12 @@ internal fun PersuadeOverlay(
             )
         state.play(scene = scene, message = animatingMessage)
 
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawPersuade(state = state) }
@@ -159,7 +166,7 @@ private suspend fun PersuadeEffectState.strumLute(scene: PersuadeScene, isSucces
                 fall.animateTo(
                     targetValue = 1f,
                     animationSpec =
-                    tween(durationMillis = NOTE_FALL_MILLIS, easing = FastOutSlowInEasing),
+                        tween(durationMillis = NOTE_FALL_MILLIS, easing = FastOutSlowInEasing),
                 )
             }
         }
@@ -226,7 +233,7 @@ private suspend fun PersuadeEffectState.ringStrings() {
             notes.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = NOTE_ENTER_MILLIS, easing = FastOutSlowInEasing),
+                    tween(durationMillis = NOTE_ENTER_MILLIS, easing = FastOutSlowInEasing),
             )
         }
     }

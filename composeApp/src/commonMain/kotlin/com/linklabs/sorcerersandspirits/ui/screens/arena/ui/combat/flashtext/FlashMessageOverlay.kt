@@ -37,16 +37,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FlashAnchor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.random.Random
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 private val flashFontSize = 46.sp
 private const val FLASH_OUTLINE_FRACTION = 0.09f
@@ -80,12 +82,12 @@ internal fun FlashMessageOverlay(
 
     Box(
         modifier =
-        modifier
-            .fillMaxSize()
-            .onGloballyPositioned {
-                avatarBoundsStateHolder.reportOverlayBounds(boundsInRoot = it.boundsInRoot())
-            }
-            .onSizeChanged { overlaySize = it },
+            modifier
+                .fillMaxSize()
+                .onGloballyPositioned {
+                    avatarBoundsStateHolder.reportOverlayBounds(boundsInRoot = it.boundsInRoot())
+                }
+                .onSizeChanged { overlaySize = it }
     ) {
         val message = shownMessage ?: return@Box
         val point =
@@ -104,18 +106,18 @@ internal fun FlashMessageOverlay(
             message = message,
             swingDegrees = textAnimation.swingDegrees.value,
             modifier =
-            Modifier.centeredAt(point = { point }).graphicsLayer {
-                alpha = textAnimation.alpha.value
-                scaleX = textAnimation.scale.value
-                scaleY = textAnimation.scale.value
-            },
+                Modifier.centeredAt(point = { point }).graphicsLayer {
+                    alpha = textAnimation.alpha.value
+                    scaleX = textAnimation.scale.value
+                    scaleY = textAnimation.scale.value
+                },
         )
     }
 }
 
 @Composable
 private fun AnimateText(messageId: String, textAnimation: TextAnimation) {
-    val onFlashComplete = ArenaActionsProvider.current.onFlashComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = messageId) {
         coroutineScope {
@@ -123,10 +125,10 @@ private fun AnimateText(messageId: String, textAnimation: TextAnimation) {
             textAnimation.scale.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                spring(
-                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                    stiffness = Spring.StiffnessLow,
-                ),
+                    spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness = Spring.StiffnessLow,
+                    ),
             )
         }
 
@@ -145,7 +147,12 @@ private fun AnimateText(messageId: String, textAnimation: TextAnimation) {
             )
         }
 
-        onFlashComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = messageId,
+                animationKey = AnimationKey.FlashMessage,
+            )
+        )
     }
 }
 
@@ -205,16 +212,16 @@ private fun FlashText(
         Text(
             text = text,
             style =
-            baseStyle.copy(
-                color = Color.Black,
-                drawStyle = Stroke(width = outlineWidthPx),
-                shadow =
-                Shadow(
+                baseStyle.copy(
                     color = Color.Black,
-                    offset = Offset(x = 0f, y = 4f),
-                    blurRadius = 12f,
+                    drawStyle = Stroke(width = outlineWidthPx),
+                    shadow =
+                        Shadow(
+                            color = Color.Black,
+                            offset = Offset(x = 0f, y = 4f),
+                            blurRadius = 12f,
+                        ),
                 ),
-            ),
         )
         Text(text = text, style = baseStyle.copy(color = fillColor))
     }
@@ -250,7 +257,8 @@ private class TextAnimation {
 
     companion object {
         @Composable
-        fun rememberTextAnimation(messageId: String): TextAnimation = remember(key1 = messageId) { TextAnimation() }
+        fun rememberTextAnimation(messageId: String): TextAnimation =
+            remember(key1 = messageId) { TextAnimation() }
     }
 }
 
@@ -278,11 +286,11 @@ private fun confettiParticles(): List<ConfettiParticle> {
         ConfettiParticle(
             angle = Random.nextFloat() * 2f * PI_FLOAT,
             distance =
-            CONFETTI_MIN_DISTANCE +
-                Random.nextFloat() * (CONFETTI_MAX_DISTANCE - CONFETTI_MIN_DISTANCE),
+                CONFETTI_MIN_DISTANCE +
+                    Random.nextFloat() * (CONFETTI_MAX_DISTANCE - CONFETTI_MIN_DISTANCE),
             radius =
-            CONFETTI_MIN_RADIUS +
-                Random.nextFloat() * (CONFETTI_MAX_RADIUS - CONFETTI_MIN_RADIUS),
+                CONFETTI_MIN_RADIUS +
+                    Random.nextFloat() * (CONFETTI_MAX_RADIUS - CONFETTI_MIN_RADIUS),
             color = colors[index % colors.size],
         )
     }

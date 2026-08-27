@@ -504,6 +504,30 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-207 (Persuade animation), game rule: Persuade redirect needs ≥2 alive non-Bard
   players.
 
+### SS-267 — Combat queue can hang when a gesture participant isn't a seated avatar (SpellPotency splash targets)
+
+- [ ] Not completed
+- **Introduced by:** the keyed animation-completion rework in `ArenaMatchCombatQueue`
+  (`MessageAnimationCoordinator`). Each message's expected-animator set is seeded up front from the
+  message: `AnimationKey.FlashMessage`, `AnimationKey.AvatarOverlay`, and one
+  `AnimationKey.AvatarGesture(userId)` per entry in `gestures.keys`. The coordinator only resolves
+  once **every** expected key has reported via `onAnimationComplete`.
+- **Symptom / hazard:** a gesture is only reported by a mounted, seated `GestureClassAvatar` (top =
+  targeted seat, bottom = attacker seat). If a message's `gestures` map names a userId that is **not**
+  seated — rendered only in the stands (`ClassIcons`), or otherwise not composing a
+  `GestureClassAvatar` — that `AvatarGesture(userId)` key is never reported, the coordinator's
+  `completion` never completes, `await()` blocks forever, and the queue stalls. That's the same
+  end-state SS-256 fought (combat controls never return, match becomes unplayable).
+- **Identified case:** SpellPotency. Its `gestures` map carries the mage (`Cast`) and the main target
+  (`Collapse`/`FlinchHeavy`). Confirm whether the main target (and any secondary/splash target that
+  ever receives a gesture) is guaranteed to be one of the two on-screen seats; splash victims live in
+  the stands and must never end up as an expected gesture key while unseated.
+- **Fix direction:** restrict the expected-animator set to participants that will actually mount and
+  report (only the seated attacker/target), or give the coordinator a bounded fallback so an
+  unreported animator can't hang the whole queue. Decide which in `getExpectedAnimationKeys`.
+- **Related:** SS-256 (the queue/gating rearchitecture this rides on), [[never-drain-loop-combat-queue]],
+  [[combat-queue-signal-reentrancy]], [[combat-button-visibility-isanimating]].
+
 ## Profile & Auth
 
 ### SS-249 — Keep users signed in with a local session record (fix re-login + duplicate accounts)

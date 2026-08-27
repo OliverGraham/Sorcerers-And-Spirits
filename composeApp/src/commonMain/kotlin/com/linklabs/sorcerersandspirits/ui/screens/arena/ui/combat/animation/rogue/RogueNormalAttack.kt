@@ -26,9 +26,11 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -41,11 +43,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.pro
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
+import kotlin.math.PI
+import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
-import kotlin.math.atan2
 
 internal const val MELEE_DASH_MILLIS = 200
 internal const val MELEE_THRUST_MILLIS = 100
@@ -64,24 +66,29 @@ internal fun RogueNormalAttackOverlay(
 ) {
     val rogueStrikeState = remember { RogueStrikeState() }
     val density = LocalDensity.current
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         val messageType = animatingMessage.normalRollMessageType
 
         rogueStrikeState.play(
             geometry =
-            projectileStrikeGeometry(
-                messageType = messageType,
-                attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
-                accentColor = accentColor,
-                density = density,
-            ),
+                projectileStrikeGeometry(
+                    messageType = messageType,
+                    attackerBounds = attackerBounds,
+                    defenderBounds = defenderBounds,
+                    accentColor = accentColor,
+                    density = density,
+                ),
             normalRollMessageType = messageType,
         )
 
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawRogueStrike(state = rogueStrikeState) }
@@ -245,12 +252,12 @@ private fun DrawScope.drawBladeThrust(
 
     drawLine(
         brush =
-        Brush.linearGradient(
-            colors =
-            listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.6f), steelBright),
-            start = trailStart,
-            end = position,
-        ),
+            Brush.linearGradient(
+                colors =
+                    listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.6f), steelBright),
+                start = trailStart,
+                end = position,
+            ),
         start = trailStart,
         end = position,
         strokeWidth = 8.dp.toPx(),
@@ -292,11 +299,11 @@ private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
     drawPath(
         path = blade,
         brush =
-        Brush.linearGradient(
-            colors = listOf(steelBright, steelShade),
-            start = Offset(x = 0f, y = 0f),
-            end = Offset(x = 0f, y = -bladeLength),
-        ),
+            Brush.linearGradient(
+                colors = listOf(steelBright, steelShade),
+                start = Offset(x = 0f, y = 0f),
+                end = Offset(x = 0f, y = -bladeLength),
+            ),
         alpha = alpha,
     )
 

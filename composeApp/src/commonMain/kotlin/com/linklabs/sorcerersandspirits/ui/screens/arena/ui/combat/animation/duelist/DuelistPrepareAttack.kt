@@ -31,22 +31,24 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 internal const val PREPARE_APPEAR_MILLIS = 160
 internal const val PREPARE_TWIRL_MILLIS = 450
@@ -103,7 +105,7 @@ internal fun PrepareAttackOverlay(
 ) {
     val state = remember { PrepareAttackEffectState() }
     val density = LocalDensity.current
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         val scene =
@@ -116,7 +118,12 @@ internal fun PrepareAttackOverlay(
 
         state.play(scene = scene, isSuccessful = animatingMessage.isSuccessful)
 
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawPrepareAttack(state = state) }
@@ -188,7 +195,7 @@ private suspend fun PrepareAttackEffectState.thrustForward() {
     thrust.animateTo(
         targetValue = 1f,
         animationSpec =
-        tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+            tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
     )
 }
 
@@ -321,12 +328,12 @@ private fun DrawScope.drawKnockoutBurst(scene: PrepareAttackScene, scale: Float,
     val radius = 40.dp.toPx() * scale
     drawCircle(
         brush =
-        Brush.radialGradient(
-            colors =
-            listOf(Color.White, scene.accentColor.copy(alpha = 0.8f), Color.Transparent),
-            center = scene.strikePoint,
-            radius = radius,
-        ),
+            Brush.radialGradient(
+                colors =
+                    listOf(Color.White, scene.accentColor.copy(alpha = 0.8f), Color.Transparent),
+                center = scene.strikePoint,
+                radius = radius,
+            ),
         radius = radius,
         center = scene.strikePoint,
         alpha = alpha,

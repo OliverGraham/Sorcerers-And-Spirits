@@ -29,9 +29,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -46,11 +48,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.sla
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.slashTangent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.smoothstep
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
+import kotlin.math.PI
+import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
-import kotlin.math.atan2
 
 private const val MACE_RAISE_MILLIS = 200
 private const val MACE_READY_HOLD_MILLIS = 200L
@@ -80,43 +82,50 @@ internal fun PaladinNormalAttackOverlay(
 ) {
     val paladinStrikeState = remember { PaladinStrikeState() }
     val density = LocalDensity.current
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         val messageType = animatingMessage.normalRollMessageType
 
         paladinStrikeState.play(
             geometry =
-            weaponStrikeGeometry(
-                attackerBounds = attackerBounds,
-                target = defenderBounds.center,
-                accentColor = accentColor,
-                density = density,
-            ),
+                weaponStrikeGeometry(
+                    attackerBounds = attackerBounds,
+                    target = defenderBounds.center,
+                    accentColor = accentColor,
+                    density = density,
+                ),
             normalRollMessageType = messageType,
         )
 
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawMaceSwing(state = paladinStrikeState) }
 }
 
 // TODO: I had meant this to be related to the actual dice total value
-private fun essenceFor(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
-    NormalRollMessageType.Knockout -> 1f
-    NormalRollMessageType.Damage -> 0.72f
-    NormalRollMessageType.ArmorClassHit -> 0.48f
-    NormalRollMessageType.ArmorClassMiss -> 0.28f
-}
+private fun essenceFor(normalRollMessageType: NormalRollMessageType): Float =
+    when (normalRollMessageType) {
+        NormalRollMessageType.Knockout -> 1f
+        NormalRollMessageType.Damage -> 0.72f
+        NormalRollMessageType.ArmorClassHit -> 0.48f
+        NormalRollMessageType.ArmorClassMiss -> 0.28f
+    }
 
 // TODO: I had meant this to be related to the actual dice total value
-private fun burstScaleFor(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
-    NormalRollMessageType.Knockout -> 1.3f
-    NormalRollMessageType.Damage -> 1f
-    NormalRollMessageType.ArmorClassHit -> 0.8f
-    NormalRollMessageType.ArmorClassMiss -> 0f
-}
+private fun burstScaleFor(normalRollMessageType: NormalRollMessageType): Float =
+    when (normalRollMessageType) {
+        NormalRollMessageType.Knockout -> 1.3f
+        NormalRollMessageType.Damage -> 1f
+        NormalRollMessageType.ArmorClassHit -> 0.8f
+        NormalRollMessageType.ArmorClassMiss -> 0f
+    }
 
 internal suspend fun PaladinStrikeState.play(
     geometry: WeaponStrikeGeometry,
@@ -139,7 +148,7 @@ internal suspend fun PaladinStrikeState.play(
             swing.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = MACE_SWING_MILLIS, easing = FastOutSlowInEasing),
+                    tween(durationMillis = MACE_SWING_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         launch {
@@ -262,38 +271,38 @@ private fun DrawScope.drawEssenceTrail(
         path = plume,
         color = paladinEssenceGlow,
         style =
-        Stroke(
-            width = 32.dp.toPx() * widthScale,
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round,
-        ),
+            Stroke(
+                width = 32.dp.toPx() * widthScale,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
         alpha = alpha * essence * 0.18f,
     )
     drawPath(
         path = plume,
         color = paladinEssenceGreen,
         style =
-        Stroke(
-            width = 19.dp.toPx() * widthScale,
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round,
-        ),
+            Stroke(
+                width = 19.dp.toPx() * widthScale,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
         alpha = alpha * essence * 0.32f,
     )
     drawPath(
         path = plume,
         brush =
-        Brush.linearGradient(
-            colors = listOf(Color.Transparent, paladinEssenceGreen, paladinEssenceCore),
-            start = tail,
-            end = head,
-        ),
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, paladinEssenceGreen, paladinEssenceCore),
+                start = tail,
+                end = head,
+            ),
         style =
-        Stroke(
-            width = 10.dp.toPx() * widthScale,
-            cap = StrokeCap.Round,
-            join = StrokeJoin.Round,
-        ),
+            Stroke(
+                width = 10.dp.toPx() * widthScale,
+                cap = StrokeCap.Round,
+                join = StrokeJoin.Round,
+            ),
         alpha = alpha * (0.5f + 0.45f * essence),
     )
 }

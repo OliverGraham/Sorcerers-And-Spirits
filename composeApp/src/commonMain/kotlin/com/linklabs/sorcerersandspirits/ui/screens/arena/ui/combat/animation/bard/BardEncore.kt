@@ -24,8 +24,10 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -81,11 +83,16 @@ internal fun EncoreOverlay(
     val crowd = remember { encoreCrowd() }
     val avatars = encoreCrowdAvatars()
 
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(message = animatingMessage, accentColor = accentColor)
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     val ambient = rememberInfiniteTransition(label = ENCORE_AMBIENT_LABEL)
@@ -94,9 +101,9 @@ internal fun EncoreOverlay(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing),
-            ),
+                infiniteRepeatable(
+                    animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing)
+                ),
             label = ENCORE_SWAY_LABEL,
         )
     val glint by
@@ -104,9 +111,9 @@ internal fun EncoreOverlay(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec =
-            infiniteRepeatable(
-                animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing),
-            ),
+                infiniteRepeatable(
+                    animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing)
+                ),
             label = ENCORE_GLINT_LABEL,
         )
     Canvas(modifier = modifier) {
@@ -115,16 +122,17 @@ internal fun EncoreOverlay(
 }
 
 @Composable
-private fun encoreCrowdAvatars(): List<ImageBitmap> = listOf(
-    imageResource(resource = Res.drawable.rogue_avatar),
-    imageResource(resource = Res.drawable.gambler_avatar),
-    imageResource(resource = Res.drawable.duelist_avatar),
-    imageResource(resource = Res.drawable.necromancer_avatar),
-    imageResource(resource = Res.drawable.bard_avatar),
-    imageResource(resource = Res.drawable.illusionist_avatar),
-    imageResource(resource = Res.drawable.mage_avatar),
-    imageResource(resource = Res.drawable.paladin_avatar),
-)
+private fun encoreCrowdAvatars(): List<ImageBitmap> =
+    listOf(
+        imageResource(resource = Res.drawable.rogue_avatar),
+        imageResource(resource = Res.drawable.gambler_avatar),
+        imageResource(resource = Res.drawable.duelist_avatar),
+        imageResource(resource = Res.drawable.necromancer_avatar),
+        imageResource(resource = Res.drawable.bard_avatar),
+        imageResource(resource = Res.drawable.illusionist_avatar),
+        imageResource(resource = Res.drawable.mage_avatar),
+        imageResource(resource = Res.drawable.paladin_avatar),
+    )
 
 private suspend fun EncoreEffectState.play(message: ArenaMessageState.Encore, accentColor: Color) {
     when (message) {
@@ -170,7 +178,7 @@ private suspend fun EncoreEffectState.resolve(accentColor: Color, isSuccessful: 
             reaction.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = REACTION_MILLIS, easing = FastOutSlowInEasing),
+                    tween(durationMillis = REACTION_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         if (!isSuccessful) {

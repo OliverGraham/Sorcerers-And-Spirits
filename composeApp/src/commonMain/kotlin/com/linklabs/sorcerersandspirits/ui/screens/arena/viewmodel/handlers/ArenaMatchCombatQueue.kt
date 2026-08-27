@@ -3,11 +3,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,8 +22,7 @@ internal class ArenaMatchCombatQueue(
 
     // TODO: Determine if Mutex is needed
     private val resolveMutex = Mutex()
-    private var flashSignal: CompletableDeferred<Unit>? = null
-    private var avatarSignal: CompletableDeferred<Unit>? = null
+    private var currentAnimationCoordinator: MessageAnimationCoordinator? = null
 
     fun enqueue(arenaMatchUpdate: ArenaMatch.Combat) {
         queue.add(element = arenaMatchUpdate)
@@ -39,11 +36,13 @@ internal class ArenaMatchCombatQueue(
             val messages = arenaMatchCombatUpdate.messages.toMessageStates()
 
             messages.forEach { message ->
+                val animationCoordinator = MessageAnimationCoordinator(message = message)
+                currentAnimationCoordinator = animationCoordinator
+
                 triggerAnimation(/* arenaMessageState= */ message)
+                animationCoordinator.await()
 
-                val animationSignals = message.animation.toAnimationSignals()
-                animationSignals.awaitAll()
-
+                currentAnimationCoordinator = null
                 addMessageToScreenState(/* arenaMessageState= */ message)
             }
 
@@ -61,34 +60,12 @@ internal class ArenaMatchCombatQueue(
         }
     }
 
-    fun onFlashComplete() {
-        val signal = flashSignal
-        flashSignal = null
-        signal?.complete(value = Unit)
-    }
-
-    fun onAvatarComplete() {
-        val signal = avatarSignal
-        avatarSignal = null
-        signal?.complete(value = Unit)
-    }
-
-    private fun ArenaAnimationState.toAnimationSignals() = buildList {
-        if (isFlash()) {
-            val flashSignal = CompletableDeferred<Unit>()
-            this@ArenaMatchCombatQueue.flashSignal = flashSignal
-            add(element = flashSignal)
-        }
-
-        if (isAvatar()) {
-            val avatarSignal = CompletableDeferred<Unit>()
-            this@ArenaMatchCombatQueue.avatarSignal = avatarSignal
-            add(element = avatarSignal)
-        }
+    fun onAnimationComplete(arguments: AnimationCompleteArguments) {
+        currentAnimationCoordinator?.markAnimationAsFinishedIfApplicable(arguments = arguments)
     }
 
     private fun ArenaMatch.Combat.isTeleportRollOffComplete(
-        userId: String,
+        userId: String
     ): TeleportRollsArguments? {
         val abilityRoll = nextCombatAction as? NextCombatAction.AbilityRoll ?: return null
         val teleport = abilityRoll.purpose as? AbilityAction.Passive.Teleport ?: return null

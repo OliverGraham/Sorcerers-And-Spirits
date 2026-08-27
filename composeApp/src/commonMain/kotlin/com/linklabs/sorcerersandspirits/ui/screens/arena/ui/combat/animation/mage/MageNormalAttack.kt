@@ -20,9 +20,11 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -55,7 +57,7 @@ internal fun MageNormalAttackOverlay(
 ) {
     val mageBoltState = remember { MageBoltState() }
     val density = LocalDensity.current
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         val messageType = animatingMessage.normalRollMessageType
@@ -63,18 +65,23 @@ internal fun MageNormalAttackOverlay(
 
         mageBoltState.play(
             geometry =
-            projectileStrikeGeometry(
-                messageType = messageType,
-                attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
-                accentColor = element.palette().glow,
-                density = density,
-            ),
+                projectileStrikeGeometry(
+                    messageType = messageType,
+                    attackerBounds = attackerBounds,
+                    defenderBounds = defenderBounds,
+                    accentColor = element.palette().glow,
+                    density = density,
+                ),
             element = element,
             normalRollMessageType = messageType,
         )
 
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawMageCast(state = mageBoltState) }
@@ -96,7 +103,7 @@ internal suspend fun MageBoltState.play(
     travel.animateTo(
         targetValue = 1f,
         animationSpec =
-        tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
+            tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
     )
 
     if (normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {
@@ -128,12 +135,13 @@ internal suspend fun MageBoltState.play(
     this.scene = null
 }
 
-private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
-    NormalRollMessageType.ArmorClassHit -> 0.8f
-    NormalRollMessageType.Damage -> 1f
-    NormalRollMessageType.Knockout -> 1.35f
-    NormalRollMessageType.ArmorClassMiss -> 0f
-}
+private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float =
+    when (normalRollMessageType) {
+        NormalRollMessageType.ArmorClassHit -> 0.8f
+        NormalRollMessageType.Damage -> 1f
+        NormalRollMessageType.Knockout -> 1.35f
+        NormalRollMessageType.ArmorClassMiss -> 0f
+    }
 
 internal fun DrawScope.drawMageCast(state: MageBoltState) {
     val geometry = state.scene ?: return

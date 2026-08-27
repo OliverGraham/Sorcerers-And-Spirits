@@ -33,9 +33,11 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -68,24 +70,29 @@ internal fun GamblerNormalAttackOverlay(
     val gamblerStrikeState = remember { GamblerStrikeState() }
     val density = LocalDensity.current
 
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         val messageType = animatingMessage.normalRollMessageType
 
         gamblerStrikeState.play(
             geometry =
-            projectileStrikeGeometry(
-                messageType = messageType,
-                attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
-                accentColor = accentColor,
-                density = density,
-            ),
+                projectileStrikeGeometry(
+                    messageType = messageType,
+                    attackerBounds = attackerBounds,
+                    defenderBounds = defenderBounds,
+                    accentColor = accentColor,
+                    density = density,
+                ),
             normalRollMessageType = messageType,
         )
 
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawGamblerStrike(state = gamblerStrikeState) }
@@ -119,7 +126,7 @@ private suspend fun GamblerStrikeState.flyAcross(durationMillis: Int) {
             travel.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = durationMillis, easing = FastOutLinearInEasing),
+                    tween(durationMillis = durationMillis, easing = FastOutLinearInEasing),
             )
         }
         launch {
@@ -198,11 +205,11 @@ private fun DrawScope.drawCardThrow(
 ) {
     drawLine(
         brush =
-        Brush.linearGradient(
-            colors = listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.35f)),
-            start = geometry.start,
-            end = position,
-        ),
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.35f)),
+                start = geometry.start,
+                end = position,
+            ),
         start = geometry.start,
         end = position,
         strokeWidth = 5.dp.toPx(),
@@ -247,45 +254,46 @@ private fun DrawScope.drawPlayingCard(accentColor: Color, alpha: Float) {
     )
 }
 
-private fun spadePath(halfWidth: Float, halfHeight: Float): Path = Path().apply {
-    moveTo(x = 0f, y = -halfHeight)
-    cubicTo(
-        x1 = halfWidth * 0.35f,
-        y1 = -halfHeight * 0.5f,
-        x2 = halfWidth,
-        y2 = -halfHeight * 0.05f,
-        x3 = halfWidth,
-        y3 = halfHeight * 0.35f,
-    )
-    cubicTo(
-        x1 = halfWidth,
-        y1 = halfHeight * 0.8f,
-        x2 = halfWidth * 0.4f,
-        y2 = halfHeight * 0.72f,
-        x3 = halfWidth * 0.14f,
-        y3 = halfHeight * 0.42f,
-    )
-    lineTo(x = halfWidth * 0.32f, y = halfHeight)
-    lineTo(x = -halfWidth * 0.32f, y = halfHeight)
-    lineTo(x = -halfWidth * 0.14f, y = halfHeight * 0.42f)
-    cubicTo(
-        x1 = -halfWidth * 0.4f,
-        y1 = halfHeight * 0.72f,
-        x2 = -halfWidth,
-        y2 = halfHeight * 0.8f,
-        x3 = -halfWidth,
-        y3 = halfHeight * 0.35f,
-    )
-    cubicTo(
-        x1 = -halfWidth,
-        y1 = -halfHeight * 0.05f,
-        x2 = -halfWidth * 0.35f,
-        y2 = -halfHeight * 0.5f,
-        x3 = 0f,
-        y3 = -halfHeight,
-    )
-    close()
-}
+private fun spadePath(halfWidth: Float, halfHeight: Float): Path =
+    Path().apply {
+        moveTo(x = 0f, y = -halfHeight)
+        cubicTo(
+            x1 = halfWidth * 0.35f,
+            y1 = -halfHeight * 0.5f,
+            x2 = halfWidth,
+            y2 = -halfHeight * 0.05f,
+            x3 = halfWidth,
+            y3 = halfHeight * 0.35f,
+        )
+        cubicTo(
+            x1 = halfWidth,
+            y1 = halfHeight * 0.8f,
+            x2 = halfWidth * 0.4f,
+            y2 = halfHeight * 0.72f,
+            x3 = halfWidth * 0.14f,
+            y3 = halfHeight * 0.42f,
+        )
+        lineTo(x = halfWidth * 0.32f, y = halfHeight)
+        lineTo(x = -halfWidth * 0.32f, y = halfHeight)
+        lineTo(x = -halfWidth * 0.14f, y = halfHeight * 0.42f)
+        cubicTo(
+            x1 = -halfWidth * 0.4f,
+            y1 = halfHeight * 0.72f,
+            x2 = -halfWidth,
+            y2 = halfHeight * 0.8f,
+            x3 = -halfWidth,
+            y3 = halfHeight * 0.35f,
+        )
+        cubicTo(
+            x1 = -halfWidth,
+            y1 = -halfHeight * 0.05f,
+            x2 = -halfWidth * 0.35f,
+            y2 = -halfHeight * 0.5f,
+            x3 = 0f,
+            y3 = -halfHeight,
+        )
+        close()
+    }
 
 @Stable
 internal class GamblerStrikeState {

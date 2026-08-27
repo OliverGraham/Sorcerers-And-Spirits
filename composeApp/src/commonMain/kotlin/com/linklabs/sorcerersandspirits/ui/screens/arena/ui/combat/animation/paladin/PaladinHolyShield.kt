@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.lerp as lerpColor
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
@@ -38,9 +39,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -48,13 +51,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-import androidx.compose.ui.graphics.lerp as lerpColor
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val RAISE_MILLIS = 620
 internal const val HOLY_SHIELD_PRAY_GLOW_MILLIS = 560
@@ -93,11 +95,16 @@ internal fun PaladinHolyShieldOverlay(
     modifier: Modifier = Modifier,
 ) {
     val state = remember { HolyShieldState() }
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(message = animatingMessage, avatarBoundsStateHolder = avatarBoundsStateHolder)
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     val textMeasurer = rememberTextMeasurer()
@@ -194,14 +201,14 @@ private suspend fun HolyShieldState.praySuccess(paladin: Rect) {
             holyBeam.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = BEAM_DESCEND_MILLIS, easing = FastOutSlowInEasing),
+                    tween(durationMillis = BEAM_DESCEND_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         launch {
             heart.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = HEART_FLOAT_MILLIS, easing = LinearOutSlowInEasing),
+                    tween(durationMillis = HEART_FLOAT_MILLIS, easing = LinearOutSlowInEasing),
             )
         }
         launch { shimmerForever() }
@@ -228,7 +235,7 @@ private suspend fun HolyShieldState.prayFail(paladin: Rect) {
             shieldFall.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = SHIELD_FALL_MILLIS, easing = FastOutLinearInEasing),
+                    tween(durationMillis = SHIELD_FALL_MILLIS, easing = FastOutLinearInEasing),
             )
         }
         launch {
@@ -261,7 +268,7 @@ private suspend fun HolyShieldState.wrath(paladin: Rect, attacker: Rect?, intens
             beamRollUp.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = WRATH_ROLLUP_MILLIS, easing = FastOutSlowInEasing),
+                    tween(durationMillis = WRATH_ROLLUP_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         launch {
@@ -277,7 +284,7 @@ private suspend fun HolyShieldState.wrath(paladin: Rect, attacker: Rect?, intens
     blast.animateTo(
         targetValue = 1f,
         animationSpec =
-        tween(durationMillis = WRATH_BLAST_RISE_MILLIS, easing = FastOutSlowInEasing),
+            tween(durationMillis = WRATH_BLAST_RISE_MILLIS, easing = FastOutSlowInEasing),
     )
     delay(timeMillis = WRATH_BLAST_HOLD_MILLIS.toLong())
     blast.animateTo(
@@ -311,7 +318,8 @@ private suspend fun HolyShieldState.resetAll() {
     blast.snapTo(targetValue = 0f)
 }
 
-private fun wrathIntensity(die: Int): Float = lerp(start = WRATH_MIN_INTENSITY, stop = 1f, fraction = (die - 1) / 5f)
+private fun wrathIntensity(die: Int): Float =
+    lerp(start = WRATH_MIN_INTENSITY, stop = 1f, fraction = (die - 1) / 5f)
 
 private fun DrawScope.drawHolyShield(state: HolyShieldState, plusOneLayout: TextLayoutResult) {
     val scene = state.scene ?: return
@@ -395,17 +403,17 @@ private fun DrawScope.drawSanctifyGlow(paladin: Rect, amount: Float) {
     val radius = paladin.height * 0.62f
     drawCircle(
         brush =
-        Brush.radialGradient(
-            colors =
-            listOf(
-                paladinEssenceCore.copy(alpha = SANCTIFY_GLOW_ALPHA * amount),
-                paladinEssenceGreen.copy(alpha = 0.5f * amount),
-                paladinGold.copy(alpha = 0.28f * amount),
-                Color.Transparent,
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        paladinEssenceCore.copy(alpha = SANCTIFY_GLOW_ALPHA * amount),
+                        paladinEssenceGreen.copy(alpha = 0.5f * amount),
+                        paladinGold.copy(alpha = 0.28f * amount),
+                        Color.Transparent,
+                    ),
+                center = center,
+                radius = radius,
             ),
-            center = center,
-            radius = radius,
-        ),
         radius = radius,
         center = center,
     )
@@ -436,16 +444,16 @@ private fun DrawScope.drawHolyBeam(
     drawPath(
         path = columnPath,
         brush =
-        Brush.verticalGradient(
-            colors =
-            listOf(
-                holyCore.copy(alpha = 0.0f),
-                holyCore.copy(alpha = 0.30f * beam * breathe),
-                paladinGold.copy(alpha = 0.42f * beam * breathe),
+            Brush.verticalGradient(
+                colors =
+                    listOf(
+                        holyCore.copy(alpha = 0.0f),
+                        holyCore.copy(alpha = 0.30f * beam * breathe),
+                        paladinGold.copy(alpha = 0.42f * beam * breathe),
+                    ),
+                startY = topY,
+                endY = footY,
             ),
-            startY = topY,
-            endY = footY,
-        ),
     )
 
     for (ray in 0 until 5) {
@@ -465,16 +473,16 @@ private fun DrawScope.drawHolyBeam(
         val poolRadius = geometry.halfWidth * (1.5f + 0.15f * sin(x = shimmer * 4f * PI.toFloat()))
         drawCircle(
             brush =
-            Brush.radialGradient(
-                colors =
-                listOf(
-                    holyCore.copy(alpha = 0.55f * beam * poolRollOff),
-                    paladinEssenceGreen.copy(alpha = 0.28f * beam * poolRollOff),
-                    Color.Transparent,
+                Brush.radialGradient(
+                    colors =
+                        listOf(
+                            holyCore.copy(alpha = 0.55f * beam * poolRollOff),
+                            paladinEssenceGreen.copy(alpha = 0.28f * beam * poolRollOff),
+                            Color.Transparent,
+                        ),
+                    center = geometry.center,
+                    radius = poolRadius,
                 ),
-                center = geometry.center,
-                radius = poolRadius,
-            ),
             radius = poolRadius,
             center = geometry.center,
         )
@@ -521,16 +529,16 @@ private fun DrawScope.drawShield(
                 val glowStrength = maxOf(glow, holyBeam)
                 drawCircle(
                     brush =
-                    Brush.radialGradient(
-                        colors =
-                        listOf(
-                            paladinEssenceGreen.copy(alpha = 0.5f * glowStrength * alpha),
-                            paladinGold.copy(alpha = 0.3f * glowStrength * alpha),
-                            Color.Transparent,
+                        Brush.radialGradient(
+                            colors =
+                                listOf(
+                                    paladinEssenceGreen.copy(alpha = 0.5f * glowStrength * alpha),
+                                    paladinGold.copy(alpha = 0.3f * glowStrength * alpha),
+                                    Color.Transparent,
+                                ),
+                            center = geometry.center,
+                            radius = geometry.height * 0.7f,
                         ),
-                        center = geometry.center,
-                        radius = geometry.height * 0.7f,
-                    ),
                     radius = geometry.height * 0.7f,
                     center = geometry.center,
                 )
@@ -539,27 +547,27 @@ private fun DrawScope.drawShield(
             drawPath(
                 path = outline,
                 brush =
-                Brush.verticalGradient(
-                    colors = listOf(face, faceDeep),
-                    startY = geometry.top,
-                    endY = geometry.tip.y,
-                ),
+                    Brush.verticalGradient(
+                        colors = listOf(face, faceDeep),
+                        startY = geometry.top,
+                        endY = geometry.tip.y,
+                    ),
                 alpha = alpha,
             )
 
             drawPath(
                 path = outline,
                 brush =
-                Brush.radialGradient(
-                    colors =
-                    listOf(holyCore.copy(alpha = 0.55f * (1f - drain)), Color.Transparent),
-                    center =
-                    Offset(
-                        x = geometry.centerX - geometry.halfWidth * 0.42f,
-                        y = geometry.top + geometry.height * 0.16f,
+                    Brush.radialGradient(
+                        colors =
+                            listOf(holyCore.copy(alpha = 0.55f * (1f - drain)), Color.Transparent),
+                        center =
+                            Offset(
+                                x = geometry.centerX - geometry.halfWidth * 0.42f,
+                                y = geometry.top + geometry.height * 0.16f,
+                            ),
+                        radius = geometry.height * 0.55f,
                     ),
-                    radius = geometry.height * 0.55f,
-                ),
                 alpha = alpha,
             )
 
@@ -589,12 +597,12 @@ private fun DrawScope.drawShield(
                 drawPath(
                     path = outline,
                     brush =
-                    Brush.verticalGradient(
-                        colors =
-                        listOf(holyCore.copy(alpha = 0.5f * faceLight), Color.Transparent),
-                        startY = geometry.top,
-                        endY = geometry.center.y,
-                    ),
+                        Brush.verticalGradient(
+                            colors =
+                                listOf(holyCore.copy(alpha = 0.5f * faceLight), Color.Transparent),
+                            startY = geometry.top,
+                            endY = geometry.center.y,
+                        ),
                     alpha = alpha,
                 )
             }
@@ -607,7 +615,7 @@ private fun DrawScope.drawGoldCross(geometry: ShieldGeometry, gold: Color, alpha
     drawRoundRect(
         color = gold,
         topLeft =
-        Offset(x = geometry.centerX - barHalf, y = geometry.top + geometry.height * 0.14f),
+            Offset(x = geometry.centerX - barHalf, y = geometry.top + geometry.height * 0.14f),
         size = Size(width = barHalf * 2f, height = geometry.height * 0.7f),
         cornerRadius = CornerRadius(x = barHalf),
         alpha = alpha * 0.85f,
@@ -615,10 +623,10 @@ private fun DrawScope.drawGoldCross(geometry: ShieldGeometry, gold: Color, alpha
     drawRoundRect(
         color = gold,
         topLeft =
-        Offset(
-            x = geometry.centerX - geometry.halfWidth * 0.62f,
-            y = geometry.center.y - barHalf,
-        ),
+            Offset(
+                x = geometry.centerX - geometry.halfWidth * 0.62f,
+                y = geometry.center.y - barHalf,
+            ),
         size = Size(width = geometry.halfWidth * 1.24f, height = barHalf * 2f),
         cornerRadius = CornerRadius(x = barHalf),
         alpha = alpha * 0.85f,
@@ -643,15 +651,15 @@ private fun DrawScope.drawShieldJewels(
     )
     drawCircle(
         brush =
-        Brush.radialGradient(
-            colors = listOf(holyCore.copy(alpha = 0.6f + 0.4f * glow), emerald),
-            center =
-            Offset(
-                x = geometry.center.x - bossRadius * 0.3f,
-                y = geometry.center.y - bossRadius * 0.3f,
+            Brush.radialGradient(
+                colors = listOf(holyCore.copy(alpha = 0.6f + 0.4f * glow), emerald),
+                center =
+                    Offset(
+                        x = geometry.center.x - bossRadius * 0.3f,
+                        y = geometry.center.y - bossRadius * 0.3f,
+                    ),
+                radius = bossRadius,
             ),
-            radius = bossRadius,
-        ),
         radius = bossRadius,
         center = geometry.center,
         alpha = alpha,
@@ -733,11 +741,11 @@ private fun DrawScope.drawHeart(
     val heart = heartPath(center = center, size = heartSize)
     drawCircle(
         brush =
-        Brush.radialGradient(
-            colors = listOf(holyCore.copy(alpha = 0.5f), Color.Transparent),
-            center = center,
-            radius = heartSize,
-        ),
+            Brush.radialGradient(
+                colors = listOf(holyCore.copy(alpha = 0.5f), Color.Transparent),
+                center = center,
+                radius = heartSize,
+            ),
         radius = heartSize,
         center = center,
         alpha = alpha,
@@ -757,35 +765,36 @@ private fun DrawScope.drawHeart(
             textLayoutResult = plusOneLayout,
             color = paladinGold,
             topLeft =
-            Offset(
-                x = textCenter.x - plusOneLayout.size.width / 2f,
-                y = textCenter.y - plusOneLayout.size.height / 2f,
-            ),
+                Offset(
+                    x = textCenter.x - plusOneLayout.size.width / 2f,
+                    y = textCenter.y - plusOneLayout.size.height / 2f,
+                ),
             alpha = alpha,
         )
     }
 }
 
-private fun heartPath(center: Offset, size: Float): Path = Path().apply {
-    moveTo(x = center.x, y = center.y + size * 0.4f)
-    cubicTo(
-        x1 = center.x - size * 0.6f,
-        y1 = center.y + size * 0.05f,
-        x2 = center.x - size * 0.55f,
-        y2 = center.y - size * 0.38f,
-        x3 = center.x,
-        y3 = center.y - size * 0.18f,
-    )
-    cubicTo(
-        x1 = center.x + size * 0.55f,
-        y1 = center.y - size * 0.38f,
-        x2 = center.x + size * 0.6f,
-        y2 = center.y + size * 0.05f,
-        x3 = center.x,
-        y3 = center.y + size * 0.4f,
-    )
-    close()
-}
+private fun heartPath(center: Offset, size: Float): Path =
+    Path().apply {
+        moveTo(x = center.x, y = center.y + size * 0.4f)
+        cubicTo(
+            x1 = center.x - size * 0.6f,
+            y1 = center.y + size * 0.05f,
+            x2 = center.x - size * 0.55f,
+            y2 = center.y - size * 0.38f,
+            x3 = center.x,
+            y3 = center.y - size * 0.18f,
+        )
+        cubicTo(
+            x1 = center.x + size * 0.55f,
+            y1 = center.y - size * 0.38f,
+            x2 = center.x + size * 0.6f,
+            y2 = center.y + size * 0.05f,
+            x3 = center.x,
+            y3 = center.y + size * 0.4f,
+        )
+        close()
+    }
 
 private fun DrawScope.drawWrathBlast(attacker: Rect, blast: Float, intensity: Float) {
     val impact = attacker.center
@@ -806,32 +815,32 @@ private fun DrawScope.drawWrathBlast(attacker: Rect, blast: Float, intensity: Fl
     drawPath(
         path = columnPath,
         brush =
-        Brush.verticalGradient(
-            colors =
-            listOf(
-                holyCore.copy(alpha = 0.85f * blast * reach),
-                paladinGold.copy(alpha = 0.7f * blast * reach),
-                paladinEssenceGreen.copy(alpha = 0.55f * blast),
+            Brush.verticalGradient(
+                colors =
+                    listOf(
+                        holyCore.copy(alpha = 0.85f * blast * reach),
+                        paladinGold.copy(alpha = 0.7f * blast * reach),
+                        paladinEssenceGreen.copy(alpha = 0.55f * blast),
+                    ),
+                startY = topY,
+                endY = impact.y,
             ),
-            startY = topY,
-            endY = impact.y,
-        ),
     )
 
     val burstRadius = avatarWidth * lerp(start = 0.55f, stop = 1.1f, fraction = intensity) * blast
     drawCircle(
         brush =
-        Brush.radialGradient(
-            colors =
-            listOf(
-                holyCore.copy(alpha = 0.9f * blast),
-                paladinGold.copy(alpha = 0.6f * blast),
-                paladinEssenceGreen.copy(alpha = 0.3f * blast),
-                Color.Transparent,
+            Brush.radialGradient(
+                colors =
+                    listOf(
+                        holyCore.copy(alpha = 0.9f * blast),
+                        paladinGold.copy(alpha = 0.6f * blast),
+                        paladinEssenceGreen.copy(alpha = 0.3f * blast),
+                        Color.Transparent,
+                    ),
+                center = impact,
+                radius = burstRadius,
             ),
-            center = impact,
-            radius = burstRadius,
-        ),
         radius = burstRadius,
         center = impact,
     )
@@ -875,11 +884,11 @@ private fun PaladinHolyShieldPreview(didSurvive: Boolean) {
                 secondDie = if (didSurvive) 5 else 2,
                 didSurvive = didSurvive,
                 animation =
-                if (didSurvive) {
-                    ArenaAnimationState.Flash
-                } else {
-                    ArenaAnimationState.FlashAndAvatar()
-                },
+                    if (didSurvive) {
+                        ArenaAnimationState.Flash
+                    } else {
+                        ArenaAnimationState.FlashAndAvatar()
+                    },
                 gestures = emptyMap(),
             )
         },

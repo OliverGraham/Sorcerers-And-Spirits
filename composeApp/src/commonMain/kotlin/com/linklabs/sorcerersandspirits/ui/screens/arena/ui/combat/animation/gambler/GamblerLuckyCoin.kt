@@ -25,14 +25,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.lerp as colorLerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
@@ -43,14 +46,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.dra
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
-import androidx.compose.ui.graphics.lerp as colorLerp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 private const val COIN_TILT_DEGREES = 34f
 private const val FLIP_TURNS = 3
@@ -129,11 +131,16 @@ internal fun LuckyCoinOverlay(
         ) ?: return
 
     val state = remember { LuckyCoinEffectState() }
-    val onAvatarAnimationComplete = ArenaActionsProvider.current.onAvatarComplete
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(scene = luckyCoinScene)
-        onAvatarAnimationComplete()
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            )
+        )
     }
 
     Canvas(modifier = modifier) { drawLuckyCoinScene(state = state) }
@@ -233,7 +240,8 @@ private fun getThrowScene(
     )
 }
 
-private fun coinRestCenter(bounds: Rect): Offset = Offset(x = bounds.center.x, y = bounds.bottom - bounds.height * 0.05f)
+private fun coinRestCenter(bounds: Rect): Offset =
+    Offset(x = bounds.center.x, y = bounds.bottom - bounds.height * 0.05f)
 
 private fun coinRadiusFor(bounds: Rect): Float = min(bounds.width, bounds.height) * 0.16f
 
@@ -302,14 +310,14 @@ private suspend fun LuckyCoinEffectState.throwCoin(isKnockout: Boolean) {
             travel.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = FastOutLinearInEasing),
+                    tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = FastOutLinearInEasing),
             )
         }
         launch {
             throwSpin.animateTo(
                 targetValue = THROW_SPIN_TURNS * 360f,
                 animationSpec =
-                tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = LinearEasing),
+                    tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = LinearEasing),
             )
         }
     }
@@ -342,8 +350,7 @@ private fun DrawScope.drawLuckyCoinScene(state: LuckyCoinEffectState) {
     val scene = state.scene ?: return
     when (scene.mode) {
         LuckyCoinMode.Flip,
-        LuckyCoinMode.HighRoller,
-        -> drawTossedCoin(scene = scene, state = state)
+        LuckyCoinMode.HighRoller -> drawTossedCoin(scene = scene, state = state)
 
         LuckyCoinMode.Throw -> drawThrownCoin(scene = scene, state = state)
     }
@@ -369,11 +376,11 @@ private fun DrawScope.drawTossedCoin(scene: LuckyCoinScene, state: LuckyCoinEffe
     if (isGold) {
         drawCircle(
             brush =
-            Brush.radialGradient(
-                colors = listOf(luckyGlow.copy(alpha = 0.45f), Color.Transparent),
-                center = center,
-                radius = scene.radiusPx * 2f,
-            ),
+                Brush.radialGradient(
+                    colors = listOf(luckyGlow.copy(alpha = 0.45f), Color.Transparent),
+                    center = center,
+                    radius = scene.radiusPx * 2f,
+                ),
             radius = scene.radiusPx * 2f,
             center = center,
             alpha = alpha,
@@ -408,11 +415,11 @@ private fun DrawScope.drawThrownCoin(scene: LuckyCoinScene, state: LuckyCoinEffe
         val center = Offset(x = flat.x, y = flat.y - scene.throwLobPx * sin(PI.toFloat() * travel))
         drawLine(
             brush =
-            Brush.linearGradient(
-                colors = listOf(Color.Transparent, scene.accentColor.copy(alpha = 0.4f)),
-                start = scene.restCenter,
-                end = center,
-            ),
+                Brush.linearGradient(
+                    colors = listOf(Color.Transparent, scene.accentColor.copy(alpha = 0.4f)),
+                    start = scene.restCenter,
+                    end = center,
+                ),
             start = scene.restCenter,
             end = center,
             strokeWidth = 5.dp.toPx(),
@@ -510,17 +517,18 @@ private fun rimPoints(
     y: Float,
     cosPitch: Float,
     sinPitch: Float,
-): List<Offset> = (0..RIM_SEGMENTS).map { index ->
-    val theta = (index.toFloat() / RIM_SEGMENTS) * 2f * PI.toFloat()
-    projectCoinPoint(
-        center = center,
-        localX = radius * cos(theta),
-        localY = y,
-        localZ = radius * sin(theta),
-        cosPitch = cosPitch,
-        sinPitch = sinPitch,
-    )
-}
+): List<Offset> =
+    (0..RIM_SEGMENTS).map { index ->
+        val theta = (index.toFloat() / RIM_SEGMENTS) * 2f * PI.toFloat()
+        projectCoinPoint(
+            center = center,
+            localX = radius * cos(theta),
+            localY = y,
+            localZ = radius * sin(theta),
+            cosPitch = cosPitch,
+            sinPitch = sinPitch,
+        )
+    }
 
 private fun projectCoinPoint(
     center: Offset,
@@ -534,11 +542,12 @@ private fun projectCoinPoint(
     return Offset(x = center.x + localX, y = center.y - rotatedY)
 }
 
-private fun rimPath(rim: List<Offset>): Path = Path().apply {
-    moveTo(x = rim.first().x, y = rim.first().y)
-    rim.drop(n = 1).forEach { lineTo(x = it.x, y = it.y) }
-    close()
-}
+private fun rimPath(rim: List<Offset>): Path =
+    Path().apply {
+        moveTo(x = rim.first().x, y = rim.first().y)
+        rim.drop(n = 1).forEach { lineTo(x = it.x, y = it.y) }
+        close()
+    }
 
 private fun DrawScope.drawCoinEdge(
     topRim: List<Offset>,
@@ -671,7 +680,7 @@ private fun DrawScope.drawGroundShadow(
     drawOval(
         color = groundShadow,
         topLeft =
-        Offset(x = center.x - shadowWidth, y = center.y + radius * 0.3f - shadowHeight / 2f),
+            Offset(x = center.x - shadowWidth, y = center.y + radius * 0.3f - shadowHeight / 2f),
         size = Size(width = shadowWidth * 2f, height = shadowHeight),
         alpha = alpha * (0.25f + grounded * 0.4f),
     )
@@ -702,11 +711,11 @@ private fun DrawScope.drawImpactBurst(
     val radius = 40.dp.toPx() * scale
     drawCircle(
         brush =
-        Brush.radialGradient(
-            colors = listOf(impactCore, accentColor.copy(alpha = 0.8f), Color.Transparent),
-            center = center,
-            radius = radius,
-        ),
+            Brush.radialGradient(
+                colors = listOf(impactCore, accentColor.copy(alpha = 0.8f), Color.Transparent),
+                center = center,
+                radius = radius,
+            ),
         radius = radius,
         center = center,
         alpha = alpha,

@@ -39,50 +39,48 @@ sealed interface DiceRollEntity {
     }
 }
 
-internal fun DiceRollEntity.toDomain(): DiceRoll =
-    when (this) {
-        is DiceRollEntity.OneDie ->
-            DiceRoll.OneDie(
-                value = value,
-                diePosition = diePosition,
-                doublesBonus = doublesBonusEntity?.toDomain(),
-                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-                isMirrorImageReroll = isMirrorImageReroll,
-                dieColor = dieColor,
-                disablesSibling = disablesSibling,
-            )
+internal fun DiceRollEntity.toDomain(): DiceRoll = when (this) {
+    is DiceRollEntity.OneDie ->
+        DiceRoll.OneDie(
+            value = value,
+            diePosition = diePosition,
+            doublesBonus = doublesBonusEntity?.toDomain(),
+            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+            isMirrorImageReroll = isMirrorImageReroll,
+            dieColor = dieColor,
+            disablesSibling = disablesSibling,
+        )
 
-        is DiceRollEntity.TwoDice ->
-            DiceRoll.TwoDice(
-                firstDie = firstDie,
-                secondDie = secondDie,
-                doublesBonus = doublesBonusEntity?.toDomain(),
-                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-                dieColor = dieColor,
-                isMirrorImagePass = isMirrorImagePass,
-            )
-    }
+    is DiceRollEntity.TwoDice ->
+        DiceRoll.TwoDice(
+            firstDie = firstDie,
+            secondDie = secondDie,
+            doublesBonus = doublesBonusEntity?.toDomain(),
+            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+            dieColor = dieColor,
+            isMirrorImagePass = isMirrorImagePass,
+        )
+}
 
-internal fun DiceRoll.toEntity(): DiceRollEntity =
-    when (this) {
-        is DiceRoll.OneDie ->
-            DiceRollEntity.OneDie(
-                value = value,
-                diePosition = diePosition,
-                doublesBonusEntity = doublesBonus?.toEntity(),
-                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-                isMirrorImageReroll = isMirrorImageReroll,
-                dieColor = dieColor,
-                disablesSibling = disablesSibling,
-            )
+internal fun DiceRoll.toEntity(): DiceRollEntity = when (this) {
+    is DiceRoll.OneDie ->
+        DiceRollEntity.OneDie(
+            value = value,
+            diePosition = diePosition,
+            doublesBonusEntity = doublesBonus?.toEntity(),
+            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+            isMirrorImageReroll = isMirrorImageReroll,
+            dieColor = dieColor,
+            disablesSibling = disablesSibling,
+        )
 
-        is DiceRoll.TwoDice ->
-            DiceRollEntity.TwoDice(
-                firstDie = firstDie,
-                secondDie = secondDie,
-                doublesBonusEntity = doublesBonus?.toEntity(),
-                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-                dieColor = dieColor,
-                isMirrorImagePass = isMirrorImagePass,
-            )
-    }
+    is DiceRoll.TwoDice ->
+        DiceRollEntity.TwoDice(
+            firstDie = firstDie,
+            secondDie = secondDie,
+            doublesBonusEntity = doublesBonus?.toEntity(),
+            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+            dieColor = dieColor,
+            isMirrorImagePass = isMirrorImagePass,
+        )
+}

@@ -45,7 +45,8 @@ internal class CombatMutator(
     val consciousPlayers
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
-    fun dieColorFor(userId: UserId): DieColor = updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
+    fun dieColorFor(userId: UserId): DieColor =
+        updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextCombatAction = nextAction
@@ -53,7 +54,9 @@ internal class CombatMutator(
 
     fun currentAttackTurn(): AttackTurn = attackTurnFor(attackerUserId = attackerUserId)
 
-    fun attackTurnFor(attackerUserId: UserId): AttackTurn = if (attackerUserId == originalTurnUserId) {
+    fun attackTurnFor(attackerUserId: UserId): AttackTurn = if (attackerUserId ==
+        originalTurnUserId
+    ) {
         AttackTurn.Standard(attackerUserId = attackerUserId)
     } else {
         AttackTurn.RiposteReversal(
@@ -280,7 +283,9 @@ internal class CombatMutator(
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
 
         setNextCombatAction(
-            nextAction = NextCombatAction.Idle(activeUserIds = setOf(fastestPlayerNextRound.userId)),
+            nextAction = NextCombatAction.Idle(
+                activeUserIds = setOf(fastestPlayerNextRound.userId),
+            ),
         )
     }
 

@@ -69,7 +69,8 @@ class RemoteConfigCharacterClassProviderTest {
 
         override fun characterClassStats() = stats
 
-        override fun abilityConfig() = AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
+        override fun abilityConfig() =
+            AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
 
         override fun characterClassCopy() = emptyMap<String, AbilityCopyEntity>()
 

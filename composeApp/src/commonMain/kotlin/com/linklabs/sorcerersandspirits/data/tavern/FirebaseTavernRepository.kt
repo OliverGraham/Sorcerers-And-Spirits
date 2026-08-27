@@ -33,13 +33,16 @@ class FirebaseTavernRepository(
     private var travelerPresenceJob: Job? = null
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> = dataSource.mailboxChallengeIdFlow(userId = userId).distinctUntilChanged().transformLatest { challengeId ->
-        if (challengeId.isNullOrBlank()) {
-            emit(value = null)
-        } else {
-            emitAll(flow = getChallengeFlow(challengeId = challengeId))
+    override fun getActiveChallengeFlow(userId: String): Flow<Challenge?> =
+        dataSource.mailboxChallengeIdFlow(
+            userId = userId,
+        ).distinctUntilChanged().transformLatest { challengeId ->
+            if (challengeId.isNullOrBlank()) {
+                emit(value = null)
+            } else {
+                emitAll(flow = getChallengeFlow(challengeId = challengeId))
+            }
         }
-    }
 
     override fun getTavernTravelersFlow(): Flow<List<Traveler>> = dataSource
         .travelerEntitiesFlow()

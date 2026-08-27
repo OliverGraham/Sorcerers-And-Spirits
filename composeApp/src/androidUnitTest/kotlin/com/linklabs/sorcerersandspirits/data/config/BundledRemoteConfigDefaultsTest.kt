@@ -58,13 +58,17 @@ class BundledRemoteConfigDefaultsTest {
         )
     }
 
-    private fun bundledClassStatsJson(): String = readBundledResource(fileName = "character_class_stats.json")
+    private fun bundledClassStatsJson(): String =
+        readBundledResource(fileName = "character_class_stats.json")
 
-    private fun bundledAbilityConfigJson(): String = readBundledResource(fileName = "ability_config.json")
+    private fun bundledAbilityConfigJson(): String =
+        readBundledResource(fileName = "ability_config.json")
 
-    private fun bundledClassCopyJson(): String = readBundledResource(fileName = "character_class_copy.json")
+    private fun bundledClassCopyJson(): String =
+        readBundledResource(fileName = "character_class_copy.json")
 
-    private fun bundledTravelerNamesJson(): String = readBundledResource(fileName = "random_traveler_names.json")
+    private fun bundledTravelerNamesJson(): String =
+        readBundledResource(fileName = "random_traveler_names.json")
 
     private fun readBundledResource(fileName: String): String {
         val relativePath = "$BUNDLED_RESOURCE_DIR/$fileName"

@@ -189,7 +189,10 @@ private fun BarFolk(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(
+                        horizontal = 20.dp,
+                        vertical = 24.dp,
+                    ),
                 )
             }
         }

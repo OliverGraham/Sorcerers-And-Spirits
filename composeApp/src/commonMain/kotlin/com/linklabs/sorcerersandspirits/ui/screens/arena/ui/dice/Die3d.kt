@@ -399,7 +399,13 @@ private fun DrawScope.drawDie(
     }
 }
 
-private fun Color.tintedBy(tint: Color?): Color = if (tint != null) lerp(start = this, stop = tint, fraction = DIE_TINT_FRACTION) else this
+private fun Color.tintedBy(tint: Color?): Color = if (tint !=
+    null
+) {
+    lerp(start = this, stop = tint, fraction = DIE_TINT_FRACTION)
+} else {
+    this
+}
 
 private fun project(point: Vec3, center: Offset, halfWidth: Float): Offset {
     val perspective = CAMERA_DISTANCE / (CAMERA_DISTANCE - point.z)

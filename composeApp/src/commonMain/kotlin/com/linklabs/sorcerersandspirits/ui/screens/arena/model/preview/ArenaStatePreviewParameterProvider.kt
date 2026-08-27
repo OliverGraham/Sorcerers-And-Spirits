@@ -106,7 +106,8 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         diceRollState = null,
     )
 
-    private fun createExampleCharacterClassStates(): List<CharacterClassState> = previewCharacterClassStates()
+    private fun createExampleCharacterClassStates(): List<CharacterClassState> =
+        previewCharacterClassStates()
 
     private fun getExamplePlayers() = mapOf(
         "player1" to
@@ -143,4 +144,5 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
     )
 }
 
-private fun CharacterClassType.toMessageInfoState() = CharacterClassMessageInfoState(className = name, type = this)
+private fun CharacterClassType.toMessageInfoState() =
+    CharacterClassMessageInfoState(className = name, type = this)

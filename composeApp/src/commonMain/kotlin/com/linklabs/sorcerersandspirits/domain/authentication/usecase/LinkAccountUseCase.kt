@@ -18,26 +18,28 @@ class LinkAccountUseCase(
     private val socialSignInProvider: SocialSignInProvider,
 ) {
     /** Links a provider that uses a native account picker (Google or Apple). */
-    suspend operator fun invoke(method: SignInMethod): LinkAccountResult = when (val token = socialSignInProvider.requestToken(method = method)) {
-        is SocialTokenResult.Google ->
-            authenticationRepository.linkWithGoogle(
-                idToken = token.idToken,
-                accessToken = token.accessToken,
-            )
+    suspend operator fun invoke(method: SignInMethod): LinkAccountResult =
+        when (val token = socialSignInProvider.requestToken(method = method)) {
+            is SocialTokenResult.Google ->
+                authenticationRepository.linkWithGoogle(
+                    idToken = token.idToken,
+                    accessToken = token.accessToken,
+                )
 
-        is SocialTokenResult.Apple ->
-            authenticationRepository.linkWithApple(
-                idToken = token.idToken,
-                rawNonce = token.rawNonce,
-            )
+            is SocialTokenResult.Apple ->
+                authenticationRepository.linkWithApple(
+                    idToken = token.idToken,
+                    rawNonce = token.rawNonce,
+                )
 
-        is SocialTokenResult.Cancelled -> LinkAccountResult.CANCELLED
+            is SocialTokenResult.Cancelled -> LinkAccountResult.CANCELLED
 
-        is SocialTokenResult.NotAvailable -> LinkAccountResult.NOT_AVAILABLE
+            is SocialTokenResult.NotAvailable -> LinkAccountResult.NOT_AVAILABLE
 
-        is SocialTokenResult.Error -> LinkAccountResult.ERROR
-    }
+            is SocialTokenResult.Error -> LinkAccountResult.ERROR
+        }
 
     /** Links an email/password identity collected in-app (no native picker involved). */
-    suspend fun withEmail(email: String, password: String): LinkAccountResult = authenticationRepository.linkWithEmail(email = email, password = password)
+    suspend fun withEmail(email: String, password: String): LinkAccountResult =
+        authenticationRepository.linkWithEmail(email = email, password = password)
 }

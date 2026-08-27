@@ -35,15 +35,17 @@ data object WinAGauntlet : Achievement {
 data object WinAMatchWithEveryClass : Achievement {
     override val id = AchievementId.WinAMatchWithEveryClass
 
-    override fun isUnlockedBy(stats: ProfileStats): Boolean = CharacterClass.playableTypes().all { classType ->
-        stats.hasMatchWinAs(classType = classType)
-    }
+    override fun isUnlockedBy(stats: ProfileStats): Boolean =
+        CharacterClass.playableTypes().all { classType ->
+            stats.hasMatchWinAs(classType = classType)
+        }
 }
 
 data object WinAGauntletWithEveryClass : Achievement {
     override val id = AchievementId.WinAGauntletWithEveryClass
 
-    override fun isUnlockedBy(stats: ProfileStats): Boolean = CharacterClass.playableTypes().all { classType ->
-        stats.hasGauntletWinAs(classType = classType)
-    }
+    override fun isUnlockedBy(stats: ProfileStats): Boolean =
+        CharacterClass.playableTypes().all { classType ->
+            stats.hasGauntletWinAs(classType = classType)
+        }
 }

@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
 
-class DataStorePendingStatsStore(private val dataStore: DataStore<Preferences>) : PendingStatsStore {
+class DataStorePendingStatsStore(private val dataStore: DataStore<Preferences>) :
+    PendingStatsStore {
 
     private val json = Json { ignoreUnknownKeys = true }
 

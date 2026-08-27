@@ -41,13 +41,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.dra
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.lerpAngle
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 internal const val RIPOSTE_APPEAR_MILLIS = 200
 internal const val RIPOSTE_PARRY_MILLIS = 260
@@ -93,7 +93,7 @@ internal fun RiposteOverlay(
             AnimationCompleteArguments(
                 messageId = riposteMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -203,10 +203,10 @@ private suspend fun RiposteEffectState.sailPast() {
             stab.animateTo(
                 targetValue = WHIFF_OVERSHOOT_TRAVEL,
                 animationSpec =
-                    tween(
-                        durationMillis = RIPOSTE_STAB_MILLIS + RIPOSTE_FADE_MILLIS,
-                        easing = FastOutLinearInEasing,
-                    ),
+                tween(
+                    durationMillis = RIPOSTE_STAB_MILLIS + RIPOSTE_FADE_MILLIS,
+                    easing = FastOutLinearInEasing,
+                ),
             )
         }
         launch {

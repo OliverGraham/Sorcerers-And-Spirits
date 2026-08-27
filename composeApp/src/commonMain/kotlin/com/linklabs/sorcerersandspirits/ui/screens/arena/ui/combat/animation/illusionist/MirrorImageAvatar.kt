@@ -82,7 +82,10 @@ private fun GraphicsLayerScope.applyMirrorReal(gestureState: AvatarGestureState)
 
 internal fun ArenaMessageState.getMirrorImageMessageOrNull(
     userId: String,
-): ArenaMessageState.MirrorImage? = (this as? ArenaMessageState.MirrorImage)?.takeIf { it.illusionistUserId == userId }
+): ArenaMessageState.MirrorImage? = (this as? ArenaMessageState.MirrorImage)?.takeIf {
+    it.illusionistUserId ==
+        userId
+}
 
 internal suspend fun AvatarGestureState.playMirrorImage(
     message: ArenaMessageState.MirrorImage,

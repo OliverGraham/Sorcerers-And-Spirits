@@ -132,7 +132,7 @@ internal fun rememberAvatarGesture(
                 AnimationCompleteArguments(
                     messageId = animatingMessage.id,
                     animationKey = AnimationKey.AvatarGesture(userId = userId),
-                )
+                ),
             )
             return@LaunchedEffect
         }
@@ -156,7 +156,7 @@ internal fun rememberAvatarGesture(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarGesture(userId = userId),
-            )
+            ),
         )
     }
 
@@ -164,25 +164,24 @@ internal fun rememberAvatarGesture(
 }
 
 // TODO(SS-258): Common
-private fun ArenaMessageState.defenderReactionDelayMillis(): Long =
-    when (this) {
-        is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
+private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) {
+    is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
 
-        is ArenaMessageState.PrepareAttack -> prepareAttackReactionDelayMillis()
+    is ArenaMessageState.PrepareAttack -> prepareAttackReactionDelayMillis()
 
-        is ArenaMessageState.Riposte -> RIPOSTE_STRIKE_MILLIS
+    is ArenaMessageState.Riposte -> RIPOSTE_STRIKE_MILLIS
 
-        is ArenaMessageState.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
+    is ArenaMessageState.SpellPotency -> MAGE_SPELL_POTENCY_REACTION_DELAY_MILLIS
 
-        is ArenaMessageState.HolyShield ->
-            if (this is ArenaMessageState.HolyShield.Wrath) {
-                HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong()
-            } else {
-                HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
-            }
+    is ArenaMessageState.HolyShield ->
+        if (this is ArenaMessageState.HolyShield.Wrath) {
+            HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS.toLong()
+        } else {
+            HOLY_SHIELD_PRAY_GLOW_MILLIS.toLong()
+        }
 
-        else -> REACTION_DELAY_MILLIS
-    }
+    else -> REACTION_DELAY_MILLIS
+}
 
 // TODO(SS-258): Common
 private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long =
@@ -403,7 +402,7 @@ private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Fl
             offsetY.animateTo(
                 targetValue = reachPx,
                 animationSpec =
-                    tween(durationMillis = SLASH_LEAN_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = SLASH_LEAN_MILLIS, easing = FastOutSlowInEasing),
             )
             offsetY.animateTo(
                 targetValue = 0f,
@@ -462,7 +461,7 @@ private suspend fun AvatarGestureState.preparedThrust(reachPx: Float) {
             offsetY.animateTo(
                 targetValue = reachPx,
                 animationSpec =
-                    tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
             )
         }
         launch {
@@ -479,7 +478,7 @@ private suspend fun AvatarGestureState.preparedThrustWhiff(reachPx: Float) {
             offsetY.animateTo(
                 targetValue = reachPx * 1.3f,
                 animationSpec =
-                    tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
             )
             offsetY.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 300))
         }
@@ -608,7 +607,7 @@ private suspend fun AvatarGestureState.allInBust(liftPx: Float) {
     allInToss(liftPx = liftPx)
     delay(
         timeMillis =
-            (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS - ALL_IN_TOSS_GESTURE_MILLIS).toLong()
+        (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS - ALL_IN_TOSS_GESTURE_MILLIS).toLong(),
     )
     coroutineScope {
         launch {

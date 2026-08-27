@@ -11,7 +11,8 @@ import kotlin.concurrent.atomics.AtomicInt
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.concurrent.atomics.incrementAndFetch
 
-@OptIn(ExperimentalAtomicApi::class) private val diceRollStateIdCounter = AtomicInt(value = 0)
+@OptIn(ExperimentalAtomicApi::class)
+private val diceRollStateIdCounter = AtomicInt(value = 0)
 
 @OptIn(ExperimentalAtomicApi::class)
 private fun nextDiceRollStateId(): Int = diceRollStateIdCounter.incrementAndFetch()
@@ -62,30 +63,29 @@ sealed interface DiceRollState {
     }
 }
 
-internal fun DiceRoll.toState(): DiceRollState =
-    when (this) {
-        is DiceRoll.OneDie ->
-            DiceRollState.OneDie(
-                value = value,
-                diePosition = diePosition,
-                dieColor = dieColor,
-                isSiblingDisabled = disablesSibling,
-                isMirrorImageReroll = isMirrorImageReroll,
-                doublesBonus = doublesBonus?.toState(),
-                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-            )
+internal fun DiceRoll.toState(): DiceRollState = when (this) {
+    is DiceRoll.OneDie ->
+        DiceRollState.OneDie(
+            value = value,
+            diePosition = diePosition,
+            dieColor = dieColor,
+            isSiblingDisabled = disablesSibling,
+            isMirrorImageReroll = isMirrorImageReroll,
+            doublesBonus = doublesBonus?.toState(),
+            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+        )
 
-        is DiceRoll.TwoDice -> {
-            println(
-                "MIRROR IMAGE DEBUG: DiceRoll.toState called and isMirrorImagePass == $isMirrorImagePass"
-            )
-            DiceRollState.TwoDice(
-                firstDie = firstDie,
-                secondDie = secondDie,
-                dieColor = dieColor,
-                doublesBonus = doublesBonus?.toState(),
-                wasDoublesBonusConsumed = wasDoublesBonusConsumed,
-                doNotPerformDiceRollAnimation = isMirrorImagePass,
-            )
-        }
+    is DiceRoll.TwoDice -> {
+        println(
+            "MIRROR IMAGE DEBUG: DiceRoll.toState called and isMirrorImagePass == $isMirrorImagePass",
+        )
+        DiceRollState.TwoDice(
+            firstDie = firstDie,
+            secondDie = secondDie,
+            dieColor = dieColor,
+            doublesBonus = doublesBonus?.toState(),
+            wasDoublesBonusConsumed = wasDoublesBonusConsumed,
+            doNotPerformDiceRollAnimation = isMirrorImagePass,
+        )
     }
+}

@@ -31,7 +31,11 @@ internal class SpellPotencyHandler(
         }
     }
 
-    private fun CombatMutator.splashTargets() = consciousPlayers.filter { it.userId != attackerUserId && it.userId != defenderUserId }
+    private fun CombatMutator.splashTargets() = consciousPlayers.filter {
+        it.userId !=
+            attackerUserId &&
+            it.userId != defenderUserId
+    }
 
     private fun CombatMutator.applyFullDamageToDefender() {
         updateDefenderClass { defender -> defender.takeDamage(damage = diceTotal) }

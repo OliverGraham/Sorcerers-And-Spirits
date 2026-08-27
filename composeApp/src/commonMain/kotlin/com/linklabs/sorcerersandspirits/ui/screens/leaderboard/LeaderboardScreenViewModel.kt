@@ -11,7 +11,8 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
-class LeaderboardScreenViewModel(private val getLeaderboardUseCase: GetLeaderboardUseCase) : ViewModel() {
+class LeaderboardScreenViewModel(private val getLeaderboardUseCase: GetLeaderboardUseCase) :
+    ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<LeaderboardState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()

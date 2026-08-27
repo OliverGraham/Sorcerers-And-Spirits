@@ -65,13 +65,13 @@ internal fun MageNormalAttackOverlay(
 
         mageBoltState.play(
             geometry =
-                projectileStrikeGeometry(
-                    messageType = messageType,
-                    attackerBounds = attackerBounds,
-                    defenderBounds = defenderBounds,
-                    accentColor = element.palette().glow,
-                    density = density,
-                ),
+            projectileStrikeGeometry(
+                messageType = messageType,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = element.palette().glow,
+                density = density,
+            ),
             element = element,
             normalRollMessageType = messageType,
         )
@@ -80,7 +80,7 @@ internal fun MageNormalAttackOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -103,7 +103,7 @@ internal suspend fun MageBoltState.play(
     travel.animateTo(
         targetValue = 1f,
         animationSpec =
-            tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
+        tween(durationMillis = ICE_FLIGHT_MILLIS.toInt(), easing = FastOutLinearInEasing),
     )
 
     if (normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {

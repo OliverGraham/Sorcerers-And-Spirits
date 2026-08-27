@@ -42,13 +42,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 internal const val PREPARE_APPEAR_MILLIS = 160
 internal const val PREPARE_TWIRL_MILLIS = 450
@@ -122,7 +122,7 @@ internal fun PrepareAttackOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -195,7 +195,7 @@ private suspend fun PrepareAttackEffectState.thrustForward() {
     thrust.animateTo(
         targetValue = 1f,
         animationSpec =
-            tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
+        tween(durationMillis = PREPARE_THRUST_MILLIS, easing = FastOutLinearInEasing),
     )
 }
 
@@ -328,12 +328,12 @@ private fun DrawScope.drawKnockoutBurst(scene: PrepareAttackScene, scale: Float,
     val radius = 40.dp.toPx() * scale
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors =
-                    listOf(Color.White, scene.accentColor.copy(alpha = 0.8f), Color.Transparent),
-                center = scene.strikePoint,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors =
+            listOf(Color.White, scene.accentColor.copy(alpha = 0.8f), Color.Transparent),
+            center = scene.strikePoint,
+            radius = radius,
+        ),
         radius = radius,
         center = scene.strikePoint,
         alpha = alpha,

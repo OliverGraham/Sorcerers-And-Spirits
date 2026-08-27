@@ -40,7 +40,8 @@ private const val STRING_VIBRATION_CYCLES = 3.5f
 private val stringVibrationAmplitude = 4.dp
 
 /** Lerp any colour toward the failure ash, so a whole scene grays out in step. */
-private fun Color.grayed(fraction: Float): Color = lerp(start = this, stop = persuadeAsh, fraction = fraction)
+private fun Color.grayed(fraction: Float): Color =
+    lerp(start = this, stop = persuadeAsh, fraction = fraction)
 
 /**
  * The Bard's lute (SS-207): a wood-bowled pear body with a bard-coloured rosette, a fretted neck
@@ -73,9 +74,11 @@ internal fun DrawScope.drawLute(
 }
 
 /** The neck joint at the top of the body, and the pegbox at the far end of the neck. */
-private fun DrawScope.luteNeckBase(anchor: Offset): Offset = anchor - Offset(x = 0f, y = luteBodyHalfHeight.toPx())
+private fun DrawScope.luteNeckBase(anchor: Offset): Offset =
+    anchor - Offset(x = 0f, y = luteBodyHalfHeight.toPx())
 
-private fun DrawScope.lutePegbox(anchor: Offset): Offset = luteNeckBase(anchor = anchor) - Offset(x = 0f, y = luteNeckLength.toPx())
+private fun DrawScope.lutePegbox(anchor: Offset): Offset =
+    luteNeckBase(anchor = anchor) - Offset(x = 0f, y = luteNeckLength.toPx())
 
 /**
  * The fretted neck: a tapered wooden bar running up to the pegbox, banded by pale frets and pegs.
@@ -247,7 +250,8 @@ private fun DrawScope.drawRoundRectBar(
 }
 
 /** The bridge and pegbox anchor points the strings run between, spread across the instrument. */
-private fun DrawScope.stringBridgeAnchor(anchor: Offset): Offset = anchor + Offset(x = 0f, y = luteBodyHalfHeight.toPx() * 0.48f)
+private fun DrawScope.stringBridgeAnchor(anchor: Offset): Offset =
+    anchor + Offset(x = 0f, y = luteBodyHalfHeight.toPx() * 0.48f)
 
 /**
  * The strings drawn taut from bridge to pegbox and, while [strum] rings, bowed side to side in a

@@ -63,7 +63,9 @@ class AndroidHaptics(context: Context) : Haptics {
     }
 }
 
-private fun Context.resolveVibrator(): Vibrator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+private fun Context.resolveVibrator(): Vibrator = if (Build.VERSION.SDK_INT >=
+    Build.VERSION_CODES.S
+) {
     val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
     vibratorManager.defaultVibrator
 } else {

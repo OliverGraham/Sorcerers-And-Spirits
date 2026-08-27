@@ -431,4 +431,10 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         }
 }
 
-private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int): String = if (doublesBonus > 0) "$baseRoll (+$doublesBonus)" else baseRoll.toString()
+private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int): String = if (doublesBonus >
+    0
+) {
+    "$baseRoll (+$doublesBonus)"
+} else {
+    baseRoll.toString()
+}

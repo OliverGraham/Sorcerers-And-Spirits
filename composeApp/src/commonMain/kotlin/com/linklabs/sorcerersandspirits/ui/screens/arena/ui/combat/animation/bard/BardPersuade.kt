@@ -92,7 +92,7 @@ internal fun PersuadeOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -166,7 +166,7 @@ private suspend fun PersuadeEffectState.strumLute(scene: PersuadeScene, isSucces
                 fall.animateTo(
                     targetValue = 1f,
                     animationSpec =
-                        tween(durationMillis = NOTE_FALL_MILLIS, easing = FastOutSlowInEasing),
+                    tween(durationMillis = NOTE_FALL_MILLIS, easing = FastOutSlowInEasing),
                 )
             }
         }
@@ -233,7 +233,7 @@ private suspend fun PersuadeEffectState.ringStrings() {
             notes.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = NOTE_ENTER_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = NOTE_ENTER_MILLIS, easing = FastOutSlowInEasing),
             )
         }
     }

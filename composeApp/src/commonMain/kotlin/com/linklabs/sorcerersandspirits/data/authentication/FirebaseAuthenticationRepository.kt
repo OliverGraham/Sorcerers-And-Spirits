@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.first
 
 private const val APPLE_PROVIDER_ID = "apple.com"
 
-private fun googleCredential(idToken: String, accessToken: String?): AuthCredential = GoogleAuthProvider.credential(idToken = idToken, accessToken = accessToken)
+private fun googleCredential(idToken: String, accessToken: String?): AuthCredential =
+    GoogleAuthProvider.credential(idToken = idToken, accessToken = accessToken)
 
-private fun appleCredential(idToken: String, rawNonce: String): AuthCredential = OAuthProvider.credential(providerId = APPLE_PROVIDER_ID, idToken = idToken, rawNonce = rawNonce)
+private fun appleCredential(idToken: String, rawNonce: String): AuthCredential =
+    OAuthProvider.credential(providerId = APPLE_PROVIDER_ID, idToken = idToken, rawNonce = rawNonce)
 
 class FirebaseAuthenticationRepository : AuthenticationRepository {
     private val auth: FirebaseAuth = Firebase.auth
@@ -31,18 +33,23 @@ class FirebaseAuthenticationRepository : AuthenticationRepository {
 
     override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
 
-    override suspend fun linkWithGoogle(idToken: String, accessToken: String?): LinkAccountResult = link(credential = googleCredential(idToken = idToken, accessToken = accessToken))
+    override suspend fun linkWithGoogle(idToken: String, accessToken: String?): LinkAccountResult =
+        link(credential = googleCredential(idToken = idToken, accessToken = accessToken))
 
-    override suspend fun linkWithApple(idToken: String, rawNonce: String): LinkAccountResult = link(credential = appleCredential(idToken = idToken, rawNonce = rawNonce))
+    override suspend fun linkWithApple(idToken: String, rawNonce: String): LinkAccountResult =
+        link(credential = appleCredential(idToken = idToken, rawNonce = rawNonce))
 
-    override suspend fun linkWithEmail(email: String, password: String): LinkAccountResult = link(credential = EmailAuthProvider.credential(email = email, password = password))
+    override suspend fun linkWithEmail(email: String, password: String): LinkAccountResult =
+        link(credential = EmailAuthProvider.credential(email = email, password = password))
 
     override suspend fun signInWithGoogle(
         idToken: String,
         accessToken: String?,
-    ): LinkAccountResult = signIn(credential = googleCredential(idToken = idToken, accessToken = accessToken))
+    ): LinkAccountResult =
+        signIn(credential = googleCredential(idToken = idToken, accessToken = accessToken))
 
-    override suspend fun signInWithApple(idToken: String, rawNonce: String): LinkAccountResult = signIn(credential = appleCredential(idToken = idToken, rawNonce = rawNonce))
+    override suspend fun signInWithApple(idToken: String, rawNonce: String): LinkAccountResult =
+        signIn(credential = appleCredential(idToken = idToken, rawNonce = rawNonce))
 
     /**
      * Creates the account first; a collision means the email is already registered, so recover it

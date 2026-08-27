@@ -23,16 +23,17 @@ class ExitArenaUseCaseTest {
         )
 
     @Test
-    fun `invoke should call exitArena and setTravelerAvailableIfPresent when userId is present`() = runTest {
-        val arenaId = "test_arena"
-        val userId = "user_123"
-        coEvery { authenticationRepository.getUserId() } returns userId
+    fun `invoke should call exitArena and setTravelerAvailableIfPresent when userId is present`() =
+        runTest {
+            val arenaId = "test_arena"
+            val userId = "user_123"
+            coEvery { authenticationRepository.getUserId() } returns userId
 
-        exitArenaUseCase(arenaId = arenaId)
+            exitArenaUseCase(arenaId = arenaId)
 
-        coVerify { arenaRepository.exitArena(arenaId = arenaId, userId = userId) }
-        coVerify { tavernRepository.setTravelerAvailableIfPresent(userId = userId) }
-    }
+            coVerify { arenaRepository.exitArena(arenaId = arenaId, userId = userId) }
+            coVerify { tavernRepository.setTravelerAvailableIfPresent(userId = userId) }
+        }
 
     @Test
     fun `invoke should not call repository methods when userId is null`() = runTest {

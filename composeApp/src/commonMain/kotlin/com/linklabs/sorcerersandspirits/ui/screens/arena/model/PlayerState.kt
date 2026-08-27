@@ -19,7 +19,8 @@ sealed interface PlayerState {
     ) : PlayerState
 
     @Immutable
-    data class Unselected(override val userId: String, override val displayName: String) : PlayerState
+    data class Unselected(override val userId: String, override val displayName: String) :
+        PlayerState
 }
 
 internal fun Map<String, ArenaPlayer>.toState() = mapValues { it.value.toState() }

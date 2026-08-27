@@ -91,7 +91,7 @@ internal fun EncoreOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -101,9 +101,9 @@ internal fun EncoreOverlay(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec =
-                infiniteRepeatable(
-                    animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing)
-                ),
+            infiniteRepeatable(
+                animation = tween(durationMillis = SWAY_CYCLE_MILLIS, easing = LinearEasing),
+            ),
             label = ENCORE_SWAY_LABEL,
         )
     val glint by
@@ -111,9 +111,9 @@ internal fun EncoreOverlay(
             initialValue = 0f,
             targetValue = 1f,
             animationSpec =
-                infiniteRepeatable(
-                    animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing)
-                ),
+            infiniteRepeatable(
+                animation = tween(durationMillis = GLINT_CYCLE_MILLIS, easing = LinearEasing),
+            ),
             label = ENCORE_GLINT_LABEL,
         )
     Canvas(modifier = modifier) {
@@ -122,17 +122,16 @@ internal fun EncoreOverlay(
 }
 
 @Composable
-private fun encoreCrowdAvatars(): List<ImageBitmap> =
-    listOf(
-        imageResource(resource = Res.drawable.rogue_avatar),
-        imageResource(resource = Res.drawable.gambler_avatar),
-        imageResource(resource = Res.drawable.duelist_avatar),
-        imageResource(resource = Res.drawable.necromancer_avatar),
-        imageResource(resource = Res.drawable.bard_avatar),
-        imageResource(resource = Res.drawable.illusionist_avatar),
-        imageResource(resource = Res.drawable.mage_avatar),
-        imageResource(resource = Res.drawable.paladin_avatar),
-    )
+private fun encoreCrowdAvatars(): List<ImageBitmap> = listOf(
+    imageResource(resource = Res.drawable.rogue_avatar),
+    imageResource(resource = Res.drawable.gambler_avatar),
+    imageResource(resource = Res.drawable.duelist_avatar),
+    imageResource(resource = Res.drawable.necromancer_avatar),
+    imageResource(resource = Res.drawable.bard_avatar),
+    imageResource(resource = Res.drawable.illusionist_avatar),
+    imageResource(resource = Res.drawable.mage_avatar),
+    imageResource(resource = Res.drawable.paladin_avatar),
+)
 
 private suspend fun EncoreEffectState.play(message: ArenaMessageState.Encore, accentColor: Color) {
     when (message) {
@@ -178,7 +177,7 @@ private suspend fun EncoreEffectState.resolve(accentColor: Color, isSuccessful: 
             reaction.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = REACTION_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = REACTION_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         if (!isSuccessful) {

@@ -34,5 +34,6 @@ class GetTavernDataFlowUseCase(
             }
     }
 
-    private fun isSameSession(old: Profile, new: Profile): Boolean = old.userId == new.userId && old.displayName == new.displayName
+    private fun isSameSession(old: Profile, new: Profile): Boolean =
+        old.userId == new.userId && old.displayName == new.displayName
 }

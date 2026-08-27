@@ -32,20 +32,19 @@ internal class MessageAnimationCoordinator(private val message: ArenaMessageStat
         completion.await()
     }
 
-    private fun ArenaMessageState.getExpectedAnimationKeys() =
-        mutableSetOf<AnimationKey>().apply {
-            if (isFlash()) {
-                add(element = AnimationKey.FlashMessage)
-            }
+    private fun ArenaMessageState.getExpectedAnimationKeys() = mutableSetOf<AnimationKey>().apply {
+        if (isFlash()) {
+            add(element = AnimationKey.FlashMessage)
+        }
 
-            if (isAvatar()) {
-                addAll(
-                    elements =
-                        gestures.keys.map { userId -> AnimationKey.AvatarGesture(userId = userId) }
-                )
-                if (!isAvatarCompletedByGesture) {
-                    add(element = AnimationKey.AvatarOverlay)
-                }
+        if (isAvatar()) {
+            addAll(
+                elements =
+                gestures.keys.map { userId -> AnimationKey.AvatarGesture(userId = userId) },
+            )
+            if (!isAvatarCompletedByGesture) {
+                add(element = AnimationKey.AvatarOverlay)
             }
         }
+    }
 }

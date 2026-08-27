@@ -45,13 +45,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.dra
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 private const val SCYTHE_SUMMON_MILLIS = 260
 private const val SCYTHE_GLOW_HOLD_MILLIS = 240L
@@ -94,12 +94,12 @@ internal fun NecromancerNormalAttackOverlay(
 
         necromancerStrikeState.play(
             geometry =
-                weaponStrikeGeometry(
-                    attackerBounds = attackerBounds,
-                    target = defenderBounds.center,
-                    accentColor = scythePalette.blade,
-                    density = density,
-                ),
+            weaponStrikeGeometry(
+                attackerBounds = attackerBounds,
+                target = defenderBounds.center,
+                accentColor = scythePalette.blade,
+                density = density,
+            ),
             palette = scythePalette,
             normalRollMessageType = messageType,
         )
@@ -108,7 +108,7 @@ internal fun NecromancerNormalAttackOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -164,7 +164,7 @@ internal suspend fun NecromancerStrikeState.play(
             reap.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = SCYTHE_REAP_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = SCYTHE_REAP_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         launch {
@@ -263,13 +263,12 @@ private fun DrawScope.drawReapSweep(
     }
 }
 
-private fun scytheSwingDegrees(reap: Float): Float =
-    if (reap < SCYTHE_WINDUP_FRACTION) {
-        SCYTHE_COCK_DEGREES * (reap / SCYTHE_WINDUP_FRACTION)
-    } else {
-        val cutProgress = (reap - SCYTHE_WINDUP_FRACTION) / (1f - SCYTHE_WINDUP_FRACTION)
-        SCYTHE_COCK_DEGREES - (SCYTHE_COCK_DEGREES + SCYTHE_SWING_DEGREES) * cutProgress
-    }
+private fun scytheSwingDegrees(reap: Float): Float = if (reap < SCYTHE_WINDUP_FRACTION) {
+    SCYTHE_COCK_DEGREES * (reap / SCYTHE_WINDUP_FRACTION)
+} else {
+    val cutProgress = (reap - SCYTHE_WINDUP_FRACTION) / (1f - SCYTHE_WINDUP_FRACTION)
+    SCYTHE_COCK_DEGREES - (SCYTHE_COCK_DEGREES + SCYTHE_SWING_DEGREES) * cutProgress
+}
 
 private fun DrawScope.drawSlashArc(
     pivot: Offset,
@@ -314,11 +313,11 @@ private fun DrawScope.drawSlashArc(
     drawPath(
         path = arc,
         brush =
-            Brush.linearGradient(
-                colors = listOf(Color.Transparent, palette.glow, palette.core),
-                start = tail,
-                end = head,
-            ),
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, palette.glow, palette.core),
+            start = tail,
+            end = head,
+        ),
         style = Stroke(width = 9.dp.toPx(), cap = StrokeCap.Round, join = StrokeJoin.Round),
         alpha = alpha * 0.85f,
     )

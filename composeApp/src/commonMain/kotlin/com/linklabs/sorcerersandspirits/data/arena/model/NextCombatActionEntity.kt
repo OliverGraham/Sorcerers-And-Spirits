@@ -68,7 +68,8 @@ sealed interface AbilityActionEntity {
         @Serializable data object PrepareAttackEntity : ActivatedEntity
 
         @Serializable
-        data class ImpersonateEntity(val impersonateAbility: OffensiveAbilityEntity.Impersonate) : ActivatedEntity
+        data class ImpersonateEntity(val impersonateAbility: OffensiveAbilityEntity.Impersonate) :
+            ActivatedEntity
     }
 
     @Serializable
@@ -132,11 +133,12 @@ sealed interface AbilityActionEntity {
     }
 }
 
-internal fun NextCombatActionEntity.withActiveUserIds(ids: Set<String>): NextCombatActionEntity = when (this) {
-    is NextCombatActionEntity.IdleEntity -> copy(activeUserIds = ids)
-    is NextCombatActionEntity.NormalAttackEntity -> copy(activeUserIds = ids)
-    is NextCombatActionEntity.AbilityRollEntity -> copy(activeUserIds = ids)
-}
+internal fun NextCombatActionEntity.withActiveUserIds(ids: Set<String>): NextCombatActionEntity =
+    when (this) {
+        is NextCombatActionEntity.IdleEntity -> copy(activeUserIds = ids)
+        is NextCombatActionEntity.NormalAttackEntity -> copy(activeUserIds = ids)
+        is NextCombatActionEntity.AbilityRollEntity -> copy(activeUserIds = ids)
+    }
 
 internal fun NextCombatAction.toEntity(): NextCombatActionEntity = when (this) {
     is NextCombatAction.Idle -> NextCombatActionEntity.IdleEntity(activeUserIds = activeUserIds)

@@ -38,7 +38,10 @@ data class CharacterClass(
     }
 
     companion object {
-        fun playableTypes(): List<CharacterClassType> = CharacterClassType.entries.filter { type -> type != CharacterClassType.None }
+        fun playableTypes(): List<CharacterClassType> = CharacterClassType.entries.filter { type ->
+            type !=
+                CharacterClassType.None
+        }
 
         fun create(
             type: CharacterClassType,

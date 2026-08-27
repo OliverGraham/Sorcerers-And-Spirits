@@ -113,7 +113,9 @@ internal fun ProfileScreen(
     val uiState by viewModel.uiStateFlow.collectAsState()
     val linkResult by viewModel.linkResultFlow.collectAsState()
 
-    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) { paddingValues ->
+    Scaffold(modifier = modifier, snackbarHost = {
+        SnackbarHost(hostState = snackbarHostState)
+    }) { paddingValues ->
         ProfileScreen(
             uiState = uiState,
             linkResult = linkResult,

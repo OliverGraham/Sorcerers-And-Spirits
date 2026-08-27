@@ -73,9 +73,11 @@ class ArenaMessageGroupingTest {
         assertEquals(expected = listOf("r2"), actual = nextRound.messages.map { it.id })
     }
 
-    private fun newRound(id: String, roundNumber: Int) = ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
+    private fun newRound(id: String, roundNumber: Int) =
+        ArenaMessageState.NewRound(id = id, roundNumber = roundNumber.toString())
 
     private fun doubles(id: String) = ArenaMessageState.Doubles(id = id, playerName = "Rogue")
 
-    private fun connected(id: String, name: String) = ArenaMessageState.ConnectedToArena(id = id, displayName = name)
+    private fun connected(id: String, name: String) =
+        ArenaMessageState.ConnectedToArena(id = id, displayName = name)
 }

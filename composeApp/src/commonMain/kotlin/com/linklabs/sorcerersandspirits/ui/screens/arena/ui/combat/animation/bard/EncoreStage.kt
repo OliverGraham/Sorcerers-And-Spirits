@@ -28,7 +28,8 @@ private val micChromeDark = Color(color = 0xFF35383F)
 private val encoreAsh = Color(color = 0xFF8C8A85)
 private val encoreBooTint = Color(color = 0xFF9DA7C4)
 
-private fun Color.grayed(fraction: Float): Color = lerp(start = this, stop = encoreAsh, fraction = fraction)
+private fun Color.grayed(fraction: Float): Color =
+    lerp(start = this, stop = encoreAsh, fraction = fraction)
 
 internal class EncoreCrowdMember(
     val centerXFraction: Float,
@@ -151,7 +152,11 @@ internal fun DrawScope.drawEncoreStage(alpha: Float) {
     )
 }
 
-private fun DrawScope.micHeadCenter(): Offset = Offset(x = size.width * 0.5f, y = size.height * 0.58f)
+private fun DrawScope.micHeadCenter(): Offset = Offset(
+    x = size.width * 0.5f,
+    y =
+    size.height * 0.58f,
+)
 
 internal fun DrawScope.drawEncoreSpotlight(spotlight: Float) {
     if (spotlight <= 0f) return

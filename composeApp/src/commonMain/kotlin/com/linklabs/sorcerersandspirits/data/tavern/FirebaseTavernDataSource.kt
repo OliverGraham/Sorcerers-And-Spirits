@@ -45,19 +45,26 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         }
         .map { travelersByUserId -> travelersByUserId.values.toList() }
 
-    override fun mailboxChallengeIdFlow(userId: String): Flow<String?> = mailboxChallengesReference.child(path = userId).valueEvents.map { snapshot ->
-        if (snapshot.exists) snapshot.value(strategy = String.serializer().nullable) else null
+    override fun mailboxChallengeIdFlow(userId: String): Flow<String?> =
+        mailboxChallengesReference.child(path = userId).valueEvents.map { snapshot ->
+            if (snapshot.exists) snapshot.value(strategy = String.serializer().nullable) else null
+        }
+
+    override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> =
+        challengesReference.child(path = challengeId).valueEvents.map { snapshot ->
+            snapshot.value(strategy = ChallengeEntity.serializer().nullable)
+        }
+
+    override fun connectedFlow(): Flow<Boolean> = connectedReference.valueEvents.map { snapshot ->
+        snapshot.value<Boolean?>()
+            ?: false
     }
 
-    override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> = challengesReference.child(path = challengeId).valueEvents.map { snapshot ->
-        snapshot.value(strategy = ChallengeEntity.serializer().nullable)
-    }
+    override suspend fun getMailboxChallengeId(userId: String): String? =
+        mailboxChallengesReference.child(path = userId).awaitNullableValue<String>()
 
-    override fun connectedFlow(): Flow<Boolean> = connectedReference.valueEvents.map { snapshot -> snapshot.value<Boolean?>() ?: false }
-
-    override suspend fun getMailboxChallengeId(userId: String): String? = mailboxChallengesReference.child(path = userId).awaitNullableValue<String>()
-
-    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? = challengesReference.child(path = challengeId).awaitNullableValue<ChallengeEntity>()
+    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? =
+        challengesReference.child(path = challengeId).awaitNullableValue<ChallengeEntity>()
 
     override fun generateChallengeId(): String? = challengesReference.push().key
 

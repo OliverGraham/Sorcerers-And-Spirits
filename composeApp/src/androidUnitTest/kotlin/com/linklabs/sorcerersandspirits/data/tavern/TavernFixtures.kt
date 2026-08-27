@@ -9,7 +9,8 @@ fun travelerEntity(
     userId: String,
     displayName: String = userId,
     tavernStatus: TavernStatus = TavernStatus.Available,
-): TravelerEntity = TravelerEntity(userId = userId, displayName = displayName, tavernStatus = tavernStatus)
+): TravelerEntity =
+    TravelerEntity(userId = userId, displayName = displayName, tavernStatus = tavernStatus)
 
 fun challengerEntity(
     userId: String,

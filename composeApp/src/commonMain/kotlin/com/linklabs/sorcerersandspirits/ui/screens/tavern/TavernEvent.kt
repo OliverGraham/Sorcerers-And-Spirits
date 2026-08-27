@@ -5,7 +5,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenVi
 sealed interface TavernEvent {
     data class NavigateToArena(val arguments: ArenaScreenViewModelArguments) : TavernEvent
 
-    data class NotEnoughChallengersAvailable(val challengerStates: List<ChallengerState>) : TavernEvent
+    data class NotEnoughChallengersAvailable(val challengerStates: List<ChallengerState>) :
+        TavernEvent
 
     data object ShowChallengeSendFailed : TavernEvent
 }

@@ -54,15 +54,15 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_oil_barrel
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
-import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
-import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.ic_oil_barrel
 
 internal const val ALL_IN_TOSS_MILLIS = 1100
 internal const val ALL_IN_SETTLE_MILLIS = 300
@@ -124,12 +124,12 @@ internal fun AllInOverlay(
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(
             scene =
-                allInScene(
-                    bounds = avatarBounds,
-                    accentColor = accentColor,
-                    density = density,
-                    seed = animatingMessage.id.hashCode(),
-                ),
+            allInScene(
+                bounds = avatarBounds,
+                accentColor = accentColor,
+                density = density,
+                seed = animatingMessage.id.hashCode(),
+            ),
             outcome = animatingMessage.outcome,
         )
 
@@ -137,7 +137,7 @@ internal fun AllInOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -169,23 +169,23 @@ private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed:
                     color = color,
                     accent = accent,
                     launchStart =
-                        center +
-                            Offset(
-                                x = random.nextFloat(min = -0.16f, max = 0.16f) * width,
-                                y = random.nextFloat(min = -0.06f, max = 0.14f) * height,
-                            ),
+                    center +
+                        Offset(
+                            x = random.nextFloat(min = -0.16f, max = 0.16f) * width,
+                            y = random.nextFloat(min = -0.06f, max = 0.14f) * height,
+                        ),
                     apex =
-                        Offset(
-                            x = center.x + random.nextFloat(min = -0.42f, max = 0.42f) * width,
-                            y = bounds.top + random.nextFloat(min = 0f, max = 0.18f) * height,
-                        ),
+                    Offset(
+                        x = center.x + random.nextFloat(min = -0.42f, max = 0.42f) * width,
+                        y = bounds.top + random.nextFloat(min = 0f, max = 0.18f) * height,
+                    ),
                     rest =
-                        Offset(
-                            x =
-                                pileCenter.x +
-                                    random.nextFloat(min = -1f, max = 1f) * pileHalfWidth,
-                            y = pileCenter.y - random.nextFloat(min = 0f, max = 0.1f) * height,
-                        ),
+                    Offset(
+                        x =
+                        pileCenter.x +
+                            random.nextFloat(min = -1f, max = 1f) * pileHalfWidth,
+                        y = pileCenter.y - random.nextFloat(min = 0f, max = 0.1f) * height,
+                    ),
                     explodeDir = Offset(x = cos(angle), y = sin(angle)),
                     radiusPx = with(density) { valuableRadiusDp(kind = kind).dp.toPx() },
                     spinTurns = random.nextInt(from = 2, until = 4).toFloat(),
@@ -233,7 +233,7 @@ private suspend fun AllInEffectState.play(scene: AllInScene, outcome: AllInOutco
             explode.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = ALL_IN_EXPLODE_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = ALL_IN_EXPLODE_MILLIS, easing = FastOutLinearInEasing),
             )
 
         AllInOutcome.NoEffect -> {
@@ -550,7 +550,7 @@ private fun DrawScope.drawBarrel(
                 0f,
                 1f,
                 0f,
-            )
+            ),
         )
     val colorFilter = ColorFilter.colorMatrix(colorMatrix = matrix)
 
@@ -568,11 +568,11 @@ private fun DrawScope.drawBlast(center: Offset, explode: Float, accentColor: Col
     val fade = 1f - explode
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(blastCore, accentColor.copy(alpha = 0.75f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(blastCore, accentColor.copy(alpha = 0.75f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = fade,
@@ -623,23 +623,21 @@ private fun valuableKinds(): List<ValuableKind> = buildList {
     repeat(times = BARREL_COUNT) { add(element = ValuableKind.Barrel) }
 }
 
-private fun valuableColors(kind: ValuableKind, random: Random): Pair<Color, Color> =
-    when (kind) {
-        ValuableKind.Coin -> coinFace to coinRim
-        ValuableKind.Gem -> gemColors.random(random = random) to coinShine
-        ValuableKind.Bill -> billBody to billInk
-        ValuableKind.Painting -> frameGold to canvasColors.random(random = random)
-        ValuableKind.Barrel -> barrelBody to barrelBand
-    }
+private fun valuableColors(kind: ValuableKind, random: Random): Pair<Color, Color> = when (kind) {
+    ValuableKind.Coin -> coinFace to coinRim
+    ValuableKind.Gem -> gemColors.random(random = random) to coinShine
+    ValuableKind.Bill -> billBody to billInk
+    ValuableKind.Painting -> frameGold to canvasColors.random(random = random)
+    ValuableKind.Barrel -> barrelBody to barrelBand
+}
 
-private fun valuableRadiusDp(kind: ValuableKind): Float =
-    when (kind) {
-        ValuableKind.Coin -> 8f
-        ValuableKind.Gem -> 7f
-        ValuableKind.Bill -> 10f
-        ValuableKind.Painting -> 12f
-        ValuableKind.Barrel -> 17f
-    }
+private fun valuableRadiusDp(kind: ValuableKind): Float = when (kind) {
+    ValuableKind.Coin -> 8f
+    ValuableKind.Gem -> 7f
+    ValuableKind.Bill -> 10f
+    ValuableKind.Painting -> 12f
+    ValuableKind.Barrel -> 17f
+}
 
 enum class ValuableKind {
     Coin,
@@ -735,11 +733,11 @@ private fun GamblerAllInPreview(
                 gamblerUserId = PREVIEW_ACTOR_ID,
                 gamblerName = "Gambler",
                 singleDie =
-                    when (outcome) {
-                        AllInOutcome.SelfKnockout -> 1
-                        AllInOutcome.NoEffect -> 3
-                        AllInOutcome.DoubleAttack -> 6
-                    },
+                when (outcome) {
+                    AllInOutcome.SelfKnockout -> 1
+                    AllInOutcome.NoEffect -> 3
+                    AllInOutcome.DoubleAttack -> 6
+                },
                 outcome = outcome,
                 animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),

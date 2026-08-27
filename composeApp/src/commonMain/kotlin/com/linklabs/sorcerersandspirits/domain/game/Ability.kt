@@ -161,4 +161,5 @@ val OffensiveAbility.defaultState: OffensiveAbility
  * after it mutates rather than replacing the [OffensiveAbility.Impersonate]. For every other
  * ability this is simply [updated].
  */
-fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility = if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated
+fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility =
+    if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated

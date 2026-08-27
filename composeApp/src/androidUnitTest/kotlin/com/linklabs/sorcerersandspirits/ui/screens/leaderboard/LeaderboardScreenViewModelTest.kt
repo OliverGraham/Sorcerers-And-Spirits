@@ -35,7 +35,8 @@ class LeaderboardScreenViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun createViewModel() = LeaderboardScreenViewModel(getLeaderboardUseCase = getLeaderboardUseCase)
+    private fun createViewModel() =
+        LeaderboardScreenViewModel(getLeaderboardUseCase = getLeaderboardUseCase)
 
     @Test
     fun `Given the leaderboard loads, then the screen shows the ranked rows`() = runTest {

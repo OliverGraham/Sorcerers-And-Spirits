@@ -36,13 +36,17 @@ internal fun previewCharacterClassCopy(): CharacterClassCopy = CharacterClassCop
     },
 )
 
-internal fun previewCharacterClassState(type: CharacterClassType): CharacterClassState = CharacterClass.create(
-    type = type,
-    hitPoints = PREVIEW_STAT,
-    maxHitPoints = PREVIEW_STAT,
-    armorClass = PREVIEW_STAT,
-    speed = PREVIEW_STAT,
-)
-    .toState()
+internal fun previewCharacterClassState(type: CharacterClassType): CharacterClassState =
+    CharacterClass.create(
+        type = type,
+        hitPoints = PREVIEW_STAT,
+        maxHitPoints = PREVIEW_STAT,
+        armorClass = PREVIEW_STAT,
+        speed = PREVIEW_STAT,
+    )
+        .toState()
 
-internal fun previewCharacterClassStates(): List<CharacterClassState> = CharacterClass.playableTypes().map { type -> previewCharacterClassState(type = type) }
+internal fun previewCharacterClassStates(): List<CharacterClassState> =
+    CharacterClass.playableTypes().map { type ->
+        previewCharacterClassState(type = type)
+    }

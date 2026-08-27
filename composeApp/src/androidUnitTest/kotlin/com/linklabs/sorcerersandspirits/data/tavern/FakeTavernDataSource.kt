@@ -47,17 +47,24 @@ class FakeTavernDataSource : TavernDataSource {
 
     fun challenge(challengeId: String): ChallengeEntity? = challenges.value[challengeId]
 
-    override fun travelerEntitiesFlow(): Flow<List<TravelerEntity>> = travelers.map { it.values.toList() }
+    override fun travelerEntitiesFlow(): Flow<List<TravelerEntity>> = travelers.map {
+        it.values.toList()
+    }
 
-    override fun mailboxChallengeIdFlow(userId: String): Flow<String?> = mailboxes.map { it[userId] }
+    override fun mailboxChallengeIdFlow(userId: String): Flow<String?> = mailboxes.map {
+        it[userId]
+    }
 
-    override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> = challenges.map { it[challengeId] }
+    override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> = challenges.map {
+        it[challengeId]
+    }
 
     override fun connectedFlow(): Flow<Boolean> = connected
 
     override suspend fun getMailboxChallengeId(userId: String): String? = mailboxes.value[userId]
 
-    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? = challenges.value[challengeId]
+    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? =
+        challenges.value[challengeId]
 
     override fun generateChallengeId(): String? = challengeIdToGenerate
 

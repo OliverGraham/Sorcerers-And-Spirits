@@ -40,10 +40,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
-import kotlin.math.PI
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.random.Random
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -52,6 +48,10 @@ import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.golem_minion
 import sorcerersandspirits.composeapp.generated.resources.ic_health
 import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
+import kotlin.math.PI
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.random.Random
 
 private const val PORTAL_OPEN_MILLIS = 340
 private const val PORTAL_HOLD_MILLIS = 160L
@@ -83,14 +83,14 @@ internal fun NecromancerSummonMinionOverlay(
     LaunchedEffect(key1 = animatingMessage.id) {
         state.play(
             scene =
-                summonMinionScene(
-                    bounds = avatarBounds,
-                    outcome = animatingMessage.outcome,
-                    density = density,
-                    seed = animatingMessage.id.hashCode(),
-                    portalPalette =
-                        summonPortalPaletteFor(actorClass = animatingMessage.actingClassType),
-                ),
+            summonMinionScene(
+                bounds = avatarBounds,
+                outcome = animatingMessage.outcome,
+                density = density,
+                seed = animatingMessage.id.hashCode(),
+                portalPalette =
+                summonPortalPaletteFor(actorClass = animatingMessage.actingClassType),
+            ),
             outcome = animatingMessage.outcome,
         )
 
@@ -98,7 +98,7 @@ internal fun NecromancerSummonMinionOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -138,7 +138,8 @@ private suspend fun SummonMinionEffectState.play(
         SummonMinionOutcome.Skeleton -> raiseMinion(heals = false)
 
         SummonMinionOutcome.SkeletonAndHeal,
-        SummonMinionOutcome.Golem -> raiseMinion(heals = true)
+        SummonMinionOutcome.Golem,
+        -> raiseMinion(heals = true)
     }
 
     this.scene = null
@@ -250,15 +251,15 @@ private fun summonMinionScene(
     )
 }
 
-private fun minionTypeFor(outcome: SummonMinionOutcome): MinionType =
-    when (outcome) {
-        SummonMinionOutcome.Fizzle -> MinionType.None
+private fun minionTypeFor(outcome: SummonMinionOutcome): MinionType = when (outcome) {
+    SummonMinionOutcome.Fizzle -> MinionType.None
 
-        SummonMinionOutcome.Skeleton,
-        SummonMinionOutcome.SkeletonAndHeal -> MinionType.Skeleton
+    SummonMinionOutcome.Skeleton,
+    SummonMinionOutcome.SkeletonAndHeal,
+    -> MinionType.Skeleton
 
-        SummonMinionOutcome.Golem -> MinionType.Golem
-    }
+    SummonMinionOutcome.Golem -> MinionType.Golem
+}
 
 private fun DrawScope.drawSummonMinion(
     state: SummonMinionEffectState,
@@ -313,22 +314,22 @@ private fun DrawScope.drawHealBurst(center: Offset, radius: Float, heal: Float) 
     val outerRadius = radius * (0.3f + 0.7f * burst)
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(healGreen.copy(alpha = 0.8f), Color.Transparent),
-                center = center,
-                radius = outerRadius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(healGreen.copy(alpha = 0.8f), Color.Transparent),
+            center = center,
+            radius = outerRadius,
+        ),
         radius = outerRadius,
         center = center,
         alpha = fade,
     )
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(healRed.copy(alpha = 0.7f), Color.Transparent),
-                center = center,
-                radius = outerRadius * 0.6f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(healRed.copy(alpha = 0.7f), Color.Transparent),
+            center = center,
+            radius = outerRadius * 0.6f,
+        ),
         radius = outerRadius * 0.6f,
         center = center,
         alpha = fade,
@@ -348,10 +349,10 @@ private fun DrawScope.drawHealMote(mote: HealMote, heal: Float, icon: ImageBitma
     drawImage(
         image = icon,
         dstOffset =
-            IntOffset(
-                x = (x - mote.sizePx / 2f).roundToInt(),
-                y = (y - mote.sizePx / 2f).roundToInt(),
-            ),
+        IntOffset(
+            x = (x - mote.sizePx / 2f).roundToInt(),
+            y = (y - mote.sizePx / 2f).roundToInt(),
+        ),
         dstSize = IntSize(width = size, height = size),
         alpha = alpha,
     )
@@ -452,12 +453,12 @@ private fun NecromancerSummonMinionPreview(
                 className = actorClass.name,
                 actingClassType = CharacterClassType.Necromancer,
                 singleDie =
-                    when (outcome) {
-                        SummonMinionOutcome.Fizzle -> 1
-                        SummonMinionOutcome.Skeleton -> 2
-                        SummonMinionOutcome.SkeletonAndHeal -> 4
-                        SummonMinionOutcome.Golem -> 6
-                    },
+                when (outcome) {
+                    SummonMinionOutcome.Fizzle -> 1
+                    SummonMinionOutcome.Skeleton -> 2
+                    SummonMinionOutcome.SkeletonAndHeal -> 4
+                    SummonMinionOutcome.Golem -> 6
+                },
                 outcome = outcome,
                 animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),

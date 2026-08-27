@@ -14,7 +14,9 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         val messagesReference =
             arenaReference.child(path = ArenaMatchEntity.Companion.newMessagesName)
 
-        arenaReference.runTransaction(strategy = ArenaMatchEntity.Companion.serializer()) { existingMatch ->
+        arenaReference.runTransaction(
+            strategy = ArenaMatchEntity.Companion.serializer(),
+        ) { existingMatch ->
             existingMatch.applyCombatResultTransaction(messagesReference = messagesReference)
         }
     }

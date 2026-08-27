@@ -6,11 +6,16 @@ import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.CharacterClassMessageInfoEntity
 import dev.gitlive.firebase.database.DatabaseReference
 
-internal fun DatabaseReference.addNewKey(): String = push().key ?: error("Failed to generate Firebase push key")
+internal fun DatabaseReference.addNewKey(): String =
+    push().key ?: error("Failed to generate Firebase push key")
 
-internal fun Map<String, ArenaPlayerEntity>.getFastestPlayer() = values.filterIsInstance<ArenaPlayerEntity.Selected>().maxBy { it.characterClassEntity.speed }
+internal fun Map<String, ArenaPlayerEntity>.getFastestPlayer() =
+    values.filterIsInstance<ArenaPlayerEntity.Selected>().maxBy {
+        it.characterClassEntity.speed
+    }
 
-internal fun CharacterClassEntity.toCharacterClassMessageInfoEntity() = CharacterClassMessageInfoEntity(className = className, type = type)
+internal fun CharacterClassEntity.toCharacterClassMessageInfoEntity() =
+    CharacterClassMessageInfoEntity(className = className, type = type)
 
 /**
  * The opening log entries for a fresh combat match: round 1 begins, then the first player's turn.

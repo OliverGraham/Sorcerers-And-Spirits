@@ -48,11 +48,11 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.sla
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.slashTangent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.smoothstep
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.PI
-import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.atan2
 
 private const val MACE_RAISE_MILLIS = 200
 private const val MACE_READY_HOLD_MILLIS = 200L
@@ -89,12 +89,12 @@ internal fun PaladinNormalAttackOverlay(
 
         paladinStrikeState.play(
             geometry =
-                weaponStrikeGeometry(
-                    attackerBounds = attackerBounds,
-                    target = defenderBounds.center,
-                    accentColor = accentColor,
-                    density = density,
-                ),
+            weaponStrikeGeometry(
+                attackerBounds = attackerBounds,
+                target = defenderBounds.center,
+                accentColor = accentColor,
+                density = density,
+            ),
             normalRollMessageType = messageType,
         )
 
@@ -102,7 +102,7 @@ internal fun PaladinNormalAttackOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -148,7 +148,7 @@ internal suspend fun PaladinStrikeState.play(
             swing.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = MACE_SWING_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = MACE_SWING_MILLIS, easing = FastOutSlowInEasing),
             )
         }
         launch {
@@ -271,38 +271,38 @@ private fun DrawScope.drawEssenceTrail(
         path = plume,
         color = paladinEssenceGlow,
         style =
-            Stroke(
-                width = 32.dp.toPx() * widthScale,
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
+        Stroke(
+            width = 32.dp.toPx() * widthScale,
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round,
+        ),
         alpha = alpha * essence * 0.18f,
     )
     drawPath(
         path = plume,
         color = paladinEssenceGreen,
         style =
-            Stroke(
-                width = 19.dp.toPx() * widthScale,
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
+        Stroke(
+            width = 19.dp.toPx() * widthScale,
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round,
+        ),
         alpha = alpha * essence * 0.32f,
     )
     drawPath(
         path = plume,
         brush =
-            Brush.linearGradient(
-                colors = listOf(Color.Transparent, paladinEssenceGreen, paladinEssenceCore),
-                start = tail,
-                end = head,
-            ),
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, paladinEssenceGreen, paladinEssenceCore),
+            start = tail,
+            end = head,
+        ),
         style =
-            Stroke(
-                width = 10.dp.toPx() * widthScale,
-                cap = StrokeCap.Round,
-                join = StrokeJoin.Round,
-            ),
+        Stroke(
+            width = 10.dp.toPx() * widthScale,
+            cap = StrokeCap.Round,
+            join = StrokeJoin.Round,
+        ),
         alpha = alpha * (0.5f + 0.45f * essence),
     )
 }

@@ -42,12 +42,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.visibleAvatarWidth
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
 private const val PORTAL_OPEN_MILLIS = 420
 private const val SWIRL_PERIOD_MILLIS = 2600
@@ -90,7 +90,7 @@ internal fun MageTeleportOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
 
         if (animatingMessage.isContinuous()) {
@@ -121,7 +121,8 @@ private suspend fun TeleportPortalState.play(
         is ArenaMessageState.Teleport.Trigger -> open(scene = scene)
 
         is ArenaMessageState.Teleport.Roll,
-        is ArenaMessageState.Teleport.Tie -> hold(scene = scene)
+        is ArenaMessageState.Teleport.Tie,
+        -> hold(scene = scene)
 
         is ArenaMessageState.Teleport.Result ->
             if (message.didDefenderEscape) {
@@ -180,10 +181,10 @@ private suspend fun TeleportPortalState.resolveEscape(scene: TeleportScene) {
             swirl.animateTo(
                 targetValue = swirl.value + 1.2f,
                 animationSpec =
-                    tween(
-                        durationMillis = SWALLOW_MILLIS + PORTAL_CLOSE_MILLIS,
-                        easing = LinearEasing,
-                    ),
+                tween(
+                    durationMillis = SWALLOW_MILLIS + PORTAL_CLOSE_MILLIS,
+                    easing = LinearEasing,
+                ),
             )
         }
         launch {
@@ -191,7 +192,7 @@ private suspend fun TeleportPortalState.resolveEscape(scene: TeleportScene) {
             open.animateTo(
                 targetValue = 0f,
                 animationSpec =
-                    tween(durationMillis = PORTAL_CLOSE_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = PORTAL_CLOSE_MILLIS, easing = FastOutSlowInEasing),
             )
         }
     }
@@ -208,7 +209,7 @@ private suspend fun TeleportPortalState.resolveFail(scene: TeleportScene) {
             open.animateTo(
                 targetValue = 0f,
                 animationSpec =
-                    tween(durationMillis = PORTAL_SNAP_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = PORTAL_SNAP_MILLIS, easing = FastOutLinearInEasing),
             )
         }
         launch {
@@ -256,21 +257,21 @@ private fun DrawScope.drawPortal(scene: TeleportScene, open: Float, swirl: Float
     scale(scaleX = 1f, scaleY = yScale, pivot = center) {
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(PORTAL_GLOW.copy(alpha = 0.55f), Color.Transparent),
-                    center = center,
-                    radius = radius * 1.3f,
-                ),
+            Brush.radialGradient(
+                colors = listOf(PORTAL_GLOW.copy(alpha = 0.55f), Color.Transparent),
+                center = center,
+                radius = radius * 1.3f,
+            ),
             radius = radius * 1.3f,
             center = center,
         )
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(PORTAL_VOID, PORTAL_GLOW.copy(alpha = 0.85f)),
-                    center = center,
-                    radius = radius,
-                ),
+            Brush.radialGradient(
+                colors = listOf(PORTAL_VOID, PORTAL_GLOW.copy(alpha = 0.85f)),
+                center = center,
+                radius = radius,
+            ),
             radius = radius,
             center = center,
         )
@@ -300,11 +301,11 @@ private fun DrawScope.drawPortal(scene: TeleportScene, open: Float, swirl: Float
         if (swallow > 0f) {
             drawCircle(
                 brush =
-                    Brush.radialGradient(
-                        colors = listOf(PORTAL_CORE.copy(alpha = swallow), Color.Transparent),
-                        center = center,
-                        radius = radius * (0.4f + 0.6f * swallow),
-                    ),
+                Brush.radialGradient(
+                    colors = listOf(PORTAL_CORE.copy(alpha = swallow), Color.Transparent),
+                    center = center,
+                    radius = radius * (0.4f + 0.6f * swallow),
+                ),
                 radius = radius * (0.4f + 0.6f * swallow),
                 center = center,
             )
@@ -382,14 +383,14 @@ private fun MageTeleportPreview(didEscape: Boolean) {
             userId = PREVIEW_ACTOR_ID,
             characterClass = classState,
             modifier =
-                Modifier.offset(
-                        x = with(density) { bounds.left.toDp() },
-                        y = with(density) { bounds.top.toDp() },
-                    )
-                    .size(
-                        width = with(density) { bounds.width.toDp() },
-                        height = with(density) { bounds.height.toDp() },
-                    ),
+            Modifier.offset(
+                x = with(density) { bounds.left.toDp() },
+                y = with(density) { bounds.top.toDp() },
+            )
+                .size(
+                    width = with(density) { bounds.width.toDp() },
+                    height = with(density) { bounds.height.toDp() },
+                ),
         )
         MageTeleportOverlay(
             animatingMessage = message,

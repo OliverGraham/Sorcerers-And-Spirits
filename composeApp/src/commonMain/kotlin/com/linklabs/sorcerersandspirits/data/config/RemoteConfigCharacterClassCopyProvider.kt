@@ -7,5 +7,6 @@ class RemoteConfigCharacterClassCopyProvider(
     private val remoteConfigDataSource: RemoteConfigDataSource,
 ) : CharacterClassCopyProvider {
 
-    override fun getCharacterClassCopy(): CharacterClassCopy = remoteConfigDataSource.characterClassCopy().toCharacterClassCopy()
+    override fun getCharacterClassCopy(): CharacterClassCopy =
+        remoteConfigDataSource.characterClassCopy().toCharacterClassCopy()
 }

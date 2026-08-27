@@ -72,11 +72,10 @@ sealed interface ArenaMatchState {
         val playersInTheStands = getPlayersInTheStands(targetedUserId = targetedUserId)
         val areTherePlayersInTheStands = playersInTheStands.isNotEmpty()
 
-        fun canTurnOwnerTargetAnOpponent(isAnAnimationActive: Boolean) =
-            !isAnAnimationActive &&
-                isItThisUsersTurn &&
-                !isMatchOver &&
-                lockedTargetUserId.isNullOrEmpty()
+        fun canTurnOwnerTargetAnOpponent(isAnAnimationActive: Boolean) = !isAnAnimationActive &&
+            isItThisUsersTurn &&
+            !isMatchOver &&
+            lockedTargetUserId.isNullOrEmpty()
     }
 
     @Immutable
@@ -106,13 +105,12 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(userPlayerId: Str
         classSelections = emptyMap(),
     )
 
-private fun ArenaMatchState.Combat.getTargetedPlayerUserId() =
-    lockedTargetUserId
-        ?: selectedOpponentUserId
-        ?: combatActionState.defenderUserId()
-        ?: playerMap.values
-            .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
-            ?.userId
+private fun ArenaMatchState.Combat.getTargetedPlayerUserId() = lockedTargetUserId
+    ?: selectedOpponentUserId
+    ?: combatActionState.defenderUserId()
+    ?: playerMap.values
+        .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
+        ?.userId
 
 private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) =
     playerMap.filterKeys { it != attackerUserId && it != targetedUserId }.values.toList()

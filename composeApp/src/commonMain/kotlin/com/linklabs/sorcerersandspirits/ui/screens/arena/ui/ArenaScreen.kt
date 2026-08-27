@@ -119,7 +119,7 @@ private fun Flow<ArenaEvent>.collectEvents(
                 is ArenaEvent.OpponentLeft ->
                     coroutineScope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "${event.displayName} left the arena"
+                            message = "${event.displayName} left the arena",
                         )
                     }
             }

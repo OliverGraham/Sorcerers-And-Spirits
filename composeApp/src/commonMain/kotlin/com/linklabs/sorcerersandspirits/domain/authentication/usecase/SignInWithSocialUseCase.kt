@@ -17,25 +17,27 @@ class SignInWithSocialUseCase(
     private val authenticationRepository: AuthenticationRepository,
     private val socialSignInProvider: SocialSignInProvider,
 ) {
-    suspend operator fun invoke(method: SignInMethod): LinkAccountResult = when (val token = socialSignInProvider.requestToken(method = method)) {
-        is SocialTokenResult.Google ->
-            authenticationRepository.signInWithGoogle(
-                idToken = token.idToken,
-                accessToken = token.accessToken,
-            )
+    suspend operator fun invoke(method: SignInMethod): LinkAccountResult =
+        when (val token = socialSignInProvider.requestToken(method = method)) {
+            is SocialTokenResult.Google ->
+                authenticationRepository.signInWithGoogle(
+                    idToken = token.idToken,
+                    accessToken = token.accessToken,
+                )
 
-        is SocialTokenResult.Apple ->
-            authenticationRepository.signInWithApple(
-                idToken = token.idToken,
-                rawNonce = token.rawNonce,
-            )
+            is SocialTokenResult.Apple ->
+                authenticationRepository.signInWithApple(
+                    idToken = token.idToken,
+                    rawNonce = token.rawNonce,
+                )
 
-        is SocialTokenResult.Cancelled -> LinkAccountResult.CANCELLED
+            is SocialTokenResult.Cancelled -> LinkAccountResult.CANCELLED
 
-        is SocialTokenResult.NotAvailable -> LinkAccountResult.NOT_AVAILABLE
+            is SocialTokenResult.NotAvailable -> LinkAccountResult.NOT_AVAILABLE
 
-        is SocialTokenResult.Error -> LinkAccountResult.ERROR
-    }
+            is SocialTokenResult.Error -> LinkAccountResult.ERROR
+        }
 
-    suspend fun withEmail(email: String, password: String): LinkAccountResult = authenticationRepository.signInWithEmail(email = email, password = password)
+    suspend fun withEmail(email: String, password: String): LinkAccountResult =
+        authenticationRepository.signInWithEmail(email = email, password = password)
 }

@@ -35,10 +35,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.PI
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val ATMOSPHERE_IN_MILLIS = 420
 private const val ATMOSPHERE_OUT_MILLIS = 420
@@ -102,12 +102,12 @@ internal fun MageSpellPotencyOverlay(
         val element = mageElementFor(messageId = animatingMessage.id)
         state.play(
             geometry =
-                weaponStrikeGeometry(
-                    attackerBounds = mageBounds,
-                    target = defenderBounds.center,
-                    accentColor = element.palette().glow,
-                    density = density,
-                ),
+            weaponStrikeGeometry(
+                attackerBounds = mageBounds,
+                target = defenderBounds.center,
+                accentColor = element.palette().glow,
+                density = density,
+            ),
             element = element,
             boltCount = spellPotencyBoltCount(mainDamage = animatingMessage.mainDamage),
         )
@@ -116,7 +116,7 @@ internal fun MageSpellPotencyOverlay(
             AnimationCompleteArguments(
                 messageId = animatingMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            )
+            ),
         )
     }
 
@@ -171,11 +171,10 @@ internal suspend fun SpellPotencyState.play(
     this.scene = null
 }
 
-private fun mageSpellPotencyDurationMillis(mainDamage: Int): Long =
-    ATMOSPHERE_IN_MILLIS +
-        barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
-        IMPACT_BURST_TAIL_MILLIS +
-        ATMOSPHERE_OUT_MILLIS
+private fun mageSpellPotencyDurationMillis(mainDamage: Int): Long = ATMOSPHERE_IN_MILLIS +
+    barrageWindowMillis(boltCount = spellPotencyBoltCount(mainDamage = mainDamage)) +
+    IMPACT_BURST_TAIL_MILLIS +
+    ATMOSPHERE_OUT_MILLIS
 
 internal fun DrawScope.drawSpellPotency(state: SpellPotencyState) {
     val geometry = state.scene ?: return

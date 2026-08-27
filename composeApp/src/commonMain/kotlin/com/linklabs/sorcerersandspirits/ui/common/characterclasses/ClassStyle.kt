@@ -99,7 +99,8 @@ fun DieColor.toColor(): Color? = when (this) {
     DieColor.Paladin -> CharacterClassType.Paladin.toColor()
 }
 
-fun classFamilyColors(): List<Color> = listOf(RED.topStop, YELLOW.topStop, GREEN.topStop, BLUE.topStop)
+fun classFamilyColors(): List<Color> =
+    listOf(RED.topStop, YELLOW.topStop, GREEN.topStop, BLUE.topStop)
 
 private val RED =
     ClassGradient(topStop = Color(color = 0xFF9D2920), bottomStop = Color(color = 0xFF581310))

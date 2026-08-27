@@ -62,11 +62,10 @@ internal class DiceStateHolder {
         isUserRolling = false
     }
 
-    private fun DiceRollState.settlingPositions(): MutableSet<DiePosition> =
-        when (this) {
-            is DiceRollState.OneDie -> mutableSetOf(diePosition)
-            is DiceRollState.TwoDice -> mutableSetOf(DiePosition.First, DiePosition.Second)
-        }
+    private fun DiceRollState.settlingPositions(): MutableSet<DiePosition> = when (this) {
+        is DiceRollState.OneDie -> mutableSetOf(diePosition)
+        is DiceRollState.TwoDice -> mutableSetOf(DiePosition.First, DiePosition.Second)
+    }
 
     internal fun registerShake() {
         isArmed = true
@@ -92,18 +91,16 @@ internal class DiceStateHolder {
         onDiceSettled()
     }
 
-    private fun dieStateAt(diePosition: DiePosition): DieState =
-        when (diePosition) {
-            DiePosition.First -> firstDieState
-            DiePosition.Second -> secondDieState
-        }
+    private fun dieStateAt(diePosition: DiePosition): DieState = when (diePosition) {
+        DiePosition.First -> firstDieState
+        DiePosition.Second -> secondDieState
+    }
 
-    private fun DieState.startingHold(isRolling: Boolean): DieState =
-        if (isRolling) {
-            copy(isRollingLocally = true, isEnabled = true)
-        } else {
-            copy(isRollingLocally = false)
-        }
+    private fun DieState.startingHold(isRolling: Boolean): DieState = if (isRolling) {
+        copy(isRollingLocally = true, isEnabled = true)
+    } else {
+        copy(isRollingLocally = false)
+    }
 
     private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState =
         when (roll) {

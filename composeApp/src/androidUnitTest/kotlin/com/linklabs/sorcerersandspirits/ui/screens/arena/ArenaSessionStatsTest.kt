@@ -229,8 +229,7 @@ class ArenaSessionStatsTest {
         )
     }
 
-    private fun selectedPlayer(userId: String, characterClass: CharacterClass) =
-        ArenaPlayer.Selected(userId = userId, displayName = userId, characterClass = characterClass)
+    private fun selectedPlayer(userId: String, characterClass: CharacterClass) = ArenaPlayer.Selected(userId = userId, displayName = userId, characterClass = characterClass)
 
     private companion object {
         const val USER_ID = "user-1"

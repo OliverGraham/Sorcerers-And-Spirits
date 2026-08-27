@@ -110,22 +110,20 @@ internal fun PaladinNormalAttackOverlay(
 }
 
 // TODO: I had meant this to be related to the actual dice total value
-private fun essenceFor(normalRollMessageType: NormalRollMessageType): Float =
-    when (normalRollMessageType) {
-        NormalRollMessageType.Knockout -> 1f
-        NormalRollMessageType.Damage -> 0.72f
-        NormalRollMessageType.ArmorClassHit -> 0.48f
-        NormalRollMessageType.ArmorClassMiss -> 0.28f
-    }
+private fun essenceFor(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
+    NormalRollMessageType.Knockout -> 1f
+    NormalRollMessageType.Damage -> 0.72f
+    NormalRollMessageType.ArmorClassHit -> 0.48f
+    NormalRollMessageType.ArmorClassMiss -> 0.28f
+}
 
 // TODO: I had meant this to be related to the actual dice total value
-private fun burstScaleFor(normalRollMessageType: NormalRollMessageType): Float =
-    when (normalRollMessageType) {
-        NormalRollMessageType.Knockout -> 1.3f
-        NormalRollMessageType.Damage -> 1f
-        NormalRollMessageType.ArmorClassHit -> 0.8f
-        NormalRollMessageType.ArmorClassMiss -> 0f
-    }
+private fun burstScaleFor(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
+    NormalRollMessageType.Knockout -> 1.3f
+    NormalRollMessageType.Damage -> 1f
+    NormalRollMessageType.ArmorClassHit -> 0.8f
+    NormalRollMessageType.ArmorClassMiss -> 0f
+}
 
 internal suspend fun PaladinStrikeState.play(
     geometry: WeaponStrikeGeometry,

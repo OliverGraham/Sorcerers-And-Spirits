@@ -45,8 +45,7 @@ internal class CombatMutator(
     val consciousPlayers
         get() = updatedPlayerMap.values.filter { it.characterClass.isConscious() }
 
-    fun dieColorFor(userId: UserId): DieColor =
-        updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
+    fun dieColorFor(userId: UserId): DieColor = updatedPlayerMap.getValue(key = userId).characterClass.type.toDieColor()
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextCombatAction = nextAction

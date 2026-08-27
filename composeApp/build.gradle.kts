@@ -134,9 +134,13 @@ spotless {
             mapOf(
                 "ktlint_standard_function-naming" to "disabled",
                 "ktlint_standard_comment-wrapping" to "disabled",
-                "max_line_length" to "100",
+
             ),
         )
+        suppressLintsFor {
+            step = "ktlint"
+            shortCode = "standard:max-line-length"
+        }
         trimTrailingWhitespace()
         endWithNewline()
     }

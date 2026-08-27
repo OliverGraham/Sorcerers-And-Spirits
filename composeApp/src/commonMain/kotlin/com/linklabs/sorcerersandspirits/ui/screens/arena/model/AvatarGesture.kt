@@ -99,10 +99,9 @@ private fun genericStrike(messageType: NormalRollMessageType): AvatarGesture = w
     NormalRollMessageType.Knockout -> AvatarGesture.LungeStrong
 }
 
-internal fun defenderReactionGesture(normalRollMessageType: NormalRollMessageType): AvatarGesture =
-    when (normalRollMessageType) {
-        NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
-        NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep
-        NormalRollMessageType.Damage -> AvatarGesture.FlinchHeavy
-        NormalRollMessageType.Knockout -> AvatarGesture.Collapse
-    }
+internal fun defenderReactionGesture(normalRollMessageType: NormalRollMessageType): AvatarGesture = when (normalRollMessageType) {
+    NormalRollMessageType.ArmorClassHit -> AvatarGesture.Flinch
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.Sidestep
+    NormalRollMessageType.Damage -> AvatarGesture.FlinchHeavy
+    NormalRollMessageType.Knockout -> AvatarGesture.Collapse
+}

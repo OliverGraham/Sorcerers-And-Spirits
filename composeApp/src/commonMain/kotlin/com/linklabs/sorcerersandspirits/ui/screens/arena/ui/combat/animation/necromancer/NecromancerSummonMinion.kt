@@ -187,12 +187,11 @@ private suspend fun SummonMinionEffectState.raiseMinion(heals: Boolean) {
     }
 }
 
-private fun summonPortalPaletteFor(actorClass: CharacterClassType): ScythePalette =
-    if (actorClass == CharacterClassType.Illusionist) {
-        illusionistScythePalette
-    } else {
-        necroScythePalette
-    }
+private fun summonPortalPaletteFor(actorClass: CharacterClassType): ScythePalette = if (actorClass == CharacterClassType.Illusionist) {
+    illusionistScythePalette
+} else {
+    necroScythePalette
+}
 
 private fun summonMinionScene(
     bounds: Rect,

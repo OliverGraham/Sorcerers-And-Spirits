@@ -10,11 +10,10 @@ class ChoosingClassesSelectionTest {
 
     private val characterClasses = previewCharacterClassStates()
 
-    private fun classOfType(type: CharacterClassType): CharacterClassState =
-        characterClasses.first {
-            it.type ==
-                type
-        }
+    private fun classOfType(type: CharacterClassType): CharacterClassState = characterClasses.first {
+        it.type ==
+            type
+    }
 
     @Test
     fun `a previous selection taken by another player is kept, not moved to Rogue (SS-187)`() {

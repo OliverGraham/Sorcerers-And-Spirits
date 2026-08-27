@@ -40,15 +40,12 @@ class RemoteConfigCharacterClassCopyProviderTest {
         )
     }
 
-    private class FakeRemoteConfigDataSource(private val copy: Map<String, AbilityCopyEntity>) :
-        RemoteConfigDataSource {
+    private class FakeRemoteConfigDataSource(private val copy: Map<String, AbilityCopyEntity>) : RemoteConfigDataSource {
         override suspend fun initialize() = Unit
 
-        override fun characterClassStats() =
-            emptyMap<CharacterClassType, CharacterClassStatsEntity>()
+        override fun characterClassStats() = emptyMap<CharacterClassType, CharacterClassStatsEntity>()
 
-        override fun abilityConfig() =
-            AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
+        override fun abilityConfig() = AbilityConfigEntity.fromDomain(config = AbilityConfig.DEFAULT)
 
         override fun characterClassCopy() = copy
 

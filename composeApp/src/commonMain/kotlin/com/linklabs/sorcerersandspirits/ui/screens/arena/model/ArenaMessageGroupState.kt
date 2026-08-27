@@ -11,8 +11,7 @@ sealed interface ArenaMessageGroupState {
     data class Setup(override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
 
     @Immutable
-    data class Round(val roundNumber: Int, override val messages: List<ArenaMessageState>) :
-        ArenaMessageGroupState
+    data class Round(val roundNumber: Int, override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
 }
 
 // TODO(SS-259): Use when NOT Combat

@@ -7,6 +7,5 @@ class RemoteConfigAbilityConfigProvider(
     private val remoteConfigDataSource: RemoteConfigDataSource,
 ) : AbilityConfigProvider {
 
-    override fun getAbilityConfig(): AbilityConfig =
-        remoteConfigDataSource.abilityConfig().toDomain()
+    override fun getAbilityConfig(): AbilityConfig = remoteConfigDataSource.abilityConfig().toDomain()
 }

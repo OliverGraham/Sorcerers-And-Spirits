@@ -184,21 +184,19 @@ private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) 
 }
 
 // TODO(SS-258): Common
-private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long =
-    when (attackerClassType) {
-        CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
-        CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
-        CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
-        CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
-        CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
-        CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
-        CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
-        else -> REACTION_DELAY_MILLIS
-    }
+private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long = when (attackerClassType) {
+    CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
+    CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
+    CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
+    CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
+    CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
+    CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
+    CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
+    else -> REACTION_DELAY_MILLIS
+}
 
 // TODO(SS-258): Duelist
-private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long =
-    if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
+private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long = if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
 // TODO(SS-258): Common
 private suspend fun AvatarGestureState.play(
@@ -393,8 +391,7 @@ private suspend fun AvatarGestureState.slashCombo(reachPx: Float, isFinisher: Bo
     }
 }
 
-private fun twinSlashPreambleMillis(): Long =
-    (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS).toLong()
+private fun twinSlashPreambleMillis(): Long = (TWIN_SLASH_RAISE_MILLIS + TWIN_SLASH_READY_HOLD_MILLIS).toLong()
 
 private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Float) {
     coroutineScope {

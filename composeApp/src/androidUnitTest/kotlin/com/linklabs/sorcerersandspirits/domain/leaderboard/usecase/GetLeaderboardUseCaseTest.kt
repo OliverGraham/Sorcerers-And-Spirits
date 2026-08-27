@@ -69,13 +69,12 @@ class GetLeaderboardUseCaseTest {
         assertFalse(actual = entries.single().isCurrentUser)
     }
 
-    private fun profile(userId: String, displayName: String, gauntletsWon: Long, matchesWon: Long) =
-        Profile(
-            userId = userId,
-            displayName = displayName,
-            stats =
-            ProfileStats(
-                overall = GameStats(gauntletsWon = gauntletsWon, matchesWon = matchesWon),
-            ),
-        )
+    private fun profile(userId: String, displayName: String, gauntletsWon: Long, matchesWon: Long) = Profile(
+        userId = userId,
+        displayName = displayName,
+        stats =
+        ProfileStats(
+            overall = GameStats(gauntletsWon = gauntletsWon, matchesWon = matchesWon),
+        ),
+    )
 }

@@ -318,8 +318,7 @@ private suspend fun HolyShieldState.resetAll() {
     blast.snapTo(targetValue = 0f)
 }
 
-private fun wrathIntensity(die: Int): Float =
-    lerp(start = WRATH_MIN_INTENSITY, stop = 1f, fraction = (die - 1) / 5f)
+private fun wrathIntensity(die: Int): Float = lerp(start = WRATH_MIN_INTENSITY, stop = 1f, fraction = (die - 1) / 5f)
 
 private fun DrawScope.drawHolyShield(state: HolyShieldState, plusOneLayout: TextLayoutResult) {
     val scene = state.scene ?: return

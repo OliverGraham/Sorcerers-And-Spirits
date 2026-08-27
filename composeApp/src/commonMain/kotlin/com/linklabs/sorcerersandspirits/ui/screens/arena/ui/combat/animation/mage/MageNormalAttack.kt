@@ -135,13 +135,12 @@ internal suspend fun MageBoltState.play(
     this.scene = null
 }
 
-private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float =
-    when (normalRollMessageType) {
-        NormalRollMessageType.ArmorClassHit -> 0.8f
-        NormalRollMessageType.Damage -> 1f
-        NormalRollMessageType.Knockout -> 1.35f
-        NormalRollMessageType.ArmorClassMiss -> 0f
-    }
+private fun shatterPeakScale(normalRollMessageType: NormalRollMessageType): Float = when (normalRollMessageType) {
+    NormalRollMessageType.ArmorClassHit -> 0.8f
+    NormalRollMessageType.Damage -> 1f
+    NormalRollMessageType.Knockout -> 1.35f
+    NormalRollMessageType.ArmorClassMiss -> 0f
+}
 
 internal fun DrawScope.drawMageCast(state: MageBoltState) {
     val geometry = state.scene ?: return

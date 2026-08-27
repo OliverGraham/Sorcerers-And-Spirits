@@ -57,8 +57,7 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
     }
 }
 
-internal fun NavKey.isHomeScreen(): Boolean =
-    this is Route.TavernScreen || this is Route.ArenaScreen
+internal fun NavKey.isHomeScreen(): Boolean = this is Route.TavernScreen || this is Route.ArenaScreen
 
 internal fun NavBackStack<NavKey>.popToNearestHomeScreen() {
     while (size > 1 && !last().isHomeScreen()) {

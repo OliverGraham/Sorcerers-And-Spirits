@@ -133,24 +133,23 @@ internal val AbilityActionState.requiresTarget: Boolean
         }
 
 // TODO(SS-257): What is going on here? Refactor right? One when statement necessary?
-internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? =
-    when (combatActionState) {
-        is CombatActionState.AbilityRoll -> null
+internal fun AttackArguments.toDomain(): CurrentCombatAction.NormalAttack? = when (combatActionState) {
+    is CombatActionState.AbilityRoll -> null
 
-        is CombatActionState.Idle ->
-            CurrentCombatAction.NormalAttack(
-                roll = NormalAttackType.ArmorClass,
-                attackTurn = AttackTurn.Standard(attackerUserId = userPlayerId),
-                defenderUserId = targetedOpponentUserId,
-            )
+    is CombatActionState.Idle ->
+        CurrentCombatAction.NormalAttack(
+            roll = NormalAttackType.ArmorClass,
+            attackTurn = AttackTurn.Standard(attackerUserId = userPlayerId),
+            defenderUserId = targetedOpponentUserId,
+        )
 
-        is CombatActionState.NormalAttack ->
-            CurrentCombatAction.NormalAttack(
-                roll = combatActionState.roll,
-                attackTurn = combatActionState.attackTurn,
-                defenderUserId = combatActionState.defenderUserId,
-            )
-    }
+    is CombatActionState.NormalAttack ->
+        CurrentCombatAction.NormalAttack(
+            roll = combatActionState.roll,
+            attackTurn = combatActionState.attackTurn,
+            defenderUserId = combatActionState.defenderUserId,
+        )
+}
 
 // TODO(SS-257): What is going on here?
 internal fun UseAbilityArguments.toDomain(): CurrentCombatAction.AbilityRoll? {
@@ -198,12 +197,11 @@ internal fun UseAbilityArguments.toDomain(): CurrentCombatAction.AbilityRoll? {
  * [AbilityActionState.Passive.Persuade.Charm.targetableUserIds]) is accepted; any other input
  * leaves the target unset. Every other ability ignores [targetUserId].
  */
-private fun AbilityActionState.withSelectedCharmTarget(targetUserId: String): AbilityAction =
-    if (this is AbilityActionState.Passive.Persuade.Charm && targetUserId in targetableUserIds) {
-        copy(selectedCharmTargetUserId = targetUserId).toDomain()
-    } else {
-        toDomain()
-    }
+private fun AbilityActionState.withSelectedCharmTarget(targetUserId: String): AbilityAction = if (this is AbilityActionState.Passive.Persuade.Charm && targetUserId in targetableUserIds) {
+    copy(selectedCharmTargetUserId = targetUserId).toDomain()
+} else {
+    toDomain()
+}
 
 internal fun AbilityActionState.toDomain(): AbilityAction = when (this) {
     is AbilityActionState.Activated ->

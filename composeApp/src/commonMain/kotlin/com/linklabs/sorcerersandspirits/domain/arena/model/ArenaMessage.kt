@@ -60,8 +60,7 @@ sealed interface ArenaMessage {
 
         data class Tie(override val mageUserId: String) : Teleport
 
-        data class Result(override val mageUserId: String, val didDefenderEscape: Boolean) :
-            Teleport
+        data class Result(override val mageUserId: String, val didDefenderEscape: Boolean) : Teleport
     }
 
     sealed interface LuckyCoin : ArenaMessage {
@@ -111,8 +110,7 @@ sealed interface ArenaMessage {
 
         data class Trigger(val bardUserId: String) : Persuade
 
-        data class StrumLute(val bardUserId: String, val diceRoll: Int, val isSuccessful: Boolean) :
-            Persuade
+        data class StrumLute(val bardUserId: String, val diceRoll: Int, val isSuccessful: Boolean) : Persuade
 
         data class CharmActivation(val bardUserId: String) : Persuade
 

@@ -10,8 +10,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
 
     fun triggerTeleport() = combatMutator.triggerTeleport()
 
-    fun handleTeleport(teleport: AbilityAction.Passive.Teleport) =
-        combatMutator.handleTeleport(teleport = teleport)
+    fun handleTeleport(teleport: AbilityAction.Passive.Teleport) = combatMutator.handleTeleport(teleport = teleport)
 
     private fun CombatMutator.triggerTeleport() {
         addMessage(message = ArenaMessage.Teleport.Trigger(mageUserId = defenderUserId))

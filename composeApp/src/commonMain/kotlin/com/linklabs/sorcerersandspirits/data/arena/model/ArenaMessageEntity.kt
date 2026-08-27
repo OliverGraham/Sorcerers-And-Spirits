@@ -26,8 +26,7 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = CONNECTED_TO_ARENA)
-    data class ConnectedToArena(override val id: String, val displayName: String) :
-        ArenaMessageEntity
+    data class ConnectedToArena(override val id: String, val displayName: String) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = NEW_ROUND)
@@ -67,8 +66,7 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = KILLING_MOMENTUM)
-    data class KillingMomentum(override val id: String, val attackerUserId: String) :
-        ArenaMessageEntity
+    data class KillingMomentum(override val id: String, val attackerUserId: String) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = DODGE)
@@ -668,8 +666,7 @@ internal fun List<ArenaMessageEntity>.toDomain(): List<IncomingArenaMessage> {
     }
 }
 
-private fun CharacterClassMessageInfoEntity.toDomain() =
-    CharacterClassMessageInfo(className = className, type = type)
+private fun CharacterClassMessageInfoEntity.toDomain() = CharacterClassMessageInfo(className = className, type = type)
 
 internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this) {
     is ArenaMessage.ChoseCharacterClass ->
@@ -938,5 +935,4 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
     is ArenaMessage.Doubles -> ArenaMessageEntity.Doubles(id = id, className = className)
 }
 
-private fun CharacterClassMessageInfo.toEntity() =
-    CharacterClassMessageInfoEntity(className = className, type = type)
+private fun CharacterClassMessageInfo.toEntity() = CharacterClassMessageInfoEntity(className = className, type = type)

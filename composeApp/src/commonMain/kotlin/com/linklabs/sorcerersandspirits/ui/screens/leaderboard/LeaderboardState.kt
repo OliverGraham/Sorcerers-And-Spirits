@@ -27,9 +27,8 @@ enum class LeaderboardSort {
  * Orders the fetched entries by [sort] (descending) and assigns the displayed 1-based rank from
  * that order. Ties keep the fetched order (top players by Gauntlets won) since the sort is stable.
  */
-internal fun List<LeaderboardEntry>.toRowStates(sort: LeaderboardSort): List<LeaderboardRowState> =
-    sortedByDescending { entry -> entry.sortValue(sort = sort) }
-        .mapIndexed { index, entry -> entry.toRowState(rank = index + 1) }
+internal fun List<LeaderboardEntry>.toRowStates(sort: LeaderboardSort): List<LeaderboardRowState> = sortedByDescending { entry -> entry.sortValue(sort = sort) }
+    .mapIndexed { index, entry -> entry.toRowState(rank = index + 1) }
 
 private fun LeaderboardEntry.sortValue(sort: LeaderboardSort): Long = when (sort) {
     LeaderboardSort.Rating -> rating

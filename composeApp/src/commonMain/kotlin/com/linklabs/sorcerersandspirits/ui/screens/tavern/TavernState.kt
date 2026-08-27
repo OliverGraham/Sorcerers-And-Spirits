@@ -90,13 +90,12 @@ private fun Traveler.toTravelerState(isThisTravelerTheUser: Boolean): TravelerSt
     rating = rating,
 )
 
-internal fun TravelerState.toChallenger(isInstigator: Boolean, status: ChallengerStatus) =
-    Challenger(
-        userId = userId,
-        displayName = displayName,
-        isInstigator = isInstigator,
-        status = status,
-    )
+internal fun TravelerState.toChallenger(isInstigator: Boolean, status: ChallengerStatus) = Challenger(
+    userId = userId,
+    displayName = displayName,
+    isInstigator = isInstigator,
+    status = status,
+)
 
 internal fun Challenge.toChallengeState(
     isUserInstigator: Boolean,

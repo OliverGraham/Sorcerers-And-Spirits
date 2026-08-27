@@ -30,8 +30,7 @@ internal class DiceStateHolder {
     val isRolling: Boolean
         get() = isHolding || isUserRolling
 
-    fun isDieRolling(diePosition: DiePosition): Boolean =
-        isRolling && dieStateAt(diePosition = diePosition).isRollingLocally
+    fun isDieRolling(diePosition: DiePosition): Boolean = isRolling && dieStateAt(diePosition = diePosition).isRollingLocally
 
     fun startHold(rollingPositions: Set<DiePosition>) {
         isArmed = false
@@ -102,37 +101,35 @@ internal class DiceStateHolder {
         copy(isRollingLocally = false)
     }
 
-    private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState =
-        when (roll) {
-            is DiceRollState.OneDie ->
-                when {
-                    diePosition == roll.diePosition ->
-                        copy(
-                            value = roll.value,
-                            isEnabled = true,
-                            tint = roll.dieColor.toColor(),
-                            badge = roll.diceBadge.forPosition(diePosition = diePosition),
-                            settleGeneration = settleGeneration + 1,
-                            isRollingLocally = false,
-                        )
+    private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState = when (roll) {
+        is DiceRollState.OneDie ->
+            when {
+                diePosition == roll.diePosition ->
+                    copy(
+                        value = roll.value,
+                        isEnabled = true,
+                        tint = roll.dieColor.toColor(),
+                        badge = roll.diceBadge.forPosition(diePosition = diePosition),
+                        settleGeneration = settleGeneration + 1,
+                        isRollingLocally = false,
+                    )
 
-                    roll.isSiblingDisabled ->
-                        copy(isEnabled = false, tint = null, badge = null, isRollingLocally = false)
+                roll.isSiblingDisabled ->
+                    copy(isEnabled = false, tint = null, badge = null, isRollingLocally = false)
 
-                    else -> this
-                }
+                else -> this
+            }
 
-            is DiceRollState.TwoDice ->
-                copy(
-                    value = if (diePosition == DiePosition.First) roll.firstDie else roll.secondDie,
-                    isEnabled = true,
-                    tint = roll.dieColor.toColor(),
-                    badge = roll.diceBadge.forPosition(diePosition = diePosition),
-                    settleGeneration = settleGeneration + 1,
-                    isRollingLocally = false,
-                )
-        }
+        is DiceRollState.TwoDice ->
+            copy(
+                value = if (diePosition == DiePosition.First) roll.firstDie else roll.secondDie,
+                isEnabled = true,
+                tint = roll.dieColor.toColor(),
+                badge = roll.diceBadge.forPosition(diePosition = diePosition),
+                settleGeneration = settleGeneration + 1,
+                isRollingLocally = false,
+            )
+    }
 
-    private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? =
-        this?.takeIf { it.diePosition == diePosition }
+    private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? = this?.takeIf { it.diePosition == diePosition }
 }

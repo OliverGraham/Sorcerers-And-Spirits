@@ -173,8 +173,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         }
     }
 
-    private fun AbilityAction.Passive.MirrorImage.baseRoll() =
-        firstDie.finalValue + secondDie.finalValue
+    private fun AbilityAction.Passive.MirrorImage.baseRoll() = firstDie.finalValue + secondDie.finalValue
 
     private fun AbilityAction.Passive.MirrorImage.total() = baseRoll() + existingDoublesBonus
 

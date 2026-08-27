@@ -24,8 +24,7 @@ class ArenaMatchEntityExtensionsTest {
         ),
     )
 
-    private fun createUnselectedPlayer(userId: String) =
-        ArenaPlayerEntity.Unselected(userId = userId, displayName = "Player $userId")
+    private fun createUnselectedPlayer(userId: String) = ArenaPlayerEntity.Unselected(userId = userId, displayName = "Player $userId")
 
     @Test
     fun `getFastestPlayerId returns the player with highest speed`() {

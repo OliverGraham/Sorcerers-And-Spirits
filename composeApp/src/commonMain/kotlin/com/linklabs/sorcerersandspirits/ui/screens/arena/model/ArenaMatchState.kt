@@ -95,15 +95,14 @@ sealed interface ActiveMatchState : ArenaMatchState {
     val userPlayerId: String
 }
 
-internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(userPlayerId: String) =
-    ArenaMatchState.ChoosingClasses(
-        playerMap = playerMap.toState(),
-        userPlayerId = userPlayerId,
-        activePlayerUserId = activePlayerUserId,
-        selectedClass = null,
-        unavailableClasses = emptySet(),
-        classSelections = emptyMap(),
-    )
+internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(userPlayerId: String) = ArenaMatchState.ChoosingClasses(
+    playerMap = playerMap.toState(),
+    userPlayerId = userPlayerId,
+    activePlayerUserId = activePlayerUserId,
+    selectedClass = null,
+    unavailableClasses = emptySet(),
+    classSelections = emptyMap(),
+)
 
 private fun ArenaMatchState.Combat.getTargetedPlayerUserId() = lockedTargetUserId
     ?: selectedOpponentUserId
@@ -112,8 +111,7 @@ private fun ArenaMatchState.Combat.getTargetedPlayerUserId() = lockedTargetUserI
         .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
         ?.userId
 
-private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) =
-    playerMap.filterKeys { it != attackerUserId && it != targetedUserId }.values.toList()
+private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) = playerMap.filterKeys { it != attackerUserId && it != targetedUserId }.values.toList()
 
 internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Teleport? {
     val abilityRoll = this as? CombatActionState.AbilityRoll ?: return null
@@ -121,6 +119,5 @@ internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Tele
     return abilityRoll.action as? AbilityActionState.Passive.Teleport
 }
 
-private fun ArenaCombatControl.isImpersonate(): Boolean =
-    this is ArenaCombatControl.ActivatedAbility &&
-        action is AbilityActionState.Activated.Impersonate
+private fun ArenaCombatControl.isImpersonate(): Boolean = this is ArenaCombatControl.ActivatedAbility &&
+    action is AbilityActionState.Activated.Impersonate

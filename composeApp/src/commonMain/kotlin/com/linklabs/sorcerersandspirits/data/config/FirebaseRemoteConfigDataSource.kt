@@ -21,8 +21,7 @@ import kotlin.time.Duration.Companion.hours
  *   [ClassCopyKeys] bullshit would have to be used. Or, why did Claude use a map in the first
  *   place? Why not a data class?
  */
-class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteConfig) :
-    RemoteConfigDataSource {
+class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteConfig) : RemoteConfigDataSource {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -66,25 +65,23 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         remoteConfig.fetchAndActivate()
     }
 
-    private suspend inline fun <reified T> loadBundledDefault(path: String, fallback: T): T =
-        runCatching {
-            val bytes = Res.readBytes(path = path)
-            json.decodeFromString<T>(string = bytes.decodeToString())
-        }
-            .getOrDefault(defaultValue = fallback)
+    private suspend inline fun <reified T> loadBundledDefault(path: String, fallback: T): T = runCatching {
+        val bytes = Res.readBytes(path = path)
+        json.decodeFromString<T>(string = bytes.decodeToString())
+    }
+        .getOrDefault(defaultValue = fallback)
 
-    override fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity> =
-        runCatching {
-            val raw = remoteConfig.getValue(key = CHARACTER_CLASS_STATS).asString()
-            json.decodeFromString<Map<String, CharacterClassStatsEntity>>(string = raw)
+    override fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity> = runCatching {
+        val raw = remoteConfig.getValue(key = CHARACTER_CLASS_STATS).asString()
+        json.decodeFromString<Map<String, CharacterClassStatsEntity>>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultStats)
+        .mapNotNull { (name, stats) ->
+            runCatching { CharacterClassType.valueOf(value = name) }
+                .getOrNull()
+                ?.let { it to stats }
         }
-            .getOrDefault(defaultValue = defaultStats)
-            .mapNotNull { (name, stats) ->
-                runCatching { CharacterClassType.valueOf(value = name) }
-                    .getOrNull()
-                    ?.let { it to stats }
-            }
-            .toMap()
+        .toMap()
 
     override fun abilityConfig(): AbilityConfigEntity = runCatching {
         val raw = remoteConfig.getValue(key = ABILITY_CONFIG).asString()
@@ -106,8 +103,7 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         .getOrDefault(defaultValue = defaultNames)
         .ifEmpty { defaultNames }
 
-    override fun minimumSupportedVersionCode(): Long =
-        remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
+    override fun minimumSupportedVersionCode(): Long = remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
 
     override fun latestVersionCode(): Long = remoteConfig.getValue(key = LATEST_VERSION).asLong()
 

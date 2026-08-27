@@ -257,8 +257,7 @@ private class TextAnimation {
 
     companion object {
         @Composable
-        fun rememberTextAnimation(messageId: String): TextAnimation =
-            remember(key1 = messageId) { TextAnimation() }
+        fun rememberTextAnimation(messageId: String): TextAnimation = remember(key1 = messageId) { TextAnimation() }
     }
 }
 

@@ -63,8 +63,7 @@ class FakeTavernDataSource : TavernDataSource {
 
     override suspend fun getMailboxChallengeId(userId: String): String? = mailboxes.value[userId]
 
-    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? =
-        challenges.value[challengeId]
+    override suspend fun getChallengeEntity(challengeId: String): ChallengeEntity? = challenges.value[challengeId]
 
     override fun generateChallengeId(): String? = challengeIdToGenerate
 

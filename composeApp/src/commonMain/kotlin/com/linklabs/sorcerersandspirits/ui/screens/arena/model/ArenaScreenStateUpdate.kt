@@ -255,8 +255,7 @@ private fun ArenaMatch.Finished.updateFinished(
 //       error state; behavior to be decided.
 private fun ArenaMatch.handleImpossibleScreenUpdate(
     currentScreenState: ArenaScreenState,
-): ArenaScreenStateUpdate =
-    ArenaScreenStateUpdate(screenState = currentScreenState, timerAction = TimerAction.None)
+): ArenaScreenStateUpdate = ArenaScreenStateUpdate(screenState = currentScreenState, timerAction = TimerAction.None)
 
 private fun ArenaMatch.Combat.toCombatState(userId: String) = ArenaMatchState.Combat(
     playerMap = playerMap.mapValues { it.value.toSelectedState() },

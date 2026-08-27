@@ -67,10 +67,9 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
         .documents
         .mapNotNull { document -> document.data<ProfileEntity?>()?.toDomain() }
 
-    override fun getProfileFlow(userId: String): Flow<Profile?> =
-        profilesCollection.document(documentPath = userId).snapshots.map { snapshot ->
-            snapshot.data<ProfileEntity?>()?.toDomain()
-        }
+    override fun getProfileFlow(userId: String): Flow<Profile?> = profilesCollection.document(documentPath = userId).snapshots.map { snapshot ->
+        snapshot.data<ProfileEntity?>()?.toDomain()
+    }
 
     override suspend fun updateDisplayName(
         userId: String,
@@ -128,8 +127,7 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
         }
     }
 
-    private fun displayNameReference(displayName: String): DocumentReference =
-        displayNamesCollection.document(documentPath = displayName.normalize())
+    private fun displayNameReference(displayName: String): DocumentReference = displayNamesCollection.document(documentPath = displayName.normalize())
 }
 
 private const val OVERALL_GAUNTLETS_WON_PATH =

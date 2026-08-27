@@ -252,8 +252,7 @@ private fun DrawScope.drumstickFulcrum(drumCenter: Offset): Offset = drumCenter 
     Offset(x = cos(x = STICK_STRIKE_ANGLE), y = sin(x = STICK_STRIKE_ANGLE)) *
     drumstickLength.toPx()
 
-private fun drumstickAngle(swing: Float, depress: Float): Float =
-    STICK_REST_ANGLE + (STICK_STRIKE_ANGLE - STICK_REST_ANGLE) * swing + depress * STICK_PRESS_ANGLE
+private fun drumstickAngle(swing: Float, depress: Float): Float = STICK_REST_ANGLE + (STICK_STRIKE_ANGLE - STICK_REST_ANGLE) * swing + depress * STICK_PRESS_ANGLE
 
 @Stable
 internal class BardStrikeState {

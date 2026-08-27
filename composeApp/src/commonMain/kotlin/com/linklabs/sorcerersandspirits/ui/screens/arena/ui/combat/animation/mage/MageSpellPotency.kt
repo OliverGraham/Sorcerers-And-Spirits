@@ -55,13 +55,11 @@ private const val GATHER_BAND_FRACTION = 0.36f
 private const val IMPACT_BAND_FRACTION = 0.24f
 private const val BOLT_BOW_FRACTION = 0.05f
 
-internal fun spellPotencyBoltCount(mainDamage: Int): Int =
-    mainDamage.coerceIn(minimumValue = 1, maximumValue = MAX_BOLTS)
+internal fun spellPotencyBoltCount(mainDamage: Int): Int = mainDamage.coerceIn(minimumValue = 1, maximumValue = MAX_BOLTS)
 
 private fun waveCount(boltCount: Int): Int = (boltCount + BOLTS_PER_WAVE - 1) / BOLTS_PER_WAVE
 
-private fun waveSize(boltCount: Int, wave: Int): Int =
-    minOf(BOLTS_PER_WAVE, boltCount - wave * BOLTS_PER_WAVE)
+private fun waveSize(boltCount: Int, wave: Int): Int = minOf(BOLTS_PER_WAVE, boltCount - wave * BOLTS_PER_WAVE)
 
 private fun barrageWindowMillis(boltCount: Int): Int {
     val lastWave = waveCount(boltCount = boltCount) - 1

@@ -17,42 +17,40 @@ class IosSocialSignInProvider(private val bridge: IosSocialSignInBridge) : Socia
         SignInMethod.EMAIL -> SocialTokenResult.NotAvailable
     }
 
-    private suspend fun requestGoogleToken(): SocialTokenResult =
-        suspendCancellableCoroutine { continuation ->
-            bridge.signInWithGoogle { googleResult ->
-                val result =
-                    when {
-                        googleResult.isCancelled -> SocialTokenResult.Cancelled
+    private suspend fun requestGoogleToken(): SocialTokenResult = suspendCancellableCoroutine { continuation ->
+        bridge.signInWithGoogle { googleResult ->
+            val result =
+                when {
+                    googleResult.isCancelled -> SocialTokenResult.Cancelled
 
-                        googleResult.idToken == null -> SocialTokenResult.Error
+                    googleResult.idToken == null -> SocialTokenResult.Error
 
-                        else ->
-                            SocialTokenResult.Google(
-                                idToken = googleResult.idToken,
-                                accessToken = googleResult.accessToken,
-                            )
-                    }
-                continuation.resume(value = result)
-            }
+                    else ->
+                        SocialTokenResult.Google(
+                            idToken = googleResult.idToken,
+                            accessToken = googleResult.accessToken,
+                        )
+                }
+            continuation.resume(value = result)
         }
+    }
 
-    private suspend fun requestAppleToken(): SocialTokenResult =
-        suspendCancellableCoroutine { continuation ->
-            bridge.signInWithApple { appleResult ->
-                val result =
-                    when {
-                        appleResult.isCancelled -> SocialTokenResult.Cancelled
+    private suspend fun requestAppleToken(): SocialTokenResult = suspendCancellableCoroutine { continuation ->
+        bridge.signInWithApple { appleResult ->
+            val result =
+                when {
+                    appleResult.isCancelled -> SocialTokenResult.Cancelled
 
-                        appleResult.idToken == null || appleResult.rawNonce == null ->
-                            SocialTokenResult.Error
+                    appleResult.idToken == null || appleResult.rawNonce == null ->
+                        SocialTokenResult.Error
 
-                        else ->
-                            SocialTokenResult.Apple(
-                                idToken = appleResult.idToken,
-                                rawNonce = appleResult.rawNonce,
-                            )
-                    }
-                continuation.resume(value = result)
-            }
+                    else ->
+                        SocialTokenResult.Apple(
+                            idToken = appleResult.idToken,
+                            rawNonce = appleResult.rawNonce,
+                        )
+                }
+            continuation.resume(value = result)
         }
+    }
 }

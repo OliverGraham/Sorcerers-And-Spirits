@@ -609,10 +609,9 @@ data class CharacterClassMessageInfoState(val className: String, val type: Chara
 // TODO(SS-259): figure out how to do this better (dedupe with CharacterClassMessageInfoState)
 @Immutable data class ParticipantClass(val className: String, val type: CharacterClassType)
 
-internal fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> =
-    map { incomingMessage ->
-        incomingMessage.message.toState(id = incomingMessage.id)
-    }
+internal fun List<IncomingArenaMessage>.toMessageStates(): List<ArenaMessageState> = map { incomingMessage ->
+    incomingMessage.message.toState(id = incomingMessage.id)
+}
 
 private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
     is ArenaMessage.NewRound -> ArenaMessageState.NewRound(id = id, roundNumber = roundNumber)
@@ -1016,5 +1015,4 @@ sealed interface FlashAnchor {
     @Immutable data object Center : FlashAnchor
 }
 
-private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState =
-    CharacterClassMessageInfoState(className = className, type = type)
+private fun CharacterClassMessageInfo.toState(): CharacterClassMessageInfoState = CharacterClassMessageInfoState(className = className, type = type)

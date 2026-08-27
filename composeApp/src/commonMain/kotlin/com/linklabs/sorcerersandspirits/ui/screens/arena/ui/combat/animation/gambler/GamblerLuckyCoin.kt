@@ -240,8 +240,7 @@ private fun getThrowScene(
     )
 }
 
-private fun coinRestCenter(bounds: Rect): Offset =
-    Offset(x = bounds.center.x, y = bounds.bottom - bounds.height * 0.05f)
+private fun coinRestCenter(bounds: Rect): Offset = Offset(x = bounds.center.x, y = bounds.bottom - bounds.height * 0.05f)
 
 private fun coinRadiusFor(bounds: Rect): Float = min(bounds.width, bounds.height) * 0.16f
 

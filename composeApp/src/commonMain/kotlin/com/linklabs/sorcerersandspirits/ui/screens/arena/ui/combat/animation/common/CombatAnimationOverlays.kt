@@ -292,11 +292,10 @@ private fun AnimateNormalAttack(
     }
 }
 
-private fun ArenaMessageState.NormalRoll.Attack.getImpersonatedAttackTypeOrRandom() =
-    if (impersonatedClassType == null || impersonatedClassType == CharacterClassType.Illusionist) {
-        CharacterClassType.entries
-            .filterNot { it == CharacterClassType.Illusionist || it == CharacterClassType.None }
-            .random()
-    } else {
-        impersonatedClassType
-    }
+private fun ArenaMessageState.NormalRoll.Attack.getImpersonatedAttackTypeOrRandom() = if (impersonatedClassType == null || impersonatedClassType == CharacterClassType.Illusionist) {
+    CharacterClassType.entries
+        .filterNot { it == CharacterClassType.Illusionist || it == CharacterClassType.None }
+        .random()
+} else {
+    impersonatedClassType
+}

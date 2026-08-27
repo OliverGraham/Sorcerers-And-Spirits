@@ -247,11 +247,10 @@ internal class ComputerOpponentHandler(
             .randomOrNull()
     }
 
-    private fun randomCharmTarget(action: AbilityActionState): String =
-        (action as? AbilityActionState.Passive.Persuade.Charm)
-            ?.targetableUserIds
-            ?.randomOrNull()
-            .orEmpty()
+    private fun randomCharmTarget(action: AbilityActionState): String = (action as? AbilityActionState.Passive.Persuade.Charm)
+        ?.targetableUserIds
+        ?.randomOrNull()
+        .orEmpty()
 
     private fun ArenaMatchState.pendingComputerActorId(): String? = when (this) {
         is ArenaMatchState.ChoosingClasses ->
@@ -281,6 +280,5 @@ internal class ComputerOpponentHandler(
         -> "none"
     }
 
-    private fun thinkingDelayMillis(): Long =
-        Random.nextLong(from = MIN_THINKING_DELAY_MILLIS, until = MAX_THINKING_DELAY_MILLIS)
+    private fun thinkingDelayMillis(): Long = Random.nextLong(from = MIN_THINKING_DELAY_MILLIS, until = MAX_THINKING_DELAY_MILLIS)
 }

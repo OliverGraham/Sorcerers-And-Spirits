@@ -95,6 +95,7 @@ class ArenaScreenViewModel(
             addMessageToScreenState = ::addMessageToScreenState,
             onAnimationsComplete = ::onAnimationsComplete,
             onTeleportRollOffComplete = ::onTeleportRollOffComplete,
+            finishMatch = { finishMatchUseCase(arenaId = arguments.arenaId) },
         )
 
     // TODO(SS-260): Probably a handler for this
@@ -139,8 +140,6 @@ class ArenaScreenViewModel(
         )
 
     private var screenStateFlowJob: Job? = null
-
-    private var finishWriteJob: Job? = null
 
     init {
         loadArenaMatch()
@@ -196,7 +195,6 @@ class ArenaScreenViewModel(
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
-        finishWriteJob?.cancel()
         // computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
@@ -259,7 +257,6 @@ class ArenaScreenViewModel(
 
     private fun loadArenaMatch() {
         screenStateFlowJob?.cancel()
-        finishWriteJob?.cancel()
         screenStateFlowJob =
             viewModelScope.launch {
                 val userId = getUserIdUseCase()
@@ -386,11 +383,6 @@ class ArenaScreenViewModel(
     }
 
     private fun onAnimationsComplete(arenaMatchCombatUpdate: ArenaMatch.Combat) {
-        if (arenaMatchCombatUpdate.isMatchOver) {
-            finishMatchAfterPlayback()
-            return
-        }
-
         _uiStateFlow.updateLoaded { screenState ->
             updateCombatState(
                 currentScreenState = screenState,
@@ -442,12 +434,6 @@ class ArenaScreenViewModel(
         )
     }
 
-    // TODO(SS-256): Should be done automatically, when MessageQueue is working
-    private fun finishMatchAfterPlayback() {
-        if (finishWriteJob?.isActive == true) return
-        finishWriteJob = viewModelScope.launch { finishMatchUseCase(arenaId = arguments.arenaId) }
-    }
-
     private suspend fun flushSessionStats() {
         val delta = sessionStats.consumeDelta()
         val wasWritten = updateProfileStatsUseCase(delta = delta)
@@ -477,7 +463,6 @@ class ArenaScreenViewModel(
     //       happens in the middle of a match? For now, probably just show an error then leave.
     private suspend fun handleScreenStateUpdateError() {
         screenStateFlowJob?.cancel()
-        finishWriteJob?.cancel()
 
         setCurrentTravelerAvailableUseCase()
         flushSessionStats()
@@ -564,7 +549,6 @@ class ArenaScreenViewModel(
 
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
-        finishWriteJob?.cancel()
         // computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)

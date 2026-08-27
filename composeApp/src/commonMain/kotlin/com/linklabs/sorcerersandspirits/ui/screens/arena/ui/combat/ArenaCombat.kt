@@ -165,7 +165,6 @@ private fun BoxScope.OverlayContent(
         )
     }
 
-    // TODO(SS-256): is this it? - maybe is done now, Claude
     val isPlayingBack = animatingMessage != null && !animatingMessage.isContinuous()
     CombatButtons(
         state = arenaMatchState,

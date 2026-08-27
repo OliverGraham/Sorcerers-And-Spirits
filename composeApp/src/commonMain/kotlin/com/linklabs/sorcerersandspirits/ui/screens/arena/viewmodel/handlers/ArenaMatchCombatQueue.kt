@@ -17,6 +17,7 @@ internal class ArenaMatchCombatQueue(
     private val addMessageToScreenState: (ArenaMessageState) -> Unit,
     private val onAnimationsComplete: (ArenaMatch.Combat) -> Unit,
     private val onTeleportRollOffComplete: (TeleportRollsArguments) -> Unit,
+    private val finishMatch: suspend () -> Unit,
 ) {
     private val queue = ArrayDeque<ArenaMatch.Combat>()
 
@@ -48,6 +49,8 @@ internal class ArenaMatchCombatQueue(
 
             if (arenaMatchCombatUpdate.isMatchOver) {
                 delay(timeMillis = MATCH_OVER_PAUSE_MILLIS)
+                finishMatch()
+                return@withLock
             }
 
             onAnimationsComplete(arenaMatchCombatUpdate)

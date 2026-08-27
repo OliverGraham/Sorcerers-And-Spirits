@@ -151,7 +151,7 @@ private fun BarFolk(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement =
-                    Arrangement.spacedBy(space = 4.dp, alignment = Alignment.CenterHorizontally),
+                Arrangement.spacedBy(space = 4.dp, alignment = Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
@@ -185,11 +185,14 @@ private fun BarFolk(
             item {
                 Text(
                     text =
-                        stringResource(resource = Res.string.tavern_search_no_matches, searchQuery),
+                    stringResource(resource = Res.string.tavern_search_no_matches, searchQuery),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                    modifier = Modifier.fillMaxWidth().padding(
+                        horizontal = 20.dp,
+                        vertical = 24.dp,
+                    ),
                 )
             }
         }
@@ -272,10 +275,10 @@ private fun SelectedTravelerCard(
         border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.primary),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
         colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ),
+        CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        ),
     ) {
         TravelerCardLabel(name = displayName, rating = rating, fontWeight = FontWeight.Bold)
     }
@@ -296,14 +299,14 @@ private fun UnselectedTravelerCard(
         shape = MaterialTheme.shapes.medium,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         colors =
-            CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                disabledContainerColor =
-                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                disabledContentColor =
-                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
-            ),
+        CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+            disabledContainerColor =
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+            disabledContentColor =
+            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
+        ),
     ) {
         TravelerCardLabel(
             name = if (isBusy) "$displayName (Busy)" else displayName,

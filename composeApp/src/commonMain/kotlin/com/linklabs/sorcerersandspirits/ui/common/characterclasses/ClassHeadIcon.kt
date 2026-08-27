@@ -32,7 +32,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -40,6 +39,7 @@ import sorcerersandspirits.composeapp.generated.resources.ic_armor_class
 import sorcerersandspirits.composeapp.generated.resources.ic_bust_background
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
+import kotlin.math.roundToInt
 
 private val DEFAULT_HEAD_ICON_WIDTH = 132.dp
 private const val DISABLED_ALPHA = 0.45f
@@ -83,7 +83,7 @@ fun ClassHeadIcon(
 
     Box(
         modifier =
-            modifier.width(width = width).aspectRatio(ratio = ASPECT_RATIO).then(disabledModifier),
+        modifier.width(width = width).aspectRatio(ratio = ASPECT_RATIO).then(disabledModifier),
         contentAlignment = Alignment.Center,
     ) {
         BackingCircles(colors = circleColors, modifier = Modifier.matchParentSize())
@@ -166,11 +166,11 @@ private fun BackingCircles(colors: ClassGradient, modifier: Modifier = Modifier)
             val radius = size.width * radiusFraction
             drawCircle(
                 brush =
-                    Brush.linearGradient(
-                        colors = listOf(colors.topStop, colors.bottomStop),
-                        start = Offset(x = pixelCenter.x, y = pixelCenter.y - radius),
-                        end = Offset(x = pixelCenter.x, y = pixelCenter.y + radius),
-                    ),
+                Brush.linearGradient(
+                    colors = listOf(colors.topStop, colors.bottomStop),
+                    start = Offset(x = pixelCenter.x, y = pixelCenter.y - radius),
+                    end = Offset(x = pixelCenter.x, y = pixelCenter.y + radius),
+                ),
                 radius = radius,
                 center = pixelCenter,
             )
@@ -203,22 +203,22 @@ private fun BoxScope.StatValue(
             text = value.toString(),
             modifier = Modifier.graphicsLayer(scaleX = emphasisScale, scaleY = emphasisScale),
             style =
-                TextStyle(
-                    color =
-                        lerp(
-                            start = Color.White,
-                            stop = HIT_POINTS_EMPHASIS_COLOR,
-                            fraction = emphasis,
-                        ),
-                    fontSize = (width.value * VALUE_TEXT_FRACTION).sp,
-                    fontWeight = FontWeight.Bold,
-                    shadow =
-                        Shadow(
-                            color = Color.Black,
-                            offset = Offset(x = 0f, y = width.value * VALUE_SHADOW_FRACTION),
-                            blurRadius = width.value * VALUE_SHADOW_FRACTION,
-                        ),
+            TextStyle(
+                color =
+                lerp(
+                    start = Color.White,
+                    stop = HIT_POINTS_EMPHASIS_COLOR,
+                    fraction = emphasis,
                 ),
+                fontSize = (width.value * VALUE_TEXT_FRACTION).sp,
+                fontWeight = FontWeight.Bold,
+                shadow =
+                Shadow(
+                    color = Color.Black,
+                    offset = Offset(x = 0f, y = width.value * VALUE_SHADOW_FRACTION),
+                    blurRadius = width.value * VALUE_SHADOW_FRACTION,
+                ),
+            ),
         )
     }
 }
@@ -232,12 +232,12 @@ private fun BoxScope.OverlayAt(
 ) {
     Box(
         modifier =
-            Modifier.align(alignment = Alignment.Center).offset {
-                IntOffset(
-                    x = (width.toPx() * (center.x - 0.5f)).roundToInt(),
-                    y = (height.toPx() * (center.y - 0.5f)).roundToInt(),
-                )
-            },
+        Modifier.align(alignment = Alignment.Center).offset {
+            IntOffset(
+                x = (width.toPx() * (center.x - 0.5f)).roundToInt(),
+                y = (height.toPx() * (center.y - 0.5f)).roundToInt(),
+            )
+        },
         contentAlignment = Alignment.Center,
     ) {
         content()
@@ -251,10 +251,10 @@ private fun ClassHeadIconPreview() {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
             Row(horizontalArrangement = Arrangement.spacedBy(space = 12.dp)) {
                 ClassHeadIcon(
-                    characterClass = previewCharacterClassState(type = CharacterClassType.Rogue)
+                    characterClass = previewCharacterClassState(type = CharacterClassType.Rogue),
                 )
                 ClassHeadIcon(
-                    characterClass = previewCharacterClassState(type = CharacterClassType.Mage)
+                    characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
                 )
             }
         }

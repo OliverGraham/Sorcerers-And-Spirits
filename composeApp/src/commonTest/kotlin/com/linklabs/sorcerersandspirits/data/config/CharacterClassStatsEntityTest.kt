@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.config
 
+import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.serialization.json.Json
 
 class CharacterClassStatsEntityTest {
 

@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena
+package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel
 
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponent
 

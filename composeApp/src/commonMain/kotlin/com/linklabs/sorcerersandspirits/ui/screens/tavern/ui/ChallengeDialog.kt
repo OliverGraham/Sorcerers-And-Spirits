@@ -63,8 +63,8 @@ private fun ChallengeState.DialogContent(modifier: Modifier = Modifier) {
             formattedTimeRemaining = formattedTimeRemaining,
             isLessThanTenSeconds = isLessThanTenSeconds,
             instigatorDisplayName =
-                instigator?.displayName
-                    ?: stringResource(resource = Res.string.challenge_dialog_default_instigator),
+            instigator?.displayName
+                ?: stringResource(resource = Res.string.challenge_dialog_default_instigator),
             isThisUserTheInstigator = isThisUserTheInstigator,
         )
 
@@ -98,11 +98,11 @@ private fun HeaderSection(
             text = formattedTimeRemaining,
             style = MaterialTheme.typography.titleMedium,
             color =
-                if (isLessThanTenSeconds) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.primary
-                },
+            if (isLessThanTenSeconds) {
+                MaterialTheme.colorScheme.error
+            } else {
+                MaterialTheme.colorScheme.primary
+            },
         )
     }
 
@@ -151,7 +151,7 @@ private fun ActionButtons(challengeId: String, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement =
-            Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
+        Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val onDeclineChallenge = ChallengeActionsProvider.current.onDeclineChallenge

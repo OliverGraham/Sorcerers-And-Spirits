@@ -21,5 +21,4 @@ sealed interface ArenaPlayer {
     ) : ArenaPlayer
 }
 
-fun ArenaPlayer.isKnockedOut(): Boolean =
-    this is ArenaPlayer.Selected && !characterClass.isConscious()
+fun ArenaPlayer.isKnockedOut(): Boolean = this is ArenaPlayer.Selected && !characterClass.isConscious()

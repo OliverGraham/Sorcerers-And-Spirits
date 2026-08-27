@@ -142,12 +142,11 @@ private fun LeaderboardSortControls(
     }
 }
 
-private fun LeaderboardSort.labelResource() =
-    when (this) {
-        LeaderboardSort.Rating -> Res.string.leaderboard_sort_rating
-        LeaderboardSort.GauntletsWon -> Res.string.leaderboard_sort_gauntlets
-        LeaderboardSort.MatchesWon -> Res.string.leaderboard_sort_matches
-    }
+private fun LeaderboardSort.labelResource() = when (this) {
+    LeaderboardSort.Rating -> Res.string.leaderboard_sort_rating
+    LeaderboardSort.GauntletsWon -> Res.string.leaderboard_sort_gauntlets
+    LeaderboardSort.MatchesWon -> Res.string.leaderboard_sort_matches
+}
 
 @Composable
 private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modifier) {
@@ -204,10 +203,10 @@ private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modi
                 )
                 Text(
                     text =
-                        stringResource(
-                            resource = Res.string.leaderboard_match_wins,
-                            entry.matchesWon,
-                        ),
+                    stringResource(
+                        resource = Res.string.leaderboard_match_wins,
+                        entry.matchesWon,
+                    ),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -215,10 +214,10 @@ private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modi
 
             Text(
                 text =
-                    stringResource(
-                        resource = Res.string.leaderboard_gauntlet_wins,
-                        entry.gauntletsWon,
-                    ),
+                stringResource(
+                    resource = Res.string.leaderboard_gauntlet_wins,
+                    entry.gauntletsWon,
+                ),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
@@ -243,39 +242,39 @@ private fun LeaderboardScreenPreview() {
     SorcerersAndSpiritsTheme {
         LeaderboardScreen(
             uiState =
-                UiState.Loaded(
-                    data =
-                        LeaderboardState(
-                            sort = LeaderboardSort.GauntletsWon,
-                            entries =
-                                listOf(
-                                    LeaderboardRowState(
-                                        rank = 1,
-                                        displayName = "Gandalf",
-                                        rating = 2_225,
-                                        gauntletsWon = 12,
-                                        matchesWon = 41,
-                                        isCurrentUser = false,
-                                    ),
-                                    LeaderboardRowState(
-                                        rank = 2,
-                                        displayName = "Radagast",
-                                        rating = 1_725,
-                                        gauntletsWon = 9,
-                                        matchesWon = 33,
-                                        isCurrentUser = true,
-                                    ),
-                                    LeaderboardRowState(
-                                        rank = 3,
-                                        displayName = "Saruman",
-                                        rating = 1_400,
-                                        gauntletsWon = 7,
-                                        matchesWon = 28,
-                                        isCurrentUser = false,
-                                    ),
-                                ),
-                        )
+            UiState.Loaded(
+                data =
+                LeaderboardState(
+                    sort = LeaderboardSort.GauntletsWon,
+                    entries =
+                    listOf(
+                        LeaderboardRowState(
+                            rank = 1,
+                            displayName = "Gandalf",
+                            rating = 2_225,
+                            gauntletsWon = 12,
+                            matchesWon = 41,
+                            isCurrentUser = false,
+                        ),
+                        LeaderboardRowState(
+                            rank = 2,
+                            displayName = "Radagast",
+                            rating = 1_725,
+                            gauntletsWon = 9,
+                            matchesWon = 33,
+                            isCurrentUser = true,
+                        ),
+                        LeaderboardRowState(
+                            rank = 3,
+                            displayName = "Saruman",
+                            rating = 1_400,
+                            gauntletsWon = 7,
+                            matchesWon = 28,
+                            isCurrentUser = false,
+                        ),
+                    ),
                 ),
+            ),
             onRetry = {},
             onSortSelected = {},
         )

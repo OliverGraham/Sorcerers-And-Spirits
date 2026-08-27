@@ -53,16 +53,15 @@ class AndroidMusicPlayer(private val context: Context) : MusicPlayer {
         currentTrack = null
     }
 
-    private fun createPlayer(track: MusicTrack): ExoPlayer =
-        ExoPlayer.Builder(context).build().apply {
-            setMediaItem(
-                MediaItem.fromUri("asset:///$AUDIO_ASSET_DIRECTORY/${track.assetFileName}")
-            )
-            repeatMode = Player.REPEAT_MODE_ONE
-            volume = SILENT
-            prepare()
-            playWhenReady = true
-        }
+    private fun createPlayer(track: MusicTrack): ExoPlayer = ExoPlayer.Builder(context).build().apply {
+        setMediaItem(
+            MediaItem.fromUri("asset:///$AUDIO_ASSET_DIRECTORY/${track.assetFileName}"),
+        )
+        repeatMode = Player.REPEAT_MODE_ONE
+        volume = SILENT
+        prepare()
+        playWhenReady = true
+    }
 
     private fun fadeIn(outgoing: ExoPlayer?, incoming: ExoPlayer) {
         fadeJob?.cancel()
@@ -94,11 +93,14 @@ class AndroidMusicPlayer(private val context: Context) : MusicPlayer {
 
     private fun Int.toFadeFraction() = (this + 1).toFloat() / CROSS_FADE_STEPS
 
-    private fun getIncomingVolumeOrMuted(fadeFraction: Float) =
-        if (isMuted) SILENT else fadeFraction
+    private fun getIncomingVolumeOrMuted(fadeFraction: Float) = if (isMuted) SILENT else fadeFraction
 
-    private fun getOutgoingVolumeOrMuted(fadeFraction: Float) =
-        if (isMuted) SILENT else FULL_VOLUME - fadeFraction
+    private fun getOutgoingVolumeOrMuted(fadeFraction: Float) = if (isMuted) {
+        SILENT
+    } else {
+        FULL_VOLUME -
+            fadeFraction
+    }
 
     companion object {
         private const val CROSS_FADE_MILLIS = 800L

@@ -11,7 +11,6 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -60,18 +59,19 @@ internal fun weaponStrikeGeometry(
 }
 
 internal fun projectileStrikeGeometry(
-    cue: CombatAnimationCue.NormalAttack,
+    messageType: NormalRollMessageType,
     attackerBounds: Rect,
     defenderBounds: Rect,
     accentColor: Color,
     density: Density,
 ): WeaponStrikeGeometry {
     val target =
-        if (cue.normalRollMessageType == NormalRollMessageType.ArmorClassMiss) {
+        if (messageType == NormalRollMessageType.ArmorClassMiss) {
             missThrustTarget(defenderBounds = defenderBounds, origin = attackerBounds.center)
         } else {
             defenderBounds.center
         }
+
     return weaponStrikeGeometry(
         attackerBounds = attackerBounds,
         target = target,
@@ -118,11 +118,11 @@ internal fun DrawScope.drawImpactBurst(
     val radius = 38.dp.toPx() * scale
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(steelBright, accentColor.copy(alpha = 0.8f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(steelBright, accentColor.copy(alpha = 0.8f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = alpha,

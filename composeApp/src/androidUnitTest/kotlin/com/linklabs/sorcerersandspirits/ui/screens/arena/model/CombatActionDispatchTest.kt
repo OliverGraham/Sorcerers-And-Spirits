@@ -21,7 +21,7 @@ class CombatActionDispatchTest {
                 .asUseAbilityArguments()
                 .toDomain(
                     combatActionState =
-                        abilityRoll(action = mirrorImagePayload(), defenderUserId = USER_ID)
+                    abilityRoll(action = mirrorImagePayload(), defenderUserId = USER_ID),
                 )
 
         val dispatched = assertNotNull(actual = action)
@@ -56,7 +56,7 @@ class CombatActionDispatchTest {
                 .asUseAbilityArguments()
                 .toDomain(
                     combatActionState =
-                        CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+                    CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
                 )
 
         assertNull(actual = action)
@@ -69,10 +69,10 @@ class CombatActionDispatchTest {
                 .asUseAbilityArguments()
                 .toDomain(
                     combatActionState =
-                        abilityRoll(
-                            action = AbilityActionState.Passive.Riposte(attackerRollTotal = 7),
-                            defenderUserId = USER_ID,
-                        )
+                    abilityRoll(
+                        action = AbilityActionState.Passive.Riposte(attackerRollTotal = 7),
+                        defenderUserId = USER_ID,
+                    ),
                 )
 
         assertNull(actual = action)
@@ -82,14 +82,14 @@ class CombatActionDispatchTest {
     fun `Given the user's own idle turn, then activating an ability dispatches from the user's ids`() {
         val action =
             UseAbilityArguments(
-                    abilityActionState =
-                        AbilityActionState.Activated.AllIn(allInAbility = OffensiveAbility.AllIn()),
-                    targetedOpponentUserId = "",
-                    userPlayerId = USER_ID,
-                )
+                abilityActionState =
+                AbilityActionState.Activated.AllIn(allInAbility = OffensiveAbility.AllIn()),
+                targetedOpponentUserId = "",
+                userPlayerId = USER_ID,
+            )
                 .toDomain(
                     combatActionState =
-                        CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+                    CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
                 )
 
         val dispatched = assertNotNull(actual = action)
@@ -101,14 +101,14 @@ class CombatActionDispatchTest {
     fun `Given an opponent's idle turn, then the user's activated ability tap is dropped`() {
         val action =
             UseAbilityArguments(
-                    abilityActionState =
-                        AbilityActionState.Activated.AllIn(allInAbility = OffensiveAbility.AllIn()),
-                    targetedOpponentUserId = "",
-                    userPlayerId = USER_ID,
-                )
+                abilityActionState =
+                AbilityActionState.Activated.AllIn(allInAbility = OffensiveAbility.AllIn()),
+                targetedOpponentUserId = "",
+                userPlayerId = USER_ID,
+            )
                 .toDomain(
                     combatActionState =
-                        CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 )
 
         assertNull(actual = action)
@@ -120,7 +120,7 @@ class CombatActionDispatchTest {
             AttackArguments(targetedOpponentUserId = OPPONENT_ID, userPlayerId = USER_ID)
                 .toDomain(
                     combatActionState =
-                        CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+                    CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
                 )
 
         val dispatched = assertNotNull(actual = action)
@@ -134,7 +134,7 @@ class CombatActionDispatchTest {
             AttackArguments(targetedOpponentUserId = OPPONENT_ID, userPlayerId = USER_ID)
                 .toDomain(
                     combatActionState =
-                        CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 )
 
         assertNull(actual = action)
@@ -176,30 +176,27 @@ class CombatActionDispatchTest {
         assertNull(actual = action)
     }
 
-    private fun mirrorImagePayload() =
-        AbilityActionState.Passive.MirrorImage(
-            firstDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 3),
-            secondDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 4),
-            attackType = NormalAttackType.ArmorClass,
-            existingDoublesBonus = 0,
-            mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
-            mirrorImageRerollSelection = MirrorImageRerollSelection.None,
-        )
+    private fun mirrorImagePayload() = AbilityActionState.Passive.MirrorImage(
+        firstDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 3),
+        secondDie = AbilityActionState.Passive.MirrorImageDieState(originalRoll = 4),
+        attackType = NormalAttackType.ArmorClass,
+        existingDoublesBonus = 0,
+        mirrorImageDefensiveAbility = DefensiveAbility.MirrorImage(),
+        mirrorImageRerollSelection = MirrorImageRerollSelection.None,
+    )
 
-    private fun AbilityActionState.asUseAbilityArguments() =
-        UseAbilityArguments(
-            abilityActionState = this,
-            targetedOpponentUserId = USER_ID,
-            userPlayerId = USER_ID,
-        )
+    private fun AbilityActionState.asUseAbilityArguments() = UseAbilityArguments(
+        abilityActionState = this,
+        targetedOpponentUserId = USER_ID,
+        userPlayerId = USER_ID,
+    )
 
-    private fun abilityRoll(action: AbilityActionState, defenderUserId: String) =
-        CombatActionState.AbilityRoll(
-            action = action,
-            attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
-            defenderUserId = defenderUserId,
-            activeUserIds = setOf(element = defenderUserId),
-        )
+    private fun abilityRoll(action: AbilityActionState, defenderUserId: String) = CombatActionState.AbilityRoll(
+        action = action,
+        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
+        defenderUserId = defenderUserId,
+        activeUserIds = setOf(element = defenderUserId),
+    )
 
     private companion object {
         const val USER_ID = "userId"

@@ -14,9 +14,12 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
@@ -30,31 +33,31 @@ import sorcerersandspirits.composeapp.generated.resources.arena_background
 private fun ArenaCombatMultiplayerPreview() {
     PreviewArenaCombat(
         state =
-            previewCombatState(
-                players =
-                    listOf(
-                        previewCombatPlayer(
-                            userId = "player1",
-                            displayName = "Sorcerer Supreme",
-                            type = CharacterClassType.Mage,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player2",
-                            displayName = "Spirit Walker",
-                            type = CharacterClassType.Rogue,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player3",
-                            displayName = "Card Sharp",
-                            type = CharacterClassType.Gambler,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player4",
-                            displayName = "Holy Knight",
-                            type = CharacterClassType.Paladin,
-                        ),
-                    )
-            )
+        previewCombatState(
+            players =
+            listOf(
+                previewCombatPlayer(
+                    userId = "player1",
+                    displayName = "Sorcerer Supreme",
+                    type = CharacterClassType.Mage,
+                ),
+                previewCombatPlayer(
+                    userId = "player2",
+                    displayName = "Spirit Walker",
+                    type = CharacterClassType.Rogue,
+                ),
+                previewCombatPlayer(
+                    userId = "player3",
+                    displayName = "Card Sharp",
+                    type = CharacterClassType.Gambler,
+                ),
+                previewCombatPlayer(
+                    userId = "player4",
+                    displayName = "Holy Knight",
+                    type = CharacterClassType.Paladin,
+                ),
+            ),
+        ),
     )
 }
 
@@ -63,21 +66,21 @@ private fun ArenaCombatMultiplayerPreview() {
 private fun ArenaCombatTwoPlayerPreview() {
     PreviewArenaCombat(
         state =
-            previewCombatState(
-                players =
-                    listOf(
-                        previewCombatPlayer(
-                            userId = "player1",
-                            displayName = "Sorcerer Supreme",
-                            type = CharacterClassType.Mage,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player2",
-                            displayName = "Spirit Walker",
-                            type = CharacterClassType.Rogue,
-                        ),
-                    )
-            )
+        previewCombatState(
+            players =
+            listOf(
+                previewCombatPlayer(
+                    userId = "player1",
+                    displayName = "Sorcerer Supreme",
+                    type = CharacterClassType.Mage,
+                ),
+                previewCombatPlayer(
+                    userId = "player2",
+                    displayName = "Spirit Walker",
+                    type = CharacterClassType.Rogue,
+                ),
+            ),
+        ),
     )
 }
 
@@ -86,32 +89,32 @@ private fun ArenaCombatTwoPlayerPreview() {
 private fun ArenaCombatKnockedOutOpponentPreview() {
     PreviewArenaCombat(
         state =
-            previewCombatState(
-                players =
-                    listOf(
-                        previewCombatPlayer(
-                            userId = "player1",
-                            displayName = "Sorcerer Supreme",
-                            type = CharacterClassType.Mage,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player2",
-                            displayName = "Spirit Walker",
-                            type = CharacterClassType.Rogue,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player3",
-                            displayName = "Card Sharp",
-                            type = CharacterClassType.Gambler,
-                            hitPoints = 0,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player4",
-                            displayName = "Holy Knight",
-                            type = CharacterClassType.Paladin,
-                        ),
-                    )
-            )
+        previewCombatState(
+            players =
+            listOf(
+                previewCombatPlayer(
+                    userId = "player1",
+                    displayName = "Sorcerer Supreme",
+                    type = CharacterClassType.Mage,
+                ),
+                previewCombatPlayer(
+                    userId = "player2",
+                    displayName = "Spirit Walker",
+                    type = CharacterClassType.Rogue,
+                ),
+                previewCombatPlayer(
+                    userId = "player3",
+                    displayName = "Card Sharp",
+                    type = CharacterClassType.Gambler,
+                    hitPoints = 0,
+                ),
+                previewCombatPlayer(
+                    userId = "player4",
+                    displayName = "Holy Knight",
+                    type = CharacterClassType.Paladin,
+                ),
+            ),
+        ),
     )
 }
 
@@ -120,22 +123,22 @@ private fun ArenaCombatKnockedOutOpponentPreview() {
 private fun ArenaCombatUserTurnPreview() {
     PreviewArenaCombat(
         state =
-            previewCombatState(
-                players =
-                    listOf(
-                        previewCombatPlayer(
-                            userId = "player1",
-                            displayName = "Trickster",
-                            type = CharacterClassType.Illusionist,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player2",
-                            displayName = "Spirit Walker",
-                            type = CharacterClassType.Rogue,
-                        ),
-                    ),
-                combatActionState = CombatActionState.Idle(activeUserIds = setOf("player1")),
-            )
+        previewCombatState(
+            players =
+            listOf(
+                previewCombatPlayer(
+                    userId = "player1",
+                    displayName = "Trickster",
+                    type = CharacterClassType.Illusionist,
+                ),
+                previewCombatPlayer(
+                    userId = "player2",
+                    displayName = "Spirit Walker",
+                    type = CharacterClassType.Rogue,
+                ),
+            ),
+            combatActionState = CombatActionState.Idle(activeUserIds = setOf("player1")),
+        ),
     )
 }
 
@@ -144,34 +147,34 @@ private fun ArenaCombatUserTurnPreview() {
 private fun ArenaCombatFlashPreview() {
     PreviewArenaCombat(
         state =
-            previewCombatState(
-                players =
-                    listOf(
-                        previewCombatPlayer(
-                            userId = "player1",
-                            displayName = "Sorcerer Supreme",
-                            type = CharacterClassType.Mage,
-                        ),
-                        previewCombatPlayer(
-                            userId = "player2",
-                            displayName = "Spirit Walker",
-                            type = CharacterClassType.Rogue,
-                        ),
-                    )
+        previewCombatState(
+            players =
+            listOf(
+                previewCombatPlayer(
+                    userId = "player1",
+                    displayName = "Sorcerer Supreme",
+                    type = CharacterClassType.Mage,
+                ),
+                previewCombatPlayer(
+                    userId = "player2",
+                    displayName = "Spirit Walker",
+                    type = CharacterClassType.Rogue,
+                ),
             ),
+        ),
         flashMessage =
-            ArenaMessageState.NormalRoll.Outcome(
-                id = "ko",
-                attackerUserId = "player1",
-                attackerName = "Mage",
-                attackerClassType = CharacterClassType.Mage,
-                defenderUserId = "player2",
-                defenderName = "Rogue",
-                firstDie = 6,
-                secondDie = 6,
-                bonus = 0,
-                type = NormalRollMessageType.Knockout,
-            ),
+        ArenaMessageState.NormalRoll.Outcome(
+            id = "ko",
+            attackerUserId = "player1",
+            attackerClassName = "Mage",
+            defenderUserId = "player2",
+            defenderClassName = "Rogue",
+            firstDie = 6,
+            secondDie = 6,
+            bonus = 0,
+            normalRollMessageType = NormalRollMessageType.Knockout,
+            animation = ArenaAnimationState.Flash,
+        ),
     )
 }
 
@@ -182,11 +185,11 @@ private fun InspectDrawerPreview() {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
             InspectContent(
                 player =
-                    PlayerState.Selected(
-                        userId = "player1",
-                        displayName = "Sorcerer Supreme",
-                        characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
-                    ),
+                PlayerState.Selected(
+                    userId = "player1",
+                    displayName = "Sorcerer Supreme",
+                    characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
+                ),
                 onClose = {},
             )
         }
@@ -195,7 +198,7 @@ private fun InspectDrawerPreview() {
 
 @Composable
 private fun PreviewArenaCombat(
-    state: ArenaState.Combat,
+    state: ArenaMatchState.Combat,
     messages: List<ArenaMessageState> = previewMessages(),
     flashMessage: ArenaMessageState? = null,
     secondsRemaining: Int = 8,
@@ -203,26 +206,25 @@ private fun PreviewArenaCombat(
     val allMessages = if (flashMessage != null) messages + flashMessage else messages
     val screenState =
         ArenaScreenState(
-            messages = allMessages,
-            secondsRemaining = secondsRemaining,
+            messageGroups = listOf(ArenaMessageGroupState.Setup(messages = allMessages)),
             showForfeitDialog = false,
             isUserPlayerKnockedOut = false,
             hasReadiedForNextMatch = false,
-            arenaState = state,
-            participants = emptyMap(),
+            arenaMatchState = state,
         )
 
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
             ArenaCombat(
                 screenState = screenState,
-                state = state,
+                arenaMatchState = state,
+                timerState = { ArenaTimerState(secondsRemaining = secondsRemaining) },
                 modifier =
-                    Modifier.fillMaxSize()
-                        .paint(
-                            painter = painterResource(resource = Res.drawable.arena_background),
-                            contentScale = ContentScale.Crop,
-                        ),
+                Modifier.fillMaxSize()
+                    .paint(
+                        painter = painterResource(resource = Res.drawable.arena_background),
+                        contentScale = ContentScale.Crop,
+                    ),
             )
         }
     }
@@ -239,43 +241,43 @@ private fun previewCombatPlayer(
         userId = userId,
         displayName = displayName,
         characterClass =
-            if (hitPoints == null) classState else classState.copy(hitPoints = hitPoints),
+        if (hitPoints == null) classState else classState.copy(hitPoints = hitPoints),
     )
 }
 
 private fun previewCombatState(
     players: List<PlayerState.Selected>,
     combatActionState: CombatActionState? = null,
-): ArenaState.Combat {
+): ArenaMatchState.Combat {
     val userId = players.first().userId
 
-    return ArenaState.Combat(
+    return ArenaMatchState.Combat(
         playerMap = players.associateBy { it.userId },
         userPlayerId = userId,
         combatActionState =
-            combatActionState
-                ?: CombatActionState.NormalAttack(
-                    roll = NormalAttackType.ArmorClass,
-                    attackTurn = AttackTurn.Standard(attackerUserId = userId),
-                    defenderUserId = players[1].userId,
-                    activeUserIds = setOf(userId),
-                ),
+        combatActionState
+            ?: CombatActionState.NormalAttack(
+                roll = NormalAttackType.ArmorClass,
+                attackTurn = AttackTurn.Standard(attackerUserId = userId),
+                defenderUserId = players[1].userId,
+                activeUserIds = setOf(userId),
+            ),
         roundNumber = 1,
         isNewRound = true,
         isMatchOver = false,
-        turnOwnerUserId = userId,
+        attackerUserId = userId,
+        turnOwnerClassType = players.first().characterClass.type,
         lockedTargetUserId = null,
         diceRollState = null,
     )
 }
 
-private fun previewMessages(): List<ArenaMessageState> =
-    listOf(
-        ArenaMessageState.ConnectedToArena(id = "1", displayName = "The battle begins!"),
-        ArenaMessageState.NewRound(id = "2", roundNumber = "1"),
-        ArenaMessageState.NewTurn(
-            id = "3",
-            characterClassInfo =
-                CharacterClassMessageInfoState(className = "Mage", type = CharacterClassType.Mage),
-        ),
-    )
+private fun previewMessages(): List<ArenaMessageState> = listOf(
+    ArenaMessageState.ConnectedToArena(id = "1", displayName = "The battle begins!"),
+    ArenaMessageState.NewRound(id = "2", roundNumber = 1),
+    ArenaMessageState.NewTurn(
+        id = "3",
+        characterClassInfo =
+        CharacterClassMessageInfoState(className = "Mage", type = CharacterClassType.Mage),
+    ),
+)

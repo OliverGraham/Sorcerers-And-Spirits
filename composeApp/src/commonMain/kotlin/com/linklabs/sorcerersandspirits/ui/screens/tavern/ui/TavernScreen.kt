@@ -32,7 +32,7 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassWheel
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
@@ -59,7 +59,7 @@ internal fun TavernScreen(
 ) {
     CompositionLocalProvider(
         LocalTavernActions provides
-            TavernActions(onSendChallengerNotifications = viewModel::onSendChallenge)
+            TavernActions(onSendChallengerNotifications = viewModel::onSendChallenge),
     ) {
         viewModel.eventChannelFlow.collectEvents(onNavigateToArena = onNavigateToArena)
         val uiState by viewModel.uiStateFlow.collectAsState()
@@ -155,7 +155,7 @@ private fun ScreenContent(
 @Suppress("ComposableNaming")
 @Composable
 private fun Flow<TavernEvent>.collectEvents(
-    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit
+    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
 ) {
     LaunchedEffect(Unit) {
         collect { event ->

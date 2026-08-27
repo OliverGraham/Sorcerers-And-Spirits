@@ -155,15 +155,15 @@ private fun ImageBitmap.toDustParticles(): List<DustParticle> {
                         columnFraction = x.toFloat() / width,
                         color = color,
                         driftX =
-                            randomBetween(min = PARTICLE_MIN_DRIFT_X, max = PARTICLE_MAX_DRIFT_X),
+                        randomBetween(min = PARTICLE_MIN_DRIFT_X, max = PARTICLE_MAX_DRIFT_X),
                         rise = randomBetween(min = PARTICLE_MIN_RISE, max = PARTICLE_MAX_RISE),
                         wobbleFrequency =
-                            randomBetween(
-                                min = PARTICLE_WOBBLE_MIN_FREQUENCY,
-                                max = PARTICLE_WOBBLE_MAX_FREQUENCY,
-                            ),
+                        randomBetween(
+                            min = PARTICLE_WOBBLE_MIN_FREQUENCY,
+                            max = PARTICLE_WOBBLE_MAX_FREQUENCY,
+                        ),
                         wobblePhase = Random.nextFloat() * FULL_TURN_RADIANS,
-                    )
+                    ),
                 )
             }
             y += SAMPLE_STEP_PIXELS

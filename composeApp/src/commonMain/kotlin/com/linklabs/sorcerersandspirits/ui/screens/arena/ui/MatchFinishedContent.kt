@@ -25,17 +25,17 @@ import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 
 @Composable
 internal fun MatchFinishedContent(
-    finishedState: ArenaState.Finished,
+    finishedState: ArenaMatchState.Finished,
     gauntletProgress: GauntletProgress,
     hasReadiedForNextMatch: Boolean,
-    secondsRemaining: Int,
+    secondsRemaining: () -> Int,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -55,7 +55,7 @@ internal fun MatchFinishedContent(
 
         Text(
             text =
-                "Match ${gauntletProgress.currentMatch} of ${gauntletProgress.matchesPerGauntlet}",
+            "Match ${gauntletProgress.currentMatch} of ${gauntletProgress.matchesPerGauntlet}",
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -84,7 +84,7 @@ private fun MatchDecisionControls(
     canStartNextMatch: Boolean,
     isFinalMatch: Boolean,
     hasReadiedForNextMatch: Boolean,
-    secondsRemaining: Int,
+    secondsRemaining: () -> Int,
     modifier: Modifier = Modifier,
 ) {
     val actions = ArenaActionsProvider.current
@@ -111,7 +111,8 @@ private fun MatchDecisionControls(
         return
     }
 
-    val isCountdownRunning = secondsRemaining > 0
+    val currentSeconds = secondsRemaining()
+    val isCountdownRunning = currentSeconds > 0
     val nextStepName = if (isFinalMatch) "new gauntlet" else "next match"
 
     if (hasReadiedForNextMatch) {
@@ -129,7 +130,7 @@ private fun MatchDecisionControls(
             if (isCountdownRunning) {
                 CountdownText(
                     prefix = "Starting the $nextStepName in",
-                    secondsRemaining = secondsRemaining,
+                    secondsRemaining = currentSeconds,
                 )
             }
         }
@@ -144,10 +145,7 @@ private fun MatchDecisionControls(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (isCountdownRunning) {
-            CountdownText(
-                prefix = "The $nextStepName starts in",
-                secondsRemaining = secondsRemaining,
-            )
+            CountdownText(prefix = "The $nextStepName starts in", secondsRemaining = currentSeconds)
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
@@ -218,14 +216,14 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
     Card(
         modifier = modifier.fillMaxWidth(),
         colors =
-            CardDefaults.cardColors(
-                containerColor =
-                    if (isConscious) {
-                        MaterialTheme.colorScheme.secondaryContainer
-                    } else {
-                        MaterialTheme.colorScheme.surfaceVariant
-                    }
-            ),
+        CardDefaults.cardColors(
+            containerColor =
+            if (isConscious) {
+                MaterialTheme.colorScheme.secondaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+        ),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
@@ -246,34 +244,34 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 color =
-                    if (isConscious) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
+                if (isConscious) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.error
+                },
             )
         }
     }
 }
 
-private fun exampleFinishedState(): ArenaState.Finished {
+private fun exampleFinishedState(): ArenaMatchState.Finished {
     val mage = previewCharacterClassState(type = CharacterClassType.Mage)
     val rogue = previewCharacterClassState(type = CharacterClassType.Rogue)
 
-    return ArenaState.Finished(
+    return ArenaMatchState.Finished(
         players =
-            listOf(
-                PlayerState.Selected(
-                    userId = "player1",
-                    displayName = "Sorcerer Supreme",
-                    characterClass = mage,
-                ),
-                PlayerState.Selected(
-                    userId = "player2",
-                    displayName = "Spirit Walker",
-                    characterClass = rogue.copy(hitPoints = 0),
-                ),
-            )
+        listOf(
+            PlayerState.Selected(
+                userId = "player1",
+                displayName = "Sorcerer Supreme",
+                characterClass = mage,
+            ),
+            PlayerState.Selected(
+                userId = "player2",
+                displayName = "Spirit Walker",
+                characterClass = rogue.copy(hitPoints = 0),
+            ),
+        ),
     )
 }
 
@@ -285,7 +283,7 @@ private fun MatchFinishedContentPreview() {
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 0,
+            secondsRemaining = { 0 },
         )
     }
 }
@@ -298,7 +296,7 @@ private fun MatchFinishedContentFinalPreview() {
             finishedState = exampleFinishedState(),
             gauntletProgress = GauntletProgress(currentMatch = 3),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 0,
+            secondsRemaining = { 0 },
         )
     }
 }
@@ -311,7 +309,7 @@ private fun MatchFinishedContentCountdownPreview() {
             finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 45,
+            secondsRemaining = { 45 },
         )
     }
 }
@@ -324,7 +322,7 @@ private fun MatchFinishedContentWaitingPreview() {
             finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = true,
-            secondsRemaining = 45,
+            secondsRemaining = { 45 },
         )
     }
 }
@@ -335,10 +333,10 @@ private fun MatchFinishedContentLoneSurvivorPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
             finishedState =
-                exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
+            exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
             gauntletProgress = GauntletProgress(currentMatch = 2),
             hasReadiedForNextMatch = false,
-            secondsRemaining = 0,
+            secondsRemaining = { 0 },
         )
     }
 }

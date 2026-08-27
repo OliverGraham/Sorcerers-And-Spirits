@@ -18,7 +18,7 @@ class GauntletProgressTest {
     @Test
     fun `the last match is the final match`() {
         assertTrue(
-            actual = GauntletProgress(currentMatch = Gauntlet.MATCHES_PER_GAUNTLET).isFinalMatch
+            actual = GauntletProgress(currentMatch = Gauntlet.MATCHES_PER_GAUNTLET).isFinalMatch,
         )
     }
 

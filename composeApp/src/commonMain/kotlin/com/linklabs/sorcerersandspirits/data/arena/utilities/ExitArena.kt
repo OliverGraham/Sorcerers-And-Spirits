@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import com.linklabs.sorcerersandspirits.data.arena.model.withActiveUserIds
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
 import dev.gitlive.firebase.database.DatabaseReference
@@ -23,15 +22,15 @@ internal class ExitArena(private val userId: String) {
 
         return when (this) {
             is ArenaMatchEntity.WaitingForAllPlayers ->
-                copy(playerEntitiesMap = playerEntitiesMap - userId)
+                copy(playerEntitiesMap = playerEntitiesMap - userId, newMessages = emptyList())
 
             is ArenaMatchEntity.ChoosingClasses -> {
-                // TODO: make function
+                // TODO: make function. add messages?
                 val updatedPlayers = playerEntitiesMap - userId
 
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
-                        newMessages = newMessages,
+                        newMessages = emptyList(),
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
                     )
@@ -45,20 +44,20 @@ internal class ExitArena(private val userId: String) {
                     copy(
                         playerEntitiesMap = updatedPlayers,
                         activePlayerUserId = nextActivePlayerId,
+                        newMessages = emptyList(),
                     )
                 }
             }
 
             is ArenaMatchEntity.Combat -> {
-                // TODO: make function
+                // TODO: make function. add messages?
                 val updatedPlayers = playerEntitiesMap - userId
 
                 if (updatedPlayers.size < 2) {
                     ArenaMatchEntity.Finished(
-                        newMessages = newMessages,
+                        newMessages = emptyList(),
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
-                        participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
                     )
                 } else {
                     val updatedNextCombatAction =
@@ -75,11 +74,13 @@ internal class ExitArena(private val userId: String) {
                     copy(
                         playerEntitiesMap = updatedPlayers,
                         nextCombatActionEntity = updatedNextCombatAction,
+                        newMessages = emptyList(),
                     )
                 }
             }
 
-            is ArenaMatchEntity.Finished -> copy(playerEntitiesMap = playerEntitiesMap - userId)
+            is ArenaMatchEntity.Finished ->
+                copy(playerEntitiesMap = playerEntitiesMap - userId, newMessages = emptyList())
         }
     }
 }

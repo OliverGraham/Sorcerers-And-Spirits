@@ -24,13 +24,13 @@ class ArenaSessionStatsTest {
 
         assertEquals(
             expected =
-                ProfileStats(
-                    overall = GameStats(matchesPlayed = 1, matchesWon = 1),
-                    perClass =
-                        mapOf(
-                            CharacterClassType.Rogue to GameStats(matchesPlayed = 1, matchesWon = 1)
-                        ),
+            ProfileStats(
+                overall = GameStats(matchesPlayed = 1, matchesWon = 1),
+                perClass =
+                mapOf(
+                    CharacterClassType.Rogue to GameStats(matchesPlayed = 1, matchesWon = 1),
                 ),
+            ),
             actual = sessionStats.consumeDelta(),
         )
     }
@@ -56,10 +56,10 @@ class ArenaSessionStatsTest {
         (1..3).forEach { matchNumber ->
             sessionStats.onMatchUpdate(
                 match =
-                    finishedMatch(
-                        matchNumber = matchNumber,
-                        userClass = TestCharacterClasses.mage(),
-                    ),
+                finishedMatch(
+                    matchNumber = matchNumber,
+                    userClass = TestCharacterClasses.mage(),
+                ),
                 userId = USER_ID,
             )
         }
@@ -198,20 +198,20 @@ class ArenaSessionStatsTest {
         return ArenaMatch.Finished(
             messages = emptyList(),
             playerMap =
-                mapOf(
-                    USER_ID to selectedPlayer(userId = USER_ID, characterClass = survivingClass),
-                    OPPONENT_ID to
-                        selectedPlayer(
-                            userId = OPPONENT_ID,
-                            characterClass = TestCharacterClasses.mage().copy(hitPoints = 0),
-                        ),
-                ),
+            mapOf(
+                USER_ID to selectedPlayer(userId = USER_ID, characterClass = survivingClass),
+                OPPONENT_ID to
+                    selectedPlayer(
+                        userId = OPPONENT_ID,
+                        characterClass = TestCharacterClasses.mage().copy(hitPoints = 0),
+                    ),
+            ),
             matchNumberInGauntlet = matchNumber,
             participants =
-                mapOf(
-                    USER_ID to survivingClass.type,
-                    OPPONENT_ID to TestCharacterClasses.mage().type,
-                ),
+            mapOf(
+                USER_ID to survivingClass.type,
+                OPPONENT_ID to TestCharacterClasses.mage().type,
+            ),
         )
     }
 
@@ -229,8 +229,7 @@ class ArenaSessionStatsTest {
         )
     }
 
-    private fun selectedPlayer(userId: String, characterClass: CharacterClass) =
-        ArenaPlayer.Selected(userId = userId, displayName = userId, characterClass = characterClass)
+    private fun selectedPlayer(userId: String, characterClass: CharacterClass) = ArenaPlayer.Selected(userId = userId, displayName = userId, characterClass = characterClass)
 
     private companion object {
         const val USER_ID = "user-1"

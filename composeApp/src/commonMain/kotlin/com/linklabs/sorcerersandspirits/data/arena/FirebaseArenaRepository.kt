@@ -5,12 +5,12 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
-import com.linklabs.sorcerersandspirits.data.arena.utilities.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ChooseCharacterClass
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.FinishMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
+import com.linklabs.sorcerersandspirits.data.arena.utilities.applycombatresult.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
@@ -31,10 +31,10 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         nextPlayerId: String,
     ) {
         ChooseCharacterClass(
-                arenaReference = arenaMatchesReference.child(path = arenaId),
-                selectedArenaPlayer = selectedArenaPlayer.toSelectedEntity(),
-                nextPlayerId = nextPlayerId,
-            )
+            arenaReference = arenaMatchesReference.child(path = arenaId),
+            selectedArenaPlayer = selectedArenaPlayer.toSelectedEntity(),
+            nextPlayerId = nextPlayerId,
+        )
             .invoke()
     }
 
@@ -43,13 +43,12 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
         expectedNumberOfPlayers: Int,
         userId: String,
         displayName: String,
-    ) =
-        ConnectToArena(
-                expectedNumberOfPlayers = expectedNumberOfPlayers,
-                userId = userId,
-                displayName = displayName,
-            )
-            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    ) = ConnectToArena(
+        expectedNumberOfPlayers = expectedNumberOfPlayers,
+        userId = userId,
+        displayName = displayName,
+    )
+        .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
 
     override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
         arenaMatchesReference
@@ -64,14 +63,13 @@ class FirebaseArenaRepository(database: FirebaseDatabase) : ArenaRepository {
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 
-    override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> =
-        arenaMatchesReference
-            .child(path = arenaId)
-            .valueEvents
-            .map { snapshot ->
-                snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
-            }
-            .distinctUntilChanged()
+    override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> = arenaMatchesReference
+        .child(path = arenaId)
+        .valueEvents
+        .map { snapshot ->
+            snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
+        }
+        .distinctUntilChanged()
 
     override suspend fun exitArena(arenaId: String, userId: String) {
         ExitArena(userId = userId)

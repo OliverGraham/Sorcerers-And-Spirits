@@ -26,11 +26,11 @@ internal fun DrawScope.drawFireball(tail: Offset, position: Offset, alpha: Float
 
     drawLine(
         brush =
-            Brush.linearGradient(
-                colors = listOf(Color.Transparent, palette.trail.copy(alpha = 0.8f), palette.glow),
-                start = tail,
-                end = position,
-            ),
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, palette.trail.copy(alpha = 0.8f), palette.glow),
+            start = tail,
+            end = position,
+        ),
         start = tail,
         end = position,
         strokeWidth = 9.dp.toPx(),
@@ -59,17 +59,17 @@ internal fun DrawScope.drawFireball(tail: Offset, position: Offset, alpha: Float
     val ballRadius = 16.dp.toPx()
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors =
-                    listOf(
-                        palette.core,
-                        palette.glow,
-                        palette.trail.copy(alpha = 0.6f),
-                        Color.Transparent,
-                    ),
-                center = position,
-                radius = ballRadius,
+        Brush.radialGradient(
+            colors =
+            listOf(
+                palette.core,
+                palette.glow,
+                palette.trail.copy(alpha = 0.6f),
+                Color.Transparent,
             ),
+            center = position,
+            radius = ballRadius,
+        ),
         radius = ballRadius,
         center = position,
         alpha = alpha,
@@ -87,17 +87,17 @@ internal fun DrawScope.drawFireBurst(center: Offset, scale: Float, alpha: Float)
 
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors =
-                    listOf(
-                        palette.core,
-                        palette.glow,
-                        palette.trail.copy(alpha = 0.7f),
-                        Color.Transparent,
-                    ),
-                center = center,
-                radius = radius,
+        Brush.radialGradient(
+            colors =
+            listOf(
+                palette.core,
+                palette.glow,
+                palette.trail.copy(alpha = 0.7f),
+                Color.Transparent,
             ),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = alpha,
@@ -131,16 +131,16 @@ internal fun DrawScope.drawInferno(epicenter: Offset, swirl: Float, alpha: Float
     val glowRadius = span * 0.9f
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors =
-                    listOf(
-                        palette.glow.copy(alpha = 0.45f),
-                        palette.atmosphere.copy(alpha = 0.2f),
-                        Color.Transparent,
-                    ),
-                center = epicenter,
-                radius = glowRadius,
+        Brush.radialGradient(
+            colors =
+            listOf(
+                palette.glow.copy(alpha = 0.45f),
+                palette.atmosphere.copy(alpha = 0.2f),
+                Color.Transparent,
             ),
+            center = epicenter,
+            radius = glowRadius,
+        ),
         radius = glowRadius,
         center = epicenter,
         alpha = alpha,
@@ -178,11 +178,11 @@ private fun DrawScope.drawFirePillar(
     drawPath(
         path = flame,
         brush =
-            Brush.verticalGradient(
-                colors = listOf(palette.core, palette.glow, palette.trail),
-                startY = baseY - height,
-                endY = baseY,
-            ),
+        Brush.verticalGradient(
+            colors = listOf(palette.core, palette.glow, palette.trail),
+            startY = baseY - height,
+            endY = baseY,
+        ),
         alpha = alpha * 0.85f,
     )
 }

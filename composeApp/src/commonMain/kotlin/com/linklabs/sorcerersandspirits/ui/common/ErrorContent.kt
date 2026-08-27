@@ -27,7 +27,7 @@ internal fun ErrorContent(
     Column(
         modifier = modifier.fillMaxSize().padding(all = 24.dp),
         verticalArrangement =
-            Arrangement.spacedBy(space = 16.dp, alignment = Alignment.CenterVertically),
+        Arrangement.spacedBy(space = 16.dp, alignment = Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(

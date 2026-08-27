@@ -4,7 +4,7 @@ import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
 import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponent
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -57,8 +57,7 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
     }
 }
 
-internal fun NavKey.isHomeScreen(): Boolean =
-    this is Route.TavernScreen || this is Route.ArenaScreen
+internal fun NavKey.isHomeScreen(): Boolean = this is Route.TavernScreen || this is Route.ArenaScreen
 
 internal fun NavBackStack<NavKey>.popToNearestHomeScreen() {
     while (size > 1 && !last().isHomeScreen()) {
@@ -81,25 +80,23 @@ data class ArenaScreenViewModelArgumentsSerializable(
 
 @Serializable data class ComputerOpponentSerializable(val userId: String, val displayName: String)
 
-internal fun ArenaScreenViewModelArgumentsSerializable.toDomain() =
-    ArenaScreenViewModelArguments(
-        arenaId = arenaId,
-        expectedNumberOfPlayers = expectedNumberOfPlayers,
-        computerOpponents =
-            computerOpponents.map { opponent ->
-                ComputerOpponent(userId = opponent.userId, displayName = opponent.displayName)
-            },
-    )
+internal fun ArenaScreenViewModelArgumentsSerializable.toDomain() = ArenaScreenViewModelArguments(
+    arenaId = arenaId,
+    expectedNumberOfPlayers = expectedNumberOfPlayers,
+    computerOpponents =
+    computerOpponents.map { opponent ->
+        ComputerOpponent(userId = opponent.userId, displayName = opponent.displayName)
+    },
+)
 
-fun ArenaScreenViewModelArguments.toSerializable() =
-    ArenaScreenViewModelArgumentsSerializable(
-        arenaId = arenaId,
-        expectedNumberOfPlayers = expectedNumberOfPlayers,
-        computerOpponents =
-            computerOpponents.map { opponent ->
-                ComputerOpponentSerializable(
-                    userId = opponent.userId,
-                    displayName = opponent.displayName,
-                )
-            },
-    )
+fun ArenaScreenViewModelArguments.toSerializable() = ArenaScreenViewModelArgumentsSerializable(
+    arenaId = arenaId,
+    expectedNumberOfPlayers = expectedNumberOfPlayers,
+    computerOpponents =
+    computerOpponents.map { opponent ->
+        ComputerOpponentSerializable(
+            userId = opponent.userId,
+            displayName = opponent.displayName,
+        )
+    },
+)

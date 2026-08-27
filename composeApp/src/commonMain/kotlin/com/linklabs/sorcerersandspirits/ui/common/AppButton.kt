@@ -56,32 +56,32 @@ internal fun AppButton(
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         Box(
             modifier =
-                Modifier.alpha(alpha = if (isEnabled) 1f else APP_BUTTON_DISABLED_ALPHA)
-                    .padding(bottom = APP_BUTTON_LIFT)
+            Modifier.alpha(alpha = if (isEnabled) 1f else APP_BUTTON_DISABLED_ALPHA)
+                .padding(bottom = APP_BUTTON_LIFT),
         ) {
             Box(
                 modifier =
-                    Modifier.matchParentSize()
-                        .offset(y = APP_BUTTON_LIFT)
-                        .clip(shape = shape)
-                        .background(color = baseColor)
+                Modifier.matchParentSize()
+                    .offset(y = APP_BUTTON_LIFT)
+                    .clip(shape = shape)
+                    .background(color = baseColor),
             )
 
             Row(
                 modifier =
-                    Modifier.offset(y = pressDrop)
-                        .clip(shape = shape)
-                        .background(color = APP_BUTTON_FACE_COLOR)
-                        .border(width = 2.dp, color = borderColor, shape = shape)
-                        .clickable(
-                            interactionSource = interactionSource,
-                            indication = null,
-                            enabled = isEnabled,
-                            onClick = onClick,
-                        )
-                        .padding(horizontal = 24.dp, vertical = 12.dp),
+                Modifier.offset(y = pressDrop)
+                    .clip(shape = shape)
+                    .background(color = APP_BUTTON_FACE_COLOR)
+                    .border(width = 2.dp, color = borderColor, shape = shape)
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        enabled = isEnabled,
+                        onClick = onClick,
+                    )
+                    .padding(horizontal = 24.dp, vertical = 12.dp),
                 horizontalArrangement =
-                    Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
+                Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 CompositionLocalProvider(LocalContentColor provides contentColor) {

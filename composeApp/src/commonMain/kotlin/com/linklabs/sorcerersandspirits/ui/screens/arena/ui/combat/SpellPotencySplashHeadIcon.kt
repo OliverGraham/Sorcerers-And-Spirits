@@ -34,15 +34,15 @@ import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
-import kotlin.math.PI
-import kotlin.math.sin
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
+import kotlin.math.PI
+import kotlin.math.sin
 
 private const val SPLASH_DURATION_MILLIS = 900
 private const val SPLASH_RISE_FRACTION = 0.45f
@@ -53,12 +53,6 @@ private const val INDICATOR_ICON_FRACTION = 0.2f
 
 private val INDICATOR_COLOR = Color(color = 0xFFE23B3B)
 
-/**
- * One Spell Potency splash landing on a class-head icon (SS-214). [progress] runs the whole
- * decrement so the head's hit-point value swells and reddens via [hitPointsEmphasis] while a
- * floating red "-[splashDamage]" rises off the icon. [splashDamage] is null between casts, when
- * nothing is shown.
- */
 @Stable
 internal class SpellPotencySplashState {
     val progress = Animatable(initialValue = 0f)
@@ -85,50 +79,35 @@ internal class SpellPotencySplashState {
     }
 }
 
-/**
- * Drives the splash decrement for one head-icon [player]: on each new Spell Potency cue that
- * splashes this conscious opponent, it plays the decrement once. A cue already live at first
- * composition, or one that does not splash this player, leaves the head untouched.
- */
 @Composable
 internal fun rememberSpellPotencySplash(
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     player: PlayerState.Selected,
 ): SpellPotencySplashState {
     val state = remember { SpellPotencySplashState() }
-    var lastPlayedCueId by remember { mutableStateOf(value = animationCue?.id) }
+    var lastPlayedCueId by remember { mutableStateOf(value = animatingMessage?.id) }
 
-    LaunchedEffect(key1 = animationCue) {
-        val splashDamage = animationCue.spellPotencySplashFor(player = player)
+    LaunchedEffect(key1 = animatingMessage) {
+        val splashDamage = animatingMessage.spellPotencySplashFor(player = player)
         if (splashDamage == null) {
             state.cancel()
-            lastPlayedCueId = animationCue?.id
+            lastPlayedCueId = animatingMessage?.id
             return@LaunchedEffect
         }
-        if (animationCue?.id == lastPlayedCueId) return@LaunchedEffect
-        lastPlayedCueId = animationCue?.id
+        if (animatingMessage?.id == lastPlayedCueId) return@LaunchedEffect
+        lastPlayedCueId = animatingMessage?.id
         state.play(damage = splashDamage)
     }
     return state
 }
 
-/**
- * The splash damage this Spell Potency cue lands on [player]'s head icon, or null when the cue is
- * something else or does not reach this player. Membership is the exact set the cast splashed —
- * every opponent conscious when it resolved — so a player knocked out by the splash still shows the
- * decrement while a player already down before the cast does not.
- */
-private fun CombatAnimationCue?.spellPotencySplashFor(player: PlayerState.Selected): Int? {
-    val cue = this as? CombatAnimationCue.SpellPotency ?: return null
+private fun ArenaMessageState?.spellPotencySplashFor(player: PlayerState.Selected): Int? {
+    val cue = this as? ArenaMessageState.SpellPotency ?: return null
     val wasSplashed = player.userId in cue.splashTargetUserIds
     if (!wasSplashed) return null
     return cue.splashDamage.takeIf { it > 0 }
 }
 
-/**
- * The floating red "-X" and hit-point icon that rises off a head as its Spell Potency splash lands
- * (SS-214), sized to the [headWidth] it sits beside. Draws nothing between casts.
- */
 @Composable
 internal fun SpellPotencySplashIndicator(
     splash: SpellPotencySplashState,
@@ -141,7 +120,7 @@ internal fun SpellPotencySplashIndicator(
 
     Row(
         modifier =
-            modifier.offset(y = -rise).alpha(alpha = splashIndicatorAlpha(progress = progress)),
+        modifier.offset(y = -rise).alpha(alpha = splashIndicatorAlpha(progress = progress)),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
@@ -159,15 +138,14 @@ internal fun SpellPotencySplashIndicator(
     }
 }
 
-private fun splashIndicatorAlpha(progress: Float): Float =
-    when {
-        progress < SPLASH_FADE_IN_FRACTION -> progress / SPLASH_FADE_IN_FRACTION
+private fun splashIndicatorAlpha(progress: Float): Float = when {
+    progress < SPLASH_FADE_IN_FRACTION -> progress / SPLASH_FADE_IN_FRACTION
 
-        progress > SPLASH_FADE_OUT_START ->
-            ((1f - progress) / (1f - SPLASH_FADE_OUT_START)).coerceAtLeast(minimumValue = 0f)
+    progress > SPLASH_FADE_OUT_START ->
+        ((1f - progress) / (1f - SPLASH_FADE_OUT_START)).coerceAtLeast(minimumValue = 0f)
 
-        else -> 1f
-    }
+    else -> 1f
+}
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
@@ -186,21 +164,26 @@ private fun SpellPotencySplashPreview() {
                 characterClass = previewCharacterClassState(type = CharacterClassType.Bard),
             ),
         )
-    val animationCue =
-        rememberReplayingCue(replayKey = Unit) { iteration ->
-            CombatAnimationCue.SpellPotency(
-                id = "splash-$iteration",
-                mageUserId = "mage",
-                mainTargetUserId = "target",
-                mainDamage = 8,
-                splashDamage = 3,
-                splashTargetUserIds = headIconPlayers.map { it.userId },
-                isMainTargetKnockedOut = false,
-            )
-        }
+    val animatingMessage = remember {
+        ArenaMessageState.SpellPotency(
+            id = "splash",
+            mageUserId = "mage",
+            mageName = "Mage",
+            mainTargetUserId = "target",
+            mainTargetClassName = "Rogue",
+            firstDie = 6,
+            secondDie = 6,
+            mainDamage = 8,
+            splashDamage = 3,
+            splashTargetUserIds = headIconPlayers.map { it.userId },
+            isMainTargetKnockedOut = false,
+            animation = ArenaAnimationState.FlashAndAvatar(),
+            gestures = emptyMap(),
+        )
+    }
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(
-            value = LocalCharacterClassCopy provides previewCharacterClassCopy()
+            value = LocalCharacterClassCopy provides previewCharacterClassCopy(),
         ) {
             SharedTransitionLayout {
                 AnimatedVisibility(visible = true) {
@@ -212,9 +195,8 @@ private fun SpellPotencySplashPreview() {
                             headIconPlayers = headIconPlayers,
                             userPlayerId = "rogue",
                             isTargetable = false,
-                            onSelectTarget = {},
                             onInspect = {},
-                            animationCue = animationCue,
+                            animatingMessage = animatingMessage,
                             modifier = Modifier.size(width = 140.dp, height = 520.dp),
                         )
                     }

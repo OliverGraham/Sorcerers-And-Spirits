@@ -60,11 +60,11 @@ private fun DrawScope.drawHeadEssenceAura(essence: Float, alpha: Float) {
     val radius = maceHeadLength.toPx() * 0.95f
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(paladinEssenceGreen, Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(paladinEssenceGreen, Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = auraAlpha * 0.5f,
@@ -81,11 +81,11 @@ private fun DrawScope.drawHaft(alpha: Float) {
 
     drawRoundRect(
         brush =
-            Brush.horizontalGradient(
-                colors = listOf(haftIron, haftIronLit, haftIron),
-                startX = -halfWidth,
-                endX = halfWidth,
-            ),
+        Brush.horizontalGradient(
+            colors = listOf(haftIron, haftIronLit, haftIron),
+            startX = -halfWidth,
+            endX = halfWidth,
+        ),
         topLeft = Offset(x = -halfWidth, y = pommelY),
         size = Size(width = halfWidth * 2, height = haftTop - pommelY),
         cornerRadius = CornerRadius(x = halfWidth),
@@ -159,11 +159,11 @@ private fun DrawScope.drawMaulHead(alpha: Float) {
     drawPath(
         path = head,
         brush =
-            Brush.horizontalGradient(
-                colors = listOf(steelShade, steelBright, maceSteelDeep),
-                startX = -halfWidth,
-                endX = halfWidth,
-            ),
+        Brush.horizontalGradient(
+            colors = listOf(steelShade, steelBright, maceSteelDeep),
+            startX = -halfWidth,
+            endX = halfWidth,
+        ),
         alpha = alpha,
     )
 

@@ -59,14 +59,13 @@ internal fun slashTrailPath(
     perp: Offset,
     bow: Float,
     progress: Float,
-): Path =
-    Path().apply {
-        val origin = slashPoint(start = start, end = end, perp = perp, bow = bow, fraction = 0f)
-        moveTo(x = origin.x, y = origin.y)
-        for (sample in 1..SLASH_TRAIL_SAMPLES) {
-            val fraction = progress * sample / SLASH_TRAIL_SAMPLES
-            val point =
-                slashPoint(start = start, end = end, perp = perp, bow = bow, fraction = fraction)
-            lineTo(x = point.x, y = point.y)
-        }
+): Path = Path().apply {
+    val origin = slashPoint(start = start, end = end, perp = perp, bow = bow, fraction = 0f)
+    moveTo(x = origin.x, y = origin.y)
+    for (sample in 1..SLASH_TRAIL_SAMPLES) {
+        val fraction = progress * sample / SLASH_TRAIL_SAMPLES
+        val point =
+            slashPoint(start = start, end = end, perp = perp, bow = bow, fraction = fraction)
+        lineTo(x = point.x, y = point.y)
     }
+}

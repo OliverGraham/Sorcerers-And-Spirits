@@ -34,11 +34,11 @@ class GameRulesScreenViewModel(
         _uiStateFlow.value =
             UiState.Loaded(
                 data =
-                    GameRulesState(
-                        combatRules = COMBAT_RULES,
-                        gameTerms = GAME_TERMS,
-                        classes = classes,
-                    )
+                GameRulesState(
+                    combatRules = COMBAT_RULES,
+                    gameTerms = GAME_TERMS,
+                    classes = classes,
+                ),
             )
     }
 }

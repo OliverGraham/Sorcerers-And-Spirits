@@ -4,7 +4,6 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.resetForNewMatch
-import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
 import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
@@ -22,9 +21,10 @@ internal class StayForAnotherMatch(private val userId: String) {
     }
 
     private fun ArenaMatchEntity?.stayForAnotherMatchTransaction(
-        messagesReference: DatabaseReference
+        messagesReference: DatabaseReference,
     ): ArenaMatchEntity? {
         val match = this ?: return null
+        if (match !is ArenaMatchEntity.Finished) return match
 
         val updatedPlayers = match.playerEntitiesMap.toMutableMap()
         val currentPlayer = updatedPlayers[userId] ?: return match
@@ -75,20 +75,19 @@ internal class StayForAnotherMatch(private val userId: String) {
         val fastestPlayer = freshPlayers.getFastestPlayer()
         val newMessages =
             messagesReference.generateInitialCombatRoundMessages(
-                startingCharacterClass = fastestPlayer.characterClassEntity
+                startingCharacterClass = fastestPlayer.characterClassEntity,
             )
 
         return ArenaMatchEntity.Combat(
             playerEntitiesMap = freshPlayers,
             newMessages = newMessages,
             nextCombatActionEntity =
-                NextCombatActionEntity.IdleEntity(
-                    activeUserIds = setOf(element = fastestPlayer.userId)
-                ),
+            NextCombatActionEntity.IdleEntity(
+                activeUserIds = setOf(element = fastestPlayer.userId),
+            ),
             roundNumber = 1,
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet + 1,
-            participants = freshPlayers.toParticipants(),
         )
     }
 
@@ -111,20 +110,8 @@ internal class StayForAnotherMatch(private val userId: String) {
         )
     }
 
-    private fun ArenaMatchEntity.withUpdatedPlayers(
-        updatedPlayers: Map<String, ArenaPlayerEntity>
-    ): ArenaMatchEntity =
-        when (this) {
-            is ArenaMatchEntity.WaitingForAllPlayers -> copy(playerEntitiesMap = updatedPlayers)
-
-            is ArenaMatchEntity.ChoosingClasses -> copy(playerEntitiesMap = updatedPlayers)
-
-            is ArenaMatchEntity.Combat ->
-                copy(
-                    playerEntitiesMap =
-                        updatedPlayers.mapValues { it.value as ArenaPlayerEntity.Selected }
-                )
-
-            is ArenaMatchEntity.Finished -> copy(playerEntitiesMap = updatedPlayers)
-        }
+    // TODO: add messages?
+    private fun ArenaMatchEntity.Finished.withUpdatedPlayers(
+        updatedPlayers: Map<String, ArenaPlayerEntity>,
+    ): ArenaMatchEntity = copy(playerEntitiesMap = updatedPlayers, newMessages = emptyList())
 }

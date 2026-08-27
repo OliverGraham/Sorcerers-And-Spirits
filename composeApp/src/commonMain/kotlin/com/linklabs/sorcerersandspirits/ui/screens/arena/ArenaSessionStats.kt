@@ -7,6 +7,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
 
+// TODO(SS-260): Refactor all this, of course.
+
 /**
  * Accumulates the local player's stat deltas across a single Arena session, which can span several
  * matches and Gauntlets, so the totals are written once when the player finally leaves (see

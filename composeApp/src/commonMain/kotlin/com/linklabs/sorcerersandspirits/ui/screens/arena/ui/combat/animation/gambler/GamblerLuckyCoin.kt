@@ -14,9 +14,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -27,31 +25,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.lerp as colorLerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCues
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.compose.ui.graphics.lerp as colorLerp
 
 private const val COIN_TILT_DEGREES = 34f
 private const val FLIP_TURNS = 3
@@ -64,27 +65,6 @@ private const val COIN_FADE_MILLIS = 300
 private const val COIN_THROW_FLIGHT_MILLIS = 480
 private const val THROW_SPIN_TURNS = 4
 private const val THROW_IMPACT_MILLIS = 220
-
-/**
- * How long a defensive Lucky Coin flip runs — the toss, the armor pulse when the bonus holds, the
- * rest, and the fade — so the message sequencer holds the event until the coin settles (SS-201).
- */
-internal fun gamblerLuckyCoinFlipDurationMillis(didStopAttack: Boolean): Long {
-    val armorPulseMillis = if (didStopAttack) ARMOR_PULSE_MILLIS.toLong() else 0L
-    return COIN_APPEAR_MILLIS +
-        TOSS_MILLIS +
-        armorPulseMillis +
-        FLIP_REST_HOLD_MILLIS +
-        COIN_FADE_MILLIS
-}
-
-/** How long the winning High Roller coin lofts up before it rests, awaiting the throw (SS-201). */
-internal fun gamblerLuckyCoinHighRollerDurationMillis(): Long =
-    (COIN_APPEAR_MILLIS + TOSS_MILLIS).toLong()
-
-/** How long the High Roller throw flies into the attacker and bursts on landing (SS-201). */
-internal fun gamblerLuckyCoinThrowDurationMillis(): Long =
-    (COIN_THROW_FLIGHT_MILLIS + THROW_IMPACT_MILLIS).toLong()
 
 private const val LUCKY_FACE = 6
 private const val PIP_OFFSET = 0.42f
@@ -103,21 +83,12 @@ private val luckyGlow = Color(color = 0xFFFFF3D0)
 private val impactCore = Color(color = 0xFFFFF3D0)
 private val groundShadow = Color(color = 0x55000000)
 
-/**
- * Which lucky-coin figure is on screen: a defensive flip, the winning High Roller flip, or the
- * throw.
- */
 private enum class LuckyCoinMode {
     Flip,
     HighRoller,
     Throw,
 }
 
-/**
- * The measured geometry of one lucky-coin figure (SS-193), laid out from the Gambler's avatar
- * bounds — and the attacker's, for the throw. [restCenter] is the Gambler's feet, where the coin
- * lands and rests; the throw lofts from there to [throwTarget].
- */
 @Immutable
 private data class LuckyCoinScene(
     val mode: LuckyCoinMode,
@@ -133,12 +104,6 @@ private data class LuckyCoinScene(
     val accentColor: Color,
 )
 
-/**
- * The animation channels of one lucky-coin figure (SS-193): [arc] lofts the tossed coin and
- * [tumble] spins it end over end onto its face, [armorPulse] rings out when the added armor holds,
- * and [travel]/[throwSpin]/[impact] carry the High Roller throw into the attacker. [coinAlpha]
- * fades the coin in and away.
- */
 @Stable
 private class LuckyCoinEffectState {
     val coinAlpha = Animatable(initialValue = 0f)
@@ -153,86 +118,83 @@ private class LuckyCoinEffectState {
     var scene by mutableStateOf<LuckyCoinScene?>(value = null)
 }
 
-/**
- * The Gambler's Lucky Coin effect (SS-193): when the Gambler's armor is broken, a golden coin is
- * tossed up over their seat and tumbles end over end in three dimensions before landing on its face
- * at the Gambler's feet, sitting on the ground as a solid coin you could pick up — ringing out a
- * shield pulse when the added armor turns the attack away. On a High Roller the coin lands on its
- * lucky face and stays put until the Gambler rolls, then is flung across into the attacker for
- * payback damage. Anchored to the measured avatar bounds via [avatarBoundsFor], and sits out any
- * cue that is not a lucky-coin cue.
- */
 @Composable
 internal fun LuckyCoinOverlay(
-    animationCue: CombatAnimationCue?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.LuckyCoin,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { LuckyCoinEffectState() }
-    val density = LocalDensity.current
-    val latestCue by rememberUpdatedState(newValue = animationCue)
+    val luckyCoinScene =
+        getLuckyCoinScene(
+            message = animatingMessage,
+            avatarBoundsStateHolder = avatarBoundsStateHolder,
+        ) ?: return
 
-    LaunchedEffect(key1 = Unit) {
-        var lastPlayedCueId = latestCue?.id
-        var playJob: Job? = null
-        snapshotFlow { latestCue }
-            .collect { cue ->
-                if (cue == null) return@collect
-                if (cue.id == lastPlayedCueId) return@collect
-                val scene =
-                    luckyCoinScene(cue = cue, avatarBoundsFor = avatarBoundsFor, density = density)
-                        ?: return@collect
-                lastPlayedCueId = cue.id
-                playJob?.cancel()
-                playJob = launch { state.play(scene = scene) }
-            }
+    val state = remember { LuckyCoinEffectState() }
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
+
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(scene = luckyCoinScene)
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            ),
+        )
     }
 
     Canvas(modifier = modifier) { drawLuckyCoinScene(state = state) }
 }
 
-private fun luckyCoinScene(
-    cue: CombatAnimationCue,
-    avatarBoundsFor: (String) -> Rect?,
-    density: Density,
-): LuckyCoinScene? =
-    when (cue) {
-        is CombatAnimationCue.LuckyCoinFlip -> {
-            val bounds = avatarBoundsFor(cue.gamblerUserId) ?: return null
-            flipScene(
-                bounds = bounds,
+@Composable
+private fun getLuckyCoinScene(
+    message: ArenaMessageState.LuckyCoin,
+    avatarBoundsStateHolder: AvatarBoundsStateHolder,
+): LuckyCoinScene? {
+    return when (message) {
+        is ArenaMessageState.LuckyCoin.Flip -> {
+            val gamblerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = message.gamblerUserId) ?: return null
+
+            getFlipScene(
+                bounds = gamblerBounds,
                 mode = LuckyCoinMode.Flip,
-                faceValue = cue.faceValue,
-                didStopAttack = cue.didStopAttack,
+                faceValue = message.singleDie,
+                didStopAttack = message.didStopAttack,
             )
         }
 
-        is CombatAnimationCue.LuckyCoinHighRoller -> {
-            val bounds = avatarBoundsFor(cue.gamblerUserId) ?: return null
-            flipScene(
-                bounds = bounds,
+        is ArenaMessageState.LuckyCoin.HighRollerTrigger -> {
+            val gamblerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = message.gamblerUserId) ?: return null
+
+            getFlipScene(
+                bounds = gamblerBounds,
                 mode = LuckyCoinMode.HighRoller,
                 faceValue = LUCKY_FACE,
                 didStopAttack = false,
             )
         }
 
-        is CombatAnimationCue.LuckyCoinHighRollerThrow -> {
-            val gamblerBounds = avatarBoundsFor(cue.gamblerUserId) ?: return null
-            val attackerBounds = avatarBoundsFor(cue.attackerUserId) ?: return null
-            throwScene(
+        is ArenaMessageState.LuckyCoin.HighRollerDamage -> {
+            val gamblerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = message.gamblerUserId) ?: return null
+            val attackerBounds =
+                avatarBoundsStateHolder.boundsFor(userId = message.attackerUserId) ?: return null
+
+            getThrowScene(
                 gamblerBounds = gamblerBounds,
                 attackerBounds = attackerBounds,
-                damage = cue.damage,
-                isKnockout = cue.isKnockout,
-                density = density,
+                damage = message.singleDie,
+                isKnockout = message.isKnockout,
             )
         }
 
         else -> null
     }
+}
 
-private fun flipScene(
+private fun getFlipScene(
     bounds: Rect,
     mode: LuckyCoinMode,
     faceValue: Int,
@@ -254,14 +216,15 @@ private fun flipScene(
     )
 }
 
-private fun throwScene(
+@Composable
+private fun getThrowScene(
     gamblerBounds: Rect,
     attackerBounds: Rect,
     damage: Int,
     isKnockout: Boolean,
-    density: Density,
 ): LuckyCoinScene {
     val radius = coinRadiusFor(bounds = gamblerBounds) * 0.85f
+
     return LuckyCoinScene(
         mode = LuckyCoinMode.Throw,
         faceValue = damage,
@@ -272,13 +235,12 @@ private fun throwScene(
         restCenter = coinRestCenter(bounds = gamblerBounds),
         apexRisePx = 0f,
         throwTarget = attackerBounds.center,
-        throwLobPx = with(density) { 48.dp.toPx() },
+        throwLobPx = with(receiver = LocalDensity.current) { 48.dp.toPx() },
         accentColor = CharacterClassType.Gambler.toColor(),
     )
 }
 
-private fun coinRestCenter(bounds: Rect): Offset =
-    Offset(x = bounds.center.x, y = bounds.bottom - bounds.height * 0.05f)
+private fun coinRestCenter(bounds: Rect): Offset = Offset(x = bounds.center.x, y = bounds.bottom - bounds.height * 0.05f)
 
 private fun coinRadiusFor(bounds: Rect): Float = min(bounds.width, bounds.height) * 0.16f
 
@@ -319,9 +281,6 @@ private suspend fun LuckyCoinEffectState.play(scene: LuckyCoinScene) {
     }
 }
 
-/**
- * The toss: the coin fades in, lofts up and back down while tumbling end over end onto its face.
- */
 private suspend fun LuckyCoinEffectState.toss() {
     coinAlpha.animateTo(
         targetValue = 1f,
@@ -343,7 +302,6 @@ private suspend fun LuckyCoinEffectState.toss() {
     }
 }
 
-/** The High Roller throw: the resting coin lofts across into the attacker and bursts on landing. */
 private suspend fun LuckyCoinEffectState.throwCoin(isKnockout: Boolean) {
     coinAlpha.snapTo(targetValue = 1f)
     coroutineScope {
@@ -351,14 +309,17 @@ private suspend fun LuckyCoinEffectState.throwCoin(isKnockout: Boolean) {
             travel.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = FastOutLinearInEasing),
+                tween(
+                    durationMillis = COIN_THROW_FLIGHT_MILLIS,
+                    easing = FastOutLinearInEasing,
+                ),
             )
         }
         launch {
             throwSpin.animateTo(
                 targetValue = THROW_SPIN_TURNS * 360f,
                 animationSpec =
-                    tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = LinearEasing),
+                tween(durationMillis = COIN_THROW_FLIGHT_MILLIS, easing = LinearEasing),
             )
         }
     }
@@ -391,7 +352,8 @@ private fun DrawScope.drawLuckyCoinScene(state: LuckyCoinEffectState) {
     val scene = state.scene ?: return
     when (scene.mode) {
         LuckyCoinMode.Flip,
-        LuckyCoinMode.HighRoller -> drawTossedCoin(scene = scene, state = state)
+        LuckyCoinMode.HighRoller,
+        -> drawTossedCoin(scene = scene, state = state)
 
         LuckyCoinMode.Throw -> drawThrownCoin(scene = scene, state = state)
     }
@@ -417,11 +379,11 @@ private fun DrawScope.drawTossedCoin(scene: LuckyCoinScene, state: LuckyCoinEffe
     if (isGold) {
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(luckyGlow.copy(alpha = 0.45f), Color.Transparent),
-                    center = center,
-                    radius = scene.radiusPx * 2f,
-                ),
+            Brush.radialGradient(
+                colors = listOf(luckyGlow.copy(alpha = 0.45f), Color.Transparent),
+                center = center,
+                radius = scene.radiusPx * 2f,
+            ),
             radius = scene.radiusPx * 2f,
             center = center,
             alpha = alpha,
@@ -456,11 +418,11 @@ private fun DrawScope.drawThrownCoin(scene: LuckyCoinScene, state: LuckyCoinEffe
         val center = Offset(x = flat.x, y = flat.y - scene.throwLobPx * sin(PI.toFloat() * travel))
         drawLine(
             brush =
-                Brush.linearGradient(
-                    colors = listOf(Color.Transparent, scene.accentColor.copy(alpha = 0.4f)),
-                    start = scene.restCenter,
-                    end = center,
-                ),
+            Brush.linearGradient(
+                colors = listOf(Color.Transparent, scene.accentColor.copy(alpha = 0.4f)),
+                start = scene.restCenter,
+                end = center,
+            ),
             start = scene.restCenter,
             end = center,
             strokeWidth = 5.dp.toPx(),
@@ -489,12 +451,6 @@ private fun DrawScope.drawThrownCoin(scene: LuckyCoinScene, state: LuckyCoinEffe
     }
 }
 
-/**
- * A solid coin drawn as a true cylinder (SS-193): viewed from a fixed three-quarter tilt like the
- * dice, its rolled face reads on top as a foreshortened ellipse with the milled rim wrapping the
- * front below it, so it reads as a physical coin in space. [tumbleDegrees] pitches it end over end;
- * as it turns past edge-on the lit rim shows and then the minted reverse.
- */
 private fun DrawScope.drawCoin3d(
     center: Offset,
     radius: Float,
@@ -558,27 +514,24 @@ private fun DrawScope.drawCoin3d(
     }
 }
 
-/** The projected rim of one cap: [y] is the cap's height along the coin's thickness axis. */
 private fun rimPoints(
     center: Offset,
     radius: Float,
     y: Float,
     cosPitch: Float,
     sinPitch: Float,
-): List<Offset> =
-    (0..RIM_SEGMENTS).map { index ->
-        val theta = (index.toFloat() / RIM_SEGMENTS) * 2f * PI.toFloat()
-        projectCoinPoint(
-            center = center,
-            localX = radius * cos(theta),
-            localY = y,
-            localZ = radius * sin(theta),
-            cosPitch = cosPitch,
-            sinPitch = sinPitch,
-        )
-    }
+): List<Offset> = (0..RIM_SEGMENTS).map { index ->
+    val theta = (index.toFloat() / RIM_SEGMENTS) * 2f * PI.toFloat()
+    projectCoinPoint(
+        center = center,
+        localX = radius * cos(theta),
+        localY = y,
+        localZ = radius * sin(theta),
+        cosPitch = cosPitch,
+        sinPitch = sinPitch,
+    )
+}
 
-/** Orthographic projection of a coin-local point, pitched about the horizontal screen axis. */
 private fun projectCoinPoint(
     center: Offset,
     localX: Float,
@@ -591,14 +544,12 @@ private fun projectCoinPoint(
     return Offset(x = center.x + localX, y = center.y - rotatedY)
 }
 
-private fun rimPath(rim: List<Offset>): Path =
-    Path().apply {
-        moveTo(x = rim.first().x, y = rim.first().y)
-        rim.drop(n = 1).forEach { lineTo(x = it.x, y = it.y) }
-        close()
-    }
+private fun rimPath(rim: List<Offset>): Path = Path().apply {
+    moveTo(x = rim.first().x, y = rim.first().y)
+    rim.drop(n = 1).forEach { lineTo(x = it.x, y = it.y) }
+    close()
+}
 
-/** The milled edge: the front-facing band of quads between the two rims, shaded by their facing. */
 private fun DrawScope.drawCoinEdge(
     topRim: List<Offset>,
     bottomRim: List<Offset>,
@@ -652,7 +603,6 @@ private fun DrawScope.drawCoinPips(
     }
 }
 
-/** The minted reverse: a ring inset from the rim with a small central boss, projected in place. */
 private fun DrawScope.drawCoinBack(
     center: Offset,
     radius: Float,
@@ -682,7 +632,6 @@ private fun DrawScope.drawCoinBack(
     drawCircle(color = coinRim, radius = radius * 0.14f, center = center, alpha = alpha * 0.85f)
 }
 
-/** The die-face dot pattern for a value, in unit coordinates about the coin center. */
 private fun pipLayout(faceValue: Int): List<Offset> {
     val near = PIP_OFFSET
     return when (faceValue) {
@@ -721,7 +670,6 @@ private fun pipLayout(faceValue: Int): List<Offset> {
     }
 }
 
-/** The soft contact shadow that grounds the coin, strongest when it is resting at the feet. */
 private fun DrawScope.drawGroundShadow(
     center: Offset,
     radius: Float,
@@ -733,13 +681,12 @@ private fun DrawScope.drawGroundShadow(
     drawOval(
         color = groundShadow,
         topLeft =
-            Offset(x = center.x - shadowWidth, y = center.y + radius * 0.3f - shadowHeight / 2f),
+        Offset(x = center.x - shadowWidth, y = center.y + radius * 0.3f - shadowHeight / 2f),
         size = Size(width = shadowWidth * 2f, height = shadowHeight),
         alpha = alpha * (0.25f + grounded * 0.4f),
     )
 }
 
-/** The shield pulse when the added armor holds: an expanding ring in the Gambler's gold. */
 private fun DrawScope.drawArmorPulse(
     center: Offset,
     radius: Float,
@@ -756,7 +703,6 @@ private fun DrawScope.drawArmorPulse(
     )
 }
 
-/** The payback flare: a white-cored burst rimmed in the Gambler's gold at the point of impact. */
 private fun DrawScope.drawImpactBurst(
     center: Offset,
     scale: Float,
@@ -766,11 +712,11 @@ private fun DrawScope.drawImpactBurst(
     val radius = 40.dp.toPx() * scale
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(impactCore, accentColor.copy(alpha = 0.8f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(impactCore, accentColor.copy(alpha = 0.8f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = alpha,
@@ -794,20 +740,22 @@ private fun LuckyCoinFlipArmorBrokenPreview() {
 
 @Composable
 private fun LuckyCoinFlipPreview(didStopAttack: Boolean) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCue(replayKey = didStopAttack) { iteration ->
-            CombatAnimationCue.LuckyCoinFlip(
-                id = "lucky-coin-flip-$iteration",
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Gambler,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.LuckyCoin.Flip(
+                id = id,
                 gamblerUserId = PREVIEW_ACTOR_ID,
-                faceValue = PREVIEW_FLIP_FACE,
+                singleDie = PREVIEW_FLIP_FACE,
                 didStopAttack = didStopAttack,
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         LuckyCoinOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBoundsStateHolder = avatars.boundsStateHolder,
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -816,27 +764,25 @@ private fun LuckyCoinFlipPreview(didStopAttack: Boolean) {
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
 private fun LuckyCoinHighRollerPaybackPreview() {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCues(replayKey = "high-roller") { iteration ->
-            listOf(
-                CombatAnimationCue.LuckyCoinHighRoller(
-                    id = "high-roller-$iteration",
-                    gamblerUserId = PREVIEW_ACTOR_ID,
-                ),
-                CombatAnimationCue.LuckyCoinHighRollerThrow(
-                    id = "high-roller-throw-$iteration",
-                    gamblerUserId = PREVIEW_ACTOR_ID,
-                    attackerUserId = PREVIEW_TARGET_ID,
-                    damage = PREVIEW_THROW_DAMAGE,
-                    isKnockout = true,
-                ),
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Gambler,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.LuckyCoin.HighRollerDamage(
+                id = id,
+                gamblerUserId = PREVIEW_ACTOR_ID,
+                attackerUserId = PREVIEW_TARGET_ID,
+                singleDie = PREVIEW_THROW_DAMAGE,
+                isKnockout = true,
+                animation = ArenaAnimationState.FlashAndAvatar(),
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         LuckyCoinOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBoundsStateHolder = avatars.boundsStateHolder,
             modifier = Modifier.fillMaxSize(),
         )
     }

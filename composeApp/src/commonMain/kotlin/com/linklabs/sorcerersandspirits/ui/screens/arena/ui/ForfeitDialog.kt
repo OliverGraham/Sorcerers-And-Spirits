@@ -19,7 +19,7 @@ internal fun ForfeitDialog() {
         text = {
             Text(
                 text =
-                    "Leaving now will cause you to forfeit the current game. Are you sure you want to leave?"
+                "Leaving now will cause you to forfeit the current game. Are you sure you want to leave?",
             )
         },
         confirmButton = {

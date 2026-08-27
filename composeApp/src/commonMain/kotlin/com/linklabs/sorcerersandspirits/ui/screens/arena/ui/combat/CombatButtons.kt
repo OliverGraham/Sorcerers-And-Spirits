@@ -38,7 +38,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.rollActionFor
@@ -59,16 +59,13 @@ private val arenaButtonFaceColor = Color(color = 0xFF323232)
 private val arenaButtonNeutralBorder = Color(color = 0xFF555555)
 private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
 
+// TODO(SS-257): Move state to view model layer. Goddamn you Claude
 @Composable
-internal fun BottomControls(
-    state: ArenaState.Combat,
-    targetedOpponentUserId: String,
-    lockTarget: () -> Unit,
+internal fun CombatButtons(
+    state: ArenaMatchState.Combat,
     diceStateHolder: DiceStateHolder,
     areControlsVisible: Boolean,
     isPlayingBack: Boolean,
-    isActionInFlight: Boolean,
-    onActionDispatched: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val onAttack = ArenaActionsProvider.current.onAttack
@@ -77,33 +74,39 @@ internal fun BottomControls(
     val classColor = state.userPlayer.characterClass.type.toColor()
     val controls = state.combatControls
 
+    val isActionInFlight = state.isActionInFlight
     val isBusy = isPlayingBack || isActionInFlight
 
+    // TODO: refactor all this Teleport stuff here
     val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
+
     var hasReachedTeleportRollBeat by
         remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
-    val hasReachedRollBeatNow = hasPendingTeleportRoll && !isBusy
-    if (hasReachedRollBeatNow) hasReachedTeleportRollBeat = true
+    if (hasPendingTeleportRoll && !isBusy) hasReachedTeleportRollBeat = true
 
-    val isSuppressedByAnimation = isBusy && !hasReachedTeleportRollBeat
+    var hasSubmittedTeleportRoll by
+        remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
+    if (hasPendingTeleportRoll && isActionInFlight) hasSubmittedTeleportRoll = true
+
+    val isTeleportRollButtonHeld = hasReachedTeleportRollBeat && !hasSubmittedTeleportRoll
+
+    val isSuppressedByAnimation =
+        when {
+            hasSubmittedTeleportRoll -> true
+            isTeleportRollButtonHeld -> false
+            else -> isBusy
+        }
 
     // TODO: Very, very rarely are nested functions allowable (these are not)
-    fun isEnabled(control: ArenaCombatControl): Boolean =
-        !isActionInFlight &&
-            state.isControlEnabled(
-                control = control,
-                targetedOpponentUserId = targetedOpponentUserId,
-            )
+    fun isEnabled(control: ArenaCombatControl): Boolean = !isActionInFlight &&
+        state.isControlEnabled(control = control, targetedOpponentUserId = state.targetedUserId)
 
-    fun rollAction(control: ArenaCombatControl): () -> Unit =
-        state.rollActionFor(
-            control = control,
-            targetedOpponentUserId = targetedOpponentUserId,
-            onAttack = onAttack,
-            onUseAbility = onUseAbility,
-            lockTarget = lockTarget,
-            onActionDispatched = onActionDispatched,
-        )
+    fun rollAction(control: ArenaCombatControl): () -> Unit = state.rollActionFor(
+        control = control,
+        targetedOpponentUserId = state.targetedUserId,
+        onAttack = onAttack,
+        onUseAbility = onUseAbility,
+    )
 
     val areButtonsShown = areControlsVisible && !isSuppressedByAnimation && controls.isNotEmpty()
     Box(modifier = modifier.fillMaxWidth().height(height = BOTTOM_CONTROLS_HEIGHT)) {
@@ -252,44 +255,44 @@ private fun ArenaButton(
     ) {
         Box(
             modifier =
-                Modifier.size(width = arenaButtonSize, height = arenaButtonSize + arenaButtonLift)
-                    .alpha(alpha = if (isEnabled) 1f else 0.4f)
+            Modifier.size(width = arenaButtonSize, height = arenaButtonSize + arenaButtonLift)
+                .alpha(alpha = if (isEnabled) 1f else 0.4f),
         ) {
             Box(
                 modifier =
-                    Modifier.align(alignment = Alignment.BottomCenter)
-                        .size(size = arenaButtonSize)
-                        .clip(shape = arenaButtonShape)
-                        .background(color = baseColor)
+                Modifier.align(alignment = Alignment.BottomCenter)
+                    .size(size = arenaButtonSize)
+                    .clip(shape = arenaButtonShape)
+                    .background(color = baseColor),
             )
 
             Box(
                 modifier =
-                    Modifier.align(alignment = Alignment.TopCenter)
-                        .offset(y = pressDrop)
-                        .size(size = arenaButtonSize)
-                        .clip(shape = arenaButtonShape)
-                        .background(color = arenaButtonFaceColor)
-                        .border(width = 2.dp, color = borderColor, shape = arenaButtonShape)
-                        .holdToRollGesture(
-                            enabled = isEnabled,
-                            onHoldStart = {
-                                isPressed.value = true
-                                if (rollingDiePositions.isNotEmpty()) {
-                                    diceStateHolder.startHold(
-                                        rollingPositions = rollingDiePositions
-                                    )
-                                }
-                            },
-                            onRelease = { isDoubleTap ->
-                                isPressed.value = false
-                                if (rollingDiePositions.isNotEmpty()) {
-                                    diceStateHolder.release(isDoubleTap = isDoubleTap) { onRoll() }
-                                } else {
-                                    onRoll()
-                                }
-                            },
-                        ),
+                Modifier.align(alignment = Alignment.TopCenter)
+                    .offset(y = pressDrop)
+                    .size(size = arenaButtonSize)
+                    .clip(shape = arenaButtonShape)
+                    .background(color = arenaButtonFaceColor)
+                    .border(width = 2.dp, color = borderColor, shape = arenaButtonShape)
+                    .holdToRollGesture(
+                        enabled = isEnabled,
+                        onHoldStart = {
+                            isPressed.value = true
+                            if (rollingDiePositions.isNotEmpty()) {
+                                diceStateHolder.startHold(
+                                    rollingPositions = rollingDiePositions,
+                                )
+                            }
+                        },
+                        onRelease = { isDoubleTap ->
+                            isPressed.value = false
+                            if (rollingDiePositions.isNotEmpty()) {
+                                diceStateHolder.release(isDoubleTap = isDoubleTap) { onRoll() }
+                            } else {
+                                onRoll()
+                            }
+                        },
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
@@ -310,25 +313,25 @@ private fun ArenaButton(
     }
 }
 
-private fun ArenaCombatControl.toButtonIcon(): DrawableResource =
-    when (this) {
-        is ArenaCombatControl.NormalAttack -> Res.drawable.ic_attack_button
+private fun ArenaCombatControl.toButtonIcon(): DrawableResource = when (this) {
+    is ArenaCombatControl.NormalAttack -> Res.drawable.ic_attack_button
 
-        is ArenaCombatControl.ActivatedAbility -> Res.drawable.ic_offensive_ability
+    is ArenaCombatControl.ActivatedAbility -> Res.drawable.ic_offensive_ability
 
-        is ArenaCombatControl.AbilityRoll ->
-            if (action is AbilityActionState.Passive.Teleport) {
-                Res.drawable.ic_teleport_button
-            } else {
-                Res.drawable.ic_defensive_ability
-            }
-    }
+    is ArenaCombatControl.AbilityRoll ->
+        if (action is AbilityActionState.Passive.Teleport) {
+            Res.drawable.ic_teleport_button
+        } else {
+            Res.drawable.ic_defensive_ability
+        }
+}
 
-private fun ArenaState.Combat.isControlEnabled(
+// TODO(SS-257): Move to view model layer - in ArenaState.Combat itself
+private fun ArenaMatchState.Combat.isControlEnabled(
     control: ArenaCombatControl,
-    targetedOpponentUserId: String,
+    targetedOpponentUserId: String?,
 ): Boolean {
-    val hasRequiredTarget = !control.requiresTarget || targetedOpponentUserId.isNotEmpty()
+    val hasRequiredTarget = !control.requiresTarget || !targetedOpponentUserId.isNullOrEmpty()
     val isRedundantImpersonate =
         isImpersonateRedundant(control = control, targetedOpponentUserId = targetedOpponentUserId)
 
@@ -337,9 +340,9 @@ private fun ArenaState.Combat.isControlEnabled(
 
 // TODO: Can likely be GREATLY simplified (is it the Illusionist's turn? have they impersonated?
 //       can they? done.)
-internal fun ArenaState.Combat.isImpersonateRedundant(
+internal fun ArenaMatchState.Combat.isImpersonateRedundant(
     control: ArenaCombatControl,
-    targetedOpponentUserId: String,
+    targetedOpponentUserId: String?,
 ): Boolean {
     val isImpersonateControl =
         control is ArenaCombatControl.ActivatedAbility &&
@@ -362,7 +365,7 @@ internal fun ArenaState.Combat.isImpersonateRedundant(
     return targetOffensiveAbility::class == copiedAbility::class
 }
 
-private fun ArenaState.Combat.impersonateLabel(): String {
+private fun ArenaMatchState.Combat.impersonateLabel(): String {
     val ability = userPlayer.characterClass.offensiveAbility
     val isImpersonating =
         ability is OffensiveAbilityState.Impersonate &&

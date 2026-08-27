@@ -30,6 +30,14 @@ internal val necroScythePalette =
         snath = necroSnathGreen,
     )
 
+internal val illusionistScythePalette =
+    ScythePalette(
+        core = Color(color = 0xFFD6EAFF),
+        blade = Color(color = 0xFF387CD3),
+        glow = Color(color = 0xFF4C8FE0),
+        snath = Color(color = 0xFF1D406D),
+    )
+
 internal fun DrawScope.drawScytheShape(palette: ScythePalette, glow: Float, alpha: Float) {
     val blade = scytheBladePath()
     drawScytheGlow(blade = blade, palette = palette, glow = glow, alpha = alpha)
@@ -41,44 +49,42 @@ private val scytheTip = Offset(x = 0f, y = 0f)
 
 private fun DrawScope.scytheNeck() = Offset(x = 16.dp.toPx(), y = 91.dp.toPx())
 
-private fun DrawScope.scytheEdgePoints(): List<Offset> =
-    listOf(
-        Offset(x = 30.dp.toPx(), y = 64.dp.toPx()),
-        Offset(x = 31.5.dp.toPx(), y = 62.dp.toPx()),
-        Offset(x = 26.dp.toPx(), y = 40.dp.toPx()),
-        Offset(x = 27.dp.toPx(), y = 38.dp.toPx()),
-        Offset(x = 14.dp.toPx(), y = 16.dp.toPx()),
-    )
+private fun DrawScope.scytheEdgePoints(): List<Offset> = listOf(
+    Offset(x = 30.dp.toPx(), y = 64.dp.toPx()),
+    Offset(x = 31.5.dp.toPx(), y = 62.dp.toPx()),
+    Offset(x = 26.dp.toPx(), y = 40.dp.toPx()),
+    Offset(x = 27.dp.toPx(), y = 38.dp.toPx()),
+    Offset(x = 14.dp.toPx(), y = 16.dp.toPx()),
+)
 
 private fun DrawScope.scytheNeckInner() = Offset(x = 12.dp.toPx(), y = 90.dp.toPx())
 
 private fun DrawScope.scytheNeckOuter() = Offset(x = 20.dp.toPx(), y = 92.dp.toPx())
 
-private fun DrawScope.scytheBladePath(): Path =
-    Path().apply {
-        moveTo(x = scytheTip.x, y = scytheTip.y)
-        cubicTo(
-            x1 = 42.dp.toPx(),
-            y1 = 16.dp.toPx(),
-            x2 = 40.dp.toPx(),
-            y2 = 62.dp.toPx(),
-            x3 = scytheNeckOuter().x,
-            y3 = scytheNeckOuter().y,
-        )
-        lineTo(x = scytheNeckInner().x, y = scytheNeckInner().y)
-        scytheEdgePoints().forEach { point -> lineTo(x = point.x, y = point.y) }
-        close()
-    }
+private fun DrawScope.scytheBladePath(): Path = Path().apply {
+    moveTo(x = scytheTip.x, y = scytheTip.y)
+    cubicTo(
+        x1 = 42.dp.toPx(),
+        y1 = 16.dp.toPx(),
+        x2 = 40.dp.toPx(),
+        y2 = 62.dp.toPx(),
+        x3 = scytheNeckOuter().x,
+        y3 = scytheNeckOuter().y,
+    )
+    lineTo(x = scytheNeckInner().x, y = scytheNeckInner().y)
+    scytheEdgePoints().forEach { point -> lineTo(x = point.x, y = point.y) }
+    close()
+}
 
 private fun DrawScope.drawBladeFill(blade: Path, palette: ScythePalette, alpha: Float) {
     drawPath(
         path = blade,
         brush =
-            Brush.linearGradient(
-                colors = listOf(palette.core, palette.blade, palette.snath),
-                start = scytheTip,
-                end = scytheNeck(),
-            ),
+        Brush.linearGradient(
+            colors = listOf(palette.core, palette.blade, palette.snath),
+            start = scytheTip,
+            end = scytheNeck(),
+        ),
         alpha = alpha,
     )
 

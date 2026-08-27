@@ -4,9 +4,11 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +25,7 @@ import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.draw
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.drawscope.translate
@@ -40,24 +43,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AllInOutcome
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
+import kotlinx.coroutines.delay
+import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_oil_barrel
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
-import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.painterResource
-import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.ic_oil_barrel
 
 internal const val ALL_IN_TOSS_MILLIS = 1100
 internal const val ALL_IN_SETTLE_MILLIS = 300
@@ -66,21 +71,6 @@ private const val ALL_IN_GRAY_MILLIS = 500
 private const val ALL_IN_HOLD_MILLIS = 480L
 private const val ALL_IN_CASH_MILLIS = 1300
 private const val ALL_IN_FADE_MILLIS = 360
-
-/**
- * How long the All-In toss runs to its outcome, so the message sequencer holds the event until the
- * winnings finish landing, busting, or cashing out instead of flashing over the toss (SS-201).
- */
-internal fun gamblerAllInDurationMillis(outcome: AllInOutcome): Long {
-    val tossMillis = (ALL_IN_TOSS_MILLIS + ALL_IN_SETTLE_MILLIS).toLong()
-    val outcomeMillis =
-        when (outcome) {
-            AllInOutcome.SelfKnockout -> ALL_IN_EXPLODE_MILLIS.toLong()
-            AllInOutcome.NoEffect -> ALL_IN_GRAY_MILLIS + ALL_IN_HOLD_MILLIS + ALL_IN_FADE_MILLIS
-            AllInOutcome.DoubleAttack -> (ALL_IN_CASH_MILLIS + ALL_IN_FADE_MILLIS).toLong()
-        }
-    return tossMillis + outcomeMillis
-}
 
 private const val COIN_COUNT = 8
 private const val BILL_COUNT = 4
@@ -120,119 +110,42 @@ private val grayBarrelBand = Color(color = 0xFFE0E0E0)
 private val dollarSignColor = Color(color = 0xFFF4C752)
 private val blastCore = Color(color = 0xFFFFF3D0)
 
-/** The kinds of loot the Gambler flings up on All-In, drawn distinctly and mixed in the pile. */
-enum class ValuableKind {
-    Coin,
-    Gem,
-    Bill,
-    Painting,
-    Barrel,
-}
-
-/**
- * One tossed valuable in the All-In pile (SS-193): a coin or a jewel launched from the Gambler
- * along a lobbed arc — [launchStart] up over [apex] down into its [rest] spot in the pile — then
- * blown out along [explodeDir] if the roll busts.
- */
-@Immutable
-internal data class Valuable(
-    val kind: ValuableKind,
-    val color: Color,
-    val accent: Color,
-    val launchStart: Offset,
-    val apex: Offset,
-    val rest: Offset,
-    val explodeDir: Offset,
-    val radiusPx: Float,
-    val spinTurns: Float,
-)
-
-/**
- * One floating dollar sign of the winning payout (SS-193): it springs up from the pile and bobs.
- */
-@Immutable
-internal data class DollarSign(
-    val x: Float,
-    val baseY: Float,
-    val risePx: Float,
-    val bobPx: Float,
-    val sizePx: Float,
-    val phase: Float,
-)
-
-/** The measured geometry of one All-In toss, laid out from the Gambler's avatar bounds. */
-@Immutable
-internal data class AllInScene(
-    val valuables: List<Valuable>,
-    val dollarSigns: List<DollarSign>,
-    val pileCenter: Offset,
-    val accentColor: Color,
-    val explodeDistancePx: Float,
-)
-
-/**
- * The animation channels of one All-In toss (SS-193): [toss] arcs the valuables up and into the
- * pile, then exactly one of [explode] (bust), [gray] (no effect), or [cash] (payout) resolves it,
- * and [fade] clears whatever is left so the pile always vanishes.
- */
-@Stable
-internal class AllInEffectState {
-    val toss = Animatable(initialValue = 0f)
-    val explode = Animatable(initialValue = 0f)
-    val gray = Animatable(initialValue = 0f)
-    val cash = Animatable(initialValue = 0f)
-    val fade = Animatable(initialValue = 1f)
-
-    var scene by mutableStateOf<AllInScene?>(value = null)
-}
-
-/**
- * The Gambler's All-In effect (SS-193): on an activated All-In, a spray of coins and jewels is
- * tossed up off the Gambler and lands in a pile at their feet, then the rolled outcome plays out —
- * the pile detonates on a self-knockout, drains to lifeless gray on no effect, or throws up
- * bouncing dollar signs on a double-attack payout — before everything clears. Anchored to the
- * Gambler's measured avatar bounds via [avatarBoundsFor], and sits out any cue that is not an
- * All-In.
- */
 @Composable
 internal fun AllInOverlay(
-    animationCue: CombatAnimationCue?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.AllIn,
+    avatarBounds: Rect,
     modifier: Modifier = Modifier,
+    accentColor: Color = animatingMessage.actingClassType.toColor(),
 ) {
     val state = remember { AllInEffectState() }
     val density = LocalDensity.current
-    val textMeasurer = rememberTextMeasurer()
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
+
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(
+            scene =
+            allInScene(
+                bounds = avatarBounds,
+                accentColor = accentColor,
+                density = density,
+                seed = animatingMessage.id.hashCode(),
+            ),
+            outcome = animatingMessage.outcome,
+        )
+
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            ),
+        )
+    }
+
+    val dollarLayout = getRememberedDollarLayout()
     val barrelPainter = painterResource(resource = Res.drawable.ic_oil_barrel)
-    val dollarLayout =
-        remember(textMeasurer) {
-            textMeasurer.measure(
-                text = "$",
-                style = TextStyle(fontSize = DOLLAR_MEASURE_SP.sp, fontWeight = FontWeight.Black),
-            )
-        }
-    CueEffectOverlay(
-        animationCue = animationCue,
-        select = { it as? CombatAnimationCue.AllIn },
-        onCancel = {},
-        play = playLabel@{ cue ->
-                val bounds = avatarBoundsFor(cue.gamblerUserId) ?: return@playLabel
-                state.play(
-                    scene =
-                        allInScene(
-                            bounds = bounds,
-                            accentColor = CharacterClassType.Gambler.toColor(),
-                            density = density,
-                            seed = cue.id.hashCode(),
-                        ),
-                    outcome = cue.outcome,
-                )
-            },
-        modifier = modifier,
-        draw = {
-            drawAllIn(state = state, dollarLayout = dollarLayout, barrelPainter = barrelPainter)
-        },
-    )
+    Canvas(modifier = modifier) {
+        drawAllIn(state = state, dollarLayout = dollarLayout, barrelPainter = barrelPainter)
+    }
 }
 
 private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed: Int): AllInScene {
@@ -256,23 +169,23 @@ private fun allInScene(bounds: Rect, accentColor: Color, density: Density, seed:
                     color = color,
                     accent = accent,
                     launchStart =
-                        center +
-                            Offset(
-                                x = random.nextFloat(min = -0.16f, max = 0.16f) * width,
-                                y = random.nextFloat(min = -0.06f, max = 0.14f) * height,
-                            ),
+                    center +
+                        Offset(
+                            x = random.nextFloat(min = -0.16f, max = 0.16f) * width,
+                            y = random.nextFloat(min = -0.06f, max = 0.14f) * height,
+                        ),
                     apex =
-                        Offset(
-                            x = center.x + random.nextFloat(min = -0.42f, max = 0.42f) * width,
-                            y = bounds.top + random.nextFloat(min = 0f, max = 0.18f) * height,
-                        ),
+                    Offset(
+                        x = center.x + random.nextFloat(min = -0.42f, max = 0.42f) * width,
+                        y = bounds.top + random.nextFloat(min = 0f, max = 0.18f) * height,
+                    ),
                     rest =
-                        Offset(
-                            x =
-                                pileCenter.x +
-                                    random.nextFloat(min = -1f, max = 1f) * pileHalfWidth,
-                            y = pileCenter.y - random.nextFloat(min = 0f, max = 0.1f) * height,
-                        ),
+                    Offset(
+                        x =
+                        pileCenter.x +
+                            random.nextFloat(min = -1f, max = 1f) * pileHalfWidth,
+                        y = pileCenter.y - random.nextFloat(min = 0f, max = 0.1f) * height,
+                    ),
                     explodeDir = Offset(x = cos(angle), y = sin(angle)),
                     radiusPx = with(density) { valuableRadiusDp(kind = kind).dp.toPx() },
                     spinTurns = random.nextInt(from = 2, until = 4).toFloat(),
@@ -320,7 +233,7 @@ private suspend fun AllInEffectState.play(scene: AllInScene, outcome: AllInOutco
             explode.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = ALL_IN_EXPLODE_MILLIS, easing = FastOutLinearInEasing),
+                tween(durationMillis = ALL_IN_EXPLODE_MILLIS, easing = FastOutLinearInEasing),
             )
 
         AllInOutcome.NoEffect -> {
@@ -348,6 +261,17 @@ private suspend fun AllInEffectState.play(scene: AllInScene, outcome: AllInOutco
     }
 
     this.scene = null
+}
+
+@Composable
+private fun getRememberedDollarLayout(): TextLayoutResult {
+    val textMeasurer = rememberTextMeasurer()
+    return remember(key1 = textMeasurer) {
+        textMeasurer.measure(
+            text = "$",
+            style = TextStyle(fontSize = DOLLAR_MEASURE_SP.sp, fontWeight = FontWeight.Black),
+        )
+    }
 }
 
 private fun DrawScope.drawAllIn(
@@ -401,7 +325,6 @@ private fun DrawScope.drawAllIn(
     }
 }
 
-/** Draws one tumbling valuable in the pile, dispatching on its [ValuableKind]. */
 private fun DrawScope.drawValuable(
     valuable: Valuable,
     center: Offset,
@@ -465,7 +388,6 @@ private fun DrawScope.drawValuable(
     }
 }
 
-/** A coin drawn edge-flipping: its width pinches as it turns so a flat disc reads as tumbling. */
 private fun DrawScope.drawCoin(
     center: Offset,
     radius: Float,
@@ -498,7 +420,6 @@ private fun DrawScope.drawCoin(
     )
 }
 
-/** A faceted jewel: a four-point diamond spinning about its center, with a rim catch-light. */
 private fun DrawScope.drawGem(
     center: Offset,
     radius: Float,
@@ -528,7 +449,6 @@ private fun DrawScope.drawGem(
     }
 }
 
-/** A banknote fluttering: a green bill that rotates and pinches its width like turning paper. */
 private fun DrawScope.drawBill(
     center: Offset,
     radius: Float,
@@ -559,9 +479,6 @@ private fun DrawScope.drawBill(
     }
 }
 
-/**
- * A framed painting tumbling: a gilt frame around a colored canvas with a couple of brush marks.
- */
 private fun DrawScope.drawPainting(
     center: Offset,
     radius: Float,
@@ -599,7 +516,6 @@ private fun DrawScope.drawPainting(
     }
 }
 
-/** An oil barrel tumbling: its drawn using the [barrelPainter] icon. */
 private fun DrawScope.drawBarrel(
     center: Offset,
     radius: Float,
@@ -608,9 +524,6 @@ private fun DrawScope.drawBarrel(
     spinDegrees: Float,
     alpha: Float,
 ) {
-    // We map the icon's black (#000) and white (#fff) to our target colors.
-    // To ensure the "no effect" state is visibly gray and not too dark,
-    // we use a lighter gray for the barrel body when at full gray fraction.
     val currentBlack = lerp(start = barrelBody, stop = grayBarrelBody, fraction = gray)
     val currentWhite = lerp(start = barrelBand, stop = grayBarrelBand, fraction = gray)
 
@@ -637,7 +550,7 @@ private fun DrawScope.drawBarrel(
                 0f,
                 1f,
                 0f,
-            )
+            ),
         )
     val colorFilter = ColorFilter.colorMatrix(colorMatrix = matrix)
 
@@ -650,19 +563,16 @@ private fun DrawScope.drawBarrel(
     }
 }
 
-/**
- * The bust flare: a white-cored burst rimmed in the Gambler's gold, plus an expanding shock ring.
- */
 private fun DrawScope.drawBlast(center: Offset, explode: Float, accentColor: Color, reach: Float) {
     val radius = reach * (0.45f + explode)
     val fade = 1f - explode
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(blastCore, accentColor.copy(alpha = 0.75f), Color.Transparent),
-                center = center,
-                radius = radius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(blastCore, accentColor.copy(alpha = 0.75f), Color.Transparent),
+            center = center,
+            radius = radius,
+        ),
         radius = radius,
         center = center,
         alpha = fade,
@@ -705,7 +615,6 @@ private fun quadraticBezier(start: Offset, control: Offset, end: Offset, fractio
 
 private fun Random.nextFloat(min: Float, max: Float): Float = nextFloat() * (max - min) + min
 
-/** The full spread of loot spawned per All-In, before it is shuffled into a mixed pile. */
 private fun valuableKinds(): List<ValuableKind> = buildList {
     repeat(times = COIN_COUNT) { add(element = ValuableKind.Coin) }
     repeat(times = BILL_COUNT) { add(element = ValuableKind.Bill) }
@@ -714,25 +623,72 @@ private fun valuableKinds(): List<ValuableKind> = buildList {
     repeat(times = BARREL_COUNT) { add(element = ValuableKind.Barrel) }
 }
 
-/** The primary and accent colors a valuable is drawn with, keyed off its kind. */
-private fun valuableColors(kind: ValuableKind, random: Random): Pair<Color, Color> =
-    when (kind) {
-        ValuableKind.Coin -> coinFace to coinRim
-        ValuableKind.Gem -> gemColors.random(random = random) to coinShine
-        ValuableKind.Bill -> billBody to billInk
-        ValuableKind.Painting -> frameGold to canvasColors.random(random = random)
-        ValuableKind.Barrel -> barrelBody to barrelBand
-    }
+private fun valuableColors(kind: ValuableKind, random: Random): Pair<Color, Color> = when (kind) {
+    ValuableKind.Coin -> coinFace to coinRim
+    ValuableKind.Gem -> gemColors.random(random = random) to coinShine
+    ValuableKind.Bill -> billBody to billInk
+    ValuableKind.Painting -> frameGold to canvasColors.random(random = random)
+    ValuableKind.Barrel -> barrelBody to barrelBand
+}
 
-/** The half-size of each valuable in dp — barrels and paintings ride bigger than coins and gems. */
-private fun valuableRadiusDp(kind: ValuableKind): Float =
-    when (kind) {
-        ValuableKind.Coin -> 8f
-        ValuableKind.Gem -> 7f
-        ValuableKind.Bill -> 10f
-        ValuableKind.Painting -> 12f
-        ValuableKind.Barrel -> 17f
-    }
+private fun valuableRadiusDp(kind: ValuableKind): Float = when (kind) {
+    ValuableKind.Coin -> 8f
+    ValuableKind.Gem -> 7f
+    ValuableKind.Bill -> 10f
+    ValuableKind.Painting -> 12f
+    ValuableKind.Barrel -> 17f
+}
+
+enum class ValuableKind {
+    Coin,
+    Gem,
+    Bill,
+    Painting,
+    Barrel,
+}
+
+@Immutable
+internal data class Valuable(
+    val kind: ValuableKind,
+    val color: Color,
+    val accent: Color,
+    val launchStart: Offset,
+    val apex: Offset,
+    val rest: Offset,
+    val explodeDir: Offset,
+    val radiusPx: Float,
+    val spinTurns: Float,
+)
+
+@Immutable
+internal data class DollarSign(
+    val x: Float,
+    val baseY: Float,
+    val risePx: Float,
+    val bobPx: Float,
+    val sizePx: Float,
+    val phase: Float,
+)
+
+@Immutable
+internal data class AllInScene(
+    val valuables: List<Valuable>,
+    val dollarSigns: List<DollarSign>,
+    val pileCenter: Offset,
+    val accentColor: Color,
+    val explodeDistancePx: Float,
+)
+
+@Stable
+internal class AllInEffectState {
+    val toss = Animatable(initialValue = 0f)
+    val explode = Animatable(initialValue = 0f)
+    val gray = Animatable(initialValue = 0f)
+    val cash = Animatable(initialValue = 0f)
+    val fade = Animatable(initialValue = 1f)
+
+    var scene by mutableStateOf<AllInScene?>(value = null)
+}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -752,21 +708,46 @@ private fun GamblerAllInNoEffectPreview() {
     GamblerAllInPreview(outcome = AllInOutcome.NoEffect)
 }
 
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun GamblerAllInPreview(outcome: AllInOutcome) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
-            CombatAnimationCue.AllIn(
-                id = "all-in-$iteration",
+private fun IllusionistAllInPreview() {
+    GamblerAllInPreview(
+        outcome = AllInOutcome.DoubleAttack,
+        accentClass = CharacterClassType.Illusionist,
+    )
+}
+
+@Composable
+private fun GamblerAllInPreview(
+    outcome: AllInOutcome,
+    accentClass: CharacterClassType = CharacterClassType.Gambler,
+) {
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = accentClass,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.AllIn(
+                id = id,
+                actingClassType = accentClass,
                 gamblerUserId = PREVIEW_ACTOR_ID,
+                gamblerName = "Gambler",
+                singleDie =
+                when (outcome) {
+                    AllInOutcome.SelfKnockout -> 1
+                    AllInOutcome.NoEffect -> 3
+                    AllInOutcome.DoubleAttack -> 6
+                },
                 outcome = outcome,
+                animation = ArenaAnimationState.FlashAndAvatar(),
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         AllInOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            accentColor = accentClass.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

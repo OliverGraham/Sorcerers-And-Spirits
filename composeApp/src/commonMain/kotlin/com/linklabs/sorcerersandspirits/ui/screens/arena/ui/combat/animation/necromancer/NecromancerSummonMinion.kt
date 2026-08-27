@@ -3,9 +3,11 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ne
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,19 +29,17 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.SummonMinionOutcome
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.CueEffectOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloSeat
-import kotlin.math.PI
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.random.Random
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,6 +48,10 @@ import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.golem_minion
 import sorcerersandspirits.composeapp.generated.resources.ic_health
 import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
+import kotlin.math.PI
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.random.Random
 
 private const val PORTAL_OPEN_MILLIS = 340
 private const val PORTAL_HOLD_MILLIS = 160L
@@ -68,43 +72,47 @@ private val healGreen = necroGlowGreen
 
 @Composable
 internal fun NecromancerSummonMinionOverlay(
-    animationCue: CombatAnimationCue?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.SummonMinion,
+    avatarBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { SummonMinionEffectState() }
     val density = LocalDensity.current
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
+
+    LaunchedEffect(key1 = animatingMessage.id) {
+        state.play(
+            scene =
+            summonMinionScene(
+                bounds = avatarBounds,
+                outcome = animatingMessage.outcome,
+                density = density,
+                seed = animatingMessage.id.hashCode(),
+                portalPalette =
+                summonPortalPaletteFor(actorClass = animatingMessage.actingClassType),
+            ),
+            outcome = animatingMessage.outcome,
+        )
+
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            ),
+        )
+    }
+
     val healIcon = imageResource(resource = Res.drawable.ic_health)
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
     val golemImage = imageResource(resource = Res.drawable.golem_minion)
-
-    CueEffectOverlay(
-        animationCue = animationCue,
-        select = { it as? CombatAnimationCue.SummonMinion },
-        onCancel = { state.scene = null },
-        play = playLabel@{ cue ->
-                val bounds = avatarBoundsFor(cue.necroUserId) ?: return@playLabel
-                state.play(
-                    scene =
-                        summonMinionScene(
-                            bounds = bounds,
-                            outcome = cue.outcome,
-                            density = density,
-                            seed = cue.id.hashCode(),
-                        ),
-                    outcome = cue.outcome,
-                )
-            },
-        modifier = modifier,
-        draw = {
-            drawSummonMinion(
-                state = state,
-                healIcon = healIcon,
-                skeletonImage = skeletonImage,
-                golemImage = golemImage,
-            )
-        },
-    )
+    Canvas(modifier = modifier) {
+        drawSummonMinion(
+            state = state,
+            healIcon = healIcon,
+            skeletonImage = skeletonImage,
+            golemImage = golemImage,
+        )
+    }
 }
 
 private suspend fun SummonMinionEffectState.play(
@@ -130,7 +138,8 @@ private suspend fun SummonMinionEffectState.play(
         SummonMinionOutcome.Skeleton -> raiseMinion(heals = false)
 
         SummonMinionOutcome.SkeletonAndHeal,
-        SummonMinionOutcome.Golem -> raiseMinion(heals = true)
+        SummonMinionOutcome.Golem,
+        -> raiseMinion(heals = true)
     }
 
     this.scene = null
@@ -178,11 +187,18 @@ private suspend fun SummonMinionEffectState.raiseMinion(heals: Boolean) {
     }
 }
 
+private fun summonPortalPaletteFor(actorClass: CharacterClassType): ScythePalette = if (actorClass == CharacterClassType.Illusionist) {
+    illusionistScythePalette
+} else {
+    necroScythePalette
+}
+
 private fun summonMinionScene(
     bounds: Rect,
     outcome: SummonMinionOutcome,
     density: Density,
     seed: Int,
+    portalPalette: ScythePalette,
 ): SummonMinionScene {
     val center = bounds.center
     val portalCenter = Offset(x = center.x, y = bounds.bottom - bounds.height * 0.05f)
@@ -222,6 +238,7 @@ private fun summonMinionScene(
 
     return SummonMinionScene(
         portalCenter = portalCenter,
+        portalPalette = portalPalette,
         portalRadiusPx = bounds.width * 0.42f,
         minionType = minionType,
         minionHeightPx = minionHeight,
@@ -233,15 +250,15 @@ private fun summonMinionScene(
     )
 }
 
-private fun minionTypeFor(outcome: SummonMinionOutcome): MinionType =
-    when (outcome) {
-        SummonMinionOutcome.Fizzle -> MinionType.None
+private fun minionTypeFor(outcome: SummonMinionOutcome): MinionType = when (outcome) {
+    SummonMinionOutcome.Fizzle -> MinionType.None
 
-        SummonMinionOutcome.Skeleton,
-        SummonMinionOutcome.SkeletonAndHeal -> MinionType.Skeleton
+    SummonMinionOutcome.Skeleton,
+    SummonMinionOutcome.SkeletonAndHeal,
+    -> MinionType.Skeleton
 
-        SummonMinionOutcome.Golem -> MinionType.Golem
-    }
+    SummonMinionOutcome.Golem -> MinionType.Golem
+}
 
 private fun DrawScope.drawSummonMinion(
     state: SummonMinionEffectState,
@@ -258,6 +275,7 @@ private fun DrawScope.drawSummonMinion(
         open = open,
         gray = state.gray.value,
         alpha = 1f,
+        palette = scene.portalPalette,
     )
 
     val rise = state.minion.value
@@ -295,22 +313,22 @@ private fun DrawScope.drawHealBurst(center: Offset, radius: Float, heal: Float) 
     val outerRadius = radius * (0.3f + 0.7f * burst)
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(healGreen.copy(alpha = 0.8f), Color.Transparent),
-                center = center,
-                radius = outerRadius,
-            ),
+        Brush.radialGradient(
+            colors = listOf(healGreen.copy(alpha = 0.8f), Color.Transparent),
+            center = center,
+            radius = outerRadius,
+        ),
         radius = outerRadius,
         center = center,
         alpha = fade,
     )
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(healRed.copy(alpha = 0.7f), Color.Transparent),
-                center = center,
-                radius = outerRadius * 0.6f,
-            ),
+        Brush.radialGradient(
+            colors = listOf(healRed.copy(alpha = 0.7f), Color.Transparent),
+            center = center,
+            radius = outerRadius * 0.6f,
+        ),
         radius = outerRadius * 0.6f,
         center = center,
         alpha = fade,
@@ -330,10 +348,10 @@ private fun DrawScope.drawHealMote(mote: HealMote, heal: Float, icon: ImageBitma
     drawImage(
         image = icon,
         dstOffset =
-            IntOffset(
-                x = (x - mote.sizePx / 2f).roundToInt(),
-                y = (y - mote.sizePx / 2f).roundToInt(),
-            ),
+        IntOffset(
+            x = (x - mote.sizePx / 2f).roundToInt(),
+            y = (y - mote.sizePx / 2f).roundToInt(),
+        ),
         dstSize = IntSize(width = size, height = size),
         alpha = alpha,
     )
@@ -355,6 +373,7 @@ private class SummonMinionEffectState {
 @Immutable
 private data class SummonMinionScene(
     val portalCenter: Offset,
+    val portalPalette: ScythePalette,
     val portalRadiusPx: Float,
     val minionType: MinionType,
     val minionHeightPx: Float,
@@ -374,22 +393,6 @@ private data class HealMote(
     val sizePx: Float,
     val phase: Float,
 )
-
-internal fun necromancerSummonMinionDurationMillis(outcome: SummonMinionOutcome): Long {
-    val opening = PORTAL_OPEN_MILLIS.toLong() + PORTAL_HOLD_MILLIS
-    val closing = maxOf(MINION_FADE_MILLIS, PORTAL_CLOSE_MILLIS).toLong()
-    val body =
-        when (outcome) {
-            SummonMinionOutcome.Fizzle ->
-                FIZZLE_GRAY_MILLIS.toLong() + FIZZLE_HOLD_MILLIS + PORTAL_CLOSE_MILLIS
-
-            SummonMinionOutcome.Skeleton -> MINION_RISE_MILLIS + MINION_HOLD_MILLIS + closing
-
-            SummonMinionOutcome.SkeletonAndHeal,
-            SummonMinionOutcome.Golem -> MINION_RISE_MILLIS + HEAL_MILLIS + closing
-        }
-    return opening + body
-}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -415,21 +418,55 @@ private fun NecromancerSummonMinionGolemPreview() {
     NecromancerSummonMinionPreview(outcome = SummonMinionOutcome.Golem)
 }
 
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun NecromancerSummonMinionPreview(outcome: SummonMinionOutcome) {
-    val seats = rememberSoloSeat()
-    val cue =
-        rememberReplayingCue(replayKey = outcome) { iteration ->
-            CombatAnimationCue.SummonMinion(
-                id = "summon-minion-$iteration",
-                necroUserId = PREVIEW_ACTOR_ID,
+private fun IllusionistSummonMinionSkeletonPreview() {
+    NecromancerSummonMinionPreview(
+        outcome = SummonMinionOutcome.Skeleton,
+        actorClass = CharacterClassType.Illusionist,
+    )
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun IllusionistSummonMinionGolemPreview() {
+    NecromancerSummonMinionPreview(
+        outcome = SummonMinionOutcome.Golem,
+        actorClass = CharacterClassType.Illusionist,
+    )
+}
+
+@Composable
+private fun NecromancerSummonMinionPreview(
+    outcome: SummonMinionOutcome,
+    actorClass: CharacterClassType = CharacterClassType.Necromancer,
+) {
+    val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = actorClass,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.SummonMinion(
+                id = id,
+                necromancerUserId = PREVIEW_ACTOR_ID,
+                className = actorClass.name,
+                actingClassType = CharacterClassType.Necromancer,
+                singleDie =
+                when (outcome) {
+                    SummonMinionOutcome.Fizzle -> 1
+                    SummonMinionOutcome.Skeleton -> 2
+                    SummonMinionOutcome.SkeletonAndHeal -> 4
+                    SummonMinionOutcome.Golem -> 6
+                },
                 outcome = outcome,
+                animation = ArenaAnimationState.FlashAndAvatar(),
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Necromancer, seats = seats) {
+        },
+    ) { message ->
         NecromancerSummonMinionOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            avatarBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }

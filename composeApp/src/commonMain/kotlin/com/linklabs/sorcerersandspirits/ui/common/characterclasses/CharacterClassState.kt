@@ -38,28 +38,26 @@ data class CharacterClassState(
     }
 }
 
-internal fun CharacterClass.toState() =
-    CharacterClassState(
-        type = type,
-        hitPoints = hitPoints,
-        maxHitPoints = maxHitPoints,
-        armorClass = armorClass,
-        speed = speed,
-        offensiveAbility = offensiveAbility.toState(),
-        defensiveAbility = defensiveAbility.toState(),
-        attacksRemaining = attacksRemaining,
-        hasActedThisRound = hasActedThisRound,
-    )
+internal fun CharacterClass.toState() = CharacterClassState(
+    type = type,
+    hitPoints = hitPoints,
+    maxHitPoints = maxHitPoints,
+    armorClass = armorClass,
+    speed = speed,
+    offensiveAbility = offensiveAbility.toState(),
+    defensiveAbility = defensiveAbility.toState(),
+    attacksRemaining = attacksRemaining,
+    hasActedThisRound = hasActedThisRound,
+)
 
-internal fun CharacterClassState.toDomain() =
-    CharacterClass(
-        type = type,
-        hitPoints = hitPoints,
-        maxHitPoints = maxHitPoints,
-        armorClass = armorClass,
-        speed = speed,
-        offensiveAbility = offensiveAbility.toDomain(),
-        defensiveAbility = defensiveAbility.toDomain(),
-        attacksRemaining = attacksRemaining,
-        hasActedThisRound = hasActedThisRound,
-    )
+internal fun CharacterClassState.toDomain() = CharacterClass(
+    type = type,
+    hitPoints = hitPoints,
+    maxHitPoints = maxHitPoints,
+    armorClass = armorClass,
+    speed = speed,
+    offensiveAbility = offensiveAbility.toDomain(),
+    defensiveAbility = defensiveAbility.toDomain(),
+    attacksRemaining = attacksRemaining,
+    hasActedThisRound = hasActedThisRound,
+)

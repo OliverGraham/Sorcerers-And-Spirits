@@ -26,8 +26,7 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = CONNECTED_TO_ARENA)
-    data class ConnectedToArena(override val id: String, val displayName: String) :
-        ArenaMessageEntity
+    data class ConnectedToArena(override val id: String, val displayName: String) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = NEW_ROUND)
@@ -46,6 +45,7 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val attackerUserId: String,
         val defenderUserId: String,
+        val attackerClassType: CharacterClassType,
         val impersonatedCharacterType: CharacterClassType,
         val normalRollMessageType: NormalRollMessageType,
     ) : ArenaMessageEntity
@@ -56,6 +56,8 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val attackerUserId: String,
         val defenderUserId: String,
+        val attackerClassName: String,
+        val defenderClassName: String,
         val firstDie: Int,
         val secondDie: Int,
         val bonus: Int = 0,
@@ -64,8 +66,7 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = KILLING_MOMENTUM)
-    data class KillingMomentum(override val id: String, val attackerUserId: String) :
-        ArenaMessageEntity
+    data class KillingMomentum(override val id: String, val attackerUserId: String) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = DODGE)
@@ -90,6 +91,7 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val mageUserId: String,
             val userId: String,
+            val className: String,
             val singleDie: Int,
         ) : Teleport
 
@@ -129,7 +131,7 @@ sealed interface ArenaMessageEntity {
         data class HighRollerTrigger(
             override val id: String,
             override val gamblerUserId: String,
-            val attackerUserId: String,
+            val attackerClassName: String,
         ) : LuckyCoin
 
         @Serializable
@@ -168,8 +170,13 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = SUMMON_MINION)
-    data class SummonMinion(override val id: String, val necroUserId: String, val singleDie: Int) :
-        ArenaMessageEntity
+    data class SummonMinion(
+        override val id: String,
+        val necromancerUserId: String,
+        val className: String,
+        val classType: CharacterClassType,
+        val singleDie: Int,
+    ) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = PERSUADE)
@@ -192,16 +199,14 @@ sealed interface ArenaMessageEntity {
         data class CharmActivation(override val id: String, val bardUserId: String) : Persuade
 
         @Serializable
-        @SerialName(value = PERSUADE_LULL)
-        data class Lull(override val id: String) : Persuade
-
-        @Serializable
         @SerialName(value = PERSUADE_CHARM)
         data class Charm(
             override val id: String,
             val bardUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val defenderUserId: String,
+            val defenderClassName: String,
         ) : Persuade
     }
 
@@ -209,16 +214,22 @@ sealed interface ArenaMessageEntity {
     @SerialName(value = ENCORE)
     sealed interface Encore : ArenaMessageEntity {
         val bardUserId: String
+        val classType: CharacterClassType
 
         @Serializable
         @SerialName(value = ENCORE_TRIGGER)
-        data class Trigger(override val id: String, override val bardUserId: String) : Encore
+        data class Trigger(
+            override val id: String,
+            override val bardUserId: String,
+            override val classType: CharacterClassType,
+        ) : Encore
 
         @Serializable
         @SerialName(value = ENCORE_ROLL)
         data class Roll(
             override val id: String,
             override val bardUserId: String,
+            override val classType: CharacterClassType,
             val encoreDie: Int,
             val isSuccessful: Boolean,
         ) : Encore
@@ -229,6 +240,7 @@ sealed interface ArenaMessageEntity {
     data class Impersonate(
         override val id: String,
         val illusionistUserId: String,
+        val illusionistName: String,
         val impersonateAbility: OffensiveAbilityEntity.Impersonate,
     ) : ArenaMessageEntity
 
@@ -252,6 +264,8 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val illusionistUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val messageType: NormalRollMessageType,
             val baseRoll: Int = 0,
             val doublesBonus: Int = 0,
@@ -262,10 +276,11 @@ sealed interface ArenaMessageEntity {
         data class TemptFate(
             override val id: String,
             override val illusionistUserId: String,
+            val attackerUserId: String,
+            val attackerClassName: String,
+            val messageType: NormalRollMessageType,
             val originalRoll: Int,
             val reroll: Int? = null,
-            val attackerUserId: String,
-            val messageType: NormalRollMessageType,
         ) : MirrorImage
     }
 
@@ -274,7 +289,9 @@ sealed interface ArenaMessageEntity {
     data class SpellPotency(
         override val id: String,
         val mageUserId: String,
+        val mageName: String,
         val mainTargetUserId: String,
+        val mainTargetClassName: String,
         val firstDie: Int,
         val secondDie: Int,
         val mainDamage: Int,
@@ -307,7 +324,9 @@ sealed interface ArenaMessageEntity {
         data class Wrath(
             override val id: String,
             override val paladinUserId: String,
+            val paladinName: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isAttackerKnockedOut: Boolean,
         ) : HolyShield
@@ -315,15 +334,23 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = ALL_IN)
-    data class AllIn(override val id: String, val gamblerUserId: String, val singleDie: Int) :
-        ArenaMessageEntity
+    data class AllIn(
+        override val id: String,
+        val gamblerUserId: String,
+        val gamblerName: String,
+        val classType: CharacterClassType,
+        val singleDie: Int,
+    ) : ArenaMessageEntity
 
     @Serializable
     @SerialName(value = PREPARE_ATTACK)
     data class PrepareAttack(
         override val id: String,
         val duelistUserId: String,
+        val duelistName: String,
+        val classType: CharacterClassType,
         val targetUserId: String,
+        val targetClassName: String,
         val firstDie: Int,
         val secondDie: Int,
         val isSuccessful: Boolean,
@@ -331,7 +358,7 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = DOUBLES)
-    data class Doubles(override val id: String, val userId: String) : ArenaMessageEntity
+    data class Doubles(override val id: String, val className: String) : ArenaMessageEntity
 
     companion object {
         private const val CHOSE_CHARACTER_CLASS = "ChoseCharacterClass"
@@ -359,7 +386,6 @@ sealed interface ArenaMessageEntity {
         private const val PERSUADE_TRIGGER = "PersuadeTrigger"
         private const val PERSUADE_STRUM_LUTE = "PersuadeStrumLute"
         private const val PERSUADE_CHARM_ACTIVATION = "PersuadeCharmActivation"
-        private const val PERSUADE_LULL = "PersuadeLull"
         private const val PERSUADE_CHARM = "PersuadeCharm"
         private const val ENCORE = "Encore"
         private const val ENCORE_TRIGGER = "EncoreTrigger"
@@ -405,6 +431,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.NormalRoll.Attack(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
+                    attackerClassType = attackerClassType,
                     impersonatedCharacterType = impersonatedCharacterType,
                     normalRollMessageType = normalRollMessageType,
                 )
@@ -413,6 +440,8 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.NormalRoll.Outcome(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
+                    attackerClassName = attackerClassName,
+                    defenderClassName = defenderClassName,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     bonus = bonus,
@@ -433,6 +462,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     userId = userId,
                     singleDie = singleDie,
                     mageUserId = mageUserId,
+                    className = className,
                 )
 
             is ArenaMessageEntity.Teleport.Tie -> ArenaMessage.Teleport.Tie(mageUserId = mageUserId)
@@ -456,7 +486,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
             is ArenaMessageEntity.LuckyCoin.HighRollerTrigger ->
                 ArenaMessage.LuckyCoin.HighRollerTrigger(
                     gamblerUserId = gamblerUserId,
-                    attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                 )
 
             is ArenaMessageEntity.LuckyCoin.HighRollerDamage ->
@@ -483,7 +513,12 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.SummonMinion ->
-                ArenaMessage.SummonMinion(necroUserId = necroUserId, singleDie = singleDie)
+                ArenaMessage.SummonMinion(
+                    necromancerUserId = necromancerUserId,
+                    className = className,
+                    classType = classType,
+                    singleDie = singleDie,
+                )
 
             is ArenaMessageEntity.Persuade.Trigger ->
                 ArenaMessage.Persuade.Trigger(bardUserId = bardUserId)
@@ -498,21 +533,22 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
             is ArenaMessageEntity.Persuade.CharmActivation ->
                 ArenaMessage.Persuade.CharmActivation(bardUserId = bardUserId)
 
-            is ArenaMessageEntity.Persuade.Lull -> ArenaMessage.Persuade.Lull
-
             is ArenaMessageEntity.Persuade.Charm ->
                 ArenaMessage.Persuade.Charm(
                     bardUserId = bardUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                     defenderUserId = defenderUserId,
+                    defenderClassName = defenderClassName,
                 )
 
             is ArenaMessageEntity.Encore.Trigger ->
-                ArenaMessage.Encore.Trigger(bardUserId = bardUserId)
+                ArenaMessage.Encore.Trigger(bardUserId = bardUserId, classType = classType)
 
             is ArenaMessageEntity.Encore.Roll ->
                 ArenaMessage.Encore.Roll(
                     bardUserId = bardUserId,
+                    classType = classType,
                     encoreDie = encoreDie,
                     isSuccessful = isSuccessful,
                 )
@@ -520,8 +556,9 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
             is ArenaMessageEntity.Impersonate ->
                 ArenaMessage.Impersonate(
                     illusionistUserId = illusionistUserId,
+                    illusionistName = illusionistName,
                     impersonateAbility =
-                        impersonateAbility.toDomain() as OffensiveAbility.Impersonate,
+                    impersonateAbility.toDomain() as OffensiveAbility.Impersonate,
                 )
 
             is ArenaMessageEntity.MirrorImage.Trigger ->
@@ -535,6 +572,8 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.MirrorImage.Pass(
                     illusionistUserId = illusionistUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
+                    attackerClassType = attackerClassType,
                     messageType = messageType,
                     baseRoll = baseRoll,
                     doublesBonus = doublesBonus,
@@ -544,18 +583,21 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.MirrorImage.TemptFate(
                     illusionistUserId = illusionistUserId,
                     rerolledMirrorImageDie =
-                        AbilityAction.Passive.MirrorImage.MirrorImageDie(
-                            originalRoll = originalRoll,
-                            reroll = reroll,
-                        ),
+                    AbilityAction.Passive.MirrorImage.MirrorImageDie(
+                        originalRoll = originalRoll,
+                        reroll = reroll,
+                    ),
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                     messageType = messageType,
                 )
 
             is ArenaMessageEntity.SpellPotency ->
                 ArenaMessage.SpellPotency(
                     mageUserId = mageUserId,
+                    mageName = mageName,
                     mainTargetUserId = mainTargetUserId,
+                    mainTargetClassName = mainTargetClassName,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     mainDamage = mainDamage,
@@ -578,24 +620,34 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
             is ArenaMessageEntity.HolyShield.Wrath ->
                 ArenaMessage.HolyShield.Wrath(
                     paladinUserId = paladinUserId,
+                    paladinName = paladinName,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                     singleDie = singleDie,
                     isAttackerKnockedOut = isAttackerKnockedOut,
                 )
 
             is ArenaMessageEntity.AllIn ->
-                ArenaMessage.AllIn(gamblerUserId = gamblerUserId, singleDie = singleDie)
+                ArenaMessage.AllIn(
+                    gamblerUserId = gamblerUserId,
+                    gamblerName = gamblerName,
+                    classType = classType,
+                    singleDie = singleDie,
+                )
 
             is ArenaMessageEntity.PrepareAttack ->
                 ArenaMessage.PrepareAttack(
                     duelistUserId = duelistUserId,
+                    duelistName = duelistName,
+                    classType = classType,
                     targetUserId = targetUserId,
+                    targetClassName = targetClassName,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     isSuccessful = isSuccessful,
                 )
 
-            is ArenaMessageEntity.Doubles -> ArenaMessage.Doubles(userId = userId)
+            is ArenaMessageEntity.Doubles -> ArenaMessage.Doubles(className = className)
         }
 
     return IncomingArenaMessage(id = id, roundNumber = roundNumber, message = message)
@@ -614,248 +666,273 @@ internal fun List<ArenaMessageEntity>.toDomain(): List<IncomingArenaMessage> {
     }
 }
 
-private fun CharacterClassMessageInfoEntity.toDomain() =
-    CharacterClassMessageInfo(className = className, type = type)
+private fun CharacterClassMessageInfoEntity.toDomain() = CharacterClassMessageInfo(className = className, type = type)
 
-internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity =
-    when (this) {
-        is ArenaMessage.ChoseCharacterClass ->
-            ArenaMessageEntity.ChoseCharacterClass(
-                id = id,
-                displayName = displayName,
-                characterClassInfo = characterClassInfo.toEntity(),
-            )
+internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this) {
+    is ArenaMessage.ChoseCharacterClass ->
+        ArenaMessageEntity.ChoseCharacterClass(
+            id = id,
+            displayName = displayName,
+            characterClassInfo = characterClassInfo.toEntity(),
+        )
 
-        is ArenaMessage.ConnectedToArena ->
-            ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
+    is ArenaMessage.ConnectedToArena ->
+        ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
 
-        is ArenaMessage.NewRound -> ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
+    is ArenaMessage.NewRound -> ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
 
-        is ArenaMessage.NewTurn ->
-            ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
+    is ArenaMessage.NewTurn ->
+        ArenaMessageEntity.NewTurn(id = id, characterClassInfo = characterClassInfo.toEntity())
 
-        is ArenaMessage.NormalRoll.Attack ->
-            ArenaMessageEntity.NormalRollAttack(
-                id = id,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-                impersonatedCharacterType = impersonatedCharacterType,
-                normalRollMessageType = normalRollMessageType,
-            )
+    is ArenaMessage.NormalRoll.Attack ->
+        ArenaMessageEntity.NormalRollAttack(
+            id = id,
+            attackerUserId = attackerUserId,
+            defenderUserId = defenderUserId,
+            attackerClassType = attackerClassType,
+            impersonatedCharacterType = impersonatedCharacterType,
+            normalRollMessageType = normalRollMessageType,
+        )
 
-        is ArenaMessage.NormalRoll.Outcome ->
-            ArenaMessageEntity.NormalRollOutcome(
-                id = id,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-                firstDie = firstDie,
-                secondDie = secondDie,
-                bonus = bonus,
-                messageType = type,
-            )
+    is ArenaMessage.NormalRoll.Outcome ->
+        ArenaMessageEntity.NormalRollOutcome(
+            id = id,
+            attackerUserId = attackerUserId,
+            defenderUserId = defenderUserId,
+            attackerClassName = attackerClassName,
+            defenderClassName = defenderClassName,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            bonus = bonus,
+            messageType = type,
+        )
 
-        is ArenaMessage.KillingMomentum ->
-            ArenaMessageEntity.KillingMomentum(id = id, attackerUserId = attackerUserId)
+    is ArenaMessage.KillingMomentum ->
+        ArenaMessageEntity.KillingMomentum(id = id, attackerUserId = attackerUserId)
 
-        is ArenaMessage.Dodge ->
-            ArenaMessageEntity.Dodge(
-                id = id,
-                didArmorIncrease = didArmorIncrease,
-                dodgerUserId = dodgerUserId,
-            )
+    is ArenaMessage.Dodge ->
+        ArenaMessageEntity.Dodge(
+            id = id,
+            didArmorIncrease = didArmorIncrease,
+            dodgerUserId = dodgerUserId,
+        )
 
-        is ArenaMessage.Teleport.Trigger ->
-            ArenaMessageEntity.Teleport.Trigger(id = id, mageUserId = mageUserId)
+    is ArenaMessage.Teleport.Trigger ->
+        ArenaMessageEntity.Teleport.Trigger(id = id, mageUserId = mageUserId)
 
-        is ArenaMessage.Teleport.Roll ->
-            ArenaMessageEntity.Teleport.Roll(
-                id = id,
-                userId = userId,
-                singleDie = singleDie,
-                mageUserId = mageUserId,
-            )
+    is ArenaMessage.Teleport.Roll ->
+        ArenaMessageEntity.Teleport.Roll(
+            id = id,
+            userId = userId,
+            singleDie = singleDie,
+            mageUserId = mageUserId,
+            className = className,
+        )
 
-        is ArenaMessage.Teleport.Tie ->
-            ArenaMessageEntity.Teleport.Tie(id = id, mageUserId = mageUserId)
+    is ArenaMessage.Teleport.Tie ->
+        ArenaMessageEntity.Teleport.Tie(id = id, mageUserId = mageUserId)
 
-        is ArenaMessage.Teleport.Result ->
-            ArenaMessageEntity.Teleport.Result(
-                id = id,
-                didDefenderEscape = didDefenderEscape,
-                mageUserId = mageUserId,
-            )
+    is ArenaMessage.Teleport.Result ->
+        ArenaMessageEntity.Teleport.Result(
+            id = id,
+            didDefenderEscape = didDefenderEscape,
+            mageUserId = mageUserId,
+        )
 
-        is ArenaMessage.LuckyCoin.Trigger ->
-            ArenaMessageEntity.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
+    is ArenaMessage.LuckyCoin.Trigger ->
+        ArenaMessageEntity.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
 
-        is ArenaMessage.LuckyCoin.Flip ->
-            ArenaMessageEntity.LuckyCoin.Flip(
-                id = id,
-                gamblerUserId = gamblerUserId,
-                singleDie = singleDie,
-                didStopAttack = didStopAttack,
-            )
+    is ArenaMessage.LuckyCoin.Flip ->
+        ArenaMessageEntity.LuckyCoin.Flip(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            singleDie = singleDie,
+            didStopAttack = didStopAttack,
+        )
 
-        is ArenaMessage.LuckyCoin.HighRollerTrigger ->
-            ArenaMessageEntity.LuckyCoin.HighRollerTrigger(
-                id = id,
-                gamblerUserId = gamblerUserId,
-                attackerUserId = attackerUserId,
-            )
+    is ArenaMessage.LuckyCoin.HighRollerTrigger ->
+        ArenaMessageEntity.LuckyCoin.HighRollerTrigger(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+        )
 
-        is ArenaMessage.LuckyCoin.HighRollerDamage ->
-            ArenaMessageEntity.LuckyCoin.HighRollerDamage(
-                id = id,
-                gamblerUserId = gamblerUserId,
-                attackerUserId = attackerUserId,
-                singleDie = singleDie,
-                isKnockout = isKnockout,
-            )
+    is ArenaMessage.LuckyCoin.HighRollerDamage ->
+        ArenaMessageEntity.LuckyCoin.HighRollerDamage(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            attackerUserId = attackerUserId,
+            singleDie = singleDie,
+            isKnockout = isKnockout,
+        )
 
-        is ArenaMessage.Riposte.Trigger ->
-            ArenaMessageEntity.Riposte.Trigger(
-                id = id,
-                duelistUserId = duelistUserId,
-                attackerUserId = attackerUserId,
-            )
+    is ArenaMessage.Riposte.Trigger ->
+        ArenaMessageEntity.Riposte.Trigger(
+            id = id,
+            duelistUserId = duelistUserId,
+            attackerUserId = attackerUserId,
+        )
 
-        is ArenaMessage.Riposte.EnGarde ->
-            ArenaMessageEntity.Riposte.EnGarde(
-                id = id,
-                duelistUserId = duelistUserId,
-                attackerUserId = attackerUserId,
-                firstDie = firstDie,
-                secondDie = secondDie,
-                isSuccessful = isSuccessful,
-            )
+    is ArenaMessage.Riposte.EnGarde ->
+        ArenaMessageEntity.Riposte.EnGarde(
+            id = id,
+            duelistUserId = duelistUserId,
+            attackerUserId = attackerUserId,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            isSuccessful = isSuccessful,
+        )
 
-        is ArenaMessage.SummonMinion ->
-            ArenaMessageEntity.SummonMinion(
-                id = id,
-                necroUserId = necroUserId,
-                singleDie = singleDie,
-            )
+    is ArenaMessage.SummonMinion ->
+        ArenaMessageEntity.SummonMinion(
+            id = id,
+            necromancerUserId = necromancerUserId,
+            className = className,
+            classType = classType,
+            singleDie = singleDie,
+        )
 
-        is ArenaMessage.Persuade.Trigger ->
-            ArenaMessageEntity.Persuade.Trigger(id = id, bardUserId = bardUserId)
+    is ArenaMessage.Persuade.Trigger ->
+        ArenaMessageEntity.Persuade.Trigger(id = id, bardUserId = bardUserId)
 
-        is ArenaMessage.Persuade.StrumLute ->
-            ArenaMessageEntity.Persuade.StrumLute(
-                id = id,
-                bardUserId = bardUserId,
-                diceRoll = diceRoll,
-                isSuccessful = isSuccessful,
-            )
+    is ArenaMessage.Persuade.StrumLute ->
+        ArenaMessageEntity.Persuade.StrumLute(
+            id = id,
+            bardUserId = bardUserId,
+            diceRoll = diceRoll,
+            isSuccessful = isSuccessful,
+        )
 
-        is ArenaMessage.Persuade.CharmActivation ->
-            ArenaMessageEntity.Persuade.CharmActivation(id = id, bardUserId = bardUserId)
+    is ArenaMessage.Persuade.CharmActivation ->
+        ArenaMessageEntity.Persuade.CharmActivation(id = id, bardUserId = bardUserId)
 
-        is ArenaMessage.Persuade.Lull -> ArenaMessageEntity.Persuade.Lull(id = id)
+    is ArenaMessage.Persuade.Charm ->
+        ArenaMessageEntity.Persuade.Charm(
+            id = id,
+            bardUserId = bardUserId,
+            attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            defenderUserId = defenderUserId,
+            defenderClassName = defenderClassName,
+        )
 
-        is ArenaMessage.Persuade.Charm ->
-            ArenaMessageEntity.Persuade.Charm(
-                id = id,
-                bardUserId = bardUserId,
-                attackerUserId = attackerUserId,
-                defenderUserId = defenderUserId,
-            )
+    is ArenaMessage.Encore.Trigger ->
+        ArenaMessageEntity.Encore.Trigger(
+            id = id,
+            bardUserId = bardUserId,
+            classType = classType,
+        )
 
-        is ArenaMessage.Encore.Trigger ->
-            ArenaMessageEntity.Encore.Trigger(id = id, bardUserId = bardUserId)
+    is ArenaMessage.Encore.Roll ->
+        ArenaMessageEntity.Encore.Roll(
+            id = id,
+            bardUserId = bardUserId,
+            classType = classType,
+            encoreDie = encoreDie,
+            isSuccessful = isSuccessful,
+        )
 
-        is ArenaMessage.Encore.Roll ->
-            ArenaMessageEntity.Encore.Roll(
-                id = id,
-                bardUserId = bardUserId,
-                encoreDie = encoreDie,
-                isSuccessful = isSuccessful,
-            )
+    is ArenaMessage.Impersonate ->
+        ArenaMessageEntity.Impersonate(
+            id = id,
+            illusionistUserId = illusionistUserId,
+            illusionistName = illusionistName,
+            impersonateAbility =
+            impersonateAbility.toEntity() as OffensiveAbilityEntity.Impersonate,
+        )
 
-        is ArenaMessage.Impersonate ->
-            ArenaMessageEntity.Impersonate(
-                id = id,
-                illusionistUserId = illusionistUserId,
-                impersonateAbility =
-                    impersonateAbility.toEntity() as OffensiveAbilityEntity.Impersonate,
-            )
+    is ArenaMessage.MirrorImage.Trigger ->
+        ArenaMessageEntity.MirrorImage.Trigger(
+            illusionistUserId = illusionistUserId,
+            id = id,
+            firstDie = firstDie,
+            secondDie = secondDie,
+        )
 
-        is ArenaMessage.MirrorImage.Trigger ->
-            ArenaMessageEntity.MirrorImage.Trigger(
-                illusionistUserId = illusionistUserId,
-                id = id,
-                firstDie = firstDie,
-                secondDie = secondDie,
-            )
+    is ArenaMessage.MirrorImage.Pass ->
+        ArenaMessageEntity.MirrorImage.Pass(
+            illusionistUserId = illusionistUserId,
+            id = id,
+            attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            attackerClassType = attackerClassType,
+            messageType = messageType,
+            baseRoll = baseRoll,
+            doublesBonus = doublesBonus,
+        )
 
-        is ArenaMessage.MirrorImage.Pass ->
-            ArenaMessageEntity.MirrorImage.Pass(
-                illusionistUserId = illusionistUserId,
-                id = id,
-                attackerUserId = attackerUserId,
-                messageType = messageType,
-                baseRoll = baseRoll,
-                doublesBonus = doublesBonus,
-            )
+    is ArenaMessage.MirrorImage.TemptFate ->
+        ArenaMessageEntity.MirrorImage.TemptFate(
+            illusionistUserId = illusionistUserId,
+            id = id,
+            originalRoll = rerolledMirrorImageDie.originalRoll,
+            reroll = rerolledMirrorImageDie.reroll,
+            attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            messageType = messageType,
+        )
 
-        is ArenaMessage.MirrorImage.TemptFate ->
-            ArenaMessageEntity.MirrorImage.TemptFate(
-                illusionistUserId = illusionistUserId,
-                id = id,
-                originalRoll = rerolledMirrorImageDie.originalRoll,
-                reroll = rerolledMirrorImageDie.reroll,
-                attackerUserId = attackerUserId,
-                messageType = messageType,
-            )
+    is ArenaMessage.SpellPotency ->
+        ArenaMessageEntity.SpellPotency(
+            id = id,
+            mageUserId = mageUserId,
+            mageName = mageName,
+            mainTargetUserId = mainTargetUserId,
+            mainTargetClassName = mainTargetClassName,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            mainDamage = mainDamage,
+            splashDamage = splashDamage,
+            splashTargetUserIds = splashTargetUserIds,
+            isMainTargetKnockedOut = isMainTargetKnockedOut,
+        )
 
-        is ArenaMessage.SpellPotency ->
-            ArenaMessageEntity.SpellPotency(
-                id = id,
-                mageUserId = mageUserId,
-                mainTargetUserId = mainTargetUserId,
-                firstDie = firstDie,
-                secondDie = secondDie,
-                mainDamage = mainDamage,
-                splashDamage = splashDamage,
-                splashTargetUserIds = splashTargetUserIds,
-                isMainTargetKnockedOut = isMainTargetKnockedOut,
-            )
+    is ArenaMessage.HolyShield.Trigger ->
+        ArenaMessageEntity.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
 
-        is ArenaMessage.HolyShield.Trigger ->
-            ArenaMessageEntity.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
+    is ArenaMessage.HolyShield.Prayer ->
+        ArenaMessageEntity.HolyShield.Prayer(
+            id = id,
+            paladinUserId = paladinUserId,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            didSurvive = didSurvive,
+        )
 
-        is ArenaMessage.HolyShield.Prayer ->
-            ArenaMessageEntity.HolyShield.Prayer(
-                id = id,
-                paladinUserId = paladinUserId,
-                firstDie = firstDie,
-                secondDie = secondDie,
-                didSurvive = didSurvive,
-            )
+    is ArenaMessage.HolyShield.Wrath ->
+        ArenaMessageEntity.HolyShield.Wrath(
+            id = id,
+            paladinUserId = paladinUserId,
+            paladinName = paladinName,
+            attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            singleDie = singleDie,
+            isAttackerKnockedOut = isAttackerKnockedOut,
+        )
 
-        is ArenaMessage.HolyShield.Wrath ->
-            ArenaMessageEntity.HolyShield.Wrath(
-                id = id,
-                paladinUserId = paladinUserId,
-                attackerUserId = attackerUserId,
-                singleDie = singleDie,
-                isAttackerKnockedOut = isAttackerKnockedOut,
-            )
+    is ArenaMessage.AllIn ->
+        ArenaMessageEntity.AllIn(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            gamblerName = gamblerName,
+            classType = classType,
+            singleDie = singleDie,
+        )
 
-        is ArenaMessage.AllIn ->
-            ArenaMessageEntity.AllIn(id = id, gamblerUserId = gamblerUserId, singleDie = singleDie)
+    is ArenaMessage.PrepareAttack ->
+        ArenaMessageEntity.PrepareAttack(
+            id = id,
+            duelistUserId = duelistUserId,
+            duelistName = duelistName,
+            classType = classType,
+            targetUserId = targetUserId,
+            targetClassName = targetClassName,
+            firstDie = firstDie,
+            secondDie = secondDie,
+            isSuccessful = isSuccessful,
+        )
 
-        is ArenaMessage.PrepareAttack ->
-            ArenaMessageEntity.PrepareAttack(
-                id = id,
-                duelistUserId = duelistUserId,
-                targetUserId = targetUserId,
-                firstDie = firstDie,
-                secondDie = secondDie,
-                isSuccessful = isSuccessful,
-            )
+    is ArenaMessage.Doubles -> ArenaMessageEntity.Doubles(id = id, className = className)
+}
 
-        is ArenaMessage.Doubles -> ArenaMessageEntity.Doubles(id = id, userId = userId)
-    }
-
-private fun CharacterClassMessageInfo.toEntity() =
-    CharacterClassMessageInfoEntity(className = className, type = type)
+private fun CharacterClassMessageInfo.toEntity() = CharacterClassMessageInfoEntity(className = className, type = type)

@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
 import org.jetbrains.compose.resources.painterResource
 
 private val inspectDrawerColor = Color(color = 0xF21A1A1A)
@@ -61,12 +62,12 @@ internal fun InspectDrawer(
         AnimatedVisibility(visible = isOpen, enter = fadeIn(), exit = fadeOut()) {
             Box(
                 modifier =
-                    Modifier.fillMaxSize().background(color = inspectScrimColor).clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                    ) {
-                        onClose()
-                    }
+                Modifier.fillMaxSize().background(color = inspectScrimColor).clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    onClose()
+                },
             )
         }
 
@@ -93,17 +94,17 @@ internal fun InspectContent(
 
     Column(
         modifier =
-            modifier
-                .fillMaxHeight()
-                .width(width = 280.dp)
-                .background(color = inspectDrawerColor)
-                .clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = onClose,
-                )
-                .verticalScroll(state = rememberScrollState())
-                .padding(all = 16.dp),
+        modifier
+            .fillMaxHeight()
+            .width(width = 280.dp)
+            .background(color = inspectDrawerColor)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClose,
+            )
+            .verticalScroll(state = rememberScrollState())
+            .padding(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         Text(
@@ -112,7 +113,7 @@ internal fun InspectContent(
             fontWeight = FontWeight.Bold,
             color = Color.White,
         )
-        ClassAvatar(
+        AvatarImage(
             characterClass = player.characterClass,
             modifier = Modifier.fillMaxWidth().height(height = 200.dp),
         )

@@ -15,12 +15,11 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
         holyShield: DefensiveAbility.HolyShield,
         holyShieldUserId: String,
         knockoutDealerUserId: String,
-    ) =
-        combatMutator.triggerHolyShield(
-            holyShield = holyShield,
-            holyShieldUserId = holyShieldUserId,
-            knockoutDealerUserId = knockoutDealerUserId,
-        )
+    ) = combatMutator.triggerHolyShield(
+        holyShield = holyShield,
+        holyShieldUserId = holyShieldUserId,
+        knockoutDealerUserId = knockoutDealerUserId,
+    )
 
     fun attemptPrayer() = combatMutator.attemptPrayer()
 
@@ -55,17 +54,17 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-                ArenaMessage.HolyShield.Prayer(
-                    paladinUserId = defenderUserId,
-                    firstDie = result.firstDie,
-                    secondDie = result.secondDie,
-                    didSurvive = didSurvive,
-                )
+            ArenaMessage.HolyShield.Prayer(
+                paladinUserId = defenderUserId,
+                firstDie = result.firstDie,
+                secondDie = result.secondDie,
+                didSurvive = didSurvive,
+            ),
         )
 
         if (didSurvive) {
             if (result.isDoubles) {
-                addMessage(message = ArenaMessage.Doubles(userId = defenderUserId))
+                addMessage(message = ArenaMessage.Doubles(className = defender.className))
             }
             prayerSuccess()
         } else {
@@ -105,12 +104,14 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-                ArenaMessage.HolyShield.Wrath(
-                    paladinUserId = defenderUserId,
-                    attackerUserId = attackerUserId,
-                    singleDie = result,
-                    isAttackerKnockedOut = !attacker.isConscious(),
-                )
+            ArenaMessage.HolyShield.Wrath(
+                paladinUserId = defenderUserId,
+                paladinName = defender.className,
+                attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
+                singleDie = result,
+                isAttackerKnockedOut = !attacker.isConscious(),
+            ),
         )
 
         resolveWrath()
@@ -166,7 +167,7 @@ internal class HolyShieldHandler(private val combatMutator: CombatMutator) {
             if (isHolyShieldAvailable(defenderDefensiveAbility)) {
                 combatMutator.updatePlayerClass(userId = holyShieldUserId) { playerClass ->
                     playerClass.copy(
-                        defensiveAbility = defenderDefensiveAbility.copy(usedThisMatch = true)
+                        defensiveAbility = defenderDefensiveAbility.copy(usedThisMatch = true),
                     )
                 }
             }

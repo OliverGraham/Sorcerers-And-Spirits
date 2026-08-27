@@ -24,12 +24,12 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.exp
 import kotlin.math.sin
 import kotlin.random.Random
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 private const val DIE_SIDE_DP = 64
 
@@ -135,8 +135,7 @@ internal fun Die3d(
     // The die rests on its current face the first time it lays out, then tumbles for every change
     // after that: while held, and on any value change once a roll (by any player) lands (SS-112).
     var isFirstLayout by remember { mutableStateOf(value = true) }
-    // The value the die last settled on, so a later change can be told apart from a release.
-    var previousValue by remember { mutableStateOf(value = value) }
+    var previousSettleKey by remember { mutableStateOf(value = settleKey) }
     // The die's live velocity is handed from the held shake-physics loop to the release settle, so
     // releasing continues the motion the shaking built up rather than starting over.
     val velocity = remember { mutableStateOf(value = Offset.Zero) }
@@ -173,14 +172,14 @@ internal fun Die3d(
             )
         } else if (isFirstLayout) {
             isFirstLayout = false
-            previousValue = value
+            previousSettleKey = settleKey
             velocity.value = Offset.Zero
             angleX.snapTo(targetValue = target.first)
             angleY.snapTo(targetValue = target.second)
             center.snapTo(targetValue = homeCenter)
         } else {
-            val hasValueChanged = value != previousValue
-            previousValue = value
+            val hasSettled = settleKey != previousSettleKey
+            previousSettleKey = settleKey
             val heldVelocity = velocity.value
             velocity.value = Offset.Zero
 
@@ -188,7 +187,7 @@ internal fun Die3d(
                 when {
                     !enabled -> Offset.Zero
                     heldVelocity.getDistance() > restSpeed -> heldVelocity
-                    hasValueChanged -> randomThrowVelocity(density = density.density)
+                    hasSettled -> randomThrowVelocity(density = density.density)
                     else -> Offset.Zero
                 }
 
@@ -212,29 +211,31 @@ internal fun Die3d(
                 launch {
                     angleX.animateTo(
                         targetValue =
-                            rightingAngle(current = angleX.value, faceAngle = target.first),
+                        rightingAngle(current = angleX.value, faceAngle = target.first),
                         animationSpec =
-                            tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
+                        tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
                     )
                 }
                 angleY.animateTo(
                     targetValue = rightingAngle(current = angleY.value, faceAngle = target.second),
                     animationSpec =
-                        tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
+                    tween(durationMillis = RIGHTING_MILLIS, easing = LinearOutSlowInEasing),
                 )
             }
 
-            currentOnSettled()
+            if (enabled) {
+                currentOnSettled()
+            }
 
             if (center.value != homeCenter) {
                 if (shouldGlideHome) {
                     center.animateTo(
                         targetValue = homeCenter,
                         animationSpec =
-                            tween(
-                                durationMillis = GLIDE_HOME_MILLIS,
-                                easing = LinearOutSlowInEasing,
-                            ),
+                        tween(
+                            durationMillis = GLIDE_HOME_MILLIS,
+                            easing = LinearOutSlowInEasing,
+                        ),
                     )
                 } else {
                     center.snapTo(targetValue = homeCenter)
@@ -335,8 +336,10 @@ private fun randomThrowVelocity(density: Float): Offset {
 private fun randomShakeImpulse(density: Float): Offset {
     val angle = Random.nextFloat() * 2f * PI
     val speed =
-        (MIN_SHAKE_IMPULSE_DP +
-            Random.nextFloat() * (MAX_SHAKE_IMPULSE_DP - MIN_SHAKE_IMPULSE_DP)) * density
+        (
+            MIN_SHAKE_IMPULSE_DP +
+                Random.nextFloat() * (MAX_SHAKE_IMPULSE_DP - MIN_SHAKE_IMPULSE_DP)
+            ) * density
     return Offset(x = cos(x = angle) * speed, y = sin(x = angle) * speed)
 }
 
@@ -396,8 +399,13 @@ private fun DrawScope.drawDie(
     }
 }
 
-private fun Color.tintedBy(tint: Color?): Color =
-    if (tint != null) lerp(start = this, stop = tint, fraction = DIE_TINT_FRACTION) else this
+private fun Color.tintedBy(tint: Color?): Color = if (tint !=
+    null
+) {
+    lerp(start = this, stop = tint, fraction = DIE_TINT_FRACTION)
+} else {
+    this
+}
 
 private fun project(point: Vec3, center: Offset, halfWidth: Float): Offset {
     val perspective = CAMERA_DISTANCE / (CAMERA_DISTANCE - point.z)
@@ -421,16 +429,15 @@ private fun rightingAngle(current: Float, faceAngle: Float): Float {
  * The (rotationX, rotationY) that brings the face carrying [value] to the top (+Y) before the fixed
  * view tilt is applied, so the rolled value is the face you read. Opposite faces sum to 7.
  */
-private fun faceAngles(value: Int): Pair<Float, Float> =
-    when (value) {
-        1 -> 0f to 0f
-        2 -> -90f to 0f
-        3 -> 90f to 90f
-        4 -> -90f to 90f
-        5 -> 90f to 0f
-        6 -> 180f to 0f
-        else -> 0f to 0f
-    }
+private fun faceAngles(value: Int): Pair<Float, Float> = when (value) {
+    1 -> 0f to 0f
+    2 -> -90f to 0f
+    3 -> 90f to 90f
+    4 -> -90f to 90f
+    5 -> 90f to 0f
+    6 -> 180f to 0f
+    else -> 0f to 0f
+}
 
 /** Pip centres for a face, in face-local (u, v) fractions of the half-width. */
 private fun pipLocalOffsets(value: Int): List<Pair<Float, Float>> {
@@ -465,12 +472,11 @@ private class Mat3(private val m: FloatArray) {
         return Mat3(m = result)
     }
 
-    operator fun times(v: Vec3) =
-        Vec3(
-            x = m[0] * v.x + m[1] * v.y + m[2] * v.z,
-            y = m[3] * v.x + m[4] * v.y + m[5] * v.z,
-            z = m[6] * v.x + m[7] * v.y + m[8] * v.z,
-        )
+    operator fun times(v: Vec3) = Vec3(
+        x = m[0] * v.x + m[1] * v.y + m[2] * v.z,
+        y = m[3] * v.x + m[4] * v.y + m[5] * v.z,
+        z = m[6] * v.x + m[7] * v.y + m[8] * v.z,
+    )
 }
 
 private fun rotationX(degrees: Float): Mat3 {

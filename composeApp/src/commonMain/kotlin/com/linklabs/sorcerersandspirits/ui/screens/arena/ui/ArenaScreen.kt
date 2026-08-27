@@ -18,12 +18,13 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -46,10 +47,12 @@ internal fun ArenaScreen(
                 onAttack = viewModel::onAttack,
                 onUseAbility = viewModel::onUseAbility,
                 onDiceSettled = viewModel::onDiceSettled,
+                onAnimationComplete = viewModel::onAnimationComplete,
                 onTryLeaveArena = viewModel::onTryLeaveArena,
                 onConfirmLeaveArena = viewModel::onConfirmLeaveArena,
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
                 onStayForAnotherMatch = viewModel::onStayForAnotherMatch,
+                onTargetOpponent = viewModel::onTargetOpponent,
             ),
         LocalShakeDetector provides koinInject(),
         LocalHaptics provides koinInject(),
@@ -62,9 +65,11 @@ internal fun ArenaScreen(
             snackbarHostState = snackbarHostState,
         )
         val uiState by viewModel.uiStateFlow.collectAsState()
+        val timerState = viewModel.timerStateFlow.collectAsState()
 
         ArenaScreen(
             uiState = uiState,
+            timerState = { timerState.value },
             onRetry = viewModel::retry,
             snackbarHostState = snackbarHostState,
             modifier = modifier,
@@ -76,6 +81,7 @@ internal fun ArenaScreen(
 @Composable
 private fun ArenaScreen(
     uiState: UiState<ArenaScreenState>,
+    timerState: () -> ArenaTimerState,
     onRetry: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -86,6 +92,7 @@ private fun ArenaScreen(
         is UiState.Loaded ->
             LoadedArenaScreen(
                 screenState = uiState.data,
+                timerState = timerState,
                 snackbarHostState = snackbarHostState,
                 modifier = modifier,
             )
@@ -112,7 +119,7 @@ private fun Flow<ArenaEvent>.collectEvents(
                 is ArenaEvent.OpponentLeft ->
                     coroutineScope.launch {
                         snackbarHostState.showSnackbar(
-                            message = "${event.displayName} left the arena"
+                            message = "${event.displayName} left the arena",
                         )
                     }
             }

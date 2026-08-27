@@ -6,8 +6,10 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,22 +27,24 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
-import kotlin.math.cos
-import kotlin.math.sin
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.sin
 
 private const val DRUM_APPEAR_MILLIS = 220
 private const val STICK_APPEAR_MILLIS = 180
@@ -50,89 +54,57 @@ private const val STICK_LIFT_MILLIS = 240
 private const val SOUND_WAVE_MILLIS = 470
 private const val MUSIC_NOTE_MILLIS = 720
 private const val DRUM_FADE_MILLIS = 220
+private const val DRUM_POP_SCALE = 0.72f
+private const val STICK_REST_ANGLE = 0.14f
+private const val STICK_STRIKE_ANGLE = 0.62f
+private const val STICK_PRESS_ANGLE = 0.05f
 
-/** The drum has to appear, the stick has to appear and settle, then it drives down to the head. */
 private const val BARD_STRIKE_CONTACT_MILLIS: Long =
     DRUM_APPEAR_MILLIS.toLong() +
         STICK_APPEAR_MILLIS.toLong() +
         STICK_READY_HOLD_MILLIS +
         STICK_STRIKE_MILLIS.toLong()
 
-/** The sound rings reach the opponent late in their travel, so the flinch lands as they arrive. */
-internal val BARD_WAVE_REACTION_DELAY_MILLIS: Long =
+internal const val BARD_WAVE_REACTION_DELAY_MILLIS: Long =
     BARD_STRIKE_CONTACT_MILLIS + SOUND_WAVE_MILLIS * 80L / 100L
 
-/** The stick's raised rest and the scale a drum pops in from. */
-private const val DRUM_POP_SCALE = 0.72f
-
-/**
- * The play-out of the Bard's snare strike. The choreography drives these Animatables and the draw
- * layer reads them, so a strike redraws the canvas without recomposing anything.
- */
-@Stable
-internal class BardStrikeState {
-    val drumAlpha = Animatable(initialValue = 0f)
-    val drumScale = Animatable(initialValue = DRUM_POP_SCALE)
-    val stickAlpha = Animatable(initialValue = 0f)
-    val stickSwing = Animatable(initialValue = 0f)
-    val headDepress = Animatable(initialValue = 0f)
-    val waves = Animatable(initialValue = 0f)
-    val waveAlpha = Animatable(initialValue = 0f)
-    val notes = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
-    var showNotes by mutableStateOf(value = false)
-}
-
-/**
- * The Bard's normal attack (SS-196): a wooden snare drum pops up in front of the Bard, a drumstick
- * appears above it, then strikes down — the batter head dimples and bounces back — and sound rings
- * ripple toward the opponent. A landed strike answers with bard-colored music notes rising off the
- * drum; a whiffed one leaves the air silent. Sits out any cue that is not a Bard normal attack.
- */
 @Composable
 internal fun BardNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.NormalRoll,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { BardStrikeState() }
+    val bardStrikeState = remember { BardStrikeState() }
     val density = LocalDensity.current
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
-    NormalAttackOverlay(
-        animationCue = animationCue,
-        attackerClassType = CharacterClassType.Bard,
-        avatarBoundsFor = avatarBoundsFor,
-        onCancel = { state.scene = null },
-        play = { cue, attackerBounds, defenderBounds ->
-            state.play(
-                geometry =
-                    weaponStrikeGeometry(
-                        attackerBounds = attackerBounds,
-                        target = defenderBounds.center,
-                        accentColor = CharacterClassType.Bard.toColor(),
-                        density = density,
-                    ),
-                normalRollMessageType = cue.normalRollMessageType,
-            )
-        },
-        modifier = modifier,
-        draw = { drawBardDrumStrike(state = state) },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val messageType = animatingMessage.normalRollMessageType
+
+        bardStrikeState.play(
+            geometry =
+            weaponStrikeGeometry(
+                attackerBounds = attackerBounds,
+                target = defenderBounds.center,
+                accentColor = accentColor,
+                density = density,
+            ),
+            normalRollMessageType = messageType,
+        )
+
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            ),
+        )
+    }
+
+    Canvas(modifier = modifier) { drawBardDrumStrike(state = bardStrikeState) }
 }
 
-/**
- * How long the Bard's snare strike runs, so the message sequencer holds the event until the drum
- * has popped in, been struck, rung out its sound and notes, and faded, instead of cutting it off.
- */
-internal fun bardNormalAttackDurationMillis(): Long =
-    BARD_STRIKE_CONTACT_MILLIS + MUSIC_NOTE_MILLIS.toLong() + DRUM_FADE_MILLIS.toLong()
-
-/**
- * The drum pops in, the stick drops in above it and settles, then drives down onto the head. At
- * contact the head dimples and springs back, sound rings ripple toward the opponent, and — only on
- * a hit — music notes rise off the drum. The whole kit fades once the sound has rung out.
- */
 internal suspend fun BardStrikeState.play(
     geometry: WeaponStrikeGeometry,
     normalRollMessageType: NormalRollMessageType,
@@ -196,7 +168,10 @@ internal suspend fun BardStrikeState.play(
             if (connects) {
                 notes.animateTo(
                     targetValue = 1f,
-                    animationSpec = tween(durationMillis = MUSIC_NOTE_MILLIS, easing = LinearEasing),
+                    animationSpec = tween(
+                        durationMillis = MUSIC_NOTE_MILLIS,
+                        easing = LinearEasing,
+                    ),
                 )
             }
         }
@@ -204,7 +179,7 @@ internal suspend fun BardStrikeState.play(
             stickSwing.animateTo(
                 targetValue = 0f,
                 animationSpec =
-                    tween(durationMillis = STICK_LIFT_MILLIS, easing = FastOutSlowInEasing),
+                tween(durationMillis = STICK_LIFT_MILLIS, easing = FastOutSlowInEasing),
             )
         }
     }
@@ -258,7 +233,7 @@ internal fun DrawScope.drawBardDrumStrike(state: BardStrikeState) {
         drawDrumstick(
             fulcrum = drumstickFulcrum(drumCenter = drumCenter),
             angleRadians =
-                drumstickAngle(swing = state.stickSwing.value, depress = state.headDepress.value),
+            drumstickAngle(swing = state.stickSwing.value, depress = state.headDepress.value),
             alpha = state.stickAlpha.value,
         )
     }
@@ -273,24 +248,26 @@ internal fun DrawScope.drawBardDrumStrike(state: BardStrikeState) {
     }
 }
 
-/** The stick's ready angle just below level, the strike angle that drops the bead onto the head. */
-private const val STICK_REST_ANGLE = 0.14f
-private const val STICK_STRIKE_ANGLE = 0.62f
+private fun DrawScope.drumstickFulcrum(drumCenter: Offset): Offset = drumCenter -
+    Offset(x = cos(x = STICK_STRIKE_ANGLE), y = sin(x = STICK_STRIKE_ANGLE)) *
+    drumstickLength.toPx()
 
-/** A touch more travel as the head gives under the bead, so the stick presses in with the dip. */
-private const val STICK_PRESS_ANGLE = 0.05f
+private fun drumstickAngle(swing: Float, depress: Float): Float = STICK_REST_ANGLE + (STICK_STRIKE_ANGLE - STICK_REST_ANGLE) * swing + depress * STICK_PRESS_ANGLE
 
-/** The grip sits up and back from the head so that at [STICK_STRIKE_ANGLE] the bead lands on it. */
-private fun DrawScope.drumstickFulcrum(drumCenter: Offset): Offset =
-    drumCenter -
-        Offset(x = cos(x = STICK_STRIKE_ANGLE), y = sin(x = STICK_STRIKE_ANGLE)) *
-            drumstickLength.toPx()
+@Stable
+internal class BardStrikeState {
+    val drumAlpha = Animatable(initialValue = 0f)
+    val drumScale = Animatable(initialValue = DRUM_POP_SCALE)
+    val stickAlpha = Animatable(initialValue = 0f)
+    val stickSwing = Animatable(initialValue = 0f)
+    val headDepress = Animatable(initialValue = 0f)
+    val waves = Animatable(initialValue = 0f)
+    val waveAlpha = Animatable(initialValue = 0f)
+    val notes = Animatable(initialValue = 0f)
 
-/**
- * The stick swings from its ready angle down to the strike, pressing a hair further as it lands.
- */
-private fun drumstickAngle(swing: Float, depress: Float): Float =
-    STICK_REST_ANGLE + (STICK_STRIKE_ANGLE - STICK_REST_ANGLE) * swing + depress * STICK_PRESS_ANGLE
+    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
+    var showNotes by mutableStateOf(value = false)
+}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -318,22 +295,28 @@ private fun BardNormalAttackArmorClassMissPreview() {
 
 @Composable
 private fun BardNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
-            CombatAnimationCue.NormalAttack(
-                id = "bard-attack-$iteration",
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Bard,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.NormalRoll.Attack(
+                id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Bard,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                animation = ArenaAnimationState.Avatar(),
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Bard, seats = seats) {
+        },
+    ) { message ->
         BardNormalAttackOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
+            accentColor = CharacterClassType.Bard.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

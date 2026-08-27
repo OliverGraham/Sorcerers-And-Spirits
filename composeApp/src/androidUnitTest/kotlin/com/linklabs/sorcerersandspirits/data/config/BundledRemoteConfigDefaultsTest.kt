@@ -3,10 +3,10 @@ package com.linklabs.sorcerersandspirits.data.config
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
+import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.serialization.json.Json
 
 /**
  * Guards the version-controlled bundled JSON (the in-app RemoteConfig default + Firebase-published
@@ -22,7 +22,7 @@ class BundledRemoteConfigDefaultsTest {
     fun `bundled character_class_stats JSON covers every playable class`() {
         val parsed =
             json.decodeFromString<Map<String, CharacterClassStatsEntity>>(
-                string = bundledClassStatsJson()
+                string = bundledClassStatsJson(),
             )
 
         val expectedTypeNames = CharacterClass.playableTypes().map { it.name }.toSet()
@@ -58,17 +58,13 @@ class BundledRemoteConfigDefaultsTest {
         )
     }
 
-    private fun bundledClassStatsJson(): String =
-        readBundledResource(fileName = "character_class_stats.json")
+    private fun bundledClassStatsJson(): String = readBundledResource(fileName = "character_class_stats.json")
 
-    private fun bundledAbilityConfigJson(): String =
-        readBundledResource(fileName = "ability_config.json")
+    private fun bundledAbilityConfigJson(): String = readBundledResource(fileName = "ability_config.json")
 
-    private fun bundledClassCopyJson(): String =
-        readBundledResource(fileName = "character_class_copy.json")
+    private fun bundledClassCopyJson(): String = readBundledResource(fileName = "character_class_copy.json")
 
-    private fun bundledTravelerNamesJson(): String =
-        readBundledResource(fileName = "random_traveler_names.json")
+    private fun bundledTravelerNamesJson(): String = readBundledResource(fileName = "random_traveler_names.json")
 
     private fun readBundledResource(fileName: String): String {
         val relativePath = "$BUNDLED_RESOURCE_DIR/$fileName"
@@ -76,7 +72,7 @@ class BundledRemoteConfigDefaultsTest {
             listOf(relativePath, "composeApp/$relativePath").map(::File).firstOrNull { it.exists() }
                 ?: error(
                     "Could not locate bundled $fileName from ${File(".").absolutePath}; " +
-                        "expected at $relativePath"
+                        "expected at $relativePath",
                 )
         return file.readText()
     }

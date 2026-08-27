@@ -15,22 +15,21 @@ internal class ConnectToArena(
     private val userId: String,
     private val displayName: String,
 ) {
-    suspend operator fun invoke(arenaReference: DatabaseReference): Boolean =
-        try {
-            val strategy =
-                nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
-            val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
+    suspend operator fun invoke(arenaReference: DatabaseReference): Boolean = try {
+        val strategy =
+            nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
+        val messagesReference = arenaReference.child(path = ArenaMatchEntity.newMessagesName)
 
-            arenaReference.runTransaction(strategy = strategy) { existingMatch ->
-                existingMatch.connectToArenaTransaction(messagesReference = messagesReference)
-            }
-            true
-        } catch (_: Exception) {
-            false
+        arenaReference.runTransaction(strategy = strategy) { existingMatch ->
+            existingMatch.connectToArenaTransaction(messagesReference = messagesReference)
         }
+        true
+    } catch (_: Exception) {
+        false
+    }
 
     private fun ArenaMatchEntity?.connectToArenaTransaction(
-        messagesReference: DatabaseReference
+        messagesReference: DatabaseReference,
     ): ArenaMatchEntity {
         val arenaMatchEntity = this ?: ArenaMatchEntity.WaitingForAllPlayers()
 
@@ -40,12 +39,13 @@ internal class ConnectToArena(
 
             is ArenaMatchEntity.ChoosingClasses,
             is ArenaMatchEntity.Combat,
-            is ArenaMatchEntity.Finished -> arenaMatchEntity
+            is ArenaMatchEntity.Finished,
+            -> arenaMatchEntity
         }
     }
 
     private fun ArenaMatchEntity.WaitingForAllPlayers.connectToArenaTransaction(
-        messagesReference: DatabaseReference
+        messagesReference: DatabaseReference,
     ): ArenaMatchEntity {
         val isAlreadyConnected = userId in playerEntitiesMap
         if (isAlreadyConnected) return this
@@ -55,22 +55,23 @@ internal class ConnectToArena(
             ArenaPlayerEntity.Unselected(displayName = displayName, userId = userId)
 
         val connectedMessage =
-            ArenaMessageEntity.ConnectedToArena(
-                id = messagesReference.addNewKey(),
-                displayName = displayName,
+            listOf(
+                element =
+                ArenaMessageEntity.ConnectedToArena(
+                    id = messagesReference.addNewKey(),
+                    displayName = displayName,
+                ),
             )
-        val updatedMessages =
-            newMessages.appendCapped(newMessages = listOf(element = connectedMessage))
 
         return if (updatedPlayers.size == expectedNumberOfPlayers) {
             ArenaMatchEntity.ChoosingClasses(
                 playerEntitiesMap = updatedPlayers,
                 activePlayerUserId = userId,
-                newMessages = updatedMessages,
+                newMessages = connectedMessage,
                 matchNumberInGauntlet = matchNumberInGauntlet,
             )
         } else {
-            copy(playerEntitiesMap = updatedPlayers, newMessages = updatedMessages)
+            copy(playerEntitiesMap = updatedPlayers, newMessages = connectedMessage)
         }
     }
 }

@@ -26,22 +26,23 @@ internal fun DrawScope.drawSummonPortal(
     open: Float,
     gray: Float,
     alpha: Float,
+    palette: ScythePalette,
 ) {
     if (open <= 0f || alpha <= 0f) return
 
     val discRadius = radius * open
-    val core = lerp(start = necroBladeCore, stop = portalGrayCore, fraction = gray)
-    val mid = lerp(start = necroGlowGreen, stop = portalGrayCore, fraction = gray)
-    val rim = lerp(start = necroSnathGreen, stop = portalGrayEdge, fraction = gray)
+    val core = lerp(start = palette.core, stop = portalGrayCore, fraction = gray)
+    val mid = lerp(start = palette.glow, stop = portalGrayCore, fraction = gray)
+    val rim = lerp(start = palette.snath, stop = portalGrayEdge, fraction = gray)
 
     scale(scaleX = 1f, scaleY = PORTAL_FLATTEN, pivot = center) {
         drawCircle(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(core, mid, rim, Color.Transparent),
-                    center = center,
-                    radius = discRadius,
-                ),
+            Brush.radialGradient(
+                colors = listOf(core, mid, rim, Color.Transparent),
+                center = center,
+                radius = discRadius,
+            ),
             radius = discRadius,
             center = center,
             alpha = alpha,
@@ -97,10 +98,10 @@ private fun DrawScope.drawMinionImage(
     drawImage(
         image = image,
         dstOffset =
-            IntOffset(
-                x = (footCenter.x - drawWidth / 2f).roundToInt(),
-                y = (footCenter.y - drawHeight).roundToInt(),
-            ),
+        IntOffset(
+            x = (footCenter.x - drawWidth / 2f).roundToInt(),
+            y = (footCenter.y - drawHeight).roundToInt(),
+        ),
         dstSize = IntSize(width = drawWidth.roundToInt(), height = drawHeight.roundToInt()),
         alpha = alpha,
     )

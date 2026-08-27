@@ -135,11 +135,11 @@ private fun DrawScope.drawShell(
     drawPath(
         path = shell,
         brush =
-            Brush.verticalGradient(
-                colors = listOf(bardShellLight, bardShellDark),
-                startY = topY,
-                endY = bottomY + bow,
-            ),
+        Brush.verticalGradient(
+            colors = listOf(bardShellLight, bardShellDark),
+            startY = topY,
+            endY = bottomY + bow,
+        ),
         alpha = alpha,
     )
     drawWoodGrain(center = center, radiusX = radiusX, topY = topY, bottomY = bottomY, alpha = alpha)
@@ -245,11 +245,11 @@ private fun DrawScope.drawBatterHead(
 
     drawOval(
         brush =
-            Brush.radialGradient(
-                colors = listOf(bardHeadWhite, bardHeadShade),
-                center = Offset(x = headCenter.x, y = headCenter.y - headHalfHeight * 0.4f),
-                radius = headRadiusX,
-            ),
+        Brush.radialGradient(
+            colors = listOf(bardHeadWhite, bardHeadShade),
+            center = Offset(x = headCenter.x, y = headCenter.y - headHalfHeight * 0.4f),
+            radius = headRadiusX,
+        ),
         topLeft = Offset(x = headCenter.x - headRadiusX, y = headCenter.y - headHalfHeight),
         size = Size(width = headRadiusX * 2f, height = headHalfHeight * 2f),
         alpha = alpha,
@@ -258,11 +258,11 @@ private fun DrawScope.drawBatterHead(
     if (depress > 0f) {
         drawOval(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(bardHeadShade, Color.Transparent),
-                    center = headCenter,
-                    radius = headRadiusX * 0.7f,
-                ),
+            Brush.radialGradient(
+                colors = listOf(bardHeadShade, Color.Transparent),
+                center = headCenter,
+                radius = headRadiusX * 0.7f,
+            ),
             topLeft = Offset(x = headCenter.x - headRadiusX, y = headCenter.y - headHalfHeight),
             size = Size(width = headRadiusX * 2f, height = headHalfHeight * 2f),
             alpha = alpha * depress * 0.7f,
@@ -301,11 +301,11 @@ internal fun DrawScope.drawDrumstick(fulcrum: Offset, angleRadians: Float, alpha
     drawPath(
         path = shaft,
         brush =
-            Brush.linearGradient(
-                colors = listOf(bardStickLight, bardStickDark),
-                start = bead,
-                end = butt,
-            ),
+        Brush.linearGradient(
+            colors = listOf(bardStickLight, bardStickDark),
+            start = bead,
+            end = butt,
+        ),
         alpha = alpha,
     )
     drawLine(
@@ -318,11 +318,11 @@ internal fun DrawScope.drawDrumstick(fulcrum: Offset, angleRadians: Float, alpha
     )
     drawCircle(
         brush =
-            Brush.radialGradient(
-                colors = listOf(bardStickLight, bardStickDark),
-                center = bead - perpendicular * 1.5.dp.toPx(),
-                radius = 5.dp.toPx(),
-            ),
+        Brush.radialGradient(
+            colors = listOf(bardStickLight, bardStickDark),
+            center = bead - perpendicular * 1.5.dp.toPx(),
+            radius = 5.dp.toPx(),
+        ),
         radius = 4.6.dp.toPx(),
         center = bead,
         alpha = alpha,
@@ -417,12 +417,11 @@ internal fun DrawScope.drawMusicNotes(anchor: Offset, progress: Float, color: Co
 }
 
 /** A note fades in as it leaves the head and fades back out as it climbs away. */
-private fun musicNoteFade(phase: Float): Float =
-    when {
-        phase < 0.2f -> phase / 0.2f
-        phase > 0.6f -> ((1f - phase) / 0.4f).coerceIn(minimumValue = 0f, maximumValue = 1f)
-        else -> 1f
-    }
+private fun musicNoteFade(phase: Float): Float = when {
+    phase < 0.2f -> phase / 0.2f
+    phase > 0.6f -> ((1f - phase) / 0.4f).coerceIn(minimumValue = 0f, maximumValue = 1f)
+    else -> 1f
+}
 
 /** One eighth note: a slanted filled head, a stem up its right side, and a small flag. */
 internal fun DrawScope.drawMusicNote(center: Offset, color: Color, alpha: Float) {

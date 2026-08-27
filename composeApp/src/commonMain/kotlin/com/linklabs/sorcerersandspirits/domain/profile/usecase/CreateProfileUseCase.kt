@@ -13,7 +13,7 @@ class CreateProfileUseCase(
         val userId = authenticationRepository.signInAnonymously() ?: return DisplayNameResult.ERROR
 
         return profileRepository.createProfile(
-            profile = Profile(userId = userId, displayName = displayName)
+            profile = Profile(userId = userId, displayName = displayName),
         )
     }
 }

@@ -134,15 +134,23 @@ spotless {
             mapOf(
                 "ktlint_standard_function-naming" to "disabled",
                 "ktlint_standard_comment-wrapping" to "disabled",
+
             ),
         )
-        ktfmt().kotlinlangStyle().configure { it.setMaxWidth(100) }
+        suppressLintsFor {
+            step = "ktlint"
+            shortCode = "standard:max-line-length"
+        }
         trimTrailingWhitespace()
         endWithNewline()
     }
 
     kotlinGradle {
         target("*.gradle.kts")
-        ktlint()
+        ktlint().editorConfigOverride(
+            mapOf(
+                "max_line_length" to "100",
+            ),
+        )
     }
 }

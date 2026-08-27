@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.sensor
 
 import com.linklabs.sorcerersandspirits.domain.sensor.ShakeDetector
-import kotlin.math.sqrt
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.channels.awaitClose
@@ -9,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import platform.CoreMotion.CMMotionManager
 import platform.Foundation.NSOperationQueue
+import kotlin.math.sqrt
 
 private const val SHAKE_G_FORCE_THRESHOLD = 1.2
 private const val SHAKE_DEBOUNCE_SECONDS = 0.08

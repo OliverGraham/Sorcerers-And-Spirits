@@ -19,10 +19,9 @@ class IosHaptics : Haptics {
 
     override fun stopContinuous() = Unit
 
-    private fun HapticStrength.toStyle(): UIImpactFeedbackStyle =
-        when (this) {
-            HapticStrength.LIGHT -> UIImpactFeedbackStyle.UIImpactFeedbackStyleLight
-            HapticStrength.MEDIUM -> UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium
-            HapticStrength.HEAVY -> UIImpactFeedbackStyle.UIImpactFeedbackStyleHeavy
-        }
+    private fun HapticStrength.toStyle(): UIImpactFeedbackStyle = when (this) {
+        HapticStrength.LIGHT -> UIImpactFeedbackStyle.UIImpactFeedbackStyleLight
+        HapticStrength.MEDIUM -> UIImpactFeedbackStyle.UIImpactFeedbackStyleMedium
+        HapticStrength.HEAVY -> UIImpactFeedbackStyle.UIImpactFeedbackStyleHeavy
+    }
 }

@@ -58,7 +58,7 @@ import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUs
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.AchievementsScreenViewModel
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel
@@ -67,8 +67,6 @@ import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.database.database
 import dev.gitlive.firebase.firestore.firestore
 import dev.gitlive.firebase.remoteconfig.remoteConfig
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -78,6 +76,8 @@ import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 val commonModule = module {
     includes(platformModule())

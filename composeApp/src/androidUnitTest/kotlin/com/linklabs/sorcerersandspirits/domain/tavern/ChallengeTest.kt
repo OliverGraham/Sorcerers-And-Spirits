@@ -37,12 +37,11 @@ class ChallengeTest {
         )
     }
 
-    private fun challenge(endTimeMillis: Long?): Challenge =
-        Challenge(
-            challengeId = "challenge-1",
-            challengers = emptyMap(),
-            endTimeMillis = endTimeMillis,
-        )
+    private fun challenge(endTimeMillis: Long?): Challenge = Challenge(
+        challengeId = "challenge-1",
+        challengers = emptyMap(),
+        endTimeMillis = endTimeMillis,
+    )
 
     private companion object {
         const val NOW = 1_000_000L

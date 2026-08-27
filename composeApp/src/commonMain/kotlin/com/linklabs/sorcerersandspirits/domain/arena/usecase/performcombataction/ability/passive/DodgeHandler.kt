@@ -25,10 +25,10 @@ internal class DodgeHandler(
 
         addMessage(
             message =
-                ArenaMessage.Dodge(
-                    didArmorIncrease = didArmorIncrease,
-                    dodgerUserId = defenderUserId,
-                )
+            ArenaMessage.Dodge(
+                didArmorIncrease = didArmorIncrease,
+                dodgerUserId = defenderUserId,
+            ),
         )
     }
 }

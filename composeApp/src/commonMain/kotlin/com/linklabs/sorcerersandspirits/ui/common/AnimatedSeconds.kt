@@ -27,14 +27,14 @@ internal fun AnimatedSeconds(
             scaleIn(
                 initialScale = ANIMATED_SECONDS_INITIAL_SCALE,
                 animationSpec =
-                    tween(
-                        durationMillis = ANIMATED_SECONDS_SCALE_IN_DURATION_MILLIS,
-                        delayMillis = ANIMATED_SECONDS_SCALE_IN_DELAY_MILLIS,
-                    ),
+                tween(
+                    durationMillis = ANIMATED_SECONDS_SCALE_IN_DURATION_MILLIS,
+                    delayMillis = ANIMATED_SECONDS_SCALE_IN_DELAY_MILLIS,
+                ),
             ) togetherWith
                 scaleOut(
                     animationSpec =
-                        tween(durationMillis = ANIMATED_SECONDS_SCALE_OUT_DURATION_MILLIS)
+                    tween(durationMillis = ANIMATED_SECONDS_SCALE_OUT_DURATION_MILLIS),
                 )
         },
         label = ANIMATED_SECONDS_LABEL,

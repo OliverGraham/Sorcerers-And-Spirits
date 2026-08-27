@@ -113,8 +113,9 @@ internal fun ProfileScreen(
     val uiState by viewModel.uiStateFlow.collectAsState()
     val linkResult by viewModel.linkResultFlow.collectAsState()
 
-    Scaffold(modifier = modifier, snackbarHost = { SnackbarHost(hostState = snackbarHostState) }) {
-        paddingValues ->
+    Scaffold(modifier = modifier, snackbarHost = {
+        SnackbarHost(hostState = snackbarHostState)
+    }) { paddingValues ->
         ProfileScreen(
             uiState = uiState,
             linkResult = linkResult,
@@ -326,11 +327,11 @@ private fun AchievementsCard(
             StatLabel(text = stringResource(resource = Res.string.profile_stats_achievements))
             Text(
                 text =
-                    stringResource(
-                        resource = Res.string.profile_stats_achievements_progress,
-                        unlocked,
-                        total,
-                    ),
+                stringResource(
+                    resource = Res.string.profile_stats_achievements_progress,
+                    unlocked,
+                    total,
+                ),
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
@@ -347,22 +348,22 @@ private fun OverallRecordCard(overall: GameStats, modifier: Modifier = Modifier)
             LabeledStat(
                 label = stringResource(resource = Res.string.profile_stats_matches),
                 value =
-                    stringResource(
-                        resource = Res.string.profile_stats_record,
-                        overall.matchesWon,
-                        overall.matchesLost,
-                        overall.matchesPlayed,
-                    ),
+                stringResource(
+                    resource = Res.string.profile_stats_record,
+                    overall.matchesWon,
+                    overall.matchesLost,
+                    overall.matchesPlayed,
+                ),
             )
             LabeledStat(
                 label = stringResource(resource = Res.string.profile_stats_gauntlets),
                 value =
-                    stringResource(
-                        resource = Res.string.profile_stats_record,
-                        overall.gauntletsWon,
-                        overall.gauntletsLost,
-                        overall.gauntletsPlayed,
-                    ),
+                stringResource(
+                    resource = Res.string.profile_stats_record,
+                    overall.gauntletsWon,
+                    overall.gauntletsLost,
+                    overall.gauntletsPlayed,
+                ),
             )
             LabeledStat(
                 label = stringResource(resource = Res.string.profile_stats_knockouts),
@@ -388,11 +389,11 @@ private fun PerClassCard(perClass: List<ClassStatsState>, modifier: Modifier = M
                 LabeledStat(
                     label = classStats.classType.name,
                     value =
-                        stringResource(
-                            resource = Res.string.profile_stats_class_record,
-                            classStats.stats.matchesWon,
-                            classStats.stats.gauntletsWon,
-                        ),
+                    stringResource(
+                        resource = Res.string.profile_stats_class_record,
+                        classStats.stats.matchesWon,
+                        classStats.stats.gauntletsWon,
+                    ),
                 )
             }
         }
@@ -433,25 +434,26 @@ private fun StatLabel(text: String) {
  * afterwards, so SUCCESS gets its own confirmation message. CANCELLED is the player's own choice.
  */
 @Composable
-private fun linkStatusMessage(result: LinkAccountResult?): String? =
-    when (result) {
-        LinkAccountResult.SUCCESS -> stringResource(resource = Res.string.link_account_success)
+private fun linkStatusMessage(result: LinkAccountResult?): String? = when (result) {
+    LinkAccountResult.SUCCESS -> stringResource(resource = Res.string.link_account_success)
 
-        LinkAccountResult.CREDENTIAL_IN_USE ->
-            stringResource(resource = Res.string.link_account_error_credential_in_use)
+    LinkAccountResult.CREDENTIAL_IN_USE ->
+        stringResource(resource = Res.string.link_account_error_credential_in_use)
 
-        LinkAccountResult.INVALID_CREDENTIAL ->
-            stringResource(resource = Res.string.link_account_error_invalid_credential)
+    LinkAccountResult.INVALID_CREDENTIAL ->
+        stringResource(resource = Res.string.link_account_error_invalid_credential)
 
-        LinkAccountResult.NOT_AVAILABLE ->
-            stringResource(resource = Res.string.link_account_error_unavailable)
+    LinkAccountResult.NOT_AVAILABLE ->
+        stringResource(resource = Res.string.link_account_error_unavailable)
 
-        LinkAccountResult.NO_CURRENT_USER,
-        LinkAccountResult.ERROR -> stringResource(resource = Res.string.link_account_error_generic)
+    LinkAccountResult.NO_CURRENT_USER,
+    LinkAccountResult.ERROR,
+    -> stringResource(resource = Res.string.link_account_error_generic)
 
-        LinkAccountResult.CANCELLED,
-        null -> null
-    }
+    LinkAccountResult.CANCELLED,
+    null,
+    -> null
+}
 
 @Composable
 private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
@@ -484,36 +486,36 @@ private fun ProfileScreenPreview() {
     SorcerersAndSpiritsTheme {
         ProfileScreen(
             uiState =
-                UiState.Loaded(
-                    data =
-                        ProfileState(
-                            displayName = "Gandalf",
-                            rating = 1_240L,
-                            overall =
-                                GameStats(
-                                    matchesPlayed = 40,
-                                    matchesWon = 22,
-                                    matchesLost = 18,
-                                    gauntletsPlayed = 12,
-                                    gauntletsWon = 7,
-                                    gauntletsLost = 5,
-                                    knockoutsDealt = 63,
-                                ),
-                            perClass =
-                                listOf(
-                                    ClassStatsState(
-                                        classType = CharacterClassType.Mage,
-                                        stats = GameStats(matchesWon = 14, gauntletsWon = 4),
-                                    ),
-                                    ClassStatsState(
-                                        classType = CharacterClassType.Paladin,
-                                        stats = GameStats(matchesWon = 8, gauntletsWon = 3),
-                                    ),
-                                ),
-                            achievementsUnlocked = 2,
-                            achievementsTotal = 4,
-                        )
+            UiState.Loaded(
+                data =
+                ProfileState(
+                    displayName = "Gandalf",
+                    rating = 1_240L,
+                    overall =
+                    GameStats(
+                        matchesPlayed = 40,
+                        matchesWon = 22,
+                        matchesLost = 18,
+                        gauntletsPlayed = 12,
+                        gauntletsWon = 7,
+                        gauntletsLost = 5,
+                        knockoutsDealt = 63,
+                    ),
+                    perClass =
+                    listOf(
+                        ClassStatsState(
+                            classType = CharacterClassType.Mage,
+                            stats = GameStats(matchesWon = 14, gauntletsWon = 4),
+                        ),
+                        ClassStatsState(
+                            classType = CharacterClassType.Paladin,
+                            stats = GameStats(matchesWon = 8, gauntletsWon = 3),
+                        ),
+                    ),
+                    achievementsUnlocked = 2,
+                    achievementsTotal = 4,
                 ),
+            ),
             linkResult = null,
             onUpdateDisplayName = {},
             onDeleteProfile = {},

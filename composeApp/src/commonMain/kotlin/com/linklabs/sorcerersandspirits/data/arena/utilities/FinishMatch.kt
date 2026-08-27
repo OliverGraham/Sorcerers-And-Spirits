@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
-import com.linklabs.sorcerersandspirits.data.arena.model.toParticipants
 import dev.gitlive.firebase.database.DatabaseReference
 
 internal class FinishMatch {
@@ -15,11 +14,11 @@ internal class FinishMatch {
         if (this !is ArenaMatchEntity.Combat) return this
         if (!isMatchOver) return this
 
+        // TODO: add messages?
         return ArenaMatchEntity.Finished(
-            newMessages = newMessages,
+            newMessages = emptyList(),
             playerEntitiesMap = playerEntitiesMap,
             matchNumberInGauntlet = matchNumberInGauntlet,
-            participants = participants.ifEmpty { playerEntitiesMap.toParticipants() },
         )
     }
 }

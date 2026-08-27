@@ -77,14 +77,14 @@ internal fun DiceBadgeOverlay(
     AnimatedContent(
         targetState = diceBadgeState,
         modifier =
-            modifier
-                .offset {
-                    IntOffset(
-                        x = (targetX - badgeSize.width / 2f).roundToInt(),
-                        y = (targetY - badgeSize.height / 2f).roundToInt(),
-                    )
-                }
-                .onGloballyPositioned { badgeSize = it.size },
+        modifier
+            .offset {
+                IntOffset(
+                    x = (targetX - badgeSize.width / 2f).roundToInt(),
+                    y = (targetY - badgeSize.height / 2f).roundToInt(),
+                )
+            }
+            .onGloballyPositioned { badgeSize = it.size },
     ) {
         if (diceBadgeState != null) {
             DiceChip(diceBadgeState = diceBadgeState)
@@ -100,11 +100,11 @@ private fun DiceChip(diceBadgeState: DiceBadgeState, modifier: Modifier = Modifi
 
     Box(
         modifier =
-            modifier
-                .badgeWobble()
-                .background(color = chipColor, shape = CircleShape)
-                .border(width = 1.5.dp, color = Color.White, shape = CircleShape)
-                .padding(horizontal = 10.dp, vertical = 3.dp)
+        modifier
+            .badgeWobble()
+            .background(color = chipColor, shape = CircleShape)
+            .border(width = 1.5.dp, color = Color.White, shape = CircleShape)
+            .padding(horizontal = 10.dp, vertical = 3.dp),
     ) {
         Text(text = label, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Black)
     }
@@ -144,12 +144,13 @@ private fun Modifier.badgeWobble(): Modifier {
     }
 }
 
-private fun wobbleSpec(periodMillis: Int) =
-    infiniteRepeatable<Float>(
-        animation = tween(durationMillis = periodMillis, easing = FastOutSlowInEasing),
-        repeatMode = RepeatMode.Reverse,
-    )
+private fun wobbleSpec(periodMillis: Int) = infiniteRepeatable<Float>(
+    animation = tween(durationMillis = periodMillis, easing = FastOutSlowInEasing),
+    repeatMode = RepeatMode.Reverse,
+)
 
-@Preview @Composable private fun DiceModifierChipDoublesPreview() {}
+@Preview @Composable
+private fun DiceModifierChipDoublesPreview() {}
 
-@Preview @Composable private fun DiceModifierChipMirrorPreview() {}
+@Preview @Composable
+private fun DiceModifierChipMirrorPreview() {}

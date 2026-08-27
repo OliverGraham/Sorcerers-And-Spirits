@@ -32,28 +32,26 @@ internal fun CharacterClassEntity.resetForNewMatch(): CharacterClassEntity {
     )
 }
 
-internal fun CharacterClassEntity.toDomain(): CharacterClass =
-    CharacterClass(
-        type = type,
-        hitPoints = hitPoints,
-        maxHitPoints = maxHitPoints,
-        armorClass = armorClass,
-        speed = speed,
-        offensiveAbility = offensiveAbility.toDomain(),
-        defensiveAbility = defensiveAbility.toDomain(),
-        hasActedThisRound = hasActedThisRound,
-        attacksRemaining = attacksRemaining,
-    )
+internal fun CharacterClassEntity.toDomain(): CharacterClass = CharacterClass(
+    type = type,
+    hitPoints = hitPoints,
+    maxHitPoints = maxHitPoints,
+    armorClass = armorClass,
+    speed = speed,
+    offensiveAbility = offensiveAbility.toDomain(),
+    defensiveAbility = defensiveAbility.toDomain(),
+    hasActedThisRound = hasActedThisRound,
+    attacksRemaining = attacksRemaining,
+)
 
-internal fun CharacterClass.toEntity(): CharacterClassEntity =
-    CharacterClassEntity(
-        type = type,
-        hitPoints = hitPoints,
-        maxHitPoints = maxHitPoints,
-        armorClass = armorClass,
-        speed = speed,
-        offensiveAbility = offensiveAbility.toEntity(),
-        defensiveAbility = defensiveAbility.toEntity(),
-        hasActedThisRound = hasActedThisRound,
-        attacksRemaining = attacksRemaining,
-    )
+internal fun CharacterClass.toEntity(): CharacterClassEntity = CharacterClassEntity(
+    type = type,
+    hitPoints = hitPoints,
+    maxHitPoints = maxHitPoints,
+    armorClass = armorClass,
+    speed = speed,
+    offensiveAbility = offensiveAbility.toEntity(),
+    defensiveAbility = defensiveAbility.toEntity(),
+    hasActedThisRound = hasActedThisRound,
+    attacksRemaining = attacksRemaining,
+)

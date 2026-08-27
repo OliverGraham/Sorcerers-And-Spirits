@@ -17,29 +17,130 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
-### SS-256 — Rearchitect combat animation gating around a ViewModel-owned playback queue
+### SS-257 — Move combat button/control state into the ViewModel; consolidate the control + argument types
 
 - [ ] Not completed
-- **Goal:** Fix the high-priority bug where the CombatButtons disappear permanently mid-match (game
-  becomes unplayable), and prevent the whole class of bug by moving animation gating off the
-  composables into a single, serialized, bounded queue in the ViewModel.
-- **Root cause (the real one):** the arena message log is a rolling 30-message window
-  (`appendCapped` / `MAX_RETAINED_MESSAGES` in `data/arena/utilities/Common.kt`), and every update
-  reports `numberOfNewMessages`. Both the old in-composable sequencer and the first cut of the VM
-  sequencer computed fresh work with `messages.drop(playedCount)`, which only holds while the log
-  grows. Once a match passes 30 messages (repeated Summon Minion reaches it quickly) the drop stops
-  lining up with what is actually new, playback desyncs, and the controls disappear. Moving the loop
-  to the ViewModel did not fix this — the windowing mismatch was the bug the whole time.
-- **Fix:** `CombatPlaybackSequencer` (`ui/screens/arena/playback/`) runs one bounded drain coroutine
-  in `viewModelScope` and now derives fresh steps from `numberOfNewMessages`
-  (`messages.takeLast(numberOfNewMessages)`), so windowing no longer desyncs it; every wait is
-  bounded with a crash-recovery path so the controls can't be left hidden. The UI keeps its
-  `rememberHeldDuringSequence` seating/stats rendering, gated on `ArenaScreenState.isPlayingBack`.
-- **Remaining (owner to build the real thing):** replace the mechanical port with a plain queue of
-  already-built animation steps that a single consumer polls off one at a time — no `emit`/`compose`
-  indirection, no held-state gymnastics. Also drop the `ArenaScreenState` playback default args,
-  unify the two "last roll" trackers (`CombatPlaybackSequencer.lastDiceRoll` vs the UI's
-  `CommitDiceRolls.lastRoll`), and close the CONFLATED `diceSettled` stale-signal race.
+- **Problem:** Combat button *view* state is computed inside composables instead of the VM, and the
+  control/argument types are tangled. TODOs tagged `SS-257`.
+- **Move to VM (`ArenaMatchState.Combat` / VM mapping), out of composables:**
+    - `CombatButtons.kt` — the whole button-visibility/enablement derivation, incl. the teleport
+      per-user roll-suppression latch (`hasReachedTeleportRollBeat`); a user must not be able to roll
+      twice for a roll-off. (`// TODO: Move state to view model layer`, teleport note.)
+- **Consolidate types (they overlap and confuse):** `ArenaCombatControl`, `CombatButtons`,
+  `AttackArguments`, `CombatActionArguments`/`UseAbilityArguments`, and the two
+  `*.toDomain()` `when`s in `CombatActionState.kt` (likely collapsible to one). `CombatControlActions`
+  suggests `ArenaCombatControl` may be removable entirely.
+- **Sources:** `model/ArenaCombatControl.kt`, `ui/CombatControlActions.kt`,
+  `ui/combat/CombatButtons.kt`, `viewmodel/handlers/CombatHandler.kt`, `model/CombatActionState.kt`.
+- **Related:** SS-029 is the sibling piece (move combat-action *availability* derivation
+  `deriveCombatControls` into the domain + string resources). Do them together.
+  [[derived-ui-state-in-state-model]].
+
+### SS-258 — Refactor CombatAnimationCue + AvatarGesture (build gestures at map time, split files, dedupe shared gestures)
+
+- [ ] Not completed
+- **Core idea:** gestures are known at VM/message-mapping time (top & bottom seats are known) — build
+  them into the message instead of querying from the composable. TODOs tagged `SS-258`.
+- **Do:**
+    - Compute the per-message `gestures` map when mapping `ArenaMessage → ArenaMessageState`, not in
+      `CombatAvatarGesture`/composables. (`ArenaMessageState.gestures` TODO;
+      `CombatAvatarGesture.rememberAvatarGesture` "determined at VM mapping time".)
+    - Split `CombatAvatarGesture.kt` into a package: a shared/utilities file + per-class files. The
+      bare `// TODO(SS-258): Common` / `Duelist` markers in `CombatAvatarGesture.kt` and
+      `AvatarGesture.kt` tag which gestures are shared vs class-specific — dedupe the shared ones.
+    - Rename misleading APIs: `rememberAvatarGesture` also *plays* the animation (should just
+      remember); rename `AvatarGestureState` → `AvatarGestureStateHolder`; continue the
+      `CombatAnimationCue` rename/move started in `CombatAvatars.kt`; clarify the confusing
+      `userPlayerId` pass-through there.
+    - Fill the missing/uncertain cue→overlay branches in `animation/common/CombatAnimationOverlays.kt`
+      (KillingMomentum, Dodge, the "Where is it?" / "should never happen" cases).
+    - Consider collapsing `ArenaAnimationState` to a plain enum if it now carries no data.
+- **Sources:** `ui/combat/CombatAvatarGesture.kt`, `ui/combat/CombatAvatars.kt`,
+  `model/AvatarGesture.kt`, `model/ArenaAnimationState.kt`,
+  `animation/common/AvatarGestureState.kt`, `animation/common/CombatAnimationOverlays.kt`,
+  `model/ArenaMessageState.kt`. [[sequence-animations-from-domain-data]], [[file-size-and-organization]].
+
+### SS-259 — Message pipeline: move UI-computed message values + grouping into the domain (display-ready)
+
+- [ ] Not completed
+- **Rule:** the domain provides display-ready values; the UI must not re-derive them
+  ([[message-pipeline-layering]], [[domain-provides-display-ready-values]]). TODOs tagged `SS-259`.
+- **Do:**
+    - `SummonMinionOutcome` / `AllInOutcome` are recomputed from the single die in
+      `ArenaMessageState.kt` (`summonMinionOutcomeFor` / `allInOutcomeFor`) — move these back to the
+      domain and pass them through on the message.
+    - Message *grouping* (`ArenaMessageGroupState.appendNewMessages` "not-combat" vs
+      `addNewMessageDuringCombat` "combat-only", + the Setup handling) belongs in a domain MessageLog,
+      not two ugly UI functions.
+    - Dedupe `CharacterClassMessageInfoState` vs `ParticipantClass` (same shape) in
+      `ArenaMessageState.kt`.
+    - Rename the domain `NormalRoll` outcome type → `NormalRollOutcomeType` (`domain/.../ArenaMessage.kt`).
+- **Sources:** `model/ArenaMessageState.kt`, `model/ArenaMessageGroupState.kt`,
+  `domain/arena/model/ArenaMessage.kt`.
+
+### SS-260 — Extract ArenaScreenViewModel responsibilities into handlers; tidy the combat-update flow
+
+- [ ] Not completed
+- **Do (TODOs tagged `SS-260`):**
+    - Pull `sessionStats` (`ArenaSessionStats`) into its own handler and refactor
+      `ArenaSessionStats.kt` ("refactor all this").
+    - Pull all timer operations (the `Timer` wiring + tick/expire callbacks) into a timer handler.
+    - `updateCombatState`: confirm `selectedOpponentUserId` is carried correctly across a combat
+      update (`// TODO: Correct?`); consider passing the resolved `arenaMatchState` into
+      `notifyDepartedOpponents` during a branching update.
+    - `handleScreenStateUpdateError`: decide mid-match error behavior (currently: show error + leave).
+- **Sources:** `viewmodel/ArenaScreenViewModel.kt`, `ArenaSessionStats.kt`.
+
+### SS-261 — ArenaScreenStateUpdate finished-transition gaps
+
+- [ ] Not completed
+- **Gaps (TODOs tagged `SS-261`, all in `model/ArenaScreenStateUpdate.kt`):**
+    - `transitionCombatToFinished` uses `MATCH_FINISHED_TIMER_DURATION_SECONDS` unconditionally —
+      the final match of a Gauntlet should use a GAUNTLET_FINISHED duration. Distinguish them.
+    - `transitionChoosingClassesToFinished` fires when someone leaves *during class selection* —
+      decide whether that should kick everyone out.
+    - `handleImpossibleScreenUpdate` is a no-op for ArenaMatch/ArenaScreenState combos that should
+      never occur — decide the real error behavior.
+
+### SS-262 — Illusionist Impersonate: accent color + dice flow for copied abilities
+
+- [ ] Not completed
+- **Do (TODOs tagged `SS-262`):**
+    - When the Illusionist impersonates an ability, overlays use the *acted class's* color; the accent
+      should be the **Illusionist's** color instead (`gambler/GamblerAllIn.kt` accentColor default is
+      the tell — every borrowed ability overlay has the same issue).
+    - Verify the dice-kickoff path in `DiceStateHolder.kt` works for Impersonate (and other
+      dice-consuming abilities). [[illusionist-borrows-weapons]], [[dice-roll-must-be-roll-bearing]].
+
+### SS-263 — Duelist Riposte animation visual polish
+
+- [ ] Not completed
+- **Goal:** the Riposte animation "needs some work, visually" — polish pass on the reversal overlay.
+- **Source:** `animation/duelist/DuelistRiposte.kt`. Parent: SS-191. Domain Riposte work is done
+  (SS-165, SS-216); this is the animation-only follow-up. Ship interactive previews
+  ([[combat-animation-previews]]).
+
+### SS-265 — SpellPotency: possible accent/color palette update when impersonated
+
+- [ ] Not completed
+- **Goal:** SpellPotency's overlay tints from a random *elemental* palette (`element.palette().glow`
+  in `animation/mage/MageSpellPotency.kt`), not the acting class color, so the borrowed-ability
+  accent fix (SS-262) does not touch it. Decide whether an impersonating Illusionist should get a
+  distinct palette (e.g. Illusionist-blue elemental variant) instead of the standard Mage elements.
+- **Source:** `animation/mage/MageSpellPotency.kt` (`mageElementFor`, `MageSpellElement.palette()`).
+  The actor's real class is now available on the message via `actingClassType` (SS-262). Related:
+  SS-262, [[illusionist-borrows-weapons]]. Ship interactive previews ([[combat-animation-previews]]).
+
+### SS-266 — SummonMinion: Illusionist portal should be illusionist blue, not green
+
+- [ ] Not completed
+- **Goal:** When the Illusionist impersonates Summon Minion, the summoning portal should render in
+  Illusionist blue rather than the Necromancer green. Currently the portal color is baked to the
+  necromancer palette regardless of the actor.
+- **Source:** `animation/necromancer/NecromancerSummonMinion.kt` (`summonMinionScene` / portal
+  draw). The actor's real class is available on the message via `actingClassType` (SS-262); thread a
+  portal color off it (necro green vs illusionist blue). Related: SS-262,
+  [[illusionist-borrows-weapons]]. Ship interactive previews ([[combat-animation-previews]]).
 
 ### SS-185 — Pare back which messages flash
 
@@ -378,6 +479,30 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `bard/BardLute.kt` / `bardUserId` plumbing (SS-207).
 - **Related:** SS-207 (Persuade animation), game rule: Persuade redirect needs ≥2 alive non-Bard
   players.
+
+### SS-267 — Combat queue can hang when a gesture participant isn't a seated avatar (SpellPotency splash targets)
+
+- [ ] Not completed
+- **Introduced by:** the keyed animation-completion rework in `ArenaMatchCombatQueue`
+  (`MessageAnimationCoordinator`). Each message's expected-animator set is seeded up front from the
+  message: `AnimationKey.FlashMessage`, `AnimationKey.AvatarOverlay`, and one
+  `AnimationKey.AvatarGesture(userId)` per entry in `gestures.keys`. The coordinator only resolves
+  once **every** expected key has reported via `onAnimationComplete`.
+- **Symptom / hazard:** a gesture is only reported by a mounted, seated `GestureClassAvatar` (top =
+  targeted seat, bottom = attacker seat). If a message's `gestures` map names a userId that is **not**
+  seated — rendered only in the stands (`ClassIcons`), or otherwise not composing a
+  `GestureClassAvatar` — that `AvatarGesture(userId)` key is never reported, the coordinator's
+  `completion` never completes, `await()` blocks forever, and the queue stalls. That's the same
+  end-state SS-256 fought (combat controls never return, match becomes unplayable).
+- **Identified case:** SpellPotency. Its `gestures` map carries the mage (`Cast`) and the main target
+  (`Collapse`/`FlinchHeavy`). Confirm whether the main target (and any secondary/splash target that
+  ever receives a gesture) is guaranteed to be one of the two on-screen seats; splash victims live in
+  the stands and must never end up as an expected gesture key while unseated.
+- **Fix direction:** restrict the expected-animator set to participants that will actually mount and
+  report (only the seated attacker/target), or give the coordinator a bounded fallback so an
+  unreported animator can't hang the whole queue. Decide which in `getExpectedAnimationKeys`.
+- **Related:** SS-256 (the queue/gating rearchitecture this rides on), [[never-drain-loop-combat-queue]],
+  [[combat-queue-signal-reentrancy]], [[combat-button-visibility-isanimating]].
 
 ## Profile & Auth
 
@@ -753,6 +878,37 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Note:** this is the larger, speculative piece — don't build it until population actually
   warrants
   it. SS-125 is expected to carry the load until then.
+
+### SS-264 — Aborting the "mark traveler busy" transaction crashes the app instead of surfacing a retryable error
+
+- [ ] Not completed
+- **Severity:** High — an app crash is never acceptable. Intermittent (does not reproduce every
+  time), but reproducible enough to have been seen in the wild.
+- **Symptom / crash:**
+  `com.google.firebase.database.DatabaseException: Firebase Database error: User code called from the
+  Firebase Database runloop threw an exception:
+  com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource$AbortTransactionException`,
+  originating at `FirebaseTavernDataSource.markTravelerBusyIfAvailable` (the `traveler ?: throw
+  AbortTransactionException()` / status-not-Available abort path).
+- **Root cause:** `markTravelerBusyIfAvailable` aborts the transaction by *throwing* an exception
+  from inside the `runTransaction` lambda. Although the call site wraps `runTransaction` in a
+  `try/catch (_: AbortTransactionException)`, the throw happens on Firebase's own runloop thread; the
+  Android SDK catches user-code exceptions there, re-wraps them as a `DatabaseException`, and
+  rethrows on that thread — so it never reaches our `catch` and crashes the process as an uncaught
+  exception. Throwing to abort is fundamentally unsafe with this SDK.
+- **Fix direction:**
+    - Stop using an exception to model "don't write". Abort by returning the value unchanged (a
+      no-op write) or via whatever non-throwing abort the gitlive wrapper exposes, and detect the
+      "was I the one who claimed it" result by re-reading committed state / the transaction result
+      rather than by catching a throw. `markTravelerBusyIfAvailable` should still return `false` when
+      the traveler is missing or already busy — just without ever throwing across the runloop.
+    - Audit the sibling transactions in the same file (`upsertTravelerPresence`,
+      `setTravelerStatusIfPresent`, `releaseTravelerIfBusy`) and any other `runTransaction` usage
+      (e.g. arena transactions) for the same throw-to-abort pattern and apply the same treatment.
+- **UX requirement:** when claiming a traveler genuinely fails (already busy, transient DB error),
+  the caller must land in a recoverable UI error state with a retry affordance — never a crash and
+  never a silent dead-end. Thread the failure up from the data source through the tavern domain/VM to
+  a surfaced, retryable error.
 
 ---
 

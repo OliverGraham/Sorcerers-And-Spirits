@@ -34,18 +34,15 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toAvatarResource
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -72,24 +69,16 @@ private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
 private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 
-/**
- * The two combatants as full-size avatars stacked vertically with the resting [DiceHomeSlot]
- * between them (SS-157). Either seat is empty when it has no combatant so the dice stay centered.
- * The seats are assigned by identity — the user's player always sits at the bottom (SS-181) — and
- * the [ActivePlayerHalo] marks whoever is rolling, so the seats themselves carry no meaning.
- *
- * Each seat reports its measured bounds up through [onAvatarBoundsChanged], feeding the
- * CombatAnimationOverlays that host the weapon and ability effects above the seating transition
- * (SS-192, SS-203).
- */
+// TODO(SS-258): Continue renaming, refactoring CombatAnimationCue. Move things into separate files
+// and such
 @Composable
 internal fun CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
     bottomPlayer: PlayerState.Selected?,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     userPlayerId: String,
     activeUserIds: Set<String>,
-    turnOwnerUserId: String,
+    attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
@@ -98,11 +87,11 @@ internal fun CombatAvatarColumn(
     Column(modifier = modifier.fillMaxSize()) {
         SeatedAvatar(
             player = topPlayer,
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             isTopSeat = true,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
-            turnOwnerUserId = turnOwnerUserId,
+            attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
         )
@@ -111,41 +100,46 @@ internal fun CombatAvatarColumn(
 
         SeatedAvatar(
             player = bottomPlayer,
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             isTopSeat = false,
             userPlayerId = userPlayerId,
             activeUserIds = activeUserIds,
-            turnOwnerUserId = turnOwnerUserId,
+            attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
         )
     }
 }
 
+// TODO(SS-258): Refactor data that's passed in. Confusing the pass in userPlayerId for the purpose
+// its used
+// for
 @Composable
 private fun ColumnScope.SeatedAvatar(
     player: PlayerState.Selected?,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
     userPlayerId: String,
     activeUserIds: Set<String>,
-    turnOwnerUserId: String,
+    attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
 ) {
     if (player != null) {
         LargeAvatar(
             player = player,
-            animationCue = animationCue,
+            animatingMessage = animatingMessage,
             isTopSeat = isTopSeat,
             isUserPlayer = player.userId == userPlayerId,
             isActiveRoller = player.userId in activeUserIds,
-            isTurnOwner = player.userId == turnOwnerUserId,
+            isAttacker = player.userId == attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
         )
     } else {
+        // TODO(SS-234): If the player is null, then show the not-yet-created "Choose your target"
+        // avatar
         Spacer(modifier = Modifier.weight(weight = 1f))
     }
 }
@@ -154,32 +148,24 @@ private fun ColumnScope.SeatedAvatar(
 private fun DiceHomeSlot(onBoundsChanged: (Rect) -> Unit, modifier: Modifier = Modifier) {
     Box(
         modifier =
-            modifier.fillMaxWidth().height(height = 56.dp).onGloballyPositioned {
-                onBoundsChanged(it.boundsInRoot())
-            }
+        modifier.fillMaxWidth().height(height = 56.dp).onGloballyPositioned {
+            onBoundsChanged(it.boundsInRoot())
+        },
     )
 }
 
 @Composable
 private fun LargeAvatar(
     player: PlayerState.Selected,
-    animationCue: CombatAnimationCue?,
+    animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
     isUserPlayer: Boolean,
     isActiveRoller: Boolean,
-    isTurnOwner: Boolean,
+    isAttacker: Boolean,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val classColor = player.characterClass.type.toColor()
-    val gestureState =
-        rememberAvatarGesture(
-            animationCue = animationCue,
-            userId = player.userId,
-            isTopSeat = isTopSeat,
-        )
-
     Row(
         modifier = modifier.clickable { onInspect(player.userId) },
         verticalAlignment = Alignment.CenterVertically,
@@ -187,16 +173,16 @@ private fun LargeAvatar(
         AvatarStatsBar(
             characterClass = player.characterClass,
             isUserPlayer = isUserPlayer,
-            isTurnOwner = isTurnOwner,
-            classColor = classColor,
+            isAttacker = isAttacker,
+            classColor = player.characterClass.type.toColor(),
             modifier = Modifier.sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
         )
 
         Box(
             modifier =
-                Modifier.weight(weight = 1f).fillMaxWidth().onGloballyPositioned {
-                    onAvatarBoundsChanged(player.userId, it.boundsInRoot())
-                },
+            Modifier.weight(weight = 1f).fillMaxWidth().onGloballyPositioned {
+                onAvatarBoundsChanged(player.userId, it.boundsInRoot())
+            },
             contentAlignment = Alignment.BottomCenter,
         ) {
             if (isActiveRoller) {
@@ -204,25 +190,21 @@ private fun LargeAvatar(
             }
 
             GestureClassAvatar(
+                animatingMessage = animatingMessage,
                 characterClass = player.characterClass,
-                gestureState = gestureState,
+                userId = player.userId,
+                isTopSeat = isTopSeat,
                 modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
             )
         }
     }
 }
 
-/**
- * The Speed / Armor / Hit-points pills shown beside an avatar, mirroring the inspect drawer's stat
- * markers (SS-157). The local player's identity marker sits atop the pills so the column reads as
- * "you", with each pill stacked vertically down the side of the avatar. An attacks-remaining pill
- * joins them only while this avatar's player owns the turn (SS-200).
- */
 @Composable
 private fun AvatarStatsBar(
     characterClass: CharacterClassState,
     isUserPlayer: Boolean,
-    isTurnOwner: Boolean,
+    isAttacker: Boolean,
     classColor: Color,
     modifier: Modifier = Modifier,
 ) {
@@ -251,7 +233,7 @@ private fun AvatarStatsBar(
             classColor = classColor,
         )
 
-        AnimatedVisibility(visible = isTurnOwner) {
+        AnimatedVisibility(visible = isAttacker) {
             AttacksStatPill(count = characterClass.attacksRemaining, classColor = classColor)
         }
     }
@@ -269,11 +251,6 @@ private fun StatPill(
     }
 }
 
-/**
- * The turn owner's attacks-remaining pill, shown only while it is their turn. The number swaps with
- * an [AnimatedContent] so a Necromancer's follow-ups tick down (or a fresh count fades in) rather
- * than snapping.
- */
 @Composable
 private fun AttacksStatPill(count: Int, classColor: Color, modifier: Modifier = Modifier) {
     StatPillFrame(
@@ -296,10 +273,10 @@ private fun StatPillFrame(
 ) {
     Row(
         modifier =
-            modifier
-                .clip(shape = statPillShape)
-                .background(color = classColor)
-                .padding(horizontal = 6.dp, vertical = 4.dp),
+        modifier
+            .clip(shape = statPillShape)
+            .background(color = classColor)
+            .padding(horizontal = 6.dp, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -322,12 +299,6 @@ private fun StatPillValue(value: String) {
     )
 }
 
-/**
- * The glowing oval the active roller stands on (SS-157): the attacker, a defender mid-defensive
- * ability, or both combatants during a Teleport roll-off. Seated at the bottom of the avatar box so
- * the bottom-aligned art's feet rest on it. Drawn behind the art so the transparent base reads as a
- * halo on the ground.
- */
 @Composable
 private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
     val sweep = rememberInfiniteTransition(label = HALO_SWEEP_LABEL)
@@ -336,44 +307,27 @@ private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
             initialValue = 0f,
             targetValue = HALO_SWEEP_WIDTH_PX,
             animationSpec =
-                infiniteRepeatable(
-                    animation =
-                        tween(durationMillis = HALO_SWEEP_DURATION_MILLIS, easing = LinearEasing),
-                    repeatMode = RepeatMode.Restart,
-                ),
+            infiniteRepeatable(
+                animation =
+                tween(durationMillis = HALO_SWEEP_DURATION_MILLIS, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
             label = HALO_SWEEP_TRANSLATE_LABEL,
         )
 
     Box(
         modifier =
-            modifier
-                .size(width = haloWidth, height = haloHeight)
-                .clip(shape = haloShape)
-                .background(
-                    brush =
-                        Brush.linearGradient(
-                            colors = haloSweepColors,
-                            start = Offset(x = translate, y = 0f),
-                            end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
-                            tileMode = TileMode.Repeated,
-                        )
-                )
-    )
-}
-
-@Composable
-internal fun ClassAvatar(
-    characterClass: CharacterClassState,
-    modifier: Modifier = Modifier,
-    alignment: Alignment = Alignment.Center,
-    colorFilter: ColorFilter? = null,
-) {
-    Image(
-        painter = painterResource(resource = characterClass.type.toAvatarResource()),
-        contentDescription = characterClass.className,
-        contentScale = ContentScale.Fit,
-        alignment = alignment,
-        colorFilter = colorFilter,
-        modifier = modifier,
+        modifier
+            .size(width = haloWidth, height = haloHeight)
+            .clip(shape = haloShape)
+            .background(
+                brush =
+                Brush.linearGradient(
+                    colors = haloSweepColors,
+                    start = Offset(x = translate, y = 0f),
+                    end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
+                    tileMode = TileMode.Repeated,
+                ),
+            ),
     )
 }

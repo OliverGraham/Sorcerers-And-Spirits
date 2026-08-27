@@ -18,10 +18,10 @@ internal class RiposteHandler(
     private fun CombatMutator.triggerRiposte() {
         addMessage(
             message =
-                ArenaMessage.Riposte.Trigger(
-                    duelistUserId = defenderUserId,
-                    attackerUserId = attackerUserId,
-                )
+            ArenaMessage.Riposte.Trigger(
+                duelistUserId = defenderUserId,
+                attackerUserId = attackerUserId,
+            ),
         )
 
         setNextAbilityRoll(
@@ -45,18 +45,18 @@ internal class RiposteHandler(
 
         addMessage(
             message =
-                ArenaMessage.Riposte.EnGarde(
-                    duelistUserId = defenderUserId,
-                    attackerUserId = attackerUserId,
-                    firstDie = result.firstDie,
-                    secondDie = result.secondDie,
-                    isSuccessful = isSuccessful,
-                )
+            ArenaMessage.Riposte.EnGarde(
+                duelistUserId = defenderUserId,
+                attackerUserId = attackerUserId,
+                firstDie = result.firstDie,
+                secondDie = result.secondDie,
+                isSuccessful = isSuccessful,
+            ),
         )
 
         if (isSuccessful) {
             if (result.isDoubles) {
-                addMessage(message = ArenaMessage.Doubles(userId = defenderUserId))
+                addMessage(message = ArenaMessage.Doubles(className = defender.className))
             }
             handleSuccess()
         } else {
@@ -68,16 +68,16 @@ internal class RiposteHandler(
     private fun CombatMutator.handleSuccess() {
         setNextCombatAction(
             nextAction =
-                NextCombatAction.NormalAttack(
-                    roll = NormalAttackType.ArmorClass,
-                    attackTurn =
-                        AttackTurn.RiposteReversal(
-                            attackerUserId = defenderUserId,
-                            turnOwnerUserId = originalTurnUserId,
-                        ),
-                    defenderUserId = attackerUserId,
-                    activeUserIds = setOf(element = defenderUserId),
-                )
+            NextCombatAction.NormalAttack(
+                roll = NormalAttackType.ArmorClass,
+                attackTurn =
+                AttackTurn.RiposteReversal(
+                    attackerUserId = defenderUserId,
+                    turnOwnerUserId = originalTurnUserId,
+                ),
+                defenderUserId = attackerUserId,
+                activeUserIds = setOf(element = defenderUserId),
+            ),
         )
     }
 }

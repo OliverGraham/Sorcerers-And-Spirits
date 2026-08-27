@@ -34,8 +34,8 @@ internal fun CharacterClassState.toRulesState(copy: CharacterClassCopy): ClassRu
         armorClass = armorClass,
         speed = speed,
         offensiveAbility =
-            AbilityRulesState(name = offensiveCopy.name, description = offensiveCopy.long),
+        AbilityRulesState(name = offensiveCopy.name, description = offensiveCopy.long),
         defensiveAbility =
-            AbilityRulesState(name = defensiveCopy.name, description = defensiveCopy.long),
+        AbilityRulesState(name = defensiveCopy.name, description = defensiveCopy.long),
     )
 }

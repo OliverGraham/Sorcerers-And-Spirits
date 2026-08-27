@@ -65,10 +65,10 @@ class CharacterClassTakeDamageTest {
             TestCharacterClasses.illusionist()
                 .copy(
                     offensiveAbility =
-                        OffensiveAbility.Impersonate(
-                            impersonatedAbility =
-                                OffensiveAbility.SummonMinion(skeletonCount = 1, golemCount = 1)
-                        )
+                    OffensiveAbility.Impersonate(
+                        impersonatedAbility =
+                        OffensiveAbility.SummonMinion(skeletonCount = 1, golemCount = 1),
+                    ),
                 )
 
         val damaged = illusionist.takeDamage(damage = 2)
@@ -83,13 +83,12 @@ class CharacterClassTakeDamageTest {
     private fun necromancerWithMinions(
         skeletonCount: Int = 0,
         golemCount: Int = 0,
-    ): CharacterClass =
-        TestCharacterClasses.necromancer()
-            .copy(
-                offensiveAbility =
-                    OffensiveAbility.SummonMinion(
-                        skeletonCount = skeletonCount,
-                        golemCount = golemCount,
-                    )
-            )
+    ): CharacterClass = TestCharacterClasses.necromancer()
+        .copy(
+            offensiveAbility =
+            OffensiveAbility.SummonMinion(
+                skeletonCount = skeletonCount,
+                golemCount = golemCount,
+            ),
+        )
 }

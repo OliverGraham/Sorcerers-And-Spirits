@@ -18,25 +18,24 @@ internal fun Modifier.holdToRollGesture(
     enabled: Boolean,
     onHoldStart: () -> Unit,
     onRelease: (isDoubleTap: Boolean) -> Unit,
-): Modifier =
-    pointerInput(enabled) {
-        if (!enabled) return@pointerInput
-        val doubleTapTimeoutMillis = viewConfiguration.doubleTapTimeoutMillis
-        var previousUpTimeMillis = 0L
+): Modifier = pointerInput(enabled) {
+    if (!enabled) return@pointerInput
+    val doubleTapTimeoutMillis = viewConfiguration.doubleTapTimeoutMillis
+    var previousUpTimeMillis = 0L
 
-        awaitEachGesture {
-            val down = awaitFirstDown(requireUnconsumed = false)
-            down.consume()
-            val isSecondTapOfDoubleTap =
-                down.uptimeMillis - previousUpTimeMillis < doubleTapTimeoutMillis
-            onHoldStart()
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false)
+        down.consume()
+        val isSecondTapOfDoubleTap =
+            down.uptimeMillis - previousUpTimeMillis < doubleTapTimeoutMillis
+        onHoldStart()
 
-            val up = awaitPointerUp(pointerId = down.id)
+        val up = awaitPointerUp(pointerId = down.id)
 
-            previousUpTimeMillis = up?.uptimeMillis ?: 0L
-            onRelease(isSecondTapOfDoubleTap)
-        }
+        previousUpTimeMillis = up?.uptimeMillis ?: 0L
+        onRelease(isSecondTapOfDoubleTap)
     }
+}
 
 /**
  * Suspends until the pointer with [pointerId] lifts, consuming its events so the gesture keeps
@@ -44,7 +43,7 @@ internal fun Modifier.holdToRollGesture(
  * disappeared without a cleanup.
  */
 private suspend fun AwaitPointerEventScope.awaitPointerUp(
-    pointerId: PointerId
+    pointerId: PointerId,
 ): PointerInputChange? {
     while (true) {
         val event = awaitPointerEvent()

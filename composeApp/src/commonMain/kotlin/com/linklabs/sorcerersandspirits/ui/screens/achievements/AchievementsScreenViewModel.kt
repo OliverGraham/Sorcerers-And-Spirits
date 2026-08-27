@@ -12,8 +12,7 @@ import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
-class AchievementsScreenViewModel(private val getProfileFlowUseCase: GetProfileFlowUseCase) :
-    ViewModel() {
+class AchievementsScreenViewModel(private val getProfileFlowUseCase: GetProfileFlowUseCase) : ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<AchievementsState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()

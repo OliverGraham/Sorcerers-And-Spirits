@@ -11,18 +11,17 @@ import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfig
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.hours
 import kotlinx.serialization.json.Json
 import sorcerersandspirits.composeapp.generated.resources.Res
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 /**
  * TODO: Use something like Moshi that can generate data classes from Json, so none of this
  *   [ClassCopyKeys] bullshit would have to be used. Or, why did Claude use a map in the first
  *   place? Why not a data class?
  */
-class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteConfig) :
-    RemoteConfigDataSource {
+class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteConfig) : RemoteConfigDataSource {
 
     private val json = Json { ignoreUnknownKeys = true }
 
@@ -66,51 +65,45 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         remoteConfig.fetchAndActivate()
     }
 
-    private suspend inline fun <reified T> loadBundledDefault(path: String, fallback: T): T =
-        runCatching {
-                val bytes = Res.readBytes(path = path)
-                json.decodeFromString<T>(string = bytes.decodeToString())
-            }
-            .getOrDefault(defaultValue = fallback)
+    private suspend inline fun <reified T> loadBundledDefault(path: String, fallback: T): T = runCatching {
+        val bytes = Res.readBytes(path = path)
+        json.decodeFromString<T>(string = bytes.decodeToString())
+    }
+        .getOrDefault(defaultValue = fallback)
 
-    override fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity> =
-        runCatching {
-                val raw = remoteConfig.getValue(key = CHARACTER_CLASS_STATS).asString()
-                json.decodeFromString<Map<String, CharacterClassStatsEntity>>(string = raw)
-            }
-            .getOrDefault(defaultValue = defaultStats)
-            .mapNotNull { (name, stats) ->
-                runCatching { CharacterClassType.valueOf(value = name) }
-                    .getOrNull()
-                    ?.let { it to stats }
-            }
-            .toMap()
+    override fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity> = runCatching {
+        val raw = remoteConfig.getValue(key = CHARACTER_CLASS_STATS).asString()
+        json.decodeFromString<Map<String, CharacterClassStatsEntity>>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultStats)
+        .mapNotNull { (name, stats) ->
+            runCatching { CharacterClassType.valueOf(value = name) }
+                .getOrNull()
+                ?.let { it to stats }
+        }
+        .toMap()
 
-    override fun abilityConfig(): AbilityConfigEntity =
-        runCatching {
-                val raw = remoteConfig.getValue(key = ABILITY_CONFIG).asString()
-                json.decodeFromString<AbilityConfigEntity>(string = raw)
-            }
-            .getOrDefault(defaultValue = defaultAbilityConfig)
+    override fun abilityConfig(): AbilityConfigEntity = runCatching {
+        val raw = remoteConfig.getValue(key = ABILITY_CONFIG).asString()
+        json.decodeFromString<AbilityConfigEntity>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultAbilityConfig)
 
-    override fun characterClassCopy(): Map<String, AbilityCopyEntity> =
-        runCatching {
-                val raw = remoteConfig.getValue(key = CHARACTER_CLASS_COPY).asString()
-                json.decodeFromString<Map<String, AbilityCopyEntity>>(string = raw)
-            }
-            .getOrDefault(defaultValue = defaultClassCopy)
-            .ifEmpty { defaultClassCopy }
+    override fun characterClassCopy(): Map<String, AbilityCopyEntity> = runCatching {
+        val raw = remoteConfig.getValue(key = CHARACTER_CLASS_COPY).asString()
+        json.decodeFromString<Map<String, AbilityCopyEntity>>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultClassCopy)
+        .ifEmpty { defaultClassCopy }
 
-    override fun randomTravelerNames(): List<String> =
-        runCatching {
-                val raw = remoteConfig.getValue(key = RANDOM_TRAVELER_NAMES).asString()
-                json.decodeFromString<List<String>>(string = raw)
-            }
-            .getOrDefault(defaultValue = defaultNames)
-            .ifEmpty { defaultNames }
+    override fun randomTravelerNames(): List<String> = runCatching {
+        val raw = remoteConfig.getValue(key = RANDOM_TRAVELER_NAMES).asString()
+        json.decodeFromString<List<String>>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultNames)
+        .ifEmpty { defaultNames }
 
-    override fun minimumSupportedVersionCode(): Long =
-        remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
+    override fun minimumSupportedVersionCode(): Long = remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
 
     override fun latestVersionCode(): Long = remoteConfig.getValue(key = LATEST_VERSION).asLong()
 

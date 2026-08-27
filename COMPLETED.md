@@ -60,6 +60,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-256** — Rearchitect combat animation gating around a ViewModel-owned playback queue: Fixed the
+  CombatButtons-disappear-mid-match bug by moving animation gating out of the composables into a
+  single bounded `CombatPlaybackSequencer` drain coroutine in `viewModelScope` that derives fresh
+  steps from `numberOfNewMessages` (`messages.takeLast(...)`) instead of `drop(playedCount)`, so the
+  rolling 30-message window no longer desyncs playback; every wait is bounded with a crash-recovery
+  path, and the UI holds seating/stats via `rememberHeldDuringSequence` gated on
+  `ArenaScreenState.isPlayingBack`.
 - **SS-251** — Group the arena message log by Round → Turn, with a compact round/turn handle header:
   Messages are tagged with their round in the data layer (`List<ArenaMessageEntity>.toDomain()`
   carries the running `NewRound` number onto each message) and grouped in the state model

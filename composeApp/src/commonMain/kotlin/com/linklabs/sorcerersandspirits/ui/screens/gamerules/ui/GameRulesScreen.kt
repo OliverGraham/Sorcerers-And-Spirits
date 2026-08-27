@@ -116,9 +116,9 @@ private fun ClassRulesCard(classRules: ClassRulesState, modifier: Modifier = Mod
             )
             Text(
                 text =
-                    "Health ${classRules.hitPoints}  ·  " +
-                        "Armor ${classRules.armorClass}  ·  " +
-                        "Speed ${classRules.speed}",
+                "Health ${classRules.hitPoints}  ·  " +
+                    "Armor ${classRules.armorClass}  ·  " +
+                    "Speed ${classRules.speed}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

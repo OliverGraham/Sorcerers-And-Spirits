@@ -1,15 +1,12 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rogue
 
-import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -29,9 +26,12 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -40,15 +40,14 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
-import kotlin.math.PI
-import kotlin.math.atan2
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.PI
+import kotlin.math.atan2
 
 internal const val MELEE_DASH_MILLIS = 200
 internal const val MELEE_THRUST_MILLIS = 100
@@ -57,65 +56,43 @@ internal const val MELEE_REACTION_DELAY_MILLIS = 280L
 
 private const val WITHDRAW_MILLIS = 220
 
-/**
- * The flight of the Rogue's dagger strike. The choreography drives these Animatables and the draw
- * layer reads them, so a strike redraws the canvas without recomposing anything.
- */
-@Stable
-internal class RogueStrikeState {
-    val travel = Animatable(initialValue = 0f)
-    val weaponAlpha = Animatable(initialValue = 0f)
-    val impactAlpha = Animatable(initialValue = 0f)
-    val impactScale = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
-}
-
-/**
- * The Rogue's normal attack (SS-192): a close-combat dagger strike. The dagger appears in front of
- * the avatar as it dashes into range, thrusts into the defender avatar — or past it on a miss —
- * flares a burst in the Rogue's class color, and withdraws as the avatar settles back. Geometry
- * comes from the measured avatar bounds via [avatarBoundsFor], so the pierce always lands on the
- * defender art regardless of layout. Sits out any cue that is not a Rogue normal attack.
- */
 @Composable
 internal fun RogueNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.NormalRoll,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { RogueStrikeState() }
+    val rogueStrikeState = remember { RogueStrikeState() }
     val density = LocalDensity.current
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
-    NormalAttackOverlay(
-        animationCue = animationCue,
-        attackerClassType = CharacterClassType.Rogue,
-        avatarBoundsFor = avatarBoundsFor,
-        onCancel = { state.scene = null },
-        play = { cue, attackerBounds, defenderBounds ->
-            state.play(
-                geometry =
-                    projectileStrikeGeometry(
-                        cue = cue,
-                        attackerBounds = attackerBounds,
-                        defenderBounds = defenderBounds,
-                        accentColor = cue.attackerClassType.toColor(),
-                        density = density,
-                    ),
-                normalRollMessageType = cue.normalRollMessageType,
-            )
-        },
-        modifier = modifier,
-        draw = { drawRogueStrike(state = state) },
-    )
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val messageType = animatingMessage.normalRollMessageType
+
+        rogueStrikeState.play(
+            geometry =
+            projectileStrikeGeometry(
+                messageType = messageType,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = accentColor,
+                density = density,
+            ),
+            normalRollMessageType = messageType,
+        )
+
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            ),
+        )
+    }
+
+    Canvas(modifier = modifier) { drawRogueStrike(state = rogueStrikeState) }
 }
-
-internal fun rogueNormalAttackDurationMillis(normalRollMessageType: NormalRollMessageType): Long =
-    MELEE_DASH_MILLIS +
-        MELEE_THRUST_MILLIS +
-        MELEE_EMBED_MILLIS +
-        WITHDRAW_MILLIS +
-        if (normalRollMessageType == NormalRollMessageType.Knockout) 120L else 0L
 
 internal suspend fun RogueStrikeState.play(
     geometry: WeaponStrikeGeometry,
@@ -142,7 +119,6 @@ internal suspend fun RogueStrikeState.play(
     this.scene = null
 }
 
-/** The blade fades in at the attacker's hands and rides the avatar's dash into melee range. */
 private suspend fun RogueStrikeState.closeIn(dashFraction: Float) {
     coroutineScope {
         launch {
@@ -157,10 +133,6 @@ private suspend fun RogueStrikeState.closeIn(dashFraction: Float) {
     }
 }
 
-/**
- * The close-combat pierce: dash into range, thrust the blade into the defender, hold it embedded
- * while the burst flares, then withdraw as the attacker settles back.
- */
 private suspend fun RogueStrikeState.pierce(dashFraction: Float, burstScale: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
@@ -182,9 +154,6 @@ private suspend fun RogueStrikeState.pierce(dashFraction: Float, burstScale: Flo
     }
 }
 
-/**
- * The knockout: the pierce, then the blade driven deeper with a bigger burst before withdrawing.
- */
 private suspend fun RogueStrikeState.pierceDeep(dashFraction: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
@@ -214,7 +183,6 @@ private suspend fun RogueStrikeState.pierceDeep(dashFraction: Float) {
     }
 }
 
-/** The miss: the thrust carries past the defender into empty air, hangs, and is pulled back. */
 private suspend fun RogueStrikeState.whiff(dashFraction: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
@@ -269,7 +237,6 @@ internal fun DrawScope.drawRogueStrike(state: RogueStrikeState) {
     }
 }
 
-/** The flash of steel: a class-color streak trailing the blade, brightening to white at its tip. */
 private fun DrawScope.drawBladeThrust(
     geometry: WeaponStrikeGeometry,
     travel: Float,
@@ -285,12 +252,12 @@ private fun DrawScope.drawBladeThrust(
 
     drawLine(
         brush =
-            Brush.linearGradient(
-                colors =
-                    listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.6f), steelBright),
-                start = trailStart,
-                end = position,
-            ),
+        Brush.linearGradient(
+            colors =
+            listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.6f), steelBright),
+            start = trailStart,
+            end = position,
+        ),
         start = trailStart,
         end = position,
         strokeWidth = 8.dp.toPx(),
@@ -312,11 +279,6 @@ private fun DrawScope.drawDagger(geometry: WeaponStrikeGeometry, position: Offse
     }
 }
 
-/**
- * The dagger in local coordinates: tip at the origin leading the thrust, blade trailing behind it,
- * with the guard, hilt, and pommel bringing up the rear. The blade is a steel gradient; the guard
- * and hilt carry the class-color accent.
- */
 private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
     val bladeLength = 52.dp.toPx()
     val bladeHalfWidth = 6.5.dp.toPx()
@@ -337,11 +299,11 @@ private fun DrawScope.drawDaggerShape(accentColor: Color, alpha: Float) {
     drawPath(
         path = blade,
         brush =
-            Brush.linearGradient(
-                colors = listOf(steelBright, steelShade),
-                start = Offset(x = 0f, y = 0f),
-                end = Offset(x = 0f, y = -bladeLength),
-            ),
+        Brush.linearGradient(
+            colors = listOf(steelBright, steelShade),
+            start = Offset(x = 0f, y = 0f),
+            end = Offset(x = 0f, y = -bladeLength),
+        ),
         alpha = alpha,
     )
 
@@ -395,22 +357,28 @@ private fun RogueNormalAttackArmorClassMissPreview() {
 
 @Composable
 private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
-            CombatAnimationCue.NormalAttack(
-                id = "rogue-attack-$iteration",
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Rogue,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.NormalRoll.Attack(
+                id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                animation = ArenaAnimationState.Avatar(),
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Rogue, seats = seats) {
+        },
+    ) { message ->
         RogueNormalAttackOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
+            accentColor = CharacterClassType.Rogue.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

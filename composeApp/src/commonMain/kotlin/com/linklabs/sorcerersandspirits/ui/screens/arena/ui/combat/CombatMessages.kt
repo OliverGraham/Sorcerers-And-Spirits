@@ -47,18 +47,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.getDisplayString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_log_header
-import sorcerersandspirits.composeapp.generated.resources.arena_log_round
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
 internal val messagesIconSize = 44.dp
@@ -85,27 +85,25 @@ private val headerBookendReserve = 60.dp
 @Composable
 internal fun MessagesBar(
     roundNumber: Int,
-    turnOwnerClass: CharacterClassMessageInfoState?,
+    turnOwnerClassType: CharacterClassType,
     latestMessage: ArenaMessageState?,
-    secondsRemaining: Int,
-    isTimerVisible: Boolean,
-    isTimerUrgent: Boolean,
+    timerState: () -> ArenaTimerState,
     unreadMessageCount: Int,
-    diceHomeBounds: Rect?,
+    diceHomeBoundsTop: Float?,
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val barHeightPx = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
-    val spanEndY = diceHomeBounds?.top ?: barHeightPx
+    val spanEndY =
+        diceHomeBoundsTop ?: with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
 
     Column(
         modifier =
-            modifier
-                .fillMaxWidth()
-                .height(height = messageBarHeight)
-                .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY))
-                .clickable(onClick = onToggleExpanded)
-                .padding(horizontal = 8.dp)
+        modifier
+            .fillMaxWidth()
+            .height(height = messageBarHeight)
+            .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY))
+            .clickable(onClick = onToggleExpanded)
+            .padding(horizontal = 8.dp),
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             MessagesIcon(
@@ -114,19 +112,19 @@ internal fun MessagesBar(
             )
 
             AnimatedContent(
-                targetState = roundNumber to turnOwnerClass,
+                targetState = roundNumber to turnOwnerClassType,
                 transitionSpec = {
                     (slideInVertically { height -> height } + fadeIn()) togetherWith
                         (slideOutVertically { height -> -height } + fadeOut())
                 },
                 label = ROUND_HEADER_TRANSITION_LABEL,
                 modifier =
-                    Modifier.align(alignment = Alignment.Center)
-                        .fillMaxWidth()
-                        .padding(horizontal = headerBookendReserve),
-            ) { (round, ownerClass) ->
+                Modifier.align(alignment = Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = headerBookendReserve),
+            ) { (round, classType) ->
                 Text(
-                    text = roundTurnHeaderText(roundNumber = round, turnOwnerClass = ownerClass),
+                    text = roundTurnHeaderText(roundNumber = round, classType = classType),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -138,9 +136,7 @@ internal fun MessagesBar(
             }
 
             TurnTimer(
-                secondsRemaining = secondsRemaining,
-                isVisible = isTimerVisible,
-                isUrgent = isTimerUrgent,
+                timerState = timerState,
                 modifier = Modifier.align(alignment = Alignment.CenterEnd),
             )
         }
@@ -176,34 +172,21 @@ internal fun MessagesBar(
  * color. Falls back to just the round when no turn owner is known (e.g. between matches).
  */
 @Composable
-private fun roundTurnHeaderText(
-    roundNumber: Int,
-    turnOwnerClass: CharacterClassMessageInfoState?,
-): AnnotatedString {
-    if (turnOwnerClass == null) {
-        return AnnotatedString(
-            text = stringResource(resource = Res.string.arena_log_round, roundNumber.toString())
-        )
-    }
-
+private fun roundTurnHeaderText(roundNumber: Int, classType: CharacterClassType): AnnotatedString {
+    val className = classType.name
     val fullText =
-        stringResource(
-            resource = Res.string.arena_log_header,
-            roundNumber.toString(),
-            turnOwnerClass.className,
-        )
-    val classNameStart = fullText.lastIndexOf(string = turnOwnerClass.className)
+        stringResource(resource = Res.string.arena_log_header, roundNumber.toString(), className)
+    val classNameStart = fullText.lastIndexOf(string = className)
 
     return buildAnnotatedString {
         if (classNameStart < 0) {
-            append(fullText)
+            append(text = fullText)
             return@buildAnnotatedString
         }
-        append(fullText.substring(startIndex = 0, endIndex = classNameStart))
-        withStyle(style = SpanStyle(color = turnOwnerClass.type.toColor())) {
-            append(turnOwnerClass.className)
-        }
-        append(fullText.substring(startIndex = classNameStart + turnOwnerClass.className.length))
+
+        append(text = fullText.substring(startIndex = 0, endIndex = classNameStart))
+        withStyle(style = SpanStyle(color = classType.toColor())) { append(text = className) }
+        append(text = fullText.substring(startIndex = classNameStart + className.length))
     }
 }
 
@@ -255,14 +238,14 @@ internal fun MessageLogOverlay(
             messageGroups = messageGroups,
             onDismiss = onDismiss,
             modifier =
-                Modifier.fillMaxWidth()
-                    .padding(top = messageBarHeight)
-                    .height(height = fullLogHeight * expandedFraction)
-                    .background(
-                        brush =
-                            messagesBackgroundBrush(startY = -barHeightPx, endY = fullLogHeightPx)
-                    )
-                    .clickable(onClick = onDismiss),
+            Modifier.fillMaxWidth()
+                .padding(top = messageBarHeight)
+                .height(height = fullLogHeight * expandedFraction)
+                .background(
+                    brush =
+                    messagesBackgroundBrush(startY = -barHeightPx, endY = fullLogHeightPx),
+                )
+                .clickable(onClick = onDismiss),
         )
     }
 }
@@ -274,20 +257,19 @@ internal fun MessageLogOverlay(
  * offsets into the shared bar-top-to-dice-home span, so the collapsed [MessagesBar] and the
  * unfurled [MessageLogOverlay] sample one continuous gradient rather than each restarting its own.
  */
-private fun messagesBackgroundBrush(startY: Float, endY: Float): Brush =
-    Brush.verticalGradient(
-        colorStops =
-            arrayOf(
-                MESSAGES_GRADIENT_TOP_STOP to
-                    messagesGradientTop.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-                MESSAGES_GRADIENT_MIDDLE_STOP to
-                    messagesGradientMiddle.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-                MESSAGES_GRADIENT_BOTTOM_STOP to
-                    messagesGradientBottom.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-            ),
-        startY = startY,
-        endY = endY,
-    )
+private fun messagesBackgroundBrush(startY: Float, endY: Float): Brush = Brush.verticalGradient(
+    colorStops =
+    arrayOf(
+        MESSAGES_GRADIENT_TOP_STOP to
+            messagesGradientTop.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
+        MESSAGES_GRADIENT_MIDDLE_STOP to
+            messagesGradientMiddle.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
+        MESSAGES_GRADIENT_BOTTOM_STOP to
+            messagesGradientBottom.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
+    ),
+    startY = startY,
+    endY = endY,
+)
 
 /**
  * The unread count, drawn so the four class colors continuously flow through its digits — a looping
@@ -302,13 +284,13 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
             initialValue = 0f,
             targetValue = UNREAD_COUNT_COLOR_TILE_WIDTH_PX,
             animationSpec =
-                infiniteRepeatable(
-                    animation =
-                        tween(
-                            durationMillis = UNREAD_COUNT_COLOR_CYCLE_MILLIS,
-                            easing = LinearEasing,
-                        )
+            infiniteRepeatable(
+                animation =
+                tween(
+                    durationMillis = UNREAD_COUNT_COLOR_CYCLE_MILLIS,
+                    easing = LinearEasing,
                 ),
+            ),
             label = UNREAD_COUNT_COLOR_SHIFT_LABEL,
         )
 
@@ -335,11 +317,11 @@ private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
         Text(
             text = value,
             style =
-                TextStyle(
-                    brush = flowingBrush,
-                    fontSize = unreadCountFontSize,
-                    fontWeight = FontWeight.Bold,
-                ),
+            TextStyle(
+                brush = flowingBrush,
+                fontSize = unreadCountFontSize,
+                fontWeight = FontWeight.Bold,
+            ),
         )
     }
 }

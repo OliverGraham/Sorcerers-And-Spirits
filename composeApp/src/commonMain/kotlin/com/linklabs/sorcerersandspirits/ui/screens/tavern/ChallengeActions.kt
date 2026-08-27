@@ -24,5 +24,6 @@ internal val LocalChallengeState = staticCompositionLocalOf<ChallengeState?> { n
 
 internal object ChallengeActionsProvider {
     val current: ChallengeActions
-        @Composable @ReadOnlyComposable get() = LocalChallengeActions.current
+        @Composable @ReadOnlyComposable
+        get() = LocalChallengeActions.current
 }

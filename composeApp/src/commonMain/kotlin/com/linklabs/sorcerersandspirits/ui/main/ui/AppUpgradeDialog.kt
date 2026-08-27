@@ -56,10 +56,10 @@ fun AppUpgradeDialog(
     Dialog(
         onDismissRequest = { if (!isForcedUpgrade) onDismiss() },
         properties =
-            DialogProperties(
-                dismissOnBackPress = !isForcedUpgrade,
-                dismissOnClickOutside = !isForcedUpgrade,
-            ),
+        DialogProperties(
+            dismissOnBackPress = !isForcedUpgrade,
+            dismissOnClickOutside = !isForcedUpgrade,
+        ),
     ) {
         Surface(
             modifier = modifier,
@@ -92,7 +92,7 @@ fun AppUpgradeDialog(
                         ) {
                             Text(
                                 text =
-                                    stringResource(resource = Res.string.app_update_dismiss_button)
+                                stringResource(resource = Res.string.app_update_dismiss_button),
                             )
                         }
                     }

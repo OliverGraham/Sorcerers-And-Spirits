@@ -105,7 +105,7 @@ class ArenaMessageEntityTest {
                     secondDie = 4,
                     isSuccessful = true,
                 ),
-                ArenaMessage.SummonMinion(necroUserId = "necro", singleDie = 6),
+                ArenaMessage.SummonMinion(necromancerUserId = "necro", singleDie = 6),
                 ArenaMessage.Persuade.Trigger(bardUserId = "bard"),
                 ArenaMessage.Persuade.StrumLute(
                     bardUserId = "bard",
@@ -113,7 +113,6 @@ class ArenaMessageEntityTest {
                     isSuccessful = true,
                 ),
                 ArenaMessage.Persuade.CharmActivation(bardUserId = "bard"),
-                ArenaMessage.Persuade.Lull,
                 ArenaMessage.Persuade.Charm(
                     bardUserId = "bard",
                     attackerUserId = "attacker",
@@ -124,7 +123,7 @@ class ArenaMessageEntityTest {
                 ArenaMessage.Impersonate(
                     illusionistUserId = "illusionist",
                     impersonateAbility =
-                        OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.AllIn()),
+                    OffensiveAbility.Impersonate(impersonatedAbility = OffensiveAbility.AllIn()),
                 ),
                 ArenaMessage.MirrorImage.Trigger(
                     illusionistUserId = "illusionist",
@@ -141,10 +140,10 @@ class ArenaMessageEntityTest {
                 ArenaMessage.MirrorImage.TemptFate(
                     illusionistUserId = "illusionist",
                     rerolledMirrorImageDie =
-                        AbilityAction.Passive.MirrorImage.MirrorImageDie(
-                            originalRoll = 4,
-                            reroll = 6,
-                        ),
+                    AbilityAction.Passive.MirrorImage.MirrorImageDie(
+                        originalRoll = 4,
+                        reroll = 6,
+                    ),
                     attackerUserId = "attacker",
                     messageType = NormalRollMessageType.Knockout,
                 ),

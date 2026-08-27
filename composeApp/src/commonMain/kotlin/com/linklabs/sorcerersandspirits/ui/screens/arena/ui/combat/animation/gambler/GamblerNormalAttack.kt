@@ -4,8 +4,10 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,9 +33,12 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatAnimationCue
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AbilityAnimationStage
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.NormalAttackOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
@@ -42,8 +47,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoSeats
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberReplayingCue
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
@@ -55,65 +59,44 @@ private const val CARD_SPIN_ROTATIONS = 4f
 private val cardFace = Color(color = 0xFFFBF6EC)
 private val cardEdge = Color(color = 0xFFD8CFBC)
 
-/**
- * The flight of the Gambler's thrown card. The choreography drives these Animatables and the draw
- * layer reads them, so a throw redraws the canvas without recomposing anything.
- */
-@Stable
-internal class GamblerStrikeState {
-    val travel = Animatable(initialValue = 0f)
-    val weaponAlpha = Animatable(initialValue = 0f)
-    val spin = Animatable(initialValue = 0f)
-    val impactAlpha = Animatable(initialValue = 0f)
-    val impactScale = Animatable(initialValue = 0f)
-
-    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
-}
-
-/**
- * The Gambler's normal attack (SS-193): a thrown playing card. The card spins the full span to the
- * defender and flares a burst on landing, or spins past into empty air on a miss. Nothing withdraws
- * — a thrown card lands and is gone, so the card fades into the burst rather than being pulled
- * back. Geometry comes from the measured avatar bounds via [avatarBoundsFor]. Sits out any cue that
- * is not a Gambler normal attack.
- */
 @Composable
 internal fun GamblerNormalAttackOverlay(
-    animationCue: CombatAnimationCue?,
-    avatarBoundsFor: (String) -> Rect?,
+    animatingMessage: ArenaMessageState.NormalRoll,
+    attackerBounds: Rect,
+    defenderBounds: Rect,
+    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember { GamblerStrikeState() }
+    val gamblerStrikeState = remember { GamblerStrikeState() }
     val density = LocalDensity.current
 
-    NormalAttackOverlay(
-        animationCue = animationCue,
-        attackerClassType = CharacterClassType.Gambler,
-        avatarBoundsFor = avatarBoundsFor,
-        onCancel = { state.scene = null },
-        play = { cue, attackerBounds, defenderBounds ->
-            state.play(
-                geometry =
-                    projectileStrikeGeometry(
-                        cue = cue,
-                        attackerBounds = attackerBounds,
-                        defenderBounds = defenderBounds,
-                        accentColor = cue.attackerClassType.toColor(),
-                        density = density,
-                    ),
-                normalRollMessageType = cue.normalRollMessageType,
-            )
-        },
-        modifier = modifier,
-        draw = { drawGamblerStrike(state = state) },
-    )
-}
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
-/**
- * How long the Gambler's card throw runs, so the message sequencer can hold the event until the
- * card lands instead of cutting it off (SS-201).
- */
-internal fun gamblerNormalAttackDurationMillis(): Long = THROW_FLIGHT_MILLIS + 200L
+    LaunchedEffect(key1 = animatingMessage.id) {
+        val messageType = animatingMessage.normalRollMessageType
+
+        gamblerStrikeState.play(
+            geometry =
+            projectileStrikeGeometry(
+                messageType = messageType,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                accentColor = accentColor,
+                density = density,
+            ),
+            normalRollMessageType = messageType,
+        )
+
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = animatingMessage.id,
+                animationKey = AnimationKey.AvatarOverlay,
+            ),
+        )
+    }
+
+    Canvas(modifier = modifier) { drawGamblerStrike(state = gamblerStrikeState) }
+}
 
 internal suspend fun GamblerStrikeState.play(
     geometry: WeaponStrikeGeometry,
@@ -136,7 +119,6 @@ internal suspend fun GamblerStrikeState.play(
     this.scene = null
 }
 
-/** The card's flight to its target: it appears at the hand and spins across the gap. */
 private suspend fun GamblerStrikeState.flyAcross(durationMillis: Int) {
     weaponAlpha.snapTo(targetValue = 1f)
     coroutineScope {
@@ -144,7 +126,7 @@ private suspend fun GamblerStrikeState.flyAcross(durationMillis: Int) {
             travel.animateTo(
                 targetValue = 1f,
                 animationSpec =
-                    tween(durationMillis = durationMillis, easing = FastOutLinearInEasing),
+                tween(durationMillis = durationMillis, easing = FastOutLinearInEasing),
             )
         }
         launch {
@@ -156,7 +138,6 @@ private suspend fun GamblerStrikeState.flyAcross(durationMillis: Int) {
     }
 }
 
-/** A landed throw: the card spins to the defender, then vanishes into a class-color burst. */
 private suspend fun GamblerStrikeState.throwAcross(burstScale: Float) {
     flyAcross(durationMillis = THROW_FLIGHT_MILLIS)
     coroutineScope {
@@ -173,7 +154,6 @@ private suspend fun GamblerStrikeState.throwAcross(burstScale: Float) {
     }
 }
 
-/** The missed throw: the card spins past the sidestepping defender and fades into empty air. */
 private suspend fun GamblerStrikeState.throwPast() {
     flyAcross(durationMillis = THROW_FLIGHT_MILLIS)
     coroutineScope {
@@ -217,11 +197,6 @@ internal fun DrawScope.drawGamblerStrike(state: GamblerStrikeState) {
     }
 }
 
-/**
- * The thrown playing card (SS-193): a soft class-color trail marks its arc, and the card itself
- * spins in-plane about its center as it flies — a spade pip in the class color on a poker-card
- * face.
- */
 private fun DrawScope.drawCardThrow(
     geometry: WeaponStrikeGeometry,
     position: Offset,
@@ -230,11 +205,11 @@ private fun DrawScope.drawCardThrow(
 ) {
     drawLine(
         brush =
-            Brush.linearGradient(
-                colors = listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.35f)),
-                start = geometry.start,
-                end = position,
-            ),
+        Brush.linearGradient(
+            colors = listOf(Color.Transparent, geometry.accentColor.copy(alpha = 0.35f)),
+            start = geometry.start,
+            end = position,
+        ),
         start = geometry.start,
         end = position,
         strokeWidth = 5.dp.toPx(),
@@ -249,11 +224,6 @@ private fun DrawScope.drawCardThrow(
     }
 }
 
-/**
- * The playing card in local coordinates, centered on the origin so it spins about its own middle: a
- * pale poker-card face rimmed in the class color, with a single spade pip in the class color at its
- * heart.
- */
 private fun DrawScope.drawPlayingCard(accentColor: Color, alpha: Float) {
     val halfWidth = 15.dp.toPx()
     val halfHeight = 21.dp.toPx()
@@ -284,50 +254,56 @@ private fun DrawScope.drawPlayingCard(accentColor: Color, alpha: Float) {
     )
 }
 
-/**
- * A spade centered on the origin, point up over a short stem: two lobes swept out with mirrored
- * cubics that curl into the base, then a trapezoidal stem closing it off.
- */
-private fun spadePath(halfWidth: Float, halfHeight: Float): Path =
-    Path().apply {
-        moveTo(x = 0f, y = -halfHeight)
-        cubicTo(
-            x1 = halfWidth * 0.35f,
-            y1 = -halfHeight * 0.5f,
-            x2 = halfWidth,
-            y2 = -halfHeight * 0.05f,
-            x3 = halfWidth,
-            y3 = halfHeight * 0.35f,
-        )
-        cubicTo(
-            x1 = halfWidth,
-            y1 = halfHeight * 0.8f,
-            x2 = halfWidth * 0.4f,
-            y2 = halfHeight * 0.72f,
-            x3 = halfWidth * 0.14f,
-            y3 = halfHeight * 0.42f,
-        )
-        lineTo(x = halfWidth * 0.32f, y = halfHeight)
-        lineTo(x = -halfWidth * 0.32f, y = halfHeight)
-        lineTo(x = -halfWidth * 0.14f, y = halfHeight * 0.42f)
-        cubicTo(
-            x1 = -halfWidth * 0.4f,
-            y1 = halfHeight * 0.72f,
-            x2 = -halfWidth,
-            y2 = halfHeight * 0.8f,
-            x3 = -halfWidth,
-            y3 = halfHeight * 0.35f,
-        )
-        cubicTo(
-            x1 = -halfWidth,
-            y1 = -halfHeight * 0.05f,
-            x2 = -halfWidth * 0.35f,
-            y2 = -halfHeight * 0.5f,
-            x3 = 0f,
-            y3 = -halfHeight,
-        )
-        close()
-    }
+private fun spadePath(halfWidth: Float, halfHeight: Float): Path = Path().apply {
+    moveTo(x = 0f, y = -halfHeight)
+    cubicTo(
+        x1 = halfWidth * 0.35f,
+        y1 = -halfHeight * 0.5f,
+        x2 = halfWidth,
+        y2 = -halfHeight * 0.05f,
+        x3 = halfWidth,
+        y3 = halfHeight * 0.35f,
+    )
+    cubicTo(
+        x1 = halfWidth,
+        y1 = halfHeight * 0.8f,
+        x2 = halfWidth * 0.4f,
+        y2 = halfHeight * 0.72f,
+        x3 = halfWidth * 0.14f,
+        y3 = halfHeight * 0.42f,
+    )
+    lineTo(x = halfWidth * 0.32f, y = halfHeight)
+    lineTo(x = -halfWidth * 0.32f, y = halfHeight)
+    lineTo(x = -halfWidth * 0.14f, y = halfHeight * 0.42f)
+    cubicTo(
+        x1 = -halfWidth * 0.4f,
+        y1 = halfHeight * 0.72f,
+        x2 = -halfWidth,
+        y2 = halfHeight * 0.8f,
+        x3 = -halfWidth,
+        y3 = halfHeight * 0.35f,
+    )
+    cubicTo(
+        x1 = -halfWidth,
+        y1 = -halfHeight * 0.05f,
+        x2 = -halfWidth * 0.35f,
+        y2 = -halfHeight * 0.5f,
+        x3 = 0f,
+        y3 = -halfHeight,
+    )
+    close()
+}
+
+@Stable
+internal class GamblerStrikeState {
+    val travel = Animatable(initialValue = 0f)
+    val weaponAlpha = Animatable(initialValue = 0f)
+    val spin = Animatable(initialValue = 0f)
+    val impactAlpha = Animatable(initialValue = 0f)
+    val impactScale = Animatable(initialValue = 0f)
+
+    var scene by mutableStateOf<WeaponStrikeGeometry?>(value = null)
+}
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -355,22 +331,28 @@ private fun GamblerNormalAttackArmorClassMissPreview() {
 
 @Composable
 private fun GamblerNormalAttackPreview(normalRollMessageType: NormalRollMessageType) {
-    val seats = rememberDuoSeats()
-    val cue =
-        rememberReplayingCue(replayKey = normalRollMessageType) { iteration ->
-            CombatAnimationCue.NormalAttack(
-                id = "gambler-attack-$iteration",
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Gambler,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.NormalRoll.Attack(
+                id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
                 attackerClassType = CharacterClassType.Gambler,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                animation = ArenaAnimationState.Avatar(),
+                gestures = emptyMap(),
             )
-        }
-    AbilityAnimationStage(accentClass = CharacterClassType.Gambler, seats = seats) {
+        },
+    ) { message ->
         GamblerNormalAttackOverlay(
-            animationCue = cue,
-            avatarBoundsFor = seats.boundsFor,
+            animatingMessage = message,
+            attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
+            accentColor = CharacterClassType.Gambler.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

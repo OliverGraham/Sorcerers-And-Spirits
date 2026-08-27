@@ -4,9 +4,8 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopyProvider
 
 class RemoteConfigCharacterClassCopyProvider(
-    private val remoteConfigDataSource: RemoteConfigDataSource
+    private val remoteConfigDataSource: RemoteConfigDataSource,
 ) : CharacterClassCopyProvider {
 
-    override fun getCharacterClassCopy(): CharacterClassCopy =
-        remoteConfigDataSource.characterClassCopy().toCharacterClassCopy()
+    override fun getCharacterClassCopy(): CharacterClassCopy = remoteConfigDataSource.characterClassCopy().toCharacterClassCopy()
 }

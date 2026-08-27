@@ -8,15 +8,14 @@ import kotlin.test.assertTrue
 
 class CharacterClassEntityTest {
 
-    private fun createCharacterClass(hasActedThisRound: Boolean) =
-        CharacterClass.create(
-                type = CharacterClassType.Rogue,
-                hitPoints = 10,
-                maxHitPoints = 10,
-                armorClass = 10,
-                speed = 5,
-            )
-            .copy(hasActedThisRound = hasActedThisRound)
+    private fun createCharacterClass(hasActedThisRound: Boolean) = CharacterClass.create(
+        type = CharacterClassType.Rogue,
+        hitPoints = 10,
+        maxHitPoints = 10,
+        armorClass = 10,
+        speed = 5,
+    )
+        .copy(hasActedThisRound = hasActedThisRound)
 
     @Test
     fun `hasActedThisRound survives the entity round-trip`() {

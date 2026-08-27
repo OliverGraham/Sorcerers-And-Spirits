@@ -1,39 +1,12 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
-import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
-import com.linklabs.sorcerersandspirits.domain.haptics.HapticStrength
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.DiceBadgeState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalHaptics
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.compositionlocals.LocalShakeDetector
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-
-// Before any roll lands the two dice rest on ones, as a normal attack would show them.
-private const val DIE_RESTING_FACE = 1
-private const val BUZZ_LINGER_MILLIS = 200L
-private const val ROLL_TUMBLE_IMPULSE_MILLIS = 220L
-private const val MAX_ROLL_TUMBLE_IMPULSES = 27
-
-data class DieState(
-    val value: Int = DIE_RESTING_FACE,
-    val isEnabled: Boolean = true,
-    val tint: Color? = null,
-    val badge: DiceBadgeState? = null,
-    val settleGeneration: Int = 0,
-    val isRollingLocally: Boolean = false,
-    val isSettling: Boolean = false,
-)
 
 @Stable
 internal class DiceStateHolder {
@@ -52,14 +25,12 @@ internal class DiceStateHolder {
     var firstDieState by mutableStateOf(value = DieState())
     var secondDieState by mutableStateOf(value = DieState())
 
+    private val pendingSettleGroups = ArrayDeque<MutableSet<DiePosition>>()
+
     val isRolling: Boolean
         get() = isHolding || isUserRolling
 
-    val isSettled: Boolean
-        get() = !isRolling && !firstDieState.isSettling && !secondDieState.isSettling
-
-    fun isDieRolling(diePosition: DiePosition): Boolean =
-        isRolling && dieStateAt(diePosition = diePosition).isRollingLocally
+    fun isDieRolling(diePosition: DiePosition): Boolean = isRolling && dieStateAt(diePosition = diePosition).isRollingLocally
 
     fun startHold(rollingPositions: Set<DiePosition>) {
         isArmed = false
@@ -79,6 +50,22 @@ internal class DiceStateHolder {
         }
     }
 
+    fun applyRoll(diceRollState: DiceRollState) {
+        pendingSettleGroups.add(element = diceRollState.settlingPositions())
+
+        firstDieState =
+            firstDieState.applying(roll = diceRollState, diePosition = DiePosition.First)
+        secondDieState =
+            secondDieState.applying(roll = diceRollState, diePosition = DiePosition.Second)
+
+        isUserRolling = false
+    }
+
+    private fun DiceRollState.settlingPositions(): MutableSet<DiePosition> = when (this) {
+        is DiceRollState.OneDie -> mutableSetOf(diePosition)
+        is DiceRollState.TwoDice -> mutableSetOf(DiePosition.First, DiePosition.Second)
+    }
+
     internal fun registerShake() {
         isArmed = true
         shakeTick++
@@ -88,163 +75,61 @@ internal class DiceStateHolder {
         shakeTick++
     }
 
-    internal fun finishAwaiting() {
+    internal fun setIsUserRollingToFalse() {
         isUserRolling = false
     }
 
-    internal fun markDieSettled(diePosition: DiePosition) {
-        when (diePosition) {
-            DiePosition.First -> firstDieState = firstDieState.copy(isSettling = false)
-            DiePosition.Second -> secondDieState = secondDieState.copy(isSettling = false)
-        }
+    internal fun markDieSettled(diePosition: DiePosition, onDiceSettled: () -> Unit) {
+        // TODO(SS-262): Need to make sure this works with Impersonate and whatever else. This kicks
+        //  off the ArenaMatchCombatQueue's onCombatActionResolved()
+        val settleGroup = pendingSettleGroups.firstOrNull { it.contains(diePosition) } ?: return
+        settleGroup.remove(element = diePosition)
+        if (settleGroup.isNotEmpty()) return
+
+        pendingSettleGroups.remove(element = settleGroup)
+        onDiceSettled()
     }
 
-    private fun dieStateAt(diePosition: DiePosition): DieState =
-        when (diePosition) {
-            DiePosition.First -> firstDieState
-            DiePosition.Second -> secondDieState
-        }
-
-    // TODO: Likely not necessary - maybe call if diceRollState is null???
-
-    /**
-     * Stop awaiting a committed roll whose turn already resolved without a roll-bearing result:
-     * newer messages have landed since the roll was released but none rolled the dice, so tumbling
-     * on to the safety cap would only stall on a stale value. A whole turn's messages arrive in one
-     * batch, so a batch that carries no roll is a turn that produced none for this device.
-     */
-    internal fun settleIfResolvedWithoutResult() {
-        val hasTurnResolvedWithoutRoll = isUserRolling
-        if (hasTurnResolvedWithoutRoll) finishAwaiting()
+    private fun dieStateAt(diePosition: DiePosition): DieState = when (diePosition) {
+        DiePosition.First -> firstDieState
+        DiePosition.Second -> secondDieState
     }
 
-    internal fun commitRoll(
-        diceRollState: DiceRollState,
-        diceBadge: DiceBadgeState?,
-        isBadgeBonusSpent: Boolean,
-    ) {
-        firstDieState =
-            firstDieState
-                .applying(diceRollState = diceRollState, diePosition = DiePosition.First)
-                .committingBadge(
-                    diceRollState = diceRollState,
-                    diceBadge = diceBadge,
-                    diePosition = DiePosition.First,
-                    isBadgeBonusSpent = isBadgeBonusSpent,
-                )
-        secondDieState =
-            secondDieState
-                .applying(diceRollState = diceRollState, diePosition = DiePosition.Second)
-                .committingBadge(
-                    diceRollState = diceRollState,
-                    diceBadge = diceBadge,
-                    diePosition = DiePosition.Second,
-                    isBadgeBonusSpent = isBadgeBonusSpent,
-                )
-        isUserRolling = false
-    }
-}
-
-private fun DieState.committingBadge(
-    diceRollState: DiceRollState,
-    diceBadge: DiceBadgeState?,
-    diePosition: DiePosition,
-    isBadgeBonusSpent: Boolean,
-): DieState {
-    val isRollOffContinuation =
-        diceRollState is DiceRollState.OneDie && !diceRollState.isSiblingDisabled
-    val nextBadge =
-        when {
-            diceBadge != null -> diceBadge.takeIf { it.diePosition == diePosition }
-            isRollOffContinuation && !isBadgeBonusSpent -> badge
-            else -> null
-        }
-
-    return copy(badge = nextBadge)
-}
-
-private fun DieState.startingHold(isRolling: Boolean): DieState =
-    if (isRolling) {
+    private fun DieState.startingHold(isRolling: Boolean): DieState = if (isRolling) {
         copy(isRollingLocally = true, isEnabled = true)
     } else {
         copy(isRollingLocally = false)
     }
 
-private fun DieState.applying(diceRollState: DiceRollState, diePosition: DiePosition): DieState {
-    val rolledValue = diceRollState.rolledValueAt(diePosition = diePosition)
-    val dieColor = diceRollState.dieColorAt(diePosition = diePosition)
+    private fun DieState.applying(roll: DiceRollState, diePosition: DiePosition): DieState = when (roll) {
+        is DiceRollState.OneDie ->
+            when {
+                diePosition == roll.diePosition ->
+                    copy(
+                        value = roll.value,
+                        isEnabled = true,
+                        tint = roll.dieColor.toColor(),
+                        badge = roll.diceBadge.forPosition(diePosition = diePosition),
+                        settleGeneration = settleGeneration + 1,
+                        isRollingLocally = false,
+                    )
 
-    return when {
-        rolledValue != null ->
+                roll.isSiblingDisabled ->
+                    copy(isEnabled = false, tint = null, badge = null, isRollingLocally = false)
+
+                else -> this
+            }
+
+        is DiceRollState.TwoDice ->
             copy(
-                value = rolledValue,
+                value = if (diePosition == DiePosition.First) roll.firstDie else roll.secondDie,
                 isEnabled = true,
-                tint = dieColor?.toColor(),
+                tint = roll.dieColor.toColor(),
+                badge = roll.diceBadge.forPosition(diePosition = diePosition),
                 settleGeneration = settleGeneration + 1,
                 isRollingLocally = false,
-                isSettling = true,
             )
-
-        dieColor == DieColor.Disabled ->
-            copy(isEnabled = false, tint = null, isRollingLocally = false)
-
-        else -> copy(isRollingLocally = false)
     }
-}
 
-@Composable
-internal fun rememberDiceStateHolder(): DiceStateHolder {
-    val diceStateHolder = remember { DiceStateHolder() }
-
-    diceStateHolder.settleIfResolvedWithoutResult()
-
-    ShakeDiceWhileHeld(diceStateHolder = diceStateHolder)
-    ShakeDiceWhileWaitingForResult(diceStateHolder = diceStateHolder)
-
-    return diceStateHolder
-}
-
-@Composable
-private fun ShakeDiceWhileHeld(diceStateHolder: DiceStateHolder) {
-    val shakeDetector = LocalShakeDetector.current
-    val haptics = LocalHaptics.current
-
-    // TODO: Not supposed to use mutableState for keys for LaunchedEffect
-    LaunchedEffect(key1 = diceStateHolder.isHolding) {
-        if (!diceStateHolder.isHolding) return@LaunchedEffect
-
-        var stopBuzzJob: Job? = null
-        try {
-            shakeDetector.shakes.collect {
-                diceStateHolder.registerShake()
-                haptics.startContinuous(strength = HapticStrength.MEDIUM)
-                stopBuzzJob?.cancel()
-                stopBuzzJob = launch {
-                    delay(timeMillis = BUZZ_LINGER_MILLIS)
-                    haptics.stopContinuous()
-                }
-            }
-        } finally {
-            stopBuzzJob?.cancel()
-            haptics.stopContinuous()
-        }
-    }
-}
-
-@Composable
-private fun ShakeDiceWhileWaitingForResult(diceStateHolder: DiceStateHolder) {
-    val haptics = LocalHaptics.current
-
-    // TODO: Not supposed to use mutableState for keys for LaunchedEffect
-    LaunchedEffect(key1 = diceStateHolder.isUserRolling) {
-        if (!diceStateHolder.isUserRolling) return@LaunchedEffect
-
-        haptics.vibrate(strength = HapticStrength.HEAVY)
-        repeat(times = MAX_ROLL_TUMBLE_IMPULSES) {
-            delay(timeMillis = ROLL_TUMBLE_IMPULSE_MILLIS)
-            diceStateHolder.tick()
-        }
-
-        diceStateHolder.finishAwaiting()
-    }
+    private fun DiceBadgeState?.forPosition(diePosition: DiePosition): DiceBadgeState? = this?.takeIf { it.diePosition == diePosition }
 }

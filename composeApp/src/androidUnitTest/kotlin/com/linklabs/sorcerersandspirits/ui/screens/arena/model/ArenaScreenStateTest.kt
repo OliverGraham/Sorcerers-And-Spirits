@@ -27,12 +27,12 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.NormalAttack(
-                        roll = NormalAttackType.Health,
-                        attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
-                        defenderUserId = OPPONENT_ID,
-                        activeUserIds = setOf(element = USER_ID),
-                    )
+                CombatActionState.NormalAttack(
+                    roll = NormalAttackType.Health,
+                    attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
+                    defenderUserId = OPPONENT_ID,
+                    activeUserIds = setOf(element = USER_ID),
+                ),
             )
 
         assertEquals(expected = OPPONENT_ID, actual = state.lockedTargetUserId)
@@ -42,7 +42,7 @@ class ArenaScreenStateTest {
     fun `Given it is the user's turn to start, then no target is locked`() {
         val state =
             combatState(
-                combatActionState = CombatActionState.Idle(activeUserIds = setOf(element = USER_ID))
+                combatActionState = CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
             )
 
         assertNull(actual = state.lockedTargetUserId)
@@ -53,12 +53,12 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.NormalAttack(
-                        roll = NormalAttackType.Health,
-                        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
-                        defenderUserId = USER_ID,
-                        activeUserIds = setOf(element = OPPONENT_ID),
-                    )
+                CombatActionState.NormalAttack(
+                    roll = NormalAttackType.Health,
+                    attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
+                    defenderUserId = USER_ID,
+                    activeUserIds = setOf(element = OPPONENT_ID),
+                ),
             )
 
         assertNull(actual = state.lockedTargetUserId)
@@ -69,10 +69,10 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    holyShieldRoll(
-                        action = AbilityActionState.Passive.HolyShield.Prayer,
-                        defenderUserId = USER_ID,
-                    )
+                holyShieldRoll(
+                    action = AbilityActionState.Passive.HolyShield.Prayer,
+                    defenderUserId = USER_ID,
+                ),
             )
 
         assertNull(actual = state.lockedTargetUserId)
@@ -83,7 +83,7 @@ class ArenaScreenStateTest {
         val nextState =
             endingCombatMatch().toUpdatedState(previousState = null, userId = USER_ID).nextState
 
-        assertTrue(actual = nextState.arenaState is ArenaState.Combat)
+        assertTrue(actual = nextState.arenaMatchState is ArenaMatchState.Combat)
         assertTrue(actual = nextState.isMatchEnding)
     }
 
@@ -103,7 +103,7 @@ class ArenaScreenStateTest {
         val nextState =
             finishedMatch.toUpdatedState(previousState = null, userId = USER_ID).nextState
 
-        assertTrue(actual = nextState.arenaState is ArenaState.Finished)
+        assertTrue(actual = nextState.arenaMatchState is ArenaMatchState.Finished)
         assertFalse(actual = nextState.isMatchEnding)
     }
 
@@ -132,11 +132,11 @@ class ArenaScreenStateTest {
     fun `Given the gauntlet finishes with nobody readied, then the finished screen has no countdown`() {
         val previousState =
             screenState(
-                arenaState =
-                    combatState(
-                        combatActionState =
-                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
-                    )
+                arenaMatchState =
+                combatState(
+                    combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                ),
             )
         val finishedMatch =
             finishedMatch(
@@ -152,7 +152,8 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given the first player readies on the gauntlet finished screen, then a one-minute countdown starts`() {
-        val previousState = screenState(arenaState = ArenaState.Finished(players = emptyList()))
+        val previousState =
+            screenState(arenaMatchState = ArenaMatchState.Finished(players = emptyList()))
         val finishedMatch =
             finishedMatch(
                 messageCount = 0,
@@ -169,7 +170,8 @@ class ArenaScreenStateTest {
     fun `Given the gauntlet countdown is already running, then another player readying does not restart it`() {
         val previousState =
             screenState(
-                arenaState = ArenaState.Finished(players = emptyList(), hasAnyPlayerReadied = true)
+                arenaMatchState =
+                ArenaMatchState.Finished(players = emptyList(), hasAnyPlayerReadied = true),
             )
         val finishedMatch =
             finishedMatch(
@@ -188,11 +190,11 @@ class ArenaScreenStateTest {
         val timerAction =
             determineTimerAction(
                 previous =
-                    combatState(
-                        combatActionState =
-                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
-                    ),
-                next = ArenaState.Finished(players = players().values.toList()),
+                combatState(
+                    combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                ),
+                next = ArenaMatchState.Finished(players = players().values.toList()),
                 isFinalMatch = false,
             )
 
@@ -203,8 +205,8 @@ class ArenaScreenStateTest {
     fun `Given a non-final match countdown is already running, then a later update does not restart it`() {
         val timerAction =
             determineTimerAction(
-                previous = ArenaState.Finished(players = players().values.toList()),
-                next = ArenaState.Finished(players = players().values.toList()),
+                previous = ArenaMatchState.Finished(players = players().values.toList()),
+                next = ArenaMatchState.Finished(players = players().values.toList()),
                 isFinalMatch = false,
             )
 
@@ -216,11 +218,11 @@ class ArenaScreenStateTest {
         val timerAction =
             determineTimerAction(
                 previous =
-                    combatState(
-                        combatActionState =
-                            CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID))
-                    ),
-                next = ArenaState.Finished(players = players().values.take(n = 1)),
+                combatState(
+                    combatActionState =
+                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                ),
+                next = ArenaMatchState.Finished(players = players().values.take(n = 1)),
                 isFinalMatch = false,
             )
 
@@ -263,23 +265,23 @@ class ArenaScreenStateTest {
             ArenaMatch.ChoosingClasses(
                 messages = emptyList(),
                 playerMap =
-                    mapOf(
-                        USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
-                        OPPONENT_ID to
-                            ArenaPlayer.Selected(
-                                userId = OPPONENT_ID,
-                                displayName = "Gambler",
-                                characterClass = woundedGambler,
-                            ),
-                    ),
+                mapOf(
+                    USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
+                    OPPONENT_ID to
+                        ArenaPlayer.Selected(
+                            userId = OPPONENT_ID,
+                            displayName = "Gambler",
+                            characterClass = woundedGambler,
+                        ),
+                ),
                 activePlayer = ArenaPlayer.Unselected(userId = USER_ID, displayName = "Player"),
                 activePlayerUserId = USER_ID,
             )
 
         val nextState =
-            match.toUpdatedState(previousState = null, userId = USER_ID).nextState.arenaState
+            match.toUpdatedState(previousState = null, userId = USER_ID).nextState.arenaMatchState
 
-        assertTrue(actual = nextState is ArenaState.ChoosingClasses)
+        assertTrue(actual = nextState is ArenaMatchState.ChoosingClasses)
         assertEquals(
             expected = setOf(CharacterClassType.Gambler),
             actual = nextState.unavailableClasses,
@@ -288,14 +290,14 @@ class ArenaScreenStateTest {
 
     @Test
     fun `Given two players remain in a finished match, then the next match can start`() {
-        val finished = ArenaState.Finished(players = players().values.toList())
+        val finished = ArenaMatchState.Finished(players = players().values.toList())
 
         assertTrue(actual = finished.canStartNextMatch)
     }
 
     @Test
     fun `Given only one player remains in a finished match, then the next match cannot start`() {
-        val finished = ArenaState.Finished(players = players().values.take(1))
+        val finished = ArenaMatchState.Finished(players = players().values.take(1))
 
         assertFalse(actual = finished.canStartNextMatch)
     }
@@ -304,72 +306,69 @@ class ArenaScreenStateTest {
         messageCount: Int,
         isUserReady: Boolean = false,
         matchNumberInGauntlet: Int = 1,
-    ) =
-        ArenaMatch.Finished(
-            messages =
-                (1..messageCount).map { index ->
-                    IncomingArenaMessage(
-                        id = "message-$index",
-                        roundNumber = index,
-                        message = ArenaMessage.NewRound(roundNumber = index),
-                    )
-                },
-            matchNumberInGauntlet = matchNumberInGauntlet,
-            playerMap = combatPlayers(isUserReady = isUserReady),
-            participants = matchParticipants,
-        )
+    ) = ArenaMatch.Finished(
+        messages =
+        (1..messageCount).map { index ->
+            IncomingArenaMessage(
+                id = "message-$index",
+                roundNumber = index,
+                message = ArenaMessage.NewRound(roundNumber = index),
+            )
+        },
+        matchNumberInGauntlet = matchNumberInGauntlet,
+        playerMap = combatPlayers(isUserReady = isUserReady),
+        participants = matchParticipants,
+    )
 
-    private fun endingCombatMatch() =
-        ArenaMatch.Combat(
-            messages = emptyList(),
-            playerMap = combatPlayers(),
-            nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
-            roundNumber = 1,
-            isNewRound = false,
-            isMatchOver = true,
-            diceRoll = null,
-            participants = matchParticipants,
-        )
+    private fun endingCombatMatch() = ArenaMatch.Combat(
+        messages = emptyList(),
+        playerMap = combatPlayers(),
+        nextCombatAction = NextCombatAction.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+        roundNumber = 1,
+        isNewRound = false,
+        isMatchOver = true,
+        diceRoll = null,
+        participants = matchParticipants,
+    )
 
-    private fun combatPlayers(isUserReady: Boolean = false) =
-        mapOf(
-            USER_ID to
-                ArenaPlayer.Selected(
-                    userId = USER_ID,
-                    displayName = "Paladin",
-                    isReadyForNextMatch = isUserReady,
-                    characterClass = TestCharacterClasses.paladin(),
-                ),
-            OPPONENT_ID to
-                ArenaPlayer.Selected(
-                    userId = OPPONENT_ID,
-                    displayName = "Rogue",
-                    characterClass = TestCharacterClasses.rogue(),
-                ),
-        )
+    private fun combatPlayers(isUserReady: Boolean = false) = mapOf(
+        USER_ID to
+            ArenaPlayer.Selected(
+                userId = USER_ID,
+                displayName = "Paladin",
+                isReadyForNextMatch = isUserReady,
+                characterClass = TestCharacterClasses.paladin(),
+            ),
+        OPPONENT_ID to
+            ArenaPlayer.Selected(
+                userId = OPPONENT_ID,
+                displayName = "Rogue",
+                characterClass = TestCharacterClasses.rogue(),
+            ),
+    )
 
     @Test
     fun `Given the pending doubles bonus is owned by the player about to roll, then the doubles badge shows`() {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.NormalAttack(
-                        roll = NormalAttackType.Health,
-                        attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
-                        defenderUserId = OPPONENT_ID,
-                        activeUserIds = setOf(element = USER_ID),
-                    ),
+                CombatActionState.NormalAttack(
+                    roll = NormalAttackType.Health,
+                    attackTurn = AttackTurn.Standard(attackerUserId = USER_ID),
+                    defenderUserId = OPPONENT_ID,
+                    activeUserIds = setOf(element = USER_ID),
+                ),
                 diceRollState =
-                    DiceRollState.TwoDice(
-                        firstDie = 3,
-                        secondDie = 3,
-                        doublesBonus = DoublesBonusState(userId = USER_ID),
-                    ),
+                DiceRollState.TwoDice(
+                    firstDie = 3,
+                    secondDie = 3,
+                    doublesBonus = DoublesBonusState(userId = USER_ID),
+                ),
             )
 
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -378,18 +377,18 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 diceRollState =
-                    DiceRollState.TwoDice(
-                        firstDie = 3,
-                        secondDie = 3,
-                        doublesBonus = DoublesBonusState(userId = USER_ID),
-                    ),
+                DiceRollState.TwoDice(
+                    firstDie = 3,
+                    secondDie = 3,
+                    doublesBonus = DoublesBonusState(userId = USER_ID),
+                ),
             )
 
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -404,23 +403,23 @@ class ArenaScreenStateTest {
         val whileRollerActive =
             combatState(
                 combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
+                CombatActionState.Idle(activeUserIds = setOf(element = USER_ID)),
                 diceRollState = doublesRoll,
             )
         val afterTurnPassed =
             combatState(
                 combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 diceRollState = doublesRoll,
             )
 
         assertEquals(
-            expected = whileRollerActive.diceBadgeState,
-            actual = afterTurnPassed.diceBadgeState,
+            expected = whileRollerActive.diceRollState?.diceBadge,
+            actual = afterTurnPassed.diceRollState?.diceBadge,
         )
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.Second),
-            actual = afterTurnPassed.diceBadgeState,
+            actual = afterTurnPassed.diceRollState?.diceBadge,
         )
     }
 
@@ -429,19 +428,19 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 diceRollState =
-                    DiceRollState.OneDie(
-                        value = 4,
-                        diePosition = DiePosition.First,
-                        doublesBonus = null,
-                        isMirrorImageReroll = true,
-                    ),
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    doublesBonus = null,
+                    isMirrorImageReroll = true,
+                ),
             )
 
         assertEquals(
             expected = DiceBadgeState.MirrorImageBonus(diePosition = DiePosition.First),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -450,36 +449,36 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.AbilityRoll(
-                        action =
-                            AbilityActionState.Passive.Teleport(
-                                attackerRoll =
-                                    AbilityActionState.Passive.TeleportDieState(
-                                        userId = OPPONENT_ID,
-                                        diePosition = DiePosition.First,
-                                    ),
-                                defenderRoll =
-                                    AbilityActionState.Passive.TeleportDieState(
-                                        userId = USER_ID,
-                                        diePosition = DiePosition.Second,
-                                    ),
-                                attackerDoublesBonus = 1,
-                            ),
-                        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
-                        defenderUserId = USER_ID,
-                        activeUserIds = setOf(OPPONENT_ID, USER_ID),
+                CombatActionState.AbilityRoll(
+                    action =
+                    AbilityActionState.Passive.Teleport(
+                        attackerRoll =
+                        AbilityActionState.Passive.TeleportDieState(
+                            userId = OPPONENT_ID,
+                            diePosition = DiePosition.First,
+                        ),
+                        defenderRoll =
+                        AbilityActionState.Passive.TeleportDieState(
+                            userId = USER_ID,
+                            diePosition = DiePosition.Second,
+                        ),
+                        attackerDoublesBonus = 1,
                     ),
+                    attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
+                    defenderUserId = USER_ID,
+                    activeUserIds = setOf(OPPONENT_ID, USER_ID),
+                ),
                 diceRollState =
-                    DiceRollState.OneDie(
-                        value = 4,
-                        diePosition = DiePosition.First,
-                        doublesBonus = DoublesBonusState(userId = OPPONENT_ID),
-                    ),
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    doublesBonus = DoublesBonusState(userId = OPPONENT_ID),
+                ),
             )
 
         assertEquals(
             expected = DiceBadgeState.DoublesBonus(diePosition = DiePosition.First),
-            actual = state.diceBadgeState,
+            actual = state.diceRollState?.diceBadge,
         )
     }
 
@@ -488,35 +487,34 @@ class ArenaScreenStateTest {
         val state =
             combatState(
                 combatActionState =
-                    CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
+                CombatActionState.Idle(activeUserIds = setOf(element = OPPONENT_ID)),
                 diceRollState =
-                    DiceRollState.OneDie(
-                        value = 4,
-                        diePosition = DiePosition.First,
-                        doublesBonus = null,
-                        isMirrorImageReroll = false,
-                    ),
+                DiceRollState.OneDie(
+                    value = 4,
+                    diePosition = DiePosition.First,
+                    doublesBonus = null,
+                    isMirrorImageReroll = false,
+                ),
             )
 
-        assertNull(actual = state.diceBadgeState)
+        assertNull(actual = state.diceRollState?.diceBadge)
     }
 
     private fun combatState(
         combatActionState: CombatActionState,
         playerMap: Map<String, PlayerState.Selected> = players(),
         diceRollState: DiceRollState? = null,
-    ) =
-        ArenaState.Combat(
-            playerMap = playerMap,
-            userPlayerId = USER_ID,
-            combatActionState = combatActionState,
-            roundNumber = 1,
-            isNewRound = false,
-            isMatchOver = false,
-            turnOwnerUserId = USER_ID,
-            lockedTargetUserId = lockedTarget(combatActionState = combatActionState),
-            diceRollState = diceRollState,
-        )
+    ) = ArenaMatchState.Combat(
+        playerMap = playerMap,
+        userPlayerId = USER_ID,
+        combatActionState = combatActionState,
+        roundNumber = 1,
+        isNewRound = false,
+        isMatchOver = false,
+        turnOwnerUserId = USER_ID,
+        lockedTargetUserId = lockedTarget(combatActionState = combatActionState),
+        diceRollState = diceRollState,
+    )
 
     private fun lockedTarget(combatActionState: CombatActionState): String? {
         val attack = combatActionState as? CombatActionState.NormalAttack ?: return null
@@ -526,50 +524,47 @@ class ArenaScreenStateTest {
     private fun holyShieldRoll(
         action: AbilityActionState.Passive.HolyShield,
         defenderUserId: String,
-    ) =
-        CombatActionState.AbilityRoll(
-            action = action,
-            attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
-            defenderUserId = defenderUserId,
-            activeUserIds = setOf(defenderUserId),
-        )
+    ) = CombatActionState.AbilityRoll(
+        action = action,
+        attackTurn = AttackTurn.Standard(attackerUserId = OPPONENT_ID),
+        defenderUserId = defenderUserId,
+        activeUserIds = setOf(defenderUserId),
+    )
 
     private fun screenState(
-        arenaState: ArenaState = ArenaState.Finished(players = emptyList()),
+        arenaMatchState: ArenaMatchState = ArenaMatchState.Finished(players = emptyList()),
         hasReadiedForNextMatch: Boolean = false,
         messages: List<ArenaMessageState> = emptyList(),
-    ) =
-        ArenaScreenState(
-            messages = messages,
-            secondsRemaining = 0,
-            showForfeitDialog = false,
-            isUserPlayerKnockedOut = false,
-            hasReadiedForNextMatch = hasReadiedForNextMatch,
-            arenaState = arenaState,
-            participants = emptyMap(),
-        )
+    ) = ArenaScreenState(
+        messages = messages,
+        secondsRemaining = 0,
+        showForfeitDialog = false,
+        isUserPlayerKnockedOut = false,
+        hasReadiedForNextMatch = hasReadiedForNextMatch,
+        arenaMatchState = arenaMatchState,
+        participants = emptyMap(),
+    )
 
-    private fun players() =
-        mapOf(
-            USER_ID to
-                PlayerState.Selected(
-                    userId = USER_ID,
-                    displayName = "Paladin",
-                    characterClass = TestCharacterClasses.paladin().toState(),
-                ),
-            OPPONENT_ID to
-                PlayerState.Selected(
-                    userId = OPPONENT_ID,
-                    displayName = "Rogue",
-                    characterClass = TestCharacterClasses.rogue().toState(),
-                ),
-        )
+    private fun players() = mapOf(
+        USER_ID to
+            PlayerState.Selected(
+                userId = USER_ID,
+                displayName = "Paladin",
+                characterClass = TestCharacterClasses.paladin().toState(),
+            ),
+        OPPONENT_ID to
+            PlayerState.Selected(
+                userId = OPPONENT_ID,
+                displayName = "Rogue",
+                characterClass = TestCharacterClasses.rogue().toState(),
+            ),
+    )
 
     private fun playersAfterActivatedAbility(): Map<String, PlayerState.Selected> {
         val actingPlayer = players().getValue(USER_ID)
         val actedClass =
             actingPlayer.characterClass.copy(
-                attacksRemaining = actingPlayer.characterClass.attacksRemaining + 1
+                attacksRemaining = actingPlayer.characterClass.attacksRemaining + 1,
             )
         return players() + (USER_ID to actingPlayer.copy(characterClass = actedClass))
     }

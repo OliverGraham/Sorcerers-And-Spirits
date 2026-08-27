@@ -114,14 +114,14 @@ private fun PulsingDots(modifier: Modifier = Modifier) {
                     initialValue = DOT_MIN_ALPHA,
                     targetValue = DOT_MAX_ALPHA,
                     animationSpec =
-                        infiniteRepeatable(
-                            animation =
-                                tween(
-                                    durationMillis = DOT_PULSE_DURATION_MILLIS,
-                                    delayMillis = index * DOT_PULSE_DURATION_MILLIS / DOT_COUNT,
-                                ),
-                            repeatMode = RepeatMode.Reverse,
+                    infiniteRepeatable(
+                        animation =
+                        tween(
+                            durationMillis = DOT_PULSE_DURATION_MILLIS,
+                            delayMillis = index * DOT_PULSE_DURATION_MILLIS / DOT_COUNT,
                         ),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
                     label = DOT_PULSE_ALPHA_LABEL,
                 )
 
@@ -163,7 +163,7 @@ private fun RotatingTipCard(modifier: Modifier = Modifier) {
                 targetState = tipIndex,
                 transitionSpec = {
                     fadeIn(
-                        animationSpec = tween(durationMillis = TIP_CROSSFADE_MILLIS)
+                        animationSpec = tween(durationMillis = TIP_CROSSFADE_MILLIS),
                     ) togetherWith
                         fadeOut(animationSpec = tween(durationMillis = TIP_CROSSFADE_MILLIS))
                 },

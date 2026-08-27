@@ -12,10 +12,10 @@ class NavigationRoutesTest {
     private val arenaScreen =
         Route.ArenaScreen(
             arguments =
-                ArenaScreenViewModelArgumentsSerializable(
-                    arenaId = "arena-1",
-                    expectedNumberOfPlayers = 2,
-                )
+            ArenaScreenViewModelArgumentsSerializable(
+                arenaId = "arena-1",
+                expectedNumberOfPlayers = 2,
+            ),
         )
 
     @Test

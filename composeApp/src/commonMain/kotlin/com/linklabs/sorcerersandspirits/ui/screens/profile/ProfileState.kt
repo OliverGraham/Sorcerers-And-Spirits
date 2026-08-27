@@ -30,14 +30,14 @@ internal fun Profile.toProfileState(): ProfileState {
         rating = stats.rating,
         overall = stats.overall,
         perClass =
-            CharacterClass.playableTypes().mapNotNull { classType ->
-                val classStats = stats.perClass[classType] ?: return@mapNotNull null
-                if (classStats.isEmpty) {
-                    null
-                } else {
-                    ClassStatsState(classType = classType, stats = classStats)
-                }
-            },
+        CharacterClass.playableTypes().mapNotNull { classType ->
+            val classStats = stats.perClass[classType] ?: return@mapNotNull null
+            if (classStats.isEmpty) {
+                null
+            } else {
+                ClassStatsState(classType = classType, stats = classStats)
+            }
+        },
         achievementsUnlocked = unlockedAchievements.keys.count { id -> id in catalogIds },
         achievementsTotal = catalogIds.size,
     )

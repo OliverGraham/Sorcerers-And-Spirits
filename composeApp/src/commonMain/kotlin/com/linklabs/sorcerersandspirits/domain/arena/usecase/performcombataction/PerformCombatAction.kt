@@ -42,51 +42,47 @@ internal class PerformCombatAction(
         return combatMutator.getOutcome()
     }
 
-    private fun CurrentCombatAction.rollingUserId(): String =
-        when (this) {
-            is CurrentCombatAction.NormalAttack -> attackTurn.attackerUserId
-            is CurrentCombatAction.AbilityRoll -> rollingUserId
-        }
+    private fun CurrentCombatAction.rollingUserId(): String = when (this) {
+        is CurrentCombatAction.NormalAttack -> attackTurn.attackerUserId
+        is CurrentCombatAction.AbilityRoll -> rollingUserId
+    }
 
-    private fun resolveAction(action: CurrentCombatAction) =
-        when (action) {
-            is CurrentCombatAction.NormalAttack ->
-                NormalAttackRollHandler.handleNormalRoll(
-                    currentAction = action,
-                    combatMutator = combatMutator,
-                )
+    private fun resolveAction(action: CurrentCombatAction) = when (action) {
+        is CurrentCombatAction.NormalAttack ->
+            NormalAttackRollHandler.handleNormalRoll(
+                currentAction = action,
+                combatMutator = combatMutator,
+            )
 
-            is CurrentCombatAction.AbilityRoll -> action.purpose.handleAbilityRoll()
-        }
+        is CurrentCombatAction.AbilityRoll -> action.purpose.handleAbilityRoll()
+    }
 
-    private fun AbilityAction.handleAbilityRoll() =
-        when (this) {
-            is AbilityAction.Activated -> handleActivated()
-            is AbilityAction.Passive -> handlePassive()
-        }
+    private fun AbilityAction.handleAbilityRoll() = when (this) {
+        is AbilityAction.Activated -> handleActivated()
+        is AbilityAction.Passive -> handlePassive()
+    }
 
-    private fun AbilityAction.Activated.handleActivated() =
-        when (this) {
-            is AbilityAction.Activated.AllIn ->
-                AllInActivated(combatMutator = combatMutator, allIn = allInAbility).invoke()
+    private fun AbilityAction.Activated.handleActivated() = when (this) {
+        is AbilityAction.Activated.AllIn ->
+            AllInActivated(combatMutator = combatMutator, allIn = allInAbility).invoke()
 
-            is AbilityAction.Activated.Impersonate ->
-                ImpersonateActivated(
-                        combatMutator = combatMutator,
-                        impersonateAbility = impersonateAbility,
-                    )
-                    .invoke()
+        is AbilityAction.Activated.Impersonate ->
+            ImpersonateActivated(
+                combatMutator = combatMutator,
+                impersonateAbility = impersonateAbility,
+            )
+                .invoke()
 
-            is AbilityAction.Activated.PrepareAttack ->
-                PrepareAttackActivated(combatMutator = combatMutator).invoke()
+        is AbilityAction.Activated.PrepareAttack ->
+            PrepareAttackActivated(combatMutator = combatMutator).invoke()
 
-            is AbilityAction.Activated.SummonMinion ->
-                SummonMinionActivated(
-                        combatMutator = combatMutator,
-                        summonMinionAbility = summonMinionAbility,
-                    )
-                    .invoke()
-        }
+        is AbilityAction.Activated.SummonMinion ->
+            SummonMinionActivated(
+                combatMutator = combatMutator,
+                summonMinionAbility = summonMinionAbility,
+            )
+                .invoke()
+    }
 
     private fun AbilityAction.Passive.handlePassive() {
         when (this) {
@@ -116,16 +112,16 @@ internal class PerformCombatAction(
         when (this) {
             is AbilityAction.Passive.LuckyCoin.Flip ->
                 LuckyCoinHandler(
-                        combatMutator = combatMutator,
-                        attackerRollTotal = this.attackerRollTotal,
-                    )
+                    combatMutator = combatMutator,
+                    attackerRollTotal = this.attackerRollTotal,
+                )
                     .flipLuckyCoin()
 
             is AbilityAction.Passive.LuckyCoin.HighRoller ->
                 LuckyCoinHandler(
-                        combatMutator = combatMutator,
-                        attackerRollTotal = this.attackerRollTotal,
-                    )
+                    combatMutator = combatMutator,
+                    attackerRollTotal = this.attackerRollTotal,
+                )
                     .handleHighRoller()
         }
     }

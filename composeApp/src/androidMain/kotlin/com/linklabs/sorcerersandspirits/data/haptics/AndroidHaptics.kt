@@ -45,31 +45,31 @@ class AndroidHaptics(context: Context) : Haptics {
             vibrator.vibrate(VibrationEffect.createOneShot(durationMillis, amplitude))
         } else {
             // createOneShot requires API 26; no non-deprecated alternative exists below it.
-            @Suppress("DEPRECATION") vibrator.vibrate(durationMillis)
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(durationMillis)
         }
     }
 
-    private fun HapticStrength.durationMillis(): Long =
-        when (this) {
-            HapticStrength.LIGHT -> 25L
-            HapticStrength.MEDIUM -> 55L
-            HapticStrength.HEAVY -> 700L
-        }
+    private fun HapticStrength.durationMillis(): Long = when (this) {
+        HapticStrength.LIGHT -> 25L
+        HapticStrength.MEDIUM -> 55L
+        HapticStrength.HEAVY -> 700L
+    }
 
-    private fun HapticStrength.amplitude(): Int =
-        when (this) {
-            HapticStrength.LIGHT -> 120
-            HapticStrength.MEDIUM -> 190
-            HapticStrength.HEAVY -> 255
-        }
+    private fun HapticStrength.amplitude(): Int = when (this) {
+        HapticStrength.LIGHT -> 120
+        HapticStrength.MEDIUM -> 190
+        HapticStrength.HEAVY -> 255
+    }
 }
 
-private fun Context.resolveVibrator(): Vibrator =
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
-        vibratorManager.defaultVibrator
-    } else {
-        // VibratorManager requires API 31; getSystemService(Vibrator) is the only option below it.
-        @Suppress("DEPRECATION")
-        getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-    }
+private fun Context.resolveVibrator(): Vibrator = if (Build.VERSION.SDK_INT >=
+    Build.VERSION_CODES.S
+) {
+    val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as VibratorManager
+    vibratorManager.defaultVibrator
+} else {
+    // VibratorManager requires API 31; getSystemService(Vibrator) is the only option below it.
+    @Suppress("DEPRECATION")
+    getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+}

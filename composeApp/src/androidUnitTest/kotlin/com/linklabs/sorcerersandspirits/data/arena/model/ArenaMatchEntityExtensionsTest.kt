@@ -10,23 +10,21 @@ import kotlin.test.assertTrue
 
 class ArenaMatchEntityExtensionsTest {
 
-    private fun createSelectedPlayer(userId: String, speed: Int) =
-        ArenaPlayerEntity.Selected(
-            userId = userId,
-            displayName = "Player $userId",
-            characterClassEntity =
-                CharacterClassEntity(
-                    type = CharacterClassType.Rogue,
-                    hitPoints = 10,
-                    armorClass = 10,
-                    speed = speed,
-                    offensiveAbility = OffensiveAbilityEntity.KillingMomentum,
-                    defensiveAbility = DefensiveAbilityEntity.Dodge(armorBonus = 0),
-                ),
-        )
+    private fun createSelectedPlayer(userId: String, speed: Int) = ArenaPlayerEntity.Selected(
+        userId = userId,
+        displayName = "Player $userId",
+        characterClassEntity =
+        CharacterClassEntity(
+            type = CharacterClassType.Rogue,
+            hitPoints = 10,
+            armorClass = 10,
+            speed = speed,
+            offensiveAbility = OffensiveAbilityEntity.KillingMomentum,
+            defensiveAbility = DefensiveAbilityEntity.Dodge(armorBonus = 0),
+        ),
+    )
 
-    private fun createUnselectedPlayer(userId: String) =
-        ArenaPlayerEntity.Unselected(userId = userId, displayName = "Player $userId")
+    private fun createUnselectedPlayer(userId: String) = ArenaPlayerEntity.Unselected(userId = userId, displayName = "Player $userId")
 
     @Test
     fun `getFastestPlayerId returns the player with highest speed`() {
@@ -38,21 +36,6 @@ class ArenaMatchEntityExtensionsTest {
             )
 
         assertEquals("2", players.getFastestPlayer().userId)
-    }
-
-    @Test
-    fun `toParticipants maps selected players to their class type and skips unselected`() {
-        val players =
-            mapOf(
-                "1" to createSelectedPlayer("1", 5),
-                "2" to createUnselectedPlayer("2"),
-                "3" to createSelectedPlayer("3", 3),
-            )
-
-        assertEquals(
-            mapOf("1" to CharacterClassType.Rogue, "3" to CharacterClassType.Rogue),
-            players.toParticipants(),
-        )
     }
 
     @Test

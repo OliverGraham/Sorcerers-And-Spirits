@@ -277,20 +277,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   class names (e.g. attacker + defender) — both should be colored. Reuse the class color source
   (`CharacterClassType.toColor()`).
 
-### SS-254 — Message log: gradual drag-to-dismiss (ModalBottomSheet-style), not all-or-nothing
-
-- [ ] Not completed
-- **Symptom:** The open message log dismisses via an overscroll threshold
-  (`rememberOverscrollDismissConnection` in `ArenaMessageLog.kt`): scrolling past the end snaps it
-  closed all at once.
-- **Goal:** Replace this with a **gradual, scroll-linked dismiss** like a `ModalBottomSheet` — as the
-  user scrolls/drags past the edge the log translates with the gesture and only dismisses once past a
-  distance/velocity, and springs back otherwise. Reuse the built-in bottom-sheet nested-scroll /
-  anchored-draggable behavior rather than the custom threshold accumulator.
-- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` and the unfurl host
-  `MessageLogOverlay` in `ui/screens/arena/ui/combat/CombatMessages.kt`.
-- **Notes:** Follow-up to SS-251.
-
 ### SS-255 — Message log open/insert animation reads wrong (topmost line doesn't move)
 
 - [ ] Not completed

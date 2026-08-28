@@ -1,9 +1,8 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -32,7 +31,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
@@ -50,10 +48,9 @@ import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.TurnTimer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.getDisplayString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -61,26 +58,18 @@ import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_log_header
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
-internal val messagesIconSize = 44.dp
+private val headerBookendReserve = 60.dp
+private val messagesIconSize = 44.dp
 private val unreadCountFontSize = 18.sp
-private val messagesGradientTop = Color(color = 0xFF654E35)
-private val messagesGradientMiddle = Color(color = 0xFFCB9C6A)
-private val messagesGradientBottom = Color(color = 0xFF98754F)
-private const val MESSAGES_GRADIENT_TOP_STOP = 0.0559f
-private const val MESSAGES_GRADIENT_MIDDLE_STOP = 0.5176f
-private const val MESSAGES_GRADIENT_BOTTOM_STOP = 0.9698f
-private const val MESSAGES_BACKGROUND_ALPHA = 0.9f
+
+private const val ROUND_HEADER_TRANSITION_LABEL = "MessagesRoundHeader"
+private const val LATEST_MESSAGE_TRANSITION_LABEL = "MessagesLatestMessage"
 private const val UNREAD_DISPLAY_CAP = 9
 private const val UNREAD_COUNT_COLOR_TRANSITION_LABEL = "MessagesUnreadCountColor"
 private const val UNREAD_COUNT_COLOR_SHIFT_LABEL = "MessagesUnreadCountColorShift"
-private const val MESSAGES_EXPAND_LABEL = "MessagesExpand"
-private const val ROUND_HEADER_TRANSITION_LABEL = "MessagesRoundHeader"
-private const val LATEST_MESSAGE_TRANSITION_LABEL = "MessagesLatestMessage"
 private const val UNREAD_COUNT_CHANGE_LABEL = "MessagesUnreadCountChange"
 private const val UNREAD_COUNT_COLOR_CYCLE_MILLIS = 2000
 private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
-private val messageBarHeight = 84.dp
-private val headerBookendReserve = 60.dp
 
 @Composable
 internal fun MessagesBar(
@@ -167,10 +156,6 @@ internal fun MessagesBar(
     }
 }
 
-/**
- * The persistent handle header — "Round X · {class}'s turn" — with the class name tinted its family
- * color. Falls back to just the round when no turn owner is known (e.g. between matches).
- */
 @Composable
 private fun roundTurnHeaderText(roundNumber: Int, classType: CharacterClassType): AnnotatedString {
     val className = classType.name
@@ -190,7 +175,6 @@ private fun roundTurnHeaderText(roundNumber: Int, classType: CharacterClassType)
     }
 }
 
-/** The circular messages affordance with the flowing-color unread tally drawn in its center. */
 @Composable
 private fun MessagesIcon(unreadMessageCount: Int, modifier: Modifier = Modifier) {
     Box(
@@ -209,73 +193,6 @@ private fun MessagesIcon(unreadMessageCount: Int, modifier: Modifier = Modifier)
     }
 }
 
-/**
- * The message log, unfurled as an overlay over the combat content (SS-173). It drops down from the
- * [MessagesBar] and stops at the top of the dice-home slot in [diceHomeBounds], covering the
- * topmost avatar but leaving the dice home and buttons untouched. It paints over the avatars rather
- * than reserving layout space, so nothing shifts as it opens. The hoisted [isExpanded] drives the
- * unfurl height; it renders nothing while collapsed or before the dice-home slot has been measured.
- * Tapping anywhere on the unfurled log dismisses it via [onDismiss].
- */
-@Composable
-internal fun MessageLogOverlay(
-    messageGroups: List<ArenaMessageGroupState>,
-    isExpanded: Boolean,
-    diceHomeBounds: Rect?,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val expandedFraction by
-        animateFloatAsState(targetValue = if (isExpanded) 1f else 0f, label = MESSAGES_EXPAND_LABEL)
-    if (expandedFraction <= 0f || diceHomeBounds == null) return
-
-    val barHeightPx = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
-    val fullLogHeightPx = diceHomeBounds.top - barHeightPx
-    val fullLogHeight = with(receiver = LocalDensity.current) { fullLogHeightPx.toDp() }
-
-    Box(modifier = modifier.fillMaxSize()) {
-        ArenaMessageLog(
-            messageGroups = messageGroups,
-            onDismiss = onDismiss,
-            modifier =
-            Modifier.fillMaxWidth()
-                .padding(top = messageBarHeight)
-                .height(height = fullLogHeight * expandedFraction)
-                .background(
-                    brush =
-                    messagesBackgroundBrush(startY = -barHeightPx, endY = fullLogHeightPx),
-                )
-                .clickable(onClick = onDismiss),
-        )
-    }
-}
-
-/**
- * The messages surface's translucent wash (from Figma): a single top-to-bottom gradient — dark
- * brown at the top, through warm gold, to a muted tan at the bottom — dropped to
- * [MESSAGES_BACKGROUND_ALPHA] so combat still reads through it. [startY] and [endY] are pixel
- * offsets into the shared bar-top-to-dice-home span, so the collapsed [MessagesBar] and the
- * unfurled [MessageLogOverlay] sample one continuous gradient rather than each restarting its own.
- */
-private fun messagesBackgroundBrush(startY: Float, endY: Float): Brush = Brush.verticalGradient(
-    colorStops =
-    arrayOf(
-        MESSAGES_GRADIENT_TOP_STOP to
-            messagesGradientTop.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-        MESSAGES_GRADIENT_MIDDLE_STOP to
-            messagesGradientMiddle.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-        MESSAGES_GRADIENT_BOTTOM_STOP to
-            messagesGradientBottom.copy(alpha = MESSAGES_BACKGROUND_ALPHA),
-    ),
-    startY = startY,
-    endY = endY,
-)
-
-/**
- * The unread count, drawn so the four class colors continuously flow through its digits — a looping
- * horizontal gradient whose tiled colors are shifted across the text forever. The tally reads "9+"
- * once ten or more messages go unread.
- */
 @Composable
 private fun UnreadCount(count: Int, modifier: Modifier = Modifier) {
     val colorTransition = rememberInfiniteTransition(label = UNREAD_COUNT_COLOR_TRANSITION_LABEL)

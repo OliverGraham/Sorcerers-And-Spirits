@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -23,12 +22,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -52,28 +49,19 @@ import sorcerersandspirits.composeapp.generated.resources.arena_log_round_in_pro
 import sorcerersandspirits.composeapp.generated.resources.arena_log_setup
 import sorcerersandspirits.composeapp.generated.resources.arena_log_turn
 
-private const val OVERSCROLL_DISMISS_THRESHOLD_PX = 120f
 private const val CARET_ROTATION_LABEL = "MessageLogCaretRotation"
 private const val CARET_EXPANDED_ROTATION = 0f
 private const val CARET_COLLAPSED_ROTATION = -90f
 
 private const val SETUP_GROUP_KEY = 0
 
-/**
- * The message log. The messages arrive already grouped by the state mapping, so the log just
- * renders each [ArenaMessageGroupState]: a header, then that group's lines when it is expanded.
- * Rounds are shown most-recent first, with the current round open; the pre-combat Setup group sinks
- * to the bottom, collapsed. The only per-group logic here is whether it is expanded (SS-251).
- */
 @Composable
 internal fun ArenaMessageLog(
     messageGroups: List<ArenaMessageGroupState>,
-    onDismiss: () -> Unit,
+    dismissConnection: NestedScrollConnection,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
-    val overscrollDismiss =
-        rememberOverscrollDismissConnection(listState = listState, onDismiss = onDismiss)
 
     val currentRoundNumber =
         messageGroups.filterIsInstance<ArenaMessageGroupState.Round>().maxOfOrNull {
@@ -85,7 +73,7 @@ internal fun ArenaMessageLog(
 
     LazyColumn(
         state = listState,
-        modifier = modifier.nestedScroll(connection = overscrollDismiss),
+        modifier = modifier.nestedScroll(connection = dismissConnection),
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(space = 2.dp),
     ) {
@@ -124,34 +112,6 @@ internal fun ArenaMessageLog(
 private fun ArenaMessageGroupState.groupKey(): Int = when (this) {
     is ArenaMessageGroupState.Setup -> SETUP_GROUP_KEY
     is ArenaMessageGroupState.Round -> roundNumber
-}
-
-@Composable
-private fun rememberOverscrollDismissConnection(
-    listState: LazyListState,
-    onDismiss: () -> Unit,
-): NestedScrollConnection = remember(key1 = listState, key2 = onDismiss) {
-    object : NestedScrollConnection {
-        private var accumulatedOverscroll = 0f
-
-        override fun onPostScroll(
-            consumed: Offset,
-            available: Offset,
-            source: NestedScrollSource,
-        ): Offset {
-            val isPullingPastEnd = available.y < 0f && !listState.canScrollForward
-            if (isPullingPastEnd) {
-                accumulatedOverscroll += available.y
-                if (accumulatedOverscroll <= -OVERSCROLL_DISMISS_THRESHOLD_PX) {
-                    accumulatedOverscroll = 0f
-                    onDismiss()
-                }
-            } else {
-                accumulatedOverscroll = 0f
-            }
-            return Offset.Zero
-        }
-    }
 }
 
 @Composable
@@ -320,7 +280,7 @@ private fun ArenaMessageLogPreview() {
         val duelistInfo = CharacterClassMessageInfoState("Duelist", CharacterClassType.Duelist)
 
         ArenaMessageLog(
-            onDismiss = {},
+            dismissConnection = remember { object : NestedScrollConnection {} },
             messageGroups =
             listOf(
                 ArenaMessageGroupState.Setup(

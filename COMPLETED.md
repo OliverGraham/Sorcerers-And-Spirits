@@ -75,6 +75,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   Setup group collapsed at the bottom), and `MessagesBar` gained a two-row handle with a persistent
   "Round X · {class}'s turn" header (class-tinted) aligned with the timer, and the animating latest
   message centered below.
+- **SS-254** — Message log gradual drag-to-dismiss (ModalBottomSheet-style, not all-or-nothing):
+  Replaced the overscroll threshold accumulator with an `AnchoredDraggableState<LogSheetAnchor>`
+  (Open/Dismissed) in `messagelog/MessageLogOverlay`; a `NestedScrollConnection` bridges the log's
+  overscroll to the sheet so pulling past the list end retracts it up into the bar in lockstep,
+  dismissing past halfway or on a fling (`SHEET_DISMISS_FLING_VELOCITY`) and springing back
+  otherwise. Position rides `graphicsLayer { translationY }` within a `clipToBounds` slot, a
+  `derivedStateOf` visibility gate drives the early-out, and `ArenaMessageLog` now takes the
+  `dismissConnection`. Combat messages were split into a `messagelog` package.
 - **SS-225** — MessageLog scroll behavior, spacing, and class-only coloring: `ArenaMessageLog`
   opens at the top with newest-first (`asReversed()` + fresh `rememberLazyListState` per open),
   overscrolling past the end dismisses the log via a `NestedScrollConnection` (accumulated

@@ -411,7 +411,9 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
     is ArenaMessageState.Doubles ->
         stringResource(resource = Res.string.arena_message_doubles, className)
 
-    is ArenaMessageState.PrepareAttack ->
+    is ArenaMessageState.PrepareAttack.Strike -> ""
+
+    is ArenaMessageState.PrepareAttack.Outcome ->
         if (isSuccessful) {
             stringResource(
                 resource = Res.string.arena_message_prepare_attack_success,

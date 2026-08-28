@@ -344,13 +344,23 @@ sealed interface ArenaMessageEntity {
     ) : ArenaMessageEntity
 
     @Serializable
-    @SerialName(value = PREPARE_ATTACK)
-    data class PrepareAttack(
+    @SerialName(value = PREPARE_ATTACK_STRIKE)
+    data class PrepareAttackStrike(
         override val id: String,
         val duelistUserId: String,
-        val duelistName: String,
         val classType: CharacterClassType,
         val targetUserId: String,
+        val isSuccessful: Boolean,
+        val isTargetKnockedOut: Boolean,
+    ) : ArenaMessageEntity
+
+    @Serializable
+    @SerialName(value = PREPARE_ATTACK_OUTCOME)
+    data class PrepareAttackOutcome(
+        override val id: String,
+        val duelistUserId: String,
+        val classType: CharacterClassType,
+        val duelistName: String,
         val targetClassName: String,
         val firstDie: Int,
         val secondDie: Int,
@@ -403,7 +413,8 @@ sealed interface ArenaMessageEntity {
         private const val HOLY_SHIELD_WRATH = "HolyShieldWrath"
         private const val KILLING_MOMENTUM = "KillingMomentum"
         private const val ALL_IN = "AllIn"
-        private const val PREPARE_ATTACK = "PrepareAttack"
+        private const val PREPARE_ATTACK_STRIKE = "PrepareAttackStrike"
+        private const val PREPARE_ATTACK_OUTCOME = "PrepareAttackOutcome"
         private const val DOUBLES = "Doubles"
     }
 }
@@ -637,12 +648,20 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     singleDie = singleDie,
                 )
 
-            is ArenaMessageEntity.PrepareAttack ->
-                ArenaMessage.PrepareAttack(
+            is ArenaMessageEntity.PrepareAttackStrike ->
+                ArenaMessage.PrepareAttack.Strike(
                     duelistUserId = duelistUserId,
-                    duelistName = duelistName,
                     classType = classType,
                     targetUserId = targetUserId,
+                    isSuccessful = isSuccessful,
+                    isTargetKnockedOut = isTargetKnockedOut,
+                )
+
+            is ArenaMessageEntity.PrepareAttackOutcome ->
+                ArenaMessage.PrepareAttack.Outcome(
+                    duelistUserId = duelistUserId,
+                    classType = classType,
+                    duelistName = duelistName,
                     targetClassName = targetClassName,
                     firstDie = firstDie,
                     secondDie = secondDie,
@@ -922,13 +941,22 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             singleDie = singleDie,
         )
 
-    is ArenaMessage.PrepareAttack ->
-        ArenaMessageEntity.PrepareAttack(
+    is ArenaMessage.PrepareAttack.Strike ->
+        ArenaMessageEntity.PrepareAttackStrike(
             id = id,
             duelistUserId = duelistUserId,
-            duelistName = duelistName,
             classType = classType,
             targetUserId = targetUserId,
+            isSuccessful = isSuccessful,
+            isTargetKnockedOut = isTargetKnockedOut,
+        )
+
+    is ArenaMessage.PrepareAttack.Outcome ->
+        ArenaMessageEntity.PrepareAttackOutcome(
+            id = id,
+            duelistUserId = duelistUserId,
+            classType = classType,
+            duelistName = duelistName,
             targetClassName = targetClassName,
             firstDie = firstDie,
             secondDie = secondDie,

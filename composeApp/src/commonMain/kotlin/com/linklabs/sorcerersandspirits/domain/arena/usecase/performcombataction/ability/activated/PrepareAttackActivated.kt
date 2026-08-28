@@ -23,13 +23,25 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                     combatMutator = this,
                     defenderDefensiveAbility = defender.defensiveAbility,
                 )
-                addPrepareAttackMessage(result = result, isSuccessful = true)
+                addPrepareAttackMessages(
+                    result = result,
+                    isSuccessful = true,
+                    isTargetKnockedOut = true,
+                )
                 resolveTurnEnd()
             }
 
             total in abilityConfig.prepareAttackKnockoutRange -> {
                 updateDefenderHitPoints(hitPoints = 0)
-                addPrepareAttackMessage(result = result, isSuccessful = true)
+                val isHolyShieldAvailable =
+                    HolyShieldHandler.isHolyShieldAvailable(
+                        defenderDefensiveAbility = defender.defensiveAbility,
+                    )
+                addPrepareAttackMessages(
+                    result = result,
+                    isSuccessful = true,
+                    isTargetKnockedOut = !isHolyShieldAvailable,
+                )
 
                 val wasHolyShieldTriggered =
                     HolyShieldHandler.triggerHolyShieldIfApplicable(
@@ -43,23 +55,37 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
             }
 
             else -> {
-                addPrepareAttackMessage(result = result, isSuccessful = false)
+                addPrepareAttackMessages(
+                    result = result,
+                    isSuccessful = false,
+                    isTargetKnockedOut = false,
+                )
                 resolveTurnEnd()
             }
         }
     }
 
-    private fun CombatMutator.addPrepareAttackMessage(
+    private fun CombatMutator.addPrepareAttackMessages(
         result: RollResult.TwoDice,
         isSuccessful: Boolean,
+        isTargetKnockedOut: Boolean,
     ) {
         addMessage(
             message =
-            ArenaMessage.PrepareAttack(
+            ArenaMessage.PrepareAttack.Strike(
                 duelistUserId = attackerUserId,
-                duelistName = attacker.className,
                 classType = attacker.type,
                 targetUserId = defenderUserId,
+                isSuccessful = isSuccessful,
+                isTargetKnockedOut = isTargetKnockedOut,
+            ),
+        )
+        addMessage(
+            message =
+            ArenaMessage.PrepareAttack.Outcome(
+                duelistUserId = attackerUserId,
+                classType = attacker.type,
+                duelistName = attacker.className,
                 targetClassName = defender.className,
                 firstDie = result.firstDie,
                 secondDie = result.secondDie,

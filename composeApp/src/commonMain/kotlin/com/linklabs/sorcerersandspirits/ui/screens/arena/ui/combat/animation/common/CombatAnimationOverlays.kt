@@ -70,7 +70,7 @@ internal fun CombatAnimationOverlays(
                 modifier = modifier,
             )
 
-        is ArenaMessageState.PrepareAttack -> {
+        is ArenaMessageState.PrepareAttack.Strike -> {
             val duelistBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.duelistUserId) ?: return
             val targetBounds =

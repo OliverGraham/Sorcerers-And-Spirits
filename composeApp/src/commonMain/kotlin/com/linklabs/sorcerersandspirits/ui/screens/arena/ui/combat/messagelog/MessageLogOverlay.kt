@@ -6,10 +6,12 @@ import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -45,7 +47,8 @@ internal fun MessageLogOverlay(
 
     val density = LocalDensity.current
     val barHeightPx = with(receiver = density) { messageBarHeight.toPx() }
-    val fullLogHeightPx = diceHomeBounds.top - barHeightPx
+    val statusBarTopPx = WindowInsets.statusBars.getTop(density = density).toFloat()
+    val fullLogHeightPx = diceHomeBounds.top - statusBarTopPx - barHeightPx
     val fullLogHeight = with(receiver = density) { fullLogHeightPx.toDp() }
 
     val sheetState = remember { AnchoredDraggableState(initialValue = LogSheetAnchor.Dismissed) }

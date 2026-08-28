@@ -114,7 +114,11 @@ private fun ArenaMatch.ChoosingClasses.transitionWaitingToChoosingClasses(
 ): ArenaScreenStateUpdate = ArenaScreenStateUpdate(
     screenState =
     currentScreenState.copy(
-        arenaMatchState = toChoosingClassesState(userPlayerId = userId),
+        arenaMatchState =
+        toChoosingClassesState(
+            userPlayerId = userId,
+            defaultSelectedClass = currentScreenState.characterClasses.firstOrNull(),
+        ),
         messageGroups =
         currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
     ),
@@ -217,7 +221,11 @@ private fun ArenaMatch.ChoosingClasses.transitionFinishedToChoosingClasses(
 ): ArenaScreenStateUpdate = ArenaScreenStateUpdate(
     screenState =
     currentScreenState.copy(
-        arenaMatchState = toChoosingClassesState(userPlayerId = userId),
+        arenaMatchState =
+        toChoosingClassesState(
+            userPlayerId = userId,
+            defaultSelectedClass = currentScreenState.characterClasses.firstOrNull(),
+        ),
         hasReadiedForNextMatch = false,
         messageGroups =
         emptyList<ArenaMessageGroupState>()

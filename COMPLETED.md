@@ -83,6 +83,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   otherwise. Position rides `graphicsLayer { translationY }` within a `clipToBounds` slot, a
   `derivedStateOf` visibility gate drives the early-out, and `ArenaMessageLog` now takes the
   `dismissConnection`. Combat messages were split into a `messagelog` package.
+- **SS-226** — MessageLog must stop above DiceHome, not be covered by it: Corrected a coordinate
+  mismatch in `messagelog/MessageLogOverlay` — `diceHomeBounds` is captured in full-window root
+  coords (edge-to-edge), but the overlay is shifted down by `windowInsetsPadding(statusBars)`, so
+  `fullLogHeightPx` over-counted by the status-bar inset and pushed the log's bottom into DiceHome.
+  Now subtracts `WindowInsets.statusBars.getTop(density)` so the log's lower bound lands exactly on
+  the DiceHome top, occluding no line while staying an overlay that doesn't push combat content up.
 - **SS-225** — MessageLog scroll behavior, spacing, and class-only coloring: `ArenaMessageLog`
   opens at the top with newest-first (`asReversed()` + fresh `rememberLazyListState` per open),
   overscrolling past the end dismisses the log via a `NestedScrollConnection` (accumulated

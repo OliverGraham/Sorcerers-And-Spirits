@@ -237,19 +237,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
 > respectively — so the placeholder tickets were removed.
 
-### SS-226 — MessageLog must stop above DiceHome, not be covered by it
-
-- [ ] Not completed
-- **Symptom:** The message log is partially covered by the DiceHome / dice tray at the bottom of the
-  arena, hiding the most recent lines behind the dice.
-- **Goal:** The log's lower bound sits **above** DiceHome so no line is ever occluded by the dice
-  tray. Keep the log as an overlay over the combat content ([[message-log-overlays-not-pushes]]) —
-  it must not push combat content up — but bottom-constrain it to end above DiceHome.
-- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` and its host in the arena layout
-  (`LoadedArenaScreen.kt` / bottom-controls / DiceHome). Anchor the log's max height/offset to the
-  DiceHome top.
-- **Related:** SS-225 (auto-scroll), SS-159 (raise DiceHome/buttons), SS-182 (top inset).
-
 ### SS-252 — Finished state: show a version of the arena message log (UI + location TBD)
 
 - [ ] Not completed

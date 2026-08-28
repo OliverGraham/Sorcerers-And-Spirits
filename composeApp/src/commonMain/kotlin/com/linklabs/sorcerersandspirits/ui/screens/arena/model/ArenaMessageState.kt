@@ -205,7 +205,8 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class HighRollerTrigger(
-            override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
+            override val animation: ArenaAnimationState =
+                ArenaAnimationState.FlashAndAvatar(isContinuous = true),
             override val id: String,
             override val gamblerUserId: String,
             val attackerClassName: String,

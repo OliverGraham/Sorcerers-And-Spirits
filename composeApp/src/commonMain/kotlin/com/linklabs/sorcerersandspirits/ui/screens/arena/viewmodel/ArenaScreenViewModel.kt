@@ -311,7 +311,11 @@ class ArenaScreenViewModel(
 
                 is ArenaMatch.ChoosingClasses ->
                     getNewArenaScreenState(
-                        arenaMatchState = toChoosingClassesState(userPlayerId = userId),
+                        arenaMatchState =
+                        toChoosingClassesState(
+                            userPlayerId = userId,
+                            defaultSelectedClass = characterClasses.firstOrNull(),
+                        ),
                         timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS,
                     )
 

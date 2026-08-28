@@ -16,6 +16,7 @@ sealed interface PlayerState {
         override val userId: String,
         override val displayName: String,
         val characterClass: CharacterClassState,
+        val isReadyForNextMatch: Boolean = false,
     ) : PlayerState
 
     @Immutable
@@ -30,6 +31,7 @@ internal fun ArenaPlayer.toState() = when (this) {
             userId = userId,
             displayName = displayName,
             characterClass = characterClass.toState(),
+            isReadyForNextMatch = isReadyForNextMatch,
         )
 
     is ArenaPlayer.Unselected ->
@@ -40,6 +42,7 @@ internal fun ArenaPlayer.Selected.toSelectedState() = PlayerState.Selected(
     userId = userId,
     displayName = displayName,
     characterClass = characterClass.toState(),
+    isReadyForNextMatch = isReadyForNextMatch,
 )
 
 internal fun PlayerState.toDomain() = when (this) {
@@ -48,6 +51,7 @@ internal fun PlayerState.toDomain() = when (this) {
             userId = userId,
             displayName = displayName,
             characterClass = characterClass.toDomain(),
+            isReadyForNextMatch = isReadyForNextMatch,
         )
 
     is PlayerState.Unselected ->
@@ -58,4 +62,5 @@ internal fun PlayerState.Selected.toDomain() = ArenaPlayer.Selected(
     userId = userId,
     displayName = displayName,
     characterClass = characterClass.toDomain(),
+    isReadyForNextMatch = isReadyForNextMatch,
 )

@@ -277,20 +277,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   rather than reveal it top-anchored.
 - **Notes:** Follow-up to SS-251; needs on-device animation iteration.
 
-### SS-227 — Finished state: show which players have readied up (like ChallengeDialog)
-
-- [ ] Not completed
-- **Goal:** In the Finished (match-over) state, once a player signals they are ready (e.g. "Go
-  Again" / rematch), surface **who is ready** to every client, the same way the ChallengeDialog
-  displays readiness. A player readying up should be reflected in real time for all participants.
-- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` for the display; mirror the readiness
-  presentation already used by the ChallengeDialog (find its ready-state rendering and reuse it).
-  Ready state flows through the shared arena state (Domain → Data → UI), not derived from the
-  message log ([[never-search-messages-for-decisions]]).
-- **Notes:** Gauntlet rule — after the final match, "Go Again" starts a new Gauntlet (back to class
-  selection); confirm the readiness display is correct for both between-match and end-of-Gauntlet
-  rematch. Related: SS-179 (Finished-state text styling).
-
 ### SS-234 — Multiplayer no-target avatar: silhouette, "?" gray stats, slanted "Choose a target"
 
 - [ ] Not completed

@@ -114,7 +114,7 @@ private fun ArenaStateContent(
             is ArenaMatchState.Finished ->
                 MatchFinishedContent(
                     finishedState = arenaState,
-                    gauntletProgress = screenState.gauntletProgress,
+                    gauntletProgressState = screenState.gauntletProgressState,
                     hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
                     secondsRemaining = { timerState().secondsRemaining },
                 )

@@ -171,7 +171,7 @@ class ArenaScreenStateTest {
         val previousState =
             screenState(
                 arenaMatchState =
-                ArenaMatchState.Finished(players = emptyList(), hasAnyPlayerReadied = true),
+                ArenaMatchState.Finished(players = emptyList()),
             )
         val finishedMatch =
             finishedMatch(

@@ -25,7 +25,7 @@ data class ArenaScreenState(
     val hasReadiedForNextMatch: Boolean,
     val arenaMatchState: ArenaMatchState,
     val messageGroups: List<ArenaMessageGroupState>,
-    val gauntletProgress: GauntletProgress = GauntletProgress(),
+    val gauntletProgressState: GauntletProgressState = GauntletProgressState(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
     val animatingMessage: ArenaMessageState? = null,

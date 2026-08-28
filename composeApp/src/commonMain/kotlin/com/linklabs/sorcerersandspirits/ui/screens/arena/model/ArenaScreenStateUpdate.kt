@@ -230,7 +230,7 @@ private fun ArenaMatch.ChoosingClasses.transitionFinishedToChoosingClasses(
         messageGroups =
         emptyList<ArenaMessageGroupState>()
             .appendNewMessages(incomingMessages = messages),
-        gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+        gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
     ),
     timerAction = TimerAction.Start(timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS),
 )
@@ -246,7 +246,7 @@ private fun ArenaMatch.Combat.transitionFinishedToCombat(
         messageGroups =
         emptyList<ArenaMessageGroupState>()
             .appendNewMessages(incomingMessages = messages),
-        gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+        gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
     ),
     timerAction = TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS),
 )
@@ -281,7 +281,6 @@ private fun ArenaMatch.Combat.toCombatState(userId: String) = ArenaMatchState.Co
 
 private fun ArenaMatch.Finished.toFinishedState() = ArenaMatchState.Finished(
     players = playerMap.values.map { it.toState() }.filterIsInstance<PlayerState.Selected>(),
-    hasAnyPlayerReadied = playerMap.values.any { it.isReadyForNextMatch },
 )
 
 private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(

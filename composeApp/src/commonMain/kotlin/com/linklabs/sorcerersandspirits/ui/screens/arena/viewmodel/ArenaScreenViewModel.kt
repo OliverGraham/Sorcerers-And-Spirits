@@ -35,7 +35,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenStateU
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CHOOSING_CLASSES_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.WAITING_TIMER_DURATION_SECONDS
@@ -346,7 +346,7 @@ class ArenaScreenViewModel(
             messageGroups =
             emptyList<ArenaMessageGroupState>()
                 .appendNewMessages(incomingMessages = messages),
-            gauntletProgress = GauntletProgress(currentMatch = matchNumberInGauntlet),
+            gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
             characterClasses = characterClasses,
             classCopy = classCopy,
             animatingMessage = null,

@@ -1,5 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,14 +31,30 @@ import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgress
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import org.jetbrains.compose.resources.stringResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_countdown_seconds
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_draw
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_everyone_left
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_leave
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_match_progress
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_knocked_out
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_not_ready
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_ready
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_survived
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_waiting_for_others
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_winner
+
+private const val READINESS_LABEL = "ReadinessLabel"
+private const val READINESS_FADE_DURATION_MILLIS = 220
 
 @Composable
 internal fun MatchFinishedContent(
     finishedState: ArenaMatchState.Finished,
-    gauntletProgress: GauntletProgress,
+    gauntletProgressState: GauntletProgressState,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: () -> Int,
     modifier: Modifier = Modifier,
@@ -43,10 +64,8 @@ internal fun MatchFinishedContent(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val headline = if (gauntletProgress.isFinalMatch) "Gauntlet Finished" else "Match Finished"
-
         Text(
-            text = headline,
+            text = stringResource(resource = gauntletProgressState.stringResources.titleResource),
             style = MaterialTheme.typography.headlineLarge,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -55,7 +74,11 @@ internal fun MatchFinishedContent(
 
         Text(
             text =
-            "Match ${gauntletProgress.currentMatch} of ${gauntletProgress.matchesPerGauntlet}",
+            stringResource(
+                resource = Res.string.arena_finished_match_progress,
+                gauntletProgressState.currentMatch,
+                gauntletProgressState.matchesPerGauntlet,
+            ),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -72,7 +95,7 @@ internal fun MatchFinishedContent(
 
         MatchDecisionControls(
             canStartNextMatch = finishedState.canStartNextMatch,
-            isFinalMatch = gauntletProgress.isFinalMatch,
+            gauntletProgressState = gauntletProgressState,
             hasReadiedForNextMatch = hasReadiedForNextMatch,
             secondsRemaining = secondsRemaining,
         )
@@ -82,7 +105,7 @@ internal fun MatchFinishedContent(
 @Composable
 private fun MatchDecisionControls(
     canStartNextMatch: Boolean,
-    isFinalMatch: Boolean,
+    gauntletProgressState: GauntletProgressState,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: () -> Int,
     modifier: Modifier = Modifier,
@@ -96,7 +119,7 @@ private fun MatchDecisionControls(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Everyone else has left the arena.",
+                text = stringResource(resource = Res.string.arena_finished_everyone_left),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -105,7 +128,7 @@ private fun MatchDecisionControls(
                 onClick = actions.onConfirmLeaveArena,
                 borderColor = MaterialTheme.colorScheme.outline,
             ) {
-                Text(text = "Leave")
+                Text(text = stringResource(resource = Res.string.arena_finished_leave))
             }
         }
         return
@@ -113,7 +136,6 @@ private fun MatchDecisionControls(
 
     val currentSeconds = secondsRemaining()
     val isCountdownRunning = currentSeconds > 0
-    val nextStepName = if (isFinalMatch) "new gauntlet" else "next match"
 
     if (hasReadiedForNextMatch) {
         Column(
@@ -122,14 +144,15 @@ private fun MatchDecisionControls(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = "Waiting for the other players…",
+                text = stringResource(resource = Res.string.arena_finished_waiting_for_others),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             if (isCountdownRunning) {
                 CountdownText(
-                    prefix = "Starting the $nextStepName in",
+                    prefix =
+                    stringResource(resource = gauntletProgressState.stringResources.countdownWaitingPrefixResource),
                     secondsRemaining = currentSeconds,
                 )
             }
@@ -137,15 +160,16 @@ private fun MatchDecisionControls(
         return
     }
 
-    val continueText = if (isFinalMatch) "Go Again" else "Next Match"
-
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (isCountdownRunning) {
-            CountdownText(prefix = "The $nextStepName starts in", secondsRemaining = currentSeconds)
+            CountdownText(
+                prefix = stringResource(resource = gauntletProgressState.stringResources.countdownStartPrefixResource),
+                secondsRemaining = currentSeconds,
+            )
         }
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
@@ -155,9 +179,11 @@ private fun MatchDecisionControls(
                 onClick = actions.onConfirmLeaveArena,
                 borderColor = MaterialTheme.colorScheme.outline,
             ) {
-                Text(text = "Leave")
+                Text(text = stringResource(resource = Res.string.arena_finished_leave))
             }
-            AppButton(onClick = actions.onStayForAnotherMatch) { Text(text = continueText) }
+            AppButton(onClick = actions.onStayForAnotherMatch) {
+                Text(text = stringResource(resource = gauntletProgressState.stringResources.continueActionResource))
+            }
         }
     }
 }
@@ -176,7 +202,8 @@ private fun CountdownText(prefix: String, secondsRemaining: Int, modifier: Modif
         )
         AnimatedSeconds(seconds = secondsRemaining) { seconds ->
             Text(
-                text = "${seconds}s",
+                text =
+                stringResource(resource = Res.string.arena_finished_countdown_seconds, seconds),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
@@ -188,9 +215,13 @@ private fun CountdownText(prefix: String, secondsRemaining: Int, modifier: Modif
 private fun WinnerBanner(winner: PlayerState.Selected?, modifier: Modifier = Modifier) {
     val text =
         if (winner != null) {
-            "${winner.displayName} wins as the ${winner.characterClass.className}!"
+            stringResource(
+                resource = Res.string.arena_finished_winner,
+                winner.displayName,
+                winner.characterClass.className,
+            )
         } else {
-            "No survivors — it's a draw"
+            stringResource(resource = Res.string.arena_finished_draw)
         }
 
     Text(
@@ -239,18 +270,55 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
                 )
             }
 
-            Text(
-                text = if (isConscious) "Survived" else "Knocked out",
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color =
-                if (isConscious) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.error
-                },
-            )
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    text =
+                    if (isConscious) {
+                        stringResource(resource = Res.string.arena_finished_player_survived)
+                    } else {
+                        stringResource(resource = Res.string.arena_finished_player_knocked_out)
+                    },
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color =
+                    if (isConscious) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.error
+                    },
+                )
+                ReadinessLabel(isReadyForNextMatch = player.isReadyForNextMatch)
+            }
         }
+    }
+}
+
+@Composable
+private fun ReadinessLabel(isReadyForNextMatch: Boolean, modifier: Modifier = Modifier) {
+    AnimatedContent(
+        targetState = isReadyForNextMatch,
+        modifier = modifier,
+        transitionSpec = {
+            fadeIn(animationSpec = tween(durationMillis = READINESS_FADE_DURATION_MILLIS)) togetherWith
+                fadeOut(animationSpec = tween(durationMillis = READINESS_FADE_DURATION_MILLIS))
+        },
+        label = READINESS_LABEL,
+    ) { isReady ->
+        Text(
+            text =
+            if (isReady) {
+                stringResource(resource = Res.string.arena_finished_player_ready)
+            } else {
+                stringResource(resource = Res.string.arena_finished_player_not_ready)
+            },
+            style = MaterialTheme.typography.labelMedium,
+            color =
+            if (isReady) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            },
+        )
     }
 }
 
@@ -281,7 +349,7 @@ private fun MatchFinishedContentPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
             finishedState = exampleFinishedState(),
-            gauntletProgress = GauntletProgress(currentMatch = 2),
+            gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },
         )
@@ -294,7 +362,7 @@ private fun MatchFinishedContentFinalPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
             finishedState = exampleFinishedState(),
-            gauntletProgress = GauntletProgress(currentMatch = 3),
+            gauntletProgressState = GauntletProgressState(currentMatch = 3),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },
         )
@@ -306,8 +374,8 @@ private fun MatchFinishedContentFinalPreview() {
 private fun MatchFinishedContentCountdownPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
-            finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
-            gauntletProgress = GauntletProgress(currentMatch = 2),
+            finishedState = exampleFinishedStateWithReadiedPlayer(),
+            gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 45 },
         )
@@ -319,8 +387,8 @@ private fun MatchFinishedContentCountdownPreview() {
 private fun MatchFinishedContentWaitingPreview() {
     SorcerersAndSpiritsTheme {
         MatchFinishedContent(
-            finishedState = exampleFinishedState().copy(hasAnyPlayerReadied = true),
-            gauntletProgress = GauntletProgress(currentMatch = 2),
+            finishedState = exampleFinishedStateWithReadiedPlayer(),
+            gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = true,
             secondsRemaining = { 45 },
         )
@@ -334,9 +402,19 @@ private fun MatchFinishedContentLoneSurvivorPreview() {
         MatchFinishedContent(
             finishedState =
             exampleFinishedState().copy(players = exampleFinishedState().players.take(1)),
-            gauntletProgress = GauntletProgress(currentMatch = 2),
+            gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },
         )
     }
+}
+
+private fun exampleFinishedStateWithReadiedPlayer(): ArenaMatchState.Finished {
+    val baseState = exampleFinishedState()
+    val readiedPlayers =
+        baseState.players.mapIndexed { index, player ->
+            player.copy(isReadyForNextMatch = index == 0)
+        }
+
+    return baseState.copy(players = readiedPlayers)
 }

@@ -60,6 +60,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-227** — Finished state: show which players have readied up (like ChallengeDialog): Per-player
+  readiness now threads Domain → UI (`ArenaPlayer.isReadyForNextMatch` → `PlayerState.Selected` via
+  `toState`/`toSelectedState`/`toDomain`), and each recap row in `MatchFinishedContent` shows a
+  "Ready"/"Not ready" label alongside its Survived/Knocked-out status, updating in real time for all
+  clients from the shared arena state (not the message log).
 - **SS-256** — Rearchitect combat animation gating around a ViewModel-owned playback queue: Fixed the
   CombatButtons-disappear-mid-match bug by moving animation gating out of the composables into a
   single bounded `CombatPlaybackSequencer` drain coroutine in `viewModelScope` that derives fresh

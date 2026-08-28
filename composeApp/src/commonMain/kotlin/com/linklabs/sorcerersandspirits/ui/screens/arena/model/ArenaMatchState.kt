@@ -81,7 +81,6 @@ sealed interface ArenaMatchState {
     @Immutable
     data class Finished(
         val players: List<PlayerState.Selected>,
-        val hasAnyPlayerReadied: Boolean = false,
     ) : ArenaMatchState {
         val survivors = players.filter { it.characterClass.isConscious }
         val winner = survivors.singleOrNull()

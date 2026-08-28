@@ -167,7 +167,7 @@ internal fun rememberAvatarGesture(
 private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) {
     is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
 
-    is ArenaMessageState.PrepareAttack -> prepareAttackReactionDelayMillis()
+    is ArenaMessageState.PrepareAttack.Strike -> prepareAttackReactionDelayMillis()
 
     is ArenaMessageState.Riposte -> RIPOSTE_STRIKE_MILLIS
 
@@ -196,7 +196,7 @@ private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long
 }
 
 // TODO(SS-258): Duelist
-private fun ArenaMessageState.PrepareAttack.prepareAttackReactionDelayMillis(): Long = if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
+private fun ArenaMessageState.PrepareAttack.Strike.prepareAttackReactionDelayMillis(): Long = if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
 // TODO(SS-258): Common
 private suspend fun AvatarGestureState.play(

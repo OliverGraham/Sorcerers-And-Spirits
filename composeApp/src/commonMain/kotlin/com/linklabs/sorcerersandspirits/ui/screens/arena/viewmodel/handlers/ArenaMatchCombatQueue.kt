@@ -40,7 +40,9 @@ internal class ArenaMatchCombatQueue(
                 val animationCoordinator = MessageAnimationCoordinator(message = message)
                 currentAnimationCoordinator = animationCoordinator
 
-                triggerAnimation(/* arenaMessageState= */ message)
+                if (message.isAnimated()) {
+                    triggerAnimation(/* arenaMessageState= */ message)
+                }
                 animationCoordinator.await()
 
                 currentAnimationCoordinator = null

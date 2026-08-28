@@ -123,7 +123,9 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
     is ArenaMessageState.Impersonate ->
         stringResource(resource = Res.string.arena_flash_impersonate)
 
-    is ArenaMessageState.PrepareAttack ->
+    is ArenaMessageState.PrepareAttack.Strike -> ""
+
+    is ArenaMessageState.PrepareAttack.Outcome ->
         if (isSuccessful) {
             stringResource(resource = Res.string.arena_flash_prepared_strike)
         } else {

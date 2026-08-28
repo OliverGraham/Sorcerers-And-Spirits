@@ -105,6 +105,12 @@ internal fun PaladinHolyShieldOverlay(
                 animationKey = AnimationKey.AvatarOverlay,
             ),
         )
+
+        val isSurvivedPrayer =
+            animatingMessage is ArenaMessageState.HolyShield.Prayer && animatingMessage.didSurvive
+        if (isSurvivedPrayer) {
+            state.shimmerForever()
+        }
     }
 
     val textMeasurer = rememberTextMeasurer()
@@ -211,7 +217,6 @@ private suspend fun HolyShieldState.praySuccess(paladin: Rect) {
                 tween(durationMillis = HEART_FLOAT_MILLIS, easing = LinearOutSlowInEasing),
             )
         }
-        launch { shimmerForever() }
     }
 }
 
@@ -256,12 +261,16 @@ private suspend fun HolyShieldState.prayFail(paladin: Rect) {
     scene = null
 }
 
-private suspend fun HolyShieldState.wrath(paladin: Rect, attacker: Rect?, intensity: Float) {
+private suspend fun HolyShieldState.wrath(paladin: Rect, attacker: Rect, intensity: Float) {
     scene = HolyShieldScene(paladin = paladin, attacker = attacker)
     wrathIntensity = intensity
     sanctify.snapTo(targetValue = 1f)
-    if (holyBeam.value == 0f) holyBeam.snapTo(targetValue = 1f)
-    if (shieldRaise.value == 0f) shieldRaise.snapTo(targetValue = 1f)
+    if (holyBeam.value == 0f) {
+        holyBeam.snapTo(targetValue = 1f)
+    }
+    if (shieldRaise.value == 0f) {
+        shieldRaise.snapTo(targetValue = 1f)
+    }
 
     coroutineScope {
         launch {

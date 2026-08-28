@@ -217,16 +217,29 @@ sealed interface ArenaMessage {
         val singleDie: Int,
     ) : ArenaMessage
 
-    data class PrepareAttack(
-        val duelistUserId: String,
-        val duelistName: String,
-        val classType: CharacterClassType,
-        val targetUserId: String,
-        val targetClassName: String,
-        val firstDie: Int,
-        val secondDie: Int,
-        val isSuccessful: Boolean,
-    ) : ArenaMessage
+    sealed interface PrepareAttack : ArenaMessage {
+        val duelistUserId: String
+        val classType: CharacterClassType
+        val isSuccessful: Boolean
+
+        data class Strike(
+            override val duelistUserId: String,
+            override val classType: CharacterClassType,
+            val targetUserId: String,
+            override val isSuccessful: Boolean,
+            val isTargetKnockedOut: Boolean,
+        ) : PrepareAttack
+
+        data class Outcome(
+            override val duelistUserId: String,
+            override val classType: CharacterClassType,
+            val duelistName: String,
+            val targetClassName: String,
+            val firstDie: Int,
+            val secondDie: Int,
+            override val isSuccessful: Boolean,
+        ) : PrepareAttack
+    }
 }
 
 // TODO(SS-259): This should be renamed to NormalRollOutcomeType or if there's another type that is

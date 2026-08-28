@@ -97,7 +97,7 @@ internal data class PrepareAttackScene(
 
 @Composable
 internal fun PrepareAttackOverlay(
-    animatingMessage: ArenaMessageState.PrepareAttack,
+    animatingMessage: ArenaMessageState.PrepareAttack.Strike,
     duelistBounds: Rect,
     targetBounds: Rect,
     accentColor: Color,
@@ -376,17 +376,14 @@ private fun DuelistPrepareAttackPreview(
         accentClass = accentClass,
         avatars = avatars,
         buildMessage = { id ->
-            ArenaMessageState.PrepareAttack(
+            ArenaMessageState.PrepareAttack.Strike(
                 id = id,
                 actingClassType = accentClass,
                 duelistUserId = PREVIEW_ACTOR_ID,
-                duelistName = "Duelist",
                 targetUserId = PREVIEW_TARGET_ID,
-                targetClassName = "Rogue",
-                firstDie = if (isSuccessful) 6 else 3,
-                secondDie = if (isSuccessful) 5 else 2,
                 isSuccessful = isSuccessful,
-                animation = ArenaAnimationState.FlashAndAvatar(),
+                isTargetKnockedOut = isSuccessful,
+                animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
             )
         },

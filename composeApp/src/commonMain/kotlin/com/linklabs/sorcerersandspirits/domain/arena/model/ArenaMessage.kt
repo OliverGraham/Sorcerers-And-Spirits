@@ -34,6 +34,7 @@ sealed interface ArenaMessage {
             override val attackerUserId: String,
             override val defenderUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val defenderClassName: String,
             val firstDie: Int,
             val secondDie: Int,

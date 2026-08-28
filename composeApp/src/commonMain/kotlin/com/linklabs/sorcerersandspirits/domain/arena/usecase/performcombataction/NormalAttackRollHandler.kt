@@ -223,6 +223,7 @@ internal class NormalAttackRollHandler(
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 defenderClassName = defender.className,
                 firstDie = firstDie,
                 secondDie = secondDie,

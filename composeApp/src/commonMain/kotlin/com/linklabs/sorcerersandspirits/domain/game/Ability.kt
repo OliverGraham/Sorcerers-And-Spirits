@@ -46,24 +46,15 @@ interface AllInAbility {
 }
 
 interface SummonMinionAbility {
-    val skeletonCount: Int
-    val golemCount: Int
+    val minions: List<Minion>
     val attacksTakenThisTurn: Int
 }
 
-/**
- * The shield total contributed by summoned minions, counted as effective hit points: each skeleton
- * is a +1 shield and each golem is a +2 shield.
- */
 val SummonMinionAbility.shieldPoints: Int
-    get() = skeletonCount + golemCount * 2
+    get() = minions.sumOf { minion -> if (minion == Minion.Golem) 2 else 1 }
 
-/**
- * The follow-up attacks a summoner gets on their turn: one per minion held. Counted off live, so a
- * minion consumed as a shield this turn no longer grants its attack.
- */
 val SummonMinionAbility.minionAttacks: Int
-    get() = skeletonCount + golemCount
+    get() = minions.size
 
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T
@@ -82,8 +73,7 @@ sealed interface OffensiveAbility : Ability {
     data object PrepareAttack : OffensiveAbility, ActivatedAbility
 
     data class SummonMinion(
-        override val skeletonCount: Int = 0,
-        override val golemCount: Int = 0,
+        override val minions: List<Minion> = emptyList(),
         override val attacksTakenThisTurn: Int = 0,
     ) : OffensiveAbility,
         ActivatedAbility,

@@ -44,6 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SummonedMinions
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -195,6 +196,12 @@ private fun LargeAvatar(
                 userId = player.userId,
                 isTopSeat = isTopSeat,
                 modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
+            )
+
+            SummonedMinions(
+                minions = player.characterClass.summonedMinions,
+                isTopSeat = isTopSeat,
+                modifier = Modifier.fillMaxSize(),
             )
         }
     }

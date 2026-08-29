@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
 import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
 import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
+import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.SummonMinionAbility
@@ -55,8 +56,7 @@ sealed interface OffensiveAbilityState : AbilityState {
 
     @Immutable
     data class SummonMinion(
-        override val skeletonCount: Int = 0,
-        override val golemCount: Int = 0,
+        override val minions: List<Minion> = emptyList(),
         override val attacksTakenThisTurn: Int = 0,
     ) : OffensiveAbilityState,
         ActivatedAbilityState,
@@ -117,8 +117,7 @@ internal fun OffensiveAbility.toState(): OffensiveAbilityState = when (this) {
 
     is OffensiveAbility.SummonMinion ->
         OffensiveAbilityState.SummonMinion(
-            skeletonCount = skeletonCount,
-            golemCount = golemCount,
+            minions = minions,
             attacksTakenThisTurn = attacksTakenThisTurn,
         )
 
@@ -162,8 +161,7 @@ internal fun OffensiveAbilityState.toDomain(): OffensiveAbility = when (this) {
 
     is OffensiveAbilityState.SummonMinion ->
         OffensiveAbility.SummonMinion(
-            skeletonCount = skeletonCount,
-            golemCount = golemCount,
+            minions = minions,
             attacksTakenThisTurn = attacksTakenThisTurn,
         )
 

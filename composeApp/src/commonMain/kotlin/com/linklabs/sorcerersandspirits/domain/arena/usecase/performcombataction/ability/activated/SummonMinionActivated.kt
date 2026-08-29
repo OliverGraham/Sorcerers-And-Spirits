@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 
@@ -28,34 +29,31 @@ internal class SummonMinionActivated(
         )
 
         updateAttackerClass { attacker ->
-            var newSkeletonCount = summonMinionAbility.skeletonCount
-            var newGolemCount = summonMinionAbility.golemCount
-            var newHp = attacker.hitPoints
-
-            when (result) {
-                in abilityConfig.summonSkeletonRange -> newSkeletonCount++
-
-                in abilityConfig.summonSkeletonAndHealRange -> {
-                    newSkeletonCount++
-                    newHp = attacker.maxHitPoints
+            val summonedMinion =
+                when (result) {
+                    in abilityConfig.summonSkeletonRange -> Minion.Skeleton
+                    in abilityConfig.summonSkeletonAndHealRange -> Minion.Skeleton
+                    abilityConfig.summonGolemRoll -> Minion.Golem
+                    else -> null
                 }
+            val healsToFull =
+                result in abilityConfig.summonSkeletonAndHealRange ||
+                    result == abilityConfig.summonGolemRoll
 
-                abilityConfig.summonGolemRoll -> {
-                    newGolemCount++
-                    newHp = attacker.maxHitPoints
+            val newMinions =
+                if (summonedMinion != null) {
+                    summonMinionAbility.minions + summonedMinion
+                } else {
+                    summonMinionAbility.minions
                 }
-
-                else -> Unit
-            }
 
             val updatedSummonMinionAbility =
                 summonMinionAbility.copy(
-                    skeletonCount = newSkeletonCount,
-                    golemCount = newGolemCount,
-                    attacksTakenThisTurn = newSkeletonCount + newGolemCount,
+                    minions = newMinions,
+                    attacksTakenThisTurn = newMinions.size,
                 )
             attacker.copy(
-                hitPoints = newHp,
+                hitPoints = if (healsToFull) attacker.maxHitPoints else attacker.hitPoints,
                 offensiveAbility =
                 attacker.offensiveAbility.withEffective(updatedSummonMinionAbility),
             )

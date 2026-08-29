@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -202,21 +203,21 @@ private fun summonMinionScene(
 ): SummonMinionScene {
     val center = bounds.center
     val portalCenter = Offset(x = center.x, y = bounds.bottom - bounds.height * 0.05f)
-    val minionType = minionTypeFor(outcome = outcome)
+    val minion = minionFor(outcome = outcome)
     val heals =
         outcome == SummonMinionOutcome.SkeletonAndHeal || outcome == SummonMinionOutcome.Golem
 
     val minionHeight =
-        when (minionType) {
-            MinionType.None -> 0f
-            MinionType.Skeleton -> bounds.height * 0.72f
-            MinionType.Golem -> bounds.height * 0.9f
+        when (minion) {
+            null -> 0f
+            Minion.Skeleton -> bounds.height * 0.72f
+            Minion.Golem -> bounds.height * 0.9f
         }
     val minionWidth =
-        when (minionType) {
-            MinionType.None -> 0f
-            MinionType.Skeleton -> bounds.width * 0.66f
-            MinionType.Golem -> bounds.width * 0.66f
+        when (minion) {
+            null -> 0f
+            Minion.Skeleton -> bounds.width * 0.66f
+            Minion.Golem -> bounds.width * 0.66f
         }
 
     val random = Random(seed = seed)
@@ -240,7 +241,7 @@ private fun summonMinionScene(
         portalCenter = portalCenter,
         portalPalette = portalPalette,
         portalRadiusPx = bounds.width * 0.42f,
-        minionType = minionType,
+        minion = minion,
         minionHeightPx = minionHeight,
         minionWidthPx = minionWidth,
         heals = heals,
@@ -250,14 +251,14 @@ private fun summonMinionScene(
     )
 }
 
-private fun minionTypeFor(outcome: SummonMinionOutcome): MinionType = when (outcome) {
-    SummonMinionOutcome.Fizzle -> MinionType.None
+private fun minionFor(outcome: SummonMinionOutcome): Minion? = when (outcome) {
+    SummonMinionOutcome.Fizzle -> null
 
     SummonMinionOutcome.Skeleton,
     SummonMinionOutcome.SkeletonAndHeal,
-    -> MinionType.Skeleton
+    -> Minion.Skeleton
 
-    SummonMinionOutcome.Golem -> MinionType.Golem
+    SummonMinionOutcome.Golem -> Minion.Golem
 }
 
 private fun DrawScope.drawSummonMinion(
@@ -278,22 +279,24 @@ private fun DrawScope.drawSummonMinion(
         palette = scene.portalPalette,
     )
 
-    val rise = state.minion.value
-    val hasMinion = scene.minionType != MinionType.None && rise > 0f
-    if (hasMinion) {
-        val emergeOffset = (1f - rise) * scene.minionHeightPx
-        val fadeIn = (rise / MINION_FADE_IN_FRACTION).coerceAtMost(maximumValue = 1f)
-        clipRect(bottom = scene.portalCenter.y) {
-            translate(top = emergeOffset) {
-                drawMinion(
-                    kind = scene.minionType,
-                    footCenter = scene.portalCenter,
-                    height = scene.minionHeightPx,
-                    width = scene.minionWidthPx,
-                    alpha = fadeIn * state.minionFade.value,
-                    skeletonImage = skeletonImage,
-                    golemImage = golemImage,
-                )
+    val minion = scene.minion
+    if (minion != null) {
+        val rise = state.minion.value
+        if (rise > 0f) {
+            val emergeOffset = (1f - rise) * scene.minionHeightPx
+            val fadeIn = (rise / MINION_FADE_IN_FRACTION).coerceAtMost(maximumValue = 1f)
+            clipRect(bottom = scene.portalCenter.y) {
+                translate(top = emergeOffset) {
+                    drawMinion(
+                        kind = minion,
+                        footCenter = scene.portalCenter,
+                        height = scene.minionHeightPx,
+                        width = scene.minionWidthPx,
+                        alpha = fadeIn * state.minionFade.value,
+                        skeletonImage = skeletonImage,
+                        golemImage = golemImage,
+                    )
+                }
             }
         }
     }
@@ -375,7 +378,7 @@ private data class SummonMinionScene(
     val portalCenter: Offset,
     val portalPalette: ScythePalette,
     val portalRadiusPx: Float,
-    val minionType: MinionType,
+    val minion: Minion?,
     val minionHeightPx: Float,
     val minionWidthPx: Float,
     val heals: Boolean,

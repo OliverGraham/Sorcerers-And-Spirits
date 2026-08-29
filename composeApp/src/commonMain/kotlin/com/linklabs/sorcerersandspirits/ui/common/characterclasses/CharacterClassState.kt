@@ -3,7 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.domain.game.shieldPoints
+
+private const val MAX_RENDERED_MINIONS = 10
 
 @Immutable
 data class CharacterClassState(
@@ -21,6 +24,13 @@ data class CharacterClassState(
     val isConscious: Boolean = hitPoints > 0
     val hitPointsDisplay: String = buildHitPointsDisplay()
     val armorClassDisplay: String = buildArmorClassDisplay()
+    val summonedMinions: List<Minion> = buildSummonedMinions()
+
+    private fun buildSummonedMinions(): List<Minion> {
+        val summon =
+            offensiveAbility.effective as? OffensiveAbilityState.SummonMinion ?: return emptyList()
+        return summon.minions.takeLast(n = MAX_RENDERED_MINIONS)
+    }
 
     private fun buildHitPointsDisplay(): String {
         val shieldPoints =

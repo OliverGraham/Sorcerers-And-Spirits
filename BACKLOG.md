@@ -313,6 +313,33 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Cue sources:** `ArenaMessageState.SummonMinion`.
 - **Parent:** SS-191. Split out of SS-195.
 
+### SS-268 — Persistent summoned minions: gather behind the summoner, attack, and death animations
+
+- [ ] Not completed — **owner wants to plan this out before work starts; Claude MUST ask clarifying
+  questions first (do not begin implementation until the design is nailed down).**
+- **Goal:** Summoned minions (skeletons and golems) become persistent, visible entities in the combat
+  arena rather than a one-shot rise/fade during the Summon Minion animation:
+    - **Gathering:** each summoned minion appears and stays **behind and to the side** of its
+      summoner's avatar. Support an **infinite** number of minions (they may overlap), but **cap the
+      rendered count at ~10**.
+    - **Z-ordering:** FIFO — newer minions are placed **at the back** (older minions render in front).
+    - **Minion attacks:** when a minion attacks, the **summoner's avatar slides to one side and stays**
+      there while the minion performs its attack. Skeletons and golems have **different attacks** (the
+      owner will describe these later).
+    - **Death:** when the summoner takes damage and their minions are destroyed, the minions get their
+      **own destruction animations** — not the shared avatar Collapse; likely **breaking apart and
+      disintegrating**.
+- **Open for owner (to resolve in the planning pass):** the exact skeleton vs golem attack
+  choreography; when/which minions are destroyed on the summoner taking damage (all of them? one per
+  hit?); whether minion count/identity is domain state that must be threaded Domain→Data→UI or a
+  pure UI accumulation off the SummonMinion messages; how minions coexist with the existing seated
+  large-avatar layout and target-seat swaps; art assets (reuse SS-205's hand-drawn/asset minions).
+- **Relationship to SS-205:** SS-205 is the *summon moment* animation (portal + rise/fade). This
+  ticket is the *persistence* layer — the minions that remain after that moment. Reuse the SS-205
+  minion renderers where possible. Domain source of truth still governs how many minions exist
+  ([[domain-is-source-of-truth]]).
+- **Notes:** Ship interactive previews ([[combat-animation-previews]]). Parent: SS-191.
+
 ### SS-206 — Bard Encore animation
 
 - [ ] Follow-up pending

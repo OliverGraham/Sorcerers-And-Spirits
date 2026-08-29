@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
+import com.linklabs.sorcerersandspirits.domain.game.Minion
 import kotlin.math.roundToInt
 
 private val portalGrayCore = Color(color = 0xFFBFC2BB)
@@ -58,7 +59,7 @@ internal fun DrawScope.drawSummonPortal(
 }
 
 internal fun DrawScope.drawMinion(
-    kind: MinionType,
+    kind: Minion,
     footCenter: Offset,
     height: Float,
     width: Float,
@@ -68,10 +69,9 @@ internal fun DrawScope.drawMinion(
 ) {
     val image =
         when (kind) {
-            MinionType.None -> null
-            MinionType.Skeleton -> skeletonImage
-            MinionType.Golem -> golemImage
-        } ?: return
+            Minion.Skeleton -> skeletonImage
+            Minion.Golem -> golemImage
+        }
 
     drawMinionImage(
         image = image,

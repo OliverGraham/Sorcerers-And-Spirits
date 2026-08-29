@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Canvas

@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message
+package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog
 
 import androidx.compose.runtime.Composable
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
@@ -67,6 +67,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_tie
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_trigger
 
+// TODO: Can add resource to data class?
 @Composable
 internal fun ArenaMessageState.getDisplayString(): String = when (this) {
     is ArenaMessageState.NewRound ->

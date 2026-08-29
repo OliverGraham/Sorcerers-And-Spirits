@@ -6,12 +6,9 @@ import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -26,30 +23,39 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.window.Popup
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.PopupProperties
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.ArenaMessageLog
 import kotlinx.coroutines.flow.drop
+import kotlin.math.roundToInt
 
 private const val SHEET_DISMISS_FLING_VELOCITY = 400f
 
 private enum class LogSheetAnchor { Open, Dismissed }
 
 @Composable
-internal fun MessageLogOverlay(
+internal fun MessageLogDropdown(
     messageGroups: List<ArenaMessageGroupState>,
     isExpanded: Boolean,
+    barBounds: Rect?,
     diceHomeBounds: Rect?,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    if (diceHomeBounds == null) return
+    if (barBounds == null || diceHomeBounds == null) return
 
     val density = LocalDensity.current
-    val barHeightPx = with(receiver = density) { messageBarHeight.toPx() }
-    val statusBarTopPx = WindowInsets.statusBars.getTop(density = density).toFloat()
-    val fullLogHeightPx = diceHomeBounds.top - statusBarTopPx - barHeightPx
+    val barHeightPx = barBounds.height
+    val fullLogHeightPx = diceHomeBounds.top - barBounds.bottom
     val fullLogHeight = with(receiver = density) { fullLogHeightPx.toDp() }
+    val logWidth = with(receiver = density) { barBounds.width.toDp() }
+    val leftOffsetPx = barBounds.left.roundToInt()
+    val topOffsetPx = barBounds.bottom.roundToInt()
 
     val sheetState = remember { AnchoredDraggableState(initialValue = LogSheetAnchor.Dismissed) }
     LaunchedEffect(key1 = fullLogHeightPx) {
@@ -81,13 +87,17 @@ internal fun MessageLogOverlay(
     }
     if (!isSheetVisible) return
 
-    Box(modifier = modifier.fillMaxSize()) {
+    val positionProvider =
+        remember(key1 = leftOffsetPx, key2 = topOffsetPx) {
+            logPopupPositionProvider(leftOffsetPx = leftOffsetPx, topOffsetPx = topOffsetPx)
+        }
+
+    Popup(
+        popupPositionProvider = positionProvider,
+        properties = PopupProperties(focusable = false),
+    ) {
         Box(
-            modifier =
-            Modifier.fillMaxWidth()
-                .padding(top = messageBarHeight)
-                .height(height = fullLogHeight)
-                .clipToBounds(),
+            modifier = Modifier.width(width = logWidth).height(height = fullLogHeight).clipToBounds(),
         ) {
             ArenaMessageLog(
                 messageGroups = messageGroups,
@@ -106,6 +116,15 @@ internal fun MessageLogOverlay(
             )
         }
     }
+}
+
+private fun logPopupPositionProvider(leftOffsetPx: Int, topOffsetPx: Int) = object : PopupPositionProvider {
+    override fun calculatePosition(
+        anchorBounds: IntRect,
+        windowSize: IntSize,
+        layoutDirection: LayoutDirection,
+        popupContentSize: IntSize,
+    ) = IntOffset(x = leftOffsetPx, y = topOffsetPx)
 }
 
 private fun logSheetDismissConnection(

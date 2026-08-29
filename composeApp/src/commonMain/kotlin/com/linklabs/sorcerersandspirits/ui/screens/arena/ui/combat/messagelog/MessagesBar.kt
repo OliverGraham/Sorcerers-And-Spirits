@@ -25,15 +25,21 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -49,9 +55,9 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.TurnTimer
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.message.getDisplayString
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -73,6 +79,50 @@ private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
 
 @Composable
 internal fun MessagesBar(
+    screenState: ArenaScreenState,
+    roundNumber: Int,
+    turnOwnerClassType: CharacterClassType,
+    timerState: () -> ArenaTimerState,
+    diceHomeBounds: Rect?,
+    modifier: Modifier = Modifier,
+) {
+    val displayedMessageCount = screenState.displayedMessageCount
+    var isExpanded by remember { mutableStateOf(value = false) }
+    var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
+    LaunchedEffect(key1 = isExpanded, key2 = displayedMessageCount) {
+        val shouldSyncSeenCount =
+            isExpanded || displayedMessageCount < seenLogMessageCount
+        if (shouldSyncSeenCount) seenLogMessageCount = displayedMessageCount
+    }
+    val unreadMessageCount = (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
+
+    var barBounds by remember { mutableStateOf<Rect?>(value = null) }
+
+    MessagesBarSurface(
+        roundNumber = roundNumber,
+        turnOwnerClassType = turnOwnerClassType,
+        latestMessage = screenState.latestCombatHeaderMessage,
+        timerState = timerState,
+        unreadMessageCount = unreadMessageCount,
+        diceHomeBoundsTop = diceHomeBounds?.top,
+        onToggleExpanded = {
+            isExpanded = !isExpanded
+            if (isExpanded) seenLogMessageCount = displayedMessageCount
+        },
+        modifier = modifier.onGloballyPositioned { barBounds = it.boundsInWindow() },
+    )
+
+    MessageLogDropdown(
+        messageGroups = screenState.messageGroups,
+        isExpanded = isExpanded,
+        barBounds = barBounds,
+        diceHomeBounds = diceHomeBounds,
+        onDismiss = { isExpanded = false },
+    )
+}
+
+@Composable
+private fun MessagesBarSurface(
     roundNumber: Int,
     turnOwnerClassType: CharacterClassType,
     latestMessage: ArenaMessageState?,

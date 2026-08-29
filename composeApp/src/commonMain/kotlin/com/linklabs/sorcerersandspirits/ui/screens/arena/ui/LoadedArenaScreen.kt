@@ -117,6 +117,7 @@ private fun ArenaStateContent(
                     gauntletProgressState = screenState.gauntletProgressState,
                     hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
                     secondsRemaining = { timerState().secondsRemaining },
+                    messageGroups = screenState.messageGroups,
                 )
         }
     }

@@ -237,19 +237,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
 > respectively — so the placeholder tickets were removed.
 
-### SS-252 — Finished state: show a version of the arena message log (UI + location TBD)
-
-- [ ] Not completed
-- **Goal:** Surface a version of the arena message log in the **Finished (match-over)** state so
-  players can review what happened after the match ends. The **exact UI and placement are to be
-  specified by the owner at the start of this work** — do not build until the spec is given.
-- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` for the host; reuse the grouped log
-  rendering from SS-251 (`ui/screens/arena/ui/message/ArenaMessageLog.kt`) rather than duplicating
-  it.
-- **Notes:** Follow-up to SS-251 (build that grouped log first). During combat the log lives behind a
-  tap-to-open handle; the Finished-state version likely wants a different affordance/location — hence
-  owner-to-spec. Related: SS-227 (Finished-state readiness), SS-179 (Finished-state text styling).
-
 ### SS-253 — Class-color every className across all arena messages
 
 - [ ] Not completed

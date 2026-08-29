@@ -166,7 +166,7 @@ private fun GroupHeader(
 }
 
 @Composable
-private fun Caret(color: Color, modifier: Modifier = Modifier) {
+internal fun Caret(color: Color, modifier: Modifier = Modifier) {
     Canvas(modifier = modifier.size(size = 10.dp)) { drawDownCaret(color = color) }
 }
 

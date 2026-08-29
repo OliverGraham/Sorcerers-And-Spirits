@@ -80,6 +80,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   Setup group collapsed at the bottom), and `MessagesBar` gained a two-row handle with a persistent
   "Round X · {class}'s turn" header (class-tinted) aligned with the timer, and the animating latest
   message centered below.
+- **SS-252** — Finished state: surface the arena message log via a collapsible "Match Log" bar in
+  `MatchFinishedContent` (between the recap and decision controls) that expands the reused
+  `ArenaMessageLog` (`FinishedMatchLog`), carrying the shared `messagesBackgroundBrush` gradient;
+  no combat-only coupling (no timer/turn/dice).
 - **SS-254** — Message log gradual drag-to-dismiss (ModalBottomSheet-style, not all-or-nothing):
   Replaced the overscroll threshold accumulator with an `AnchoredDraggableState<LogSheetAnchor>`
   (Open/Dismissed) in `messagelog/MessageLogOverlay`; a `NestedScrollConnection` bridges the log's

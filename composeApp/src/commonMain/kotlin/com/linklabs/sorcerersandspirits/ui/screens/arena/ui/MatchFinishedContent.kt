@@ -31,6 +31,9 @@ import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -57,6 +60,7 @@ internal fun MatchFinishedContent(
     gauntletProgressState: GauntletProgressState,
     hasReadiedForNextMatch: Boolean,
     secondsRemaining: () -> Int,
+    messageGroups: List<ArenaMessageGroupState>,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -90,6 +94,10 @@ internal fun MatchFinishedContent(
         Spacer(modifier = Modifier.padding(12.dp))
 
         MatchRecap(players = finishedState.players)
+
+        Spacer(modifier = Modifier.padding(12.dp))
+
+        FinishedMatchLog(messageGroups = messageGroups)
 
         Spacer(modifier = Modifier.padding(12.dp))
 
@@ -322,6 +330,39 @@ private fun ReadinessLabel(isReadyForNextMatch: Boolean, modifier: Modifier = Mo
     }
 }
 
+private fun exampleMessageGroups(): List<ArenaMessageGroupState> {
+    val mageInfo = CharacterClassMessageInfoState("Mage", CharacterClassType.Mage)
+    val rogueInfo = CharacterClassMessageInfoState("Rogue", CharacterClassType.Rogue)
+
+    return listOf(
+        ArenaMessageGroupState.Setup(
+            messages =
+            listOf(
+                ArenaMessageState.ConnectedToArena(id = "1", displayName = "Sorcerer Supreme"),
+                ArenaMessageState.ChoseCharacterClass(
+                    id = "2",
+                    displayName = "Sorcerer Supreme",
+                    characterClassInfo = mageInfo,
+                ),
+                ArenaMessageState.ChoseCharacterClass(
+                    id = "3",
+                    displayName = "Spirit Walker",
+                    characterClassInfo = rogueInfo,
+                ),
+            ),
+        ),
+        ArenaMessageGroupState.Round(
+            roundNumber = 1,
+            messages =
+            listOf(
+                ArenaMessageState.NewRound(id = "4", roundNumber = 1),
+                ArenaMessageState.NewTurn(id = "5", characterClassInfo = mageInfo),
+                ArenaMessageState.NewTurn(id = "6", characterClassInfo = rogueInfo),
+            ),
+        ),
+    )
+}
+
 private fun exampleFinishedState(): ArenaMatchState.Finished {
     val mage = previewCharacterClassState(type = CharacterClassType.Mage)
     val rogue = previewCharacterClassState(type = CharacterClassType.Rogue)
@@ -352,6 +393,7 @@ private fun MatchFinishedContentPreview() {
             gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },
+            messageGroups = exampleMessageGroups(),
         )
     }
 }
@@ -365,6 +407,7 @@ private fun MatchFinishedContentFinalPreview() {
             gauntletProgressState = GauntletProgressState(currentMatch = 3),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },
+            messageGroups = exampleMessageGroups(),
         )
     }
 }
@@ -378,6 +421,7 @@ private fun MatchFinishedContentCountdownPreview() {
             gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 45 },
+            messageGroups = exampleMessageGroups(),
         )
     }
 }
@@ -391,6 +435,7 @@ private fun MatchFinishedContentWaitingPreview() {
             gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = true,
             secondsRemaining = { 45 },
+            messageGroups = exampleMessageGroups(),
         )
     }
 }
@@ -405,6 +450,7 @@ private fun MatchFinishedContentLoneSurvivorPreview() {
             gauntletProgressState = GauntletProgressState(currentMatch = 2),
             hasReadiedForNextMatch = false,
             secondsRemaining = { 0 },
+            messageGroups = exampleMessageGroups(),
         )
     }
 }

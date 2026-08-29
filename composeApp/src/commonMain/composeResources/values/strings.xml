@@ -253,6 +253,7 @@
     <string name="arena_finished_player_knocked_out">Knocked out</string>
     <string name="arena_finished_player_ready">Ready</string>
     <string name="arena_finished_player_not_ready">Not ready</string>
+    <string name="arena_finished_match_log">Match Log</string>
 
     <string name="achievement_win_a_match_name">First Victory</string>
     <string name="achievement_win_a_match_description">Win a match.</string>

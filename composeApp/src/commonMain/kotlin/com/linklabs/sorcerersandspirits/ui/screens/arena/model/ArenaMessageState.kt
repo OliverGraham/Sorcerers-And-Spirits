@@ -286,6 +286,7 @@ sealed interface ArenaMessageState {
         val className: String,
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
+        val minionIndex: Int,
         override val gestures: Map<String, AvatarGesture>,
     ) : ArenaMessageState {
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
@@ -776,6 +777,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             actingClassType = classType,
             singleDie = singleDie,
             outcome = summonMinionOutcomeFor(singleDie = singleDie),
+            minionIndex = minionIndex,
             gestures = mapOf(necromancerUserId to AvatarGesture.Cast),
         )
     }

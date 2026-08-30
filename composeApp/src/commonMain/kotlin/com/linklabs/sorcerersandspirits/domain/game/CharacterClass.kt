@@ -20,6 +20,7 @@ data class CharacterClass(
     fun takeDamage(damage: Int): CharacterClass {
         val summon = offensiveAbility.effective as? OffensiveAbility.SummonMinion
             ?: return copy(hitPoints = hitPoints - damage)
+
         return takeDamageBehindMinions(damage = damage, summon = summon)
     }
 

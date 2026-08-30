@@ -20,8 +20,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
@@ -59,12 +57,11 @@ private const val PORTAL_HOLD_MILLIS = 160L
 private const val PORTAL_CLOSE_MILLIS = 300
 private const val FIZZLE_GRAY_MILLIS = 260
 private const val FIZZLE_HOLD_MILLIS = 140L
-private const val MINION_RISE_MILLIS = 440
-private const val MINION_HOLD_MILLIS = 360L
-private const val MINION_FADE_MILLIS = 300
+private const val MINION_TRAVEL_MILLIS = 620
 private const val HEAL_MILLIS = 900
 
-private const val MINION_FADE_IN_FRACTION = 0.3f
+private const val MINION_ENTRANCE_MIN_SCALE = 0.25f
+private const val MINION_ENTRANCE_ARC_FRACTION = 0.12f
 private const val HEAL_BURST_FRACTION = 0.4f
 private const val HEAL_MOTE_COUNT = 5
 
@@ -87,6 +84,7 @@ internal fun NecromancerSummonMinionOverlay(
             summonMinionScene(
                 bounds = avatarBounds,
                 outcome = animatingMessage.outcome,
+                minionIndex = animatingMessage.minionIndex,
                 density = density,
                 seed = animatingMessage.id.hashCode(),
                 portalPalette =
@@ -122,8 +120,7 @@ private suspend fun SummonMinionEffectState.play(
 ) {
     portal.snapTo(targetValue = 0f)
     gray.snapTo(targetValue = 0f)
-    minion.snapTo(targetValue = 0f)
-    minionFade.snapTo(targetValue = 1f)
+    creature.snapTo(targetValue = 0f)
     heal.snapTo(targetValue = 0f)
     this.scene = scene
 
@@ -134,16 +131,17 @@ private suspend fun SummonMinionEffectState.play(
     delay(timeMillis = PORTAL_HOLD_MILLIS)
 
     when (outcome) {
-        SummonMinionOutcome.Fizzle -> fizzle()
+        SummonMinionOutcome.Fizzle -> {
+            fizzle()
+            this.scene = null
+        }
 
-        SummonMinionOutcome.Skeleton -> raiseMinion(heals = false)
+        SummonMinionOutcome.Skeleton -> resolveSummon(heals = false)
 
         SummonMinionOutcome.SkeletonAndHeal,
         SummonMinionOutcome.Golem,
-        -> raiseMinion(heals = true)
+        -> resolveSummon(heals = true)
     }
-
-    this.scene = null
 }
 
 private suspend fun SummonMinionEffectState.fizzle() {
@@ -152,40 +150,29 @@ private suspend fun SummonMinionEffectState.fizzle() {
     portal.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = PORTAL_CLOSE_MILLIS))
 }
 
-private suspend fun SummonMinionEffectState.raiseMinion(heals: Boolean) {
-    minion.animateTo(
-        targetValue = 1f,
-        animationSpec = tween(durationMillis = MINION_RISE_MILLIS, easing = FastOutSlowInEasing),
-    )
-
-    if (heals) {
-        coroutineScope {
+private suspend fun SummonMinionEffectState.resolveSummon(heals: Boolean) {
+    coroutineScope {
+        launch {
+            creature.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = MINION_TRAVEL_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        if (heals) {
             launch {
                 heal.animateTo(
                     targetValue = 1f,
                     animationSpec = tween(durationMillis = HEAL_MILLIS),
                 )
             }
-            delay(timeMillis = HEAL_MILLIS.toLong())
         }
-    } else {
-        delay(timeMillis = MINION_HOLD_MILLIS)
+        delay(timeMillis = if (heals) HEAL_MILLIS.toLong() else MINION_TRAVEL_MILLIS.toLong())
     }
 
-    coroutineScope {
-        launch {
-            minionFade.animateTo(
-                targetValue = 0f,
-                animationSpec = tween(durationMillis = MINION_FADE_MILLIS),
-            )
-        }
-        launch {
-            portal.animateTo(
-                targetValue = 0f,
-                animationSpec = tween(durationMillis = PORTAL_CLOSE_MILLIS),
-            )
-        }
-    }
+    portal.animateTo(
+        targetValue = 0f,
+        animationSpec = tween(durationMillis = PORTAL_CLOSE_MILLIS),
+    )
 }
 
 private fun summonPortalPaletteFor(actorClass: CharacterClassType): ScythePalette = if (actorClass == CharacterClassType.Illusionist) {
@@ -197,27 +184,26 @@ private fun summonPortalPaletteFor(actorClass: CharacterClassType): ScythePalett
 private fun summonMinionScene(
     bounds: Rect,
     outcome: SummonMinionOutcome,
+    minionIndex: Int,
     density: Density,
     seed: Int,
     portalPalette: ScythePalette,
 ): SummonMinionScene {
     val center = bounds.center
     val portalCenter = Offset(x = center.x, y = bounds.bottom - bounds.height * 0.05f)
-    val minion = minionFor(outcome = outcome)
     val heals =
         outcome == SummonMinionOutcome.SkeletonAndHeal || outcome == SummonMinionOutcome.Golem
 
-    val minionHeight =
-        when (minion) {
-            null -> 0f
-            Minion.Skeleton -> bounds.height * 0.72f
-            Minion.Golem -> bounds.height * 0.9f
-        }
-    val minionWidth =
-        when (minion) {
-            null -> 0f
-            Minion.Skeleton -> bounds.width * 0.66f
-            Minion.Golem -> bounds.width * 0.66f
+    val minion = minionFor(outcome = outcome)
+    val restingSlot =
+        if (minion != null) {
+            minionRestingSlot(
+                displayIndex = minionIndex.coerceAtMost(maximumValue = MAX_RENDERED_MINIONS - 1),
+                kind = minion,
+                area = bounds,
+            )
+        } else {
+            null
         }
 
     val random = Random(seed = seed)
@@ -242,8 +228,7 @@ private fun summonMinionScene(
         portalPalette = portalPalette,
         portalRadiusPx = bounds.width * 0.42f,
         minion = minion,
-        minionHeightPx = minionHeight,
-        minionWidthPx = minionWidth,
+        restingSlot = restingSlot,
         heals = heals,
         healCenter = center,
         healRadiusPx = bounds.width * 0.7f,
@@ -280,25 +265,24 @@ private fun DrawScope.drawSummonMinion(
     )
 
     val minion = scene.minion
-    if (minion != null) {
-        val rise = state.minion.value
-        if (rise > 0f) {
-            val emergeOffset = (1f - rise) * scene.minionHeightPx
-            val fadeIn = (rise / MINION_FADE_IN_FRACTION).coerceAtMost(maximumValue = 1f)
-            clipRect(bottom = scene.portalCenter.y) {
-                translate(top = emergeOffset) {
-                    drawMinion(
-                        kind = minion,
-                        footCenter = scene.portalCenter,
-                        height = scene.minionHeightPx,
-                        width = scene.minionWidthPx,
-                        alpha = fadeIn * state.minionFade.value,
-                        skeletonImage = skeletonImage,
-                        golemImage = golemImage,
-                    )
-                }
-            }
-        }
+    val restingSlot = scene.restingSlot
+    val emerge = state.creature.value
+    if (minion != null && restingSlot != null && emerge > 0f) {
+        drawMinion(
+            kind = minion,
+            footCenter =
+            minionEntranceFootCenter(
+                progress = emerge,
+                portalCenter = scene.portalCenter,
+                restingCenter = restingSlot.footCenter,
+                arcHeight = size.height * MINION_ENTRANCE_ARC_FRACTION,
+            ),
+            height = restingSlot.height * (MINION_ENTRANCE_MIN_SCALE + (1f - MINION_ENTRANCE_MIN_SCALE) * emerge),
+            width = restingSlot.height * (MINION_ENTRANCE_MIN_SCALE + (1f - MINION_ENTRANCE_MIN_SCALE) * emerge),
+            alpha = 1f,
+            skeletonImage = skeletonImage,
+            golemImage = golemImage,
+        )
     }
 
     val heal = state.heal.value
@@ -306,6 +290,18 @@ private fun DrawScope.drawSummonMinion(
         drawHealBurst(center = scene.healCenter, radius = scene.healRadiusPx, heal = heal)
         scene.healMotes.forEach { mote -> drawHealMote(mote = mote, heal = heal, icon = healIcon) }
     }
+}
+
+private fun minionEntranceFootCenter(
+    progress: Float,
+    portalCenter: Offset,
+    restingCenter: Offset,
+    arcHeight: Float,
+): Offset {
+    val x = portalCenter.x + (restingCenter.x - portalCenter.x) * progress
+    val arc = sin(progress * PI.toFloat()) * arcHeight
+    val y = portalCenter.y + (restingCenter.y - portalCenter.y) * progress - arc
+    return Offset(x = x, y = y)
 }
 
 private fun DrawScope.drawHealBurst(center: Offset, radius: Float, heal: Float) {
@@ -366,8 +362,7 @@ private fun Random.nextFloat(min: Float, max: Float): Float = nextFloat() * (max
 private class SummonMinionEffectState {
     val portal = Animatable(initialValue = 0f)
     val gray = Animatable(initialValue = 0f)
-    val minion = Animatable(initialValue = 0f)
-    val minionFade = Animatable(initialValue = 1f)
+    val creature = Animatable(initialValue = 0f)
     val heal = Animatable(initialValue = 0f)
 
     var scene by mutableStateOf<SummonMinionScene?>(value = null)
@@ -379,8 +374,7 @@ private data class SummonMinionScene(
     val portalPalette: ScythePalette,
     val portalRadiusPx: Float,
     val minion: Minion?,
-    val minionHeightPx: Float,
-    val minionWidthPx: Float,
+    val restingSlot: MinionSlot?,
     val heals: Boolean,
     val healCenter: Offset,
     val healRadiusPx: Float,
@@ -462,6 +456,7 @@ private fun NecromancerSummonMinionPreview(
                     SummonMinionOutcome.Golem -> 6
                 },
                 outcome = outcome,
+                minionIndex = 0,
                 animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )

@@ -177,6 +177,7 @@ sealed interface ArenaMessageEntity {
         val className: String,
         val classType: CharacterClassType,
         val singleDie: Int,
+        val minionIndex: Int,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -531,6 +532,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     className = className,
                     classType = classType,
                     singleDie = singleDie,
+                    minionIndex = minionIndex,
                 )
 
             is ArenaMessageEntity.Persuade.Trigger ->
@@ -812,6 +814,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             className = className,
             classType = classType,
             singleDie = singleDie,
+            minionIndex = minionIndex,
         )
 
     is ArenaMessage.Persuade.Trigger ->

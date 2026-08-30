@@ -6,8 +6,6 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.domain.game.shieldPoints
 
-private const val MAX_RENDERED_MINIONS = 10
-
 @Immutable
 data class CharacterClassState(
     val type: CharacterClassType,
@@ -26,16 +24,15 @@ data class CharacterClassState(
     val armorClassDisplay: String = buildArmorClassDisplay()
     val summonedMinions: List<Minion> = buildSummonedMinions()
 
-    private fun buildSummonedMinions(): List<Minion> {
-        val summon =
-            offensiveAbility.effective as? OffensiveAbilityState.SummonMinion ?: return emptyList()
-        return summon.minions.takeLast(n = MAX_RENDERED_MINIONS)
-    }
+    private fun buildSummonedMinions(): List<Minion> = (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.minions ?: emptyList()
 
     private fun buildHitPointsDisplay(): String {
-        val shieldPoints =
-            (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.shieldPoints ?: 0
-        return if (shieldPoints > 0) "$hitPoints + $shieldPoints" else hitPoints.toString()
+        val offensiveAbility = offensiveAbility.effective
+        return if (offensiveAbility !is OffensiveAbilityState.SummonMinion) {
+            hitPoints.toString()
+        } else {
+            "$hitPoints + ${offensiveAbility.shieldPoints}"
+        }
     }
 
     private fun buildArmorClassDisplay(): String {

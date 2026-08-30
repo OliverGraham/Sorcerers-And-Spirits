@@ -34,20 +34,7 @@ internal class ArenaMatchCombatQueue(
             if (queue.isEmpty()) return@withLock
 
             val arenaMatchCombatUpdate = queue.removeFirst()
-            val messages = arenaMatchCombatUpdate.messages.toMessageStates()
-
-            messages.forEach { message ->
-                val animationCoordinator = MessageAnimationCoordinator(message = message)
-                currentAnimationCoordinator = animationCoordinator
-
-                if (message.isAnimated()) {
-                    triggerAnimation(/* arenaMessageState= */ message)
-                }
-                animationCoordinator.await()
-
-                currentAnimationCoordinator = null
-                addMessageToScreenState(/* arenaMessageState= */ message)
-            }
+            arenaMatchCombatUpdate.animateMessages()
 
             if (arenaMatchCombatUpdate.isMatchOver) {
                 delay(timeMillis = MATCH_OVER_PAUSE_MILLIS)
@@ -57,16 +44,38 @@ internal class ArenaMatchCombatQueue(
 
             onAnimationsComplete(arenaMatchCombatUpdate)
 
-            val teleportRollsArguments =
-                arenaMatchCombatUpdate.isTeleportRollOffComplete(userId = userId)
-            if (teleportRollsArguments != null) {
-                onTeleportRollOffComplete(teleportRollsArguments)
-            }
+            arenaMatchCombatUpdate.completeTeleportIfApplicable(userId = userId)
         }
     }
 
     fun onAnimationComplete(arguments: AnimationCompleteArguments) {
         currentAnimationCoordinator?.markAnimationAsFinishedIfApplicable(arguments = arguments)
+    }
+
+    private suspend fun ArenaMatch.Combat.animateMessages() {
+        val messages = messages.toMessageStates()
+
+        messages.forEach { message ->
+            val animationCoordinator = MessageAnimationCoordinator(message = message)
+            currentAnimationCoordinator = animationCoordinator
+
+            if (message.isAnimated()) {
+                triggerAnimation(/* arenaMessageState= */ message)
+            }
+            animationCoordinator.await()
+
+            currentAnimationCoordinator = null
+            addMessageToScreenState(/* arenaMessageState= */ message)
+        }
+    }
+
+    private fun ArenaMatch.Combat.completeTeleportIfApplicable(
+        userId: String,
+    ) {
+        val teleportRollsArguments = isTeleportRollOffComplete(userId = userId)
+        if (teleportRollsArguments != null) {
+            onTeleportRollOffComplete(teleportRollsArguments)
+        }
     }
 
     private fun ArenaMatch.Combat.isTeleportRollOffComplete(

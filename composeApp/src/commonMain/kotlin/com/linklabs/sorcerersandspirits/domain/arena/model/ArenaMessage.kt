@@ -105,6 +105,7 @@ sealed interface ArenaMessage {
         val className: String,
         val classType: CharacterClassType,
         val singleDie: Int,
+        val minionIndex: Int,
     ) : ArenaMessage
 
     sealed interface Persuade : ArenaMessage {

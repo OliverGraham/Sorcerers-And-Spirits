@@ -25,6 +25,7 @@ internal class SummonMinionActivated(
                 className = attacker.className,
                 classType = attacker.type,
                 singleDie = result,
+                minionIndex = summonMinionAbility.minions.size,
             ),
         )
 

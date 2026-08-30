@@ -29,37 +29,54 @@ internal class SummonMinionActivated(
             ),
         )
 
-        updateAttackerClass { attacker ->
-            val summonedMinion =
-                when (result) {
-                    in abilityConfig.summonSkeletonRange -> Minion.Skeleton
-                    in abilityConfig.summonSkeletonAndHealRange -> Minion.Skeleton
-                    abilityConfig.summonGolemRoll -> Minion.Golem
-                    else -> null
-                }
-            val healsToFull =
-                result in abilityConfig.summonSkeletonAndHealRange ||
-                    result == abilityConfig.summonGolemRoll
-
-            val newMinions =
-                if (summonedMinion != null) {
-                    summonMinionAbility.minions + summonedMinion
-                } else {
-                    summonMinionAbility.minions
-                }
-
-            val updatedSummonMinionAbility =
-                summonMinionAbility.copy(
-                    minions = newMinions,
-                    attacksTakenThisTurn = newMinions.size,
-                )
-            attacker.copy(
-                hitPoints = if (healsToFull) attacker.maxHitPoints else attacker.hitPoints,
-                offensiveAbility =
-                attacker.offensiveAbility.withEffective(updatedSummonMinionAbility),
-            )
-        }
+        handleSummonResult(result = result)
 
         resolveTurnEnd()
+    }
+
+    private fun CombatMutator.handleSummonResult(result: Int) {
+        val summonResult = getSummonResult(result = result) ?: return
+
+        val updatedMinions = summonMinionAbility.minions + summonResult.minion
+
+        val updatedSummonMinionAbility =
+            summonMinionAbility.copy(
+                minions = updatedMinions,
+                attacksTakenThisTurn = updatedMinions.size,
+            )
+
+        updateAttackerClass { attacker ->
+            attacker.copy(
+                hitPoints = if (summonResult.shouldHealToFull) attacker.maxHitPoints else attacker.hitPoints,
+                offensiveAbility =
+                attacker.offensiveAbility.withEffective(updated = updatedSummonMinionAbility),
+            )
+        }
+    }
+
+    private fun CombatMutator.getSummonResult(result: Int) = when (result) {
+        in abilityConfig.summonSkeletonRange -> SummonResult(
+            minion = Minion.Skeleton,
+            shouldHealToFull = false,
+        )
+
+        in abilityConfig.summonSkeletonAndHealRange -> SummonResult(
+            minion = Minion.Skeleton,
+            shouldHealToFull = true,
+        )
+
+        abilityConfig.summonGolemRoll -> SummonResult(
+            minion = Minion.Golem,
+            shouldHealToFull = true,
+        )
+
+        else -> null
+    }
+
+    companion object {
+        private data class SummonResult(
+            val minion: Minion,
+            val shouldHealToFull: Boolean,
+        )
     }
 }

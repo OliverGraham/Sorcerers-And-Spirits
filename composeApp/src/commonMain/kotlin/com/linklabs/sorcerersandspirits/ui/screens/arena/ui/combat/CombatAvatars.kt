@@ -2,12 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -26,15 +20,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
@@ -54,17 +44,6 @@ import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
 import sorcerersandspirits.composeapp.generated.resources.ic_user_player
 
-private val haloWidth = 132.dp
-private val haloHeight = 30.dp
-private val haloShape = RoundedCornerShape(percent = 50)
-private val haloInnerColor = Color(color = 0xFFCB9C6A)
-private val haloOuterColor = Color(color = 0xFF654E35)
-private val haloSweepColors = listOf(haloOuterColor, haloInnerColor, haloOuterColor)
-private const val HALO_SWEEP_WIDTH_PX = 220f
-private const val HALO_SWEEP_DURATION_MILLIS = 3000
-private const val HALO_SWEEP_LABEL = "haloSweep"
-private const val HALO_SWEEP_TRANSLATE_LABEL = "haloSweepTranslate"
-
 private val statPillShape = RoundedCornerShape(size = 8.dp)
 private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
@@ -78,7 +57,6 @@ internal fun CombatAvatarColumn(
     bottomPlayer: PlayerState.Selected?,
     animatingMessage: ArenaMessageState?,
     userPlayerId: String,
-    activeUserIds: Set<String>,
     attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
@@ -91,7 +69,6 @@ internal fun CombatAvatarColumn(
             animatingMessage = animatingMessage,
             isTopSeat = true,
             userPlayerId = userPlayerId,
-            activeUserIds = activeUserIds,
             attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
@@ -104,7 +81,6 @@ internal fun CombatAvatarColumn(
             animatingMessage = animatingMessage,
             isTopSeat = false,
             userPlayerId = userPlayerId,
-            activeUserIds = activeUserIds,
             attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
@@ -121,7 +97,6 @@ private fun ColumnScope.SeatedAvatar(
     animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
     userPlayerId: String,
-    activeUserIds: Set<String>,
     attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
@@ -132,7 +107,6 @@ private fun ColumnScope.SeatedAvatar(
             animatingMessage = animatingMessage,
             isTopSeat = isTopSeat,
             isUserPlayer = player.userId == userPlayerId,
-            isActiveRoller = player.userId in activeUserIds,
             isAttacker = player.userId == attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
@@ -161,7 +135,6 @@ private fun LargeAvatar(
     animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
     isUserPlayer: Boolean,
-    isActiveRoller: Boolean,
     isAttacker: Boolean,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
@@ -186,10 +159,6 @@ private fun LargeAvatar(
             },
             contentAlignment = Alignment.BottomCenter,
         ) {
-            if (isActiveRoller) {
-                ActivePlayerHalo()
-            }
-
             GestureClassAvatar(
                 animatingMessage = animatingMessage,
                 characterClass = player.characterClass,
@@ -198,11 +167,13 @@ private fun LargeAvatar(
                 modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
             )
 
-            SummonedMinions(
-                minions = player.characterClass.summonedMinions,
-                isTopSeat = isTopSeat,
-                modifier = Modifier.fillMaxSize(),
-            )
+            val summonedMinions = player.characterClass.summonedMinions
+            if (summonedMinions.isNotEmpty()) {
+                SummonedMinions(
+                    minions = summonedMinions,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }
@@ -303,38 +274,5 @@ private fun StatPillValue(value: String) {
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.Bold,
         color = Color.White,
-    )
-}
-
-@Composable
-private fun ActivePlayerHalo(modifier: Modifier = Modifier) {
-    val sweep = rememberInfiniteTransition(label = HALO_SWEEP_LABEL)
-    val translate by
-        sweep.animateFloat(
-            initialValue = 0f,
-            targetValue = HALO_SWEEP_WIDTH_PX,
-            animationSpec =
-            infiniteRepeatable(
-                animation =
-                tween(durationMillis = HALO_SWEEP_DURATION_MILLIS, easing = LinearEasing),
-                repeatMode = RepeatMode.Restart,
-            ),
-            label = HALO_SWEEP_TRANSLATE_LABEL,
-        )
-
-    Box(
-        modifier =
-        modifier
-            .size(width = haloWidth, height = haloHeight)
-            .clip(shape = haloShape)
-            .background(
-                brush =
-                Brush.linearGradient(
-                    colors = haloSweepColors,
-                    start = Offset(x = translate, y = 0f),
-                    end = Offset(x = translate + HALO_SWEEP_WIDTH_PX, y = 0f),
-                    tileMode = TileMode.Repeated,
-                ),
-            ),
     )
 }

@@ -16,17 +16,14 @@ import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
 @Composable
 internal fun SummonedMinions(
     minions: List<Minion>,
-    isTopSeat: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    if (minions.isEmpty()) return
-
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
     val golemImage = imageResource(resource = Res.drawable.golem_minion)
 
     Canvas(modifier = modifier) {
         drawGatheredMinions(
-            minions = minions.takeLast(n = MAX_RENDERED_MINIONS),
+            minions = minions,
             skeletonImage = skeletonImage,
             golemImage = golemImage,
         )

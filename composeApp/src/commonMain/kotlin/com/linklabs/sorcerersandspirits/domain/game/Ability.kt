@@ -93,19 +93,9 @@ sealed interface OffensiveAbility : Ability {
     data object None : OffensiveAbility
 }
 
-/**
- * The offensive ability whose effect actually applies. An Illusionist that has Impersonated an
- * opponent attacks with the copied ability, so [OffensiveAbility.Impersonate] resolves to the
- * ability it copied; every other ability is itself.
- */
 val OffensiveAbility.effective: OffensiveAbility
     get() = if (this is OffensiveAbility.Impersonate) impersonatedAbility else this
 
-/**
- * The class an offensive ability belongs to. Drives the Illusionist's borrowed normal attack, which
- * renders the weapon of the class whose offensive ability it copied (SS-197). Impersonate itself
- * and None are the Illusionist's own, with no opponent class to borrow from.
- */
 private fun OffensiveAbility.owningClassType(): CharacterClassType = when (this) {
     is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
 
@@ -124,12 +114,6 @@ private fun OffensiveAbility.owningClassType(): CharacterClassType = when (this)
     -> CharacterClassType.Illusionist
 }
 
-/**
- * The ability stripped of any state it has accumulated this match, leaving only its behaviour. An
- * Illusionist copies an opponent's ability, not the progress the opponent has made with it, so the
- * Necromancer's already-summoned minions or the Gambler's spent All-In must not come across with
- * the copy.
- */
 val OffensiveAbility.defaultState: OffensiveAbility
     get() =
         when (this) {
@@ -143,12 +127,4 @@ val OffensiveAbility.defaultState: OffensiveAbility
             is OffensiveAbility.None -> this
         }
 
-/**
- * Writes back an [updated] effective ability, keeping an Impersonate wrapper intact. An Illusionist
- * keeps a copied ability until end of match or until another is chosen, so a copied ability that
- * carries state across a turn (All-In's [OffensiveAbility.AllIn.usedThisTurn]/
- * [OffensiveAbility.AllIn.hasAnotherAttack], Summon Minion's minion counts) must be re-wrapped
- * after it mutates rather than replacing the [OffensiveAbility.Impersonate]. For every other
- * ability this is simply [updated].
- */
-fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility = if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated
+fun OffensiveAbility.withEffective(updated: OffensiveAbility) = if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated

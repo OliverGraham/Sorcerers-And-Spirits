@@ -69,6 +69,17 @@ sealed interface ArenaMatchState {
 
         // TODO(SS-234): For "Choose your target avatar" if this is null, then show it
         val targetedPlayer = playerMap[targetedUserId]
+
+        private val isTwoPlayerMatch = playerMap.size == 2
+        val bottomPlayer = if (isTwoPlayerMatch) userPlayer else attacker
+        val topPlayer =
+            if (isTwoPlayerMatch) {
+                playerMap.values.firstOrNull { it.userId != userPlayerId }
+            } else {
+                targetedPlayer
+            }
+        val animatedContentKey = "${bottomPlayer.userId}|${topPlayer?.userId}"
+
         val playersInTheStands = getPlayersInTheStands(targetedUserId = targetedUserId)
         val areTherePlayersInTheStands = playersInTheStands.isNotEmpty()
 

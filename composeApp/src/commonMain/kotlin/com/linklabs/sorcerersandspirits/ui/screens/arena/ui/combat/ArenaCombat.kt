@@ -181,7 +181,7 @@ private fun SharedTransitionScope.CombatContent(
 ) {
     AnimatedContent(
         targetState = arenaMatchState,
-        contentKey = { "${it.attackerUserId}|${it.targetedUserId}" },
+        contentKey = { it.animatedContentKey },
         label = AVATAR_SEATING_TRANSITION_LABEL,
         modifier = modifier.fillMaxSize(),
     ) { animatingState ->
@@ -219,8 +219,8 @@ private fun CombatStage(
 
     Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
-            topPlayer = arenaMatchState.targetedPlayer,
-            bottomPlayer = arenaMatchState.attacker,
+            topPlayer = arenaMatchState.topPlayer,
+            bottomPlayer = arenaMatchState.bottomPlayer,
             animatingMessage = animatingMessage,
             userPlayerId = arenaMatchState.userPlayerId,
             attackerUserId = arenaMatchState.attackerUserId,

@@ -339,6 +339,43 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   minion renderers where possible. Domain source of truth still governs how many minions exist
   ([[domain-is-source-of-truth]]).
 - **Notes:** Ship interactive previews ([[combat-animation-previews]]). Parent: SS-191.
+- **Already in place:** the multiple-attack domain infrastructure is complete — the summoner already
+  gets one attack per minion on top of their own (`grantMinionAttackIfApplicable` /
+  `attacksTakenThisTurn` / `isMinionAttackInProgress`). Minion gathering/persistence is likewise
+  already threaded Domain→Data→UI (`characterClass.summonedMinions`, rendered by `SummonedMinions`).
+  Do NOT rework or reorder that combat machinery from scratch; build the minion *attacks* on top of it.
+- **Implementation plan (minion attacks):**
+    1. Add a per-minion "has attacked this round" property in all layers (Domain → Data → UI).
+    2. In the UI, use that property to drive the attack animations.
+    3. The new animation is a **Gesture**: the minion PNGs become first-class **avatars** that carry
+       all the same properties/capabilities as the regular class avatars.
+    4. Once minions are set up as avatars, driving and sequencing their animations is straightforward
+       (they plug into the existing gesture + bounds + overlay system).
+    5. Sequencing: **minions attack first, then the summoner** — always one at a time, each with its
+       own dice roll, exactly like a normal attack.
+    6. Add new message(s) that clarify a *summoner's minion* is the one attacking (distinct from the
+       summoner attacking).
+- **Design notes / gotchas:**
+    - **Minion identity is the unlock (steps 3–4).** The gesture system and `AvatarBoundsStateHolder`
+      are keyed by `userId` strings; minions have none (they belong to the summoner). Making them
+      avatars concretely means giving each a stable synthetic id (e.g. `summonerId + index`) and
+      registering its bounds via `onAvatarBoundsChanged` from inside `SummonedMinions`, so gestures
+      and attack overlays can anchor to a specific minion. Decide the id scheme up front — it threads
+      through gestures, bounds, and the new messages.
+    - **Property vs. message responsibilities (steps 1 vs 6).** Keep them from overlapping: the
+      **property/flag** is the durable "has attacked this round" — the source of truth for *order*
+      (who's next), gating the Summon control mid-sequence, and surviving reconnect. The **new
+      message** is only the one-shot *animation trigger* for a specific minion's attack.
+    - **Ordering lives in the domain (step 5).** The existing infra currently fires the summoner's own
+      attack *first*, then the follow-ups, so "minions first, then summoner" is a genuine ordering
+      change. Let the domain decide the order so the flag and messages reflect the truth, rather than
+      trying to reorder purely in the UI. (Touching domain combat logic is fine here — the earlier
+      misstep was bolting on target-locking + message-tagging that weren't asked for, not the reorder
+      itself.)
+    - **Flag reset.** The "has attacked this round" flag should reset at round start
+      (`resetPlayersForNewRound`).
+- **Open questions:** does each minion attack the summoner's single chosen target (per the earlier
+  "same target" decision)? Confirm the flag reset location above.
 
 ### SS-206 — Bard Encore animation
 

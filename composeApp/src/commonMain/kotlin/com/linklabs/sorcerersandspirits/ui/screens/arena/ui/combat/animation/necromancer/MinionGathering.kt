@@ -3,9 +3,17 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ne
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
 import com.linklabs.sorcerersandspirits.domain.game.MinionType
 
 const val MAX_RENDERED_MINIONS = 10
+
+internal fun minionAvatarId(summonerUserId: String, index: Int): String = "$summonerUserId-minion-$index"
+
+internal fun MinionSlot.toRect(): Rect = Rect(
+    offset = Offset(x = footCenter.x - height / 2f, y = footCenter.y - height),
+    size = Size(width = height, height = height),
+)
 
 private const val SKELETON_HEIGHT_FRACTION = 0.42f
 private const val GOLEM_HEIGHT_FRACTION = 0.5f

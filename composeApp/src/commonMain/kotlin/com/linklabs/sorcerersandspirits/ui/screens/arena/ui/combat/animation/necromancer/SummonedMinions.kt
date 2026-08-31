@@ -7,6 +7,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.MinionState
 import org.jetbrains.compose.resources.imageResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -16,16 +18,44 @@ import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
 @Composable
 internal fun SummonedMinions(
     minions: List<MinionState>,
+    summonerUserId: String,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
     val golemImage = imageResource(resource = Res.drawable.golem_minion)
 
-    Canvas(modifier = modifier) {
+    Canvas(
+        modifier = modifier.onGloballyPositioned { coordinates ->
+            reportMinionBounds(
+                rootBounds = coordinates.boundsInRoot(),
+                minions = minions,
+                summonerUserId = summonerUserId,
+                onAvatarBoundsChanged = onAvatarBoundsChanged,
+            )
+        },
+    ) {
         drawGatheredMinions(
             minions = minions,
             skeletonImage = skeletonImage,
             golemImage = golemImage,
+        )
+    }
+}
+
+private fun reportMinionBounds(
+    rootBounds: Rect,
+    minions: List<MinionState>,
+    summonerUserId: String,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
+) {
+    val area = Rect(offset = Offset.Zero, size = rootBounds.size)
+
+    minions.forEachIndexed { index, minion ->
+        val slot = minionRestingSlot(displayIndex = index, minionType = minion.type, area = area)
+        onAvatarBoundsChanged(
+            minionAvatarId(summonerUserId = summonerUserId, index = index),
+            slot.toRect().translate(offset = rootBounds.topLeft),
         )
     }
 }

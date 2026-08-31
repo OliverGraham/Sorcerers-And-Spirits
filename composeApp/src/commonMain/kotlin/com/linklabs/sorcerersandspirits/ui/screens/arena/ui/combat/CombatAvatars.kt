@@ -171,6 +171,8 @@ private fun LargeAvatar(
             if (summonedMinions.isNotEmpty()) {
                 SummonedMinions(
                     minions = summonedMinions,
+                    summonerUserId = player.userId,
+                    onAvatarBoundsChanged = onAvatarBoundsChanged,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

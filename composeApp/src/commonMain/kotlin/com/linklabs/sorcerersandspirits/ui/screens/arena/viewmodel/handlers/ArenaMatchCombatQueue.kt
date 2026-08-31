@@ -17,6 +17,7 @@ internal class ArenaMatchCombatQueue(
     private val addMessageToScreenState: (ArenaMessageState) -> Unit,
     private val onAnimationsComplete: (ArenaMatch.Combat) -> Unit,
     private val onTeleportRollOffComplete: (TeleportRollsArguments) -> Unit,
+    private val onHeaderAnimationsComplete: () -> Unit,
     private val finishMatch: suspend () -> Unit,
 ) {
     private val queue = ArrayDeque<ArenaMatch.Combat>()
@@ -34,7 +35,7 @@ internal class ArenaMatchCombatQueue(
             if (queue.isEmpty()) return@withLock
 
             val arenaMatchCombatUpdate = queue.removeFirst()
-            arenaMatchCombatUpdate.animateMessages()
+            val roundAndTurnHeaders = arenaMatchCombatUpdate.animateMessages()
 
             if (arenaMatchCombatUpdate.isMatchOver) {
                 delay(timeMillis = MATCH_OVER_PAUSE_MILLIS)
@@ -42,9 +43,11 @@ internal class ArenaMatchCombatQueue(
                 return@withLock
             }
 
-            onAnimationsComplete(arenaMatchCombatUpdate)
+            onAnimationsComplete(/* arenaMatchCombatUpdate = */ arenaMatchCombatUpdate)
 
             arenaMatchCombatUpdate.completeTeleportIfApplicable(userId = userId)
+
+            roundAndTurnHeaders.animationRoundAndTurnMessages()
         }
     }
 
@@ -52,21 +55,28 @@ internal class ArenaMatchCombatQueue(
         currentAnimationCoordinator?.markAnimationAsFinishedIfApplicable(arguments = arguments)
     }
 
-    private suspend fun ArenaMatch.Combat.animateMessages() {
-        val messages = messages.toMessageStates()
+    private suspend fun ArenaMatch.Combat.animateMessages(): List<ArenaMessageState> {
+        val (roundAndTurnHeaders, animationMessages) =
+            messages.toMessageStates().partition { it.isRoundOrTurnHeader() }
 
-        messages.forEach { message ->
-            val animationCoordinator = MessageAnimationCoordinator(message = message)
-            currentAnimationCoordinator = animationCoordinator
-
-            if (message.isAnimated()) {
-                triggerAnimation(/* arenaMessageState= */ message)
-            }
-            animationCoordinator.await()
-
-            currentAnimationCoordinator = null
-            addMessageToScreenState(/* arenaMessageState= */ message)
+        animationMessages.forEach { message ->
+            message.animateMessage()
         }
+
+        return roundAndTurnHeaders
+    }
+
+    private suspend fun ArenaMessageState.animateMessage() {
+        val animationCoordinator = MessageAnimationCoordinator(message = this)
+        currentAnimationCoordinator = animationCoordinator
+
+        if (isAnimated()) {
+            triggerAnimation(/* arenaMessageState = */ this)
+        }
+        animationCoordinator.await()
+
+        currentAnimationCoordinator = null
+        addMessageToScreenState(/* arenaMessageState = */ this)
     }
 
     private fun ArenaMatch.Combat.completeTeleportIfApplicable(
@@ -97,4 +107,13 @@ internal class ArenaMatchCombatQueue(
             teleportOfNextCombatAction = teleport,
         )
     }
+
+    private suspend fun List<ArenaMessageState>.animationRoundAndTurnMessages() {
+        if (isNotEmpty()) {
+            forEach { header -> header.animateMessage() }
+            onHeaderAnimationsComplete()
+        }
+    }
+
+    private fun ArenaMessageState.isRoundOrTurnHeader(): Boolean = this is ArenaMessageState.NewRound || this is ArenaMessageState.NewTurn
 }

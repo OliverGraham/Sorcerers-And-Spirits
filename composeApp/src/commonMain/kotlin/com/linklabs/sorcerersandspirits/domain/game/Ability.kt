@@ -68,8 +68,7 @@ fun OffensiveAbility.SummonMinion.recordMinionAttack(): OffensiveAbility.SummonM
     return copy(minions = updatedMinions, attacksTakenThisTurn = attacksTakenThisTurn + 1)
 }
 
-fun OffensiveAbility.SummonMinion.resetMinionsForNewRound(): OffensiveAbility.SummonMinion =
-    copy(minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) })
+fun OffensiveAbility.SummonMinion.resetMinionsForNewRound(): OffensiveAbility.SummonMinion = copy(minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) })
 
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T

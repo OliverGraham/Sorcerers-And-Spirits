@@ -8,7 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.game.MinionType
 @Immutable
 data class MinionState(
     override val type: MinionType,
-    override val hasAttackedThisRound: Boolean
+    override val hasAttackedThisRound: Boolean,
 ) : MinionAttributes
 
 internal fun Minion.toState(): MinionState = MinionState(

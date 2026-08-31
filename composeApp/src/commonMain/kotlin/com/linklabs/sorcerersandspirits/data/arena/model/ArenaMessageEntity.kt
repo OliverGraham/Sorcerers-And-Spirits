@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -48,6 +49,8 @@ sealed interface ArenaMessageEntity {
         val attackerClassType: CharacterClassType,
         val impersonatedCharacterType: CharacterClassType,
         val normalRollMessageType: NormalRollMessageType,
+        val minionAttackerIndex: Int?,
+        val minionAttackerType: MinionType?,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -447,6 +450,8 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     attackerClassType = attackerClassType,
                     impersonatedCharacterType = impersonatedCharacterType,
                     normalRollMessageType = normalRollMessageType,
+                    minionAttackerIndex = minionAttackerIndex,
+                    minionAttackerType = minionAttackerType,
                 )
 
             is ArenaMessageEntity.NormalRollOutcome ->
@@ -715,6 +720,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             attackerClassType = attackerClassType,
             impersonatedCharacterType = impersonatedCharacterType,
             normalRollMessageType = normalRollMessageType,
+            minionAttackerIndex = minionAttackerIndex,
+            minionAttackerType = minionAttackerType,
         )
 
     is ArenaMessage.NormalRoll.Outcome ->

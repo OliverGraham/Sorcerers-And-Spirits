@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 
 @Immutable
 sealed interface ArenaMessageState {
@@ -91,6 +92,8 @@ sealed interface ArenaMessageState {
             override val attackerClassType: CharacterClassType,
             override val normalRollMessageType: NormalRollMessageType,
             val impersonatedClassType: CharacterClassType?,
+            val minionAttackerIndex: Int?,
+            val minionAttackerType: MinionType?,
             override val gestures: Map<String, AvatarGesture>,
         ) : NormalRoll
 
@@ -993,6 +996,8 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             attackerClassType = attackerClassType,
             impersonatedClassType = impersonatedCharacterType,
             normalRollMessageType = normalRollMessageType,
+            minionAttackerIndex = minionAttackerIndex,
+            minionAttackerType = minionAttackerType,
             gestures = gestures,
         )
     }

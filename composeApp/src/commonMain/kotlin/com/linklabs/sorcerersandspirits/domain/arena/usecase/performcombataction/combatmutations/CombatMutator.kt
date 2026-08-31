@@ -16,6 +16,7 @@ import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
 import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
@@ -23,6 +24,8 @@ import com.linklabs.sorcerersandspirits.domain.game.recordMinionAttack
 import com.linklabs.sorcerersandspirits.domain.game.resetMinionsForNewRound
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
+
+internal data class AttackingMinion(val index: Int, val type: MinionType)
 
 internal class CombatMutator(
     val attackerUserId: UserId,
@@ -54,6 +57,18 @@ internal class CombatMutator(
     }
 
     fun currentAttackTurn(): AttackTurn = attackTurnFor(attackerUserId = attackerUserId)
+
+    fun attackingMinionOrNull(): AttackingMinion? {
+        if (attackerUserId != originalTurnUserId) return null
+        val summonMinionAbility = attacker.offensiveAbility.effective as? OffensiveAbility.SummonMinion ?: return null
+        val attackingMinionIndex = summonMinionAbility.minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
+        if (attackingMinionIndex < 0) return null
+
+        return AttackingMinion(
+            index = attackingMinionIndex,
+            type = summonMinionAbility.minions[attackingMinionIndex].type,
+        )
+    }
 
     fun attackTurnFor(attackerUserId: UserId): AttackTurn = if (attackerUserId ==
         originalTurnUserId
@@ -298,16 +313,9 @@ internal class CombatMutator(
 
     // TODO: What the hell is up with this?
 
-    /**
-     * Clears per-turn ability state so a new turn starts clean. All-In's [usedThisTurn] guards it
-     * to once per turn, so it must be released when the owner's next turn begins — including when
-     * an Illusionist is using a copied All-In, where it lives inside the Impersonate wrapper.
-     */
     private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility = when (val effectiveAbility = effective) {
         is OffensiveAbility.AllIn -> withEffective(effectiveAbility.copy(usedThisTurn = false))
-
         is OffensiveAbility.SummonMinion -> withEffective(effectiveAbility.resetMinionsForNewRound())
-
         else -> this
     }
 

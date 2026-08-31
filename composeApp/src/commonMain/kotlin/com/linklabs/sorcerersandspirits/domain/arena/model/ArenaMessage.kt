@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 
 sealed interface ArenaMessage {
@@ -28,6 +29,8 @@ sealed interface ArenaMessage {
             val attackerClassType: CharacterClassType,
             val impersonatedCharacterType: CharacterClassType,
             val normalRollMessageType: NormalRollMessageType,
+            val minionAttackerIndex: Int?,
+            val minionAttackerType: MinionType?,
         ) : NormalRoll
 
         data class Outcome(

@@ -56,6 +56,21 @@ val SummonMinionAbility<*>.shieldPoints: Int
 val SummonMinionAbility<*>.minionAttacks: Int
     get() = minions.size
 
+fun OffensiveAbility.SummonMinion.recordMinionAttack(): OffensiveAbility.SummonMinion {
+    val nextMinionIndex = minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
+    val updatedMinions = minions.mapIndexed { index, minion ->
+        if (index == nextMinionIndex) {
+            minion.copy(hasAttackedThisRound = true)
+        } else {
+            minion
+        }
+    }
+    return copy(minions = updatedMinions, attacksTakenThisTurn = attacksTakenThisTurn + 1)
+}
+
+fun OffensiveAbility.SummonMinion.resetMinionsForNewRound(): OffensiveAbility.SummonMinion =
+    copy(minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) })
+
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T
 }

@@ -19,6 +19,8 @@ import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
 import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
+import com.linklabs.sorcerersandspirits.domain.game.recordMinionAttack
+import com.linklabs.sorcerersandspirits.domain.game.resetMinionsForNewRound
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
@@ -205,15 +207,6 @@ internal class CombatMutator(
         return true
     }
 
-    /**
-     * A summoner attacks once per minion they hold, on top of their normal attack. The follow-up
-     * attacks are granted here, one at a time after each attack resolves: control stays with the
-     * summoner and the taken-count is raised, until it reaches the live minion count and the turn
-     * ends. The count is read live so a minion consumed as a shield this turn no longer grants its
-     * attack. [SummonMinionActivated] marks the count spent when the turn is used to summon, so a
-     * minion first grants its attack on a later turn. Minions can live inside an Illusionist's
-     * Impersonate wrapper, so the effective ability is read and written back wrapped.
-     */
     private fun grantMinionAttackIfApplicable(): Boolean {
         val turnPlayer = updatedPlayerMap.getValue(key = originalTurnUserId).characterClass
         val minions =
@@ -222,11 +215,9 @@ internal class CombatMutator(
         if (!turnPlayer.isConscious()) return false
 
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
-            val updatedMinions =
-                minions.copy(attacksTakenThisTurn = minions.attacksTakenThisTurn + 1)
             characterClass.copy(
                 offensiveAbility =
-                characterClass.offensiveAbility.withEffective(updated = updatedMinions),
+                characterClass.offensiveAbility.withEffective(updated = minions.recordMinionAttack()),
             )
         }
         setNextCombatAction(
@@ -312,9 +303,12 @@ internal class CombatMutator(
      * to once per turn, so it must be released when the owner's next turn begins — including when
      * an Illusionist is using a copied All-In, where it lives inside the Impersonate wrapper.
      */
-    private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility {
-        val allIn = effective as? OffensiveAbility.AllIn ?: return this
-        return withEffective(allIn.copy(usedThisTurn = false))
+    private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility = when (val effectiveAbility = effective) {
+        is OffensiveAbility.AllIn -> withEffective(effectiveAbility.copy(usedThisTurn = false))
+
+        is OffensiveAbility.SummonMinion -> withEffective(effectiveAbility.resetMinionsForNewRound())
+
+        else -> this
     }
 
     private fun resetMirrorImageIfApplicable() {

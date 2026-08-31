@@ -315,8 +315,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 ### SS-268 — Persistent summoned minions: gather behind the summoner, attack, and death animations
 
-- [ ] Not completed — **owner wants to plan this out before work starts; Claude MUST ask clarifying
-  questions first (do not begin implementation until the design is nailed down).**
+- [ ] In progress — minion *attacks* are being built (steps 1–6). Design is nailed down; see
+  **Progress / resume here** at the bottom of this ticket for exact state, commits, and the next slice.
 - **Goal:** Summoned minions (skeletons and golems) become persistent, visible entities in the combat
   arena rather than a one-shot rise/fade during the Summon Minion animation:
     - **Gathering:** each summoned minion appears and stays **behind and to the side** of its
@@ -376,6 +376,72 @@ SS-191's generic lunges remain the fallback for classes not yet done.
       (`resetPlayersForNewRound`).
 - **Open questions:** does each minion attack the summoner's single chosen target (per the earlier
   "same target" decision)? Confirm the flag reset location above.
+
+- **Progress / resume here (start a new conversation from this):**
+    - **Commits so far** (branch `ss-268-summoned-minions-gather`):
+        - `5af16bcc` step 1 — reshape `Minion` → `(type, hasAttackedThisRound)`; mirrors
+          `MinionEntity` (@Serializable) / `MinionState` (@Immutable); `MinionType` enum shared raw;
+          `SummonMinionAbility<out M : MinionAttributes>` made generic (mirrors `ImpersonateAbility<T>`).
+          See [[layer-type-mirroring-pattern]].
+        - `14202415` step 2 — `recordMinionAttack()` (flags the first unattacked minion + bumps the
+          existing `attacksTakenThisTurn`) called from `grantMinionAttackIfApplicable`;
+          `resetMinionsForNewRound()` clears flags via `resetForNewTurn` (round-start path). Flag is
+          per-round; the count stays per-turn. Both on `OffensiveAbility.SummonMinion` in `Ability.kt`.
+        - `a7f4ce50` step 3 — `minionAvatarId(summonerUserId, index)` = `"summonerId-minion-index"`
+          (in `necromancer/MinionGathering.kt`) + `MinionSlot.toRect()`; `SummonedMinions` reports each
+          minion's root-space bounds via `onGloballyPositioned` into the same `AvatarBoundsStateHolder`
+          the seated avatars use, so `boundsFor("summonerId-minion-2")` resolves. Purely additive.
+        - `7f0c6824` step 4 — `necromancer/MinionAttackOverlay.kt`: `MinionGestureAvatar` renders the
+          minion png through the **same** gesture pipeline as class avatars (`AvatarGestureState` +
+          `play` + `applyGesture`), positioned at the minion's bounds. Only the art differs
+          (`MinionImage` vs `AvatarImage`). Placeholder gesture is `AvatarGesture.Lunge`; loops
+          skeleton/golem previews. Made `AvatarGestureState.play(...)` `internal` (was private) in
+          `CombatAvatarGesture.kt`.
+        - **step 5** — determined to be a **no-op mechanically**: the summoner's N+1 attacks are
+          identical; "minions first" is pure attribution consumed by step 6. No turn-loop change.
+        - `89c85e82` step 6 slice 1 — `NormalRoll.Attack` carries `minionAttackerIndex` +
+          `minionAttackerType`, computed by `CombatMutator.attackingMinionOrNull()`
+          (`indexOfFirst { !hasAttackedThisRound }` = oldest/FIFO unattacked minion). Because the flag
+          is marked *after* the attack resolves, at message time attack `k` = `minion[k-1]` and the
+          summoner's own attack (all marked) carries `null` → **minions-first falls out for free**.
+          Threaded Domain→Data→UI + both mappings; 7 per-class normal-attack previews pass `null`.
+          Nothing consumes the attribution yet.
+    - **NEXT SLICE — the visible wiring (not started):**
+        1. `toState` for `ArenaMessage.NormalRoll.Attack` (in `ArenaMessageState.kt`, ~L967): when
+           `minionAttackerIndex != null`, key the strike gesture on
+           `minionAvatarId(attackerUserId, minionAttackerIndex)` instead of `attackerUserId`; keep the
+           defender reaction. Also **relocate `minionAvatarId`** out of the necromancer package (the
+           model layer shouldn't import UI animation code) — e.g. into the arena `model` package.
+        2. `CombatAnimationOverlays` `NormalRoll.Attack` branch: if it's a minion attack, render
+           `MinionAttackOverlay` (bounds via the synthetic id; gesture from the message's gestures map;
+           strike direction from minion-vs-defender Y) **instead of** `AnimateNormalAttack` (the
+           summoner's weapon overlay).
+        3. **Completion parity (LANDMINE):** a `NormalRoll.Attack` completes via each seated avatar's
+           `onAnimationComplete(AvatarGesture(userId))` (attacker + defender) plus the weapon overlay.
+           A minion attack removes the summoner from the gestures map, so the summoner's completion
+           signal disappears — `MinionAttackOverlay` **must** fire an equivalent `onAnimationComplete`
+           or the combat queue hangs and buttons vanish ([[combat-queue-signal-reentrancy]],
+           [[combat-button-visibility-isanimating]]). Wire its `onFinished` to `onAnimationComplete`
+           with the correct `AnimationKey`; verify the expected animation count still balances.
+        4. **Hide the resting Canvas minion** (its index) while it attacks — thread the attacking-minion
+           index to `SummonedMinions` via `CombatAvatars`/`LargeAvatar` from the animating message
+           (which already flows there for `GestureClassAvatar`). Else the minion double-draws
+           (resting + overlay).
+        5. **Summoner slide-aside** — the ticket wants "slides to one side and **stays**" (a
+           non-returning gesture). **OPEN DECISION:** implement slide-and-stay, or a simpler summoner
+           reaction for the placeholder?
+    - **Open decisions / deferred:**
+        - Per-class skeleton vs golem attack choreography — placeholder `Lunge` for now; owner to
+          describe later (both share the motion currently).
+        - **Tests are broken** and need the two new `NormalRoll.Attack` fields: `CombatAnimationCueTest`
+          (`ArenaMessageState.NormalRoll.Attack`) and `ArenaMessageEntityTest` (`ArenaMessage.NormalRoll
+          .Attack` ×2). Per owner: "don't worry about tests" during the build — fix at the end.
+        - **Minion death animations** (breaking apart / disintegrating) — separate part, not started;
+          `CharacterClass.takeDamageBehindMinions` rebuilds surviving minions fresh (drops flags +
+          identity), fine for now but revisit for death.
+        - Stale bounds: removed minions leave last-reported entries in `AvatarBoundsStateHolder`;
+          harmless until consumed, clean up when wiring attacks.
+    - **Related:** `SS-269` (review Claude's memories + CLAUDE.md) was created this session.
 
 ### SS-206 — Bard Encore animation
 

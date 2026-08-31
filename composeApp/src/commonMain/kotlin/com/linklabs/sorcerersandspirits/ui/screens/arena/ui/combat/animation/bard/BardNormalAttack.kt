@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -70,10 +71,9 @@ internal const val BARD_WAVE_REACTION_DELAY_MILLIS: Long =
 
 @Composable
 internal fun BardNormalAttackOverlay(
-    animatingMessage: ArenaMessageState.NormalRoll,
+    animatingMessage: ArenaMessageState.NormalRoll.Attack,
     attackerBounds: Rect,
     defenderBounds: Rect,
-    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val bardStrikeState = remember { BardStrikeState() }
@@ -88,7 +88,7 @@ internal fun BardNormalAttackOverlay(
             weaponStrikeGeometry(
                 attackerBounds = attackerBounds,
                 target = defenderBounds.center,
-                accentColor = accentColor,
+                accentColor = animatingMessage.accentColor,
                 density = density,
             ),
             normalRollMessageType = messageType,
@@ -303,7 +303,6 @@ private fun BardNormalAttackPreview(normalRollMessageType: NormalRollMessageType
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
-                attackerClassType = CharacterClassType.Bard,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
@@ -311,6 +310,8 @@ private fun BardNormalAttackPreview(normalRollMessageType: NormalRollMessageType
                 minionAttackerType = null,
                 animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
+                accentColor = CharacterClassType.Bard.toColor(),
+                weaponType = WeaponType.Drum,
             )
         },
     ) { message ->
@@ -318,7 +319,6 @@ private fun BardNormalAttackPreview(normalRollMessageType: NormalRollMessageType
             animatingMessage = message,
             attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
-            accentColor = CharacterClassType.Bard.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

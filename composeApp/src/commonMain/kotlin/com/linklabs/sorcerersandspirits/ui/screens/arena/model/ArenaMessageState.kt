@@ -1,12 +1,15 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 
 @Immutable
 sealed interface ArenaMessageState {
@@ -74,11 +77,8 @@ sealed interface ArenaMessageState {
     sealed interface NormalRoll : ArenaMessageState {
         val attackerUserId: String
         val defenderUserId: String
-        val attackerClassType: CharacterClassType
         val normalRollMessageType: NormalRollMessageType
 
-        override val actingClassType: CharacterClassType
-            get() = attackerClassType
 
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = defenderUserId)
@@ -89,12 +89,13 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
-            override val attackerClassType: CharacterClassType,
             override val normalRollMessageType: NormalRollMessageType,
+            override val gestures: Map<String, AvatarGesture>,
             val impersonatedClassType: CharacterClassType?,
             val minionAttackerIndex: Int?,
             val minionAttackerType: MinionType?,
-            override val gestures: Map<String, AvatarGesture>,
+            val weaponType: WeaponType,
+            val accentColor: Color,
         ) : NormalRoll {
             override val isAvatarCompletedByGesture: Boolean = minionAttackerIndex != null
         }
@@ -107,13 +108,13 @@ sealed interface ArenaMessageState {
             override val attackerUserId: String,
             override val defenderUserId: String,
             override val normalRollMessageType: NormalRollMessageType,
-            override val attackerClassType: CharacterClassType,
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
             val attackerClassName: String,
             val defenderClassName: String,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
+            val accentColor: Color,
         ) : NormalRoll {
             val baseRoll: Int = firstDie + secondDie
         }
@@ -1001,12 +1002,17 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             id = id,
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
-            attackerClassType = attackerClassType,
             impersonatedClassType = impersonatedCharacterType,
             normalRollMessageType = normalRollMessageType,
             minionAttackerIndex = minionAttackerIndex,
             minionAttackerType = minionAttackerType,
             gestures = gestures,
+            weaponType = WeaponType.getWeaponType(
+                characterClassType = attackerClassType,
+                minionAttackerType = minionAttackerType,
+                impersonatedCharacterType = impersonatedCharacterType,
+            ),
+            accentColor = attackerClassType.toColor(),
         )
     }
 
@@ -1016,12 +1022,12 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
             attackerClassName = attackerClassName,
-            attackerClassType = attackerClassType,
             defenderClassName = defenderClassName,
             firstDie = firstDie,
             secondDie = secondDie,
             bonus = bonus,
             normalRollMessageType = type,
+            accentColor = attackerClassType.toColor(),
         )
 }
 

@@ -12,7 +12,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.MinionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
@@ -21,6 +20,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.minionAttackerIndexFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarGestureState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
@@ -197,7 +197,7 @@ internal fun rememberAvatarGesture(
 
 // TODO(SS-258): Common
 private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) {
-    is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
+    is ArenaMessageState.NormalRoll.Attack -> normalAttackReactionDelayMillis()
 
     is ArenaMessageState.PrepareAttack.Strike -> prepareAttackReactionDelayMillis()
 
@@ -216,14 +216,14 @@ private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) 
 }
 
 // TODO(SS-258): Common
-private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long = when (attackerClassType) {
-    CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
-    CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
-    CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
-    CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
-    CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
-    CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
-    CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
+private fun ArenaMessageState.NormalRoll.Attack.normalAttackReactionDelayMillis(): Long = when (weaponType) {
+    WeaponType.Dagger -> MELEE_REACTION_DELAY_MILLIS
+    WeaponType.Card -> THROW_REACTION_DELAY_MILLIS
+    WeaponType.Rapiers -> TWIN_SWORD_REACTION_DELAY_MILLIS
+    WeaponType.Scythe -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
+    WeaponType.Drum -> BARD_WAVE_REACTION_DELAY_MILLIS
+    WeaponType.Spell -> MAGE_BOLT_REACTION_DELAY_MILLIS
+    WeaponType.Mace -> PALADIN_SWING_REACTION_DELAY_MILLIS
     else -> REACTION_DELAY_MILLIS
 }
 

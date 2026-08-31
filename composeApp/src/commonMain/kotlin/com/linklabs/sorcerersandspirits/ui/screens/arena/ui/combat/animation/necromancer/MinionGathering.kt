@@ -3,7 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.ne
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
-import com.linklabs.sorcerersandspirits.domain.game.Minion
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 
 const val MAX_RENDERED_MINIONS = 10
 
@@ -19,15 +19,15 @@ private const val FOOT_LINE_FRACTION = 0.97f
 @Immutable
 internal data class MinionSlot(val footCenter: Offset, val height: Float)
 
-internal fun minionRestingSlot(displayIndex: Int, kind: Minion, area: Rect): MinionSlot {
+internal fun minionRestingSlot(displayIndex: Int, minionType: MinionType, area: Rect): MinionSlot {
     val side = if (displayIndex % 2 == 0) -1f else 1f
     val tier = displayIndex / 2
 
     val tierScale = (1f - tier * PER_TIER_SHRINK).coerceAtLeast(minimumValue = MIN_TIER_SCALE)
     val heightFraction =
-        when (kind) {
-            Minion.Skeleton -> SKELETON_HEIGHT_FRACTION
-            Minion.Golem -> GOLEM_HEIGHT_FRACTION
+        when (minionType) {
+            MinionType.Skeleton -> SKELETON_HEIGHT_FRACTION
+            MinionType.Golem -> GOLEM_HEIGHT_FRACTION
         }
     val height = area.height * heightFraction * tierScale
 

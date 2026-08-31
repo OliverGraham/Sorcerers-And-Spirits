@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.Minion
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -199,7 +199,7 @@ private fun summonMinionScene(
         if (minion != null) {
             minionRestingSlot(
                 displayIndex = minionIndex.coerceAtMost(maximumValue = MAX_RENDERED_MINIONS - 1),
-                kind = minion,
+                minionType = minion,
                 area = bounds,
             )
         } else {
@@ -234,16 +234,6 @@ private fun summonMinionScene(
         healRadiusPx = bounds.width * 0.7f,
         healMotes = healMotes,
     )
-}
-
-private fun minionFor(outcome: SummonMinionOutcome): Minion? = when (outcome) {
-    SummonMinionOutcome.Fizzle -> null
-
-    SummonMinionOutcome.Skeleton,
-    SummonMinionOutcome.SkeletonAndHeal,
-    -> Minion.Skeleton
-
-    SummonMinionOutcome.Golem -> Minion.Golem
 }
 
 private fun DrawScope.drawSummonMinion(
@@ -373,7 +363,7 @@ private data class SummonMinionScene(
     val portalCenter: Offset,
     val portalPalette: ScythePalette,
     val portalRadiusPx: Float,
-    val minion: Minion?,
+    val minion: MinionType?,
     val restingSlot: MinionSlot?,
     val heals: Boolean,
     val healCenter: Offset,
@@ -468,4 +458,14 @@ private fun NecromancerSummonMinionPreview(
             modifier = Modifier.fillMaxSize(),
         )
     }
+}
+
+private fun minionFor(outcome: SummonMinionOutcome): MinionType? = when (outcome) {
+    SummonMinionOutcome.Fizzle -> null
+
+    SummonMinionOutcome.Skeleton,
+    SummonMinionOutcome.SkeletonAndHeal,
+    -> MinionType.Skeleton
+
+    SummonMinionOutcome.Golem -> MinionType.Golem
 }

@@ -1098,3 +1098,27 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   Related: SS-238, SS-239 (fold in or supersede as the new design dictates).
 
 ---
+
+## Claude workflow
+
+### SS-269 — Review Claude's memory store + CLAUDE.md; decide pruning and promotion of invariants
+
+- [ ] Not completed — **owner-led review session; go through the memories and CLAUDE.md together and
+  decide, memory by memory, what to prune, consolidate, or promote before making changes.**
+- **Problem:** Architectural invariants live in the relevance-recall memory tier, whose one-line
+  `MEMORY.md` index entries are signposts while the actionable detail sits in bodies that often
+  aren't in front of Claude at edit time — so hard rules get "known" but not applied. Recurring
+  example: `derive-in-VM-not-Composables` ([[derived-ui-state-in-state-model]]) was violated a 3rd
+  time on SS-268 (`minionFor()` mapping `SummonMinionOutcome → MinionState` inside a Composable
+  file instead of the `toState()` mapping layer).
+- **Goal:** Split rules into tiers by how they're loaded:
+    - **Always-loaded (enforced every turn):** hard architectural invariants belong in **CLAUDE.md**
+      (project) or `~/.claude/CLAUDE.md` (global) — e.g. Domain→Data→State mirroring + derivations/
+      mappings in the VM never Composables, no comments, no `for` loops, `fun` over getter-property.
+    - **Recall memory:** keep for softer context/history/preferences.
+- **Options on the table (from the mechanism question):** promote invariants into CLAUDE.md; add a
+  `PreToolUse` hook on Edit/Write to UI/Composable files that injects a just-in-time reminder; prune/
+  consolidate `MEMORY.md` so the ~8 invariants stand out from historical notes. Decide per rule.
+- **Notes:** Owner wants to review before any changes. Also fold in the standalone cleanup surfaced
+  by this: move `minionFor()` out of the `necromancer` animation file into the ViewModel/`toState`
+  mapping layer.

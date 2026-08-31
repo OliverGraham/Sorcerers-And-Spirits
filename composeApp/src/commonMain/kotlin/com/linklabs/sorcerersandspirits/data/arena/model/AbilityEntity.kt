@@ -6,7 +6,6 @@ import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
 import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
 import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
-import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.SummonMinionAbility
@@ -60,11 +59,11 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
 
     @Serializable
     data class SummonMinion(
-        override val minions: List<Minion> = emptyList(),
+        override val minions: List<MinionEntity> = emptyList(),
         override val attacksTakenThisTurn: Int = 0,
     ) : OffensiveAbilityEntity,
         ActivatedAbilityEntity,
-        SummonMinionAbility
+        SummonMinionAbility<MinionEntity>
 
     @Serializable data object Encore : OffensiveAbilityEntity
 
@@ -152,7 +151,7 @@ internal fun OffensiveAbility.toEntity(): OffensiveAbilityEntity = when (this) {
 
     is OffensiveAbility.SummonMinion ->
         OffensiveAbilityEntity.SummonMinion(
-            minions = minions,
+            minions = minions.map { minion -> minion.toEntity() },
             attacksTakenThisTurn = attacksTakenThisTurn,
         )
 
@@ -196,7 +195,7 @@ internal fun OffensiveAbilityEntity.toDomain(): OffensiveAbility = when (this) {
 
     is OffensiveAbilityEntity.SummonMinion ->
         OffensiveAbility.SummonMinion(
-            minions = minions,
+            minions = minions.map { minion -> minion.toDomain() },
             attacksTakenThisTurn = attacksTakenThisTurn,
         )
 

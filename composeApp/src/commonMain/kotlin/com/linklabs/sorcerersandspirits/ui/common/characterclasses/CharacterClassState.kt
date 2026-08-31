@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.Minion
 import com.linklabs.sorcerersandspirits.domain.game.shieldPoints
 
 @Immutable
@@ -22,9 +21,9 @@ data class CharacterClassState(
     val isConscious: Boolean = hitPoints > 0
     val hitPointsDisplay: String = buildHitPointsDisplay()
     val armorClassDisplay: String = buildArmorClassDisplay()
-    val summonedMinions: List<Minion> = buildSummonedMinions()
+    val summonedMinions: List<MinionState> = buildSummonedMinions()
 
-    private fun buildSummonedMinions(): List<Minion> = (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.minions ?: emptyList()
+    private fun buildSummonedMinions(): List<MinionState> = (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.minions ?: emptyList()
 
     private fun buildHitPointsDisplay(): String {
         val offensiveAbility = offensiveAbility.effective

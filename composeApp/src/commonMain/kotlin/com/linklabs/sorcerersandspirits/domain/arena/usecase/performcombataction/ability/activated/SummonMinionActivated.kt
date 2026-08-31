@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.Minion
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 
@@ -56,17 +57,17 @@ internal class SummonMinionActivated(
 
     private fun CombatMutator.getSummonResult(result: Int) = when (result) {
         in abilityConfig.summonSkeletonRange -> SummonResult(
-            minion = Minion.Skeleton,
+            minion = Minion(type = MinionType.Skeleton, hasAttackedThisRound = false),
             shouldHealToFull = false,
         )
 
         in abilityConfig.summonSkeletonAndHealRange -> SummonResult(
-            minion = Minion.Skeleton,
+            minion = Minion(type = MinionType.Skeleton, hasAttackedThisRound = false),
             shouldHealToFull = true,
         )
 
         abilityConfig.summonGolemRoll -> SummonResult(
-            minion = Minion.Golem,
+            minion = Minion(type = MinionType.Golem, hasAttackedThisRound = false),
             shouldHealToFull = true,
         )
 

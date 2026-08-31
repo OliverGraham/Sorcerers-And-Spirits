@@ -239,7 +239,7 @@ private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl
             element =
             AbilityActionState.Activated.SummonMinion(
                 summonMinionAbility =
-                OffensiveAbility.SummonMinion(minions = minions),
+                OffensiveAbility.SummonMinion(minions = minions.map { minion -> minion.toDomain() }),
             )
                 .toControl(),
         )

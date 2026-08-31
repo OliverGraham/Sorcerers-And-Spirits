@@ -28,15 +28,15 @@ data class CharacterClass(
         damage: Int,
         summon: OffensiveAbility.SummonMinion,
     ): CharacterClass {
-        val golemCount = summon.minions.count { minion -> minion == Minion.Golem }
+        val golemCount = summon.minions.count { minion -> minion.type == MinionType.Golem }
         val absorbedByShield = minOf(damage, summon.shieldPoints)
         val survivingShield = summon.shieldPoints - absorbedByShield
         val survivingGolems = minOf(golemCount, survivingShield / 2)
         val survivingSkeletons = survivingShield - survivingGolems * 2
 
         val survivingMinions =
-            List(size = survivingGolems) { Minion.Golem } +
-                List(size = survivingSkeletons) { Minion.Skeleton }
+            List(size = survivingGolems) { Minion(type = MinionType.Golem, hasAttackedThisRound = false) } +
+                List(size = survivingSkeletons) { Minion(type = MinionType.Skeleton, hasAttackedThisRound = false) }
 
         return copy(
             hitPoints = hitPoints - (damage - absorbedByShield),

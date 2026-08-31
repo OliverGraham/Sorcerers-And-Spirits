@@ -7,7 +7,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import com.linklabs.sorcerersandspirits.domain.game.Minion
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.MinionState
 import org.jetbrains.compose.resources.imageResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.golem_minion
@@ -15,7 +15,7 @@ import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
 
 @Composable
 internal fun SummonedMinions(
-    minions: List<Minion>,
+    minions: List<MinionState>,
     modifier: Modifier = Modifier,
 ) {
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
@@ -31,7 +31,7 @@ internal fun SummonedMinions(
 }
 
 private fun DrawScope.drawGatheredMinions(
-    minions: List<Minion>,
+    minions: List<MinionState>,
     skeletonImage: ImageBitmap,
     golemImage: ImageBitmap,
 ) {
@@ -39,10 +39,10 @@ private fun DrawScope.drawGatheredMinions(
 
     minions.indices.reversed().forEach { index ->
         val minion = minions[index]
-        val slot = minionRestingSlot(displayIndex = index, kind = minion, area = area)
+        val slot = minionRestingSlot(displayIndex = index, minionType = minion.type, area = area)
 
         drawMinion(
-            kind = minion,
+            kind = minion.type,
             footCenter = slot.footCenter,
             height = slot.height,
             width = slot.height,

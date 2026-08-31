@@ -45,15 +45,15 @@ interface AllInAbility {
     val usedThisTurn: Boolean
 }
 
-interface SummonMinionAbility {
-    val minions: List<Minion>
+interface SummonMinionAbility<out M : MinionAttributes> {
+    val minions: List<M>
     val attacksTakenThisTurn: Int
 }
 
-val SummonMinionAbility.shieldPoints: Int
-    get() = minions.sumOf { minion -> if (minion == Minion.Golem) 2 else 1 }
+val SummonMinionAbility<*>.shieldPoints: Int
+    get() = minions.sumOf { minion -> if (minion.type == MinionType.Golem) 2 else 1 }
 
-val SummonMinionAbility.minionAttacks: Int
+val SummonMinionAbility<*>.minionAttacks: Int
     get() = minions.size
 
 interface ImpersonateAbility<out T> {
@@ -77,7 +77,7 @@ sealed interface OffensiveAbility : Ability {
         override val attacksTakenThisTurn: Int = 0,
     ) : OffensiveAbility,
         ActivatedAbility,
-        SummonMinionAbility
+        SummonMinionAbility<Minion>
 
     data object Encore : OffensiveAbility
 

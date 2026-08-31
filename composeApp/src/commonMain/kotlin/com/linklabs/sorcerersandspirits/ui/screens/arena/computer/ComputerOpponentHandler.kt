@@ -218,7 +218,7 @@ internal class ComputerOpponentHandler(
                 if (hasNoMinions || isBelowMaxHp) {
                     AbilityActionState.Activated.SummonMinion(
                         summonMinionAbility =
-                        OffensiveAbility.SummonMinion(minions = ability.minions),
+                        OffensiveAbility.SummonMinion(minions = ability.minions.map { minion -> minion.toDomain() }),
                     )
                 } else {
                     null

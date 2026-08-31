@@ -199,7 +199,7 @@ private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long
 private fun ArenaMessageState.PrepareAttack.Strike.prepareAttackReactionDelayMillis(): Long = if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
 // TODO(SS-258): Common
-private suspend fun AvatarGestureState.play(
+internal suspend fun AvatarGestureState.play(
     gesture: AvatarGesture,
     strikeDirection: Float,
     density: Density,

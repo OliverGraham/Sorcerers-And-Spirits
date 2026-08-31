@@ -189,6 +189,8 @@ private fun AnimateNormalAttack(
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
+    if (animatingMessage.minionAttackerIndex != null) return
+
     val attackerBounds =
         avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId) ?: return
     val defenderBounds =

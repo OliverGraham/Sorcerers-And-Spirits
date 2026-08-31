@@ -34,6 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.minionAttackerIndexFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SummonedMinions
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -171,8 +172,8 @@ private fun LargeAvatar(
             if (summonedMinions.isNotEmpty()) {
                 SummonedMinions(
                     minions = summonedMinions,
-                    summonerUserId = player.userId,
-                    onAvatarBoundsChanged = onAvatarBoundsChanged,
+                    attackingMinionIndex =
+                    animatingMessage?.minionAttackerIndexFor(attackerUserId = player.userId),
                     modifier = Modifier.fillMaxSize(),
                 )
             }

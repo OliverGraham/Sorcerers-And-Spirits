@@ -406,41 +406,37 @@ SS-191's generic lunges remain the fallback for classes not yet done.
           summoner's own attack (all marked) carries `null` → **minions-first falls out for free**.
           Threaded Domain→Data→UI + both mappings; 7 per-class normal-attack previews pass `null`.
           Nothing consumes the attribution yet.
-    - **NEXT SLICE — the visible wiring (not started):**
-        1. `toState` for `ArenaMessage.NormalRoll.Attack` (in `ArenaMessageState.kt`, ~L967): when
-           `minionAttackerIndex != null`, key the strike gesture on
-           `minionAvatarId(attackerUserId, minionAttackerIndex)` instead of `attackerUserId`; keep the
-           defender reaction. Also **relocate `minionAvatarId`** out of the necromancer package (the
-           model layer shouldn't import UI animation code) — e.g. into the arena `model` package.
-        2. `CombatAnimationOverlays` `NormalRoll.Attack` branch: if it's a minion attack, render
-           `MinionAttackOverlay` (bounds via the synthetic id; gesture from the message's gestures map;
-           strike direction from minion-vs-defender Y) **instead of** `AnimateNormalAttack` (the
-           summoner's weapon overlay).
-        3. **Completion parity (LANDMINE):** a `NormalRoll.Attack` completes via each seated avatar's
-           `onAnimationComplete(AvatarGesture(userId))` (attacker + defender) plus the weapon overlay.
-           A minion attack removes the summoner from the gestures map, so the summoner's completion
-           signal disappears — `MinionAttackOverlay` **must** fire an equivalent `onAnimationComplete`
-           or the combat queue hangs and buttons vanish ([[combat-queue-signal-reentrancy]],
-           [[combat-button-visibility-isanimating]]). Wire its `onFinished` to `onAnimationComplete`
-           with the correct `AnimationKey`; verify the expected animation count still balances.
-        4. **Hide the resting Canvas minion** (its index) while it attacks — thread the attacking-minion
-           index to `SummonedMinions` via `CombatAvatars`/`LargeAvatar` from the animating message
-           (which already flows there for `GestureClassAvatar`). Else the minion double-draws
-           (resting + overlay).
-        5. **Summoner slide-aside** — the ticket wants "slides to one side and **stays**" (a
-           non-returning gesture). **OPEN DECISION:** implement slide-and-stay, or a simpler summoner
-           reaction for the placeholder?
-    - **Open decisions / deferred:**
-        - Per-class skeleton vs golem attack choreography — placeholder `Lunge` for now; owner to
-          describe later (both share the motion currently).
-        - **Tests are broken** and need the two new `NormalRoll.Attack` fields: `CombatAnimationCueTest`
+    - **VISIBLE WIRING — done, via `GestureClassAvatar` (owner-directed pivot):** the minion attack now
+      reuses the seated-avatar gesture pipeline instead of a separate overlay + synthetic-id bounds. The
+      strike gesture stays keyed on the **summoner's** `userId` in the message `gestures` map, so
+      `rememberAvatarGesture(userId = summoner)` still plays it and still fires
+      `onAnimationComplete(AvatarGesture(summoner))` — the completion "landmine" simply doesn't exist,
+      because we only swap **which art** the shared `gestureState` drives (minion png vs class png).
+        - `ArenaMessageState.NormalRoll.Attack.isAvatarCompletedByGesture = minionAttackerIndex != null`
+          → for a minion attack the message expects only the two `AvatarGesture` completions (summoner +
+          defender) and **no** `AvatarOverlay`. Plus `minionAttackerIndexFor(attackerUserId)` helper.
+        - `CombatAnimationOverlays.AnimateNormalAttack` early-returns when `minionAttackerIndex != null`
+          (no summoner weapon overlay for a minion attack).
+        - `GestureClassAvatar` is a plain `when` (no wrapper Box): a minion-attack branch emits the
+          summoner `AvatarImage` at rest **plus** `MinionGestureAvatar` (they overlay in `LargeAvatar`'s
+          existing seat `Box`), else the normal mirror-split / gesture avatar branches. The resting
+          `SummonedMinions` stays a sibling in `LargeAvatar` and takes an `attackingMinionIndex` to skip
+          the attacker → no double-draw. `MinionGestureAvatar` (new `necromancer/MinionAttack.kt`)
+          positions the minion at its `minionRestingSlot(...).toRect()` and applies the **shared**
+          `gestureState` (no own LaunchedEffect/completion). Skeleton/golem previews loop `AvatarGesture.Lunge`.
+        - Removed the now-dead step-3 infra: `SummonedMinions` no longer reports per-minion bounds,
+          `minionAvatarId` + `reportMinionBounds` deleted, old `MinionAttackOverlay.kt` deleted.
+    - **STILL OPEN / deferred:**
+        - **Summoner slide-aside** — ticket wants "slides to one side and **stays**"; placeholder keeps
+          the summoner fully at rest during the minion's attack. Decide: slide-and-stay vs simple rest.
+        - Per-class skeleton vs golem attack choreography — placeholder is the summoner's own normal
+          strike gesture (whatever the class rolls); owner to describe distinct skeleton/golem attacks.
+        - **Tests are broken** and need the two `NormalRoll.Attack` fields: `CombatAnimationCueTest`
           (`ArenaMessageState.NormalRoll.Attack`) and `ArenaMessageEntityTest` (`ArenaMessage.NormalRoll
           .Attack` ×2). Per owner: "don't worry about tests" during the build — fix at the end.
         - **Minion death animations** (breaking apart / disintegrating) — separate part, not started;
           `CharacterClass.takeDamageBehindMinions` rebuilds surviving minions fresh (drops flags +
           identity), fine for now but revisit for death.
-        - Stale bounds: removed minions leave last-reported entries in `AvatarBoundsStateHolder`;
-          harmless until consumed, clean up when wiring attacks.
     - **Related:** `SS-269` (review Claude's memories + CLAUDE.md) was created this session.
 
 ### SS-206 — Bard Encore animation

@@ -8,8 +8,6 @@ import com.linklabs.sorcerersandspirits.domain.game.MinionType
 
 const val MAX_RENDERED_MINIONS = 10
 
-internal fun minionAvatarId(summonerUserId: String, index: Int): String = "$summonerUserId-minion-$index"
-
 internal fun MinionSlot.toRect(): Rect = Rect(
     offset = Offset(x = footCenter.x - height / 2f, y = footCenter.y - height),
     size = Size(width = height, height = height),

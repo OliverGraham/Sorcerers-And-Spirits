@@ -95,7 +95,9 @@ sealed interface ArenaMessageState {
             val minionAttackerIndex: Int?,
             val minionAttackerType: MinionType?,
             override val gestures: Map<String, AvatarGesture>,
-        ) : NormalRoll
+        ) : NormalRoll {
+            override val isAvatarCompletedByGesture: Boolean = minionAttackerIndex != null
+        }
 
         // TODO(SS-258): Does this need to be used for Avatar Animations???
         @Immutable
@@ -964,6 +966,12 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             gestures = mapOf(attackerUserId to gesture),
         )
     }
+}
+
+internal fun ArenaMessageState.minionAttackerIndexFor(attackerUserId: String): Int? {
+    if (this !is ArenaMessageState.NormalRoll.Attack) return null
+    if (this.attackerUserId != attackerUserId) return null
+    return minionAttackerIndex
 }
 
 // TODO: Make mapping functions for all types in this manner. ArenaMessage.Type.toState()

@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -13,10 +14,12 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.MinionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.minionAttackerIndexFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarGestureState
@@ -45,6 +48,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.getTeleportMessageOrNull
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.playTeleport
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.MinionGestureAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS
@@ -86,22 +90,50 @@ internal fun GestureClassAvatar(
             isTopSeat = isTopSeat,
         )
 
+    val attackingMinion = characterClass.attackingMinionOrNull(animatingMessage = animatingMessage, userId = userId)
     val isMirrorSplit = gestureState.mirrorSplit.value > 0f
-    if (!isMirrorSplit) {
-        AvatarImage(
-            characterClass = characterClass,
-            colorFilter = gestureState.colorFilter,
-            modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
-        )
-        return
-    }
 
-    MirrorSplitClassAvatar(
-        characterClass = characterClass,
-        gestureState = gestureState,
-        modifier = modifier,
-    )
+    when {
+        attackingMinion != null -> {
+            AvatarImage(
+                characterClass = characterClass,
+                colorFilter = gestureState.colorFilter,
+                modifier = modifier,
+            )
+            MinionGestureAvatar(
+                minion = attackingMinion.minion,
+                displayIndex = attackingMinion.index,
+                gestureState = gestureState,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        isMirrorSplit ->
+            MirrorSplitClassAvatar(
+                characterClass = characterClass,
+                gestureState = gestureState,
+                modifier = modifier,
+            )
+
+        else ->
+            AvatarImage(
+                characterClass = characterClass,
+                colorFilter = gestureState.colorFilter,
+                modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
+            )
+    }
 }
+
+private fun CharacterClassState.attackingMinionOrNull(
+    animatingMessage: ArenaMessageState?,
+    userId: String,
+): AttackingMinion? {
+    val index = animatingMessage?.minionAttackerIndexFor(attackerUserId = userId) ?: return null
+    val minion = summonedMinions.getOrNull(index = index) ?: return null
+    return AttackingMinion(index = index, minion = minion)
+}
+
+private data class AttackingMinion(val index: Int, val minion: MinionState)
 
 // TODO(SS-258): This naming is wrong. It does return a remembered value, but it plays the animation
 // as

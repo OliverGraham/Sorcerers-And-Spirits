@@ -141,43 +141,40 @@ private fun LargeAvatar(
     onAvatarBoundsChanged: (String, Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier.clickable { onInspect(player.userId) },
-        verticalAlignment = Alignment.CenterVertically,
+    Box(
+        modifier =
+        modifier.clickable { onInspect(player.userId) }.onGloballyPositioned {
+            onAvatarBoundsChanged(player.userId, it.boundsInRoot())
+        },
+        contentAlignment = Alignment.BottomCenter,
     ) {
+        GestureClassAvatar(
+            animatingMessage = animatingMessage,
+            characterClass = player.characterClass,
+            userId = player.userId,
+            isTopSeat = isTopSeat,
+            modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
+        )
+
+        val summonedMinions = player.characterClass.summonedMinions
+        if (summonedMinions.isNotEmpty()) {
+            SummonedMinions(
+                minions = summonedMinions,
+                attackingMinionIndex =
+                animatingMessage?.minionAttackerIndexFor(attackerUserId = player.userId),
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
         AvatarStatsBar(
             characterClass = player.characterClass,
             isUserPlayer = isUserPlayer,
             isAttacker = isAttacker,
             classColor = player.characterClass.type.toColor(),
-            modifier = Modifier.sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
-        )
-
-        Box(
             modifier =
-            Modifier.weight(weight = 1f).fillMaxWidth().onGloballyPositioned {
-                onAvatarBoundsChanged(player.userId, it.boundsInRoot())
-            },
-            contentAlignment = Alignment.BottomCenter,
-        ) {
-            GestureClassAvatar(
-                animatingMessage = animatingMessage,
-                characterClass = player.characterClass,
-                userId = player.userId,
-                isTopSeat = isTopSeat,
-                modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
-            )
-
-            val summonedMinions = player.characterClass.summonedMinions
-            if (summonedMinions.isNotEmpty()) {
-                SummonedMinions(
-                    minions = summonedMinions,
-                    attackingMinionIndex =
-                    animatingMessage?.minionAttackerIndexFor(attackerUserId = player.userId),
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
-        }
+            Modifier.align(alignment = Alignment.CenterStart)
+                .sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
+        )
     }
 }
 

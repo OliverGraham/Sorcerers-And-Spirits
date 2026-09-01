@@ -48,8 +48,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.getTeleportMessageOrNull
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.playTeleport
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.minionChargeDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.MinionGestureAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SKELETON_LONGSWORD_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PALADIN_SWING_REACTION_DELAY_MILLIS
@@ -224,6 +226,7 @@ private fun ArenaMessageState.NormalRoll.Attack.normalAttackReactionDelayMillis(
     WeaponType.Drum -> BARD_WAVE_REACTION_DELAY_MILLIS
     WeaponType.Spell -> MAGE_BOLT_REACTION_DELAY_MILLIS
     WeaponType.Mace -> PALADIN_SWING_REACTION_DELAY_MILLIS
+    WeaponType.LongSword -> SKELETON_LONGSWORD_REACTION_DELAY_MILLIS
     else -> REACTION_DELAY_MILLIS
 }
 
@@ -248,6 +251,10 @@ internal suspend fun AvatarGestureState.play(
 
             AvatarGesture.LungeOvershoot ->
                 lungeOvershoot(distancePx = 80.dp.toPx() * strikeDirection)
+
+            // TODO: Minion shouldn't use stab - should use slash
+            AvatarGesture.MinionCharge ->
+                stab(dashPx = minionChargeDistance.toPx() * strikeDirection)
 
             AvatarGesture.Stab -> stab(dashPx = meleeDashDistance.toPx() * strikeDirection)
 

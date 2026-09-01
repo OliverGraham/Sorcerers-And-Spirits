@@ -96,9 +96,7 @@ sealed interface ArenaMessageState {
             val minionAttackerType: MinionType?,
             val weaponType: WeaponType,
             val accentColor: Color,
-        ) : NormalRoll {
-            override val isAvatarCompletedByGesture: Boolean = minionAttackerIndex != null
-        }
+        ) : NormalRoll
 
         // TODO(SS-258): Does this need to be used for Avatar Animations???
         @Immutable
@@ -982,15 +980,19 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             put(
                 key = attackerUserId,
                 value =
-                attackerStrike(
-                    weaponClassType =
-                    resolveWeaponClassType(
-                        attackerClassType = attackerClassType,
-                        impersonatedClassType = impersonatedCharacterType,
-                        id = id,
-                    ),
-                    messageType = normalRollMessageType,
-                ),
+                if (minionAttackerIndex != null) {
+                    AvatarGesture.MinionCharge
+                } else {
+                    attackerStrike(
+                        weaponClassType =
+                        resolveWeaponClassType(
+                            attackerClassType = attackerClassType,
+                            impersonatedClassType = impersonatedCharacterType,
+                            id = id,
+                        ),
+                        messageType = normalRollMessageType,
+                    )
+                },
             )
             put(
                 key = defenderUserId,

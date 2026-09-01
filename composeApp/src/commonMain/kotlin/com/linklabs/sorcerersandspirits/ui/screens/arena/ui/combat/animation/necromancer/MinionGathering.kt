@@ -13,7 +13,7 @@ internal fun MinionSlot.toRect(): Rect = Rect(
     size = Size(width = height, height = height),
 )
 
-private const val SKELETON_HEIGHT_FRACTION = 0.42f
+private const val SKELETON_HEIGHT_FRACTION = 0.7f
 private const val GOLEM_HEIGHT_FRACTION = 0.5f
 private const val BASE_SIDE_GAP_FRACTION = 0.2f
 private const val PER_TIER_SIDE_GAP_FRACTION = 0.13f

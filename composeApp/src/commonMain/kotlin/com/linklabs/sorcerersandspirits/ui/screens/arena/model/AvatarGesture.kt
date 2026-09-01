@@ -8,6 +8,7 @@ enum class AvatarGesture {
     Lunge,
     LungeStrong,
     LungeOvershoot,
+    MinionCharge,
     Stab,
     StabFlurry,
     StabOvershoot,

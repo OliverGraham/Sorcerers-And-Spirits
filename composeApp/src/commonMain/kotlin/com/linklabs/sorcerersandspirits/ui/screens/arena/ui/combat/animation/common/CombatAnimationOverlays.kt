@@ -23,6 +23,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.ScythePalette
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SkeletonLongSwordOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.illusionistScythePalette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necroScythePalette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PaladinHolyShieldOverlay
@@ -189,8 +190,6 @@ private fun AnimateNormalAttack(
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     modifier: Modifier = Modifier,
 ) {
-    if (animatingMessage.minionAttackerIndex != null) return
-
     val attackerBounds =
         avatarBoundsStateHolder.boundsFor(userId = animatingMessage.attackerUserId) ?: return
     val defenderBounds =
@@ -269,8 +268,21 @@ private fun AnimateNormalAttack(
                 modifier = modifier,
             )
 
-        WeaponType.LongSword -> TODO() // TODO: Skeleton weapon
-        WeaponType.StoneFist -> TODO() // TODO: Golem weapon
+        WeaponType.LongSword ->
+            SkeletonLongSwordOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
+
+        WeaponType.StoneFist ->
+            SkeletonLongSwordOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
     }
 }
 

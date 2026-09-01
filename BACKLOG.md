@@ -355,6 +355,10 @@ SS-191's generic lunges remain the fallback for classes not yet done.
        own dice roll, exactly like a normal attack.
     6. Add new message(s) that clarify a *summoner's minion* is the one attacking (distinct from the
        summoner attacking).
+- **Fold-in cleanup (from SS-269):** move the `minionFor()` outcome→`MinionType` mapping out of
+  `NecromancerSummonMinion.kt` (a Composable/animation file) into the `ArenaMessageState.SummonMinion`
+  `toState` mapping — carry `minionType: MinionType?` on the message state and have the scene read it.
+  See `TODO(SS-268)` at `minionFor`. This is the derive-in-state-model invariant (now in CLAUDE.md).
 - **Design notes / gotchas:**
     - **Minion identity is the unlock (steps 3–4).** The gesture system and `AvatarBoundsStateHolder`
       are keyed by `userId` strings; minions have none (they belong to the summoner). Making them
@@ -1170,29 +1174,3 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** This is an epic; carve child tickets once the design is specified. Don't remove
   existing functionality without an explicit instruction in the spec ([[never-remove-without-instruction]]).
   Related: SS-238, SS-239 (fold in or supersede as the new design dictates).
-
----
-
-## Claude workflow
-
-### SS-269 — Review Claude's memory store + CLAUDE.md; decide pruning and promotion of invariants
-
-- [ ] Not completed — **owner-led review session; go through the memories and CLAUDE.md together and
-  decide, memory by memory, what to prune, consolidate, or promote before making changes.**
-- **Problem:** Architectural invariants live in the relevance-recall memory tier, whose one-line
-  `MEMORY.md` index entries are signposts while the actionable detail sits in bodies that often
-  aren't in front of Claude at edit time — so hard rules get "known" but not applied. Recurring
-  example: `derive-in-VM-not-Composables` ([[derived-ui-state-in-state-model]]) was violated a 3rd
-  time on SS-268 (`minionFor()` mapping `SummonMinionOutcome → MinionState` inside a Composable
-  file instead of the `toState()` mapping layer).
-- **Goal:** Split rules into tiers by how they're loaded:
-    - **Always-loaded (enforced every turn):** hard architectural invariants belong in **CLAUDE.md**
-      (project) or `~/.claude/CLAUDE.md` (global) — e.g. Domain→Data→State mirroring + derivations/
-      mappings in the VM never Composables, no comments, no `for` loops, `fun` over getter-property.
-    - **Recall memory:** keep for softer context/history/preferences.
-- **Options on the table (from the mechanism question):** promote invariants into CLAUDE.md; add a
-  `PreToolUse` hook on Edit/Write to UI/Composable files that injects a just-in-time reminder; prune/
-  consolidate `MEMORY.md` so the ~8 invariants stand out from historical notes. Decide per rule.
-- **Notes:** Owner wants to review before any changes. Also fold in the standalone cleanup surfaced
-  by this: move `minionFor()` out of the `necromancer` animation file into the ViewModel/`toState`
-  mapping layer.

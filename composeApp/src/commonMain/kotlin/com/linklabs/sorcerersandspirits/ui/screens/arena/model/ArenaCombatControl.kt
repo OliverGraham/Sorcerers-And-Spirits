@@ -239,10 +239,7 @@ private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl
             element =
             AbilityActionState.Activated.SummonMinion(
                 summonMinionAbility =
-                OffensiveAbility.SummonMinion(
-                    skeletonCount = skeletonCount,
-                    golemCount = golemCount,
-                ),
+                OffensiveAbility.SummonMinion(minions = minions.map { minion -> minion.toDomain() }),
             )
                 .toControl(),
         )

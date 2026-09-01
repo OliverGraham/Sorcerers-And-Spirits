@@ -179,30 +179,28 @@ private fun SharedTransitionScope.CombatContent(
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(modifier = modifier) {
-        AnimatedContent(
-            targetState = arenaMatchState,
-            contentKey = { it.animatedContentKey },
-            label = AVATAR_SEATING_TRANSITION_LABEL,
-            modifier = Modifier.fillMaxSize(),
-        ) { animatingState ->
-            SharedTransitionProvider(
-                sharedTransitionScope = this@CombatContent,
-                animatedVisibilityScope = this@AnimatedContent,
-            ) {
-                CombatStage(
-                    arenaMatchState = animatingState,
-                    animatingMessage = animatingMessage,
-                    onInspect = onInspect,
-                    isTargetable =
-                    arenaMatchState.canTurnOwnerTargetAnOpponent(
-                        isAnAnimationActive =
-                        animatingMessage != null && !animatingMessage.isContinuous(),
-                    ),
-                    onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
-                    onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
-                )
-            }
+    AnimatedContent(
+        targetState = arenaMatchState,
+        contentKey = { it.animatedContentKey },
+        label = AVATAR_SEATING_TRANSITION_LABEL,
+        modifier = modifier.fillMaxSize(),
+    ) { animatingState ->
+        SharedTransitionProvider(
+            sharedTransitionScope = this@CombatContent,
+            animatedVisibilityScope = this@AnimatedContent,
+        ) {
+            CombatStage(
+                arenaMatchState = animatingState,
+                animatingMessage = animatingMessage,
+                onInspect = onInspect,
+                isTargetable =
+                arenaMatchState.canTurnOwnerTargetAnOpponent(
+                    isAnAnimationActive =
+                    animatingMessage != null && !animatingMessage.isContinuous(),
+                ),
+                onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
+                onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
+            )
         }
     }
 }
@@ -225,7 +223,6 @@ private fun CombatStage(
             bottomPlayer = arenaMatchState.bottomPlayer,
             animatingMessage = animatingMessage,
             userPlayerId = arenaMatchState.userPlayerId,
-            activeUserIds = arenaMatchState.activeUserIds,
             attackerUserId = arenaMatchState.attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,

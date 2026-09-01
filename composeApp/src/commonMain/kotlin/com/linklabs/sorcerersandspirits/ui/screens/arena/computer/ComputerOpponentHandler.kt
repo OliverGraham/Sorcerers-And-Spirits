@@ -212,16 +212,13 @@ internal class ComputerOpponentHandler(
 
         return when (val ability = offensiveAbility) {
             is OffensiveAbilityState.SummonMinion -> {
-                val hasNoMinions = ability.skeletonCount == 0 && ability.golemCount == 0
+                val hasNoMinions = ability.minions.isEmpty()
                 val isBelowMaxHp = hitPoints < maxHitPoints
 
                 if (hasNoMinions || isBelowMaxHp) {
                     AbilityActionState.Activated.SummonMinion(
                         summonMinionAbility =
-                        OffensiveAbility.SummonMinion(
-                            skeletonCount = ability.skeletonCount,
-                            golemCount = ability.golemCount,
-                        ),
+                        OffensiveAbility.SummonMinion(minions = ability.minions.map { minion -> minion.toDomain() }),
                     )
                 } else {
                     null

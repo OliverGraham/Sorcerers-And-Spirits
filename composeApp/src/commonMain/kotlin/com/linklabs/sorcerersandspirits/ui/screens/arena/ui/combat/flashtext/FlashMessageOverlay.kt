@@ -206,7 +206,7 @@ private fun FlashText(
         with(receiver = LocalDensity.current) { flashFontSize.toPx() } * FLASH_OUTLINE_FRACTION
 
     val text = message.toStringResource()
-    val fillColor = message.actingClassType?.toColor() ?: Color.White
+    val fillColor = message.flashFillColor()
 
     Box(modifier = modifier.graphicsLayer { rotationZ = swingDegrees }) {
         Text(
@@ -225,6 +225,11 @@ private fun FlashText(
         )
         Text(text = text, style = baseStyle.copy(color = fillColor))
     }
+}
+
+private fun ArenaMessageState.flashFillColor(): Color = when (this) {
+    is ArenaMessageState.NormalRoll.Outcome -> accentColor
+    else -> actingClassType?.toColor() ?: Color.White
 }
 
 private fun FlashAnchor.resolvePoint(

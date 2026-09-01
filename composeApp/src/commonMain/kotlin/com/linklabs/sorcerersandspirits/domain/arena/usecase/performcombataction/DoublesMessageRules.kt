@@ -5,7 +5,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
-import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
 
 internal fun CombatMutator.shouldMessageDoublesAfterArmorClassHit(): Boolean = when (val defensiveAbility = defender.defensiveAbility) {
     is DefensiveAbility.Teleport,
@@ -45,10 +44,6 @@ internal fun CombatMutator.shouldMessageDoublesAfterDamage(): Boolean {
     return isEncoreEarned || hasPendingExtraAttack()
 }
 
-/**
- * An extra attack keeps the dice with the attacker only while the turn is theirs; after a Riposte
- * reversal the Duelist is the attacker, so the turn player's pending attacks would change hands.
- */
 internal fun CombatMutator.hasPendingExtraAttack(): Boolean {
     val isAttackerTheTurnPlayer = attackerUserId == originalTurnUserId
     if (!isAttackerTheTurnPlayer) return false
@@ -57,7 +52,7 @@ internal fun CombatMutator.hasPendingExtraAttack(): Boolean {
         is OffensiveAbility.AllIn -> offensiveAbility.hasAnotherAttack
 
         is OffensiveAbility.SummonMinion ->
-            offensiveAbility.attacksTakenThisTurn < offensiveAbility.minionAttacks
+            !offensiveAbility.usedThisTurn && offensiveAbility.minions.any { !it.hasAttackedThisRound }
 
         else -> false
     }

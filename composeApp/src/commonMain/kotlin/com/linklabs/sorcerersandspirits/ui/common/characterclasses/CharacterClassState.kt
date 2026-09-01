@@ -21,11 +21,21 @@ data class CharacterClassState(
     val isConscious: Boolean = hitPoints > 0
     val hitPointsDisplay: String = buildHitPointsDisplay()
     val armorClassDisplay: String = buildArmorClassDisplay()
+    val summonedMinions: List<MinionState> = buildSummonedMinions()
+
+    private fun buildSummonedMinions(): List<MinionState> = (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.minions ?: emptyList()
 
     private fun buildHitPointsDisplay(): String {
-        val shieldPoints =
-            (offensiveAbility.effective as? OffensiveAbilityState.SummonMinion)?.shieldPoints ?: 0
-        return if (shieldPoints > 0) "$hitPoints + $shieldPoints" else hitPoints.toString()
+        val offensiveAbility = offensiveAbility.effective
+        return if (offensiveAbility is OffensiveAbilityState.SummonMinion) {
+            if (offensiveAbility.shieldPoints > 0) {
+                "$hitPoints + ${offensiveAbility.shieldPoints}"
+            } else {
+                hitPoints.toString()
+            }
+        } else {
+            hitPoints.toString()
+        }
     }
 
     private fun buildArmorClassDisplay(): String {

@@ -55,12 +55,11 @@ sealed interface OffensiveAbilityState : AbilityState {
 
     @Immutable
     data class SummonMinion(
-        override val skeletonCount: Int = 0,
-        override val golemCount: Int = 0,
-        override val attacksTakenThisTurn: Int = 0,
+        override val minions: List<MinionState>,
+        override val usedThisTurn: Boolean,
     ) : OffensiveAbilityState,
         ActivatedAbilityState,
-        SummonMinionAbility
+        SummonMinionAbility<MinionState>
 
     @Immutable data object Encore : OffensiveAbilityState
 
@@ -75,13 +74,14 @@ sealed interface OffensiveAbilityState : AbilityState {
     @Immutable data object None : OffensiveAbilityState
 }
 
+// TODO: Refactor these extension vals
 internal val OffensiveAbilityState.effective: OffensiveAbilityState
     get() = if (this is OffensiveAbilityState.Impersonate) impersonatedAbility else this
 
 internal val OffensiveAbilityState.isMinionAttackInProgress: Boolean
     get() {
-        val minions = effective as? OffensiveAbilityState.SummonMinion ?: return false
-        return minions.attacksTakenThisTurn > 0
+        val summonMinion = effective as? OffensiveAbilityState.SummonMinion ?: return false
+        return summonMinion.minions.any { it.hasAttackedThisRound }
     }
 
 internal fun DefensiveAbility.toState(): DefensiveAbilityState = when (this) {
@@ -117,9 +117,8 @@ internal fun OffensiveAbility.toState(): OffensiveAbilityState = when (this) {
 
     is OffensiveAbility.SummonMinion ->
         OffensiveAbilityState.SummonMinion(
-            skeletonCount = skeletonCount,
-            golemCount = golemCount,
-            attacksTakenThisTurn = attacksTakenThisTurn,
+            minions = minions.map { minion -> minion.toState() },
+            usedThisTurn = usedThisTurn,
         )
 
     is OffensiveAbility.Encore -> OffensiveAbilityState.Encore
@@ -162,9 +161,8 @@ internal fun OffensiveAbilityState.toDomain(): OffensiveAbility = when (this) {
 
     is OffensiveAbilityState.SummonMinion ->
         OffensiveAbility.SummonMinion(
-            skeletonCount = skeletonCount,
-            golemCount = golemCount,
-            attacksTakenThisTurn = attacksTakenThisTurn,
+            minions = minions.map { minion -> minion.toDomain() },
+            usedThisTurn = usedThisTurn,
         )
 
     is OffensiveAbilityState.Encore -> OffensiveAbility.Encore

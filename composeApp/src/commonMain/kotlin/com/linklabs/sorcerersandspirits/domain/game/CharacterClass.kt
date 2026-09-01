@@ -17,23 +17,30 @@ data class CharacterClass(
 
     fun isConscious() = hitPoints > 0
 
-    // TODO: Make another method that handles this from elsewhere. Also, branch off Necromancer
-    //       only code
     fun takeDamage(damage: Int): CharacterClass {
-        val minions =
-            offensiveAbility.effective as? OffensiveAbility.SummonMinion
-                ?: return copy(hitPoints = hitPoints - damage)
+        val summon = offensiveAbility.effective as? OffensiveAbility.SummonMinion
+            ?: return copy(hitPoints = hitPoints - damage)
 
-        val absorbedByShield = minOf(damage, minions.shieldPoints)
-        val survivingShield = minions.shieldPoints - absorbedByShield
-        val survivingGolems = minOf(minions.golemCount, survivingShield / 2)
+        return takeDamageBehindMinions(damage = damage, summon = summon)
+    }
+
+    private fun takeDamageBehindMinions(
+        damage: Int,
+        summon: OffensiveAbility.SummonMinion,
+    ): CharacterClass {
+        val golemCount = summon.minions.count { minion -> minion.type == MinionType.Golem }
+        val absorbedByShield = minOf(damage, summon.shieldPoints)
+        val survivingShield = summon.shieldPoints - absorbedByShield
+        val survivingGolems = minOf(golemCount, survivingShield / 2)
         val survivingSkeletons = survivingShield - survivingGolems * 2
 
         val survivingMinions =
-            minions.copy(skeletonCount = survivingSkeletons, golemCount = survivingGolems)
+            List(size = survivingGolems) { Minion(type = MinionType.Golem, hasAttackedThisRound = false) } +
+                List(size = survivingSkeletons) { Minion(type = MinionType.Skeleton, hasAttackedThisRound = false) }
+
         return copy(
             hitPoints = hitPoints - (damage - absorbedByShield),
-            offensiveAbility = offensiveAbility.withEffective(survivingMinions),
+            offensiveAbility = offensiveAbility.withEffective(summon.copy(minions = survivingMinions)),
         )
     }
 

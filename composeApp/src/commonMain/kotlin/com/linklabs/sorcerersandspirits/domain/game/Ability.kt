@@ -45,25 +45,31 @@ interface AllInAbility {
     val usedThisTurn: Boolean
 }
 
-interface SummonMinionAbility {
-    val skeletonCount: Int
-    val golemCount: Int
-    val attacksTakenThisTurn: Int
+interface SummonMinionAbility<out M : MinionAttributes> {
+    val minions: List<M>
+    val usedThisTurn: Boolean
 }
 
-/**
- * The shield total contributed by summoned minions, counted as effective hit points: each skeleton
- * is a +1 shield and each golem is a +2 shield.
- */
-val SummonMinionAbility.shieldPoints: Int
-    get() = skeletonCount + golemCount * 2
+val SummonMinionAbility<*>.shieldPoints: Int
+    get() = minions.sumOf { minion -> if (minion.type == MinionType.Golem) 2 else 1 }
 
-/**
- * The follow-up attacks a summoner gets on their turn: one per minion held. Counted off live, so a
- * minion consumed as a shield this turn no longer grants its attack.
- */
-val SummonMinionAbility.minionAttacks: Int
-    get() = skeletonCount + golemCount
+fun OffensiveAbility.SummonMinion.recordMinionAttack(): OffensiveAbility.SummonMinion {
+    val nextMinionIndex = minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
+    val updatedMinions = minions.mapIndexed { index, minion ->
+        if (index == nextMinionIndex) {
+            minion.copy(hasAttackedThisRound = true)
+        } else {
+            minion
+        }
+    }
+
+    return copy(minions = updatedMinions)
+}
+
+fun OffensiveAbility.SummonMinion.reset() = copy(
+    usedThisTurn = false,
+    minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) },
+)
 
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T
@@ -82,12 +88,11 @@ sealed interface OffensiveAbility : Ability {
     data object PrepareAttack : OffensiveAbility, ActivatedAbility
 
     data class SummonMinion(
-        override val skeletonCount: Int = 0,
-        override val golemCount: Int = 0,
-        override val attacksTakenThisTurn: Int = 0,
+        override val minions: List<Minion> = emptyList(),
+        override val usedThisTurn: Boolean = false,
     ) : OffensiveAbility,
         ActivatedAbility,
-        SummonMinionAbility
+        SummonMinionAbility<Minion>
 
     data object Encore : OffensiveAbility
 
@@ -103,19 +108,9 @@ sealed interface OffensiveAbility : Ability {
     data object None : OffensiveAbility
 }
 
-/**
- * The offensive ability whose effect actually applies. An Illusionist that has Impersonated an
- * opponent attacks with the copied ability, so [OffensiveAbility.Impersonate] resolves to the
- * ability it copied; every other ability is itself.
- */
 val OffensiveAbility.effective: OffensiveAbility
     get() = if (this is OffensiveAbility.Impersonate) impersonatedAbility else this
 
-/**
- * The class an offensive ability belongs to. Drives the Illusionist's borrowed normal attack, which
- * renders the weapon of the class whose offensive ability it copied (SS-197). Impersonate itself
- * and None are the Illusionist's own, with no opponent class to borrow from.
- */
 private fun OffensiveAbility.owningClassType(): CharacterClassType = when (this) {
     is OffensiveAbility.KillingMomentum -> CharacterClassType.Rogue
 
@@ -134,12 +129,6 @@ private fun OffensiveAbility.owningClassType(): CharacterClassType = when (this)
     -> CharacterClassType.Illusionist
 }
 
-/**
- * The ability stripped of any state it has accumulated this match, leaving only its behaviour. An
- * Illusionist copies an opponent's ability, not the progress the opponent has made with it, so the
- * Necromancer's already-summoned minions or the Gambler's spent All-In must not come across with
- * the copy.
- */
 val OffensiveAbility.defaultState: OffensiveAbility
     get() =
         when (this) {
@@ -153,12 +142,4 @@ val OffensiveAbility.defaultState: OffensiveAbility
             is OffensiveAbility.None -> this
         }
 
-/**
- * Writes back an [updated] effective ability, keeping an Impersonate wrapper intact. An Illusionist
- * keeps a copied ability until end of match or until another is chosen, so a copied ability that
- * carries state across a turn (All-In's [OffensiveAbility.AllIn.usedThisTurn]/
- * [OffensiveAbility.AllIn.hasAnotherAttack], Summon Minion's minion counts) must be re-wrapped
- * after it mutates rather than replacing the [OffensiveAbility.Impersonate]. For every other
- * ability this is simply [updated].
- */
-fun OffensiveAbility.withEffective(updated: OffensiveAbility): OffensiveAbility = if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated
+fun OffensiveAbility.withEffective(updated: OffensiveAbility) = if (this is OffensiveAbility.Impersonate) copy(impersonatedAbility = updated) else updated

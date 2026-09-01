@@ -1,11 +1,15 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 
 @Immutable
 sealed interface ArenaMessageState {
@@ -73,11 +77,7 @@ sealed interface ArenaMessageState {
     sealed interface NormalRoll : ArenaMessageState {
         val attackerUserId: String
         val defenderUserId: String
-        val attackerClassType: CharacterClassType
         val normalRollMessageType: NormalRollMessageType
-
-        override val actingClassType: CharacterClassType
-            get() = attackerClassType
 
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = defenderUserId)
@@ -88,10 +88,13 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
-            override val attackerClassType: CharacterClassType,
             override val normalRollMessageType: NormalRollMessageType,
-            val impersonatedClassType: CharacterClassType?,
             override val gestures: Map<String, AvatarGesture>,
+            val impersonatedClassType: CharacterClassType?,
+            val minionAttackerIndex: Int?,
+            val minionAttackerType: MinionType?,
+            val weaponType: WeaponType,
+            val accentColor: Color,
         ) : NormalRoll
 
         // TODO(SS-258): Does this need to be used for Avatar Animations???
@@ -102,13 +105,13 @@ sealed interface ArenaMessageState {
             override val attackerUserId: String,
             override val defenderUserId: String,
             override val normalRollMessageType: NormalRollMessageType,
-            override val attackerClassType: CharacterClassType,
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
             val attackerClassName: String,
             val defenderClassName: String,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
+            val accentColor: Color,
         ) : NormalRoll {
             val baseRoll: Int = firstDie + secondDie
         }
@@ -286,6 +289,7 @@ sealed interface ArenaMessageState {
         val className: String,
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
+        val minionIndex: Int,
         override val gestures: Map<String, AvatarGesture>,
     ) : ArenaMessageState {
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
@@ -776,6 +780,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             actingClassType = classType,
             singleDie = singleDie,
             outcome = summonMinionOutcomeFor(singleDie = singleDie),
+            minionIndex = minionIndex,
             gestures = mapOf(necromancerUserId to AvatarGesture.Cast),
         )
     }
@@ -961,6 +966,12 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
     }
 }
 
+internal fun ArenaMessageState.minionAttackerIndexFor(attackerUserId: String): Int? {
+    if (this !is ArenaMessageState.NormalRoll.Attack) return null
+    if (this.attackerUserId != attackerUserId) return null
+    return minionAttackerIndex
+}
+
 // TODO: Make mapping functions for all types in this manner. ArenaMessage.Type.toState()
 private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
     is ArenaMessage.NormalRoll.Attack -> {
@@ -968,15 +979,19 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             put(
                 key = attackerUserId,
                 value =
-                attackerStrike(
-                    weaponClassType =
-                    resolveWeaponClassType(
-                        attackerClassType = attackerClassType,
-                        impersonatedClassType = impersonatedCharacterType,
-                        id = id,
-                    ),
-                    messageType = normalRollMessageType,
-                ),
+                if (minionAttackerIndex != null) {
+                    AvatarGesture.MinionCharge
+                } else {
+                    attackerStrike(
+                        weaponClassType =
+                        resolveWeaponClassType(
+                            attackerClassType = attackerClassType,
+                            impersonatedClassType = impersonatedCharacterType,
+                            id = id,
+                        ),
+                        messageType = normalRollMessageType,
+                    )
+                },
             )
             put(
                 key = defenderUserId,
@@ -988,10 +1003,17 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             id = id,
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
-            attackerClassType = attackerClassType,
             impersonatedClassType = impersonatedCharacterType,
             normalRollMessageType = normalRollMessageType,
+            minionAttackerIndex = minionAttackerIndex,
+            minionAttackerType = minionAttackerType,
             gestures = gestures,
+            weaponType = WeaponType.getWeaponType(
+                characterClassType = attackerClassType,
+                minionAttackerType = minionAttackerType,
+                impersonatedCharacterType = impersonatedCharacterType,
+            ),
+            accentColor = attackerClassType.toColor(),
         )
     }
 
@@ -1001,12 +1023,12 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
             attackerClassName = attackerClassName,
-            attackerClassType = attackerClassType,
             defenderClassName = defenderClassName,
             firstDie = firstDie,
             secondDie = secondDie,
             bonus = bonus,
             normalRollMessageType = type,
+            accentColor = attackerClassType.toColor(),
         )
 }
 

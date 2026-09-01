@@ -14,6 +14,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
@@ -167,7 +168,6 @@ private fun ArenaCombatFlashPreview() {
             id = "ko",
             attackerUserId = "player1",
             attackerClassName = "Mage",
-            attackerClassType = CharacterClassType.Mage,
             defenderUserId = "player2",
             defenderClassName = "Rogue",
             firstDie = 6,
@@ -175,6 +175,7 @@ private fun ArenaCombatFlashPreview() {
             bonus = 0,
             normalRollMessageType = NormalRollMessageType.Knockout,
             animation = ArenaAnimationState.Flash,
+            accentColor = CharacterClassType.Mage.toColor(),
         ),
     )
 }

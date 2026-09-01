@@ -40,6 +40,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.lerpAngle
@@ -75,10 +76,9 @@ internal const val TWIN_SWORD_REACTION_DELAY_MILLIS =
 
 @Composable
 internal fun DuelistNormalAttackOverlay(
-    animatingMessage: ArenaMessageState.NormalRoll,
+    animatingMessage: ArenaMessageState.NormalRoll.Attack,
     attackerBounds: Rect,
     defenderBounds: Rect,
-    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val duelistStrikeState = remember { DuelistStrikeState() }
@@ -93,7 +93,7 @@ internal fun DuelistNormalAttackOverlay(
             weaponStrikeGeometry(
                 attackerBounds = attackerBounds,
                 target = defenderBounds.center,
-                accentColor = accentColor,
+                accentColor = animatingMessage.accentColor,
                 density = density,
             ),
             normalRollMessageType = messageType,
@@ -332,12 +332,15 @@ private fun DuelistNormalAttackPreview(normalRollMessageType: NormalRollMessageT
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
-                attackerClassType = CharacterClassType.Duelist,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                minionAttackerIndex = null,
+                minionAttackerType = null,
                 animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
+                accentColor = CharacterClassType.Duelist.toColor(),
+                weaponType = WeaponType.Rapiers,
             )
         },
     ) { message ->
@@ -345,7 +348,6 @@ private fun DuelistNormalAttackPreview(normalRollMessageType: NormalRollMessageT
             animatingMessage = message,
             attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
-            accentColor = CharacterClassType.Duelist.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

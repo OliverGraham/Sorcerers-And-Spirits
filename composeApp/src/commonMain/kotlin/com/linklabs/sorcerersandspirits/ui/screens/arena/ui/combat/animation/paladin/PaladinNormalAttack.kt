@@ -29,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -40,6 +41,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.lerpAngle
@@ -74,11 +76,10 @@ internal const val PALADIN_SWING_REACTION_DELAY_MILLIS: Long =
 
 @Composable
 internal fun PaladinNormalAttackOverlay(
-    animatingMessage: ArenaMessageState.NormalRoll,
+    animatingMessage: ArenaMessageState.NormalRoll.Attack,
     attackerBounds: Rect,
     defenderBounds: Rect,
     modifier: Modifier = Modifier,
-    accentColor: Color = paladinEssenceGreen,
 ) {
     val paladinStrikeState = remember { PaladinStrikeState() }
     val density = LocalDensity.current
@@ -92,7 +93,7 @@ internal fun PaladinNormalAttackOverlay(
             weaponStrikeGeometry(
                 attackerBounds = attackerBounds,
                 target = defenderBounds.center,
-                accentColor = accentColor,
+                accentColor = animatingMessage.accentColor,
                 density = density,
             ),
             normalRollMessageType = messageType,
@@ -350,12 +351,15 @@ private fun PaladinNormalAttackPreview(normalRollMessageType: NormalRollMessageT
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
-                attackerClassType = CharacterClassType.Paladin,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                minionAttackerIndex = null,
+                minionAttackerType = null,
                 animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
+                accentColor = CharacterClassType.Paladin.toColor(),
+                weaponType = WeaponType.Mace,
             )
         },
     ) { message ->

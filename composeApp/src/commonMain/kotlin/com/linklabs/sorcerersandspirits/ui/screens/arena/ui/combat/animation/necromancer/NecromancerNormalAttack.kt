@@ -30,6 +30,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -41,6 +42,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
@@ -379,12 +381,15 @@ private fun NecromancerNormalAttackPreview(normalRollMessageType: NormalRollMess
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
-                attackerClassType = CharacterClassType.Necromancer,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                minionAttackerIndex = null,
+                minionAttackerType = null,
                 animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
+                accentColor = CharacterClassType.Necromancer.toColor(),
+                weaponType = WeaponType.Scythe,
             )
         },
     ) { message ->

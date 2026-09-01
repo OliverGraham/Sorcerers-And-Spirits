@@ -240,6 +240,7 @@ internal class NormalAttackRollHandler(
     }
 
     private fun CombatMutator.addAttackMessage(normalRollMessageType: NormalRollMessageType) {
+        val attackingMinion = attackingMinionOrNull()
         addMessage(
             message =
             ArenaMessage.NormalRoll.Attack(
@@ -248,6 +249,8 @@ internal class NormalAttackRollHandler(
                 attackerClassType = attacker.type,
                 impersonatedCharacterType = getImpersonatedCharacterTypeOrNone(),
                 normalRollMessageType = normalRollMessageType,
+                minionAttackerIndex = attackingMinion?.index,
+                minionAttackerType = attackingMinion?.type,
             ),
         )
     }

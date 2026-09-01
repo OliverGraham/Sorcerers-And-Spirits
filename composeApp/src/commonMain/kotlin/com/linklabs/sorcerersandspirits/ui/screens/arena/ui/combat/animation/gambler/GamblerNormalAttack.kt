@@ -44,6 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
@@ -61,10 +62,9 @@ private val cardEdge = Color(color = 0xFFD8CFBC)
 
 @Composable
 internal fun GamblerNormalAttackOverlay(
-    animatingMessage: ArenaMessageState.NormalRoll,
+    animatingMessage: ArenaMessageState.NormalRoll.Attack,
     attackerBounds: Rect,
     defenderBounds: Rect,
-    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val gamblerStrikeState = remember { GamblerStrikeState() }
@@ -81,7 +81,7 @@ internal fun GamblerNormalAttackOverlay(
                 messageType = messageType,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
+                accentColor = animatingMessage.accentColor,
                 density = density,
             ),
             normalRollMessageType = messageType,
@@ -339,12 +339,15 @@ private fun GamblerNormalAttackPreview(normalRollMessageType: NormalRollMessageT
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
-                attackerClassType = CharacterClassType.Gambler,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                minionAttackerIndex = null,
+                minionAttackerType = null,
                 animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
+                accentColor = CharacterClassType.Gambler.toColor(),
+                weaponType = WeaponType.Card,
             )
         },
     ) { message ->
@@ -352,7 +355,6 @@ private fun GamblerNormalAttackPreview(normalRollMessageType: NormalRollMessageT
             animatingMessage = message,
             attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
-            accentColor = CharacterClassType.Gambler.toColor(),
             modifier = Modifier.fillMaxSize(),
         )
     }

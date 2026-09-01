@@ -37,6 +37,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.projectileStrikeGeometry
@@ -58,10 +59,9 @@ private const val WITHDRAW_MILLIS = 220
 
 @Composable
 internal fun RogueNormalAttackOverlay(
-    animatingMessage: ArenaMessageState.NormalRoll,
+    animatingMessage: ArenaMessageState.NormalRoll.Attack,
     attackerBounds: Rect,
     defenderBounds: Rect,
-    accentColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val rogueStrikeState = remember { RogueStrikeState() }
@@ -77,7 +77,7 @@ internal fun RogueNormalAttackOverlay(
                 messageType = messageType,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
+                accentColor = animatingMessage.accentColor,
                 density = density,
             ),
             normalRollMessageType = messageType,
@@ -365,12 +365,15 @@ private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageTyp
             ArenaMessageState.NormalRoll.Attack(
                 id = id,
                 attackerUserId = PREVIEW_ACTOR_ID,
-                attackerClassType = CharacterClassType.Rogue,
                 defenderUserId = PREVIEW_TARGET_ID,
                 normalRollMessageType = normalRollMessageType,
                 impersonatedClassType = CharacterClassType.None,
+                minionAttackerIndex = null,
+                minionAttackerType = null,
                 animation = ArenaAnimationState.Avatar(),
                 gestures = emptyMap(),
+                accentColor = CharacterClassType.Rogue.toColor(),
+                weaponType = WeaponType.Dagger,
             )
         },
     ) { message ->
@@ -378,7 +381,7 @@ private fun RogueNormalAttackPreview(normalRollMessageType: NormalRollMessageTyp
             animatingMessage = message,
             attackerBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
             defenderBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
-            accentColor = CharacterClassType.Rogue.toColor(),
+
             modifier = Modifier.fillMaxSize(),
         )
     }

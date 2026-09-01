@@ -21,6 +21,8 @@ internal val steelShade = Color(color = 0xFFAEB9C4)
 
 internal val meleeDashDistance = 84.dp
 
+internal val minionChargeDistance = 220.dp
+
 /** The tail an [impactBurst] adds after it fires: its 60ms lead plus its 240ms fade-out. */
 internal const val IMPACT_BURST_TAIL_MILLIS = 300L
 

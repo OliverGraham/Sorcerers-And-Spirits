@@ -3,10 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.co
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
-import androidx.compose.ui.graphics.Color
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BardNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.EncoreOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.PersuadeOverlay
@@ -23,6 +23,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.ScythePalette
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SkeletonLongSwordOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.illusionistScythePalette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.necroScythePalette
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PaladinHolyShieldOverlay
@@ -208,68 +209,50 @@ private fun AnimateNormalAttack(
     attackerBounds: Rect,
     defenderBounds: Rect,
     modifier: Modifier = Modifier,
-    attackerClassType: CharacterClassType = animatingMessage.attackerClassType,
-    accentColor: Color = attackerClassType.toColor(),
-    scythePalette: ScythePalette = necroScythePalette,
 ) {
-    when (attackerClassType) {
-        CharacterClassType.Rogue ->
+    when (animatingMessage.weaponType) {
+        WeaponType.Dagger ->
             RogueNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
                 modifier = modifier,
             )
 
-        CharacterClassType.Gambler ->
+        WeaponType.Card ->
             GamblerNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
                 modifier = modifier,
             )
 
-        CharacterClassType.Duelist ->
+        WeaponType.Rapiers ->
             DuelistNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
                 modifier = modifier,
             )
 
-        CharacterClassType.Necromancer ->
+        WeaponType.Scythe ->
             NecromancerNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                scythePalette = scythePalette,
+                scythePalette = animatingMessage.scythePalette(),
                 modifier = modifier,
             )
 
-        CharacterClassType.Bard ->
+        WeaponType.Drum ->
             BardNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
                 modifier = modifier,
             )
 
-        CharacterClassType.Illusionist ->
-            AnimateNormalAttack(
-                animatingMessage = animatingMessage,
-                attackerBounds = attackerBounds,
-                defenderBounds = defenderBounds,
-                modifier = modifier,
-                attackerClassType = animatingMessage.getImpersonatedAttackTypeOrRandom(),
-                scythePalette = illusionistScythePalette,
-                accentColor = CharacterClassType.Illusionist.toColor(),
-            )
-
-        CharacterClassType.Mage ->
+        WeaponType.Spell ->
             MageNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
@@ -277,25 +260,35 @@ private fun AnimateNormalAttack(
                 modifier = modifier,
             )
 
-        CharacterClassType.Paladin ->
+        WeaponType.Mace ->
             PaladinNormalAttackOverlay(
                 animatingMessage = animatingMessage,
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
-                accentColor = accentColor,
                 modifier = modifier,
             )
 
-        CharacterClassType.None -> {
-            // TODO(SS-258): Should never happen - maybe need a new type or something?
-        }
+        WeaponType.LongSword ->
+            SkeletonLongSwordOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
+
+        WeaponType.StoneFist ->
+            SkeletonLongSwordOverlay(
+                animatingMessage = animatingMessage,
+                attackerBounds = attackerBounds,
+                defenderBounds = defenderBounds,
+                modifier = modifier,
+            )
     }
 }
 
-private fun ArenaMessageState.NormalRoll.Attack.getImpersonatedAttackTypeOrRandom() = if (impersonatedClassType == null || impersonatedClassType == CharacterClassType.Illusionist) {
-    CharacterClassType.entries
-        .filterNot { it == CharacterClassType.Illusionist || it == CharacterClassType.None }
-        .random()
-} else {
-    impersonatedClassType
+// TODO: Don't convert to color and then check - just first then convert if necessary.
+//       Pass info from message itself - no workarounds like this.
+private fun ArenaMessageState.NormalRoll.Attack.scythePalette(): ScythePalette {
+    val isIllusionistScythe = accentColor == CharacterClassType.Illusionist.toColor()
+    return if (isIllusionistScythe) illusionistScythePalette else necroScythePalette
 }

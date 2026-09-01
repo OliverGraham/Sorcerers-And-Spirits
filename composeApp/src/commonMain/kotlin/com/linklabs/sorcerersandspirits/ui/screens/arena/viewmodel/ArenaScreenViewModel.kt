@@ -95,6 +95,7 @@ class ArenaScreenViewModel(
             addMessageToScreenState = ::addMessageToScreenState,
             onAnimationsComplete = ::onAnimationsComplete,
             onTeleportRollOffComplete = ::onTeleportRollOffComplete,
+            onHeaderAnimationsComplete = ::onHeaderAnimationsComplete,
             finishMatch = { finishMatchUseCase(arenaId = arguments.arenaId) },
         )
 
@@ -398,6 +399,20 @@ class ArenaScreenViewModel(
     private fun onTeleportRollOffComplete(teleportRollsArguments: TeleportRollsArguments) {
         viewModelScope.launch {
             combatHandler.resolveTeleportRollOff(teleportRollsArguments = teleportRollsArguments)
+        }
+    }
+
+    private fun onHeaderAnimationsComplete() {
+        _uiStateFlow.updateLoaded { screenState ->
+            val arenaMatchState = screenState.arenaMatchState as? ArenaMatchState.Combat ?: return@updateLoaded screenState
+
+            screenState.copy(
+                animatingMessage = null,
+                arenaMatchState = arenaMatchState.copy(
+                    isActionInFlight = false,
+
+                ),
+            )
         }
     }
 

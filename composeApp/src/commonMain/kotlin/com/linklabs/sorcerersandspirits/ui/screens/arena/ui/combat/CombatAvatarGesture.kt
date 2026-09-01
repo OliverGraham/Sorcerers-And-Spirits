@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -11,13 +12,15 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.MinionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.minionAttackerIndexFor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.bard.BARD_WAVE_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarGestureState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
@@ -45,7 +48,10 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.getTeleportMessageOrNull
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.playTeleport
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.minionChargeDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.MinionGestureAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SKELETON_LONGSWORD_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_PRAY_GLOW_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.HOLY_SHIELD_WRATH_IMPACT_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.paladin.PALADIN_SWING_REACTION_DELAY_MILLIS
@@ -64,6 +70,10 @@ internal const val REACTION_DELAY_MILLIS = 170L
 private const val SHAKE_SEGMENT_MILLIS = 55
 private const val SLASH_LEAN_MILLIS = 130
 private const val SLASH_RECOVER_MILLIS = 240
+
+private const val MINION_CHARGE_IN_MILLIS = 150
+private const val MINION_CHARGE_RETREAT_MILLIS = 280
+private const val MINION_SLASH_TILT_DEGREES = -9f
 
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 
@@ -86,22 +96,50 @@ internal fun GestureClassAvatar(
             isTopSeat = isTopSeat,
         )
 
+    val attackingMinion = characterClass.attackingMinionOrNull(animatingMessage = animatingMessage, userId = userId)
     val isMirrorSplit = gestureState.mirrorSplit.value > 0f
-    if (!isMirrorSplit) {
-        AvatarImage(
-            characterClass = characterClass,
-            colorFilter = gestureState.colorFilter,
-            modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
-        )
-        return
-    }
 
-    MirrorSplitClassAvatar(
-        characterClass = characterClass,
-        gestureState = gestureState,
-        modifier = modifier,
-    )
+    when {
+        attackingMinion != null -> {
+            AvatarImage(
+                characterClass = characterClass,
+                colorFilter = gestureState.colorFilter,
+                modifier = modifier,
+            )
+            MinionGestureAvatar(
+                minion = attackingMinion.minion,
+                displayIndex = attackingMinion.index,
+                gestureState = gestureState,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
+
+        isMirrorSplit ->
+            MirrorSplitClassAvatar(
+                characterClass = characterClass,
+                gestureState = gestureState,
+                modifier = modifier,
+            )
+
+        else ->
+            AvatarImage(
+                characterClass = characterClass,
+                colorFilter = gestureState.colorFilter,
+                modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
+            )
+    }
 }
+
+private fun CharacterClassState.attackingMinionOrNull(
+    animatingMessage: ArenaMessageState?,
+    userId: String,
+): AttackingMinion? {
+    val index = animatingMessage?.minionAttackerIndexFor(attackerUserId = userId) ?: return null
+    val minion = summonedMinions.getOrNull(index = index) ?: return null
+    return AttackingMinion(index = index, minion = minion)
+}
+
+private data class AttackingMinion(val index: Int, val minion: MinionState)
 
 // TODO(SS-258): This naming is wrong. It does return a remembered value, but it plays the animation
 // as
@@ -165,7 +203,7 @@ internal fun rememberAvatarGesture(
 
 // TODO(SS-258): Common
 private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) {
-    is ArenaMessageState.NormalRoll -> normalAttackReactionDelayMillis()
+    is ArenaMessageState.NormalRoll.Attack -> normalAttackReactionDelayMillis()
 
     is ArenaMessageState.PrepareAttack.Strike -> prepareAttackReactionDelayMillis()
 
@@ -184,14 +222,15 @@ private fun ArenaMessageState.defenderReactionDelayMillis(): Long = when (this) 
 }
 
 // TODO(SS-258): Common
-private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long = when (attackerClassType) {
-    CharacterClassType.Rogue -> MELEE_REACTION_DELAY_MILLIS
-    CharacterClassType.Gambler -> THROW_REACTION_DELAY_MILLIS
-    CharacterClassType.Duelist -> TWIN_SWORD_REACTION_DELAY_MILLIS
-    CharacterClassType.Necromancer -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
-    CharacterClassType.Bard -> BARD_WAVE_REACTION_DELAY_MILLIS
-    CharacterClassType.Mage -> MAGE_BOLT_REACTION_DELAY_MILLIS
-    CharacterClassType.Paladin -> PALADIN_SWING_REACTION_DELAY_MILLIS
+private fun ArenaMessageState.NormalRoll.Attack.normalAttackReactionDelayMillis(): Long = when (weaponType) {
+    WeaponType.Dagger -> MELEE_REACTION_DELAY_MILLIS
+    WeaponType.Card -> THROW_REACTION_DELAY_MILLIS
+    WeaponType.Rapiers -> TWIN_SWORD_REACTION_DELAY_MILLIS
+    WeaponType.Scythe -> NECROMANCER_REAP_REACTION_DELAY_MILLIS
+    WeaponType.Drum -> BARD_WAVE_REACTION_DELAY_MILLIS
+    WeaponType.Spell -> MAGE_BOLT_REACTION_DELAY_MILLIS
+    WeaponType.Mace -> PALADIN_SWING_REACTION_DELAY_MILLIS
+    WeaponType.LongSword -> SKELETON_LONGSWORD_REACTION_DELAY_MILLIS
     else -> REACTION_DELAY_MILLIS
 }
 
@@ -199,7 +238,7 @@ private fun ArenaMessageState.NormalRoll.normalAttackReactionDelayMillis(): Long
 private fun ArenaMessageState.PrepareAttack.Strike.prepareAttackReactionDelayMillis(): Long = if (isSuccessful) PREPARE_ATTACK_STRIKE_MILLIS else PREPARE_ATTACK_WINDUP_MILLIS
 
 // TODO(SS-258): Common
-private suspend fun AvatarGestureState.play(
+internal suspend fun AvatarGestureState.play(
     gesture: AvatarGesture,
     strikeDirection: Float,
     density: Density,
@@ -216,6 +255,12 @@ private suspend fun AvatarGestureState.play(
 
             AvatarGesture.LungeOvershoot ->
                 lungeOvershoot(distancePx = 80.dp.toPx() * strikeDirection)
+
+            AvatarGesture.MinionCharge ->
+                minionSlashCharge(
+                    forwardPx = minionChargeDistance.toPx() * strikeDirection,
+                    tiltDegrees = MINION_SLASH_TILT_DEGREES * strikeDirection,
+                )
 
             AvatarGesture.Stab -> stab(dashPx = meleeDashDistance.toPx() * strikeDirection)
 
@@ -307,6 +352,53 @@ private suspend fun AvatarGestureState.lungeOvershoot(distancePx: Float) {
             rotation.animateTo(targetValue = 8f, animationSpec = tween(durationMillis = 180))
             rotation.animateTo(targetValue = -5f, animationSpec = tween(durationMillis = 160))
             rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 200))
+        }
+    }
+}
+
+private suspend fun AvatarGestureState.minionSlashCharge(forwardPx: Float, tiltDegrees: Float) {
+    coroutineScope {
+        launch {
+            minionCharge.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = MINION_CHARGE_IN_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        launch {
+            offsetY.animateTo(
+                targetValue = forwardPx,
+                animationSpec = tween(durationMillis = MINION_CHARGE_IN_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        launch { stretchTo(targetX = 1.05f, targetY = 0.95f, durationMillis = MINION_CHARGE_IN_MILLIS) }
+    }
+    coroutineScope {
+        launch {
+            rotation.animateTo(
+                targetValue = tiltDegrees,
+                animationSpec = tween(durationMillis = SLASH_LEAN_MILLIS),
+            )
+            rotation.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SLASH_RECOVER_MILLIS),
+            )
+        }
+        launch {
+            stretchTo(targetX = 1f, targetY = 1f, durationMillis = SLASH_LEAN_MILLIS)
+        }
+    }
+    coroutineScope {
+        launch {
+            minionCharge.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = MINION_CHARGE_RETREAT_MILLIS),
+            )
+        }
+        launch {
+            offsetY.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = MINION_CHARGE_RETREAT_MILLIS),
+            )
         }
     }
 }
@@ -769,6 +861,7 @@ internal suspend fun AvatarGestureState.stretchTo(
 internal suspend fun AvatarGestureState.snapToRest() {
     offsetX.snapTo(targetValue = 0f)
     offsetY.snapTo(targetValue = 0f)
+    minionCharge.snapTo(targetValue = 0f)
     rotation.snapTo(targetValue = 0f)
     scaleX.snapTo(targetValue = 1f)
     scaleY.snapTo(targetValue = 1f)

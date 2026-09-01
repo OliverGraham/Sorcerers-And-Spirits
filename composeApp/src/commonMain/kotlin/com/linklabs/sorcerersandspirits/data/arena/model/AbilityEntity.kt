@@ -59,12 +59,11 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
 
     @Serializable
     data class SummonMinion(
-        override val skeletonCount: Int = 0,
-        override val golemCount: Int = 0,
-        override val attacksTakenThisTurn: Int = 0,
+        override val minions: List<MinionEntity>,
+        override val usedThisTurn: Boolean,
     ) : OffensiveAbilityEntity,
         ActivatedAbilityEntity,
-        SummonMinionAbility
+        SummonMinionAbility<MinionEntity>
 
     @Serializable data object Encore : OffensiveAbilityEntity
 
@@ -82,7 +81,10 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
 internal fun OffensiveAbilityEntity.resetForNewMatch(): OffensiveAbilityEntity = when (this) {
     is OffensiveAbilityEntity.AllIn -> OffensiveAbilityEntity.AllIn()
 
-    is OffensiveAbilityEntity.SummonMinion -> OffensiveAbilityEntity.SummonMinion()
+    is OffensiveAbilityEntity.SummonMinion -> OffensiveAbilityEntity.SummonMinion(
+        minions = emptyList(),
+        usedThisTurn = false,
+    )
 
     is OffensiveAbilityEntity.Impersonate -> OffensiveAbilityEntity.Impersonate()
 
@@ -152,9 +154,8 @@ internal fun OffensiveAbility.toEntity(): OffensiveAbilityEntity = when (this) {
 
     is OffensiveAbility.SummonMinion ->
         OffensiveAbilityEntity.SummonMinion(
-            skeletonCount = skeletonCount,
-            golemCount = golemCount,
-            attacksTakenThisTurn = attacksTakenThisTurn,
+            minions = minions.map { minion -> minion.toEntity() },
+            usedThisTurn = usedThisTurn,
         )
 
     is OffensiveAbility.Encore -> OffensiveAbilityEntity.Encore
@@ -197,9 +198,8 @@ internal fun OffensiveAbilityEntity.toDomain(): OffensiveAbility = when (this) {
 
     is OffensiveAbilityEntity.SummonMinion ->
         OffensiveAbility.SummonMinion(
-            skeletonCount = skeletonCount,
-            golemCount = golemCount,
-            attacksTakenThisTurn = attacksTakenThisTurn,
+            minions = minions.map { minion -> minion.toDomain() },
+            usedThisTurn = usedThisTurn,
         )
 
     is OffensiveAbilityEntity.Encore -> OffensiveAbility.Encore

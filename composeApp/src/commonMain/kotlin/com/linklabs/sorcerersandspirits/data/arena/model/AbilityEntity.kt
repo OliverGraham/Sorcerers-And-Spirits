@@ -59,8 +59,8 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
 
     @Serializable
     data class SummonMinion(
-        override val minions: List<MinionEntity> = emptyList(),
-        override val attacksTakenThisTurn: Int = 0,
+        override val minions: List<MinionEntity>,
+        override val usedThisTurn: Boolean,
     ) : OffensiveAbilityEntity,
         ActivatedAbilityEntity,
         SummonMinionAbility<MinionEntity>
@@ -81,7 +81,10 @@ sealed interface OffensiveAbilityEntity : AbilityEntity {
 internal fun OffensiveAbilityEntity.resetForNewMatch(): OffensiveAbilityEntity = when (this) {
     is OffensiveAbilityEntity.AllIn -> OffensiveAbilityEntity.AllIn()
 
-    is OffensiveAbilityEntity.SummonMinion -> OffensiveAbilityEntity.SummonMinion()
+    is OffensiveAbilityEntity.SummonMinion -> OffensiveAbilityEntity.SummonMinion(
+        minions = emptyList(),
+        usedThisTurn = false,
+    )
 
     is OffensiveAbilityEntity.Impersonate -> OffensiveAbilityEntity.Impersonate()
 
@@ -152,7 +155,7 @@ internal fun OffensiveAbility.toEntity(): OffensiveAbilityEntity = when (this) {
     is OffensiveAbility.SummonMinion ->
         OffensiveAbilityEntity.SummonMinion(
             minions = minions.map { minion -> minion.toEntity() },
-            attacksTakenThisTurn = attacksTakenThisTurn,
+            usedThisTurn = usedThisTurn,
         )
 
     is OffensiveAbility.Encore -> OffensiveAbilityEntity.Encore
@@ -196,7 +199,7 @@ internal fun OffensiveAbilityEntity.toDomain(): OffensiveAbility = when (this) {
     is OffensiveAbilityEntity.SummonMinion ->
         OffensiveAbility.SummonMinion(
             minions = minions.map { minion -> minion.toDomain() },
-            attacksTakenThisTurn = attacksTakenThisTurn,
+            usedThisTurn = usedThisTurn,
         )
 
     is OffensiveAbilityEntity.Encore -> OffensiveAbility.Encore

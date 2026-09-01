@@ -10,7 +10,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.toDieColor
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.activated.SummonMinionActivated
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
@@ -19,9 +18,8 @@ import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.effective
-import com.linklabs.sorcerersandspirits.domain.game.minionAttacks
 import com.linklabs.sorcerersandspirits.domain.game.recordMinionAttack
-import com.linklabs.sorcerersandspirits.domain.game.resetMinionsForNewRound
+import com.linklabs.sorcerersandspirits.domain.game.reset
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
@@ -60,7 +58,7 @@ internal class CombatMutator(
 
     fun attackingMinionOrNull(): AttackingMinion? {
         if (attackerUserId != originalTurnUserId) return null
-        val summonMinionAbility = attacker.offensiveAbility.effective as? OffensiveAbility.SummonMinion ?: return null
+        val summonMinionAbility = attacker.getSummonMinionOrNull() ?: return null
         val attackingMinionIndex = summonMinionAbility.minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
         if (attackingMinionIndex < 0) return null
 
@@ -187,8 +185,6 @@ internal class CombatMutator(
 
         val nextPlayer = calculateNextPlayerInRound()
         if (nextPlayer != null) {
-            resetMinionAttacks(userId = nextPlayer.userId)
-            resetAttacksRemaining(userId = nextPlayer.userId)
             nextPlayer.characterClass.addNewTurnMessage()
             setNextCombatAction(
                 nextAction = NextCombatAction.Idle(activeUserIds = setOf(nextPlayer.userId)),
@@ -198,11 +194,6 @@ internal class CombatMutator(
         }
     }
 
-    /**
-     * A Gambler whose All-In succeeded attacks twice this round. The second attack is granted here,
-     * once, after the first attack resolves: control stays with the Gambler instead of advancing,
-     * and the flag is cleared so the turn ends normally after that second attack.
-     */
     private fun grantAllInSecondAttackIfApplicable(): Boolean {
         val turnPlayer = updatedPlayerMap.getValue(key = originalTurnUserId).characterClass
         val allIn = turnPlayer.offensiveAbility.effective as? OffensiveAbility.AllIn ?: return false
@@ -224,15 +215,16 @@ internal class CombatMutator(
 
     private fun grantMinionAttackIfApplicable(): Boolean {
         val turnPlayer = updatedPlayerMap.getValue(key = originalTurnUserId).characterClass
-        val minions =
-            turnPlayer.offensiveAbility.effective as? OffensiveAbility.SummonMinion ?: return false
-        if (minions.attacksTakenThisTurn >= minions.minionAttacks) return false
+        val summonMinion =
+            turnPlayer.getSummonMinionOrNull() ?: return false
+        if (summonMinion.usedThisTurn) return false
+        if (summonMinion.minions.all { it.hasAttackedThisRound }) return false
         if (!turnPlayer.isConscious()) return false
 
         updatePlayerClass(userId = originalTurnUserId) { characterClass ->
             characterClass.copy(
                 offensiveAbility =
-                characterClass.offensiveAbility.withEffective(updated = minions.recordMinionAttack()),
+                characterClass.offensiveAbility.withEffective(updated = summonMinion.recordMinionAttack()),
             )
         }
         setNextCombatAction(
@@ -240,39 +232,6 @@ internal class CombatMutator(
         )
 
         return true
-    }
-
-    /**
-     * Clears a summoner's minion-attack count as their turn begins, so they may attack once per
-     * minion again. A minion summoned later in the same turn is not counted until the next turn,
-     * because summoning spends the count for the summon turn.
-     */
-    private fun resetMinionAttacks(userId: UserId) {
-        val player = updatedPlayerMap.getValue(key = userId).characterClass
-        val minions = player.offensiveAbility.effective as? OffensiveAbility.SummonMinion ?: return
-
-        updatePlayerClass(userId = userId) { characterClass ->
-            val resetMinions = minions.copy(attacksTakenThisTurn = 0)
-            characterClass.copy(
-                offensiveAbility = characterClass.offensiveAbility.withEffective(resetMinions),
-            )
-        }
-    }
-
-    /**
-     * Sets a player's attacks-remaining marker (SS-200) as their turn begins: one normal attack
-     * plus a summoner's minion follow-ups. Read after [resetMinionAttacks] so the full minion count
-     * is counted before any are spent this turn.
-     */
-    private fun resetAttacksRemaining(userId: UserId) {
-        val offensiveAbility =
-            updatedPlayerMap.getValue(key = userId).characterClass.offensiveAbility
-        val minions = offensiveAbility.effective as? OffensiveAbility.SummonMinion
-        val minionFollowUps = minions?.minionAttacks ?: 0
-
-        updatePlayerClass(userId = userId) { characterClass ->
-            characterClass.copy(attacksRemaining = 1 + minionFollowUps)
-        }
     }
 
     private fun goToNextRound() {
@@ -283,8 +242,6 @@ internal class CombatMutator(
         messages.add(element = ArenaMessage.NewRound(roundNumber = newRoundNumber))
 
         val fastestPlayerNextRound = consciousPlayers.maxBy { it.characterClass.speed }
-        resetMinionAttacks(userId = fastestPlayerNextRound.userId)
-        resetAttacksRemaining(userId = fastestPlayerNextRound.userId)
         fastestPlayerNextRound.characterClass.addNewTurnMessage()
 
         setNextCombatAction(
@@ -302,20 +259,33 @@ internal class CombatMutator(
 
     private fun resetPlayersForNewRound() {
         consciousPlayers.forEach { player ->
+            val minionAttacks = player.getMinionAttacks()
+
             updatePlayerClass(userId = player.userId) { characterClass ->
                 characterClass.copy(
                     hasActedThisRound = false,
+                    attacksRemaining = 1 + minionAttacks,
                     offensiveAbility = characterClass.offensiveAbility.resetForNewTurn(),
                 )
             }
         }
     }
 
-    // TODO: What the hell is up with this?
+    private fun ArenaPlayer.Selected.getMinionAttacks(): Int {
+        val summonMinion = characterClass.getSummonMinionOrNull() ?: return 0
+
+        return summonMinion.minions.size
+    }
 
     private fun OffensiveAbility.resetForNewTurn(): OffensiveAbility = when (val effectiveAbility = effective) {
-        is OffensiveAbility.AllIn -> withEffective(effectiveAbility.copy(usedThisTurn = false))
-        is OffensiveAbility.SummonMinion -> withEffective(effectiveAbility.resetMinionsForNewRound())
+        is OffensiveAbility.AllIn -> withEffective(
+            updated = effectiveAbility.copy(usedThisTurn = false),
+        )
+
+        is OffensiveAbility.SummonMinion -> withEffective(
+            updated = effectiveAbility.reset(),
+        )
+
         else -> this
     }
 
@@ -351,4 +321,6 @@ internal class CombatMutator(
 
         return !anyActiveUnconsciousPlayers
     }
+
+    private fun CharacterClass.getSummonMinionOrNull() = offensiveAbility.effective as? OffensiveAbility.SummonMinion
 }

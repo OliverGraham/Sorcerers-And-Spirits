@@ -36,22 +36,11 @@ internal class SummonMinionActivated(
     }
 
     private fun CombatMutator.handleSummonResult(result: Int) {
-        val summonResult = getSummonResult(result = result) ?: return
-
-        val updatedMinions = summonMinionAbility.minions + summonResult.minion
-
-        val updatedSummonMinionAbility =
-            summonMinionAbility.copy(
-                minions = updatedMinions,
-                attacksTakenThisTurn = updatedMinions.size,
-            )
-
-        updateAttackerClass { attacker ->
-            attacker.copy(
-                hitPoints = if (summonResult.shouldHealToFull) attacker.maxHitPoints else attacker.hitPoints,
-                offensiveAbility =
-                attacker.offensiveAbility.withEffective(updated = updatedSummonMinionAbility),
-            )
+        val summonResult = getSummonResult(result = result)
+        if (summonResult == null) {
+            handleFailure()
+        } else {
+            handleSuccess(summonResult = summonResult)
         }
     }
 
@@ -72,6 +61,37 @@ internal class SummonMinionActivated(
         )
 
         else -> null
+    }
+
+    private fun CombatMutator.handleFailure() {
+        updateAttackerClass { attacker ->
+            attacker.copy(
+                offensiveAbility =
+                attacker.offensiveAbility.withEffective(
+                    updated = summonMinionAbility.copy(
+                        usedThisTurn = true,
+                    ),
+                ),
+            )
+        }
+    }
+
+    private fun CombatMutator.handleSuccess(summonResult: SummonResult) {
+        val updatedMinions = summonMinionAbility.minions + summonResult.minion
+
+        val updatedSummonMinionAbility =
+            summonMinionAbility.copy(
+                minions = updatedMinions,
+                usedThisTurn = true,
+            )
+
+        updateAttackerClass { attacker ->
+            attacker.copy(
+                hitPoints = if (summonResult.shouldHealToFull) attacker.maxHitPoints else attacker.hitPoints,
+                offensiveAbility =
+                attacker.offensiveAbility.withEffective(updated = updatedSummonMinionAbility),
+            )
+        }
     }
 
     companion object {

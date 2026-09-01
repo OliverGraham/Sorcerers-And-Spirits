@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -39,6 +38,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PRE
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponStrikeGeometry
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.weaponStrikeGeometry
 import kotlinx.coroutines.coroutineScope

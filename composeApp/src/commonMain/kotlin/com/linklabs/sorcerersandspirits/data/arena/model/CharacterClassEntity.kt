@@ -13,8 +13,8 @@ data class CharacterClassEntity(
     val speed: Int,
     val offensiveAbility: OffensiveAbilityEntity,
     val defensiveAbility: DefensiveAbilityEntity,
-    val hasActedThisRound: Boolean = false,
-    val attacksRemaining: Int = 1,
+    val hasActedThisRound: Boolean,
+    val attacksRemaining: Int,
 ) {
     val className = type.name
 }

@@ -11,10 +11,10 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState

@@ -79,7 +79,6 @@ sealed interface ArenaMessageState {
         val defenderUserId: String
         val normalRollMessageType: NormalRollMessageType
 
-
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = defenderUserId)
 

@@ -47,14 +47,11 @@ interface AllInAbility {
 
 interface SummonMinionAbility<out M : MinionAttributes> {
     val minions: List<M>
-    val attacksTakenThisTurn: Int
+    val usedThisTurn: Boolean
 }
 
 val SummonMinionAbility<*>.shieldPoints: Int
     get() = minions.sumOf { minion -> if (minion.type == MinionType.Golem) 2 else 1 }
-
-val SummonMinionAbility<*>.minionAttacks: Int
-    get() = minions.size
 
 fun OffensiveAbility.SummonMinion.recordMinionAttack(): OffensiveAbility.SummonMinion {
     val nextMinionIndex = minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
@@ -65,10 +62,14 @@ fun OffensiveAbility.SummonMinion.recordMinionAttack(): OffensiveAbility.SummonM
             minion
         }
     }
-    return copy(minions = updatedMinions, attacksTakenThisTurn = attacksTakenThisTurn + 1)
+
+    return copy(minions = updatedMinions)
 }
 
-fun OffensiveAbility.SummonMinion.resetMinionsForNewRound(): OffensiveAbility.SummonMinion = copy(minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) })
+fun OffensiveAbility.SummonMinion.reset() = copy(
+    usedThisTurn = false,
+    minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) },
+)
 
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T
@@ -88,7 +89,7 @@ sealed interface OffensiveAbility : Ability {
 
     data class SummonMinion(
         override val minions: List<Minion> = emptyList(),
-        override val attacksTakenThisTurn: Int = 0,
+        override val usedThisTurn: Boolean = false,
     ) : OffensiveAbility,
         ActivatedAbility,
         SummonMinionAbility<Minion>

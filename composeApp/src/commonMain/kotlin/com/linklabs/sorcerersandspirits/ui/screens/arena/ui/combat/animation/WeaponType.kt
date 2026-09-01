@@ -12,7 +12,8 @@ enum class WeaponType {
     Spell,
     Mace,
     LongSword,
-    StoneFist;
+    StoneFist,
+    ;
 
     companion object {
         fun getWeaponType(
@@ -20,17 +21,15 @@ enum class WeaponType {
             minionAttackerType: MinionType?,
             impersonatedCharacterType: CharacterClassType?,
         ) = when {
-
             minionAttackerType != null -> minionAttackerType.toWeaponType()
+
             characterClassType == CharacterClassType.Illusionist ->
-                 impersonatedWeaponType(impersonatedCharacterType = impersonatedCharacterType)
+                impersonatedWeaponType(impersonatedCharacterType = impersonatedCharacterType)
+
             else -> characterClassType.toWeaponType()
         }
 
-        private fun impersonatedWeaponType(impersonatedCharacterType: CharacterClassType?) =
-            impersonatedCharacterType?.toWeaponType() ?: entries.random()
-
-
+        private fun impersonatedWeaponType(impersonatedCharacterType: CharacterClassType?) = impersonatedCharacterType?.toWeaponType() ?: entries.random()
 
         private fun CharacterClassType.toWeaponType() = when (this) {
             CharacterClassType.Rogue -> Dagger

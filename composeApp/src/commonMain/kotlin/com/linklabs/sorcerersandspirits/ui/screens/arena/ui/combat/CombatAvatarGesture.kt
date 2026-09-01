@@ -71,6 +71,10 @@ private const val SHAKE_SEGMENT_MILLIS = 55
 private const val SLASH_LEAN_MILLIS = 130
 private const val SLASH_RECOVER_MILLIS = 240
 
+private const val MINION_CHARGE_IN_MILLIS = 150
+private const val MINION_CHARGE_RETREAT_MILLIS = 280
+private const val MINION_SLASH_TILT_DEGREES = -9f
+
 private const val ALL_IN_TOSS_GESTURE_MILLIS = 620
 
 // TODO(SS-258): This function is set up so weird
@@ -252,9 +256,11 @@ internal suspend fun AvatarGestureState.play(
             AvatarGesture.LungeOvershoot ->
                 lungeOvershoot(distancePx = 80.dp.toPx() * strikeDirection)
 
-            // TODO: Minion shouldn't use stab - should use slash
             AvatarGesture.MinionCharge ->
-                stab(dashPx = minionChargeDistance.toPx() * strikeDirection)
+                minionSlashCharge(
+                    forwardPx = minionChargeDistance.toPx() * strikeDirection,
+                    tiltDegrees = MINION_SLASH_TILT_DEGREES * strikeDirection,
+                )
 
             AvatarGesture.Stab -> stab(dashPx = meleeDashDistance.toPx() * strikeDirection)
 
@@ -346,6 +352,53 @@ private suspend fun AvatarGestureState.lungeOvershoot(distancePx: Float) {
             rotation.animateTo(targetValue = 8f, animationSpec = tween(durationMillis = 180))
             rotation.animateTo(targetValue = -5f, animationSpec = tween(durationMillis = 160))
             rotation.animateTo(targetValue = 0f, animationSpec = tween(durationMillis = 200))
+        }
+    }
+}
+
+private suspend fun AvatarGestureState.minionSlashCharge(forwardPx: Float, tiltDegrees: Float) {
+    coroutineScope {
+        launch {
+            minionCharge.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(durationMillis = MINION_CHARGE_IN_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        launch {
+            offsetY.animateTo(
+                targetValue = forwardPx,
+                animationSpec = tween(durationMillis = MINION_CHARGE_IN_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        launch { stretchTo(targetX = 1.05f, targetY = 0.95f, durationMillis = MINION_CHARGE_IN_MILLIS) }
+    }
+    coroutineScope {
+        launch {
+            rotation.animateTo(
+                targetValue = tiltDegrees,
+                animationSpec = tween(durationMillis = SLASH_LEAN_MILLIS),
+            )
+            rotation.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = SLASH_RECOVER_MILLIS),
+            )
+        }
+        launch {
+            stretchTo(targetX = 1f, targetY = 1f, durationMillis = SLASH_LEAN_MILLIS)
+        }
+    }
+    coroutineScope {
+        launch {
+            minionCharge.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = MINION_CHARGE_RETREAT_MILLIS),
+            )
+        }
+        launch {
+            offsetY.animateTo(
+                targetValue = 0f,
+                animationSpec = tween(durationMillis = MINION_CHARGE_RETREAT_MILLIS),
+            )
         }
     }
 }
@@ -808,6 +861,7 @@ internal suspend fun AvatarGestureState.stretchTo(
 internal suspend fun AvatarGestureState.snapToRest() {
     offsetX.snapTo(targetValue = 0f)
     offsetY.snapTo(targetValue = 0f)
+    minionCharge.snapTo(targetValue = 0f)
     rotation.snapTo(targetValue = 0f)
     scaleX.snapTo(targetValue = 1f)
     scaleY.snapTo(targetValue = 1f)

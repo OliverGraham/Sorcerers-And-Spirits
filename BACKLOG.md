@@ -429,12 +429,24 @@ SS-191's generic lunges remain the fallback for classes not yet done.
     - **STILL OPEN / deferred:**
         - **Summoner slide-aside** — ticket wants "slides to one side and **stays**"; placeholder keeps
           the summoner fully at rest during the minion's attack. Decide: slide-and-stay vs simple rest.
-        - Per-class skeleton vs golem attack choreography — placeholder is the summoner's own normal
-          strike gesture (whatever the class rolls); owner to describe distinct skeleton/golem attacks.
+        - **Skeleton attack — DONE.** Skeleton wields a longsword: on attack the minion slides
+          diagonally from its resting side slot up into the summoner's center (charge distance
+          `minionChargeDistance`, shared by the slide and the sword anchor), then does a wielded slash.
+          `MinionCharge` now runs `minionSlashCharge` (forward advance + `minionCharge` 0→1 progress +
+          slash lean, no thrust); `MinionGestureAvatar` reads that progress to lerp the minion to center;
+          `SkeletonLongSwordOverlay` anchors the blade to one hand (`±LONGSWORD_HAND_OFFSET_FRACTION`,
+          keyed to the resting side) at the minion's charged position, sized to the minion's height,
+          slashing toward the defender.
+        - **Golem attack for StoneFist — STILL NEEDED.** `WeaponType.StoneFist` currently reuses
+          `SkeletonLongSwordOverlay` as a placeholder (see `CombatAnimationOverlays`). The golem needs its
+          own distinct attack (it does not wield the longsword) — build it on the same
+          `MinionGestureAvatar` + overlay pipeline the skeleton now uses.
         - **Tests are broken** and need the two `NormalRoll.Attack` fields: `CombatAnimationCueTest`
           (`ArenaMessageState.NormalRoll.Attack`) and `ArenaMessageEntityTest` (`ArenaMessage.NormalRoll
           .Attack` ×2). Per owner: "don't worry about tests" during the build — fix at the end.
-        - **Minion death animations** (breaking apart / disintegrating) — separate part, not started;
+        - **Minion death animations — STILL NEEDED for both skeleton and golem.** When the summoner
+          takes damage and a minion is destroyed, each minion needs its **own** destruction animation
+          (breaking apart / disintegrating), not the shared avatar Collapse. Not started;
           `CharacterClass.takeDamageBehindMinions` rebuilds surviving minions fresh (drops flags +
           identity), fine for now but revisit for death.
     - **Related:** `SS-269` (review Claude's memories + CLAUDE.md) was created this session.

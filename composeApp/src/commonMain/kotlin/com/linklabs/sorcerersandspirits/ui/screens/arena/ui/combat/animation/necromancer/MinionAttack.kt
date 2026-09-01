@@ -62,12 +62,18 @@ internal fun MinionGestureAvatar(
         val slot =
             minionRestingSlot(displayIndex = displayIndex, minionType = minion.type, area = area)
                 .toRect()
+        val centeringOffsetX = area.center.x - slot.center.x
 
         MinionImage(
             minionType = minion.type,
             modifier =
             Modifier
-                .offset { IntOffset(x = slot.left.roundToInt(), y = slot.top.roundToInt()) }
+                .offset {
+                    IntOffset(
+                        x = (slot.left + centeringOffsetX * gestureState.minionCharge.value).roundToInt(),
+                        y = slot.top.roundToInt(),
+                    )
+                }
                 .size(
                     width = with(receiver = density) { slot.width.toDp() },
                     height = with(receiver = density) { slot.height.toDp() },

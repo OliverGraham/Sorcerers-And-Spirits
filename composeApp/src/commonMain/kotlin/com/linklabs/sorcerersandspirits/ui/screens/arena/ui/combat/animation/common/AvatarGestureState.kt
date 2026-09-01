@@ -15,6 +15,7 @@ private const val ARMOR_TINT_CHANNEL_DAMP = 0.3f
 internal class AvatarGestureState {
     val offsetX = Animatable(initialValue = 0f)
     val offsetY = Animatable(initialValue = 0f)
+    val minionCharge = Animatable(initialValue = 0f)
     val rotation = Animatable(initialValue = 0f)
     val scaleX = Animatable(initialValue = 1f)
     val scaleY = Animatable(initialValue = 1f)

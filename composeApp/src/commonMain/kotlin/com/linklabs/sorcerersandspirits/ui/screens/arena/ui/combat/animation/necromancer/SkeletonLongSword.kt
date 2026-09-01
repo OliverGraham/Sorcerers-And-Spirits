@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
@@ -45,6 +46,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Wea
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.drawImpactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.impactBurst
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.lerpAngle
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.minionChargeDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.missThrustTarget
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
@@ -63,8 +66,9 @@ private const val LONGSWORD_END_HOLD_MILLIS = 90L
 private const val LONGSWORD_FADE_MILLIS = 180
 private const val LONGSWORD_GLINT_FADE_MILLIS = 200
 
-private const val LONGSWORD_BLADE_LENGTH_FRACTION = 0.4f
-private const val LONGSWORD_PIVOT_BACK_FRACTION = 0.85f
+private const val LONGSWORD_BLADE_LENGTH_FRACTION = 0.45f
+private const val LONGSWORD_BLADE_MAX_FRACTION = 0.8f
+private const val LONGSWORD_HAND_OFFSET_FRACTION = 0.22f
 private const val LONGSWORD_SWING_ARC_DEGREES = 75f
 private const val LONGSWORD_SLASH_TILT_DEGREES = 15f
 private const val DEGREES_PER_RADIAN = 180f / PI.toFloat()
@@ -81,6 +85,7 @@ internal fun SkeletonLongSwordOverlay(
 ) {
     val strikeState = remember { LongSwordStrikeState() }
     val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
+    val chargeForwardPx = with(receiver = LocalDensity.current) { minionChargeDistance.toPx() }
 
     LaunchedEffect(key1 = animatingMessage.id) {
         strikeState.play(
@@ -88,6 +93,9 @@ internal fun SkeletonLongSwordOverlay(
             longSwordGeometry(
                 attackerBounds = attackerBounds,
                 defenderBounds = defenderBounds,
+                displayIndex = animatingMessage.minionAttackerIndex ?: 0,
+                minionType = animatingMessage.minionAttackerType ?: MinionType.Skeleton,
+                chargeForwardPx = chargeForwardPx,
                 messageType = animatingMessage.normalRollMessageType,
                 accentColor = animatingMessage.accentColor,
             ),
@@ -119,26 +127,40 @@ private data class LongSwordGeometry(
 private fun longSwordGeometry(
     attackerBounds: Rect,
     defenderBounds: Rect,
+    displayIndex: Int,
+    minionType: MinionType,
+    chargeForwardPx: Float,
     messageType: NormalRollMessageType,
     accentColor: Color,
 ): LongSwordGeometry {
     val connects = messageType != NormalRollMessageType.ArmorClassMiss
 
-    val cutCenter =
+    val restRect =
+        minionRestingSlot(displayIndex = displayIndex, minionType = minionType, area = attackerBounds).toRect()
+    val strikeDirection = if (defenderBounds.center.y < attackerBounds.center.y) -1f else 1f
+    val handSide = if (displayIndex % 2 == 0) -1f else 1f
+    val minionHand =
+        Offset(
+            x = attackerBounds.center.x + handSide * restRect.width * LONGSWORD_HAND_OFFSET_FRACTION,
+            y = restRect.center.y + strikeDirection * chargeForwardPx,
+        )
+
+    val aimPoint =
         if (connects) {
             defenderBounds.center
         } else {
-            defenderBounds.center + Offset(x = -defenderBounds.width * 0.9f, y = 0f)
+            missThrustTarget(defenderBounds = defenderBounds, origin = minionHand)
         }
 
-    val toDefenderRaw = cutCenter - attackerBounds.center
-    val toDefender = toDefenderRaw / toDefenderRaw.getDistance()
-    val reach = defenderBounds.height * LONGSWORD_BLADE_LENGTH_FRACTION
-    val pivot = cutCenter - toDefender * (reach * LONGSWORD_PIVOT_BACK_FRACTION)
-    val swingCenter = angleDegrees(from = pivot, to = cutCenter) + LONGSWORD_SLASH_TILT_DEGREES
+    val reach =
+        (aimPoint - minionHand).getDistance().coerceIn(
+            minimumValue = restRect.height * LONGSWORD_BLADE_LENGTH_FRACTION,
+            maximumValue = restRect.height * LONGSWORD_BLADE_MAX_FRACTION,
+        )
+    val swingCenter = angleDegrees(from = minionHand, to = aimPoint) + LONGSWORD_SLASH_TILT_DEGREES
 
     return LongSwordGeometry(
-        pivot = pivot,
+        pivot = minionHand,
         reach = reach,
         startAngleDegrees = swingCenter - LONGSWORD_SWING_ARC_DEGREES / 2f,
         endAngleDegrees = swingCenter + LONGSWORD_SWING_ARC_DEGREES / 2f,

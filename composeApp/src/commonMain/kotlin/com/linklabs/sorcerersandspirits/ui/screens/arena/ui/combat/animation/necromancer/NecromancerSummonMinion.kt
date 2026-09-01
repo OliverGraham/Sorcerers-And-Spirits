@@ -460,6 +460,8 @@ private fun NecromancerSummonMinionPreview(
     }
 }
 
+// TODO(SS-268): move this outcome->MinionType mapping out of the animation file into the
+// ArenaMessageState.SummonMinion toState mapping (carry minionType on the message state); flagged by SS-269.
 private fun minionFor(outcome: SummonMinionOutcome): MinionType? = when (outcome) {
     SummonMinionOutcome.Fizzle -> null
 

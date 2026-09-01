@@ -1194,6 +1194,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   app version so an outdated client can be soft- or force-upgraded — important since all clients
   share one RTDB game-state schema and a stale client could read/write incompatible data.
 
+## Claude workflow
+
+- **SS-269** — Review Claude's memory store + CLAUDE.md; decide pruning and promotion of invariants:
+  Owner-led memory-by-memory review. Promoted hard style/architecture/workflow/communication invariants
+  into a new "Always-enforced invariants" section in project CLAUDE.md (game rules kept, relabeled as a
+  reference section below it); pruned/consolidated the recall store 95 → 36 files and rebuilt a grouped
+  MEMORY.md from source descriptions; fixed the blank-name git-ship-workflow file. PreToolUse-hook option
+  declined. The minionFor() derive-in-Composable cleanup was deferred into SS-268 (TODO + backlog note).
+
 ## Dropped (won't do)
 
 - **SS-031** — Refactor ArenaScreenState mapping: Dropped as unnecessary/outdated.

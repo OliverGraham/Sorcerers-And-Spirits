@@ -998,6 +998,62 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   never a silent dead-end. Thread the failure up from the data source through the tavern domain/VM to
   a surfaced, retryable error.
 
+### SS-270 — Support a match with both a computer and human opponents
+
+- [ ] Not completed
+- **Goal:** Let a match contain a computer opponent *and* one or more real humans (e.g. 3 players: 2
+  phones + 1 computer). The arena runtime already handles this; the missing piece is the Tavern/
+  challenge setup flow.
+- **Current limitation:** `TavernScreenViewModel.startComputerMatch` treats a computer match as
+  solo-vs-computers — it skips the human challenge handshake entirely, navigates straight to a
+  freshly created arena, and sets `expectedNumberOfPlayers = computerOpponents.size + 1` (the `+1`
+  is the sole human). There is no path to add a computer into a match that other real players join.
+- **Already handled by the runtime (don't re-solve):** only the challenging user's client carries a
+  non-empty `computerOpponentIds`, so exactly one client drives the bots (other humans' clients have
+  an empty set — no double-driving). The computer-Mage teleport roll-off resolution is keyed on that
+  same set. See `ComputerOpponentHandler`, `ArenaMatchCombatQueue`, `ArenaScreenViewModel`.
+- **Do (Tavern/challenge flow):**
+    - Allow a challenge/lobby to seed one or more computer opponents alongside the human handshake,
+      rather than the current either/or (`startComputerMatch` vs the human challenge path).
+    - Derive `expectedNumberOfPlayers` from humans + computers together, not `computers + 1`.
+    - Decide arena-id/creation: a computer match currently uses `generateComputerMatchId()` and skips
+      the handshake; a mixed match must still run the human presence/claim handshake while carrying
+      the computer seed through to `ArenaScreenViewModelArguments.computerOpponents`.
+    - Confirm the computer(s) are only owned/driven by one client (the match creator) and that the
+      other humans' `computerOpponents` argument stays empty.
+- **Sources:** `ui/screens/tavern/TavernScreenViewModel.kt` (`startComputerMatch`,
+  `generateComputerMatchId`), `ui/screens/tavern/TavernState.kt`,
+  `ui/main/navigation/NavigationRoutes.kt` (`ComputerOpponentSerializable`),
+  `domain/arena/usecase/CoordinateArenaMatchUseCase.kt`, `domain/computer/ComputerOpponent.kt`.
+- **Notes:** additive — don't remove the existing solo-vs-computer path
+  ([[never-remove-without-instruction]]). [[connectivity-resilience-priority]]: the computer's owner
+  leaving/disconnecting mid-match needs a decision (bots stop acting) — surface it in the design.
+
+### SS-271 — Support multiple computer opponents (with humans)
+
+- [ ] Not completed
+- **Depends on:** SS-270 — do this after mixed computer+human matches work.
+- **Goal:** Support more than one computer opponent in a match, freely combined with humans (e.g. 2
+  humans + 2 computers), up to the 8-player cap.
+- **Current limitation:** `ComputerOpponents.all` exposes a single `default` (`The Automaton`), so
+  the Tavern only ever seeds one computer even though `startComputerMatch` already maps a *list* and
+  `CoordinateArenaMatchUseCase` / `ComputerOpponentHandler` already iterate over a set of computer
+  ids. The gap is selection/roster, not the per-turn driving.
+- **Do:**
+    - Provide a roster of distinct computer opponents (stable unique `userId`s under
+      `ComputerOpponents.ID_PREFIX`, distinct display names) and let the setup flow pick how many.
+    - Verify no-duplicate-class selection holds when several computers choose classes in the same
+      `ChoosingClasses` phase (the handler picks from `unavailableClasses` — confirm it stays correct
+      as each computer's choice lands and the set updates).
+    - Confirm total players (humans + computers) respects the 2–8 player rules and that
+      `expectedNumberOfPlayers` is computed from the combined roster.
+- **Sources:** `domain/computer/ComputerOpponent.kt` (`ComputerOpponents.all`),
+  `ui/screens/tavern/TavernScreenViewModel.kt`, `ui/screens/tavern/TavernState.kt`,
+  `ui/screens/arena/computer/ComputerOpponentHandler.kt`,
+  `domain/arena/usecase/CoordinateArenaMatchUseCase.kt`.
+- **Notes:** the random action/target logic is per-computer already, so multiple bots need no new
+  decision logic — just distinct identities and a selection surface.
+
 ---
 
 ## Audio

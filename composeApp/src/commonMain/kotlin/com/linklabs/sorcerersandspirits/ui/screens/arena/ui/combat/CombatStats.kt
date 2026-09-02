@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.game.AbilityCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
@@ -25,6 +26,7 @@ internal data class AvatarStat(
 internal fun avatarStats(
     characterClass: CharacterClassState,
     classCopy: CharacterClassCopy,
+    isDetailed: Boolean = false,
 ): List<AvatarStat> {
     val speed = classCopy[ClassCopyKeys.SPEED]
     val armor = classCopy[ClassCopyKeys.ARMOR]
@@ -32,36 +34,38 @@ internal fun avatarStats(
     val offensive = classCopy.forAbility(ability = characterClass.offensiveAbility)
     val defensive = classCopy.forAbility(ability = characterClass.defensiveAbility)
 
+    fun AbilityCopy.explanation(): String = if (isDetailed) long else short
+
     return listOf(
         AvatarStat(
             icon = Res.drawable.ic_speed,
             value = characterClass.speed.toString(),
             name = speed.name,
-            explanation = speed.short,
+            explanation = speed.explanation(),
         ),
         AvatarStat(
             icon = Res.drawable.ic_armor_class,
             value = characterClass.armorClassDisplay,
             name = armor.name,
-            explanation = armor.short,
+            explanation = armor.explanation(),
         ),
         AvatarStat(
             icon = Res.drawable.ic_hit_points,
             value = characterClass.hitPointsDisplay,
             name = health.name,
-            explanation = health.short,
+            explanation = health.explanation(),
         ),
         AvatarStat(
             icon = Res.drawable.ic_offensive_ability,
             value = null,
             name = offensive.name,
-            explanation = offensive.short,
+            explanation = offensive.explanation(),
         ),
         AvatarStat(
             icon = Res.drawable.ic_defensive_ability,
             value = null,
             name = defensive.name,
-            explanation = defensive.short,
+            explanation = defensive.explanation(),
         ),
     )
 }

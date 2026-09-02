@@ -19,6 +19,7 @@ internal class ArenaMatchCombatQueue(
     private val onTeleportRollOffComplete: (TeleportRollsArguments) -> Unit,
     private val onHeaderAnimationsComplete: () -> Unit,
     private val finishMatch: suspend () -> Unit,
+    private val computerOpponentIds: Set<String>,
 ) {
     private val queue = ArrayDeque<ArenaMatch.Combat>()
 
@@ -94,13 +95,14 @@ internal class ArenaMatchCombatQueue(
         val abilityRoll = nextCombatAction as? NextCombatAction.AbilityRoll ?: return null
         val teleport = abilityRoll.purpose as? AbilityAction.Passive.Teleport ?: return null
 
-        val isUserTheMage = teleport.defenderRoll.userId == userId
-        if (!isUserTheMage) return null
+        val mageUserId = teleport.defenderRoll.userId
+        val isMageDrivenByThisClient = mageUserId == userId || mageUserId in computerOpponentIds
+        if (!isMageDrivenByThisClient) return null
 
         if (teleport.attackerRoll.roll == null || teleport.defenderRoll.roll == null) return null
 
         return TeleportRollsArguments(
-            mageUserId = userId,
+            mageUserId = mageUserId,
             playerMap = playerMap,
             roundNumber = roundNumber,
             nextCombatAction = nextCombatAction,

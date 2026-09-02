@@ -26,6 +26,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaSessionStats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
@@ -89,6 +90,8 @@ class ArenaScreenViewModel(
     private val _timerStateFlow = MutableStateFlow(value = ArenaTimerState(secondsRemaining = 0))
     val timerStateFlow = _timerStateFlow.asStateFlow()
 
+    private val computerOpponentIds = arguments.computerOpponents.map { it.userId }.toSet()
+
     private val arenaMatchCombatQueue =
         ArenaMatchCombatQueue(
             triggerAnimation = ::triggerAnimation,
@@ -97,6 +100,7 @@ class ArenaScreenViewModel(
             onTeleportRollOffComplete = ::onTeleportRollOffComplete,
             onHeaderAnimationsComplete = ::onHeaderAnimationsComplete,
             finishMatch = { finishMatchUseCase(arenaId = arguments.arenaId) },
+            computerOpponentIds = computerOpponentIds,
         )
 
     // TODO(SS-260): Probably a handler for this
@@ -105,18 +109,15 @@ class ArenaScreenViewModel(
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
     private val classCopy by lazy { getCharacterClassCopyUseCase() }
 
-    // TODO: Reinstate computerOpponentHandler later
-    /*
     private val computerOpponentHandler =
         ComputerOpponentHandler(
             arenaId = arguments.arenaId,
-            computerOpponentIds = arguments.computerOpponents.map { it.userId }.toSet(),
+            computerOpponentIds = computerOpponentIds,
             coroutineScope = viewModelScope,
             chooseCharacterClassUseCase = chooseCharacterClassUseCase,
             performCombatActionUseCase = performCombatActionUseCase,
             stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
         )
-     */
 
     private val chooseCharacterClassHandler =
         ChooseCharacterClassHandler(
@@ -196,7 +197,7 @@ class ArenaScreenViewModel(
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
-        // computerOpponentHandler.cancel()
+        computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -248,7 +249,7 @@ class ArenaScreenViewModel(
     fun onStayForAnotherMatch() {
         viewModelScope.launch {
             stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
-            // computerOpponentHandler.readyUpForNextMatch()
+            computerOpponentHandler.readyUpForNextMatch()
 
             _uiStateFlow.updateLoaded { screenState ->
                 screenState.copy(hasReadiedForNextMatch = true)
@@ -298,7 +299,7 @@ class ArenaScreenViewModel(
             handleScreenUpdate(userId = userId, currentScreenState = currentScreenState)
         }
 
-        // coordinateComputerOpponents()
+        coordinateComputerOpponents()
     }
 
     private suspend fun ArenaMatch.handleNewArenaScreen(userId: String) {
@@ -394,6 +395,8 @@ class ArenaScreenViewModel(
                 arenaMatchCombatUpdate = arenaMatchCombatUpdate,
             )
         }
+
+        coordinateComputerOpponents()
     }
 
     private fun onTeleportRollOffComplete(teleportRollsArguments: TeleportRollsArguments) {
@@ -467,7 +470,6 @@ class ArenaScreenViewModel(
         pendingStatsStore.save(delta = sessionStats.peekDelta())
     }
 
-    /*
     private fun coordinateComputerOpponents() {
         val updatedScreenState = _uiStateFlow.getLoadedStateOrNull() ?: return
         computerOpponentHandler.onArenaState(
@@ -475,7 +477,6 @@ class ArenaScreenViewModel(
             characterClasses = updatedScreenState.characterClasses,
         )
     }
-     */
 
     // TODO(SS-260): if there's one match error, just kill the whole thing? Or determine what to do
     // if
@@ -568,7 +569,7 @@ class ArenaScreenViewModel(
 
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
-        // computerOpponentHandler.cancel()
+        computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()

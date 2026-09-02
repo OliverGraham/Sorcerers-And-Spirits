@@ -217,7 +217,7 @@ internal fun AbilityActionState.isUserTheRoller(userPlayerId: String): Boolean =
     else -> true
 }
 
-private fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl.ActivatedAbility> = when (this) {
+internal fun OffensiveAbilityState.toActivatedControls(): List<ArenaCombatControl.ActivatedAbility> = when (this) {
     is OffensiveAbilityState.AllIn ->
         listOf(
             element =

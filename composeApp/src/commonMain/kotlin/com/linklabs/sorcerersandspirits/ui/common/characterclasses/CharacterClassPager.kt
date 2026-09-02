@@ -4,6 +4,7 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
@@ -42,6 +44,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -70,6 +74,13 @@ private const val PILL_SCALE_ANIM_LABEL = "pill_scale"
 private const val PILL_ALPHA_ANIM_LABEL = "pill_alpha"
 private const val PILL_GLOW_TRANSITION_LABEL = "pill_glow"
 private const val PILL_GLOW_ALPHA_LABEL = "pill_glow_alpha"
+
+private const val AVATAR_GLOW_ALPHA = 0.75f
+private const val AVATAR_GLOW_MIN_RADIUS_FRACTION = 0.33f
+private const val AVATAR_GLOW_MAX_RADIUS_FRACTION = 0.43f
+private const val AVATAR_GLOW_DURATION_MILLIS = 2000
+private const val AVATAR_GLOW_TRANSITION_LABEL = "avatar_glow"
+private const val AVATAR_GLOW_PROGRESS_LABEL = "avatar_glow_progress"
 
 // TODO: This will replace the CharacterClassWheel eventually
 
@@ -206,6 +217,7 @@ private fun Modifier.groupBackground(): Modifier = background(
     shape = RoundedCornerShape(size = 20.dp),
 )
 
+
 @Composable
 private fun CharacterClassPage(
     characterClass: CharacterClassState,
@@ -218,13 +230,13 @@ private fun CharacterClassPage(
             Modifier.fillMaxWidth()
                 .weight(weight = 1f)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
-                .groupBackground(),
+                .classColorGlow(gradient = characterClass.type.toGradient()),
             contentAlignment = Alignment.Center,
         ) {
             Image(
                 painter = painterResource(resource = characterClass.type.toAvatarResource()),
                 contentDescription = characterClass.className,
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier.fillMaxHeight(),
             )
         }
 
@@ -286,6 +298,33 @@ private fun StatChip(stat: AvatarStat, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
+        )
+    }
+}
+
+@Composable
+private fun Modifier.classColorGlow(gradient: ClassGradient): Modifier {
+    val transition = rememberInfiniteTransition(label = AVATAR_GLOW_TRANSITION_LABEL)
+    val radiusFraction by transition.animateFloat(
+        initialValue = AVATAR_GLOW_MIN_RADIUS_FRACTION,
+        targetValue = AVATAR_GLOW_MAX_RADIUS_FRACTION,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = AVATAR_GLOW_DURATION_MILLIS, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = AVATAR_GLOW_PROGRESS_LABEL,
+    )
+
+    val glowColor = gradient.topStop.copy(alpha = AVATAR_GLOW_ALPHA)
+
+    return drawBehind {
+        drawOval(
+            brush =
+                Brush.radialGradient(
+                    colors = listOf(glowColor, Color.Transparent),
+                    center = Offset(x = size.width / 2f, y = size.height),
+                    radius = size.width * radiusFraction,
+                ),
         )
     }
 }

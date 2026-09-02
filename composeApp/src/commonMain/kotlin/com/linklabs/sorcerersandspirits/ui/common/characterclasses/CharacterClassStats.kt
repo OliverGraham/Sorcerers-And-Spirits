@@ -1,11 +1,9 @@
-package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
+package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.AbilityCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.forAbility
 import org.jetbrains.compose.resources.DrawableResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.ic_armor_class

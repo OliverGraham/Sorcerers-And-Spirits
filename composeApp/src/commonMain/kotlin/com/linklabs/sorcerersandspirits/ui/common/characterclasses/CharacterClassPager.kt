@@ -18,11 +18,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -32,7 +35,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,11 +50,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.AvatarStat
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.avatarStats
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.ic_info
 
 private const val SELECTED_ALPHA = 1f
 private const val UNSELECTED_ALPHA = 0.55f
@@ -79,32 +85,44 @@ fun CharacterClassPager(
 
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { characterClasses.size })
+    var inspectedClass by remember { mutableStateOf<CharacterClassState?>(value = null) }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        FlowRow(
-            modifier =
-            Modifier.fillMaxWidth()
-                .padding(horizontal = 12.dp)
-                .groupBackground()
-                .padding(all = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(space = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(space = 8.dp),
-            maxItemsInEachRow = PILLS_PER_ROW,
-        ) {
-            characterClasses.forEachIndexed { index, characterClass ->
-                ClassPagerIndicator(
-                    turnOrderNumber = index + 1,
-                    characterClass = characterClass,
-                    isSelected = pagerState.targetPage == index,
-                    onClick = { scope.launch { pagerState.animateScrollToPage(page = index) } },
-                    modifier = Modifier.weight(weight = 1f),
+    Box(modifier = modifier.fillMaxSize().windowInsetsPadding(insets = WindowInsets.navigationBars)) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            FlowRow(
+                modifier =
+                Modifier.fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .groupBackground()
+                    .padding(all = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(space = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+                maxItemsInEachRow = PILLS_PER_ROW,
+            ) {
+                characterClasses.forEachIndexed { index, characterClass ->
+                    ClassPagerIndicator(
+                        turnOrderNumber = index + 1,
+                        characterClass = characterClass,
+                        isSelected = pagerState.targetPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(page = index) } },
+                        modifier = Modifier.weight(weight = 1f),
+                    )
+                }
+            }
+
+            HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().weight(weight = 1f)) { page ->
+                CharacterClassPage(
+                    characterClass = characterClasses[page],
+                    onInspect = { inspectedClass = characterClasses[page] },
                 )
             }
         }
 
-        HorizontalPager(state = pagerState, modifier = Modifier.fillMaxWidth().weight(weight = 1f)) { page ->
-            CharacterClassPage(characterClass = characterClasses[page])
-        }
+        InspectDrawer(
+            characterClass = inspectedClass,
+            onClose = { inspectedClass = null },
+            isDetailed = true,
+        )
     }
 }
 
@@ -191,13 +209,14 @@ private fun Modifier.groupBackground(): Modifier = background(
 @Composable
 private fun CharacterClassPage(
     characterClass: CharacterClassState,
+    onInspect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
         Box(
             modifier =
             Modifier.fillMaxWidth()
-                .weight(weight = 1.5f)
+                .weight(weight = 1f)
                 .padding(horizontal = 12.dp, vertical = 8.dp)
                 .groupBackground(),
             contentAlignment = Alignment.Center,
@@ -211,7 +230,8 @@ private fun CharacterClassPage(
 
         ClassPageStats(
             characterClass = characterClass,
-            modifier = Modifier.fillMaxWidth().weight(weight = 1f),
+            onInspect = onInspect,
+            modifier = Modifier.fillMaxWidth(),
         )
     }
 }
@@ -219,20 +239,31 @@ private fun CharacterClassPage(
 @Composable
 private fun ClassPageStats(
     characterClass: CharacterClassState,
+    onInspect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val classCopy = LocalCharacterClassCopy.current
-    val stats = avatarStats(characterClass = characterClass, classCopy = classCopy, isDetailed = true)
+    val stats = avatarStats(characterClass = characterClass, classCopy = classCopy)
 
-    Column(
-        modifier =
-        modifier
-            .padding(horizontal = 12.dp)
-            .groupBackground()
-            .padding(all = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
-    ) {
-        stats.forEach { stat -> StatChip(stat = stat) }
+    Box(modifier = modifier.padding(horizontal = 12.dp)) {
+        Column(
+            modifier =
+            Modifier.fillMaxWidth()
+                .clip(shape = RoundedCornerShape(size = 20.dp))
+                .groupBackground()
+                .clickable(onClick = onInspect)
+                .padding(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+        ) {
+            stats.forEach { stat -> StatChip(stat = stat) }
+        }
+
+        Image(
+            painter = painterResource(resource = Res.drawable.ic_info),
+            contentDescription = null,
+            modifier =
+            Modifier.align(alignment = Alignment.TopEnd).padding(all = 12.dp).size(size = 24.dp),
+        )
     }
 }
 
@@ -246,22 +277,16 @@ private fun StatChip(stat: AvatarStat, modifier: Modifier = Modifier) {
         Image(
             painter = painterResource(resource = stat.icon),
             contentDescription = stat.name,
-            modifier = Modifier.size(size = 24.dp),
+            modifier = Modifier.size(size = 36.dp),
         )
-        Column {
-            val value = stat.value
-            val title = if (value != null) "${stat.name} · $value" else stat.name
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-            )
-            Text(
-                text = stat.explanation,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        val value = stat.value
+        val title = if (value != null) "${stat.name} · $value" else stat.name
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
     }
 }
 

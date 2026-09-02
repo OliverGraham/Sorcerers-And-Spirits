@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.InspectDrawer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
@@ -165,7 +166,7 @@ private fun BoxScope.OverlayContent(
     )
 
     InspectDrawer(
-        player = inspectedUserId?.let { arenaMatchState.playerMap[it] },
+        characterClass = inspectedUserId?.let { arenaMatchState.playerMap[it]?.characterClass },
         onClose = onCloseInspectCharacterDrawer,
     )
 }

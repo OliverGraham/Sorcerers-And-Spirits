@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.InspectContent
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
@@ -186,12 +187,7 @@ private fun InspectDrawerPreview() {
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
             InspectContent(
-                player =
-                PlayerState.Selected(
-                    userId = "player1",
-                    displayName = "Sorcerer Supreme",
-                    characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
-                ),
+                characterClass = previewCharacterClassState(type = CharacterClassType.Mage),
                 onClose = {},
             )
         }

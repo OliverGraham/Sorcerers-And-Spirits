@@ -8,16 +8,17 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.isMinionAttackInProgress
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isUserTheRoller
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toActivatedControls
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 import kotlinx.coroutines.CoroutineScope
@@ -168,29 +169,54 @@ internal class ComputerOpponentHandler(
         arenaMatchState: ArenaMatchState.Combat,
         computerId: String,
     ): CurrentCombatAction? {
-        val computerPlayer = arenaMatchState.playerMap.getValue(key = computerId)
-        val favorableAbility = computerPlayer.characterClass.favorableOffensiveAbility()
-
-        if (favorableAbility != null) {
-            return UseAbilityArguments(
-                abilityActionState = favorableAbility,
-                targetedOpponentUserId = "",
-                userPlayerId = computerId,
-                combatActionState = arenaMatchState.combatActionState,
-            )
-                .toDomain()
-        }
-
         val target =
-            weakestLivingOpponent(arenaMatchState = arenaMatchState, excludingPlayerId = computerId)
+            randomLivingOpponent(arenaMatchState = arenaMatchState, excludingPlayerId = computerId)
                 ?: return null
 
-        return AttackArguments(
-            targetedOpponentUserId = target.userId,
-            userPlayerId = computerId,
-            combatActionState = arenaMatchState.combatActionState,
+        val attackAction =
+            AttackArguments(
+                targetedOpponentUserId = target.userId,
+                userPlayerId = computerId,
+                combatActionState = arenaMatchState.combatActionState,
+            ).toDomain()
+
+        val abilityActions =
+            arenaMatchState
+                .availableActivatedAbilities(computerId = computerId)
+                .mapNotNull { control ->
+                    UseAbilityArguments(
+                        abilityActionState =
+                        control.action.withImpersonationResolved(target = target),
+                        targetedOpponentUserId =
+                        if (control.requiresTarget) target.userId else "",
+                        userPlayerId = computerId,
+                        combatActionState = arenaMatchState.combatActionState,
+                    ).toDomain()
+                }
+
+        return (listOfNotNull(attackAction) + abilityActions).randomOrNull()
+    }
+
+    private fun ArenaMatchState.Combat.availableActivatedAbilities(
+        computerId: String,
+    ): List<ArenaCombatControl.ActivatedAbility> {
+        val offensiveAbility = playerMap.getValue(key = computerId).characterClass.offensiveAbility
+        if (offensiveAbility.isMinionAttackInProgress) return emptyList()
+
+        return offensiveAbility.toActivatedControls().filter { it.enabled }
+    }
+
+    private fun AbilityActionState.Activated.withImpersonationResolved(
+        target: PlayerState.Selected,
+    ): AbilityActionState.Activated {
+        if (this !is AbilityActionState.Activated.Impersonate) return this
+
+        return AbilityActionState.Activated.Impersonate(
+            impersonateAbility =
+            OffensiveAbility.Impersonate(
+                impersonatedAbility = target.characterClass.offensiveAbility.toDomain(),
+            ),
         )
-            .toDomain()
     }
 
     private suspend fun ArenaMatchState.Combat.dispatchCombatAction(
@@ -207,42 +233,14 @@ internal class ComputerOpponentHandler(
         performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
     }
 
-    private fun CharacterClassState.favorableOffensiveAbility(): AbilityActionState.Activated? {
-        if (offensiveAbility.isMinionAttackInProgress) return null
-
-        return when (val ability = offensiveAbility) {
-            is OffensiveAbilityState.SummonMinion -> {
-                val hasNoMinions = ability.minions.isEmpty()
-                val isBelowMaxHp = hitPoints < maxHitPoints
-
-                if (hasNoMinions || isBelowMaxHp) {
-                    AbilityActionState.Activated.SummonMinion(
-                        summonMinionAbility =
-                        OffensiveAbility.SummonMinion(minions = ability.minions.map { minion -> minion.toDomain() }),
-                    )
-                } else {
-                    null
-                }
-            }
-
-            else -> null
-        }
-    }
-
-    private fun weakestLivingOpponent(
+    private fun randomLivingOpponent(
         arenaMatchState: ArenaMatchState.Combat,
         excludingPlayerId: String,
-    ): PlayerState.Selected? {
-        val opponents =
-            arenaMatchState.playerMap.values.filter { player ->
-                player.userId != excludingPlayerId && player.characterClass.hitPoints > 0
-            }
-        val lowestHitPoints = opponents.minOfOrNull { it.characterClass.hitPoints } ?: return null
-
-        return opponents
-            .filter { player -> player.characterClass.hitPoints == lowestHitPoints }
-            .randomOrNull()
-    }
+    ): PlayerState.Selected? = arenaMatchState.playerMap.values
+        .filter { player ->
+            player.userId != excludingPlayerId && player.characterClass.isConscious
+        }
+        .randomOrNull()
 
     private fun randomCharmTarget(action: AbilityActionState): String = (action as? AbilityActionState.Passive.Persuade.Charm)
         ?.targetableUserIds

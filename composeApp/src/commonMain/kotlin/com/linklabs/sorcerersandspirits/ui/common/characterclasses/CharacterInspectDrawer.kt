@@ -37,7 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
 import org.jetbrains.compose.resources.painterResource
 
-private val inspectDrawerColor = Color(color = 0xF21A1A1A)
+private val inspectDrawerColor = Color(color = 0xCC1A1A1A)
 private val inspectScrimColor = Color(color = 0x99000000)
 
 @Composable

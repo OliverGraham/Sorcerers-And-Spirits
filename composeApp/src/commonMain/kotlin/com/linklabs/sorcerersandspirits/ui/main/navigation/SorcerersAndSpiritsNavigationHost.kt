@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
@@ -160,7 +161,11 @@ private fun AppContent(
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet { SettingsDrawer(backStack = backStack, drawerState = drawerState) }
+            ModalDrawerSheet(
+                drawerContainerColor = DrawerDefaults.modalContainerColor.copy(alpha = 0.8f),
+            ) {
+                SettingsDrawer(backStack = backStack, drawerState = drawerState)
+            }
         },
         gesturesEnabled = true,
     ) {

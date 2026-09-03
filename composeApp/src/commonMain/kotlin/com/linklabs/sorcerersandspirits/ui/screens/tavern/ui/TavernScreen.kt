@@ -125,6 +125,7 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
         },
         sheetContainerColor = Color.Black.copy(alpha = 0.8f),
         sheetContentColor = Color.White,
+        sheetPeekHeight = 0.dp,
         sheetContent = {
             val statusBarHeight =
                 with(LocalDensity.current) {

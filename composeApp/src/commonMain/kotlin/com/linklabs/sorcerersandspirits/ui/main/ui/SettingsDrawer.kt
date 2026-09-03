@@ -73,7 +73,7 @@ private fun DrawerContent(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        DrawerEntry(label = "Home", onClick = onNavigateToHome)
+        DrawerEntry(label = "Tavern", onClick = onNavigateToHome)
         DrawerEntry(label = "Profile", onClick = onNavigateToProfile)
         DrawerEntry(label = "Leaderboard", onClick = onNavigateToLeaderboard)
         DrawerEntry(label = "Achievements", onClick = onNavigateToAchievements)

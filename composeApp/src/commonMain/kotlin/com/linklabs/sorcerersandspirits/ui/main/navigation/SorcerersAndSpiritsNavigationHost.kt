@@ -162,7 +162,7 @@ private fun AppContent(
         drawerState = drawerState,
         drawerContent = {
             ModalDrawerSheet(
-                drawerContainerColor = DrawerDefaults.modalContainerColor.copy(alpha = 0.8f),
+                drawerContainerColor = DrawerDefaults.modalContainerColor.copy(alpha = 0.9f),
             ) {
                 SettingsDrawer(backStack = backStack, drawerState = drawerState)
             }

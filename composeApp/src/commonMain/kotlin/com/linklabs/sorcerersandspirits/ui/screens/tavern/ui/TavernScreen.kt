@@ -1,15 +1,21 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -24,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
@@ -83,11 +90,12 @@ private fun TavernScreen(
     }
 }
 
+private val TavernTopBarHeight = 48.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Modifier) {
     val scaffoldState = rememberBottomSheetScaffoldState()
-    val scope = rememberCoroutineScope()
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
@@ -100,18 +108,38 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
             ),
         containerColor = Color.Transparent,
         topBar = {
-            TavernTopBar(onOpenBar = { scope.launch { scaffoldState.bottomSheetState.expand() } })
-        },
-        sheetPeekHeight = 0.dp,
-        sheetDragHandle = null,
-        sheetContainerColor = Color.Black.copy(alpha = 0.6f),
-        sheetContentColor = Color.White,
-        sheetTonalElevation = 0.dp,
-        sheetContent = {
-            TheBar(
-                userTraveler = tavernState.userTraveler,
-                otherTravelers = tavernState.otherTravelers,
+            val scope = rememberCoroutineScope()
+            TavernTopBar(
+                onToggleBar = {
+                    scope.launch {
+                        val bottomSheetState = scaffoldState.bottomSheetState
+                        val isBarOpen = bottomSheetState.currentValue == SheetValue.Expanded
+                        if (isBarOpen) {
+                            bottomSheetState.partialExpand()
+                        } else {
+                            bottomSheetState.expand()
+                        }
+                    }
+                },
             )
+        },
+        sheetContainerColor = Color.Black.copy(alpha = 0.8f),
+        sheetContentColor = Color.White,
+        sheetContent = {
+            val statusBarHeight =
+                with(LocalDensity.current) {
+                    WindowInsets.statusBars.getTop(density = this).toDp()
+                }
+            BoxWithConstraints {
+                TheBar(
+                    userTraveler = tavernState.userTraveler,
+                    otherTravelers = tavernState.otherTravelers,
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .height(height = maxHeight - statusBarHeight - TavernTopBarHeight),
+                )
+            }
         },
     ) { padding ->
         CompositionLocalProvider(LocalCharacterClassCopy provides tavernState.classCopy) {
@@ -122,7 +150,7 @@ private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Mo
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun TavernTopBar(onOpenBar: () -> Unit, modifier: Modifier = Modifier) {
+private fun TavernTopBar(onToggleBar: () -> Unit, modifier: Modifier = Modifier) {
     val onOpenDrawer = LocalOpenDrawer.current
     val hasActiveChallenge = LocalChallengeState.current != null
 
@@ -130,7 +158,7 @@ private fun TavernTopBar(onOpenBar: () -> Unit, modifier: Modifier = Modifier) {
         title = {},
         modifier = modifier,
         navigationIcon = {
-            IconButton(onClick = onOpenBar) {
+            IconButton(onClick = onToggleBar) {
                 Icon(
                     painter = painterResource(resource = Res.drawable.ic_martini),
                     contentDescription = null,
@@ -148,7 +176,7 @@ private fun TavernTopBar(onOpenBar: () -> Unit, modifier: Modifier = Modifier) {
                 )
             }
         },
-        expandedHeight = 48.dp,
+        expandedHeight = TavernTopBarHeight,
         colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
     )
 }

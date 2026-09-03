@@ -16,6 +16,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
+import com.linklabs.sorcerersandspirits.ui.common.MenuTopBar
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardRowState
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardSort
@@ -56,12 +58,17 @@ internal fun LeaderboardScreen(
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
 
-    LeaderboardScreen(
-        uiState = uiState,
-        onRetry = viewModel::onRetry,
-        onSortSelected = viewModel::onSortSelected,
+    Scaffold(
         modifier = modifier,
-    )
+        topBar = { MenuTopBar(title = stringResource(resource = Res.string.leaderboard_title)) },
+    ) { paddingValues ->
+        LeaderboardScreen(
+            uiState = uiState,
+            onRetry = viewModel::onRetry,
+            onSortSelected = viewModel::onSortSelected,
+            modifier = Modifier.padding(paddingValues = paddingValues),
+        )
+    }
 }
 
 @Composable
@@ -98,10 +105,6 @@ private fun LeaderboardContent(
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(space = 8.dp)) {
-                Text(
-                    text = stringResource(resource = Res.string.leaderboard_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
                 Text(
                     text = stringResource(resource = Res.string.leaderboard_subtitle),
                     style = MaterialTheme.typography.bodyMedium,

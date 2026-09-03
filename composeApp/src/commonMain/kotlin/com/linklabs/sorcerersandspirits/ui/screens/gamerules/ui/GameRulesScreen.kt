@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -21,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
+import com.linklabs.sorcerersandspirits.ui.common.MenuTopBar
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.AbilityRulesState
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ClassRulesState
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
@@ -37,7 +39,13 @@ internal fun GameRulesScreen(
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
 
-    GameRulesScreen(uiState = uiState, onRetry = viewModel::retry, modifier = modifier)
+    Scaffold(modifier = modifier, topBar = { MenuTopBar(title = "Game Rules") }) { paddingValues ->
+        GameRulesScreen(
+            uiState = uiState,
+            onRetry = viewModel::retry,
+            modifier = Modifier.padding(paddingValues = paddingValues),
+        )
+    }
 }
 
 @Composable
@@ -60,8 +68,6 @@ private fun GameRulesContent(state: GameRulesState, modifier: Modifier = Modifie
         contentPadding = PaddingValues(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 16.dp),
     ) {
-        item { Text(text = "Game Rules", style = MaterialTheme.typography.headlineMedium) }
-
         item { RulesSection(title = "How Combat Works", paragraphs = state.combatRules) }
 
         item { RulesSection(title = "Game Terms", paragraphs = state.gameTerms) }

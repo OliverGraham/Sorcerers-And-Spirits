@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.achievement.AchievementId
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
+import com.linklabs.sorcerersandspirits.ui.common.MenuTopBar
 import com.linklabs.sorcerersandspirits.ui.common.achievement.descriptionResource
 import com.linklabs.sorcerersandspirits.ui.common.achievement.displayNameResource
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.AchievementRowState
@@ -44,7 +46,15 @@ internal fun AchievementsScreen(
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
 
-    AchievementsScreen(uiState = uiState, modifier = modifier)
+    Scaffold(
+        modifier = modifier,
+        topBar = { MenuTopBar(title = stringResource(resource = Res.string.achievements_title)) },
+    ) { paddingValues ->
+        AchievementsScreen(
+            uiState = uiState,
+            modifier = Modifier.padding(paddingValues = paddingValues),
+        )
+    }
 }
 
 @Composable
@@ -64,22 +74,16 @@ private fun AchievementsContent(state: AchievementsState, modifier: Modifier = M
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(space = 4.dp)) {
-                Text(
-                    text = stringResource(resource = Res.string.achievements_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-                Text(
-                    text =
-                    stringResource(
-                        resource = Res.string.achievements_progress,
-                        state.unlockedCount,
-                        state.totalCount,
-                    ),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text =
+                stringResource(
+                    resource = Res.string.achievements_progress,
+                    state.unlockedCount,
+                    state.totalCount,
+                ),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         items(items = state.achievements, key = { row -> row.id.name }) { row ->

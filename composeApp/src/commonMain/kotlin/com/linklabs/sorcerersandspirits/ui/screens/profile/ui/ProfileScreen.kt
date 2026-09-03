@@ -38,6 +38,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
+import com.linklabs.sorcerersandspirits.ui.common.MenuTopBar
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ClassStatsState
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileEvent
@@ -113,9 +114,11 @@ internal fun ProfileScreen(
     val uiState by viewModel.uiStateFlow.collectAsState()
     val linkResult by viewModel.linkResultFlow.collectAsState()
 
-    Scaffold(modifier = modifier, snackbarHost = {
-        SnackbarHost(hostState = snackbarHostState)
-    }) { paddingValues ->
+    Scaffold(
+        modifier = modifier,
+        topBar = { MenuTopBar(title = stringResource(resource = Res.string.profile_title)) },
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
+    ) { paddingValues ->
         ProfileScreen(
             uiState = uiState,
             linkResult = linkResult,
@@ -177,13 +180,6 @@ private fun ProfileContent(
         contentPadding = PaddingValues(all = 16.dp),
         verticalArrangement = Arrangement.spacedBy(space = 24.dp),
     ) {
-        item {
-            Text(
-                text = stringResource(resource = Res.string.profile_title),
-                style = MaterialTheme.typography.headlineMedium,
-            )
-        }
-
         item {
             DisplayNameEditor(
                 displayName = state.displayName,

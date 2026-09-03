@@ -65,7 +65,11 @@ private fun DrawerContent(
         modifier = modifier.fillMaxHeight().width(300.dp).padding(16.dp),
         verticalArrangement = Arrangement.Top,
     ) {
-        Text(text = "Menu", style = MaterialTheme.typography.titleLarge)
+        Text(
+            text = "Menu",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -82,6 +86,7 @@ private fun DrawerEntry(label: String, onClick: () -> Unit, modifier: Modifier =
     Text(
         text = label,
         style = MaterialTheme.typography.bodyLarge,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
     )
 }

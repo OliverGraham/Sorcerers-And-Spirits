@@ -1,10 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -75,14 +75,14 @@ private const val PILL_ALPHA_ANIM_LABEL = "pill_alpha"
 private const val PILL_GLOW_TRANSITION_LABEL = "pill_glow"
 private const val PILL_GLOW_ALPHA_LABEL = "pill_glow_alpha"
 
-private const val AVATAR_GLOW_ALPHA = 0.75f
-private const val AVATAR_GLOW_MIN_RADIUS_FRACTION = 0.33f
-private const val AVATAR_GLOW_MAX_RADIUS_FRACTION = 0.43f
-private const val AVATAR_GLOW_DURATION_MILLIS = 2000
+private const val AVATAR_GLOW_ALPHA = 0.80f
+private const val AVATAR_GLOW_MIN_RADIUS_FRACTION = 0.41f
+private const val AVATAR_GLOW_MAX_RADIUS_FRACTION = 0.55f
+private const val AVATAR_GLOW_DURATION_MILLIS = 1000
 private const val AVATAR_GLOW_TRANSITION_LABEL = "avatar_glow"
 private const val AVATAR_GLOW_PROGRESS_LABEL = "avatar_glow_progress"
 
-// TODO: This will replace the CharacterClassWheel eventually
+// TODO: This will replace the CharacterClassWheel eventually - maybe not
 
 private const val PILLS_PER_ROW = 2
 
@@ -217,28 +217,25 @@ private fun Modifier.groupBackground(): Modifier = background(
     shape = RoundedCornerShape(size = 20.dp),
 )
 
-
 @Composable
 private fun CharacterClassPage(
     characterClass: CharacterClassState,
     onInspect: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier.fillMaxSize()) {
-        Box(
-            modifier =
-            Modifier.fillMaxWidth()
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(space = 6.dp),
+    ) {
+        Image(
+            painter = painterResource(resource = characterClass.type.toAvatarResource()),
+            contentDescription = characterClass.className,
+            modifier = Modifier
                 .weight(weight = 1f)
-                .padding(horizontal = 12.dp, vertical = 8.dp)
-                .classColorGlow(gradient = characterClass.type.toGradient()),
-            contentAlignment = Alignment.Center,
-        ) {
-            Image(
-                painter = painterResource(resource = characterClass.type.toAvatarResource()),
-                contentDescription = characterClass.className,
-                modifier = Modifier.fillMaxHeight(),
-            )
-        }
+                .fillMaxSize()
+                .classColorGlow(gradient = characterClass.type.toGradient())
+                .padding(bottom = 16.dp),
+        )
 
         ClassPageStats(
             characterClass = characterClass,
@@ -258,7 +255,7 @@ private fun ClassPageStats(
     val stats = avatarStats(characterClass = characterClass, classCopy = classCopy)
 
     Box(modifier = modifier.padding(horizontal = 12.dp)) {
-        Column(
+        FlowRow(
             modifier =
             Modifier.fillMaxWidth()
                 .clip(shape = RoundedCornerShape(size = 20.dp))
@@ -266,6 +263,8 @@ private fun ClassPageStats(
                 .clickable(onClick = onInspect)
                 .padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            maxItemsInEachRow = 3,
         ) {
             stats.forEach { stat -> StatChip(stat = stat) }
         }
@@ -274,7 +273,7 @@ private fun ClassPageStats(
             painter = painterResource(resource = Res.drawable.ic_info),
             contentDescription = null,
             modifier =
-            Modifier.align(alignment = Alignment.TopEnd).padding(all = 12.dp).size(size = 24.dp),
+            Modifier.align(alignment = Alignment.BottomEnd).padding(all = 12.dp).size(size = 24.dp),
         )
     }
 }
@@ -320,11 +319,11 @@ private fun Modifier.classColorGlow(gradient: ClassGradient): Modifier {
     return drawBehind {
         drawOval(
             brush =
-                Brush.radialGradient(
-                    colors = listOf(glowColor, Color.Transparent),
-                    center = Offset(x = size.width / 2f, y = size.height),
-                    radius = size.width * radiusFraction,
-                ),
+            Brush.radialGradient(
+                colors = listOf(glowColor, Color.Transparent),
+                center = Offset(x = size.width / 2f, y = Float.POSITIVE_INFINITY),
+                radius = size.width * radiusFraction,
+            ),
         )
     }
 }

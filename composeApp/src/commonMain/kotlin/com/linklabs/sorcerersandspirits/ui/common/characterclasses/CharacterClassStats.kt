@@ -34,36 +34,53 @@ internal fun avatarStats(
 
     fun AbilityCopy.explanation(): String = if (isDetailed) long else short
 
-    return listOf(
-        AvatarStat(
-            icon = Res.drawable.ic_speed,
-            value = characterClass.speed.toString(),
-            name = speed.name,
-            explanation = speed.explanation(),
-        ),
-        AvatarStat(
-            icon = Res.drawable.ic_armor_class,
-            value = characterClass.armorClassDisplay,
-            name = armor.name,
-            explanation = armor.explanation(),
-        ),
-        AvatarStat(
-            icon = Res.drawable.ic_hit_points,
-            value = characterClass.hitPointsDisplay,
-            name = health.name,
-            explanation = health.explanation(),
-        ),
-        AvatarStat(
-            icon = Res.drawable.ic_offensive_ability,
-            value = null,
-            name = offensive.name,
-            explanation = offensive.explanation(),
-        ),
-        AvatarStat(
-            icon = Res.drawable.ic_defensive_ability,
-            value = null,
-            name = defensive.name,
-            explanation = defensive.explanation(),
-        ),
-    )
+    val hasOffensive = characterClass.offensiveAbility !is OffensiveAbilityState.None
+    val hasDefensive = characterClass.defensiveAbility !is DefensiveAbilityState.None
+
+    return buildList {
+        add(
+            AvatarStat(
+                icon = Res.drawable.ic_speed,
+                value = characterClass.speed.toString(),
+                name = speed.name,
+                explanation = speed.explanation(),
+            ),
+        )
+        add(
+            AvatarStat(
+                icon = Res.drawable.ic_armor_class,
+                value = characterClass.armorClassDisplay,
+                name = armor.name,
+                explanation = armor.explanation(),
+            ),
+        )
+        add(
+            AvatarStat(
+                icon = Res.drawable.ic_hit_points,
+                value = characterClass.hitPointsDisplay,
+                name = health.name,
+                explanation = health.explanation(),
+            ),
+        )
+        if (hasOffensive) {
+            add(
+                AvatarStat(
+                    icon = Res.drawable.ic_offensive_ability,
+                    value = null,
+                    name = offensive.name,
+                    explanation = offensive.explanation(),
+                ),
+            )
+        }
+        if (hasDefensive) {
+            add(
+                AvatarStat(
+                    icon = Res.drawable.ic_defensive_ability,
+                    value = null,
+                    name = defensive.name,
+                    explanation = defensive.explanation(),
+                ),
+            )
+        }
+    }
 }

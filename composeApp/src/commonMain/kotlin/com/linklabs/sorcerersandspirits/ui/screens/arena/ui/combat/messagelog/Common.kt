@@ -14,7 +14,10 @@ private const val MESSAGES_GRADIENT_MIDDLE_STOP = 0.5176f
 private const val MESSAGES_GRADIENT_BOTTOM_STOP = 0.9698f
 private const val MESSAGES_BACKGROUND_ALPHA = 0.9f
 
-internal fun messagesBackgroundBrush(startY: Float, endY: Float): Brush = Brush.verticalGradient(
+internal fun messagesBackgroundBrush(
+    startY: Float = 0f,
+    endY: Float = Float.POSITIVE_INFINITY,
+): Brush = Brush.verticalGradient(
     colorStops =
     arrayOf(
         MESSAGES_GRADIENT_TOP_STOP to

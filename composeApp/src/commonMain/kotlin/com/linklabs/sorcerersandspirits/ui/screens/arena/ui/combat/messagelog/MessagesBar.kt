@@ -34,12 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -101,7 +98,6 @@ internal fun MessagesBar(
     timerState: () -> ArenaTimerState,
     isExpanded: Boolean,
     onExpandedChange: (Boolean) -> Unit,
-    bottomBounds: Rect?,
     modifier: Modifier = Modifier,
 ) {
     val displayedMessageCount = screenState.displayedMessageCount
@@ -113,24 +109,13 @@ internal fun MessagesBar(
     }
     val unreadMessageCount = (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
 
-    var barBounds by remember { mutableStateOf<Rect?>(value = null) }
-
     MessagesBarSurface(
         header = header,
         latestMessage = latestMessage,
         timerState = timerState,
         unreadMessageCount = unreadMessageCount,
-        bottomBoundsTop = bottomBounds?.top,
         onToggleExpanded = { onExpandedChange(!isExpanded) },
-        modifier = modifier.onGloballyPositioned { barBounds = it.boundsInWindow() },
-    )
-
-    MessageLogDropdown(
-        messageGroups = screenState.messageGroups,
-        isExpanded = isExpanded,
-        barBounds = barBounds,
-        bottomBounds = bottomBounds,
-        onDismiss = { onExpandedChange(false) },
+        modifier = modifier,
     )
 }
 
@@ -140,12 +125,10 @@ private fun MessagesBarSurface(
     latestMessage: ArenaMessageState?,
     timerState: () -> ArenaTimerState,
     unreadMessageCount: Int,
-    bottomBoundsTop: Float?,
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val spanEndY =
-        bottomBoundsTop ?: with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
+    val spanEndY = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
 
     Column(
         modifier =

@@ -1,10 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,8 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
@@ -34,20 +29,18 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharac
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassStates
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ArenaMessageLog
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.messagesBackgroundBrush
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.messageBarHeight
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_confirm
 
-private const val LOG_REVEAL_ANIMATION_LABEL = "LogRevealAnimationLabel"
 private const val CONFIRM_BUTTON_VISIBILITY_LABEL = "ConfirmButtonVisibilityLabel"
 
 @Composable
@@ -58,38 +51,40 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
 ) {
     var isLogExpanded by remember { mutableStateOf(value = false) }
 
-    Column(
-        modifier = modifier.fillMaxSize().padding(bottom = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        MessagesBar(
-            screenState = screenState,
-            header =
-            MessagesBarHeaderTarget.ChoosingClassesTurn(
-                activePlayerUserId = activePlayerUserId,
-                isThisUser = isItThisUsersTurn,
-                displayName = playerMap.getValue(key = activePlayerUserId).displayName,
-            ),
-            latestMessage = screenState.latestChoosingClassesMessage,
-            timerState = timerState,
-            isExpanded = isLogExpanded,
-            onExpandedChange = { isLogExpanded = it },
-            bottomBounds = null,
-            modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
-        )
-
-        ChoosingClassesCards(
-            characterClasses = screenState.characterClasses,
-            modifier = Modifier.weight(weight = 1f),
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(bottom = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            ChoosingClassesLogOverlay(
+            MessagesBar(
+                screenState = screenState,
+                header =
+                MessagesBarHeaderTarget.ChoosingClassesTurn(
+                    activePlayerUserId = activePlayerUserId,
+                    isThisUser = isItThisUsersTurn,
+                    displayName = playerMap.getValue(key = activePlayerUserId).displayName,
+                ),
+                latestMessage = screenState.latestChoosingClassesMessage,
+                timerState = timerState,
                 isExpanded = isLogExpanded,
-                messageGroups = screenState.messageGroups,
-                onDismiss = { isLogExpanded = false },
+                onExpandedChange = { isLogExpanded = it },
+                modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
             )
+
+            ChoosingClassesCards(
+                characterClasses = screenState.characterClasses,
+                modifier = Modifier.weight(weight = 1f),
+            )
+
+            ConfirmSelectionButton()
         }
 
-        ConfirmSelectionButton()
+        ExpandingMessageLog(
+            isExpanded = isLogExpanded,
+            messageGroups = screenState.messageGroups,
+            onDismiss = { isLogExpanded = false },
+
+        )
     }
 }
 
@@ -97,7 +92,6 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
 private fun ArenaMatchState.ChoosingClasses.ChoosingClassesCards(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
-    wheelOverlay: @Composable BoxScope.() -> Unit,
 ) {
     val onClassSelected = ArenaActionsProvider.current.onSelectCharacterClass
 
@@ -107,38 +101,8 @@ private fun ArenaMatchState.ChoosingClasses.ChoosingClassesCards(
         unavailableClasses = unavailableClasses,
         isSelectionAuraVisible = isItThisUsersTurn,
         onClassSelected = { if (isItThisUsersTurn) onClassSelected(it) },
-        wheelOverlay = wheelOverlay,
         modifier = modifier,
     )
-}
-
-@Composable
-private fun BoxScope.ChoosingClassesLogOverlay(
-    isExpanded: Boolean,
-    messageGroups: List<ArenaMessageGroupState>,
-    onDismiss: () -> Unit,
-) {
-    val revealProgress by
-        animateFloatAsState(
-            targetValue = if (isExpanded) 1f else 0f,
-            label = LOG_REVEAL_ANIMATION_LABEL,
-        )
-    if (revealProgress == 0f) return
-
-    var panelHeight by remember { mutableStateOf(value = 0f) }
-
-    Box(modifier = Modifier.matchParentSize().clipToBounds()) {
-        ArenaMessageLog(
-            messageGroups = messageGroups,
-            dismissConnection = remember { object : NestedScrollConnection {} },
-            modifier =
-            Modifier.fillMaxSize()
-                .onSizeChanged { panelHeight = it.height.toFloat() }
-                .graphicsLayer { translationY = (revealProgress - 1f) * size.height }
-                .background(brush = messagesBackgroundBrush(startY = 0f, endY = panelHeight))
-                .clickable(onClick = onDismiss),
-        )
-    }
 }
 
 @Composable

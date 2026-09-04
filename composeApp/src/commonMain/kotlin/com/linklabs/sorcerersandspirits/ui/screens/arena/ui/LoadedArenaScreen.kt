@@ -115,12 +115,9 @@ private fun ArenaStateContent(
             is ArenaMatchState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
 
             is ArenaMatchState.Finished ->
-                MatchFinishedContent(
-                    finishedState = arenaState,
-                    gauntletProgressState = screenState.gauntletProgressState,
-                    hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
-                    secondsRemaining = { timerState().secondsRemaining },
-                    messageGroups = screenState.messageGroups,
+                arenaState.MatchFinishedContent(
+                    screenState = screenState,
+                    timerState = timerState,
                 )
         }
     }

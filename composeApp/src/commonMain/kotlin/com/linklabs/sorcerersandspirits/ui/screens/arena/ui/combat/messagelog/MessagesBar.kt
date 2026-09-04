@@ -55,6 +55,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.TurnTimer
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -88,6 +89,8 @@ internal sealed interface MessagesBarHeaderTarget {
         val isThisUser: Boolean,
         val displayName: String,
     ) : MessagesBarHeaderTarget
+
+    data class Finished(val titleResource: StringResource) : MessagesBarHeaderTarget
 }
 
 @Composable
@@ -208,6 +211,9 @@ private fun messagesBarHeaderText(header: MessagesBarHeaderTarget): AnnotatedStr
 
     is MessagesBarHeaderTarget.ChoosingClassesTurn ->
         choosingClassesHeaderText(isThisUser = header.isThisUser, displayName = header.displayName)
+
+    is MessagesBarHeaderTarget.Finished ->
+        AnnotatedString(text = stringResource(resource = header.titleResource))
 }
 
 @Composable

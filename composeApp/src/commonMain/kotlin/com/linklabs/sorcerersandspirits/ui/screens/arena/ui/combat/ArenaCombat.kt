@@ -35,6 +35,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.com
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
 
@@ -97,12 +98,20 @@ private fun SharedTransitionScope.ScreenContent(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
+        var isLogExpanded by remember { mutableStateOf(value = false) }
+
         MessagesBar(
             screenState = arenaScreenState,
-            roundNumber = arenaMatchState.roundNumber,
-            turnOwnerClassType = arenaMatchState.turnOwnerClassType,
+            header =
+            MessagesBarHeaderTarget.CombatTurn(
+                roundNumber = arenaMatchState.roundNumber,
+                classType = arenaMatchState.turnOwnerClassType,
+            ),
+            latestMessage = arenaScreenState.latestCombatHeaderMessage,
             timerState = timerState,
-            diceHomeBounds = diceHomeBounds,
+            isExpanded = isLogExpanded,
+            onExpandedChange = { isLogExpanded = it },
+            bottomBounds = diceHomeBounds,
             modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
         )
 

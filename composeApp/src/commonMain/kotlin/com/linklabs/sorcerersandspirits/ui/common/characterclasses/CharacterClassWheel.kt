@@ -1,12 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -17,24 +14,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ripple
@@ -44,6 +33,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -61,24 +51,14 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.ic_armor
-import sorcerersandspirits.composeapp.generated.resources.ic_health
-import sorcerersandspirits.composeapp.generated.resources.ic_spc
-import sorcerersandspirits.composeapp.generated.resources.ic_speed
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -88,10 +68,6 @@ import kotlin.math.sin
 private const val DEGREES_PER_CLASS = 45f
 private const val QUARTER_TURN_DEGREES = 90f
 private const val DISABLED_ALPHA = 0.35f
-
-private const val CLASS_NAME_ANIM_LABEL = "stat_class_name"
-private const val STAT_VALUE_ANIM_LABEL = "stat_value"
-private const val ABILITY_NAME_ANIM_LABEL = "stat_ability_name"
 
 private const val AURA_TRANSITION_LABEL = "class_aura"
 private const val AURA_SCALE_LABEL = "class_aura_scale"
@@ -112,15 +88,17 @@ private const val AVATAR_SIZE_FRACTION = 0.24f
 private const val AVATAR_RADIUS_FRACTION = 0.38f
 private const val LABEL_RADIUS_FRACTION = 0.22f
 
+// TODO: Refactor this BAD
+
 @Composable
 fun CharacterClassWheel(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
     selectedClass: CharacterClassState? = null,
     unavailableClasses: Set<CharacterClassType> = emptySet(),
-    classSelections: Map<CharacterClassType, String> = emptyMap(),
     isSelectionAuraVisible: Boolean = false,
     onClassSelected: (CharacterClassState) -> Unit = {},
+    wheelOverlay: @Composable BoxScope.() -> Unit = {},
 ) {
     val count = characterClasses.size
     if (count == 0) return
@@ -135,14 +113,17 @@ fun CharacterClassWheel(
         remember(key1 = count) { mutableFloatStateOf(rotationForIndex(index = initialIndex)) }
     var animationJob by remember { mutableStateOf<Job?>(null) }
 
-    // Derived so the wheel subtree (avatars, labels, stat bar) only recomposes when the centred
-    // class actually changes — not on every drag frame. The live rotation reaches the GPU purely
-    // through graphicsLayer reads, never through recomposition.
     val centeredIndex by
         remember(key1 = count) {
             derivedStateOf { centeredIndex(rotationDegrees = rotationDegrees, count = count) }
         }
-    val centeredClass = characterClasses[centeredIndex]
+
+    var statsIndex by remember(key1 = count) { mutableIntStateOf(value = initialIndex) }
+    val statsClass = characterClasses[statsIndex]
+
+    fun settleStatsToCenter() {
+        statsIndex = centeredIndex(rotationDegrees = rotationDegrees, count = count)
+    }
 
     fun animateRotationTo(targetDegrees: Float) {
         animationJob?.cancel()
@@ -152,6 +133,7 @@ fun CharacterClassWheel(
                 animatable.animateTo(targetValue = targetDegrees, animationSpec = WHEEL_SNAP_SPEC) {
                     rotationDegrees = value
                 }
+                settleStatsToCenter()
             }
     }
 
@@ -176,88 +158,89 @@ fun CharacterClassWheel(
         }
     }
 
-    BoxWithConstraints(modifier = modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-        val isHeightBounded = constraints.hasBoundedHeight
-        val wheelSize =
-            minOf(
-                maxWidth,
-                WHEEL_MAX_SIZE,
-                if (isHeightBounded) maxHeight * WHEEL_HEIGHT_FRACTION else Dp.Infinity,
-            )
+    var inspectedClass by remember { mutableStateOf<CharacterClassState?>(value = null) }
 
+    Box(modifier = modifier.fillMaxSize()) {
         Column(
-            modifier = if (isHeightBounded) Modifier.fillMaxSize() else Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Box(
-                modifier =
-                Modifier.size(size = wheelSize).pointerInput(key1 = count) {
-                    detectDragGestures(
-                        onDragStart = { animationJob?.cancel() },
-                        onDragEnd = {
-                            select(
-                                index =
-                                centeredIndex(
-                                    rotationDegrees = rotationDegrees,
-                                    count = count,
-                                ),
-                            )
-                        },
-                        onDragCancel = {
-                            select(
-                                index =
-                                centeredIndex(
-                                    rotationDegrees = rotationDegrees,
-                                    count = count,
-                                ),
-                            )
-                        },
-                        onDrag = { change, _ ->
-                            change.consume()
-                            val centerX = size.width / 2f
-                            val centerY = size.height / 2f
-                            val previousAngle =
-                                atan2(
-                                    y = change.previousPosition.y - centerY,
-                                    x = change.previousPosition.x - centerX,
-                                )
-                            val currentAngle =
-                                atan2(
-                                    y = change.position.y - centerY,
-                                    x = change.position.x - centerX,
-                                )
-                            var sweptDegrees =
-                                (currentAngle - previousAngle) * 180f / PI.toFloat()
-                            if (sweptDegrees > 180f) sweptDegrees -= 360f
-                            if (sweptDegrees < -180f) sweptDegrees += 360f
-                            rotationDegrees += sweptDegrees
-                        },
-                    )
-                },
+            BoxWithConstraints(
+                modifier = Modifier.fillMaxWidth().weight(weight = 1f, fill = false),
                 contentAlignment = Alignment.Center,
             ) {
-                RotatingWheel(
-                    characterClasses = characterClasses,
-                    rotationDegrees = { rotationDegrees },
-                    unavailableClasses = unavailableClasses,
-                    selectedIndex = if (isSelectionAuraVisible) centeredIndex else -1,
-                    wheelSize = wheelSize,
-                    onClassClick = { index -> select(index = index) },
-                )
+                val wheelSize =
+                    if (constraints.hasBoundedHeight) minOf(maxWidth, maxHeight) else maxWidth
+
+                Box(
+                    modifier =
+                    Modifier.size(size = wheelSize).pointerInput(key1 = count) {
+                        detectDragGestures(
+                            onDragStart = { animationJob?.cancel() },
+                            onDragEnd = {
+                                select(
+                                    index =
+                                    centeredIndex(rotationDegrees = rotationDegrees, count = count),
+                                )
+                            },
+                            onDragCancel = {
+                                select(
+                                    index =
+                                    centeredIndex(rotationDegrees = rotationDegrees, count = count),
+                                )
+                            },
+                            onDrag = { change, _ ->
+                                change.consume()
+                                val centerX = size.width / 2f
+                                val centerY = size.height / 2f
+                                val previousAngle =
+                                    atan2(
+                                        y = change.previousPosition.y - centerY,
+                                        x = change.previousPosition.x - centerX,
+                                    )
+                                val currentAngle =
+                                    atan2(
+                                        y = change.position.y - centerY,
+                                        x = change.position.x - centerX,
+                                    )
+                                var sweptDegrees =
+                                    (currentAngle - previousAngle) * 180f / PI.toFloat()
+                                if (sweptDegrees > 180f) sweptDegrees -= 360f
+                                if (sweptDegrees < -180f) sweptDegrees += 360f
+                                rotationDegrees += sweptDegrees
+                            },
+                        )
+                    },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    RotatingWheel(
+                        characterClasses = characterClasses,
+                        rotationDegrees = { rotationDegrees },
+                        unavailableClasses = unavailableClasses,
+                        selectedIndex = if (isSelectionAuraVisible) centeredIndex else -1,
+                        wheelSize = wheelSize,
+                        onClassClick = { index -> select(index = index) },
+                    )
+                }
+
+                wheelOverlay()
             }
 
-            ClassStatBar(
-                characterClass = centeredClass,
-                selectedBy = classSelections[centeredClass.type],
-                modifier =
-                if (isHeightBounded) Modifier.weight(weight = 1f, fill = false) else Modifier,
+            ClassPageStats(
+                characterClass = statsClass,
+                onInspect = { inspectedClass = statsClass },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
+
+        InspectDrawer(
+            characterClass = inspectedClass,
+            onClose = { inspectedClass = null },
+            isDetailed = true,
+        )
     }
 }
 
-private val WHEEL_MAX_SIZE = 320.dp
-private const val WHEEL_HEIGHT_FRACTION = 0.6f
 private val WHEEL_SNAP_SPEC =
     spring<Float>(
         dampingRatio = Spring.DampingRatioLowBouncy,
@@ -458,168 +441,6 @@ private fun BoxScope.ClassLabel(
             .graphicsLayer { rotationZ = baseAngle - QUARTER_TURN_DEGREES }
             .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
     )
-}
-
-@Composable
-private fun ClassStatBar(
-    characterClass: CharacterClassState,
-    selectedBy: String?,
-    modifier: Modifier = Modifier,
-) {
-    var isExpanded by remember { mutableStateOf(value = false) }
-    val classCopy = LocalCharacterClassCopy.current
-
-    ElevatedCard(
-        onClick = { isExpanded = !isExpanded },
-        modifier = modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 6.dp),
-    ) {
-        Column(
-            modifier =
-            Modifier.fillMaxWidth()
-                .verticalScroll(state = rememberScrollState())
-                .animateContentSize()
-                .padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(space = 4.dp),
-        ) {
-            AnimatedContent(
-                targetState = characterClass.className,
-                label = CLASS_NAME_ANIM_LABEL,
-            ) { className ->
-                Text(
-                    text = className,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-
-            if (selectedBy != null) {
-                Text(
-                    text = "Chosen by: $selectedBy",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AnimatedStatChip(icon = Res.drawable.ic_health, value = characterClass.hitPoints)
-                AnimatedStatChip(icon = Res.drawable.ic_armor, value = characterClass.armorClass)
-                AnimatedStatChip(icon = Res.drawable.ic_speed, value = characterClass.speed)
-            }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AbilityChip(
-                    abilityName =
-                    classCopy.forAbility(ability = characterClass.offensiveAbility).name,
-                )
-                AbilityChip(
-                    abilityName =
-                    classCopy.forAbility(ability = characterClass.defensiveAbility).name,
-                )
-            }
-
-            if (isExpanded) {
-                ClassStatDetails(characterClass = characterClass, classCopy = classCopy)
-            }
-        }
-    }
-}
-
-@Composable
-private fun AnimatedStatChip(icon: DrawableResource, value: Int, modifier: Modifier = Modifier) {
-    val animatedValue by animateIntAsState(targetValue = value, label = STAT_VALUE_ANIM_LABEL)
-
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Image(
-            painter = painterResource(resource = icon),
-            contentDescription = null,
-            modifier = Modifier.size(size = 18.dp),
-        )
-        Text(
-            text = animatedValue.toString(),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(start = 3.dp),
-        )
-    }
-}
-
-@Composable
-private fun AbilityChip(abilityName: String, modifier: Modifier = Modifier) {
-    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Image(
-            painter = painterResource(resource = Res.drawable.ic_spc),
-            contentDescription = null,
-            modifier = Modifier.size(size = 18.dp),
-        )
-        AnimatedContent(targetState = abilityName, label = ABILITY_NAME_ANIM_LABEL) { name ->
-            Text(
-                text = name,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 3.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ClassStatDetails(
-    characterClass: CharacterClassState,
-    classCopy: CharacterClassCopy,
-    modifier: Modifier = Modifier,
-) {
-    val health = classCopy[ClassCopyKeys.HEALTH]
-    val armor = classCopy[ClassCopyKeys.ARMOR]
-    val speed = classCopy[ClassCopyKeys.SPEED]
-    val offensive = classCopy.forAbility(ability = characterClass.offensiveAbility)
-    val defensive = classCopy.forAbility(ability = characterClass.defensiveAbility)
-
-    Column(
-        modifier = modifier.fillMaxWidth().padding(top = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
-    ) {
-        HorizontalDivider()
-        DetailItem(
-            title = "${health.name} · ${characterClass.hitPoints}",
-            description = health.short,
-        )
-        DetailItem(
-            title = "${armor.name} · ${characterClass.armorClass}",
-            description = armor.short,
-        )
-        DetailItem(title = "${speed.name} · ${characterClass.speed}", description = speed.short)
-        DetailItem(title = offensive.name, description = offensive.short)
-        DetailItem(title = defensive.name, description = defensive.short)
-    }
-}
-
-@Composable
-private fun DetailItem(title: String, description: String, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth()) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(
-            text = description,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
 }
 
 private fun rotationForIndex(index: Int) = -index * DEGREES_PER_CLASS

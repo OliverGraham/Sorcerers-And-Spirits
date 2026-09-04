@@ -44,14 +44,14 @@ internal fun MessageLogDropdown(
     messageGroups: List<ArenaMessageGroupState>,
     isExpanded: Boolean,
     barBounds: Rect?,
-    diceHomeBounds: Rect?,
+    bottomBounds: Rect?,
     onDismiss: () -> Unit,
 ) {
-    if (barBounds == null || diceHomeBounds == null) return
+    if (barBounds == null || bottomBounds == null) return
 
     val density = LocalDensity.current
     val barHeightPx = barBounds.height
-    val fullLogHeightPx = diceHomeBounds.top - barBounds.bottom
+    val fullLogHeightPx = bottomBounds.top - barBounds.bottom
     val fullLogHeight = with(receiver = density) { fullLogHeightPx.toDp() }
     val logWidth = with(receiver = density) { barBounds.width.toDp() }
     val leftOffsetPx = barBounds.left.roundToInt()

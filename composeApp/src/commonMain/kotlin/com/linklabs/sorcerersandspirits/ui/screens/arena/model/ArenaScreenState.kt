@@ -34,6 +34,8 @@ data class ArenaScreenState(
 
     val latestCombatHeaderMessage = messageGroups.getLatestCombatHeaderMessage()
 
+    val latestChoosingClassesMessage = messageGroups.getLatestChoosingClassesMessage()
+
     val displayedMessageCount = messageGroups.sumOf { it.messages.size }
 }
 
@@ -46,6 +48,11 @@ private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMe
             it !is ArenaMessageState.NewTurn &&
             it !is ArenaMessageState.NormalRoll.Attack
     }
+}
+
+private fun List<ArenaMessageGroupState>.getLatestChoosingClassesMessage(): ArenaMessageState? {
+    val setupGroup = filterIsInstance<ArenaMessageGroupState.Setup>().lastOrNull() ?: return null
+    return setupGroup.messages.lastOrNull { it is ArenaMessageState.ChoseCharacterClass }
 }
 
 internal fun ArenaMatchState.players(): List<PlayerState> = when (this) {

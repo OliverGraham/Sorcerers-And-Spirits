@@ -18,20 +18,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,11 +50,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.fadedBlackBackground
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
-import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.ic_info
 
 private const val SELECTED_ALPHA = 1f
 private const val UNSELECTED_ALPHA = 0.55f
@@ -104,7 +99,7 @@ fun CharacterClassPager(
                 modifier =
                 Modifier.fillMaxWidth()
                     .padding(horizontal = 12.dp)
-                    .groupBackground()
+                    .fadedBlackBackground()
                     .padding(all = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(space = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(space = 8.dp),
@@ -212,11 +207,6 @@ private fun Modifier.selectionGlow(color: Color, isVisible: Boolean): Modifier {
     return border(width = 2.dp, color = glowColor.copy(alpha = glowAlpha), shape = CircleShape)
 }
 
-private fun Modifier.groupBackground(): Modifier = background(
-    color = Color.Black.copy(alpha = 0.35f),
-    shape = RoundedCornerShape(size = 20.dp),
-)
-
 @Composable
 private fun CharacterClassPage(
     characterClass: CharacterClassState,
@@ -241,62 +231,6 @@ private fun CharacterClassPage(
             characterClass = characterClass,
             onInspect = onInspect,
             modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-@Composable
-private fun ClassPageStats(
-    characterClass: CharacterClassState,
-    onInspect: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val classCopy = LocalCharacterClassCopy.current
-    val stats = avatarStats(characterClass = characterClass, classCopy = classCopy)
-
-    Box(modifier = modifier.padding(horizontal = 12.dp)) {
-        FlowRow(
-            modifier =
-            Modifier.fillMaxWidth()
-                .clip(shape = RoundedCornerShape(size = 20.dp))
-                .groupBackground()
-                .clickable(onClick = onInspect)
-                .padding(all = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(space = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            maxItemsInEachRow = 3,
-        ) {
-            stats.forEach { stat -> StatChip(stat = stat) }
-        }
-
-        Image(
-            painter = painterResource(resource = Res.drawable.ic_info),
-            contentDescription = null,
-            modifier =
-            Modifier.align(alignment = Alignment.BottomEnd).padding(all = 12.dp).size(size = 24.dp),
-        )
-    }
-}
-
-@Composable
-private fun StatChip(stat: AvatarStat, modifier: Modifier = Modifier) {
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Image(
-            painter = painterResource(resource = stat.icon),
-            contentDescription = stat.name,
-            modifier = Modifier.size(size = 36.dp),
-        )
-        val value = stat.value
-        val title = if (value != null) "${stat.name} · $value" else stat.name
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
         )
     }
 }

@@ -100,7 +100,10 @@ private fun ArenaStateContent(
     ) { arenaState ->
         when (arenaState) {
             is ArenaMatchState.ChoosingClasses ->
-                arenaState.ArenaChoosingClasses(characterClasses = screenState.characterClasses)
+                arenaState.ArenaChoosingClasses(
+                    screenState = screenState,
+                    timerState = timerState,
+                )
 
             is ArenaMatchState.Combat ->
                 ArenaCombat(

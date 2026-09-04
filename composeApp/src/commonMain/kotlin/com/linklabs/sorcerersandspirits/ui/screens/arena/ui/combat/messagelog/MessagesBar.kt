@@ -34,12 +34,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -58,9 +55,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.TurnTimer
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_title
+import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_waiting
 import sorcerersandspirits.composeapp.generated.resources.arena_log_header
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
@@ -77,17 +77,33 @@ private const val UNREAD_COUNT_CHANGE_LABEL = "MessagesUnreadCountChange"
 private const val UNREAD_COUNT_COLOR_CYCLE_MILLIS = 2000
 private const val UNREAD_COUNT_COLOR_TILE_WIDTH_PX = 80f
 
+// TODO: Refactor
+internal sealed interface MessagesBarHeaderTarget {
+    data class CombatTurn(
+        val roundNumber: Int,
+        val classType: CharacterClassType,
+    ) : MessagesBarHeaderTarget
+
+    data class ChoosingClassesTurn(
+        val activePlayerUserId: String,
+        val isThisUser: Boolean,
+        val displayName: String,
+    ) : MessagesBarHeaderTarget
+
+    data class Finished(val titleResource: StringResource) : MessagesBarHeaderTarget
+}
+
 @Composable
 internal fun MessagesBar(
     screenState: ArenaScreenState,
-    roundNumber: Int,
-    turnOwnerClassType: CharacterClassType,
+    header: MessagesBarHeaderTarget,
+    latestMessage: ArenaMessageState?,
     timerState: () -> ArenaTimerState,
-    diceHomeBounds: Rect?,
+    isExpanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val displayedMessageCount = screenState.displayedMessageCount
-    var isExpanded by remember { mutableStateOf(value = false) }
     var seenLogMessageCount by remember { mutableStateOf(value = displayedMessageCount) }
     LaunchedEffect(key1 = isExpanded, key2 = displayedMessageCount) {
         val shouldSyncSeenCount =
@@ -96,44 +112,26 @@ internal fun MessagesBar(
     }
     val unreadMessageCount = (displayedMessageCount - seenLogMessageCount).coerceAtLeast(minimumValue = 0)
 
-    var barBounds by remember { mutableStateOf<Rect?>(value = null) }
-
     MessagesBarSurface(
-        roundNumber = roundNumber,
-        turnOwnerClassType = turnOwnerClassType,
-        latestMessage = screenState.latestCombatHeaderMessage,
+        header = header,
+        latestMessage = latestMessage,
         timerState = timerState,
         unreadMessageCount = unreadMessageCount,
-        diceHomeBoundsTop = diceHomeBounds?.top,
-        onToggleExpanded = {
-            isExpanded = !isExpanded
-            if (isExpanded) seenLogMessageCount = displayedMessageCount
-        },
-        modifier = modifier.onGloballyPositioned { barBounds = it.boundsInWindow() },
-    )
-
-    MessageLogDropdown(
-        messageGroups = screenState.messageGroups,
-        isExpanded = isExpanded,
-        barBounds = barBounds,
-        diceHomeBounds = diceHomeBounds,
-        onDismiss = { isExpanded = false },
+        onToggleExpanded = { onExpandedChange(!isExpanded) },
+        modifier = modifier,
     )
 }
 
 @Composable
 private fun MessagesBarSurface(
-    roundNumber: Int,
-    turnOwnerClassType: CharacterClassType,
+    header: MessagesBarHeaderTarget,
     latestMessage: ArenaMessageState?,
     timerState: () -> ArenaTimerState,
     unreadMessageCount: Int,
-    diceHomeBoundsTop: Float?,
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val spanEndY =
-        diceHomeBoundsTop ?: with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
+    val spanEndY = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
 
     Column(
         modifier =
@@ -151,7 +149,7 @@ private fun MessagesBarSurface(
             )
 
             AnimatedContent(
-                targetState = roundNumber to turnOwnerClassType,
+                targetState = header,
                 transitionSpec = {
                     (slideInVertically { height -> height } + fadeIn()) togetherWith
                         (slideOutVertically { height -> -height } + fadeOut())
@@ -161,9 +159,9 @@ private fun MessagesBarSurface(
                 Modifier.align(alignment = Alignment.Center)
                     .fillMaxWidth()
                     .padding(horizontal = headerBookendReserve),
-            ) { (round, classType) ->
+            ) { headerTarget ->
                 Text(
-                    text = roundTurnHeaderText(roundNumber = round, classType = classType),
+                    text = messagesBarHeaderText(header = headerTarget),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White,
@@ -204,6 +202,29 @@ private fun MessagesBarSurface(
             }
         }
     }
+}
+
+@Composable
+private fun messagesBarHeaderText(header: MessagesBarHeaderTarget): AnnotatedString = when (header) {
+    is MessagesBarHeaderTarget.CombatTurn ->
+        roundTurnHeaderText(roundNumber = header.roundNumber, classType = header.classType)
+
+    is MessagesBarHeaderTarget.ChoosingClassesTurn ->
+        choosingClassesHeaderText(isThisUser = header.isThisUser, displayName = header.displayName)
+
+    is MessagesBarHeaderTarget.Finished ->
+        AnnotatedString(text = stringResource(resource = header.titleResource))
+}
+
+@Composable
+private fun choosingClassesHeaderText(isThisUser: Boolean, displayName: String): AnnotatedString {
+    val text =
+        if (isThisUser) {
+            stringResource(resource = Res.string.arena_choosing_classes_title)
+        } else {
+            stringResource(resource = Res.string.arena_choosing_classes_waiting, displayName)
+        }
+    return AnnotatedString(text = text)
 }
 
 @Composable

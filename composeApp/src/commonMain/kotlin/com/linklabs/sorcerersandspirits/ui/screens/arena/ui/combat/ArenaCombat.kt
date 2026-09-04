@@ -26,14 +26,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.InspectDrawer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarBoundsStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.CombatAnimationOverlays
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.FlashMessageOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.messageBarHeight
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
 
@@ -56,6 +61,7 @@ internal fun ArenaCombat(
         remember(key1 = arenaMatchState.activeUserIds) { mutableStateOf<String?>(value = null) }
 
     var diceHomeBounds by remember { mutableStateOf<Rect?>(value = null) }
+    var isLogExpanded by remember { mutableStateOf(value = false) }
 
     SharedTransitionLayout(modifier = modifier.fillMaxSize()) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -66,7 +72,8 @@ internal fun ArenaCombat(
                 arenaMatchState = arenaMatchState,
                 timerState = timerState,
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
-                diceHomeBounds = diceHomeBounds,
+                isLogExpanded = isLogExpanded,
+                onLogExpandedChange = { isLogExpanded = it },
                 onDiceHomeBoundsChanged = { diceHomeBounds = it },
                 onInspect = { inspectedUserId.value = it },
             )
@@ -78,6 +85,8 @@ internal fun ArenaCombat(
                 diceStateHolder = diceStateHolder,
                 diceHomeBounds = diceHomeBounds,
                 inspectedUserId = inspectedUserId.value,
+                isLogExpanded = isLogExpanded,
+                onDismissMessageLog = { isLogExpanded = false },
                 onCloseInspectCharacterDrawer = { inspectedUserId.value = null },
             )
         }
@@ -89,7 +98,8 @@ private fun SharedTransitionScope.ScreenContent(
     arenaScreenState: ArenaScreenState,
     arenaMatchState: ArenaMatchState.Combat,
     timerState: () -> ArenaTimerState,
-    diceHomeBounds: Rect?,
+    isLogExpanded: Boolean,
+    onLogExpandedChange: (Boolean) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     onInspect: (String) -> Unit,
@@ -98,10 +108,15 @@ private fun SharedTransitionScope.ScreenContent(
     Column(modifier = modifier.fillMaxSize()) {
         MessagesBar(
             screenState = arenaScreenState,
-            roundNumber = arenaMatchState.roundNumber,
-            turnOwnerClassType = arenaMatchState.turnOwnerClassType,
+            header =
+            MessagesBarHeaderTarget.CombatTurn(
+                roundNumber = arenaMatchState.roundNumber,
+                classType = arenaMatchState.turnOwnerClassType,
+            ),
+            latestMessage = arenaScreenState.latestCombatHeaderMessage,
             timerState = timerState,
-            diceHomeBounds = diceHomeBounds,
+            isExpanded = isLogExpanded,
+            onExpandedChange = onLogExpandedChange,
             modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
         )
 
@@ -130,6 +145,8 @@ private fun BoxScope.OverlayContent(
     diceStateHolder: DiceStateHolder,
     diceHomeBounds: Rect?,
     inspectedUserId: String?,
+    isLogExpanded: Boolean,
+    onDismissMessageLog: () -> Unit,
     onCloseInspectCharacterDrawer: () -> Unit,
 ) {
     val animatingMessage = arenaScreenState.animatingMessage
@@ -164,8 +181,14 @@ private fun BoxScope.OverlayContent(
         avatarBoundsStateHolder = avatarBoundsStateHolder,
     )
 
+    ExpandingMessageLog(
+        isExpanded = isLogExpanded,
+        messageGroups = arenaScreenState.messageGroups,
+        onDismiss = onDismissMessageLog,
+    )
+
     InspectDrawer(
-        player = inspectedUserId?.let { arenaMatchState.playerMap[it] },
+        characterClass = inspectedUserId?.let { arenaMatchState.playerMap[it]?.characterClass },
         onClose = onCloseInspectCharacterDrawer,
     )
 }

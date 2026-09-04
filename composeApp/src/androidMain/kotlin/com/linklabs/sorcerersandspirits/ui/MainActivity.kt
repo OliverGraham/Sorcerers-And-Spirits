@@ -1,7 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui
 
+import android.graphics.Color
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
@@ -14,7 +16,10 @@ class MainActivity : ComponentActivity() {
     private val currentActivityHolder: CurrentActivityHolder by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(scrim = Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(scrim = Color.TRANSPARENT),
+        )
         super.onCreate(savedInstanceState)
 
         // Lets platform singletons (e.g. the Credential Manager account picker) host system UI on

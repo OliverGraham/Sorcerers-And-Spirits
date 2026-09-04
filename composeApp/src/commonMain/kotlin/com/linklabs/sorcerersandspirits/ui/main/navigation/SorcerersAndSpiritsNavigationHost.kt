@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ModalDrawerSheet
@@ -13,6 +14,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
@@ -32,6 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.ChallengeDialog
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -153,26 +156,37 @@ private fun AppContent(
     modifier: Modifier = Modifier,
     drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
 ) {
+    val scope = rememberCoroutineScope()
+
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet { SettingsDrawer(backStack = backStack, drawerState = drawerState) }
+            ModalDrawerSheet(
+                drawerContainerColor = DrawerDefaults.modalContainerColor.copy(alpha = 0.9f),
+            ) {
+                SettingsDrawer(backStack = backStack, drawerState = drawerState)
+            }
         },
         gesturesEnabled = true,
     ) {
         Scaffold(modifier = modifier) { innerPadding ->
-            val isEdgeToEdgeRoute = backStack.lastOrNull() is Route.ArenaScreen
-            Column(
-                modifier =
-                if (isEdgeToEdgeRoute) {
-                    Modifier
-                } else {
-                    Modifier.padding(paddingValues = innerPadding)
-                },
+            val lastRoute = backStack.lastOrNull()
+            val isEdgeToEdgeRoute = lastRoute is Route.ArenaScreen || lastRoute is Route.TavernScreen
+            CompositionLocalProvider(
+                LocalOpenDrawer provides { scope.launch { drawerState.open() } },
             ) {
-                OfflineBanner(isOffline = isOffline)
+                Column(
+                    modifier =
+                    if (isEdgeToEdgeRoute) {
+                        Modifier
+                    } else {
+                        Modifier.padding(paddingValues = innerPadding)
+                    },
+                ) {
+                    OfflineBanner(isOffline = isOffline)
 
-                NavigationDisplay(backStack = backStack, modifier = modifier)
+                    NavigationDisplay(backStack = backStack, modifier = modifier)
+                }
             }
         }
     }

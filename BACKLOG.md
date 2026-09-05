@@ -331,6 +331,14 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - Prepare Attack has no trigger log line (its `Strike` message renders blank — animation-only cue),
       so the KO range folds into the outcome. Dropped the misleading old "studied … next attack is
       prepared" copy.
+- **Progress — Necromancer (Summon Minion) complete:** strings-only rewrite (no new fields — the
+  message already carries `className`, `singleDie`, and the derived `SummonMinionOutcome`). Log now
+  describes each minion's grant: skeleton "(+1 Health shield, extra attack)", golem "(+2 Health shield,
+  extra attack) and heals to full", fizzle "no minion is raised". Flash gained a heal indicator:
+  "Skeleton · Healed!" / "Golem · Healed!". Shield values are inherent to minion type
+  (`Ability.kt` `shieldPoints` = Golem 2 else 1), stated as literals per outcome-specific string.
+  Extra-attack timing nuance (skeleton "next turn" vs golem "your turn") left as plain "extra attack"
+  to avoid misstating. Minion *attacks* flow through `NormalRoll.Outcome` (Group B), not this pass.
 - **Open considerations:**
     - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
       deserialization defaults. [[serialization-backcompat-non-concern]]
@@ -340,7 +348,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** Necromancer (SummonMinion) next, then remaining classes. Group B still open:
+- **Next:** Mage (Spell Potency + Teleport) next, then remaining classes. Group B still open:
   `NormalRoll.Outcome` (carry defender ArmorClass/Health), `Teleport.Result` (both roll-off values),
   `Dodge` (old→new armor), `MirrorImage.TemptFate`. Then Group A string-only rewrites (`Encore.Roll`,
   `HolyShield.Prayer`, `AllIn`). Fix all siblings of a message family in the same pass.

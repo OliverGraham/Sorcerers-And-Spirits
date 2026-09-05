@@ -393,10 +393,18 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** all 10 classes done. Remaining: Group B `NormalRoll.Outcome` (normal + minion attacks —
-  carry the defender threshold so "rolled 9 vs 6 armor" reads fully; also completes the Mirror Image
-  Pass threshold deferred in the Illusionist pass) and Group A `AllIn` polish. Fix all siblings of a
-  message family in the same pass.
+- **Progress — NormalRoll.Outcome complete (core attack messages):** threaded `defenderArmorClass`
+  through all layers. Armor hit/miss now read "…rolled 9 against Rogue's 6 armor — armor broken!" /
+  "…the armor holds!". Health roll (cumulative `takeDamage`, not a fixed threshold — and the `Damage`
+  type also covers a HolyShield-deferred KO) reframed to the rule's language without a bogus threshold:
+  "…Health roll of 7 damages Rogue" / "…knocks out Rogue!". Flash left as-is (roll-bearing).
+    - Minion attacks reuse this Outcome with `attackerClassName` = Necromancer (minions grant *the
+      Necromancer* extra attacks) — existing attribution, unchanged. Could attribute to Skeleton/Golem
+      later (needs minion info threaded into Outcome).
+    - `MirrorImage.Pass` still shows the roll total but not the "vs armor" threshold — easy follow-up to
+      add `defenderArmorClass` there so a declined Mirror Image reads like a normal armor roll.
+- **Next:** Group A `AllIn` polish is the last item. Fix all siblings of a message family in the same
+  pass.
 
 ## Combat animations
 

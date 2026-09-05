@@ -111,6 +111,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     attackerClassName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                    defenderArmorClass,
                 )
 
             NormalRollMessageType.ArmorClassMiss ->
@@ -119,6 +120,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     attackerClassName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                    defenderArmorClass,
                 )
 
             NormalRollMessageType.Damage ->

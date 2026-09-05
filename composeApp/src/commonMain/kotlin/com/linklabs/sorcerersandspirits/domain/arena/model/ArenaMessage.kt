@@ -41,6 +41,7 @@ sealed interface ArenaMessage {
             val attackerClassName: String,
             val attackerClassType: CharacterClassType,
             val defenderClassName: String,
+            val defenderArmorClass: Int,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,

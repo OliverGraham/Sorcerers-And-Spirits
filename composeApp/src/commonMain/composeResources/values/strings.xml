@@ -113,10 +113,10 @@
     <string name="arena_message_next_match_starting_soon">Next match starting soon!</string>
     <string name="arena_message_new_turn">It's %1$s's turn</string>
 
-    <string name="arena_message_normal_roll_hit">%1$s targeted %2$s, rolled %3$s and hit</string>
-    <string name="arena_message_normal_roll_miss">%1$s targeted %2$s, rolled %3$s and missed</string>
-    <string name="arena_message_normal_roll_damage">%1$s damaged %2$s for %3$s</string>
-    <string name="arena_message_normal_roll_knockout">%1$s damaged %2$s for %3$s and knocked them out!</string>
+    <string name="arena_message_normal_roll_hit">%1$s rolled %3$s against %2$s's %4$s armor — armor broken!</string>
+    <string name="arena_message_normal_roll_miss">%1$s rolled %3$s against %2$s's %4$s armor — the armor holds!</string>
+    <string name="arena_message_normal_roll_damage">%1$s's Health roll of %3$s damages %2$s</string>
+    <string name="arena_message_normal_roll_knockout">%1$s's Health roll of %3$s knocks out %2$s!</string>
 
     <string name="arena_message_killing_momentum">Killing Momentum! The Rogue's knockout grants another attack</string>
 

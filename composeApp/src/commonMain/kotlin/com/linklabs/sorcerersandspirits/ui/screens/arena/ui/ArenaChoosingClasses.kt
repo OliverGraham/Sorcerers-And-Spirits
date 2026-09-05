@@ -100,6 +100,7 @@ private fun ArenaMatchState.ChoosingClasses.ChoosingClassesCards(
         selectedClass = selectedClass,
         unavailableClasses = unavailableClasses,
         isSelectionAuraVisible = isItThisUsersTurn,
+        pinnedAuraClassType = userConfirmedClassType,
         onClassSelected = { if (isItThisUsersTurn) onClassSelected(it) },
         modifier = modifier,
     )
@@ -157,6 +158,7 @@ private fun ArenaChoosingClassesPreview() {
                 selectedClass = null,
                 unavailableClasses = emptySet(),
                 classSelections = emptyMap(),
+                userConfirmedClassType = null,
             )
         val mockScreenState =
             ArenaScreenState(

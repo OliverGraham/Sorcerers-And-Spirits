@@ -22,6 +22,7 @@ sealed interface ArenaMatchState {
         val selectedClass: CharacterClassState?,
         val unavailableClasses: Set<CharacterClassType>,
         val classSelections: Map<CharacterClassType, String>,
+        val userConfirmedClassType: CharacterClassType?,
     ) : ActiveMatchState {
         val otherPlayers = playerMap.filterKeys { it != activePlayerUserId }
         val isItThisUsersTurn = activePlayerUserId == userPlayerId
@@ -115,6 +116,7 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
     selectedClass = defaultSelectedClass,
     unavailableClasses = emptySet(),
     classSelections = emptyMap(),
+    userConfirmedClassType = playerMap.userConfirmedClassType(userId = userPlayerId),
 )
 
 private fun ArenaMatchState.Combat.getTargetedPlayerUserId() = lockedTargetUserId

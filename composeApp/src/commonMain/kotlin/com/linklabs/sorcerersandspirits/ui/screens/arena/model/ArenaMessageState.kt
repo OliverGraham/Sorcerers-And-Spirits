@@ -156,6 +156,9 @@ sealed interface ArenaMessageState {
         override val id: String,
         val didArmorIncrease: Boolean,
         val dodgerUserId: String,
+        val newArmorClass: Int,
+        val armorBonus: Int,
+        val maxArmorBonus: Int,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = dodgerUserId)
@@ -671,6 +674,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             didArmorIncrease = didArmorIncrease,
             dodgerUserId = dodgerUserId,
+            newArmorClass = newArmorClass,
+            armorBonus = armorBonus,
+            maxArmorBonus = maxArmorBonus,
             gestures = mapOf(dodgerUserId to gesture),
         )
     }

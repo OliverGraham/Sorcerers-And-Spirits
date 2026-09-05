@@ -19,6 +19,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_counter_fa
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_damage
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_damage_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_dodge
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_dodge_capped
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_encore
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_encore_again
@@ -115,7 +116,12 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
     is ArenaMessageState.KillingMomentum ->
         stringResource(resource = Res.string.arena_flash_killing_momentum)
 
-    is ArenaMessageState.Dodge -> stringResource(resource = Res.string.arena_flash_dodge)
+    is ArenaMessageState.Dodge ->
+        if (didArmorIncrease) {
+            stringResource(resource = Res.string.arena_flash_dodge, armorBonus)
+        } else {
+            stringResource(resource = Res.string.arena_flash_dodge_capped)
+        }
 
     is ArenaMessageState.SpellPotency ->
         stringResource(resource = Res.string.arena_flash_spell_potency, mainDamage)

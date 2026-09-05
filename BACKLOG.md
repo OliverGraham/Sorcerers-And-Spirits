@@ -351,6 +351,15 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - **No "d1 + d2 = dmg" for Spell Potency:** `mainDamage = diceTotal = firstDie + secondDie + bonus`
       (carried doubles bonus in `NormalAttackRollHandler`), so the sum wouldn't always match. State
       "rolled doubles" + the resulting damage instead.
+- **Progress — Rogue (Killing Momentum + Dodge) complete:**
+    - Killing Momentum strings-only: "Killing Momentum! The Rogue's knockout grants another attack"
+      (the victim is already named by the preceding Knockout message; no dice of its own).
+    - Dodge is Group B — threaded `newArmorClass` + `armorBonus` + `maxArmorBonus`. Log now states the
+      actual armor value, running Dodge bonus, and the +2 cap: "Dodge! The Rogue's armor held — armor
+      rises to {new} (Dodge bonus now +{bonus} of +{max} max)" / "…already at the +{max} Dodge cap,
+      armor stays {new}". Flash: "Dodge · +{bonus} Armor!" / new "Dodge · At Cap!".
+    - `maxArmorBonus` from `AbilityConfig.dodgeMaxArmorBonus`; `newArmorClass`/`armorBonus` captured in
+      `DodgeHandler` after the update. Rogue name hardcoded in strings (Dodge is Rogue-only).
 - **Open considerations:**
     - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
       deserialization defaults. [[serialization-backcompat-non-concern]]
@@ -360,10 +369,10 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** Rogue (Killing Momentum + Dodge) next, then remaining classes (Illusionist, Bard-minus-
-  Persuade, Paladin). Group B still open: `NormalRoll.Outcome` (carry defender ArmorClass/Health),
-  `Dodge` (old→new armor), `MirrorImage.TemptFate`. Then Group A string-only rewrites (`Encore.Roll`,
-  `HolyShield.Prayer`, `AllIn`). Fix all siblings of a message family in the same pass.
+- **Next:** Illusionist (Impersonate + Mirror Image) next, then Bard-minus-Persuade (Encore) and
+  Paladin (Holy Shield). Group B still open: `NormalRoll.Outcome` (carry defender ArmorClass/Health),
+  `MirrorImage.TemptFate`. Then Group A string-only rewrites (`Encore.Roll`, `HolyShield.Prayer`,
+  `AllIn`). Fix all siblings of a message family in the same pass.
 
 ## Combat animations
 

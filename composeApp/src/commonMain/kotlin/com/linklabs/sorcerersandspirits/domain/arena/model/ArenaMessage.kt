@@ -50,7 +50,13 @@ sealed interface ArenaMessage {
 
     data class KillingMomentum(val attackerUserId: String) : ArenaMessage
 
-    data class Dodge(val didArmorIncrease: Boolean, val dodgerUserId: String) : ArenaMessage
+    data class Dodge(
+        val didArmorIncrease: Boolean,
+        val dodgerUserId: String,
+        val newArmorClass: Int,
+        val armorBonus: Int,
+        val maxArmorBonus: Int,
+    ) : ArenaMessage
 
     sealed interface Teleport : ArenaMessage {
         val mageUserId: String

@@ -118,12 +118,12 @@
     <string name="arena_message_normal_roll_damage">%1$s damaged %2$s for %3$s</string>
     <string name="arena_message_normal_roll_knockout">%1$s damaged %2$s for %3$s and knocked them out!</string>
 
-    <string name="arena_message_killing_momentum">Killing Momentum! The attack presses on</string>
+    <string name="arena_message_killing_momentum">Killing Momentum! The Rogue's knockout grants another attack</string>
 
     <string name="arena_message_doubles">Doubles! %1$s rolled a matching pair</string>
 
-    <string name="arena_message_dodge_armor_increased">Dodge! Armor class increased</string>
-    <string name="arena_message_dodge_armor_unchanged">Dodge! Armor class unchanged</string>
+    <string name="arena_message_dodge_armor_increased">Dodge! The Rogue's armor held — armor rises to %1$s (Dodge bonus now +%2$s of +%3$s max)</string>
+    <string name="arena_message_dodge_armor_unchanged">Dodge! The Rogue's armor held — already at the +%1$s Dodge cap, armor stays %2$s</string>
 
     <string name="arena_message_teleport_trigger">Teleport! The Mage rolls off 1d6 with the attacker — the higher roll escapes</string>
     <string name="arena_message_teleport_roll">%1$s rolled a %2$s</string>
@@ -197,7 +197,8 @@
     <string name="arena_flash_knockout_total">%1$s · K.O!</string>
     <string name="arena_flash_knockout_total_doubles">%1$s (+%2$s) · K.O!</string>
     <string name="arena_flash_killing_momentum">Killing Momentum!</string>
-    <string name="arena_flash_dodge">Dodge!</string>
+    <string name="arena_flash_dodge">Dodge · +%1$s Armor!</string>
+    <string name="arena_flash_dodge_capped">Dodge · At Cap!</string>
     <string name="arena_flash_spell_potency">Spell Potency · %1$s!</string>
     <string name="arena_flash_doubles">Doubles!</string>
     <string name="arena_flash_impersonate">Impersonate!</string>

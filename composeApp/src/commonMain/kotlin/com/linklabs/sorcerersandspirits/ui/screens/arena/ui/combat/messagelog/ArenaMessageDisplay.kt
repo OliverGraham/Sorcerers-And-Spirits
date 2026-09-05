@@ -142,9 +142,18 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
 
     is ArenaMessageState.Dodge ->
         if (didArmorIncrease) {
-            stringResource(resource = Res.string.arena_message_dodge_armor_increased)
+            stringResource(
+                resource = Res.string.arena_message_dodge_armor_increased,
+                newArmorClass,
+                armorBonus,
+                maxArmorBonus,
+            )
         } else {
-            stringResource(resource = Res.string.arena_message_dodge_armor_unchanged)
+            stringResource(
+                resource = Res.string.arena_message_dodge_armor_unchanged,
+                maxArmorBonus,
+                newArmorClass,
+            )
         }
 
     is ArenaMessageState.Teleport.Trigger ->

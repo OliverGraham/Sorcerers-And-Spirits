@@ -82,6 +82,9 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val didArmorIncrease: Boolean,
         val dodgerUserId: String,
+        val newArmorClass: Int,
+        val armorBonus: Int,
+        val maxArmorBonus: Int,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -496,7 +499,13 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.KillingMomentum(attackerUserId = attackerUserId)
 
             is ArenaMessageEntity.Dodge ->
-                ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease, dodgerUserId = dodgerUserId)
+                ArenaMessage.Dodge(
+                    didArmorIncrease = didArmorIncrease,
+                    dodgerUserId = dodgerUserId,
+                    newArmorClass = newArmorClass,
+                    armorBonus = armorBonus,
+                    maxArmorBonus = maxArmorBonus,
+                )
 
             is ArenaMessageEntity.Teleport.Trigger ->
                 ArenaMessage.Teleport.Trigger(mageUserId = mageUserId)
@@ -790,6 +799,9 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             didArmorIncrease = didArmorIncrease,
             dodgerUserId = dodgerUserId,
+            newArmorClass = newArmorClass,
+            armorBonus = armorBonus,
+            maxArmorBonus = maxArmorBonus,
         )
 
     is ArenaMessage.Teleport.Trigger ->

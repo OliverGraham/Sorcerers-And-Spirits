@@ -12,9 +12,10 @@ internal class DodgeHandler(
 
     private fun CombatMutator.triggerDodge() {
         val didArmorIncrease = dodge.armorBonus < abilityConfig.dodgeMaxArmorBonus
+        val updatedArmorBonus = if (didArmorIncrease) dodge.armorBonus + 1 else dodge.armorBonus
 
         if (didArmorIncrease) {
-            val updatedDodge = dodge.copy(armorBonus = dodge.armorBonus + 1)
+            val updatedDodge = dodge.copy(armorBonus = updatedArmorBonus)
             updateDefenderClass { playerClass ->
                 playerClass.copy(
                     armorClass = playerClass.armorClass + 1,
@@ -28,6 +29,9 @@ internal class DodgeHandler(
             ArenaMessage.Dodge(
                 didArmorIncrease = didArmorIncrease,
                 dodgerUserId = defenderUserId,
+                newArmorClass = defender.armorClass,
+                armorBonus = updatedArmorBonus,
+                maxArmorBonus = abilityConfig.dodgeMaxArmorBonus,
             ),
         )
     }

@@ -37,8 +37,10 @@ internal class ChooseCharacterClassHandler(
 
         val availableClasses =
             screenState.characterClasses.filterNot { it.type in arenaMatchState.unavailableClasses }
+        val availableSelectedClass =
+            arenaMatchState.selectedClass?.takeIf { it.type !in arenaMatchState.unavailableClasses }
         val chosenClass =
-            arenaMatchState.selectedClass ?: availableClasses.randomOrNull() ?: return false
+            availableSelectedClass ?: availableClasses.randomOrNull() ?: return false
 
         val userPlayer = arenaMatchState.playerMap.getValue(key = arenaMatchState.userPlayerId)
 

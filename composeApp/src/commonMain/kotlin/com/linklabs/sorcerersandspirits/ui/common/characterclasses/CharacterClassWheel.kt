@@ -97,6 +97,7 @@ fun CharacterClassWheel(
     selectedClass: CharacterClassState? = null,
     unavailableClasses: Set<CharacterClassType> = emptySet(),
     isSelectionAuraVisible: Boolean = false,
+    pinnedAuraClassType: CharacterClassType? = null,
     onClassSelected: (CharacterClassState) -> Unit = {},
     wheelOverlay: @Composable BoxScope.() -> Unit = {},
 ) {
@@ -217,7 +218,15 @@ fun CharacterClassWheel(
                         characterClasses = characterClasses,
                         rotationDegrees = { rotationDegrees },
                         unavailableClasses = unavailableClasses,
-                        selectedIndex = if (isSelectionAuraVisible) centeredIndex else -1,
+                        selectedIndex =
+                        when {
+                            pinnedAuraClassType != null ->
+                                characterClasses.indexOfFirst { it.type == pinnedAuraClassType }
+
+                            isSelectionAuraVisible -> centeredIndex
+
+                            else -> -1
+                        },
                         wheelSize = wheelSize,
                         onClassClick = { index -> select(index = index) },
                     )

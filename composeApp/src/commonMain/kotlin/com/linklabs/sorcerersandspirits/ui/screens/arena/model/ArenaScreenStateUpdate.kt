@@ -138,6 +138,7 @@ private fun ArenaMatch.ChoosingClasses.updateChoosingClasses(
             activePlayerUserId = activePlayerUserId,
             unavailableClasses = unavailableClasses,
             classSelections = classSelections,
+            userConfirmedClassType = playerMap.userConfirmedClassType(userId = userId),
         )
 
     val hasActivePlayerChanged = currentArenaMatchState.activePlayerUserId != activePlayerUserId
@@ -303,3 +304,5 @@ private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(
 
     return unavailableClasses to classSelections
 }
+
+internal fun Map<String, ArenaPlayer>.userConfirmedClassType(userId: String): CharacterClassType? = (getValue(key = userId) as? ArenaPlayer.Selected)?.characterClass?.type

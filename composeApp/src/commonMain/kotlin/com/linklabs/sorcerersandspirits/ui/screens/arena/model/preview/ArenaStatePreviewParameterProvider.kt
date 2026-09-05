@@ -81,6 +81,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         selectedClass = null,
         unavailableClasses = emptySet(),
         classSelections = emptyMap(),
+        userConfirmedClassType = null,
     )
 
     private fun getExampleCombatState(

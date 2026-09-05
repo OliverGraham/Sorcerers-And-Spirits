@@ -123,13 +123,21 @@ sealed interface ArenaMessageEntity {
 
         @Serializable
         @SerialName(value = LUCKY_COIN_TRIGGER)
-        data class Trigger(override val id: String, override val gamblerUserId: String) : LuckyCoin
+        data class Trigger(
+            override val id: String,
+            override val gamblerUserId: String,
+            val attackerClassName: String,
+            val attackerRollTotal: Int,
+            val minimumCoinToStop: Int,
+        ) : LuckyCoin
 
         @Serializable
         @SerialName(value = LUCKY_COIN_FLIP)
         data class Flip(
             override val id: String,
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -148,6 +156,7 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val gamblerUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin
@@ -501,11 +510,18 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.LuckyCoin.Trigger ->
-                ArenaMessage.LuckyCoin.Trigger(gamblerUserId = gamblerUserId)
+                ArenaMessage.LuckyCoin.Trigger(
+                    gamblerUserId = gamblerUserId,
+                    attackerClassName = attackerClassName,
+                    attackerRollTotal = attackerRollTotal,
+                    minimumCoinToStop = minimumCoinToStop,
+                )
 
             is ArenaMessageEntity.LuckyCoin.Flip ->
                 ArenaMessage.LuckyCoin.Flip(
                     gamblerUserId = gamblerUserId,
+                    attackerClassName = attackerClassName,
+                    defenderArmorClass = defenderArmorClass,
                     singleDie = singleDie,
                     didStopAttack = didStopAttack,
                 )
@@ -520,6 +536,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.LuckyCoin.HighRollerDamage(
                     gamblerUserId = gamblerUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                     singleDie = singleDie,
                     isKnockout = isKnockout,
                 )
@@ -782,12 +799,20 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
         )
 
     is ArenaMessage.LuckyCoin.Trigger ->
-        ArenaMessageEntity.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
+        ArenaMessageEntity.LuckyCoin.Trigger(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            attackerRollTotal = attackerRollTotal,
+            minimumCoinToStop = minimumCoinToStop,
+        )
 
     is ArenaMessage.LuckyCoin.Flip ->
         ArenaMessageEntity.LuckyCoin.Flip(
             id = id,
             gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            defenderArmorClass = defenderArmorClass,
             singleDie = singleDie,
             didStopAttack = didStopAttack,
         )
@@ -804,6 +829,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             gamblerUserId = gamblerUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             singleDie = singleDie,
             isKnockout = isKnockout,
         )

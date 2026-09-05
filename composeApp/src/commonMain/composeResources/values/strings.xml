@@ -131,12 +131,12 @@
     <string name="arena_message_teleport_escaped">The defender teleported away!</string>
     <string name="arena_message_teleport_failed">The teleport failed</string>
 
-    <string name="arena_message_lucky_coin_trigger">Lucky Coin! Flipping for fate…</string>
-    <string name="arena_message_lucky_coin_flip_stopped">The coin shows %1$s — the attack is stopped!</string>
-    <string name="arena_message_lucky_coin_flip_failed">The coin shows %1$s — the attack continues</string>
-    <string name="arena_message_lucky_coin_high_roller_trigger">High Roller! %1$s is targeted</string>
-    <string name="arena_message_lucky_coin_high_roller_damage">The coin strikes for %1$s damage</string>
-    <string name="arena_message_lucky_coin_high_roller_knockout">The coin strikes for %1$s damage — a knockout!</string>
+    <string name="arena_message_lucky_coin_trigger">Lucky Coin! Gambler needs at least a %1$s to stop %2$s's attack of %3$s</string>
+    <string name="arena_message_lucky_coin_flip_stopped">Lucky Coin adds %1$s to Gambler's %2$s armor — %3$s's attack is stopped!</string>
+    <string name="arena_message_lucky_coin_flip_failed">Lucky Coin adds %1$s to Gambler's %2$s armor — %3$s's attack continues!</string>
+    <string name="arena_message_lucky_coin_high_roller_trigger">High Roller! The coin lands on 6 — the Gambler strikes back at the %1$s!</string>
+    <string name="arena_message_lucky_coin_high_roller_damage">The Gambler's coin strikes the %1$s for %2$s damage</string>
+    <string name="arena_message_lucky_coin_high_roller_knockout">The Gambler's coin strikes the %1$s for %2$s damage — a knockout!</string>
 
     <string name="arena_message_riposte_trigger">Riposte! Preparing a counter…</string>
     <string name="arena_message_riposte_en_garde_success">En garde! Rolled %1$s and %2$s — the counter lands</string>
@@ -211,7 +211,9 @@
     <string name="arena_flash_teleport">Teleport!</string>
     <string name="arena_flash_escaped">Escaped!</string>
     <string name="arena_flash_caught">Caught!</string>
-    <string name="arena_flash_lucky_coin">Lucky Coin!</string>
+    <string name="arena_flash_lucky_coin">Lucky Coin · Need %1$s!</string>
+    <string name="arena_flash_lucky_coin_stopped">+%1$s Armor · Stopped!</string>
+    <string name="arena_flash_lucky_coin_continues">+%1$s Armor · Not enough!</string>
     <string name="arena_flash_attack_stopped">Attack stopped!</string>
     <string name="arena_flash_attack_continues">%1$s · Attack continues!</string>
     <string name="arena_flash_riposte">Riposte!</string>

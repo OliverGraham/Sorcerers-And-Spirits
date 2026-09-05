@@ -162,18 +162,27 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         }
 
     is ArenaMessageState.LuckyCoin.Trigger ->
-        stringResource(resource = Res.string.arena_message_lucky_coin_trigger)
+        stringResource(
+            resource = Res.string.arena_message_lucky_coin_trigger,
+            minimumCoinToStop,
+            attackerClassName,
+            attackerRollTotal,
+        )
 
     is ArenaMessageState.LuckyCoin.Flip ->
         if (didStopAttack) {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_flip_stopped,
                 singleDie,
+                defenderArmorClass,
+                attackerClassName,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_flip_failed,
                 singleDie,
+                defenderArmorClass,
+                attackerClassName,
             )
         }
 
@@ -187,11 +196,13 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         if (isKnockout) {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_high_roller_knockout,
+                attackerClassName,
                 singleDie,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_high_roller_damage,
+                attackerClassName,
                 singleDie,
             )
         }

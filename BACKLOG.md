@@ -281,6 +281,55 @@ are archived in [COMPLETED.md](COMPLETED.md).
   [[downsample-figma-raster-assets]]) or request/export it first. Related: SS-144 (target-selection
   transition), SS-136 (head icon).
 
+### SS-272 — Rewrite Arena combat messages to describe the rules and what happened
+
+- [ ] Not completed
+- **Problem:** Arena-combat messages (both the message log and the brief on-avatar flash text) are
+  uninformative. They state an outcome without the contest that produced it — e.g. the old Lucky Coin
+  line "The coin shows 4 — the attack is stopped!" never says what the attacker rolled, the Gambler's
+  armor, or how the coin bonus changed the result. Messages should read like a narration of the rules:
+  show both sides of the contest (attacker roll vs defender armor/health), the ability's modifier, and
+  the result.
+- **Scope:** Arena Combat (core gameplay) only.
+- **Agreed wording style (owner-approved):** *full contest, one line* — state both sides and the math
+  on a single message-log line. Flash text stays terse but gains the key number.
+- **Approach (the four-layer thread):** most messages only carry one side of the contest, so enriching
+  them means adding fields through all layers, not just editing the string. Per message:
+  `ArenaMessage` (Domain, source of truth) → the handler that constructs it (live game values live
+  here) → `ArenaMessageEntity` (`@Serializable`, + `toEntity()`/`toDomain()`) → `ArenaMessageState`
+  (`@Immutable`, + `toState()`) → `getDisplayString()` in `ArenaMessageDisplay.kt` (log) and
+  `FlashTextStringResource.kt` (flash) + `strings.xml`. Derive display-ready values (e.g. effective
+  armor, "minimum coin to stop") in the domain/handler, never with arithmetic at the display site.
+- **Message inventory (by effort):**
+    - *Group A — data already present, string rewrite only:* `Encore.Roll`, `SummonMinion`,
+      `PrepareAttack.Outcome`, `HolyShield.Prayer`, `AllIn`, `Riposte.EnGarde`, `Persuade.StrumLute`.
+    - *Group B — needs new domain fields threaded through all layers:* `NormalRoll.Outcome` (carry
+      defender ArmorClass/Health checked against), `LuckyCoin` (done), `Teleport.Result` (both
+      roll-off values), `Dodge` (old→new armor), `MirrorImage.TemptFate` (original die → rerolled
+      value vs target).
+    - *Group C — flavor, leave as-is:* `Doubles`, `KillingMomentum`, pure triggers.
+- **Progress:** LuckyCoin pilot **complete** across all layers (log + flash). Final approved wording:
+    - Trigger log: "Lucky Coin! Gambler needs at least a {minCoin} to stop {Attacker}'s attack of
+      {roll}"; flash: "Lucky Coin · Need {minCoin}!"
+    - Stopped log: "Lucky Coin adds {coin} to Gambler's {armor} armor — {Attacker}'s attack is
+      stopped!"; flash: "+{coin} Armor · Stopped!"
+    - Continues log: same prefix, "…attack continues!"; flash: "+{coin} Armor · Not enough!"
+    - High Roller trigger/damage/KO: owner approved as-is.
+    - `minimumCoinToStop = attackerRollTotal − armorClass + 1`, computed in `LuckyCoinHandler`. Can
+      exceed 6 (attacker beat armor by 6+) — currently shown honestly; revisit if the edge reads odd.
+- **Open considerations:**
+    - *Serialization back-compat:* new required fields on `@Serializable` message entities only bite a
+      match already in progress across a deploy (messages are per-match). Following the existing
+      no-default pattern; add deserialization defaults only if we decide to protect mid-flight matches.
+    - Flash strings `arena_flash_attack_stopped`/`_continues` are shared with Persuade; LuckyCoin got
+      its own `arena_flash_lucky_coin_stopped`/`_continues`. Give Persuade the same treatment when it's
+      its turn.
+    - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
+      about tests").
+- **Next:** continue class-by-class — Group B first (`NormalRoll.Outcome`, `Teleport.Result`, `Dodge`,
+  `MirrorImage.TemptFate`), then Group A string rewrites. Fix all siblings of a message family in the
+  same pass.
+
 ## Combat animations
 
 Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system

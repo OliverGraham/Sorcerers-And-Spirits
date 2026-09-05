@@ -191,6 +191,9 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
             override val id: String,
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val attackerRollTotal: Int,
+            val minimumCoinToStop: Int,
         ) : LuckyCoin
 
         @Immutable
@@ -198,6 +201,8 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
             override val id: String,
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -217,6 +222,7 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val gamblerUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isKnockout: Boolean,
             override val gestures: Map<String, AvatarGesture>,
@@ -686,12 +692,20 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
     }
 
     is ArenaMessage.LuckyCoin.Trigger ->
-        ArenaMessageState.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
+        ArenaMessageState.LuckyCoin.Trigger(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            attackerRollTotal = attackerRollTotal,
+            minimumCoinToStop = minimumCoinToStop,
+        )
 
     is ArenaMessage.LuckyCoin.Flip ->
         ArenaMessageState.LuckyCoin.Flip(
             id = id,
             gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            defenderArmorClass = defenderArmorClass,
             singleDie = singleDie,
             didStopAttack = didStopAttack,
         )
@@ -715,6 +729,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             gamblerUserId = gamblerUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             singleDie = singleDie,
             isKnockout = isKnockout,
             gestures = gestures,

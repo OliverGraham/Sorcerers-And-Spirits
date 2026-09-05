@@ -37,6 +37,8 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin_continues
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin_stopped
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_holds
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_image
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_miss
@@ -185,13 +187,13 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         stringResource(resource = Res.string.arena_flash_teleport_tie)
 
     is ArenaMessageState.LuckyCoin.Trigger ->
-        stringResource(resource = Res.string.arena_flash_lucky_coin)
+        stringResource(resource = Res.string.arena_flash_lucky_coin, minimumCoinToStop)
 
     is ArenaMessageState.LuckyCoin.Flip ->
         if (didStopAttack) {
-            stringResource(resource = Res.string.arena_flash_attack_stopped)
+            stringResource(resource = Res.string.arena_flash_lucky_coin_stopped, singleDie)
         } else {
-            stringResource(resource = Res.string.arena_flash_attack_continues, singleDie)
+            stringResource(resource = Res.string.arena_flash_lucky_coin_continues, singleDie)
         }
 
     is ArenaMessageState.LuckyCoin.HighRollerTrigger ->

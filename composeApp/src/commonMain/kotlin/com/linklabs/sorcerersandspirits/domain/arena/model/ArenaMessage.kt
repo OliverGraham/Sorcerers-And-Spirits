@@ -72,10 +72,17 @@ sealed interface ArenaMessage {
     sealed interface LuckyCoin : ArenaMessage {
         val gamblerUserId: String
 
-        data class Trigger(override val gamblerUserId: String) : LuckyCoin
+        data class Trigger(
+            override val gamblerUserId: String,
+            val attackerClassName: String,
+            val attackerRollTotal: Int,
+            val minimumCoinToStop: Int,
+        ) : LuckyCoin
 
         data class Flip(
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -88,6 +95,7 @@ sealed interface ArenaMessage {
         data class HighRollerDamage(
             override val gamblerUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin

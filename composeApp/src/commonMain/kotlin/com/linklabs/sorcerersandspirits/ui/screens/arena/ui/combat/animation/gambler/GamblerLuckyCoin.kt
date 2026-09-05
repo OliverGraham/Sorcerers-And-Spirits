@@ -725,6 +725,7 @@ private fun DrawScope.drawImpactBurst(
 
 private const val PREVIEW_FLIP_FACE = 4
 private const val PREVIEW_THROW_DAMAGE = 3
+private const val PREVIEW_ARMOR_CLASS = 6
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
@@ -748,6 +749,8 @@ private fun LuckyCoinFlipPreview(didStopAttack: Boolean) {
             ArenaMessageState.LuckyCoin.Flip(
                 id = id,
                 gamblerUserId = PREVIEW_ACTOR_ID,
+                attackerClassName = "Rogue",
+                defenderArmorClass = PREVIEW_ARMOR_CLASS,
                 singleDie = PREVIEW_FLIP_FACE,
                 didStopAttack = didStopAttack,
             )
@@ -773,6 +776,7 @@ private fun LuckyCoinHighRollerPaybackPreview() {
                 id = id,
                 gamblerUserId = PREVIEW_ACTOR_ID,
                 attackerUserId = PREVIEW_TARGET_ID,
+                attackerClassName = "Rogue",
                 singleDie = PREVIEW_THROW_DAMAGE,
                 isKnockout = true,
                 animation = ArenaAnimationState.FlashAndAvatar(),

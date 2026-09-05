@@ -41,6 +41,7 @@ sealed interface ArenaMessage {
             val attackerClassName: String,
             val attackerClassType: CharacterClassType,
             val defenderClassName: String,
+            val defenderArmorClass: Int,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
@@ -50,7 +51,13 @@ sealed interface ArenaMessage {
 
     data class KillingMomentum(val attackerUserId: String) : ArenaMessage
 
-    data class Dodge(val didArmorIncrease: Boolean, val dodgerUserId: String) : ArenaMessage
+    data class Dodge(
+        val didArmorIncrease: Boolean,
+        val dodgerUserId: String,
+        val newArmorClass: Int,
+        val armorBonus: Int,
+        val maxArmorBonus: Int,
+    ) : ArenaMessage
 
     sealed interface Teleport : ArenaMessage {
         val mageUserId: String
@@ -72,10 +79,17 @@ sealed interface ArenaMessage {
     sealed interface LuckyCoin : ArenaMessage {
         val gamblerUserId: String
 
-        data class Trigger(override val gamblerUserId: String) : LuckyCoin
+        data class Trigger(
+            override val gamblerUserId: String,
+            val attackerClassName: String,
+            val attackerRollTotal: Int,
+            val minimumCoinToStop: Int,
+        ) : LuckyCoin
 
         data class Flip(
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -88,19 +102,28 @@ sealed interface ArenaMessage {
         data class HighRollerDamage(
             override val gamblerUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin
     }
 
     sealed interface Riposte : ArenaMessage {
-        data class Trigger(val duelistUserId: String, val attackerUserId: String) : Riposte
+        data class Trigger(
+            val duelistUserId: String,
+            val attackerUserId: String,
+            val attackerClassName: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
+        ) : Riposte
 
         data class EnGarde(
             val duelistUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val isSuccessful: Boolean,
         ) : Riposte
     }
@@ -137,6 +160,8 @@ sealed interface ArenaMessage {
         data class Trigger(
             override val bardUserId: String,
             override val classType: CharacterClassType,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Encore
 
         data class Roll(
@@ -197,12 +222,17 @@ sealed interface ArenaMessage {
     sealed interface HolyShield : ArenaMessage {
         val paladinUserId: String
 
-        data class Trigger(override val paladinUserId: String) : HolyShield
+        data class Trigger(
+            override val paladinUserId: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
+        ) : HolyShield
 
         data class Prayer(
             override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val didSurvive: Boolean,
         ) : HolyShield
 
@@ -243,6 +273,9 @@ sealed interface ArenaMessage {
             val targetClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
+            val knockoutRangeMin: Int,
+            val knockoutRangeMax: Int,
             override val isSuccessful: Boolean,
         ) : PrepareAttack
     }

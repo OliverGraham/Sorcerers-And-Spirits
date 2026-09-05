@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.SummonMinionOutcome
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_bust
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_no_effect
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_strike_twice
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_continues
@@ -19,6 +20,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_counter_fa
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_damage
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_damage_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_dodge
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_dodge_capped
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_encore
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_encore_again
@@ -37,6 +39,8 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_total_doubles
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin_continues
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin_stopped
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_holds
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_image
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_miss
@@ -113,10 +117,15 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
     is ArenaMessageState.KillingMomentum ->
         stringResource(resource = Res.string.arena_flash_killing_momentum)
 
-    is ArenaMessageState.Dodge -> stringResource(resource = Res.string.arena_flash_dodge)
+    is ArenaMessageState.Dodge ->
+        if (didArmorIncrease) {
+            stringResource(resource = Res.string.arena_flash_dodge, armorBonus)
+        } else {
+            stringResource(resource = Res.string.arena_flash_dodge_capped)
+        }
 
     is ArenaMessageState.SpellPotency ->
-        stringResource(resource = Res.string.arena_flash_spell_potency)
+        stringResource(resource = Res.string.arena_flash_spell_potency, mainDamage)
 
     is ArenaMessageState.Doubles -> stringResource(resource = Res.string.arena_flash_doubles)
 
@@ -127,13 +136,13 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
 
     is ArenaMessageState.PrepareAttack.Outcome ->
         if (isSuccessful) {
-            stringResource(resource = Res.string.arena_flash_prepared_strike)
+            stringResource(resource = Res.string.arena_flash_prepared_strike, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_attack_whiffed)
+            stringResource(resource = Res.string.arena_flash_attack_whiffed, total)
         }
 
     is ArenaMessageState.Encore.Trigger ->
-        stringResource(resource = Res.string.arena_flash_encore)
+        stringResource(resource = Res.string.arena_flash_encore, successRangeMin, successRangeMax)
 
     is ArenaMessageState.Encore.Roll ->
         if (isSuccessful) {
@@ -151,7 +160,7 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
                 stringResource(resource = Res.string.arena_flash_all_in_no_effect)
 
             AllInOutcome.SelfKnockout ->
-                stringResource(resource = Res.string.arena_flash_knockout)
+                stringResource(resource = Res.string.arena_flash_all_in_bust)
         }
 
     is ArenaMessageState.SummonMinion ->
@@ -185,13 +194,13 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         stringResource(resource = Res.string.arena_flash_teleport_tie)
 
     is ArenaMessageState.LuckyCoin.Trigger ->
-        stringResource(resource = Res.string.arena_flash_lucky_coin)
+        stringResource(resource = Res.string.arena_flash_lucky_coin, minimumCoinToStop)
 
     is ArenaMessageState.LuckyCoin.Flip ->
         if (didStopAttack) {
-            stringResource(resource = Res.string.arena_flash_attack_stopped)
+            stringResource(resource = Res.string.arena_flash_lucky_coin_stopped, singleDie)
         } else {
-            stringResource(resource = Res.string.arena_flash_attack_continues, singleDie)
+            stringResource(resource = Res.string.arena_flash_lucky_coin_continues, singleDie)
         }
 
     is ArenaMessageState.LuckyCoin.HighRollerTrigger ->
@@ -205,13 +214,13 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         }
 
     is ArenaMessageState.Riposte.Trigger ->
-        stringResource(resource = Res.string.arena_flash_riposte)
+        stringResource(resource = Res.string.arena_flash_riposte, successRangeMin, successRangeMax)
 
     is ArenaMessageState.Riposte.EnGarde ->
         if (isSuccessful) {
-            stringResource(resource = Res.string.arena_flash_reversed)
+            stringResource(resource = Res.string.arena_flash_reversed, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_counter_failed)
+            stringResource(resource = Res.string.arena_flash_counter_failed, total)
         }
 
     is ArenaMessageState.Persuade.Trigger ->
@@ -252,17 +261,17 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         }
 
     is ArenaMessageState.HolyShield.Trigger ->
-        stringResource(resource = Res.string.arena_flash_holy_shield)
+        stringResource(resource = Res.string.arena_flash_holy_shield, successRangeMin, successRangeMax)
 
     is ArenaMessageState.HolyShield.Prayer ->
         if (didSurvive) {
-            stringResource(resource = Res.string.arena_flash_saved)
+            stringResource(resource = Res.string.arena_flash_saved, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_struck_down)
+            stringResource(resource = Res.string.arena_flash_struck_down, total)
         }
 
     is ArenaMessageState.HolyShield.Wrath ->
-        stringResource(resource = Res.string.arena_flash_holy_wrath)
+        stringResource(resource = Res.string.arena_flash_holy_wrath, singleDie)
 
     is ArenaMessageState.NewRound ->
         stringResource(resource = Res.string.arena_flash_new_round, roundNumber)

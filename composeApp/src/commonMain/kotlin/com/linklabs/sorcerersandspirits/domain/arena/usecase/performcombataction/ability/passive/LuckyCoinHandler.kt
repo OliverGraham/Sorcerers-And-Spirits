@@ -15,7 +15,15 @@ internal class LuckyCoinHandler(
     fun handleHighRoller() = combatMutator.handleHighRoller()
 
     private fun CombatMutator.triggerLuckyCoin() {
-        addMessage(message = ArenaMessage.LuckyCoin.Trigger(gamblerUserId = defenderUserId))
+        addMessage(
+            message =
+            ArenaMessage.LuckyCoin.Trigger(
+                gamblerUserId = defenderUserId,
+                attackerClassName = attacker.className,
+                attackerRollTotal = attackerRollTotal,
+                minimumCoinToStop = attackerRollTotal - defender.armorClass + 1,
+            ),
+        )
 
         setNextAbilityRoll(
             purpose = AbilityAction.Passive.LuckyCoin.Flip(attackerRollTotal = attackerRollTotal),
@@ -66,6 +74,7 @@ internal class LuckyCoinHandler(
             ArenaMessage.LuckyCoin.HighRollerDamage(
                 gamblerUserId = defenderUserId,
                 attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
                 singleDie = result,
                 isKnockout = isKnockout,
             ),
@@ -105,6 +114,8 @@ internal class LuckyCoinHandler(
             message =
             ArenaMessage.LuckyCoin.Flip(
                 gamblerUserId = defenderUserId,
+                attackerClassName = attacker.className,
+                defenderArmorClass = defender.armorClass,
                 singleDie = luckyCoinArmorBonus,
                 didStopAttack = true,
             ),
@@ -118,6 +129,8 @@ internal class LuckyCoinHandler(
             message =
             ArenaMessage.LuckyCoin.Flip(
                 gamblerUserId = defenderUserId,
+                attackerClassName = attacker.className,
+                defenderArmorClass = defender.armorClass,
                 singleDie = luckyCoinArmorBonus,
                 didStopAttack = false,
             ),

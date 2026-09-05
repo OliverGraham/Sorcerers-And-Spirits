@@ -66,6 +66,7 @@ sealed interface ArenaMessageEntity {
         val attackerClassName: String,
         val attackerClassType: CharacterClassType,
         val defenderClassName: String,
+        val defenderArmorClass: Int,
         val firstDie: Int,
         val secondDie: Int,
         val bonus: Int = 0,
@@ -82,6 +83,9 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val didArmorIncrease: Boolean,
         val dodgerUserId: String,
+        val newArmorClass: Int,
+        val armorBonus: Int,
+        val maxArmorBonus: Int,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -123,13 +127,21 @@ sealed interface ArenaMessageEntity {
 
         @Serializable
         @SerialName(value = LUCKY_COIN_TRIGGER)
-        data class Trigger(override val id: String, override val gamblerUserId: String) : LuckyCoin
+        data class Trigger(
+            override val id: String,
+            override val gamblerUserId: String,
+            val attackerClassName: String,
+            val attackerRollTotal: Int,
+            val minimumCoinToStop: Int,
+        ) : LuckyCoin
 
         @Serializable
         @SerialName(value = LUCKY_COIN_FLIP)
         data class Flip(
             override val id: String,
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -148,6 +160,7 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val gamblerUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin
@@ -162,6 +175,9 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             val duelistUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Riposte
 
         @Serializable
@@ -170,8 +186,10 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             val duelistUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val isSuccessful: Boolean,
         ) : Riposte
     }
@@ -231,6 +249,8 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val bardUserId: String,
             override val classType: CharacterClassType,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Encore
 
         @Serializable
@@ -316,7 +336,12 @@ sealed interface ArenaMessageEntity {
 
         @Serializable
         @SerialName(value = HOLY_SHIELD_TRIGGER)
-        data class Trigger(override val id: String, override val paladinUserId: String) : HolyShield
+        data class Trigger(
+            override val id: String,
+            override val paladinUserId: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
+        ) : HolyShield
 
         @Serializable
         @SerialName(value = HOLY_SHIELD_PRAYER)
@@ -325,6 +350,7 @@ sealed interface ArenaMessageEntity {
             override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val didSurvive: Boolean,
         ) : HolyShield
 
@@ -372,6 +398,9 @@ sealed interface ArenaMessageEntity {
         val targetClassName: String,
         val firstDie: Int,
         val secondDie: Int,
+        val total: Int,
+        val knockoutRangeMin: Int,
+        val knockoutRangeMax: Int,
         val isSuccessful: Boolean,
     ) : ArenaMessageEntity
 
@@ -469,6 +498,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     attackerClassName = attackerClassName,
                     attackerClassType = attackerClassType,
                     defenderClassName = defenderClassName,
+                    defenderArmorClass = defenderArmorClass,
                     firstDie = firstDie,
                     secondDie = secondDie,
                     bonus = bonus,
@@ -479,7 +509,13 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.KillingMomentum(attackerUserId = attackerUserId)
 
             is ArenaMessageEntity.Dodge ->
-                ArenaMessage.Dodge(didArmorIncrease = didArmorIncrease, dodgerUserId = dodgerUserId)
+                ArenaMessage.Dodge(
+                    didArmorIncrease = didArmorIncrease,
+                    dodgerUserId = dodgerUserId,
+                    newArmorClass = newArmorClass,
+                    armorBonus = armorBonus,
+                    maxArmorBonus = maxArmorBonus,
+                )
 
             is ArenaMessageEntity.Teleport.Trigger ->
                 ArenaMessage.Teleport.Trigger(mageUserId = mageUserId)
@@ -501,11 +537,18 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.LuckyCoin.Trigger ->
-                ArenaMessage.LuckyCoin.Trigger(gamblerUserId = gamblerUserId)
+                ArenaMessage.LuckyCoin.Trigger(
+                    gamblerUserId = gamblerUserId,
+                    attackerClassName = attackerClassName,
+                    attackerRollTotal = attackerRollTotal,
+                    minimumCoinToStop = minimumCoinToStop,
+                )
 
             is ArenaMessageEntity.LuckyCoin.Flip ->
                 ArenaMessage.LuckyCoin.Flip(
                     gamblerUserId = gamblerUserId,
+                    attackerClassName = attackerClassName,
+                    defenderArmorClass = defenderArmorClass,
                     singleDie = singleDie,
                     didStopAttack = didStopAttack,
                 )
@@ -520,6 +563,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.LuckyCoin.HighRollerDamage(
                     gamblerUserId = gamblerUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                     singleDie = singleDie,
                     isKnockout = isKnockout,
                 )
@@ -528,14 +572,19 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.Riposte.Trigger(
                     duelistUserId = duelistUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
+                    successRangeMin = successRangeMin,
+                    successRangeMax = successRangeMax,
                 )
 
             is ArenaMessageEntity.Riposte.EnGarde ->
                 ArenaMessage.Riposte.EnGarde(
                     duelistUserId = duelistUserId,
                     attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
                     firstDie = firstDie,
                     secondDie = secondDie,
+                    total = total,
                     isSuccessful = isSuccessful,
                 )
 
@@ -571,7 +620,12 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.Encore.Trigger ->
-                ArenaMessage.Encore.Trigger(bardUserId = bardUserId, classType = classType)
+                ArenaMessage.Encore.Trigger(
+                    bardUserId = bardUserId,
+                    classType = classType,
+                    successRangeMin = successRangeMin,
+                    successRangeMax = successRangeMax,
+                )
 
             is ArenaMessageEntity.Encore.Roll ->
                 ArenaMessage.Encore.Roll(
@@ -635,13 +689,18 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.HolyShield.Trigger ->
-                ArenaMessage.HolyShield.Trigger(paladinUserId = paladinUserId)
+                ArenaMessage.HolyShield.Trigger(
+                    paladinUserId = paladinUserId,
+                    successRangeMin = successRangeMin,
+                    successRangeMax = successRangeMax,
+                )
 
             is ArenaMessageEntity.HolyShield.Prayer ->
                 ArenaMessage.HolyShield.Prayer(
                     paladinUserId = paladinUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
+                    total = total,
                     didSurvive = didSurvive,
                 )
 
@@ -680,6 +739,9 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     targetClassName = targetClassName,
                     firstDie = firstDie,
                     secondDie = secondDie,
+                    total = total,
+                    knockoutRangeMin = knockoutRangeMin,
+                    knockoutRangeMax = knockoutRangeMax,
                     isSuccessful = isSuccessful,
                 )
 
@@ -743,6 +805,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             attackerClassName = attackerClassName,
             attackerClassType = attackerClassType,
             defenderClassName = defenderClassName,
+            defenderArmorClass = defenderArmorClass,
             firstDie = firstDie,
             secondDie = secondDie,
             bonus = bonus,
@@ -757,6 +820,9 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             didArmorIncrease = didArmorIncrease,
             dodgerUserId = dodgerUserId,
+            newArmorClass = newArmorClass,
+            armorBonus = armorBonus,
+            maxArmorBonus = maxArmorBonus,
         )
 
     is ArenaMessage.Teleport.Trigger ->
@@ -782,12 +848,20 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
         )
 
     is ArenaMessage.LuckyCoin.Trigger ->
-        ArenaMessageEntity.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
+        ArenaMessageEntity.LuckyCoin.Trigger(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            attackerRollTotal = attackerRollTotal,
+            minimumCoinToStop = minimumCoinToStop,
+        )
 
     is ArenaMessage.LuckyCoin.Flip ->
         ArenaMessageEntity.LuckyCoin.Flip(
             id = id,
             gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            defenderArmorClass = defenderArmorClass,
             singleDie = singleDie,
             didStopAttack = didStopAttack,
         )
@@ -804,6 +878,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             gamblerUserId = gamblerUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             singleDie = singleDie,
             isKnockout = isKnockout,
         )
@@ -813,6 +888,9 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             duelistUserId = duelistUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Riposte.EnGarde ->
@@ -820,8 +898,10 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             duelistUserId = duelistUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             isSuccessful = isSuccessful,
         )
 
@@ -864,6 +944,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             bardUserId = bardUserId,
             classType = classType,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Encore.Roll ->
@@ -931,7 +1013,12 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
         )
 
     is ArenaMessage.HolyShield.Trigger ->
-        ArenaMessageEntity.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
+        ArenaMessageEntity.HolyShield.Trigger(
+            id = id,
+            paladinUserId = paladinUserId,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
+        )
 
     is ArenaMessage.HolyShield.Prayer ->
         ArenaMessageEntity.HolyShield.Prayer(
@@ -939,6 +1026,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             paladinUserId = paladinUserId,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             didSurvive = didSurvive,
         )
 
@@ -981,6 +1069,9 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             targetClassName = targetClassName,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
+            knockoutRangeMin = knockoutRangeMin,
+            knockoutRangeMax = knockoutRangeMax,
             isSuccessful = isSuccessful,
         )
 

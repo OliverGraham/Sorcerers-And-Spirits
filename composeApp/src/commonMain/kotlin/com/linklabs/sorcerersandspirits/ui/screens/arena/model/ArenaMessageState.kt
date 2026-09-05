@@ -121,6 +121,7 @@ sealed interface ArenaMessageState {
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
             val attackerClassName: String,
             val defenderClassName: String,
+            val defenderArmorClass: Int,
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
@@ -156,6 +157,9 @@ sealed interface ArenaMessageState {
         override val id: String,
         val didArmorIncrease: Boolean,
         val dodgerUserId: String,
+        val newArmorClass: Int,
+        val armorBonus: Int,
+        val maxArmorBonus: Int,
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = dodgerUserId)
@@ -191,6 +195,9 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
             override val id: String,
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val attackerRollTotal: Int,
+            val minimumCoinToStop: Int,
         ) : LuckyCoin
 
         @Immutable
@@ -198,6 +205,8 @@ sealed interface ArenaMessageState {
             override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
             override val id: String,
             override val gamblerUserId: String,
+            val attackerClassName: String,
+            val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
         ) : LuckyCoin
@@ -217,6 +226,7 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val gamblerUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val singleDie: Int,
             val isKnockout: Boolean,
             override val gestures: Map<String, AvatarGesture>,
@@ -255,6 +265,9 @@ sealed interface ArenaMessageState {
             val targetClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
+            val knockoutRangeMin: Int,
+            val knockoutRangeMax: Int,
             override val isSuccessful: Boolean,
         ) : PrepareAttack
     }
@@ -277,6 +290,9 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val duelistUserId: String,
             override val attackerUserId: String,
+            val attackerClassName: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Riposte
 
         @Immutable
@@ -286,8 +302,10 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val duelistUserId: String,
             override val attackerUserId: String,
+            val attackerClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val isSuccessful: Boolean,
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
         ) : Riposte
@@ -324,6 +342,8 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val bardUserId: String,
             override val actingClassType: CharacterClassType,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Encore
 
         @Immutable
@@ -447,7 +467,7 @@ sealed interface ArenaMessageState {
             val messageType: NormalRollMessageType,
             override val gestures: Map<String, AvatarGesture>,
         ) : MirrorImage {
-            val rerollDisplay: String = "$rawReroll - 1"
+            val rerollDisplay: String = "$rawReroll − 1 = $finalRoll"
 
             override val isAvatarCompletedByGesture: Boolean = true
         }
@@ -539,6 +559,8 @@ sealed interface ArenaMessageState {
                 ArenaAnimationState.FlashAndAvatar(isContinuous = true),
             override val id: String,
             override val paladinUserId: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : HolyShield
 
         @Immutable
@@ -549,6 +571,7 @@ sealed interface ArenaMessageState {
             override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val didSurvive: Boolean,
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
         ) : HolyShield
@@ -657,6 +680,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             didArmorIncrease = didArmorIncrease,
             dodgerUserId = dodgerUserId,
+            newArmorClass = newArmorClass,
+            armorBonus = armorBonus,
+            maxArmorBonus = maxArmorBonus,
             gestures = mapOf(dodgerUserId to gesture),
         )
     }
@@ -686,12 +712,20 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
     }
 
     is ArenaMessage.LuckyCoin.Trigger ->
-        ArenaMessageState.LuckyCoin.Trigger(id = id, gamblerUserId = gamblerUserId)
+        ArenaMessageState.LuckyCoin.Trigger(
+            id = id,
+            gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            attackerRollTotal = attackerRollTotal,
+            minimumCoinToStop = minimumCoinToStop,
+        )
 
     is ArenaMessage.LuckyCoin.Flip ->
         ArenaMessageState.LuckyCoin.Flip(
             id = id,
             gamblerUserId = gamblerUserId,
+            attackerClassName = attackerClassName,
+            defenderArmorClass = defenderArmorClass,
             singleDie = singleDie,
             didStopAttack = didStopAttack,
         )
@@ -715,6 +749,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             gamblerUserId = gamblerUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             singleDie = singleDie,
             isKnockout = isKnockout,
             gestures = gestures,
@@ -759,6 +794,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             targetClassName = targetClassName,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
+            knockoutRangeMin = knockoutRangeMin,
+            knockoutRangeMax = knockoutRangeMax,
             isSuccessful = isSuccessful,
         )
 
@@ -767,6 +805,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             duelistUserId = duelistUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Riposte.EnGarde -> {
@@ -781,8 +822,10 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             duelistUserId = duelistUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             isSuccessful = isSuccessful,
             gestures = gestures,
         )
@@ -806,6 +849,8 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             bardUserId = bardUserId,
             actingClassType = classType,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Encore.Roll ->
@@ -946,7 +991,12 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
         ArenaMessageState.Teleport.Trigger(id = id, mageUserId = mageUserId)
 
     is ArenaMessage.HolyShield.Trigger ->
-        ArenaMessageState.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
+        ArenaMessageState.HolyShield.Trigger(
+            id = id,
+            paladinUserId = paladinUserId,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
+        )
 
     is ArenaMessage.HolyShield.Prayer -> {
         val gestures =
@@ -961,6 +1011,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             paladinUserId = paladinUserId,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             didSurvive = didSurvive,
             gestures = gestures,
         )
@@ -1040,6 +1091,7 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             defenderUserId = defenderUserId,
             attackerClassName = attackerClassName,
             defenderClassName = defenderClassName,
+            defenderArmorClass = defenderArmorClass,
             firstDie = firstDie,
             secondDie = secondDie,
             bonus = bonus,

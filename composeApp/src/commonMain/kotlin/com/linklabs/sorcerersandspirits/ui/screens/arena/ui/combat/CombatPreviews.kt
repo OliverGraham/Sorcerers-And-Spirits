@@ -171,6 +171,7 @@ private fun ArenaCombatFlashPreview() {
             attackerClassName = "Mage",
             defenderUserId = "player2",
             defenderClassName = "Rogue",
+            defenderArmorClass = 6,
             firstDie = 6,
             secondDie = 6,
             bonus = 0,

@@ -889,6 +889,7 @@ private fun PaladinHolyShieldPreview(didSurvive: Boolean) {
                 paladinUserId = PREVIEW_ACTOR_ID,
                 firstDie = if (didSurvive) 6 else 2,
                 secondDie = if (didSurvive) 5 else 2,
+                total = if (didSurvive) 11 else 4,
                 didSurvive = didSurvive,
                 animation =
                 if (didSurvive) {

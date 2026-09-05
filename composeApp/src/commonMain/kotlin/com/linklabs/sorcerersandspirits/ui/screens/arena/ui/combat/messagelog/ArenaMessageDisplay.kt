@@ -21,6 +21,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shi
 import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_prayer_survived
 import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_wrath
+import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_wrath_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_impersonate
 import sorcerersandspirits.composeapp.generated.resources.arena_message_joined_arena
 import sorcerersandspirits.composeapp.generated.resources.arena_message_killing_momentum
@@ -58,7 +59,9 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_round
 import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency
+import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_no_splash
+import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_no_splash_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_fizzle
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_golem
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton
@@ -108,6 +111,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     attackerClassName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                    defenderArmorClass,
                 )
 
             NormalRollMessageType.ArmorClassMiss ->
@@ -116,6 +120,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     attackerClassName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                    defenderArmorClass,
                 )
 
             NormalRollMessageType.Damage ->
@@ -140,9 +145,18 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
 
     is ArenaMessageState.Dodge ->
         if (didArmorIncrease) {
-            stringResource(resource = Res.string.arena_message_dodge_armor_increased)
+            stringResource(
+                resource = Res.string.arena_message_dodge_armor_increased,
+                newArmorClass,
+                armorBonus,
+                maxArmorBonus,
+            )
         } else {
-            stringResource(resource = Res.string.arena_message_dodge_armor_unchanged)
+            stringResource(
+                resource = Res.string.arena_message_dodge_armor_unchanged,
+                maxArmorBonus,
+                newArmorClass,
+            )
         }
 
     is ArenaMessageState.Teleport.Trigger ->
@@ -162,18 +176,27 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         }
 
     is ArenaMessageState.LuckyCoin.Trigger ->
-        stringResource(resource = Res.string.arena_message_lucky_coin_trigger)
+        stringResource(
+            resource = Res.string.arena_message_lucky_coin_trigger,
+            minimumCoinToStop,
+            attackerClassName,
+            attackerRollTotal,
+        )
 
     is ArenaMessageState.LuckyCoin.Flip ->
         if (didStopAttack) {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_flip_stopped,
                 singleDie,
+                defenderArmorClass,
+                attackerClassName,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_flip_failed,
                 singleDie,
+                defenderArmorClass,
+                attackerClassName,
             )
         }
 
@@ -187,17 +210,24 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         if (isKnockout) {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_high_roller_knockout,
+                attackerClassName,
                 singleDie,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_lucky_coin_high_roller_damage,
+                attackerClassName,
                 singleDie,
             )
         }
 
     is ArenaMessageState.Riposte.Trigger ->
-        stringResource(resource = Res.string.arena_message_riposte_trigger)
+        stringResource(
+            resource = Res.string.arena_message_riposte_trigger,
+            attackerClassName,
+            successRangeMin,
+            successRangeMax,
+        )
 
     is ArenaMessageState.Riposte.EnGarde ->
         if (isSuccessful) {
@@ -205,12 +235,16 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                 resource = Res.string.arena_message_riposte_en_garde_success,
                 firstDie,
                 secondDie,
+                total,
+                attackerClassName,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_riposte_en_garde_failed,
                 firstDie,
                 secondDie,
+                total,
+                attackerClassName,
             )
         }
 
@@ -272,7 +306,11 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         )
 
     is ArenaMessageState.Encore.Trigger ->
-        stringResource(resource = Res.string.arena_message_encore_trigger)
+        stringResource(
+            resource = Res.string.arena_message_encore_trigger,
+            successRangeMin,
+            successRangeMax,
+        )
 
     is ArenaMessageState.Encore.Roll ->
         if (isSuccessful) {
@@ -297,24 +335,28 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_armor_broke,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
 
             NormalRollMessageType.ArmorClassMiss ->
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_armor_held,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
 
             NormalRollMessageType.Damage ->
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_damage,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
 
             NormalRollMessageType.Knockout ->
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_knockout,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
         }
 
@@ -351,24 +393,47 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
 
     is ArenaMessageState.SpellPotency ->
         if (splashDamage > 0) {
-            stringResource(
-                resource = Res.string.arena_message_spell_potency,
-                mageName,
-                mainTargetClassName,
-                mainDamage,
-                splashDamage,
-            )
+            if (isMainTargetKnockedOut) {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_knockout,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                    splashDamage,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                    splashDamage,
+                )
+            }
         } else {
-            stringResource(
-                resource = Res.string.arena_message_spell_potency_no_splash,
-                mageName,
-                mainTargetClassName,
-                mainDamage,
-            )
+            if (isMainTargetKnockedOut) {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_no_splash_knockout,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_no_splash,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                )
+            }
         }
 
     is ArenaMessageState.HolyShield.Trigger ->
-        stringResource(resource = Res.string.arena_message_holy_shield_trigger)
+        stringResource(
+            resource = Res.string.arena_message_holy_shield_trigger,
+            successRangeMin,
+            successRangeMax,
+        )
 
     is ArenaMessageState.HolyShield.Prayer ->
         if (didSurvive) {
@@ -376,22 +441,33 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                 resource = Res.string.arena_message_holy_shield_prayer_survived,
                 firstDie,
                 secondDie,
+                total,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_holy_shield_prayer_failed,
                 firstDie,
                 secondDie,
+                total,
             )
         }
 
     is ArenaMessageState.HolyShield.Wrath ->
-        stringResource(
-            resource = Res.string.arena_message_holy_shield_wrath,
-            paladinName,
-            attackerClassName,
-            singleDie,
-        )
+        if (isAttackerKnockedOut) {
+            stringResource(
+                resource = Res.string.arena_message_holy_shield_wrath_knockout,
+                paladinName,
+                attackerClassName,
+                singleDie,
+            )
+        } else {
+            stringResource(
+                resource = Res.string.arena_message_holy_shield_wrath,
+                paladinName,
+                attackerClassName,
+                singleDie,
+            )
+        }
 
     is ArenaMessageState.AllIn ->
         when (outcome) {
@@ -427,22 +503,28 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             stringResource(
                 resource = Res.string.arena_message_prepare_attack_success,
                 duelistName,
-                targetClassName,
                 firstDie,
                 secondDie,
+                total,
+                knockoutRangeMin,
+                knockoutRangeMax,
+                targetClassName,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_prepare_attack_failed,
                 duelistName,
-                targetClassName,
                 firstDie,
                 secondDie,
+                total,
+                knockoutRangeMin,
+                knockoutRangeMax,
+                targetClassName,
             )
         }
 }
 
-private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int): String = if (doublesBonus >
+private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int) = if (doublesBonus >
     0
 ) {
     "$baseRoll (+$doublesBonus)"

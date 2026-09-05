@@ -60,6 +60,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-272** — Rewrite Arena combat messages to describe the rules and what happened: Reworked the
+  message log + flash text for every ability across all 8 classes plus the core `NormalRoll.Outcome`
+  and Gambler `AllIn`, so each line narrates the contest (roll vs armor/threshold, the modifier, the
+  result) instead of a bare outcome. Threaded display-ready fields (ranges/totals/thresholds, derived
+  in the domain/handlers) through Domain → Data → State → resolvers. Persuade skipped (broken, pending
+  its own overhaul). Optional follow-ups noted in the PR: Mirror Image Pass "vs armor" threshold,
+  minion-attack attribution, and a stray `MIRROR IMAGE DEBUG` println.
+
 - **SS-227** — Finished state: show which players have readied up (like ChallengeDialog): Per-player
   readiness now threads Domain → UI (`ArenaPlayer.isReadyForNextMatch` → `PlayerState.Selected` via
   `toState`/`toSelectedState`/`toDomain`), and each recap row in `MatchFinishedContent` shows a

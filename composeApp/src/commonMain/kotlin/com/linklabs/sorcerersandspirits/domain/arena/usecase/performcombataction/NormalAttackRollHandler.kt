@@ -225,6 +225,7 @@ internal class NormalAttackRollHandler(
                 attackerClassName = attacker.className,
                 attackerClassType = attacker.type,
                 defenderClassName = defender.className,
+                defenderArmorClass = defender.armorClass,
                 firstDie = firstDie,
                 secondDie = secondDie,
                 bonus = bonus,

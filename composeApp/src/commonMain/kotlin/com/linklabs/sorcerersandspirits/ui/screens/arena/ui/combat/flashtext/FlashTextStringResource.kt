@@ -260,17 +260,17 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         }
 
     is ArenaMessageState.HolyShield.Trigger ->
-        stringResource(resource = Res.string.arena_flash_holy_shield)
+        stringResource(resource = Res.string.arena_flash_holy_shield, successRangeMin, successRangeMax)
 
     is ArenaMessageState.HolyShield.Prayer ->
         if (didSurvive) {
-            stringResource(resource = Res.string.arena_flash_saved)
+            stringResource(resource = Res.string.arena_flash_saved, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_struck_down)
+            stringResource(resource = Res.string.arena_flash_struck_down, total)
         }
 
     is ArenaMessageState.HolyShield.Wrath ->
-        stringResource(resource = Res.string.arena_flash_holy_wrath)
+        stringResource(resource = Res.string.arena_flash_holy_wrath, singleDie)
 
     is ArenaMessageState.NewRound ->
         stringResource(resource = Res.string.arena_flash_new_round, roundNumber)

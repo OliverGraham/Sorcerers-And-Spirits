@@ -335,7 +335,12 @@ sealed interface ArenaMessageEntity {
 
         @Serializable
         @SerialName(value = HOLY_SHIELD_TRIGGER)
-        data class Trigger(override val id: String, override val paladinUserId: String) : HolyShield
+        data class Trigger(
+            override val id: String,
+            override val paladinUserId: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
+        ) : HolyShield
 
         @Serializable
         @SerialName(value = HOLY_SHIELD_PRAYER)
@@ -344,6 +349,7 @@ sealed interface ArenaMessageEntity {
             override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val didSurvive: Boolean,
         ) : HolyShield
 
@@ -681,13 +687,18 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.HolyShield.Trigger ->
-                ArenaMessage.HolyShield.Trigger(paladinUserId = paladinUserId)
+                ArenaMessage.HolyShield.Trigger(
+                    paladinUserId = paladinUserId,
+                    successRangeMin = successRangeMin,
+                    successRangeMax = successRangeMax,
+                )
 
             is ArenaMessageEntity.HolyShield.Prayer ->
                 ArenaMessage.HolyShield.Prayer(
                     paladinUserId = paladinUserId,
                     firstDie = firstDie,
                     secondDie = secondDie,
+                    total = total,
                     didSurvive = didSurvive,
                 )
 
@@ -999,7 +1010,12 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
         )
 
     is ArenaMessage.HolyShield.Trigger ->
-        ArenaMessageEntity.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
+        ArenaMessageEntity.HolyShield.Trigger(
+            id = id,
+            paladinUserId = paladinUserId,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
+        )
 
     is ArenaMessage.HolyShield.Prayer ->
         ArenaMessageEntity.HolyShield.Prayer(
@@ -1007,6 +1023,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             paladinUserId = paladinUserId,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             didSurvive = didSurvive,
         )
 

@@ -175,10 +175,11 @@
     <string name="arena_message_spell_potency_no_splash">Spell Potency! %1$s rolled doubles — %3$s damage to %2$s!</string>
     <string name="arena_message_spell_potency_no_splash_knockout">Spell Potency! %1$s rolled doubles — %3$s damage knocks out %2$s!</string>
 
-    <string name="arena_message_holy_shield_trigger">Holy Shield! A prayer is offered…</string>
-    <string name="arena_message_holy_shield_prayer_survived">Rolled %1$s and %2$s — the prayer is answered!</string>
-    <string name="arena_message_holy_shield_prayer_failed">Rolled %1$s and %2$s — the prayer goes unanswered</string>
-    <string name="arena_message_holy_shield_wrath">%1$s's wrath strikes %2$s for %3$s</string>
+    <string name="arena_message_holy_shield_trigger">Holy Shield! The Paladin is knocked out — a 2d6 prayer survives on %1$s–%2$s</string>
+    <string name="arena_message_holy_shield_prayer_survived">The Paladin prayed %1$s + %2$s = %3$s — answered! The Paladin survives with 1 Health</string>
+    <string name="arena_message_holy_shield_prayer_failed">The Paladin prayed %1$s + %2$s = %3$s — the prayer goes unanswered</string>
+    <string name="arena_message_holy_shield_wrath">Holy Wrath! %1$s's unblockable retribution strikes %2$s for %3$s</string>
+    <string name="arena_message_holy_shield_wrath_knockout">Holy Wrath! %1$s's unblockable retribution strikes %2$s for %3$s — knocking them out!</string>
 
     <string name="arena_message_all_in_self_knockout">%1$s goes all in, rolls a %2$s — and knocks themselves out!</string>
     <string name="arena_message_all_in_no_effect">%1$s goes all in, rolls a %2$s — no effect</string>
@@ -227,10 +228,10 @@
     <string name="arena_flash_redirected">Redirected to %1$s!</string>
     <string name="arena_flash_mirror_image">Mirror Image!</string>
     <string name="arena_flash_reroll">Reroll %1$s (−1)!</string>
-    <string name="arena_flash_holy_shield">Holy Shield!</string>
-    <string name="arena_flash_saved">Saved!</string>
-    <string name="arena_flash_struck_down">Struck down!</string>
-    <string name="arena_flash_holy_wrath">Holy Wrath!</string>
+    <string name="arena_flash_holy_shield">Holy Shield · Need %1$s–%2$s!</string>
+    <string name="arena_flash_saved">%1$s · Saved!</string>
+    <string name="arena_flash_struck_down">%1$s · Struck down!</string>
+    <string name="arena_flash_holy_wrath">%1$s · Holy Wrath!</string>
     <string name="arena_flash_new_round">Round %1$s!</string>
     <string name="arena_flash_chose_class">%1$s!</string>
     <string name="arena_flash_joined">%1$s joined!</string>

@@ -21,6 +21,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shi
 import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_prayer_survived
 import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_wrath
+import sorcerersandspirits.composeapp.generated.resources.arena_message_holy_shield_wrath_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_impersonate
 import sorcerersandspirits.composeapp.generated.resources.arena_message_joined_arena
 import sorcerersandspirits.composeapp.generated.resources.arena_message_killing_momentum
@@ -426,7 +427,11 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         }
 
     is ArenaMessageState.HolyShield.Trigger ->
-        stringResource(resource = Res.string.arena_message_holy_shield_trigger)
+        stringResource(
+            resource = Res.string.arena_message_holy_shield_trigger,
+            successRangeMin,
+            successRangeMax,
+        )
 
     is ArenaMessageState.HolyShield.Prayer ->
         if (didSurvive) {
@@ -434,22 +439,33 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                 resource = Res.string.arena_message_holy_shield_prayer_survived,
                 firstDie,
                 secondDie,
+                total,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_holy_shield_prayer_failed,
                 firstDie,
                 secondDie,
+                total,
             )
         }
 
     is ArenaMessageState.HolyShield.Wrath ->
-        stringResource(
-            resource = Res.string.arena_message_holy_shield_wrath,
-            paladinName,
-            attackerClassName,
-            singleDie,
-        )
+        if (isAttackerKnockedOut) {
+            stringResource(
+                resource = Res.string.arena_message_holy_shield_wrath_knockout,
+                paladinName,
+                attackerClassName,
+                singleDie,
+            )
+        } else {
+            stringResource(
+                resource = Res.string.arena_message_holy_shield_wrath,
+                paladinName,
+                attackerClassName,
+                singleDie,
+            )
+        }
 
     is ArenaMessageState.AllIn ->
         when (outcome) {

@@ -377,6 +377,13 @@ are archived in [COMPLETED.md](COMPLETED.md).
   `Encore.Trigger` (from `AbilityConfig.encoreSuccessRange` 5..6), same as Riposte. Trigger states the
   rule ("…5–6 earns another attack"); Roll shows the die + outcome ("the crowd roars, the Bard attacks
   again!" / "the moment passes, no encore"). Flash trigger "Encore · Need 5–6!". Persuade untouched.
+- **Progress — Paladin (Holy Shield) complete — all 10 classes done:** threaded `successRangeMin`/`Max`
+  onto `HolyShield.Trigger` (from `holyShieldSuccessRange` 10..12) and `total` onto `HolyShield.Prayer`.
+  Trigger: "…a 2d6 prayer survives on 10–12"; Prayer: "The Paladin prayed 6 + 5 = 11 — answered!
+  survives with 1 Health" / "…the prayer goes unanswered". Wrath states "unblockable retribution" (the
+  no-armor-roll rule) and gained a KO variant surfacing the already-carried `isAttackerKnockedOut`.
+  Flash enriched with the range/total/damage. The "12 stops Prepare Attack" edge lives in the Prepare
+  Attack bypass path (not a Holy Shield message).
 - **Open considerations:**
     - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
       deserialization defaults. [[serialization-backcompat-non-concern]]
@@ -386,9 +393,10 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** Paladin (Holy Shield) next — last class. Then the two cross-cutting pieces: Group B
-  `NormalRoll.Outcome` (normal + minion attacks — carry defender ArmorClass/Health; the biggest one)
-  and Group A `AllIn` polish. Fix all siblings of a message family in the same pass.
+- **Next:** all 10 classes done. Remaining: Group B `NormalRoll.Outcome` (normal + minion attacks —
+  carry the defender threshold so "rolled 9 vs 6 armor" reads fully; also completes the Mirror Image
+  Pass threshold deferred in the Illusionist pass) and Group A `AllIn` polish. Fix all siblings of a
+  message family in the same pass.
 
 ## Combat animations
 

@@ -221,12 +221,17 @@ sealed interface ArenaMessage {
     sealed interface HolyShield : ArenaMessage {
         val paladinUserId: String
 
-        data class Trigger(override val paladinUserId: String) : HolyShield
+        data class Trigger(
+            override val paladinUserId: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
+        ) : HolyShield
 
         data class Prayer(
             override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val didSurvive: Boolean,
         ) : HolyShield
 

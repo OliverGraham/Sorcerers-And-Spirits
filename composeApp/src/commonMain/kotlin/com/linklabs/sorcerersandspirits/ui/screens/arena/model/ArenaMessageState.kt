@@ -558,6 +558,8 @@ sealed interface ArenaMessageState {
                 ArenaAnimationState.FlashAndAvatar(isContinuous = true),
             override val id: String,
             override val paladinUserId: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : HolyShield
 
         @Immutable
@@ -568,6 +570,7 @@ sealed interface ArenaMessageState {
             override val paladinUserId: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val didSurvive: Boolean,
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
         ) : HolyShield
@@ -987,7 +990,12 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
         ArenaMessageState.Teleport.Trigger(id = id, mageUserId = mageUserId)
 
     is ArenaMessage.HolyShield.Trigger ->
-        ArenaMessageState.HolyShield.Trigger(id = id, paladinUserId = paladinUserId)
+        ArenaMessageState.HolyShield.Trigger(
+            id = id,
+            paladinUserId = paladinUserId,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
+        )
 
     is ArenaMessage.HolyShield.Prayer -> {
         val gestures =
@@ -1002,6 +1010,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             paladinUserId = paladinUserId,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             didSurvive = didSurvive,
             gestures = gestures,
         )

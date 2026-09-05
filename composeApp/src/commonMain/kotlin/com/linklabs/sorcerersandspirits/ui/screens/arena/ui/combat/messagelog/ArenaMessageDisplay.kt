@@ -303,7 +303,11 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         )
 
     is ArenaMessageState.Encore.Trigger ->
-        stringResource(resource = Res.string.arena_message_encore_trigger)
+        stringResource(
+            resource = Res.string.arena_message_encore_trigger,
+            successRangeMin,
+            successRangeMax,
+        )
 
     is ArenaMessageState.Encore.Roll ->
         if (isSuccessful) {

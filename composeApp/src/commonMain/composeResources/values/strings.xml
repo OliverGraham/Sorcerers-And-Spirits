@@ -154,9 +154,9 @@
     <string name="arena_message_persuade_lull">The attacker is lulled…</string>
     <string name="arena_message_persuade_charm">%1$s charmed %2$s</string>
 
-    <string name="arena_message_encore_trigger">Encore! The crowd demands more…</string>
-    <string name="arena_message_encore_roll_success">Encore roll of %1$s — another performance!</string>
-    <string name="arena_message_encore_roll_failed">Encore roll of %1$s — the moment passes</string>
+    <string name="arena_message_encore_trigger">Encore! The Bard rolls 1d6 — %1$s–%2$s earns another attack</string>
+    <string name="arena_message_encore_roll_success">Encore roll of %1$s — the crowd roars, the Bard attacks again!</string>
+    <string name="arena_message_encore_roll_failed">Encore roll of %1$s — the moment passes, no encore</string>
 
     <string name="arena_message_impersonate">Impersonate! %1$s copies the opponent's %2$s until the match ends</string>
 
@@ -204,7 +204,7 @@
     <string name="arena_flash_impersonate">Impersonate!</string>
     <string name="arena_flash_prepared_strike">%1$s · Prepared Strike!</string>
     <string name="arena_flash_attack_whiffed">%1$s · Whiffed!</string>
-    <string name="arena_flash_encore">Encore!</string>
+    <string name="arena_flash_encore">Encore · Need %1$s–%2$s!</string>
     <string name="arena_flash_all_in_no_effect">No effect</string>
     <string name="arena_flash_all_in_strike_twice">Extra attack!</string>
     <string name="arena_flash_fizzle">Fizzle!</string>

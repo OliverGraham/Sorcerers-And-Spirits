@@ -159,6 +159,8 @@ sealed interface ArenaMessage {
         data class Trigger(
             override val bardUserId: String,
             override val classType: CharacterClassType,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Encore
 
         data class Roll(

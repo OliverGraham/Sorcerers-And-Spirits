@@ -141,7 +141,7 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         }
 
     is ArenaMessageState.Encore.Trigger ->
-        stringResource(resource = Res.string.arena_flash_encore)
+        stringResource(resource = Res.string.arena_flash_encore, successRangeMin, successRangeMax)
 
     is ArenaMessageState.Encore.Roll ->
         if (isSuccessful) {

@@ -373,6 +373,10 @@ are archived in [COMPLETED.md](COMPLETED.md).
       but it's entangled with knockout-total animation anchoring — revisit only if asked.
     - **Cruft noted (not removed):** `MirrorImageHandler.temptFate()` has a leftover
       `println("MIRROR IMAGE DEBUG: …")` (~lines 37–39). Out of scope; flagged to owner.
+- **Progress — Bard (Encore only; Persuade skipped) complete:** threaded `successRangeMin`/`Max` onto
+  `Encore.Trigger` (from `AbilityConfig.encoreSuccessRange` 5..6), same as Riposte. Trigger states the
+  rule ("…5–6 earns another attack"); Roll shows the die + outcome ("the crowd roars, the Bard attacks
+  again!" / "the moment passes, no encore"). Flash trigger "Encore · Need 5–6!". Persuade untouched.
 - **Open considerations:**
     - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
       deserialization defaults. [[serialization-backcompat-non-concern]]
@@ -382,10 +386,9 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** Bard-minus-Persuade (Encore only — Persuade skipped, broken) next, then Paladin (Holy
-  Shield). Group B still open: `NormalRoll.Outcome` (carry defender ArmorClass/Health). Then Group A
-  string-only rewrites (`HolyShield.Prayer`, `AllIn`). Fix all siblings of a message family in the
-  same pass.
+- **Next:** Paladin (Holy Shield) next — last class. Then the two cross-cutting pieces: Group B
+  `NormalRoll.Outcome` (normal + minion attacks — carry defender ArmorClass/Health; the biggest one)
+  and Group A `AllIn` polish. Fix all siblings of a message family in the same pass.
 
 ## Combat animations
 

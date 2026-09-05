@@ -248,6 +248,8 @@ sealed interface ArenaMessageEntity {
             override val id: String,
             override val bardUserId: String,
             override val classType: CharacterClassType,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Encore
 
         @Serializable
@@ -610,7 +612,12 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.Encore.Trigger ->
-                ArenaMessage.Encore.Trigger(bardUserId = bardUserId, classType = classType)
+                ArenaMessage.Encore.Trigger(
+                    bardUserId = bardUserId,
+                    classType = classType,
+                    successRangeMin = successRangeMin,
+                    successRangeMax = successRangeMax,
+                )
 
             is ArenaMessageEntity.Encore.Roll ->
                 ArenaMessage.Encore.Roll(
@@ -923,6 +930,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             bardUserId = bardUserId,
             classType = classType,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Encore.Roll ->

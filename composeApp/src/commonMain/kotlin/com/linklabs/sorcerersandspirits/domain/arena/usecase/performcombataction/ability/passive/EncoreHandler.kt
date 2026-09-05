@@ -20,7 +20,12 @@ internal class EncoreHandler(private val combatMutator: CombatMutator) {
 
         addMessage(
             message =
-            ArenaMessage.Encore.Trigger(bardUserId = attackerUserId, classType = attacker.type),
+            ArenaMessage.Encore.Trigger(
+                bardUserId = attackerUserId,
+                classType = attacker.type,
+                successRangeMin = abilityConfig.encoreSuccessRange.first,
+                successRangeMax = abilityConfig.encoreSuccessRange.last,
+            ),
         )
 
         setNextAbilityRoll(

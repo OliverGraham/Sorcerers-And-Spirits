@@ -341,6 +341,8 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val bardUserId: String,
             override val actingClassType: CharacterClassType,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Encore
 
         @Immutable
@@ -843,6 +845,8 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             bardUserId = bardUserId,
             actingClassType = classType,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Encore.Roll ->

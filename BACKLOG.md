@@ -360,6 +360,19 @@ are archived in [COMPLETED.md](COMPLETED.md).
       armor stays {new}". Flash: "Dodge · +{bonus} Armor!" / new "Dodge · At Cap!".
     - `maxArmorBonus` from `AbilityConfig.dodgeMaxArmorBonus`; `newArmorClass`/`armorBonus` captured in
       `DodgeHandler` after the update. Rogue name hardcoded in strings (Dodge is Rogue-only).
+- **Progress — Illusionist (Impersonate + Mirror Image) complete:** near-entirely strings.
+    - Impersonate: "Impersonate! {Illusionist} copies the opponent's {Ability} until the match ends".
+    - Mirror Image trigger states the rule: "…may reroll one attack die at −1".
+    - Mirror Image Pass now shows the roll total that stood (`baseRoll`/`doublesBonus` already on state,
+      via existing `rolledTotalDisplay`): "…{Attacker}'s {total} breaks the armor!" etc.
+    - Tempt Fate: enhanced the state's `rerollDisplay` computed value from "{raw} - 1" to
+      "{raw} − 1 = {final}" (one line), improving all four existing messages at once.
+    - Did NOT thread the Illusionist's armor/health into Pass (the "{roll} vs {armor}" threshold) — that
+      is the same defender-threshold data `NormalRoll.Outcome` needs; do both there.
+    - Flash left as-is. The Pass flash's non-knockout "Holds!" reads oddly when a Pass actually lands,
+      but it's entangled with knockout-total animation anchoring — revisit only if asked.
+    - **Cruft noted (not removed):** `MirrorImageHandler.temptFate()` has a leftover
+      `println("MIRROR IMAGE DEBUG: …")` (~lines 37–39). Out of scope; flagged to owner.
 - **Open considerations:**
     - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
       deserialization defaults. [[serialization-backcompat-non-concern]]
@@ -369,10 +382,10 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** Illusionist (Impersonate + Mirror Image) next, then Bard-minus-Persuade (Encore) and
-  Paladin (Holy Shield). Group B still open: `NormalRoll.Outcome` (carry defender ArmorClass/Health),
-  `MirrorImage.TemptFate`. Then Group A string-only rewrites (`Encore.Roll`, `HolyShield.Prayer`,
-  `AllIn`). Fix all siblings of a message family in the same pass.
+- **Next:** Bard-minus-Persuade (Encore only — Persuade skipped, broken) next, then Paladin (Holy
+  Shield). Group B still open: `NormalRoll.Outcome` (carry defender ArmorClass/Health). Then Group A
+  string-only rewrites (`HolyShield.Prayer`, `AllIn`). Fix all siblings of a message family in the
+  same pass.
 
 ## Combat animations
 

@@ -464,7 +464,7 @@ sealed interface ArenaMessageState {
             val messageType: NormalRollMessageType,
             override val gestures: Map<String, AvatarGesture>,
         ) : MirrorImage {
-            val rerollDisplay: String = "$rawReroll - 1"
+            val rerollDisplay: String = "$rawReroll − 1 = $finalRoll"
 
             override val isAvatarCompletedByGesture: Boolean = true
         }

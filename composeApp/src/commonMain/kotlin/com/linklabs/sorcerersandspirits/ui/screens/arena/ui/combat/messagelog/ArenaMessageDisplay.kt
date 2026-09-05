@@ -328,24 +328,28 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_armor_broke,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
 
             NormalRollMessageType.ArmorClassMiss ->
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_armor_held,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
 
             NormalRollMessageType.Damage ->
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_damage,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
 
             NormalRollMessageType.Knockout ->
                 stringResource(
                     resource = Res.string.arena_message_mirror_image_pass_knockout,
                     attackerClassName,
+                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = doublesBonus),
                 )
         }
 
@@ -498,7 +502,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         }
 }
 
-private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int): String = if (doublesBonus >
+private fun rolledTotalDisplay(baseRoll: Int, doublesBonus: Int) = if (doublesBonus >
     0
 ) {
     "$baseRoll (+$doublesBonus)"

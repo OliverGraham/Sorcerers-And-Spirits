@@ -61,6 +61,7 @@ import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_title
 import sorcerersandspirits.composeapp.generated.resources.arena_choosing_classes_waiting
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_header
 import sorcerersandspirits.composeapp.generated.resources.arena_log_header
 import sorcerersandspirits.composeapp.generated.resources.ic_messages
 
@@ -90,7 +91,11 @@ internal sealed interface MessagesBarHeaderTarget {
         val displayName: String,
     ) : MessagesBarHeaderTarget
 
-    data class Finished(val titleResource: StringResource) : MessagesBarHeaderTarget
+    data class Finished(
+        val titleResource: StringResource,
+        val currentMatch: Int,
+        val matchesPerGauntlet: Int,
+    ) : MessagesBarHeaderTarget
 }
 
 @Composable
@@ -213,7 +218,15 @@ private fun messagesBarHeaderText(header: MessagesBarHeaderTarget): AnnotatedStr
         choosingClassesHeaderText(isThisUser = header.isThisUser, displayName = header.displayName)
 
     is MessagesBarHeaderTarget.Finished ->
-        AnnotatedString(text = stringResource(resource = header.titleResource))
+        AnnotatedString(
+            text =
+            stringResource(
+                resource = Res.string.arena_finished_header,
+                stringResource(resource = header.titleResource),
+                header.currentMatch,
+                header.matchesPerGauntlet,
+            ),
+        )
 }
 
 @Composable

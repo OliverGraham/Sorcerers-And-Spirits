@@ -276,6 +276,10 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
     is ArenaMessageState.ConnectedToArena ->
         stringResource(resource = Res.string.arena_flash_joined, displayName)
 
+    is ArenaMessageState.ReadiedForNextMatch -> ""
+
+    is ArenaMessageState.NextMatchStartingSoon -> ""
+
     is ArenaMessageState.NewTurn ->
         stringResource(
             resource = Res.string.arena_flash_turn_start,

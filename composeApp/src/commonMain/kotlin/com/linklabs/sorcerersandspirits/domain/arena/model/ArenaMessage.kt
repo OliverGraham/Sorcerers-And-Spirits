@@ -13,6 +13,8 @@ sealed interface ArenaMessage {
 
     data class ConnectedToArena(val displayName: String) : ArenaMessage
 
+    data class ReadiedForNextMatch(val displayName: String) : ArenaMessage
+
     data class NewRound(val roundNumber: Int) : ArenaMessage
 
     data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : ArenaMessage

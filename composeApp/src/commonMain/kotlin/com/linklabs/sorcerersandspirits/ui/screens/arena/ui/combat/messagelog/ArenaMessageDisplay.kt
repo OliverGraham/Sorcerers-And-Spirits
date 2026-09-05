@@ -40,6 +40,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_i
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_tempt_fate_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_new_turn
+import sorcerersandspirits.composeapp.generated.resources.arena_message_next_match_starting_soon
 import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_damage
 import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_hit
 import sorcerersandspirits.composeapp.generated.resources.arena_message_normal_roll_knockout
@@ -51,6 +52,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade
 import sorcerersandspirits.composeapp.generated.resources.arena_message_persuade_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_prepare_attack_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_prepare_attack_success
+import sorcerersandspirits.composeapp.generated.resources.arena_message_readied_for_next_match
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_en_garde_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_en_garde_success
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_trigger
@@ -82,6 +84,12 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
 
     is ArenaMessageState.ConnectedToArena ->
         stringResource(resource = Res.string.arena_message_joined_arena, displayName)
+
+    is ArenaMessageState.ReadiedForNextMatch ->
+        stringResource(resource = Res.string.arena_message_readied_for_next_match, displayName)
+
+    is ArenaMessageState.NextMatchStartingSoon ->
+        stringResource(resource = Res.string.arena_message_next_match_starting_soon)
 
     is ArenaMessageState.NewTurn ->
         stringResource(

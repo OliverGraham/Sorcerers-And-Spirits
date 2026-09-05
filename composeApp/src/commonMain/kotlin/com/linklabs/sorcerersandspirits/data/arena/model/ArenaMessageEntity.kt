@@ -30,6 +30,10 @@ sealed interface ArenaMessageEntity {
     data class ConnectedToArena(override val id: String, val displayName: String) : ArenaMessageEntity
 
     @Serializable
+    @SerialName(value = READIED_FOR_NEXT_MATCH)
+    data class ReadiedForNextMatch(override val id: String, val displayName: String) : ArenaMessageEntity
+
+    @Serializable
     @SerialName(value = NEW_ROUND)
     data class NewRound(override val id: String, val roundNumber: Int) : ArenaMessageEntity
 
@@ -378,6 +382,7 @@ sealed interface ArenaMessageEntity {
     companion object {
         private const val CHOSE_CHARACTER_CLASS = "ChoseCharacterClass"
         private const val CONNECTED_TO_ARENA = "ConnectedToArena"
+        private const val READIED_FOR_NEXT_MATCH = "ReadiedForNextMatch"
         private const val NEW_ROUND = "NewRound"
         private const val NEW_TURN = "NewTurn"
         private const val NORMAL_ROLL_ATTACK = "NormalRollAttack"
@@ -437,6 +442,9 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
 
             is ArenaMessageEntity.ConnectedToArena ->
                 ArenaMessage.ConnectedToArena(displayName = displayName)
+
+            is ArenaMessageEntity.ReadiedForNextMatch ->
+                ArenaMessage.ReadiedForNextMatch(displayName = displayName)
 
             is ArenaMessageEntity.NewRound -> ArenaMessage.NewRound(roundNumber = this.roundNumber)
 
@@ -706,6 +714,9 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
 
     is ArenaMessage.ConnectedToArena ->
         ArenaMessageEntity.ConnectedToArena(id = id, displayName = displayName)
+
+    is ArenaMessage.ReadiedForNextMatch ->
+        ArenaMessageEntity.ReadiedForNextMatch(id = id, displayName = displayName)
 
     is ArenaMessage.NewRound -> ArenaMessageEntity.NewRound(id = id, roundNumber = roundNumber)
 

@@ -339,6 +339,18 @@ are archived in [COMPLETED.md](COMPLETED.md).
   (`Ability.kt` `shieldPoints` = Golem 2 else 1), stated as literals per outcome-specific string.
   Extra-attack timing nuance (skeleton "next turn" vs golem "your turn") left as plain "extra attack"
   to avoid misstating. Minion *attacks* flow through `NormalRoll.Outcome` (Group B), not this pass.
+- **Progress — Mage (Teleport + Spell Potency) complete:**
+    - Teleport is strings-only. The two per-roller `Teleport.Roll` messages already narrate the roll-off
+      dice, so Trigger/Tie/Result stay rule-descriptive without repeating numbers or threading fields:
+      trigger "The Mage rolls off 1d6 with the attacker — the higher roll escapes"; result "The Mage
+      rolled higher — teleports away…" / "rolled lower — the attack lands!". Roll line + flash left as-is.
+    - Spell Potency is strings + a display KO branch (no new fields — `isMainTargetKnockedOut`,
+      `mainDamage`, `splashDamage` already threaded). Log: "Spell Potency! {Mage} rolled doubles —
+      {dmg} damage to {Target}…" with splash/no-splash × KO/no-KO variants (2 new KO strings).
+      Surfaced the previously-unused knockout wording. Flash: "Spell Potency · {dmg}!".
+    - **No "d1 + d2 = dmg" for Spell Potency:** `mainDamage = diceTotal = firstDie + secondDie + bonus`
+      (carried doubles bonus in `NormalAttackRollHandler`), so the sum wouldn't always match. State
+      "rolled doubles" + the resulting damage instead.
 - **Open considerations:**
     - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
       deserialization defaults. [[serialization-backcompat-non-concern]]
@@ -348,8 +360,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
       alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** Mage (Spell Potency + Teleport) next, then remaining classes. Group B still open:
-  `NormalRoll.Outcome` (carry defender ArmorClass/Health), `Teleport.Result` (both roll-off values),
+- **Next:** Rogue (Killing Momentum + Dodge) next, then remaining classes (Illusionist, Bard-minus-
+  Persuade, Paladin). Group B still open: `NormalRoll.Outcome` (carry defender ArmorClass/Health),
   `Dodge` (old→new armor), `MirrorImage.TemptFate`. Then Group A string-only rewrites (`Encore.Roll`,
   `HolyShield.Prayer`, `AllIn`). Fix all siblings of a message family in the same pass.
 

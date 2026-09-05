@@ -118,7 +118,7 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
     is ArenaMessageState.Dodge -> stringResource(resource = Res.string.arena_flash_dodge)
 
     is ArenaMessageState.SpellPotency ->
-        stringResource(resource = Res.string.arena_flash_spell_potency)
+        stringResource(resource = Res.string.arena_flash_spell_potency, mainDamage)
 
     is ArenaMessageState.Doubles -> stringResource(resource = Res.string.arena_flash_doubles)
 

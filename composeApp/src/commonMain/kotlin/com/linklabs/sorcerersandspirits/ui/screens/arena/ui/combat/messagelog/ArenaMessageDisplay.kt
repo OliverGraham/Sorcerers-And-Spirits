@@ -58,7 +58,9 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_
 import sorcerersandspirits.composeapp.generated.resources.arena_message_riposte_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_round
 import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency
+import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_no_splash
+import sorcerersandspirits.composeapp.generated.resources.arena_message_spell_potency_no_splash_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_fizzle
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_golem
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton
@@ -371,20 +373,39 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
 
     is ArenaMessageState.SpellPotency ->
         if (splashDamage > 0) {
-            stringResource(
-                resource = Res.string.arena_message_spell_potency,
-                mageName,
-                mainTargetClassName,
-                mainDamage,
-                splashDamage,
-            )
+            if (isMainTargetKnockedOut) {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_knockout,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                    splashDamage,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                    splashDamage,
+                )
+            }
         } else {
-            stringResource(
-                resource = Res.string.arena_message_spell_potency_no_splash,
-                mageName,
-                mainTargetClassName,
-                mainDamage,
-            )
+            if (isMainTargetKnockedOut) {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_no_splash_knockout,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_spell_potency_no_splash,
+                    mageName,
+                    mainTargetClassName,
+                    mainDamage,
+                )
+            }
         }
 
     is ArenaMessageState.HolyShield.Trigger ->

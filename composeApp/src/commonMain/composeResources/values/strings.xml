@@ -106,10 +106,11 @@
     <string name="arena_log_turn">%1$s's Turn</string>
     <string name="arena_log_header">Round %1$s · %2$s's turn</string>
     <string name="arena_log_setup">Match Setup</string>
+    <string name="arena_log_finished">Match Over</string>
     <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>
     <string name="arena_message_readied_for_next_match">%1$s is ready for the next match</string>
-    <string name="arena_message_next_match_starting_soon">The next match is starting soon!</string>
+    <string name="arena_message_next_match_starting_soon">Next match starting soon!</string>
     <string name="arena_message_new_turn">It's %1$s's turn</string>
 
     <string name="arena_message_normal_roll_hit">%1$s targeted %2$s, rolled %3$s and hit</string>

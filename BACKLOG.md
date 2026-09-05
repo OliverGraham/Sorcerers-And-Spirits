@@ -308,7 +308,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
       roll-off values), `Dodge` (old→new armor), `MirrorImage.TemptFate` (original die → rerolled
       value vs target).
     - *Group C — flavor, leave as-is:* `Doubles`, `KillingMomentum`, pure triggers.
-- **Progress:** LuckyCoin pilot **complete** across all layers (log + flash). Final approved wording:
+- **Progress — Gambler (LuckyCoin) complete:** approved wording:
     - Trigger log: "Lucky Coin! Gambler needs at least a {minCoin} to stop {Attacker}'s attack of
       {roll}"; flash: "Lucky Coin · Need {minCoin}!"
     - Stopped log: "Lucky Coin adds {coin} to Gambler's {armor} armor — {Attacker}'s attack is
@@ -317,18 +317,33 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - High Roller trigger/damage/KO: owner approved as-is.
     - `minimumCoinToStop = attackerRollTotal − armorClass + 1`, computed in `LuckyCoinHandler`. Can
       exceed 6 (attacker beat armor by 6+) — currently shown honestly; revisit if the edge reads odd.
+- **Progress — Duelist (Riposte + Prepare Attack) complete:** approved wording:
+    - Riposte trigger log: "Riposte! {Attacker} broke through — Duelist needs {min}–{max} to turn the
+      attack around"; flash: "Riposte · Need {min}–{max}!"
+    - Riposte EnGarde log: "En garde! Duelist rolled {d1} + {d2} = {total} — {Attacker}'s attack is
+      turned back on them!" / "…the counter fails and {Attacker}'s attack continues!"; flash:
+      "{total} · Reversed!" / "{total} · No counter!"
+    - Prepare Attack log: "Prepare Attack! {Duelist} rolled {d1} + {d2} = {total} — {min}–{max} knocks
+      out {Target}!" / "…needed {min}–{max}, {Target} survives"; flash: "{total} · Prepared Strike!" /
+      "{total} · Whiffed!"
+    - Ranges read live from `AbilityConfig` (`riposteSuccessRange` 6–8, `prepareAttackKnockoutRange`
+      10–12) carried as min/max fields, not hardcoded. `total` carried (no UI arithmetic).
+    - Prepare Attack has no trigger log line (its `Strike` message renders blank — animation-only cue),
+      so the KO range folds into the outcome. Dropped the misleading old "studied … next attack is
+      prepared" copy.
 - **Open considerations:**
-    - *Serialization back-compat:* new required fields on `@Serializable` message entities only bite a
-      match already in progress across a deploy (messages are per-match). Following the existing
-      no-default pattern; add deserialization defaults only if we decide to protect mid-flight matches.
-    - Flash strings `arena_flash_attack_stopped`/`_continues` are shared with Persuade; LuckyCoin got
-      its own `arena_flash_lucky_coin_stopped`/`_continues`. Give Persuade the same treatment when it's
-      its turn.
+    - Serialization back-compat is a **non-concern** — app unreleased + version-controlled; do not add
+      deserialization defaults. [[serialization-backcompat-non-concern]]
+    - *Persuade is broken and slated for a full overhaul — skip it entirely in this sweep.* Do not
+      reword its messages/flash or build on it. Where LuckyCoin needed flash strings shared with
+      Persuade (`arena_flash_attack_stopped`/`_continues`), it got its own copies and left Persuade's
+      alone. [[persuade-bard-broken-overhaul]]
     - Tests that construct changed messages have compile fallout; deferred per owner ("don't worry
       about tests").
-- **Next:** continue class-by-class — Group B first (`NormalRoll.Outcome`, `Teleport.Result`, `Dodge`,
-  `MirrorImage.TemptFate`), then Group A string rewrites. Fix all siblings of a message family in the
-  same pass.
+- **Next:** Necromancer (SummonMinion) next, then remaining classes. Group B still open:
+  `NormalRoll.Outcome` (carry defender ArmorClass/Health), `Teleport.Result` (both roll-off values),
+  `Dodge` (old→new armor), `MirrorImage.TemptFate`. Then Group A string-only rewrites (`Encore.Roll`,
+  `HolyShield.Prayer`, `AllIn`). Fix all siblings of a message family in the same pass.
 
 ## Combat animations
 

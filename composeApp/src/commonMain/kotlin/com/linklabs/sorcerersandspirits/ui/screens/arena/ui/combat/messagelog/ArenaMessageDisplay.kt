@@ -208,7 +208,12 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
         }
 
     is ArenaMessageState.Riposte.Trigger ->
-        stringResource(resource = Res.string.arena_message_riposte_trigger)
+        stringResource(
+            resource = Res.string.arena_message_riposte_trigger,
+            attackerClassName,
+            successRangeMin,
+            successRangeMax,
+        )
 
     is ArenaMessageState.Riposte.EnGarde ->
         if (isSuccessful) {
@@ -216,12 +221,16 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                 resource = Res.string.arena_message_riposte_en_garde_success,
                 firstDie,
                 secondDie,
+                total,
+                attackerClassName,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_riposte_en_garde_failed,
                 firstDie,
                 secondDie,
+                total,
+                attackerClassName,
             )
         }
 
@@ -438,17 +447,23 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             stringResource(
                 resource = Res.string.arena_message_prepare_attack_success,
                 duelistName,
-                targetClassName,
                 firstDie,
                 secondDie,
+                total,
+                knockoutRangeMin,
+                knockoutRangeMax,
+                targetClassName,
             )
         } else {
             stringResource(
                 resource = Res.string.arena_message_prepare_attack_failed,
                 duelistName,
-                targetClassName,
                 firstDie,
                 secondDie,
+                total,
+                knockoutRangeMin,
+                knockoutRangeMax,
+                targetClassName,
             )
         }
 }

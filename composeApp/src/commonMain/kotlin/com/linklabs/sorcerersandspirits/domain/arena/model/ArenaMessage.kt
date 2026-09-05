@@ -102,13 +102,21 @@ sealed interface ArenaMessage {
     }
 
     sealed interface Riposte : ArenaMessage {
-        data class Trigger(val duelistUserId: String, val attackerUserId: String) : Riposte
+        data class Trigger(
+            val duelistUserId: String,
+            val attackerUserId: String,
+            val attackerClassName: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
+        ) : Riposte
 
         data class EnGarde(
             val duelistUserId: String,
             val attackerUserId: String,
+            val attackerClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val isSuccessful: Boolean,
         ) : Riposte
     }
@@ -251,6 +259,9 @@ sealed interface ArenaMessage {
             val targetClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
+            val knockoutRangeMin: Int,
+            val knockoutRangeMax: Int,
             override val isSuccessful: Boolean,
         ) : PrepareAttack
     }

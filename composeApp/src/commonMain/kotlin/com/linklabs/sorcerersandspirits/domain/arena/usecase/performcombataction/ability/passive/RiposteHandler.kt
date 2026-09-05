@@ -21,6 +21,9 @@ internal class RiposteHandler(
             ArenaMessage.Riposte.Trigger(
                 duelistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
+                successRangeMin = abilityConfig.riposteSuccessRange.first,
+                successRangeMax = abilityConfig.riposteSuccessRange.last,
             ),
         )
 
@@ -48,8 +51,10 @@ internal class RiposteHandler(
             ArenaMessage.Riposte.EnGarde(
                 duelistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
                 firstDie = result.firstDie,
                 secondDie = result.secondDie,
+                total = result.total,
                 isSuccessful = isSuccessful,
             ),
         )

@@ -261,6 +261,9 @@ sealed interface ArenaMessageState {
             val targetClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
+            val knockoutRangeMin: Int,
+            val knockoutRangeMax: Int,
             override val isSuccessful: Boolean,
         ) : PrepareAttack
     }
@@ -283,6 +286,9 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val duelistUserId: String,
             override val attackerUserId: String,
+            val attackerClassName: String,
+            val successRangeMin: Int,
+            val successRangeMax: Int,
         ) : Riposte
 
         @Immutable
@@ -292,8 +298,10 @@ sealed interface ArenaMessageState {
             override val id: String,
             override val duelistUserId: String,
             override val attackerUserId: String,
+            val attackerClassName: String,
             val firstDie: Int,
             val secondDie: Int,
+            val total: Int,
             val isSuccessful: Boolean,
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
         ) : Riposte
@@ -774,6 +782,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             targetClassName = targetClassName,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
+            knockoutRangeMin = knockoutRangeMin,
+            knockoutRangeMax = knockoutRangeMax,
             isSuccessful = isSuccessful,
         )
 
@@ -782,6 +793,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             duelistUserId = duelistUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            successRangeMin = successRangeMin,
+            successRangeMax = successRangeMax,
         )
 
     is ArenaMessage.Riposte.EnGarde -> {
@@ -796,8 +810,10 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             id = id,
             duelistUserId = duelistUserId,
             attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
             firstDie = firstDie,
             secondDie = secondDie,
+            total = total,
             isSuccessful = isSuccessful,
             gestures = gestures,
         )

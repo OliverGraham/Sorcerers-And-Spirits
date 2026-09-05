@@ -129,9 +129,9 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
 
     is ArenaMessageState.PrepareAttack.Outcome ->
         if (isSuccessful) {
-            stringResource(resource = Res.string.arena_flash_prepared_strike)
+            stringResource(resource = Res.string.arena_flash_prepared_strike, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_attack_whiffed)
+            stringResource(resource = Res.string.arena_flash_attack_whiffed, total)
         }
 
     is ArenaMessageState.Encore.Trigger ->
@@ -207,13 +207,13 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         }
 
     is ArenaMessageState.Riposte.Trigger ->
-        stringResource(resource = Res.string.arena_flash_riposte)
+        stringResource(resource = Res.string.arena_flash_riposte, successRangeMin, successRangeMax)
 
     is ArenaMessageState.Riposte.EnGarde ->
         if (isSuccessful) {
-            stringResource(resource = Res.string.arena_flash_reversed)
+            stringResource(resource = Res.string.arena_flash_reversed, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_counter_failed)
+            stringResource(resource = Res.string.arena_flash_counter_failed, total)
         }
 
     is ArenaMessageState.Persuade.Trigger ->

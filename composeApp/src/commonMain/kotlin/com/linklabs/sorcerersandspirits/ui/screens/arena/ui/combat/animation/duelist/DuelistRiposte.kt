@@ -326,8 +326,10 @@ private fun DuelistRipostePreview(isSuccessful: Boolean) {
                 id = id,
                 duelistUserId = PREVIEW_ACTOR_ID,
                 attackerUserId = PREVIEW_TARGET_ID,
+                attackerClassName = "Rogue",
                 firstDie = if (isSuccessful) 4 else 6,
                 secondDie = if (isSuccessful) 3 else 6,
+                total = if (isSuccessful) 7 else 12,
                 isSuccessful = isSuccessful,
                 gestures = emptyMap(),
             )

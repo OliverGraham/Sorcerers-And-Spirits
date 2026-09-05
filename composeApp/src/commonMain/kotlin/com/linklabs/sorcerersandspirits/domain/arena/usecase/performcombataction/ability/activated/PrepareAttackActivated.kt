@@ -89,6 +89,9 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                 targetClassName = defender.className,
                 firstDie = result.firstDie,
                 secondDie = result.secondDie,
+                total = result.total,
+                knockoutRangeMin = abilityConfig.prepareAttackKnockoutRange.first,
+                knockoutRangeMax = abilityConfig.prepareAttackKnockoutRange.last,
                 isSuccessful = isSuccessful,
             ),
         )

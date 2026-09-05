@@ -138,9 +138,9 @@
     <string name="arena_message_lucky_coin_high_roller_damage">The Gambler's coin strikes the %1$s for %2$s damage</string>
     <string name="arena_message_lucky_coin_high_roller_knockout">The Gambler's coin strikes the %1$s for %2$s damage — a knockout!</string>
 
-    <string name="arena_message_riposte_trigger">Riposte! Preparing a counter…</string>
-    <string name="arena_message_riposte_en_garde_success">En garde! Rolled %1$s and %2$s — the counter lands</string>
-    <string name="arena_message_riposte_en_garde_failed">En garde! Rolled %1$s and %2$s — the counter fails</string>
+    <string name="arena_message_riposte_trigger">Riposte! %1$s broke through — Duelist needs %2$s–%3$s to turn the attack around</string>
+    <string name="arena_message_riposte_en_garde_success">En garde! Duelist rolled %1$s + %2$s = %3$s — %4$s's attack is turned back on them!</string>
+    <string name="arena_message_riposte_en_garde_failed">En garde! Duelist rolled %1$s + %2$s = %3$s — the counter fails and %4$s's attack continues!</string>
 
     <string name="arena_message_summon_minion_fizzle">%1$s rolled a %2$s — the summoning fizzles</string>
     <string name="arena_message_summon_minion_skeleton">%1$s rolled a %2$s and raises a skeleton</string>
@@ -182,8 +182,8 @@
     <string name="arena_message_all_in_no_effect">%1$s goes all in, rolls a %2$s — no effect</string>
     <string name="arena_message_all_in_double_attack">%1$s goes all in, rolls a %2$s — and attacks twice this round!</string>
 
-    <string name="arena_message_prepare_attack_success">%1$s studied %2$s, rolled %3$s and %4$s — the next attack is prepared!</string>
-    <string name="arena_message_prepare_attack_failed">%1$s studied %2$s, rolled %3$s and %4$s — the preparation fails</string>
+    <string name="arena_message_prepare_attack_success">Prepare Attack! %1$s rolled %2$s + %3$s = %4$s — %5$s–%6$s knocks out %7$s!</string>
+    <string name="arena_message_prepare_attack_failed">Prepare Attack! %1$s rolled %2$s + %3$s = %4$s — needed %5$s–%6$s, %7$s survives</string>
 
     <string name="arena_flash_hit">%1$s · Hit!</string>
     <string name="arena_flash_hit_doubles">%1$s (+%2$s) · Hit!</string>
@@ -199,8 +199,8 @@
     <string name="arena_flash_spell_potency">Spell Potency!</string>
     <string name="arena_flash_doubles">Doubles!</string>
     <string name="arena_flash_impersonate">Impersonate!</string>
-    <string name="arena_flash_prepared_strike">Prepared Strike!</string>
-    <string name="arena_flash_attack_whiffed">Whiffed!</string>
+    <string name="arena_flash_prepared_strike">%1$s · Prepared Strike!</string>
+    <string name="arena_flash_attack_whiffed">%1$s · Whiffed!</string>
     <string name="arena_flash_encore">Encore!</string>
     <string name="arena_flash_all_in_no_effect">No effect</string>
     <string name="arena_flash_all_in_strike_twice">Extra attack!</string>
@@ -216,9 +216,9 @@
     <string name="arena_flash_lucky_coin_continues">+%1$s Armor · Not enough!</string>
     <string name="arena_flash_attack_stopped">Attack stopped!</string>
     <string name="arena_flash_attack_continues">%1$s · Attack continues!</string>
-    <string name="arena_flash_riposte">Riposte!</string>
-    <string name="arena_flash_reversed">Reversed!</string>
-    <string name="arena_flash_counter_failed">No counter!</string>
+    <string name="arena_flash_riposte">Riposte · Need %1$s–%2$s!</string>
+    <string name="arena_flash_reversed">%1$s · Reversed!</string>
+    <string name="arena_flash_counter_failed">%1$s · No counter!</string>
     <string name="arena_flash_persuade">Persuade!</string>
     <string name="arena_flash_charmed">Charmed!</string>
     <string name="arena_flash_redirected">Redirected to %1$s!</string>

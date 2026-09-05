@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.SummonMinionOutcome
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_bust
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_no_effect
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_strike_twice
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_continues
@@ -159,7 +160,7 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
                 stringResource(resource = Res.string.arena_flash_all_in_no_effect)
 
             AllInOutcome.SelfKnockout ->
-                stringResource(resource = Res.string.arena_flash_knockout)
+                stringResource(resource = Res.string.arena_flash_all_in_bust)
         }
 
     is ArenaMessageState.SummonMinion ->

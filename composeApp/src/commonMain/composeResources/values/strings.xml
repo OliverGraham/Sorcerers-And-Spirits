@@ -181,9 +181,9 @@
     <string name="arena_message_holy_shield_wrath">Holy Wrath! %1$s's unblockable retribution strikes %2$s for %3$s</string>
     <string name="arena_message_holy_shield_wrath_knockout">Holy Wrath! %1$s's unblockable retribution strikes %2$s for %3$s — knocking them out!</string>
 
-    <string name="arena_message_all_in_self_knockout">%1$s goes all in, rolls a %2$s — and knocks themselves out!</string>
-    <string name="arena_message_all_in_no_effect">%1$s goes all in, rolls a %2$s — no effect</string>
-    <string name="arena_message_all_in_double_attack">%1$s goes all in, rolls a %2$s — and attacks twice this round!</string>
+    <string name="arena_message_all_in_self_knockout">%1$s goes all in and rolls a %2$s — a 1 busts, knocking themselves out!</string>
+    <string name="arena_message_all_in_no_effect">%1$s goes all in and rolls a %2$s — no effect (a 5 or 6 attacks twice)</string>
+    <string name="arena_message_all_in_double_attack">%1$s goes all in and rolls a %2$s — 5 or 6, the gamble pays off! Attacking twice this round!</string>
 
     <string name="arena_message_prepare_attack_success">Prepare Attack! %1$s rolled %2$s + %3$s = %4$s — %5$s–%6$s knocks out %7$s!</string>
     <string name="arena_message_prepare_attack_failed">Prepare Attack! %1$s rolled %2$s + %3$s = %4$s — needed %5$s–%6$s, %7$s survives</string>
@@ -208,6 +208,7 @@
     <string name="arena_flash_encore">Encore · Need %1$s–%2$s!</string>
     <string name="arena_flash_all_in_no_effect">No effect</string>
     <string name="arena_flash_all_in_strike_twice">Extra attack!</string>
+    <string name="arena_flash_all_in_bust">Bust!</string>
     <string name="arena_flash_fizzle">Fizzle!</string>
     <string name="arena_flash_skeleton">Skeleton!</string>
     <string name="arena_flash_skeleton_and_heal">Skeleton · Healed!</string>

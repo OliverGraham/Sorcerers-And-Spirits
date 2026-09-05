@@ -17,6 +17,47 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
+### SS-273 — Name summoned minions and show the name in the minion attack message
+
+- [ ] Not completed
+- **Goal:** Give every summoned minion a name so a minion attack reads like
+  "Necromancer's minion, {minionName}, attacks!" instead of attributing the attack to the Necromancer
+  (the current behavior — see the SS-272 follow-up note in that ticket's COMPLETED entry).
+- **Naming rules (owner spec):**
+    - Names come from a **hardcoded pool** held in code (a `const`/list constant, e.g. a `MinionNames`
+      object) — not RemoteConfig. [[remoteconfig-optional-override-not-required-map]].
+    - Each **currently-living** minion of a Necromancer has a **unique** name (unique among that
+      Necromancer's living minions, not globally — decide/confirm scope during work).
+    - Names are **reusable after a minion is destroyed** — when a named minion dies, its name returns to
+      the pool and a future minion may take it. So assignment is "pick any pool name not currently in
+      use by a living minion."
+    - Behavior when the pool is exhausted (more living minions than names) is an edge to handle —
+      surface the cost and pick a rule (e.g. suffix a number, or size the pool comfortably above the max
+      possible living minions). Don't dismiss it as rare. [[project_context]].
+- **Threading (three-layer mirroring):** add `name: String` to the `Minion` domain model
+  (`domain/game/Minion.kt`), and mirror it through `MinionEntity` (`data/arena/model/MinionEntity.kt`,
+  `@Serializable`) and `MinionState` (`ui/common/characterclasses/MinionState.kt`) with the
+  `toEntity()`/`toDomain()`/`toState()` mappings — the name must round-trip and persist to Firebase so
+  every client shows the same name.
+- **Assignment site:** name is chosen when a minion is summoned — `SummonMinionActivated.handleSuccess`
+  builds the `Minion`; give it a name not used by the Necromancer's existing living minions there
+  (the summon roll bands live in `AbilityConfig`; the minion list is `SummonMinionAbility.minions`).
+- **Message wiring:** the minion-attack cue is `ArenaMessage.NormalRoll.Attack` (already carries
+  `minionAttackerIndex` + `minionAttackerType`; currently renders blank in the log). Carry the minion
+  **name** to the message (via the index→minion lookup at build time, per
+  [[carry-class-on-message-not-map-lookup]] — resolve to the name in the domain/handler, don't look it
+  up from a map in the Composable) and give the minion-attack case a real display string
+  "Necromancer's minion, {name}, attacks!" (+ matching flash). Normal (non-minion) attacks keep their
+  current empty `Attack` cue. Reuses the SS-272 message pipeline
+  (Domain → Data → State → `ArenaMessageDisplay`/`FlashTextStringResource` + `strings.xml`); the raw
+  minion name is UI-facing but generated in-app, so it can live on the type as a plain String.
+- **Sources:** `domain/game/Minion.kt`, `data/arena/model/MinionEntity.kt`,
+  `ui/common/characterclasses/MinionState.kt`,
+  `domain/arena/usecase/performcombataction/ability/activated/SummonMinionActivated.kt`,
+  `domain/arena/model/ArenaMessage.kt` (`NormalRoll.Attack`), the message
+  Entity/State/`getDisplayString`/`FlashTextStringResource`. Related: SS-268 (minion attack infra),
+  SS-272 (message rewrites).
+
 ### SS-257 — Move combat button/control state into the ViewModel; consolidate the control + argument types
 
 - [ ] Not completed

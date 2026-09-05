@@ -65,6 +65,19 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState
 
     @Immutable
+    data class ReadiedForNextMatch(
+        override val animation: ArenaAnimationState = ArenaAnimationState.None,
+        override val id: String,
+        val displayName: String,
+    ) : ArenaMessageState
+
+    @Immutable
+    data object NextMatchStartingSoon : ArenaMessageState {
+        override val animation: ArenaAnimationState = ArenaAnimationState.None
+        override val id: String = "NextMatchStartingSoon"
+    }
+
+    @Immutable
     data class NewTurn(
         override val animation: ArenaAnimationState = ArenaAnimationState.None,
         override val id: String,
@@ -618,6 +631,9 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
 
     is ArenaMessage.ConnectedToArena ->
         ArenaMessageState.ConnectedToArena(id = id, displayName = displayName)
+
+    is ArenaMessage.ReadiedForNextMatch ->
+        ArenaMessageState.ReadiedForNextMatch(id = id, displayName = displayName)
 
     is ArenaMessage.NewTurn ->
         ArenaMessageState.NewTurn(id = id, characterClassInfo = characterClassInfo.toState())

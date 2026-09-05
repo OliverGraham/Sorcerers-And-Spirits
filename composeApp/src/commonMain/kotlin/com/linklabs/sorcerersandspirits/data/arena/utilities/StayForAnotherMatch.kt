@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.resetForNewMatch
@@ -40,7 +41,15 @@ internal class StayForAnotherMatch(private val userId: String) {
         return if (areAllReady) {
             match.startNextMatch(players = updatedPlayers, messagesReference = messagesReference)
         } else {
-            match.withUpdatedPlayers(updatedPlayers = updatedPlayers)
+            val readiedMessage =
+                ArenaMessageEntity.ReadiedForNextMatch(
+                    id = messagesReference.addNewKey(),
+                    displayName = currentPlayer.displayName,
+                )
+            match.withUpdatedPlayers(
+                updatedPlayers = updatedPlayers,
+                newMessages = listOf(element = readiedMessage),
+            )
         }
     }
 
@@ -110,8 +119,8 @@ internal class StayForAnotherMatch(private val userId: String) {
         )
     }
 
-    // TODO: add messages?
     private fun ArenaMatchEntity.Finished.withUpdatedPlayers(
         updatedPlayers: Map<String, ArenaPlayerEntity>,
-    ): ArenaMatchEntity = copy(playerEntitiesMap = updatedPlayers, newMessages = emptyList())
+        newMessages: List<ArenaMessageEntity>,
+    ): ArenaMatchEntity = copy(playerEntitiesMap = updatedPlayers, newMessages = newMessages)
 }

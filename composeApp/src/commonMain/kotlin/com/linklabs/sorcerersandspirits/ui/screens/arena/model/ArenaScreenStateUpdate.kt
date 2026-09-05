@@ -254,7 +254,12 @@ private fun ArenaMatch.Combat.transitionFinishedToCombat(
 private fun ArenaMatch.Finished.updateFinished(
     currentScreenState: ArenaScreenState,
 ): ArenaScreenStateUpdate = ArenaScreenStateUpdate(
-    screenState = currentScreenState.copy(arenaMatchState = toFinishedState()),
+    screenState =
+    currentScreenState.copy(
+        arenaMatchState = toFinishedState(),
+        messageGroups =
+        currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
+    ),
     timerAction = TimerAction.None,
 )
 

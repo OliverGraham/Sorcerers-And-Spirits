@@ -36,8 +36,12 @@ data class ArenaScreenState(
 
     val latestChoosingClassesMessage = messageGroups.getLatestChoosingClassesMessage()
 
+    val latestFinishedMessage = messageGroups.getLatestFinishedMessage()
+
     val displayedMessageCount = messageGroups.sumOf { it.messages.size }
 }
+
+private fun List<ArenaMessageGroupState>.getLatestFinishedMessage(): ArenaMessageState? = flatMap { it.messages }.lastOrNull { it is ArenaMessageState.ReadiedForNextMatch }
 
 private fun List<ArenaMessageGroupState>.getLatestCombatHeaderMessage(): ArenaMessageState? {
     val latestGroupMessage = lastOrNull() ?: return null

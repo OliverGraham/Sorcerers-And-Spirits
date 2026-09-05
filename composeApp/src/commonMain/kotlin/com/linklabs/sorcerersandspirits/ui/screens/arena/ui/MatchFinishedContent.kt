@@ -1,10 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +8,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +39,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.GestureClassAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
@@ -54,16 +49,10 @@ import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_draw
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_everyone_left
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_leave
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_match_progress
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_knocked_out
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_not_ready
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_ready
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_survived
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_waiting_for_others
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_winner
-
-private const val READINESS_LABEL = "ReadinessLabel"
-private const val READINESS_FADE_DURATION_MILLIS = 220
 
 @Composable
 internal fun ArenaMatchState.Finished.MatchFinishedContent(
@@ -73,6 +62,13 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
 ) {
     val gauntletProgressState = screenState.gauntletProgressState
     var isLogExpanded by remember { mutableStateOf(value = false) }
+
+    val latestMessage =
+        if (timerState().isVisible) {
+            ArenaMessageState.NextMatchStartingSoon
+        } else {
+            screenState.latestFinishedMessage
+        }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -84,10 +80,10 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
                 header =
                 MessagesBarHeaderTarget.Finished(
                     titleResource = gauntletProgressState.stringResources.titleResource,
+                    currentMatch = gauntletProgressState.currentMatch,
+                    matchesPerGauntlet = gauntletProgressState.matchesPerGauntlet,
                 ),
-                // TODO: Populate with the domain "readied for next match" message, shown alongside
-                //       the timer as the next match begins.
-                latestMessage = null,
+                latestMessage = latestMessage,
                 timerState = timerState,
                 isExpanded = isLogExpanded,
                 onExpandedChange = { isLogExpanded = it },
@@ -95,47 +91,53 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
             )
 
             Column(
-                modifier =
-                Modifier.weight(weight = 1f)
-                    .fillMaxWidth()
-                    .verticalScroll(rememberScrollState())
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(weight = 1f).fillMaxWidth().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(
-                    text =
-                    stringResource(
-                        resource = Res.string.arena_finished_match_progress,
-                        gauntletProgressState.currentMatch,
-                        gauntletProgressState.matchesPerGauntlet,
-                    ),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                MatchRecap(players = players)
 
                 Spacer(modifier = Modifier.padding(12.dp))
 
                 WinnerBanner(winner = winner)
 
-                Spacer(modifier = Modifier.padding(12.dp))
+                Spacer(modifier = Modifier.padding(8.dp))
 
-                MatchRecap(players = players)
-
-                Spacer(modifier = Modifier.padding(12.dp))
-
-                MatchDecisionControls(
-                    canStartNextMatch = canStartNextMatch,
-                    gauntletProgressState = gauntletProgressState,
-                    hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
-                )
+                if (winner != null) {
+                    WinnerAvatar(
+                        winner = winner,
+                        modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
+                    )
+                }
             }
+
+            MatchDecisionControls(
+                canStartNextMatch = canStartNextMatch,
+                gauntletProgressState = gauntletProgressState,
+                hasReadiedForNextMatch = screenState.hasReadiedForNextMatch,
+                modifier =
+                Modifier.fillMaxWidth()
+                    .windowInsetsPadding(insets = WindowInsets.navigationBars)
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+            )
         }
 
         ExpandingMessageLog(
             isExpanded = isLogExpanded,
             messageGroups = screenState.messageGroups,
             onDismiss = { isLogExpanded = false },
+        )
+    }
+}
+
+@Composable
+private fun WinnerAvatar(winner: PlayerState.Selected, modifier: Modifier = Modifier) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        GestureClassAvatar(
+            animatingMessage = null,
+            isTopSeat = false,
+            userId = winner.userId,
+            characterClass = winner.characterClass,
+            modifier = Modifier.fillMaxSize(),
         )
     }
 }
@@ -280,38 +282,8 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
                         MaterialTheme.colorScheme.error
                     },
                 )
-                ReadinessLabel(isReadyForNextMatch = player.isReadyForNextMatch)
             }
         }
-    }
-}
-
-@Composable
-private fun ReadinessLabel(isReadyForNextMatch: Boolean, modifier: Modifier = Modifier) {
-    AnimatedContent(
-        targetState = isReadyForNextMatch,
-        modifier = modifier,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(durationMillis = READINESS_FADE_DURATION_MILLIS)) togetherWith
-                fadeOut(animationSpec = tween(durationMillis = READINESS_FADE_DURATION_MILLIS))
-        },
-        label = READINESS_LABEL,
-    ) { isReady ->
-        Text(
-            text =
-            if (isReady) {
-                stringResource(resource = Res.string.arena_finished_player_ready)
-            } else {
-                stringResource(resource = Res.string.arena_finished_player_not_ready)
-            },
-            style = MaterialTheme.typography.labelMedium,
-            color =
-            if (isReady) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-        )
     }
 }
 

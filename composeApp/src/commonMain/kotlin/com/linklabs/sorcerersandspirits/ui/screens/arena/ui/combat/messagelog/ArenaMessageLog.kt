@@ -44,6 +44,7 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.arena_log_finished
 import sorcerersandspirits.composeapp.generated.resources.arena_log_round
 import sorcerersandspirits.composeapp.generated.resources.arena_log_round_in_progress
 import sorcerersandspirits.composeapp.generated.resources.arena_log_setup
@@ -54,11 +55,13 @@ private const val CARET_EXPANDED_ROTATION = 0f
 private const val CARET_COLLAPSED_ROTATION = -90f
 
 private const val SETUP_GROUP_KEY = 0
+private const val FINISHED_GROUP_KEY = -1
 
 @Composable
 internal fun ArenaMessageLog(
     messageGroups: List<ArenaMessageGroupState>,
     dismissConnection: NestedScrollConnection,
+    isCombatOngoing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -81,12 +84,13 @@ internal fun ArenaMessageLog(
             val groupKey = group.groupKey()
             val isCurrentRound =
                 group is ArenaMessageGroupState.Round && group.roundNumber == currentRoundNumber
-            val isExpanded = expandedGroups[groupKey] ?: isCurrentRound
+            val isDefaultExpanded = isCurrentRound || group is ArenaMessageGroupState.Finished
+            val isExpanded = expandedGroups[groupKey] ?: isDefaultExpanded
 
             item(key = "group-$groupKey") {
                 GroupHeader(
                     group = group,
-                    isCurrentRound = isCurrentRound,
+                    isRoundInProgress = isCurrentRound && isCombatOngoing,
                     isExpanded = isExpanded,
                     onToggle = { expandedGroups[groupKey] = !isExpanded },
                     modifier = Modifier.animateItem(),
@@ -112,12 +116,13 @@ internal fun ArenaMessageLog(
 private fun ArenaMessageGroupState.groupKey(): Int = when (this) {
     is ArenaMessageGroupState.Setup -> SETUP_GROUP_KEY
     is ArenaMessageGroupState.Round -> roundNumber
+    is ArenaMessageGroupState.Finished -> FINISHED_GROUP_KEY
 }
 
 @Composable
 private fun GroupHeader(
     group: ArenaMessageGroupState,
-    isCurrentRound: Boolean,
+    isRoundInProgress: Boolean,
     isExpanded: Boolean,
     onToggle: () -> Unit,
     modifier: Modifier = Modifier,
@@ -126,8 +131,11 @@ private fun GroupHeader(
         when (group) {
             is ArenaMessageGroupState.Setup -> stringResource(resource = Res.string.arena_log_setup)
 
+            is ArenaMessageGroupState.Finished ->
+                stringResource(resource = Res.string.arena_log_finished)
+
             is ArenaMessageGroupState.Round ->
-                if (isCurrentRound) {
+                if (isRoundInProgress) {
                     stringResource(
                         resource = Res.string.arena_log_round_in_progress,
                         group.roundNumber.toString(),
@@ -281,6 +289,7 @@ private fun ArenaMessageLogPreview() {
 
         ArenaMessageLog(
             dismissConnection = remember { object : NestedScrollConnection {} },
+            isCombatOngoing = true,
             messageGroups =
             listOf(
                 ArenaMessageGroupState.Setup(

@@ -195,7 +195,7 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
             arenaMatchState = toFinishedState(),
             hasReadiedForNextMatch = false,
             messageGroups =
-            currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
+            currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
             animatingMessage = null,
         ),
         timerAction = TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS),
@@ -210,7 +210,7 @@ private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
         arenaMatchState = toFinishedState(),
         hasReadiedForNextMatch = false,
         messageGroups =
-        currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
+        currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
     ),
     timerAction = TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS),
 )
@@ -258,7 +258,7 @@ private fun ArenaMatch.Finished.updateFinished(
     currentScreenState.copy(
         arenaMatchState = toFinishedState(),
         messageGroups =
-        currentScreenState.messageGroups.appendNewMessages(incomingMessages = messages),
+        currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
     ),
     timerAction = TimerAction.None,
 )

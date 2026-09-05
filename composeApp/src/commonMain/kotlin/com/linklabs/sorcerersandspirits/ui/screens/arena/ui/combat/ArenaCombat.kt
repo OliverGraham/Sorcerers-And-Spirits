@@ -185,6 +185,7 @@ private fun BoxScope.OverlayContent(
         isExpanded = isLogExpanded,
         messageGroups = arenaScreenState.messageGroups,
         onDismiss = onDismissMessageLog,
+        isCombatOngoing = true,
     )
 
     InspectDrawer(

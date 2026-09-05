@@ -12,6 +12,25 @@ sealed interface ArenaMessageGroupState {
 
     @Immutable
     data class Round(val roundNumber: Int, override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
+
+    @Immutable
+    data class Finished(override val messages: List<ArenaMessageState>) : ArenaMessageGroupState
+}
+
+internal fun List<ArenaMessageGroupState>.appendFinishedMessages(
+    incomingMessages: List<IncomingArenaMessage>,
+): List<ArenaMessageGroupState> {
+    val newMessages = incomingMessages.toMessageStates()
+    if (newMessages.isEmpty()) return this
+
+    val lastGroup = lastOrNull()
+    if (lastGroup is ArenaMessageGroupState.Finished) {
+        val mutableMessageGroups = toMutableList()
+        mutableMessageGroups[lastIndex] = lastGroup.copy(messages = lastGroup.messages + newMessages)
+        return mutableMessageGroups
+    }
+
+    return this + ArenaMessageGroupState.Finished(messages = newMessages)
 }
 
 // TODO(SS-259): Use when NOT Combat
@@ -72,6 +91,9 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
 
             is ArenaMessageGroupState.Setup ->
                 lastGroup.copy(messages = lastGroup.messages + message)
+
+            is ArenaMessageGroupState.Finished ->
+                lastGroup.copy(messages = lastGroup.messages + message)
         }
 
     return mutableMessageGroups
@@ -93,6 +115,9 @@ private fun List<ArenaMessageGroupState>.appendToGroup(
                 lastGroup.copy(messages = lastGroup.messages + messages)
 
             is ArenaMessageGroupState.Setup ->
+                lastGroup.copy(messages = lastGroup.messages + messages)
+
+            is ArenaMessageGroupState.Finished ->
                 lastGroup.copy(messages = lastGroup.messages + messages)
         }
 

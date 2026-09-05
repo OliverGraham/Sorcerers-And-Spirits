@@ -1,7 +1,13 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,6 +15,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -17,19 +24,32 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.fadedBlackBackground
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
@@ -53,6 +73,14 @@ import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_survived
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_waiting_for_others
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_winner
+import sorcerersandspirits.composeapp.generated.resources.arena_message_next_match_starting_soon
+import kotlin.math.roundToInt
+
+private const val BOUNCE_SPEED_DP_PER_SECOND = 110f
+private const val NANOS_PER_SECOND = 1_000_000_000f
+private const val BOUNCE_COLOR_TRANSITION_LABEL = "NextMatchBounceColor"
+private const val BOUNCE_COLOR_SHIFT_LABEL = "NextMatchBounceColorShift"
+private const val BOUNCE_COLOR_CYCLE_MILLIS = 2000
 
 @Composable
 internal fun ArenaMatchState.Finished.MatchFinishedContent(
@@ -62,13 +90,6 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
 ) {
     val gauntletProgressState = screenState.gauntletProgressState
     var isLogExpanded by remember { mutableStateOf(value = false) }
-
-    val latestMessage =
-        if (timerState().isVisible) {
-            ArenaMessageState.NextMatchStartingSoon
-        } else {
-            screenState.latestFinishedMessage
-        }
 
     Box(modifier = modifier.fillMaxSize()) {
         Column(
@@ -83,7 +104,7 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
                     currentMatch = gauntletProgressState.currentMatch,
                     matchesPerGauntlet = gauntletProgressState.matchesPerGauntlet,
                 ),
-                latestMessage = latestMessage,
+                latestMessage = screenState.latestFinishedMessage,
                 timerState = timerState,
                 isExpanded = isLogExpanded,
                 onExpandedChange = { isLogExpanded = it },
@@ -121,10 +142,111 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
             )
         }
 
+        if (timerState().isVisible) {
+            NextMatchBounceOverlay()
+        }
+
         ExpandingMessageLog(
             isExpanded = isLogExpanded,
             messageGroups = screenState.messageGroups,
             onDismiss = { isLogExpanded = false },
+            isCombatOngoing = false,
+        )
+    }
+}
+
+@Composable
+private fun NextMatchBounceOverlay(modifier: Modifier = Modifier) {
+    val density = LocalDensity.current
+
+    val colorTransition = rememberInfiniteTransition(label = BOUNCE_COLOR_TRANSITION_LABEL)
+    val sweepProgress by
+        colorTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec =
+            infiniteRepeatable(
+                animation =
+                tween(durationMillis = BOUNCE_COLOR_CYCLE_MILLIS, easing = LinearEasing),
+            ),
+            label = BOUNCE_COLOR_SHIFT_LABEL,
+        )
+
+    val sweepColors = remember { classFamilyColors().let { it + it.first() } }
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val containerWidthPx = with(receiver = density) { maxWidth.toPx() }
+        val containerHeightPx = with(receiver = density) { maxHeight.toPx() }
+        val speedPxPerSecond = with(receiver = density) { BOUNCE_SPEED_DP_PER_SECOND.dp.toPx() }
+
+        var contentSize by remember { mutableStateOf(value = IntSize.Zero) }
+        var position by remember { mutableStateOf(value = Offset.Zero) }
+        var velocity by
+            remember { mutableStateOf(value = Offset(x = speedPxPerSecond, y = speedPxPerSecond)) }
+
+        LaunchedEffect(key1 = contentSize, key2 = containerWidthPx, key3 = containerHeightPx) {
+            val hasBounds =
+                contentSize != IntSize.Zero && containerWidthPx > 0f && containerHeightPx > 0f
+            if (!hasBounds) return@LaunchedEffect
+
+            val maxX = (containerWidthPx - contentSize.width).coerceAtLeast(minimumValue = 0f)
+            val maxY = (containerHeightPx - contentSize.height).coerceAtLeast(minimumValue = 0f)
+
+            var lastFrameNanos = 0L
+            while (true) {
+                val frameNanos = withFrameNanos { it }
+                val isFirstFrame = lastFrameNanos == 0L
+                if (isFirstFrame) {
+                    lastFrameNanos = frameNanos
+                    continue
+                }
+
+                val deltaSeconds = (frameNanos - lastFrameNanos) / NANOS_PER_SECOND
+                lastFrameNanos = frameNanos
+
+                var nextX = position.x + velocity.x * deltaSeconds
+                var nextY = position.y + velocity.y * deltaSeconds
+                var nextVelocity = velocity
+
+                val hasHitHorizontalEdge = nextX <= 0f || nextX >= maxX
+                if (hasHitHorizontalEdge) {
+                    nextX = nextX.coerceIn(minimumValue = 0f, maximumValue = maxX)
+                    nextVelocity = nextVelocity.copy(x = -nextVelocity.x)
+                }
+
+                val hasHitVerticalEdge = nextY <= 0f || nextY >= maxY
+                if (hasHitVerticalEdge) {
+                    nextY = nextY.coerceIn(minimumValue = 0f, maximumValue = maxY)
+                    nextVelocity = nextVelocity.copy(y = -nextVelocity.y)
+                }
+
+                position = Offset(x = nextX, y = nextY)
+                velocity = nextVelocity
+            }
+        }
+
+        val textWidthPx = contentSize.width.toFloat().coerceAtLeast(minimumValue = 1f)
+        val sweepStartX = sweepProgress * textWidthPx
+        val sweepBrush =
+            Brush.linearGradient(
+                colors = sweepColors,
+                start = Offset(x = sweepStartX, y = 0f),
+                end = Offset(x = sweepStartX + textWidthPx, y = 0f),
+                tileMode = TileMode.Repeated,
+            )
+
+        Text(
+            text = stringResource(resource = Res.string.arena_message_next_match_starting_soon),
+            style =
+            TextStyle(brush = sweepBrush, fontSize = 24.sp, fontWeight = FontWeight.Bold),
+            maxLines = 1,
+            modifier =
+            Modifier.offset {
+                IntOffset(x = position.x.roundToInt(), y = position.y.roundToInt())
+            }
+                .onSizeChanged { contentSize = it }
+                .fadedBlackBackground(alpha = 0.5f)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
         )
     }
 }

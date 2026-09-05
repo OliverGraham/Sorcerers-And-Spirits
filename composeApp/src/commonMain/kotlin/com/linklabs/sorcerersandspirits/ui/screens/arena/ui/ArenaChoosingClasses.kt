@@ -83,7 +83,7 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
             isExpanded = isLogExpanded,
             messageGroups = screenState.messageGroups,
             onDismiss = { isLogExpanded = false },
-
+            isCombatOngoing = false,
         )
     }
 }

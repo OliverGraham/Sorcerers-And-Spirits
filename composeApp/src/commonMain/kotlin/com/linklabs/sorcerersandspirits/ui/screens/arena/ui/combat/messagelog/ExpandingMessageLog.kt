@@ -41,6 +41,7 @@ internal fun ExpandingMessageLog(
     isExpanded: Boolean,
     messageGroups: List<ArenaMessageGroupState>,
     onDismiss: () -> Unit,
+    isCombatOngoing: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val revealProgress by
@@ -78,6 +79,7 @@ internal fun ExpandingMessageLog(
     ArenaMessageLog(
         messageGroups = messageGroups,
         dismissConnection = dismissConnection,
+        isCombatOngoing = isCombatOngoing,
         modifier = modifier
             .windowInsetsPadding(insets = WindowInsets.statusBars)
             .padding(top = messageBarHeight)

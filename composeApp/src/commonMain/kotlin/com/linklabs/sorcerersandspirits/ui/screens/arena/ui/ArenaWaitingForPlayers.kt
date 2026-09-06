@@ -36,6 +36,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.classHighlightedText
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.StringResource
@@ -70,6 +73,11 @@ private val waitingTips: List<StringResource> =
         Res.string.arena_waiting_tip_gambler,
         Res.string.arena_waiting_tip_paladin,
     )
+
+private val tipClassColors: List<CharacterClassMessageInfoState> =
+    CharacterClassType.entries
+        .filter { type -> type != CharacterClassType.None }
+        .map { type -> CharacterClassMessageInfoState(className = type.name, type = type) }
 
 @Composable
 internal fun ArenaWaitingForPlayers(modifier: Modifier = Modifier) {
@@ -169,7 +177,11 @@ private fun RotatingTipCard(modifier: Modifier = Modifier) {
                 },
             ) { index ->
                 Text(
-                    text = stringResource(resource = waitingTips[index]),
+                    text =
+                    classHighlightedText(
+                        text = stringResource(resource = waitingTips[index]),
+                        coloredClassNames = tipClassColors,
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                 )

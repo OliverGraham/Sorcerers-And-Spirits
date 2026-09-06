@@ -172,6 +172,13 @@ sealed interface ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = attackerUserId)
         override val isAvatarCompletedByGesture: Boolean = true
+        override val coloredClassNames: List<CharacterClassMessageInfoState> =
+            listOf(
+                CharacterClassMessageInfoState(
+                    className = actingClassType.name,
+                    type = actingClassType,
+                ),
+            )
     }
 
     @Immutable
@@ -188,6 +195,13 @@ sealed interface ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Rogue
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = dodgerUserId)
         override val isAvatarCompletedByGesture: Boolean = true
+        override val coloredClassNames: List<CharacterClassMessageInfoState> =
+            listOf(
+                CharacterClassMessageInfoState(
+                    className = actingClassType.name,
+                    type = actingClassType,
+                ),
+            )
     }
 
     @Immutable
@@ -221,6 +235,10 @@ sealed interface ArenaMessageState {
         override val coloredClassNames: List<CharacterClassMessageInfoState>
             get() =
                 listOf(
+                    CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
                     CharacterClassMessageInfoState(
                         className = attackerClassName,
                         type = attackerClassType,
@@ -335,6 +353,10 @@ sealed interface ArenaMessageState {
             get() =
                 listOf(
                     CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
+                    CharacterClassMessageInfoState(
                         className = attackerClassName,
                         type = attackerClassType,
                     ),
@@ -401,6 +423,15 @@ sealed interface ArenaMessageState {
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = bardUserId)
 
+        override val coloredClassNames: List<CharacterClassMessageInfoState>
+            get() =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
+                )
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimationState =
@@ -433,6 +464,15 @@ sealed interface ArenaMessageState {
             get() {
                 return FlashAnchor.Avatar(userId = bardUserId)
             }
+
+        override val coloredClassNames: List<CharacterClassMessageInfoState>
+            get() =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
+                )
 
         val bardUserId: String
 
@@ -511,6 +551,15 @@ sealed interface ArenaMessageState {
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = illusionistUserId)
 
+        override val coloredClassNames: List<CharacterClassMessageInfoState>
+            get() =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = CharacterClassType.Illusionist.name,
+                        type = CharacterClassType.Illusionist,
+                    ),
+                )
+
         @Immutable
         data class Trigger(
             override val animation: ArenaAnimationState =
@@ -540,6 +589,10 @@ sealed interface ArenaMessageState {
             override val coloredClassNames: List<CharacterClassMessageInfoState> =
                 listOf(
                     CharacterClassMessageInfoState(
+                        className = CharacterClassType.Illusionist.name,
+                        type = CharacterClassType.Illusionist,
+                    ),
+                    CharacterClassMessageInfoState(
                         className = attackerClassName,
                         type = attackerClassType,
                     ),
@@ -564,6 +617,10 @@ sealed interface ArenaMessageState {
             override val isAvatarCompletedByGesture: Boolean = true
             override val coloredClassNames: List<CharacterClassMessageInfoState> =
                 listOf(
+                    CharacterClassMessageInfoState(
+                        className = CharacterClassType.Illusionist.name,
+                        type = CharacterClassType.Illusionist,
+                    ),
                     CharacterClassMessageInfoState(
                         className = attackerClassName,
                         type = attackerClassType,
@@ -610,6 +667,15 @@ sealed interface ArenaMessageState {
 
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = mageUserId)
+
+        override val coloredClassNames: List<CharacterClassMessageInfoState>
+            get() =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
+                )
 
         @Immutable
         data class Trigger(
@@ -663,6 +729,15 @@ sealed interface ArenaMessageState {
 
         override val flashAnchor: FlashAnchor
             get() = FlashAnchor.Avatar(userId = paladinUserId)
+
+        override val coloredClassNames: List<CharacterClassMessageInfoState>
+            get() =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
+                )
 
         @Immutable
         data class Trigger(

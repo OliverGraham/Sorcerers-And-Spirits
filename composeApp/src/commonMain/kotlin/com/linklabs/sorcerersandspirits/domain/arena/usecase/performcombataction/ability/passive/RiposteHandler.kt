@@ -22,6 +22,7 @@ internal class RiposteHandler(
                 duelistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 successRangeMin = abilityConfig.riposteSuccessRange.first,
                 successRangeMax = abilityConfig.riposteSuccessRange.last,
             ),
@@ -52,6 +53,7 @@ internal class RiposteHandler(
                 duelistUserId = defenderUserId,
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 firstDie = result.firstDie,
                 secondDie = result.secondDie,
                 total = result.total,
@@ -61,7 +63,10 @@ internal class RiposteHandler(
 
         if (isSuccessful) {
             if (result.isDoubles) {
-                addMessage(message = ArenaMessage.Doubles(className = defender.className))
+                addMessage(
+                    message =
+                    ArenaMessage.Doubles(className = defender.className, classType = defender.type),
+                )
             }
             handleSuccess()
         } else {

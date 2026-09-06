@@ -298,6 +298,7 @@ private fun MageSpellPotencyPreview(element: MageSpellElement, mainDamage: Int) 
                 mageName = "Mage",
                 mainTargetUserId = PREVIEW_TARGET_ID,
                 mainTargetClassName = "Rogue",
+                mainTargetClassType = CharacterClassType.Rogue,
                 firstDie = 6,
                 secondDie = 6,
                 mainDamage = mainDamage,

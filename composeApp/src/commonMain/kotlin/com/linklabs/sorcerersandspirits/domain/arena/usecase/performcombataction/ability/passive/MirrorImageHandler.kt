@@ -105,6 +105,7 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
                 rerolledMirrorImageDie = rerolledDie,
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 messageType = messageType,
             )
         }
@@ -221,7 +222,10 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         addMessage(message = message(NormalRollMessageType.ArmorClassHit))
 
         if (isAttackerDoublesLive) {
-            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
+            addMessage(
+                message =
+                ArenaMessage.Doubles(className = attacker.className, classType = attacker.type),
+            )
         }
 
         continueAttackWithHealthRoll()
@@ -235,7 +239,10 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
 
         val shouldMessageDoubles = isAttackerDoublesLive && hasPendingExtraAttack()
         if (shouldMessageDoubles) {
-            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
+            addMessage(
+                message =
+                ArenaMessage.Doubles(className = attacker.className, classType = attacker.type),
+            )
         }
 
         resolveTurnEnd()
@@ -264,7 +271,10 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
             }
         val shouldMessageDoubles = isAttackerDoublesLive && isDoublesBonusStillLive
         if (shouldMessageDoubles) {
-            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
+            addMessage(
+                message =
+                ArenaMessage.Doubles(className = attacker.className, classType = attacker.type),
+            )
         }
 
         if (consciousPlayers.size <= 1) {

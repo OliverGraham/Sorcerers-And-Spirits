@@ -20,6 +20,7 @@ internal class LuckyCoinHandler(
             ArenaMessage.LuckyCoin.Trigger(
                 gamblerUserId = defenderUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 attackerRollTotal = attackerRollTotal,
                 minimumCoinToStop = attackerRollTotal - defender.armorClass + 1,
             ),
@@ -50,6 +51,7 @@ internal class LuckyCoinHandler(
             ArenaMessage.LuckyCoin.HighRollerTrigger(
                 gamblerUserId = defenderUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
             ),
         )
 
@@ -75,6 +77,7 @@ internal class LuckyCoinHandler(
                 gamblerUserId = defenderUserId,
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 singleDie = result,
                 isKnockout = isKnockout,
             ),
@@ -115,6 +118,7 @@ internal class LuckyCoinHandler(
             ArenaMessage.LuckyCoin.Flip(
                 gamblerUserId = defenderUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 defenderArmorClass = defender.armorClass,
                 singleDie = luckyCoinArmorBonus,
                 didStopAttack = true,
@@ -130,6 +134,7 @@ internal class LuckyCoinHandler(
             ArenaMessage.LuckyCoin.Flip(
                 gamblerUserId = defenderUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 defenderArmorClass = defender.armorClass,
                 singleDie = luckyCoinArmorBonus,
                 didStopAttack = false,

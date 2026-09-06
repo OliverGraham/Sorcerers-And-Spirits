@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction.Passive.Teleport.TeleportDie
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 
 internal class TeleportHandler(private val combatMutator: CombatMutator) {
@@ -114,6 +115,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 bonus = bonus,
                 mageUserId = teleport.defenderRoll.userId,
                 className = if (isAttackerRolling) attacker.className else defender.className,
+                classType = if (isAttackerRolling) attacker.type else defender.type,
             )
         return if (isAttackerRolling) {
             teleport.copy(attackerRoll = rolledDie)
@@ -127,6 +129,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
         bonus: Int,
         mageUserId: String,
         className: String,
+        classType: CharacterClassType,
     ): TeleportDie {
         val userId = unrolledTeleportDie.userId
         val result =
@@ -146,6 +149,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 singleDie = result,
                 mageUserId = mageUserId,
                 className = className,
+                classType = classType,
             ),
         )
 

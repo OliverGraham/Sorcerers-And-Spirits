@@ -39,21 +39,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.TurnTimer
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.painterResource
@@ -196,7 +193,11 @@ private fun MessagesBarSurface(
                 label = LATEST_MESSAGE_TRANSITION_LABEL,
             ) { message ->
                 Text(
-                    text = message?.getDisplayString().orEmpty(),
+                    text =
+                    classHighlightedText(
+                        text = message?.getDisplayString().orEmpty(),
+                        coloredClassNames = message?.coloredClassNames ?: emptyList(),
+                    ),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     maxLines = 1,
@@ -242,21 +243,17 @@ private fun choosingClassesHeaderText(isThisUser: Boolean, displayName: String):
 
 @Composable
 private fun roundTurnHeaderText(roundNumber: Int, classType: CharacterClassType): AnnotatedString {
-    val className = classType.name
     val fullText =
-        stringResource(resource = Res.string.arena_log_header, roundNumber.toString(), className)
-    val classNameStart = fullText.lastIndexOf(string = className)
-
-    return buildAnnotatedString {
-        if (classNameStart < 0) {
-            append(text = fullText)
-            return@buildAnnotatedString
-        }
-
-        append(text = fullText.substring(startIndex = 0, endIndex = classNameStart))
-        withStyle(style = SpanStyle(color = classType.toColor())) { append(text = className) }
-        append(text = fullText.substring(startIndex = classNameStart + className.length))
-    }
+        stringResource(
+            resource = Res.string.arena_log_header,
+            roundNumber.toString(),
+            classType.name,
+        )
+    return classHighlightedText(
+        text = fullText,
+        coloredClassNames =
+        listOf(CharacterClassMessageInfoState(className = classType.name, type = classType)),
+    )
 }
 
 @Composable

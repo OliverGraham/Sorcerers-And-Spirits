@@ -278,20 +278,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 > by the ArenaCombat layout — SS-144 (target-selection transition) and SS-150 (inspect a player),
 > respectively — so the placeholder tickets were removed.
 
-### SS-253 — Class-color every className across all arena messages
-
-- [ ] Not completed
-- **Goal:** Every message that contains a class name should render that name in the class's family
-  color, everywhere it appears in the log and flashes — not just the handful (NewTurn header,
-  ChoseCharacterClass) that do today.
-- **Source:** `ui/screens/arena/ui/message/ArenaMessageLog.kt` (`classHighlightedText` /
-  `ArenaMessageItem`) and `ui/screens/arena/ui/message/ArenaMessageDisplay.kt` (`getDisplayString`).
-  The message states carry `attackerClassType` / participant class info already; thread the class
-  type(s) into a colored `AnnotatedString` builder rather than plain strings.
-- **Notes:** Follow-up to SS-251 (owner flagged this as a separate ticket). Watch messages with two
-  class names (e.g. attacker + defender) — both should be colored. Reuse the class color source
-  (`CharacterClassType.toColor()`).
-
 ### SS-255 — Message log open/insert animation reads wrong (topmost line doesn't move)
 
 - [ ] Not completed

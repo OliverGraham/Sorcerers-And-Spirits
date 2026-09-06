@@ -103,90 +103,90 @@
     <string name="arena_message_round">ROUND %1$s</string>
     <string name="arena_log_round">Round %1$s</string>
     <string name="arena_log_round_in_progress">Round %1$s — In Progress</string>
-    <string name="arena_log_turn">%1$s's Turn</string>
-    <string name="arena_log_header">Round %1$s · %2$s's turn</string>
+    <string name="arena_log_turn">{class}%1$s{/class}'s Turn</string>
+    <string name="arena_log_header">Round %1$s · {class}%2$s{/class}'s turn</string>
     <string name="arena_log_setup">Match Setup</string>
     <string name="arena_log_finished">Match Over</string>
-    <string name="arena_message_chose_character_class">%1$s chose %2$s</string>
+    <string name="arena_message_chose_character_class">%1$s chose {class}%2$s{/class}</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>
     <string name="arena_message_readied_for_next_match">%1$s is ready for the next match</string>
     <string name="arena_message_next_match_starting_soon">Next match starting soon!</string>
-    <string name="arena_message_new_turn">It's %1$s's turn</string>
+    <string name="arena_message_new_turn">It's {class}%1$s{/class}'s turn</string>
 
-    <string name="arena_message_normal_roll_hit">%1$s rolled %3$s against %2$s's %4$s armor — armor broken!</string>
-    <string name="arena_message_normal_roll_miss">%1$s rolled %3$s against %2$s's %4$s armor — the armor holds!</string>
-    <string name="arena_message_normal_roll_damage">%1$s's Health roll of %3$s damages %2$s</string>
-    <string name="arena_message_normal_roll_knockout">%1$s's Health roll of %3$s knocks out %2$s!</string>
+    <string name="arena_message_normal_roll_hit">{class}%1$s{/class} rolled %3$s against {class}%2$s{/class}'s %4$s armor — armor broken!</string>
+    <string name="arena_message_normal_roll_miss">{class}%1$s{/class} rolled %3$s against {class}%2$s{/class}'s %4$s armor — the armor holds!</string>
+    <string name="arena_message_normal_roll_damage">{class}%1$s{/class}'s Health roll of %3$s damages {class}%2$s{/class}</string>
+    <string name="arena_message_normal_roll_knockout">{class}%1$s{/class}'s Health roll of %3$s knocks out {class}%2$s{/class}!</string>
 
     <string name="arena_message_killing_momentum">Killing Momentum! The Rogue's knockout grants another attack</string>
 
-    <string name="arena_message_doubles">Doubles! %1$s rolled a matching pair</string>
+    <string name="arena_message_doubles">Doubles! {class}%1$s{/class} rolled a matching pair</string>
 
     <string name="arena_message_dodge_armor_increased">Dodge! The Rogue's armor held — armor rises to %1$s (Dodge bonus now +%2$s of +%3$s max)</string>
     <string name="arena_message_dodge_armor_unchanged">Dodge! The Rogue's armor held — already at the +%1$s Dodge cap, armor stays %2$s</string>
 
     <string name="arena_message_teleport_trigger">Teleport! The Mage rolls off 1d6 with the attacker — the higher roll escapes</string>
-    <string name="arena_message_teleport_roll">%1$s rolled a %2$s</string>
+    <string name="arena_message_teleport_roll">{class}%1$s{/class} rolled a %2$s</string>
     <string name="arena_message_teleport_tie">Tie! Equal rolls — the Mage and attacker roll off again</string>
     <string name="arena_message_teleport_escaped">The Mage rolled higher — teleports away and escapes the attack!</string>
     <string name="arena_message_teleport_failed">The Mage rolled lower — the teleport fails and the attack lands!</string>
 
-    <string name="arena_message_lucky_coin_trigger">Lucky Coin! Gambler needs at least a %1$s to stop %2$s's attack of %3$s</string>
-    <string name="arena_message_lucky_coin_flip_stopped">Lucky Coin adds %1$s to Gambler's %2$s armor — %3$s's attack is stopped!</string>
-    <string name="arena_message_lucky_coin_flip_failed">Lucky Coin adds %1$s to Gambler's %2$s armor — %3$s's attack continues!</string>
-    <string name="arena_message_lucky_coin_high_roller_trigger">High Roller! The coin lands on 6 — the Gambler strikes back at the %1$s!</string>
-    <string name="arena_message_lucky_coin_high_roller_damage">The Gambler's coin strikes the %1$s for %2$s damage</string>
-    <string name="arena_message_lucky_coin_high_roller_knockout">The Gambler's coin strikes the %1$s for %2$s damage — a knockout!</string>
+    <string name="arena_message_lucky_coin_trigger">Lucky Coin! Gambler needs at least a %1$s to stop {class}%2$s{/class}'s attack of %3$s</string>
+    <string name="arena_message_lucky_coin_flip_stopped">Lucky Coin adds %1$s to Gambler's %2$s armor — {class}%3$s{/class}'s attack is stopped!</string>
+    <string name="arena_message_lucky_coin_flip_failed">Lucky Coin adds %1$s to Gambler's %2$s armor — {class}%3$s{/class}'s attack continues!</string>
+    <string name="arena_message_lucky_coin_high_roller_trigger">High Roller! The coin lands on 6 — the Gambler strikes back at the {class}%1$s{/class}!</string>
+    <string name="arena_message_lucky_coin_high_roller_damage">The Gambler's coin strikes the {class}%1$s{/class} for %2$s damage</string>
+    <string name="arena_message_lucky_coin_high_roller_knockout">The Gambler's coin strikes the {class}%1$s{/class} for %2$s damage — a knockout!</string>
 
-    <string name="arena_message_riposte_trigger">Riposte! %1$s broke through — Duelist needs %2$s–%3$s to turn the attack around</string>
-    <string name="arena_message_riposte_en_garde_success">En garde! Duelist rolled %1$s + %2$s = %3$s — %4$s's attack is turned back on them!</string>
-    <string name="arena_message_riposte_en_garde_failed">En garde! Duelist rolled %1$s + %2$s = %3$s — the counter fails and %4$s's attack continues!</string>
+    <string name="arena_message_riposte_trigger">Riposte! {class}%1$s{/class} broke through — Duelist needs %2$s–%3$s to turn the attack around</string>
+    <string name="arena_message_riposte_en_garde_success">En garde! Duelist rolled %1$s + %2$s = %3$s — {class}%4$s{/class}'s attack is turned back on them!</string>
+    <string name="arena_message_riposte_en_garde_failed">En garde! Duelist rolled %1$s + %2$s = %3$s — the counter fails and {class}%4$s{/class}'s attack continues!</string>
 
-    <string name="arena_message_summon_minion_fizzle">%1$s rolled a %2$s — the summoning fizzles, no minion is raised</string>
-    <string name="arena_message_summon_minion_skeleton">%1$s rolled a %2$s — raises a skeleton (+1 Health shield, extra attack)</string>
-    <string name="arena_message_summon_minion_skeleton_heal">%1$s rolled a %2$s — raises a skeleton (+1 Health shield, extra attack) and heals to full</string>
-    <string name="arena_message_summon_minion_golem">%1$s rolled a %2$s — raises a golem (+2 Health shield, extra attack) and heals to full</string>
+    <string name="arena_message_summon_minion_fizzle">{class}%1$s{/class} rolled a %2$s — the summoning fizzles, no minion is raised</string>
+    <string name="arena_message_summon_minion_skeleton">{class}%1$s{/class} rolled a %2$s — raises a skeleton (+1 Health shield, extra attack)</string>
+    <string name="arena_message_summon_minion_skeleton_heal">{class}%1$s{/class} rolled a %2$s — raises a skeleton (+1 Health shield, extra attack) and heals to full</string>
+    <string name="arena_message_summon_minion_golem">{class}%1$s{/class} rolled a %2$s — raises a golem (+2 Health shield, extra attack) and heals to full</string>
 
     <string name="arena_message_persuade_trigger">Persuade! The Bard begins strumming a lute…</string>
     <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>
     <string name="arena_message_persuade_strum_lute_failed">Strummed the lute and rolled %1$s — the song falls flat</string>
     <string name="arena_message_persuade_charm_activation">The charm takes effect!</string>
     <string name="arena_message_persuade_lull">The attacker is lulled…</string>
-    <string name="arena_message_persuade_charm">%1$s charmed %2$s</string>
+    <string name="arena_message_persuade_charm">{class}%1$s{/class} charmed {class}%2$s{/class}</string>
 
     <string name="arena_message_encore_trigger">Encore! The Bard rolls 1d6 — %1$s–%2$s earns another attack</string>
     <string name="arena_message_encore_roll_success">Encore roll of %1$s — the crowd roars, the Bard attacks again!</string>
     <string name="arena_message_encore_roll_failed">Encore roll of %1$s — the moment passes, no encore</string>
 
-    <string name="arena_message_impersonate">Impersonate! %1$s copies the opponent's %2$s until the match ends</string>
+    <string name="arena_message_impersonate">Impersonate! {class}%1$s{/class} copies the opponent's %2$s until the match ends</string>
 
     <string name="arena_message_mirror_image_trigger">Mirror Image! The Illusionist may reroll one attack die at −1</string>
-    <string name="arena_message_mirror_image_pass_armor_broke">The Illusionist lets the roll stand — %1$s's %2$s breaks the armor!</string>
-    <string name="arena_message_mirror_image_pass_armor_held">The Illusionist lets the roll stand — %1$s's %2$s fails to break the armor!</string>
-    <string name="arena_message_mirror_image_pass_damage">The Illusionist lets the roll stand — %1$s's %2$s lands a blow!</string>
-    <string name="arena_message_mirror_image_pass_knockout">The Illusionist lets the roll stand — %1$s's %2$s lands a knockout blow!</string>
-    <string name="arena_message_mirror_image_tempt_fate_armor_broke">The Illusionist rerolls a die (%1$s), but %2$s breaks through the armor anyway!</string>
-    <string name="arena_message_mirror_image_tempt_fate_armor_held">The Illusionist rerolls a die (%1$s) and turns aside %2$s's attack!</string>
-    <string name="arena_message_mirror_image_tempt_fate_damage">The Illusionist rerolls a die (%1$s), but %2$s still lands a blow!</string>
-    <string name="arena_message_mirror_image_tempt_fate_knockout">The Illusionist rerolls a die (%1$s), but %2$s lands a knockout blow!</string>
+    <string name="arena_message_mirror_image_pass_armor_broke">The Illusionist lets the roll stand — {class}%1$s{/class}'s %2$s breaks the armor!</string>
+    <string name="arena_message_mirror_image_pass_armor_held">The Illusionist lets the roll stand — {class}%1$s{/class}'s %2$s fails to break the armor!</string>
+    <string name="arena_message_mirror_image_pass_damage">The Illusionist lets the roll stand — {class}%1$s{/class}'s %2$s lands a blow!</string>
+    <string name="arena_message_mirror_image_pass_knockout">The Illusionist lets the roll stand — {class}%1$s{/class}'s %2$s lands a knockout blow!</string>
+    <string name="arena_message_mirror_image_tempt_fate_armor_broke">The Illusionist rerolls a die (%1$s), but {class}%2$s{/class} breaks through the armor anyway!</string>
+    <string name="arena_message_mirror_image_tempt_fate_armor_held">The Illusionist rerolls a die (%1$s) and turns aside {class}%2$s{/class}'s attack!</string>
+    <string name="arena_message_mirror_image_tempt_fate_damage">The Illusionist rerolls a die (%1$s), but {class}%2$s{/class} still lands a blow!</string>
+    <string name="arena_message_mirror_image_tempt_fate_knockout">The Illusionist rerolls a die (%1$s), but {class}%2$s{/class} lands a knockout blow!</string>
 
-    <string name="arena_message_spell_potency">Spell Potency! %1$s rolled doubles — %3$s damage to %2$s and %4$s splashed to all other opponents!</string>
-    <string name="arena_message_spell_potency_knockout">Spell Potency! %1$s rolled doubles — %3$s damage knocks out %2$s, and %4$s splashed to all other opponents!</string>
-    <string name="arena_message_spell_potency_no_splash">Spell Potency! %1$s rolled doubles — %3$s damage to %2$s!</string>
-    <string name="arena_message_spell_potency_no_splash_knockout">Spell Potency! %1$s rolled doubles — %3$s damage knocks out %2$s!</string>
+    <string name="arena_message_spell_potency">Spell Potency! {class}%1$s{/class} rolled doubles — %3$s damage to {class}%2$s{/class} and %4$s splashed to all other opponents!</string>
+    <string name="arena_message_spell_potency_knockout">Spell Potency! {class}%1$s{/class} rolled doubles — %3$s damage knocks out {class}%2$s{/class}, and %4$s splashed to all other opponents!</string>
+    <string name="arena_message_spell_potency_no_splash">Spell Potency! {class}%1$s{/class} rolled doubles — %3$s damage to {class}%2$s{/class}!</string>
+    <string name="arena_message_spell_potency_no_splash_knockout">Spell Potency! {class}%1$s{/class} rolled doubles — %3$s damage knocks out {class}%2$s{/class}!</string>
 
     <string name="arena_message_holy_shield_trigger">Holy Shield! The Paladin is knocked out — a 2d6 prayer survives on %1$s–%2$s</string>
     <string name="arena_message_holy_shield_prayer_survived">The Paladin prayed %1$s + %2$s = %3$s — answered! The Paladin survives with 1 Health</string>
     <string name="arena_message_holy_shield_prayer_failed">The Paladin prayed %1$s + %2$s = %3$s — the prayer goes unanswered</string>
-    <string name="arena_message_holy_shield_wrath">Holy Wrath! %1$s's unblockable retribution strikes %2$s for %3$s</string>
-    <string name="arena_message_holy_shield_wrath_knockout">Holy Wrath! %1$s's unblockable retribution strikes %2$s for %3$s — knocking them out!</string>
+    <string name="arena_message_holy_shield_wrath">Holy Wrath! {class}%1$s{/class}'s unblockable retribution strikes {class}%2$s{/class} for %3$s</string>
+    <string name="arena_message_holy_shield_wrath_knockout">Holy Wrath! {class}%1$s{/class}'s unblockable retribution strikes {class}%2$s{/class} for %3$s — knocking them out!</string>
 
-    <string name="arena_message_all_in_self_knockout">%1$s goes all in and rolls a %2$s — a 1 busts, knocking themselves out!</string>
-    <string name="arena_message_all_in_no_effect">%1$s goes all in and rolls a %2$s — no effect (a 5 or 6 attacks twice)</string>
-    <string name="arena_message_all_in_double_attack">%1$s goes all in and rolls a %2$s — 5 or 6, the gamble pays off! Attacking twice this round!</string>
+    <string name="arena_message_all_in_self_knockout">{class}%1$s{/class} goes all in and rolls a %2$s — a 1 busts, knocking themselves out!</string>
+    <string name="arena_message_all_in_no_effect">{class}%1$s{/class} goes all in and rolls a %2$s — no effect (a 5 or 6 attacks twice)</string>
+    <string name="arena_message_all_in_double_attack">{class}%1$s{/class} goes all in and rolls a %2$s — 5 or 6, the gamble pays off! Attacking twice this round!</string>
 
-    <string name="arena_message_prepare_attack_success">Prepare Attack! %1$s rolled %2$s + %3$s = %4$s — %5$s–%6$s knocks out %7$s!</string>
-    <string name="arena_message_prepare_attack_failed">Prepare Attack! %1$s rolled %2$s + %3$s = %4$s — needed %5$s–%6$s, %7$s survives</string>
+    <string name="arena_message_prepare_attack_success">Prepare Attack! {class}%1$s{/class} rolled %2$s + %3$s = %4$s — %5$s–%6$s knocks out {class}%7$s{/class}!</string>
+    <string name="arena_message_prepare_attack_failed">Prepare Attack! {class}%1$s{/class} rolled %2$s + %3$s = %4$s — needed %5$s–%6$s, {class}%7$s{/class} survives</string>
 
     <string name="arena_flash_hit">%1$s · Hit!</string>
     <string name="arena_flash_hit_doubles">%1$s (+%2$s) · Hit!</string>

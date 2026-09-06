@@ -85,6 +85,8 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
 
     private fun CombatMutator.charm(charm: AbilityAction.Passive.Persuade.Charm) {
         val selectedCharmTargetUserId = charm.selectedCharmTargetUserId ?: return
+        val charmTargetClass =
+            consciousPlayers.first { it.userId == selectedCharmTargetUserId }.characterClass
 
         addMessage(
             message =
@@ -92,12 +94,10 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
                 bardUserId = defenderUserId,
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
                 defenderUserId = selectedCharmTargetUserId,
-                defenderClassName =
-                consciousPlayers
-                    .first { it.userId == selectedCharmTargetUserId }
-                    .characterClass
-                    .className,
+                defenderClassName = charmTargetClass.className,
+                defenderClassType = charmTargetClass.type,
             ),
         )
 

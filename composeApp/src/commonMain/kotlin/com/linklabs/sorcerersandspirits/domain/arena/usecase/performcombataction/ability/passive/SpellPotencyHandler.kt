@@ -63,6 +63,7 @@ internal class SpellPotencyHandler(
                 mageName = attacker.className,
                 mainTargetUserId = defenderUserId,
                 mainTargetClassName = defender.className,
+                mainTargetClassType = defender.type,
                 firstDie = firstDie,
                 secondDie = secondDie,
                 mainDamage = diceTotal,

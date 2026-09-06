@@ -92,6 +92,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   `MatchFinishedContent` (between the recap and decision controls) that expands the reused
   `ArenaMessageLog` (`FinishedMatchLog`), carrying the shared `messagesBackgroundBrush` gradient;
   no combat-only coupling (no timer/turn/dice).
+- **SS-253** — Class-color every className across all arena messages: every class name is threaded
+  as a typed `CharacterClassType` through Domain→Data→State (so each message carries its class
+  type, not just a name string), the message strings wrap each class name in `{class}…{/class}`
+  markers, and `classHighlightedText` splits on those markers to color each tagged name via
+  `CharacterClassType.toColor()` (any number per string, attacker + defender both colored) across
+  the log and `MessagesBar`. Log lines are also bullet-prefixed except the centered turn line.
 - **SS-254** — Message log gradual drag-to-dismiss (ModalBottomSheet-style, not all-or-nothing):
   Replaced the overscroll threshold accumulator with an `AnchoredDraggableState<LogSheetAnchor>`
   (Open/Dismissed) in `messagelog/MessageLogOverlay`; a `NestedScrollConnection` bridges the log's

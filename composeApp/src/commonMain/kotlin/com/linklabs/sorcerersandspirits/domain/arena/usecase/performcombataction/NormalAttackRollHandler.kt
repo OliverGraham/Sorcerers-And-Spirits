@@ -225,6 +225,7 @@ internal class NormalAttackRollHandler(
                 attackerClassName = attacker.className,
                 attackerClassType = attacker.type,
                 defenderClassName = defender.className,
+                defenderClassType = defender.type,
                 defenderArmorClass = defender.armorClass,
                 firstDie = firstDie,
                 secondDie = secondDie,
@@ -236,7 +237,10 @@ internal class NormalAttackRollHandler(
         val isDoubles = firstDie == secondDie
         val isDoublesBonusEarned = isDoubles && shouldMessageDoubles
         if (isDoublesBonusEarned) {
-            addMessage(message = ArenaMessage.Doubles(className = attacker.className))
+            addMessage(
+                message =
+                ArenaMessage.Doubles(className = attacker.className, classType = attacker.type),
+            )
         }
     }
 

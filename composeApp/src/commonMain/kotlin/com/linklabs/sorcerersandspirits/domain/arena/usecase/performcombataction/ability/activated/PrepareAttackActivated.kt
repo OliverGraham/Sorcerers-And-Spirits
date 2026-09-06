@@ -87,6 +87,7 @@ internal class PrepareAttackActivated(private val combatMutator: CombatMutator) 
                 classType = attacker.type,
                 duelistName = attacker.className,
                 targetClassName = defender.className,
+                targetClassType = defender.type,
                 firstDie = result.firstDie,
                 secondDie = result.secondDie,
                 total = result.total,

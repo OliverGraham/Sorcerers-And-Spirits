@@ -19,7 +19,7 @@ sealed interface ArenaMessage {
 
     data class NewTurn(val characterClassInfo: CharacterClassMessageInfo) : ArenaMessage
 
-    data class Doubles(val className: String) : ArenaMessage
+    data class Doubles(val className: String, val classType: CharacterClassType) : ArenaMessage
 
     sealed interface NormalRoll : ArenaMessage {
         val attackerUserId: String
@@ -41,6 +41,7 @@ sealed interface ArenaMessage {
             val attackerClassName: String,
             val attackerClassType: CharacterClassType,
             val defenderClassName: String,
+            val defenderClassType: CharacterClassType,
             val defenderArmorClass: Int,
             val firstDie: Int,
             val secondDie: Int,
@@ -68,6 +69,7 @@ sealed interface ArenaMessage {
             override val mageUserId: String,
             val userId: String,
             val className: String,
+            val classType: CharacterClassType,
             val singleDie: Int,
         ) : Teleport
 
@@ -82,6 +84,7 @@ sealed interface ArenaMessage {
         data class Trigger(
             override val gamblerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val attackerRollTotal: Int,
             val minimumCoinToStop: Int,
         ) : LuckyCoin
@@ -89,6 +92,7 @@ sealed interface ArenaMessage {
         data class Flip(
             override val gamblerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val defenderArmorClass: Int,
             val singleDie: Int,
             val didStopAttack: Boolean,
@@ -97,12 +101,14 @@ sealed interface ArenaMessage {
         data class HighRollerTrigger(
             override val gamblerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
         ) : LuckyCoin
 
         data class HighRollerDamage(
             override val gamblerUserId: String,
             val attackerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val singleDie: Int,
             val isKnockout: Boolean,
         ) : LuckyCoin
@@ -113,6 +119,7 @@ sealed interface ArenaMessage {
             val duelistUserId: String,
             val attackerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val successRangeMin: Int,
             val successRangeMax: Int,
         ) : Riposte
@@ -121,6 +128,7 @@ sealed interface ArenaMessage {
             val duelistUserId: String,
             val attackerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val firstDie: Int,
             val secondDie: Int,
             val total: Int,
@@ -148,8 +156,10 @@ sealed interface ArenaMessage {
             val bardUserId: String,
             val attackerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val defenderUserId: String,
             val defenderClassName: String,
+            val defenderClassType: CharacterClassType,
         ) : Persuade
     }
 
@@ -202,6 +212,7 @@ sealed interface ArenaMessage {
             val rerolledMirrorImageDie: AbilityAction.Passive.MirrorImage.MirrorImageDie,
             val attackerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val messageType: NormalRollMessageType,
         ) : MirrorImage
     }
@@ -211,6 +222,7 @@ sealed interface ArenaMessage {
         val mageName: String,
         val mainTargetUserId: String,
         val mainTargetClassName: String,
+        val mainTargetClassType: CharacterClassType,
         val firstDie: Int,
         val secondDie: Int,
         val mainDamage: Int,
@@ -241,6 +253,7 @@ sealed interface ArenaMessage {
             val paladinName: String,
             val attackerUserId: String,
             val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val singleDie: Int,
             val isAttackerKnockedOut: Boolean,
         ) : HolyShield
@@ -271,6 +284,7 @@ sealed interface ArenaMessage {
             override val classType: CharacterClassType,
             val duelistName: String,
             val targetClassName: String,
+            val targetClassType: CharacterClassType,
             val firstDie: Int,
             val secondDie: Int,
             val total: Int,

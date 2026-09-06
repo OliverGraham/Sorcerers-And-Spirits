@@ -321,7 +321,9 @@ private fun BardPersuadeCharmPreview() {
                 id = id,
                 bardUserId = PREVIEW_ACTOR_ID,
                 attackerClassName = "Rogue",
+                attackerClassType = CharacterClassType.Rogue,
                 defenderClassName = "Mage",
+                defenderClassType = CharacterClassType.Mage,
             )
         },
     ) { message ->

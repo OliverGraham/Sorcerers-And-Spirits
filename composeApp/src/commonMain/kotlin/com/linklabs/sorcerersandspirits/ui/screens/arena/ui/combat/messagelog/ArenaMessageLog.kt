@@ -31,6 +31,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -56,6 +57,11 @@ private const val CARET_COLLAPSED_ROTATION = -90f
 
 private const val SETUP_GROUP_KEY = 0
 private const val FINISHED_GROUP_KEY = -1
+
+private const val MESSAGE_BULLET_PREFIX = "•  "
+
+private const val CLASS_START_TAG = "{class}"
+private const val CLASS_END_TAG = "{/class}"
 
 @Composable
 internal fun ArenaMessageLog(
@@ -206,8 +212,15 @@ private fun ArenaMessageItem(messageState: ArenaMessageState, modifier: Modifier
 
 @Composable
 private fun DefaultMessage(state: ArenaMessageState, modifier: Modifier = Modifier) {
+    val displayText = state.getDisplayString()
+    if (displayText.isBlank()) return
     Text(
-        text = state.getDisplayString(),
+        text =
+        classHighlightedText(
+            text = displayText,
+            coloredClassNames = state.coloredClassNames,
+            hasBullet = true,
+        ),
         style = MaterialTheme.typography.bodyMedium,
         modifier = modifier.padding(vertical = 2.dp),
     )
@@ -218,15 +231,16 @@ private fun TurnMessage(state: ArenaMessageState.NewTurn, modifier: Modifier = M
     Text(
         text =
         classHighlightedText(
-            fullText =
+            text =
             stringResource(
                 resource = Res.string.arena_log_turn,
                 state.characterClassInfo.className,
             ),
-            characterClassInfo = state.characterClassInfo,
+            coloredClassNames = state.coloredClassNames,
         ),
         style = MaterialTheme.typography.titleSmall,
         fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
     )
 }
@@ -239,8 +253,9 @@ private fun ChoseCharacterClassMessage(
     Text(
         text =
         classHighlightedText(
-            fullText = state.getDisplayString(),
-            characterClassInfo = state.characterClassInfo,
+            text = state.getDisplayString(),
+            coloredClassNames = state.coloredClassNames,
+            hasBullet = true,
         ),
         style = MaterialTheme.typography.bodyLarge,
         modifier = modifier.padding(vertical = 2.dp),
@@ -253,30 +268,44 @@ private fun ConnectedToArenaMessage(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = state.getDisplayString(),
+        text =
+        classHighlightedText(
+            text = state.getDisplayString(),
+            coloredClassNames = state.coloredClassNames,
+            hasBullet = true,
+        ),
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.outline,
         modifier = modifier.padding(vertical = 1.dp),
     )
 }
 
-@Composable
-private fun classHighlightedText(
-    fullText: String,
-    characterClassInfo: CharacterClassMessageInfoState,
+/**
+ * Splitting on the [CLASS_START_TAG]/[CLASS_END_TAG] markers yields alternating segments: even
+ * indices are plain text and odd indices are class names, so any number of tagged classes in one
+ * string each get their own color.
+ */
+internal fun classHighlightedText(
+    text: String,
+    coloredClassNames: List<CharacterClassMessageInfoState>,
+    hasBullet: Boolean = false,
 ): AnnotatedString {
-    val className = characterClassInfo.className
-    val classColor = characterClassInfo.type.toColor()
-    val classNameStart = fullText.lastIndexOf(string = className)
+    val colorByClassName = coloredClassNames.associate { it.className to it.type.toColor() }
+    val segments = text.split(CLASS_START_TAG, CLASS_END_TAG)
 
     return buildAnnotatedString {
-        if (classNameStart < 0) {
-            append(fullText)
-            return@buildAnnotatedString
+        if (hasBullet) {
+            append(MESSAGE_BULLET_PREFIX)
         }
-        append(fullText.substring(startIndex = 0, endIndex = classNameStart))
-        withStyle(style = SpanStyle(color = classColor)) { append(className) }
-        append(fullText.substring(startIndex = classNameStart + className.length))
+        segments.forEachIndexed { index, segment ->
+            val isClassNameSegment = index % 2 == 1
+            val classColor = if (isClassNameSegment) colorByClassName[segment] else null
+            if (classColor != null) {
+                withStyle(style = SpanStyle(color = classColor)) { append(segment) }
+            } else {
+                append(segment)
+            }
+        }
     }
 }
 

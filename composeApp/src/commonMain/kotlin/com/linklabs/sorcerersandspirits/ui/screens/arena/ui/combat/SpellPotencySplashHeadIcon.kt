@@ -171,6 +171,7 @@ private fun SpellPotencySplashPreview() {
             mageName = "Mage",
             mainTargetUserId = "target",
             mainTargetClassName = "Rogue",
+            mainTargetClassType = CharacterClassType.Rogue,
             firstDie = 6,
             secondDie = 6,
             mainDamage = 8,

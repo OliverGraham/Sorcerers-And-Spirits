@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,6 +64,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.GestureClassA
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.classHighlightedText
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -332,13 +334,23 @@ private fun MatchDecisionControls(
 private fun WinnerBanner(winner: PlayerState.Selected?, modifier: Modifier = Modifier) {
     val text =
         if (winner != null) {
-            stringResource(
-                resource = Res.string.arena_finished_winner,
-                winner.displayName,
-                winner.characterClass.className,
+            classHighlightedText(
+                text =
+                stringResource(
+                    resource = Res.string.arena_finished_winner,
+                    winner.displayName,
+                    winner.characterClass.className,
+                ),
+                coloredClassNames =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = winner.characterClass.className,
+                        type = winner.characterClass.type,
+                    ),
+                ),
             )
         } else {
-            stringResource(resource = Res.string.arena_finished_draw)
+            AnnotatedString(text = stringResource(resource = Res.string.arena_finished_draw))
         }
 
     Text(

@@ -53,17 +53,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   ship an interactive preview if it's a combat-style overlay ([[combat-animation-previews]]).
   Related: SS-191 (animation seam), SS-274 (winner chip).
 
-### SS-278 — Arena combat avatars sit above the bottom system navigation
-
-- [ ] Not completed
-- **Goal:** In Arena combat the seated avatars currently render under the bottom system nav; apply the
-  correct **bottom inset padding** (navigation-bars / safe-drawing) so they sit above it. Per the
-  owner this should just be the right padding.
-- **Source:** `ui/screens/arena/ui/combat/ArenaCombat.kt` (already references `WindowInsets` / system
-  bars — apply/confirm `navigationBars` bottom padding on the avatar region). Keep consistent with the
-  sibling insets usage in `MatchFinishedContent.kt`, `ArenaChoosingClasses.kt`, and
-  `combat/messagelog/ExpandingMessageLog.kt`.
-
 ### SS-273 — Name summoned minions and show the name in the minion attack message
 
 - [ ] Not completed

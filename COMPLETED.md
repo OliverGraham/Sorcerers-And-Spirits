@@ -57,6 +57,9 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   renders at the host (a Dialog overlays any route) with challenge state + actions reaching the
   Tavern's swords re-open handle via composition locals. Challenge round-trip tests migrated to
   `GetActiveChallengeFlowUseCaseTest`.
+- **SS-276** — CharacterClassPager starts on a random page: Seeded `rememberPagerState`'s
+  `initialPage` with a `remember`-computed random index into `characterClasses.indices` so the pager
+  opens on a random class instead of page 1, computed once so it doesn't reshuffle on recomposition.
 
 ## Arena UI
 

@@ -90,7 +90,8 @@ fun CharacterClassPager(
     if (characterClasses.isEmpty()) return
 
     val scope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { characterClasses.size })
+    val initialPage = remember { characterClasses.indices.random() }
+    val pagerState = rememberPagerState(initialPage = initialPage, pageCount = { characterClasses.size })
     var inspectedClass by remember { mutableStateOf<CharacterClassState?>(value = null) }
 
     Box(modifier = modifier.fillMaxSize().windowInsetsPadding(insets = WindowInsets.navigationBars)) {

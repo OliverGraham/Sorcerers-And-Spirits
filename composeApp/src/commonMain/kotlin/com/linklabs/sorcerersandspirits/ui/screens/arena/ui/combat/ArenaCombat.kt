@@ -128,13 +128,13 @@ private fun SharedTransitionScope.ScreenContent(
             onInspect = onInspect,
             modifier = Modifier.weight(weight = 1f),
         )
-
-        Spacer(
-            modifier =
-            Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
-                .height(height = BOTTOM_CONTROLS_HEIGHT),
-        )
     }
+
+    Spacer(
+        modifier =
+        Modifier.windowInsetsPadding(insets = WindowInsets.navigationBars)
+            .height(height = BOTTOM_CONTROLS_HEIGHT),
+    )
 }
 
 @Composable

@@ -67,10 +67,6 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   (Animatable + `graphicsLayer`/`applyGesture` cheer jig) played by the winner in the Finished state,
   with a `victoryDanceFor(classType)` seam (sealed `VictoryDance`) so a per-class dance can slot in
   later; wired into `MatchFinishedContent.WinnerAvatar` and shipped interactive previews.
-- **SS-278** — Arena combat avatars sit above the bottom system navigation: Moved the bottom-inset
-  reservation Spacer (navigationBars inset + BOTTOM_CONTROLS_HEIGHT) from a Box sibling into the
-  combat Column after CombatContent, so the weight(1f) avatar region is pushed up above the system
-  nav bar and the floating combat buttons instead of rendering underneath them.
 - **SS-272** — Rewrite Arena combat messages to describe the rules and what happened: Reworked the
   message log + flash text for every ability across all 8 classes plus the core `NormalRoll.Outcome`
   and Gambler `AllIn`, so each line narrates the contest (roll vs armor/threshold, the modifier, the

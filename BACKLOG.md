@@ -17,6 +17,64 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
+### SS-274 — Arena Finished: scoreboard-style outcome chips (winner / loser / knocked-out order)
+
+- [ ] Not completed
+- **Goal:** In the Finished state, each player's recap row reads like a **scoreboard** line:
+    - A `fadedBlackBackground` behind the chip (the faded-black scrim style already used in the
+      Finished UI).
+    - **Left:** the player's `classAvatarBust`, then their `displayName`.
+    - **Right (outcome, varies):**
+        - **Winner →** "Winner!" in the **all-class-color animating text** (same treatment as the
+          "Next match starting soon!" text — see `NextMatchBounceOverlay` in `MatchFinishedContent.kt`).
+        - **2-player game →** the loser reads "LOSER" in **grey** letters (depressing).
+        - **Multiplayer →** "knocked out {Xth}" per eliminated player, and the **final** player
+          knocked out reads **"last"** instead of a numeral. Reads top-to-bottom like a scoreboard.
+- **Data needed (open):** there is currently **no knockout-order/placement data** on the domain
+  player or `PlayerState.Selected`. Thread a knockout order (or final placement) Domain→Data→UI so the
+  UI can render "Xth"/"last" — display-ready per [[domain-provides-display-ready-values]]; the UI only
+  plugs the ordinal into a string. Decide the exact field (elimination index vs final placement)
+  during work.
+- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` (`MatchRecap`/`PlayerRecapRow`,
+  `WinnerBanner`, `NextMatchBounceOverlay` for the animating-text treatment),
+  `ui/screens/arena/model/PlayerState.kt`, and the domain arena player + its Entity/State mappings for
+  the new order field. Related: SS-179 (finished text styling), SS-097 (class-color class names),
+  SS-275 (winner dance).
+
+### SS-275 — Arena Finished: winner victory-dance animation
+
+- [ ] Not completed
+- **Goal:** The winning avatar plays a celebratory **victory-dance** animation in the Finished state.
+  Same animation for all classes for now; may become class-specific later — **don't code into a
+  corner:** branch on class type at a seam so a per-class dance can slot in (mirror the SS-191
+  attacker-gesture pattern where `attackerClassType` selects the gesture).
+- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` (`WinnerAvatar`). Reuse the existing
+  avatar gesture / `Animatable` + `graphicsLayer` approach ([[sequence-animations-from-domain-data]]);
+  ship an interactive preview if it's a combat-style overlay ([[combat-animation-previews]]).
+  Related: SS-191 (animation seam), SS-274 (winner chip).
+
+### SS-276 — CharacterClassPager starts on a random page
+
+- [ ] Not completed
+- **Goal:** On app start the `CharacterClassPager` opens on a **random** page instead of always
+  page 1.
+- **Keep it simple (owner):** seed `rememberPagerState`'s `initialPage` with a random index in the
+  class count, computed once so it doesn't reshuffle on recomposition (e.g. a `remember { … }` random
+  index). No architecture change.
+- **Source:** `ui/common/characterclasses/CharacterClassPager.kt` (and its use in
+  `ui/screens/tavern/ui/TavernScreen.kt`). Confirm the page-count source.
+
+### SS-278 — Arena combat avatars sit above the bottom system navigation
+
+- [ ] Not completed
+- **Goal:** In Arena combat the seated avatars currently render under the bottom system nav; apply the
+  correct **bottom inset padding** (navigation-bars / safe-drawing) so they sit above it. Per the
+  owner this should just be the right padding.
+- **Source:** `ui/screens/arena/ui/combat/ArenaCombat.kt` (already references `WindowInsets` / system
+  bars — apply/confirm `navigationBars` bottom padding on the avatar region). Keep consistent with the
+  sibling insets usage in `MatchFinishedContent.kt`, `ArenaChoosingClasses.kt`, and
+  `combat/messagelog/ExpandingMessageLog.kt`.
+
 ### SS-273 — Name summoned minions and show the name in the minion attack message
 
 - [ ] Not completed
@@ -534,6 +592,50 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 ---
 
+## Config & Infrastructure
+
+### SS-277 — Replace Firebase Remote Config with GitHub-hosted JSON (free, version-controlled)
+
+- [ ] Not completed
+- **Goal:** Drop the managed Firebase Remote Config dependency and serve the same config JSON from a
+  **GitHub-hosted** location (raw file URL / GitHub Pages / release asset), fetched over HTTPS and
+  cached, with the existing **bundled JSON** as the offline default. Gains built-in version control on
+  the config.
+- **Owner wants a succinct, clear walkthrough first:** when this is picked up, produce a short setup
+  walkthrough before coding — repo/branch layout for the JSON, raw-URL vs Pages vs release-asset
+  trade-off, caching/ETag + refresh cadence, and how it maps onto the current `RemoteConfigDataSource`
+  seam.
+- **Preserve the seam:** keep the `RemoteConfigDataSource` interface and every consumer (class stats,
+  ability config, class copy, traveler names, credits, version gates) unchanged — swap only the
+  implementation behind the interface. A KMP HTTP client (Ktor) replaces
+  `dev.gitlive.firebase.remoteconfig`; the bundled defaults under
+  `composeResources/files/remote_config/*.json` stay the offline fallback; update the DI bind in
+  `Modules.kt`.
+- **Open questions:** refresh/fetch cadence (currently a 1h min interval), whether the version-gate
+  values (`minimum_supported_version` / `latest_version`) should stay dynamic and how they move, and
+  whether to keep Firebase for auth/db while removing only Remote Config.
+- **Source:** `data/config/RemoteConfigDataSource.kt`, `FirebaseRemoteConfigDataSource.kt`,
+  `RemoteConfigKeys.kt`, the `RemoteConfig*Provider`s, `dependencyinjection/Modules.kt`.
+  [[remoteconfig-optional-override-not-required-map]], [[serialization-backcompat-non-concern]],
+  [[connectivity-resilience-priority]].
+
+---
+
+## Credits
+
+### SS-282 — Finalize CreditsScreen text types (header / body / etc.) so animations are complete
+
+- [ ] Not completed
+- **Goal:** Formalize the credits **text types** (header, body, and any others) in the Remote Config
+  schema and the domain/UI model, replacing SS-281's placeholder `title + entries` shape, and render
+  each type with its own styling so the scroll reads properly (section headers vs body lines, spacing,
+  emphasis).
+- **Source:** builds on SS-281 — the `credits.json` schema, `CreditsEntity` / `CreditsSection`
+  (domain), `CreditsState`, and the rendering in `CreditsScreen.kt` (`CreditsSection`). Decide the
+  type set (at least header + body) and mirror it Domain→Data→UI. **Depends on SS-281.**
+
+---
+
 ## Domain layer
 
 ### SS-048 — Die-value enum
@@ -781,6 +883,31 @@ build
 the generic infrastructure for persisting stats to a profile (SS-021), keeping it stat-agnostic;
 **then** decide which concrete stats to record (SS-072) and wire them into match outcomes (SS-071);
 and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
+
+### SS-279 — Leaderboard: animate the re-order when switching sort tabs
+
+- [ ] Not completed
+- **Goal:** Changing tabs in the LeaderboardScreen re-orders the list; that re-order should
+  **animate** (items slide to their new positions) rather than snap.
+- **Approach:** use `LazyColumn` item placement animation (`Modifier.animateItem()`) keyed on a
+  **stable per-entry id** so switching the sort animates positions. Confirm the list items have a
+  stable key (userId).
+- **Source:** `ui/screens/leaderboard/ui/LeaderboardScreen.kt` (the list + tab/sort control),
+  `ui/screens/leaderboard/LeaderboardState.kt`.
+
+### SS-280 — Leaderboard: tapping a profile opens a view-only Profile
+
+- [ ] Not completed
+- **Goal:** Tapping a row in the LeaderboardScreen navigates to a **view-only** version of that user's
+  Profile.
+- **Be DRY / reuse (owner):** reuse the existing `ProfileScreen` / `ProfileState` /
+  `ProfileScreenViewModel` (`ui/screens/profile/`) with a **read-only mode** + a target `userId`
+  argument, rather than building a parallel screen. Add a `Route` variant carrying a `userId` (today's
+  profile route is the self/editable one — see `NavigationRoutes.kt`) and hide the edit/delete
+  affordances when viewing someone else. Needs a use case to load a profile **by userId** (the
+  leaderboard already has userIds via `LeaderboardEntry`). Keep it simple.
+- **Source:** `ui/screens/leaderboard/ui/LeaderboardScreen.kt` (row click), `ui/screens/profile/*`,
+  `ui/main/navigation/NavigationRoutes.kt` + `NavigationDisplay.kt`, `domain/leaderboard/LeaderboardEntry.kt`.
 
 ### SS-127 — Per-ability event achievements (thematic two-per-ability set)
 

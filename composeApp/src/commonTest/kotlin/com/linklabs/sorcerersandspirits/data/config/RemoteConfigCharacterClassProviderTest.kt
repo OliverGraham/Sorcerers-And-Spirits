@@ -75,6 +75,8 @@ class RemoteConfigCharacterClassProviderTest {
 
         override fun randomTravelerNames() = emptyList<String>()
 
+        override fun credits() = CreditsEntity.EMPTY
+
         override fun minimumSupportedVersionCode() = RemoteConfigDataSource.UNGATED_VERSION
 
         override fun latestVersionCode() = RemoteConfigDataSource.UNGATED_VERSION

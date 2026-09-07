@@ -28,6 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.ForwardSc
 import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.toContentTransform
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.ui.AchievementsScreen
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
+import com.linklabs.sorcerersandspirits.ui.screens.credits.ui.CreditsScreen
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ui.ProfileScreen
@@ -126,6 +127,8 @@ private fun NavKey.toScreen(
     Route.AchievementsScreen -> NavEntry(key = this) { AchievementsScreen() }
 
     Route.GameRulesScreen -> NavEntry(key = this) { GameRulesScreen() }
+
+    Route.CreditsScreen -> NavEntry(key = this) { CreditsScreen() }
 
     else -> throw IllegalArgumentException("Unknown key: $this")
 }

@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSour
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigAbilityConfigProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassProvider
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCreditsProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigRandomNameProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigSupportedAppVersionProvider
@@ -26,6 +27,8 @@ import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
+import com.linklabs.sorcerersandspirits.domain.credits.CreditsProvider
+import com.linklabs.sorcerersandspirits.domain.credits.usecase.GetCreditsUseCase
 import com.linklabs.sorcerersandspirits.domain.game.AbilityConfigProvider
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
@@ -59,6 +62,7 @@ import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.AchievementsScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.credits.CreditsScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.gamerules.GameRulesScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.LeaderboardScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel
@@ -103,6 +107,7 @@ private fun Module.initializeRepositories() {
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }
     singleOf(::RemoteConfigAbilityConfigProvider) { bind<AbilityConfigProvider>() }
     singleOf(::RemoteConfigCharacterClassCopyProvider) { bind<CharacterClassCopyProvider>() }
+    singleOf(::RemoteConfigCreditsProvider) { bind<CreditsProvider>() }
     singleOf(::RemoteConfigRandomNameProvider) { bind<RandomNameProvider>() }
     singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
@@ -124,6 +129,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::FlushPendingStatsUseCase)
     factoryOf(::GetCharacterClassCopyUseCase)
     factoryOf(::GetCharacterClassesUseCase)
+    factoryOf(::GetCreditsUseCase)
     factoryOf(::GetLeaderboardUseCase)
     factoryOf(::GetActiveChallengeFlowUseCase)
     factoryOf(::GetProfileFlowUseCase)
@@ -150,6 +156,7 @@ private fun Module.initializeViewModels() {
     viewModelOf(::AppViewModel)
     viewModelOf(::ArenaScreenViewModel)
     viewModelOf(::ChallengeViewModel)
+    viewModelOf(::CreditsScreenViewModel)
     viewModelOf(::GameRulesScreenViewModel)
     viewModelOf(::LeaderboardScreenViewModel)
     viewModelOf(::ProfileScreenViewModel)

@@ -53,17 +53,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   ship an interactive preview if it's a combat-style overlay ([[combat-animation-previews]]).
   Related: SS-191 (animation seam), SS-274 (winner chip).
 
-### SS-276 — CharacterClassPager starts on a random page
-
-- [ ] Not completed
-- **Goal:** On app start the `CharacterClassPager` opens on a **random** page instead of always
-  page 1.
-- **Keep it simple (owner):** seed `rememberPagerState`'s `initialPage` with a random index in the
-  class count, computed once so it doesn't reshuffle on recomposition (e.g. a `remember { … }` random
-  index). No architecture change.
-- **Source:** `ui/common/characterclasses/CharacterClassPager.kt` (and its use in
-  `ui/screens/tavern/ui/TavernScreen.kt`). Confirm the page-count source.
-
 ### SS-278 — Arena combat avatars sit above the bottom system navigation
 
 - [ ] Not completed

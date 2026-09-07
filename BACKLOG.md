@@ -41,18 +41,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   the new order field. Related: SS-179 (finished text styling), SS-097 (class-color class names),
   SS-275 (winner dance).
 
-### SS-275 — Arena Finished: winner victory-dance animation
-
-- [ ] Not completed
-- **Goal:** The winning avatar plays a celebratory **victory-dance** animation in the Finished state.
-  Same animation for all classes for now; may become class-specific later — **don't code into a
-  corner:** branch on class type at a seam so a per-class dance can slot in (mirror the SS-191
-  attacker-gesture pattern where `attackerClassType` selects the gesture).
-- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` (`WinnerAvatar`). Reuse the existing
-  avatar gesture / `Animatable` + `graphicsLayer` approach ([[sequence-animations-from-domain-data]]);
-  ship an interactive preview if it's a combat-style overlay ([[combat-animation-previews]]).
-  Related: SS-191 (animation seam), SS-274 (winner chip).
-
 ### SS-273 — Name summoned minions and show the name in the minion attack message
 
 - [ ] Not completed

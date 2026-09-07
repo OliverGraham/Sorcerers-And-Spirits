@@ -63,6 +63,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-275** — Arena Finished: winner victory-dance animation: Added a looping `VictoryDanceAvatar`
+  (Animatable + `graphicsLayer`/`applyGesture` cheer jig) played by the winner in the Finished state,
+  with a `victoryDanceFor(classType)` seam (sealed `VictoryDance`) so a per-class dance can slot in
+  later; wired into `MatchFinishedContent.WinnerAvatar` and shipped interactive previews.
 - **SS-278** — Arena combat avatars sit above the bottom system navigation: Moved the bottom-inset
   reservation Spacer (navigationBars inset + BOTTOM_CONTROLS_HEIGHT) from a Box sibling into the
   combat Column after CombatContent, so the weight(1f) avatar region is pushed up above the system

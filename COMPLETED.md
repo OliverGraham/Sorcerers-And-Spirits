@@ -105,6 +105,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   markers, and `classHighlightedText` splits on those markers to color each tagged name via
   `CharacterClassType.toColor()` (any number per string, attacker + defender both colored) across
   the log and `MessagesBar`. Log lines are also bullet-prefixed except the centered turn line.
+- **SS-179** — Message text styling: backgrounds, neutral text color, class-color class names
+  everywhere: class-name coloring across the log, `MessagesBar`, waiting tips, and winner banner
+  landed with SS-253's `classHighlightedText`; this closes the rest — the Finished recap rows now
+  render each player's class name in its class color, and the winner banner (and draw text) sits on
+  a 50%-opacity rounded black background for readability over the arena art. Flash text stays
+  whole-string class-colored by design (no tags).
 - **SS-254** — Message log gradual drag-to-dismiss (ModalBottomSheet-style, not all-or-nothing):
   Replaced the overscroll threshold accumulator with an `AnchoredDraggableState<LogSheetAnchor>`
   (Open/Dismissed) in `messagelog/MessageLogOverlay`; a `NestedScrollConnection` bridges the log's

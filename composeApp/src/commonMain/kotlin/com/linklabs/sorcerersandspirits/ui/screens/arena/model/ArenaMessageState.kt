@@ -110,12 +110,27 @@ sealed interface ArenaMessageState {
             override val defenderUserId: String,
             override val normalRollMessageType: NormalRollMessageType,
             override val gestures: Map<String, AvatarGesture>,
+            val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
             val impersonatedClassType: CharacterClassType?,
             val minionAttackerIndex: Int?,
             val minionAttackerType: MinionType?,
+            val minionAttackerName: String?,
             val weaponType: WeaponType,
             val accentColor: Color,
-        ) : NormalRoll
+        ) : NormalRoll {
+            override val coloredClassNames: List<CharacterClassMessageInfoState> =
+                if (minionAttackerName != null) {
+                    listOf(
+                        CharacterClassMessageInfoState(
+                            className = attackerClassName,
+                            type = attackerClassType,
+                        ),
+                    )
+                } else {
+                    emptyList()
+                }
+        }
 
         // TODO(SS-258): Does this need to be used for Avatar Animations???
         @Immutable
@@ -128,6 +143,7 @@ sealed interface ArenaMessageState {
             override val gestures: Map<String, AvatarGesture> = emptyMap(),
             val attackerClassName: String,
             val attackerClassType: CharacterClassType,
+            val minionAttackerName: String?,
             val defenderClassName: String,
             val defenderClassType: CharacterClassType,
             val defenderArmorClass: Int,
@@ -137,10 +153,11 @@ sealed interface ArenaMessageState {
             val accentColor: Color,
         ) : NormalRoll {
             val baseRoll: Int = firstDie + secondDie
+            val attackerDisplayName: String = minionAttackerName ?: attackerClassName
             override val coloredClassNames: List<CharacterClassMessageInfoState> =
                 listOf(
                     CharacterClassMessageInfoState(
-                        className = attackerClassName,
+                        className = attackerDisplayName,
                         type = attackerClassType,
                     ),
                     CharacterClassMessageInfoState(
@@ -407,6 +424,7 @@ sealed interface ArenaMessageState {
         val singleDie: Int,
         val outcome: SummonMinionOutcome,
         val minionIndex: Int,
+        val minionName: String?,
         override val gestures: Map<String, AvatarGesture>,
     ) : ArenaMessageState {
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
@@ -1043,6 +1061,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             singleDie = singleDie,
             outcome = summonMinionOutcomeFor(singleDie = singleDie),
             minionIndex = minionIndex,
+            minionName = minionName,
             gestures = mapOf(necromancerUserId to AvatarGesture.Cast),
         )
     }
@@ -1279,10 +1298,13 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             id = id,
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
+            attackerClassName = attackerClassName,
+            attackerClassType = attackerClassType,
             impersonatedClassType = impersonatedCharacterType,
             normalRollMessageType = normalRollMessageType,
             minionAttackerIndex = minionAttackerIndex,
             minionAttackerType = minionAttackerType,
+            minionAttackerName = minionAttackerName,
             gestures = gestures,
             weaponType = WeaponType.getWeaponType(
                 characterClassType = attackerClassType,
@@ -1300,6 +1322,7 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             defenderUserId = defenderUserId,
             attackerClassName = attackerClassName,
             attackerClassType = attackerClassType,
+            minionAttackerName = minionAttackerName,
             defenderClassName = defenderClassName,
             defenderClassType = defenderClassType,
             defenderArmorClass = defenderArmorClass,

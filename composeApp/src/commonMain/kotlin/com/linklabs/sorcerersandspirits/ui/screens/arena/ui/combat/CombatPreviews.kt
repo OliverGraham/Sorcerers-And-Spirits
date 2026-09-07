@@ -170,6 +170,7 @@ private fun ArenaCombatFlashPreview() {
             attackerUserId = "player1",
             attackerClassName = "Mage",
             attackerClassType = CharacterClassType.Mage,
+            minionAttackerName = null,
             defenderUserId = "player2",
             defenderClassName = "Rogue",
             defenderClassType = CharacterClassType.Rogue,

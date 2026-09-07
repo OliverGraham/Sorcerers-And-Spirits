@@ -28,11 +28,13 @@ sealed interface ArenaMessage {
         data class Attack(
             override val attackerUserId: String,
             override val defenderUserId: String,
+            val attackerClassName: String,
             val attackerClassType: CharacterClassType,
             val impersonatedCharacterType: CharacterClassType,
             val normalRollMessageType: NormalRollMessageType,
             val minionAttackerIndex: Int?,
             val minionAttackerType: MinionType?,
+            val minionAttackerName: String?,
         ) : NormalRoll
 
         data class Outcome(
@@ -40,6 +42,7 @@ sealed interface ArenaMessage {
             override val defenderUserId: String,
             val attackerClassName: String,
             val attackerClassType: CharacterClassType,
+            val minionAttackerName: String?,
             val defenderClassName: String,
             val defenderClassType: CharacterClassType,
             val defenderArmorClass: Int,
@@ -142,6 +145,7 @@ sealed interface ArenaMessage {
         val classType: CharacterClassType,
         val singleDie: Int,
         val minionIndex: Int,
+        val minionName: String?,
     ) : ArenaMessage
 
     sealed interface Persuade : ArenaMessage {

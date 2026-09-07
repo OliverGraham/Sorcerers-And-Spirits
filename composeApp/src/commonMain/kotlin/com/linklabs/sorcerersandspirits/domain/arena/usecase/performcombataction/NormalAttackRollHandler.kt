@@ -224,6 +224,7 @@ internal class NormalAttackRollHandler(
                 defenderUserId = defenderUserId,
                 attackerClassName = attacker.className,
                 attackerClassType = attacker.type,
+                minionAttackerName = attackingMinionOrNull()?.name,
                 defenderClassName = defender.className,
                 defenderClassType = defender.type,
                 defenderArmorClass = defender.armorClass,
@@ -251,11 +252,13 @@ internal class NormalAttackRollHandler(
             ArenaMessage.NormalRoll.Attack(
                 attackerUserId = attackerUserId,
                 defenderUserId = defenderUserId,
+                attackerClassName = attacker.className,
                 attackerClassType = attacker.type,
                 impersonatedCharacterType = getImpersonatedCharacterTypeOrNone(),
                 normalRollMessageType = normalRollMessageType,
                 minionAttackerIndex = attackingMinion?.index,
                 minionAttackerType = attackingMinion?.type,
+                minionAttackerName = attackingMinion?.name,
             ),
         )
     }

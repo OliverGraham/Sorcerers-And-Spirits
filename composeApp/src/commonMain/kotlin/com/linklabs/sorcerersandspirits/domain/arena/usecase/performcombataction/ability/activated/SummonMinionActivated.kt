@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.Minion
+import com.linklabs.sorcerersandspirits.domain.game.MinionNames
 import com.linklabs.sorcerersandspirits.domain.game.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
@@ -19,6 +20,8 @@ internal class SummonMinionActivated(
                 .roll1D6(userId = attackerUserId, dieColor = dieColorFor(userId = attackerUserId))
                 .total
 
+        val summonResult = getSummonResult(result = result)
+
         addMessage(
             message =
             ArenaMessage.SummonMinion(
@@ -27,41 +30,43 @@ internal class SummonMinionActivated(
                 classType = attacker.type,
                 singleDie = result,
                 minionIndex = summonMinionAbility.minions.size,
+                minionName = summonResult?.minion?.name,
             ),
         )
 
-        handleSummonResult(result = result)
-
-        resolveTurnEnd()
-    }
-
-    private fun CombatMutator.handleSummonResult(result: Int) {
-        val summonResult = getSummonResult(result = result)
         if (summonResult == null) {
             handleFailure()
         } else {
             handleSuccess(summonResult = summonResult)
         }
+
+        resolveTurnEnd()
     }
 
     private fun CombatMutator.getSummonResult(result: Int) = when (result) {
         in abilityConfig.summonSkeletonRange -> SummonResult(
-            minion = Minion(type = MinionType.Skeleton, hasAttackedThisRound = false),
+            minion = summonedMinion(type = MinionType.Skeleton),
             shouldHealToFull = false,
         )
 
         in abilityConfig.summonSkeletonAndHealRange -> SummonResult(
-            minion = Minion(type = MinionType.Skeleton, hasAttackedThisRound = false),
+            minion = summonedMinion(type = MinionType.Skeleton),
             shouldHealToFull = true,
         )
 
         abilityConfig.summonGolemRoll -> SummonResult(
-            minion = Minion(type = MinionType.Golem, hasAttackedThisRound = false),
+            minion = summonedMinion(type = MinionType.Golem),
             shouldHealToFull = true,
         )
 
         else -> null
     }
+
+    private fun CombatMutator.summonedMinion(type: MinionType): Minion = Minion(
+        type = type,
+        name = MinionNames.nameNotIn(usedNames = livingMinionNames()),
+        hasAttackedThisRound = false,
+    )
 
     private fun CombatMutator.handleFailure() {
         updateAttackerClass { attacker ->

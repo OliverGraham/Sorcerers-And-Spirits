@@ -61,7 +61,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.GestureClassAvatar
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.finished.VictoryDanceAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
@@ -257,10 +257,7 @@ private fun NextMatchBounceOverlay(modifier: Modifier = Modifier) {
 @Composable
 private fun WinnerAvatar(winner: PlayerState.Selected, modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        GestureClassAvatar(
-            animatingMessage = null,
-            isTopSeat = false,
-            userId = winner.userId,
+        VictoryDanceAvatar(
             characterClass = winner.characterClass,
             modifier = Modifier.fillMaxSize(),
         )

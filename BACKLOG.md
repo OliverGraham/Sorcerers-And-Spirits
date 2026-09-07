@@ -258,25 +258,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   hold-to-roll/dice behavior is preserved (combat-regression risk).
 - **Related:** SS-160 (3D button style), and the shared-AppButton work (PR #181).
 
-### SS-179 — Message text styling: backgrounds, neutral text color, class-color class names everywhere
-
-- [ ] Not completed
-- **Goal:** A consistent text-styling pass across **all** messaging — Finished-state floating text,
-  the message log, and the flash overlay:
-    - Floating text in the Finished state needs a **background** (black at ~50% opacity or less) so
-      it's readable without hiding the background art.
-    - Text bodies use a **theme-neutral color**; any **class name** within a message renders in
-      **that class's color**. This applies everywhere a class name appears (message log, flash,
-      Finished, etc.).
-- **Source:** `MatchFinishedContent.kt` (the floating `Text`s — headline, winner banner, recap),
-  `ArenaMessageLog.kt`/`ArenaMessageDisplay`, and `CombatFlashOverlay.kt` (`FlashText`). Class
-  names already resolve via the className map (SS-097); class colors via `ClassStyle`/
-  `classFamilyColors`. Likely an `AnnotatedString` builder that colors class-name spans from one
-  shared place.
-- **Related:** SS-097 (class names in messages), SS-153 (class colors), SS-164 (flash
-  wording/color),
-  SS-029 (string resources).
-
 ### SS-029 — Move combat-action availability to the domain + StringResources in ArenaCombatControl
 
 - [ ] Not completed

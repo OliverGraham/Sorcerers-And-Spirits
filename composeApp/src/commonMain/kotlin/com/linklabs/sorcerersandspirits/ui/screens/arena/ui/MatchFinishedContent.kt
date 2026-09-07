@@ -50,6 +50,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.fadedBlackBackground
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
@@ -354,7 +355,10 @@ private fun WinnerBanner(winner: PlayerState.Selected?, modifier: Modifier = Mod
         }
 
     Text(
-        modifier = modifier,
+        modifier =
+        modifier
+            .fadedBlackBackground(alpha = 0.5f)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         text = text,
         style = MaterialTheme.typography.titleLarge,
         fontWeight = FontWeight.Bold,
@@ -395,7 +399,8 @@ private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Mo
                 Text(
                     text = player.characterClass.className,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = FontWeight.Bold,
+                    color = player.characterClass.type.toColor(),
                 )
             }
 

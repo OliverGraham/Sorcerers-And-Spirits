@@ -46,6 +46,7 @@ internal fun SettingsDrawer(
         onNavigateToLeaderboard = { navigateTo(route = Route.LeaderboardScreen) },
         onNavigateToAchievements = { navigateTo(route = Route.AchievementsScreen) },
         onNavigateToGameRules = { navigateTo(route = Route.GameRulesScreen) },
+        onNavigateToCredits = { navigateTo(route = Route.CreditsScreen) },
         modifier = modifier,
     )
 }
@@ -59,6 +60,7 @@ private fun DrawerContent(
     onNavigateToLeaderboard: () -> Unit,
     onNavigateToAchievements: () -> Unit,
     onNavigateToGameRules: () -> Unit,
+    onNavigateToCredits: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -78,6 +80,7 @@ private fun DrawerContent(
         DrawerEntry(label = "Leaderboard", onClick = onNavigateToLeaderboard)
         DrawerEntry(label = "Achievements", onClick = onNavigateToAchievements)
         DrawerEntry(label = "Game Rules", onClick = onNavigateToGameRules)
+        DrawerEntry(label = "Credits", onClick = onNavigateToCredits)
     }
 }
 

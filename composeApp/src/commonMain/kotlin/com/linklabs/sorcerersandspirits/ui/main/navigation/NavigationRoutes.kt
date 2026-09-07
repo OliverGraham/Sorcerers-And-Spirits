@@ -23,6 +23,8 @@ sealed interface Route : NavKey {
     @Serializable data object AchievementsScreen : Route
 
     @Serializable data object GameRulesScreen : Route
+
+    @Serializable data object CreditsScreen : Route
 }
 
 /** Necessary for KMP and to work with iOS */
@@ -52,6 +54,10 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
             subclass(
                 subclass = Route.GameRulesScreen::class,
                 serializer = Route.GameRulesScreen.serializer(),
+            )
+            subclass(
+                subclass = Route.CreditsScreen::class,
+                serializer = Route.CreditsScreen.serializer(),
             )
         }
     }

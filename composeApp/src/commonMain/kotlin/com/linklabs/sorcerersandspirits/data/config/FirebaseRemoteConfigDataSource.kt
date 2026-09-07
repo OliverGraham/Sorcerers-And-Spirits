@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource.Compa
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.ABILITY_CONFIG
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CHARACTER_CLASS_COPY
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CHARACTER_CLASS_STATS
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CREDITS
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.LATEST_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.MINIMUM_SUPPORTED_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.RANDOM_TRAVELER_NAMES
@@ -40,6 +41,8 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
 
     private var defaultNames: List<String> = listOf(FALLBACK_TRAVELER_NAME)
 
+    private var defaultCredits: CreditsEntity = CreditsEntity.EMPTY
+
     override suspend fun initialize() {
         defaultStats =
             loadBundledDefault(path = BUNDLED_CLASS_STATS_PATH, fallback = defaultStats).ifEmpty {
@@ -53,12 +56,14 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         defaultNames =
             loadBundledDefault(path = BUNDLED_TRAVELER_NAMES_PATH, fallback = defaultNames)
                 .ifEmpty { defaultNames }
+        defaultCredits = loadBundledDefault(path = BUNDLED_CREDITS_PATH, fallback = defaultCredits)
         remoteConfig.settings { minimumFetchInterval = MINIMUM_FETCH_INTERVAL }
         remoteConfig.setDefaults(
             CHARACTER_CLASS_STATS to json.encodeToString(value = defaultStats),
             ABILITY_CONFIG to json.encodeToString(value = defaultAbilityConfig),
             CHARACTER_CLASS_COPY to json.encodeToString(value = defaultClassCopy),
             RANDOM_TRAVELER_NAMES to json.encodeToString(value = defaultNames),
+            CREDITS to json.encodeToString(value = defaultCredits),
             MINIMUM_SUPPORTED_VERSION to UNGATED_VERSION,
             LATEST_VERSION to UNGATED_VERSION,
         )
@@ -103,6 +108,12 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         .getOrDefault(defaultValue = defaultNames)
         .ifEmpty { defaultNames }
 
+    override fun credits(): CreditsEntity = runCatching {
+        val raw = remoteConfig.getValue(key = CREDITS).asString()
+        json.decodeFromString<CreditsEntity>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultCredits)
+
     override fun minimumSupportedVersionCode(): Long = remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
 
     override fun latestVersionCode(): Long = remoteConfig.getValue(key = LATEST_VERSION).asLong()
@@ -113,6 +124,7 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         const val BUNDLED_ABILITY_CONFIG_PATH = "files/remote_config/ability_config.json"
         const val BUNDLED_CLASS_COPY_PATH = "files/remote_config/character_class_copy.json"
         const val BUNDLED_TRAVELER_NAMES_PATH = "files/remote_config/random_traveler_names.json"
+        const val BUNDLED_CREDITS_PATH = "files/remote_config/credits.json"
         const val FALLBACK_TRAVELER_NAME = "a mysterious traveler"
     }
 }

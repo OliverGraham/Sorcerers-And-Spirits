@@ -24,6 +24,12 @@ interface RemoteConfigDataSource {
     fun randomTravelerNames(): List<String>
 
     /**
+     * The currently active credits roll. Falls back to the in-app defaults when nothing has been
+     * fetched or the payload can't be parsed.
+     */
+    fun credits(): CreditsEntity
+
+    /**
      * The lowest build version code still allowed to run. Falls back to [UNGATED_VERSION] (which
      * never gates any client) when nothing has been fetched.
      */

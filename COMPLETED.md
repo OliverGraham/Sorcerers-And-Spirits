@@ -525,6 +525,16 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   drop shadow, and the flash swings back and forth (~7° keyframed over 900ms, hold bumped to 1100ms)
   before the scale/fade exit. Related: SS-164, SS-185, SS-179, SS-177, SS-215.
 
+## Credits
+
+- **SS-281** — CreditsScreen (movie-style scrolling credits + swinging logo): Added a CreditsScreen
+  whose text scrolls upward like film credits, then holds a swinging placeholder logo for ~20s and
+  loops. Text comes from a new RemoteConfig `credits` key with a bundled `credits.json` default,
+  threaded Domain (`Credits`/`CreditsProvider`/`GetCreditsUseCase`) → Data
+  (`CreditsEntity`/`RemoteConfigCreditsProvider`) → UI (`CreditsState`/`CreditsScreenViewModel`/
+  `CreditsScreen`), with a `Route.CreditsScreen`, drawer entry, and Koin wiring. Text types
+  (header/body) deferred to SS-282.
+
 ## App / Main
 
 - **SS-035** — Random names from RemoteConfig: Source random traveler names from RemoteConfig

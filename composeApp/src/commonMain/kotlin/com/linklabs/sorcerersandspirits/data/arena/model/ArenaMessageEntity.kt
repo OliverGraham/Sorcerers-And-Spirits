@@ -50,11 +50,13 @@ sealed interface ArenaMessageEntity {
         override val id: String,
         val attackerUserId: String,
         val defenderUserId: String,
+        val attackerClassName: String,
         val attackerClassType: CharacterClassType,
         val impersonatedCharacterType: CharacterClassType,
         val normalRollMessageType: NormalRollMessageType,
         val minionAttackerIndex: Int?,
         val minionAttackerType: MinionType?,
+        val minionAttackerName: String?,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -65,6 +67,7 @@ sealed interface ArenaMessageEntity {
         val defenderUserId: String,
         val attackerClassName: String,
         val attackerClassType: CharacterClassType,
+        val minionAttackerName: String?,
         val defenderClassName: String,
         val defenderClassType: CharacterClassType,
         val defenderArmorClass: Int,
@@ -211,6 +214,7 @@ sealed interface ArenaMessageEntity {
         val classType: CharacterClassType,
         val singleDie: Int,
         val minionIndex: Int,
+        val minionName: String?,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -502,11 +506,13 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 ArenaMessage.NormalRoll.Attack(
                     attackerUserId = attackerUserId,
                     defenderUserId = defenderUserId,
+                    attackerClassName = attackerClassName,
                     attackerClassType = attackerClassType,
                     impersonatedCharacterType = impersonatedCharacterType,
                     normalRollMessageType = normalRollMessageType,
                     minionAttackerIndex = minionAttackerIndex,
                     minionAttackerType = minionAttackerType,
+                    minionAttackerName = minionAttackerName,
                 )
 
             is ArenaMessageEntity.NormalRollOutcome ->
@@ -515,6 +521,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     defenderUserId = defenderUserId,
                     attackerClassName = attackerClassName,
                     attackerClassType = attackerClassType,
+                    minionAttackerName = minionAttackerName,
                     defenderClassName = defenderClassName,
                     defenderClassType = defenderClassType,
                     defenderArmorClass = defenderArmorClass,
@@ -621,6 +628,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     classType = classType,
                     singleDie = singleDie,
                     minionIndex = minionIndex,
+                    minionName = minionName,
                 )
 
             is ArenaMessageEntity.Persuade.Trigger ->
@@ -823,11 +831,13 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             id = id,
             attackerUserId = attackerUserId,
             defenderUserId = defenderUserId,
+            attackerClassName = attackerClassName,
             attackerClassType = attackerClassType,
             impersonatedCharacterType = impersonatedCharacterType,
             normalRollMessageType = normalRollMessageType,
             minionAttackerIndex = minionAttackerIndex,
             minionAttackerType = minionAttackerType,
+            minionAttackerName = minionAttackerName,
         )
 
     is ArenaMessage.NormalRoll.Outcome ->
@@ -837,6 +847,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             defenderUserId = defenderUserId,
             attackerClassName = attackerClassName,
             attackerClassType = attackerClassType,
+            minionAttackerName = minionAttackerName,
             defenderClassName = defenderClassName,
             defenderClassType = defenderClassType,
             defenderArmorClass = defenderArmorClass,
@@ -954,6 +965,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             classType = classType,
             singleDie = singleDie,
             minionIndex = minionIndex,
+            minionName = minionName,
         )
 
     is ArenaMessage.Persuade.Trigger ->

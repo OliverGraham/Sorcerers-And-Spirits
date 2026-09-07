@@ -136,7 +136,7 @@ private fun MinionGestureAvatarPreview(minionType: MinionType) {
             ),
         ) {
             MinionGestureAvatar(
-                minion = MinionState(type = minionType, hasAttackedThisRound = false),
+                minion = MinionState(type = minionType, name = "Kebab", hasAttackedThisRound = false),
                 displayIndex = 0,
                 gestureState = gestureState,
                 modifier = Modifier.fillMaxSize(),

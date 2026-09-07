@@ -74,6 +74,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   in the domain/handlers) through Domain → Data → State → resolvers. Persuade skipped (broken, pending
   its own overhaul). Optional follow-ups noted in the PR: Mirror Image Pass "vs armor" threshold,
   minion-attack attribution, and a stray `MIRROR IMAGE DEBUG` println.
+- **SS-273** — Name summoned minions and show the name in minion messages: Each summoned minion gets a
+  unique name from a hardcoded `MinionNames` pool (unique across all living minions in the match,
+  reusable once gone), threaded Domain → Data → UI so it persists to Firebase. Surviving minions keep
+  their names through the damage rebuild; the summon message names the minion, and the minion attack
+  cue + roll outcome use the minion's name (colored via the summoner's class) instead of the summoner.
+  Follow-up SS-283 tracks giving golems their own hit points instead of downgrading to a skeleton.
 
 - **SS-227** — Finished state: show which players have readied up (like ChallengeDialog): Per-player
   readiness now threads Domain → UI (`ArenaPlayer.isReadyForNextMatch` → `PlayerState.Selected` via

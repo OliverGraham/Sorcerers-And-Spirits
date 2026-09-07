@@ -447,6 +447,7 @@ private fun NecromancerSummonMinionPreview(
                 },
                 outcome = outcome,
                 minionIndex = 0,
+                minionName = "Kebab",
                 animation = ArenaAnimationState.FlashAndAvatar(),
                 gestures = emptyMap(),
             )

@@ -143,9 +143,10 @@
     <string name="arena_message_riposte_en_garde_failed">En garde! {class}Duelist{/class} rolled %1$s + %2$s = %3$s — the counter fails and {class}%4$s{/class}'s attack continues!</string>
 
     <string name="arena_message_summon_minion_fizzle">{class}%1$s{/class} rolled a %2$s — the summoning fizzles, no minion is raised</string>
-    <string name="arena_message_summon_minion_skeleton">{class}%1$s{/class} rolled a %2$s — raises a skeleton (+1 Health shield, extra attack)</string>
-    <string name="arena_message_summon_minion_skeleton_heal">{class}%1$s{/class} rolled a %2$s — raises a skeleton (+1 Health shield, extra attack) and heals to full</string>
-    <string name="arena_message_summon_minion_golem">{class}%1$s{/class} rolled a %2$s — raises a golem (+2 Health shield, extra attack) and heals to full</string>
+    <string name="arena_message_summon_minion_skeleton">{class}%1$s{/class} rolled a %2$s — raises a skeleton, %3$s, (+1 Health shield, extra attack)</string>
+    <string name="arena_message_summon_minion_skeleton_heal">{class}%1$s{/class} rolled a %2$s — raises a skeleton, %3$s, (+1 Health shield, extra attack) and heals to full</string>
+    <string name="arena_message_summon_minion_golem">{class}%1$s{/class} rolled a %2$s — raises a golem, %3$s, (+2 Health shield, extra attack) and heals to full</string>
+    <string name="arena_message_minion_attack">{class}%1$s{/class}'s minion, %2$s, attacks!</string>
 
     <string name="arena_message_persuade_trigger">Persuade! The {class}Bard{/class} begins strumming a lute…</string>
     <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>
@@ -213,6 +214,7 @@
     <string name="arena_flash_skeleton">Skeleton!</string>
     <string name="arena_flash_skeleton_and_heal">Skeleton · Healed!</string>
     <string name="arena_flash_golem">Golem · Healed!</string>
+    <string name="arena_flash_minion_attack">%1$s strikes!</string>
     <string name="arena_flash_teleport">Teleport!</string>
     <string name="arena_flash_escaped">Escaped!</string>
     <string name="arena_flash_caught">Caught!</string>

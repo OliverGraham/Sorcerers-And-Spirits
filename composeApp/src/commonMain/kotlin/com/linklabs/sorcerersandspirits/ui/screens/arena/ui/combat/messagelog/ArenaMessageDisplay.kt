@@ -31,6 +31,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_co
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_trigger
+import sorcerersandspirits.composeapp.generated.resources.arena_message_minion_attack
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_broke
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_held
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_damage
@@ -100,15 +101,23 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             characterClassInfo.className,
         )
 
-    // TODO: Hmmm
-    is ArenaMessageState.NormalRoll.Attack -> ""
+    is ArenaMessageState.NormalRoll.Attack ->
+        if (minionAttackerName != null) {
+            stringResource(
+                resource = Res.string.arena_message_minion_attack,
+                attackerClassName,
+                minionAttackerName,
+            )
+        } else {
+            ""
+        }
 
     is ArenaMessageState.NormalRoll.Outcome ->
         when (normalRollMessageType) {
             NormalRollMessageType.ArmorClassHit ->
                 stringResource(
                     resource = Res.string.arena_message_normal_roll_hit,
-                    attackerClassName,
+                    attackerDisplayName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     defenderArmorClass,
@@ -117,7 +126,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             NormalRollMessageType.ArmorClassMiss ->
                 stringResource(
                     resource = Res.string.arena_message_normal_roll_miss,
-                    attackerClassName,
+                    attackerDisplayName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                     defenderArmorClass,
@@ -126,7 +135,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             NormalRollMessageType.Damage ->
                 stringResource(
                     resource = Res.string.arena_message_normal_roll_damage,
-                    attackerClassName,
+                    attackerDisplayName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                 )
@@ -134,7 +143,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             NormalRollMessageType.Knockout ->
                 stringResource(
                     resource = Res.string.arena_message_normal_roll_knockout,
-                    attackerClassName,
+                    attackerDisplayName,
                     defenderClassName,
                     rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
                 )
@@ -262,6 +271,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     resource = Res.string.arena_message_summon_minion_skeleton,
                     className,
                     singleDie,
+                    minionName.orEmpty(),
                 )
 
             SummonMinionOutcome.SkeletonAndHeal ->
@@ -269,6 +279,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     resource = Res.string.arena_message_summon_minion_skeleton_heal,
                     className,
                     singleDie,
+                    minionName.orEmpty(),
                 )
 
             SummonMinionOutcome.Golem ->
@@ -276,6 +287,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     resource = Res.string.arena_message_summon_minion_golem,
                     className,
                     singleDie,
+                    minionName.orEmpty(),
                 )
         }
 

@@ -28,15 +28,24 @@ data class CharacterClass(
         damage: Int,
         summon: OffensiveAbility.SummonMinion,
     ): CharacterClass {
-        val golemCount = summon.minions.count { minion -> minion.type == MinionType.Golem }
+        val golems = summon.minions.filter { minion -> minion.type == MinionType.Golem }
+        val skeletons = summon.minions.filter { minion -> minion.type == MinionType.Skeleton }
         val absorbedByShield = minOf(damage, summon.shieldPoints)
         val survivingShield = summon.shieldPoints - absorbedByShield
-        val survivingGolems = minOf(golemCount, survivingShield / 2)
+        val survivingGolems = minOf(golems.size, survivingShield / 2)
         val survivingSkeletons = survivingShield - survivingGolems * 2
 
-        val survivingMinions =
-            List(size = survivingGolems) { Minion(type = MinionType.Golem, hasAttackedThisRound = false) } +
-                List(size = survivingSkeletons) { Minion(type = MinionType.Skeleton, hasAttackedThisRound = false) }
+        val survivingGolemMinions =
+            golems.take(n = survivingGolems).map { minion -> minion.copy(hasAttackedThisRound = false) }
+        // TODO(SS-283): golems downgrade to skeletons because shields are fungible points; give golems
+        //   their own hit points so a hit golem survives as a damaged golem instead of morphing.
+        val downgradedGolems = golems.drop(n = survivingGolems)
+        val survivingSkeletonMinions =
+            (downgradedGolems + skeletons).take(n = survivingSkeletons).map { minion ->
+                minion.copy(type = MinionType.Skeleton, hasAttackedThisRound = false)
+            }
+
+        val survivingMinions = survivingGolemMinions + survivingSkeletonMinions
 
         return copy(
             hitPoints = hitPoints - (damage - absorbedByShield),

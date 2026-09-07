@@ -23,7 +23,7 @@ import com.linklabs.sorcerersandspirits.domain.game.reset
 import com.linklabs.sorcerersandspirits.domain.game.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
-internal data class AttackingMinion(val index: Int, val type: MinionType)
+internal data class AttackingMinion(val index: Int, val type: MinionType, val name: String)
 
 internal class CombatMutator(
     val attackerUserId: UserId,
@@ -62,9 +62,12 @@ internal class CombatMutator(
         val attackingMinionIndex = summonMinionAbility.minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
         if (attackingMinionIndex < 0) return null
 
+        val attackingMinion = summonMinionAbility.minions[attackingMinionIndex]
+
         return AttackingMinion(
             index = attackingMinionIndex,
-            type = summonMinionAbility.minions[attackingMinionIndex].type,
+            type = attackingMinion.type,
+            name = attackingMinion.name,
         )
     }
 
@@ -323,4 +326,9 @@ internal class CombatMutator(
     }
 
     private fun CharacterClass.getSummonMinionOrNull() = offensiveAbility.effective as? OffensiveAbility.SummonMinion
+
+    fun livingMinionNames(): Set<String> = consciousPlayers
+        .flatMap { player -> player.characterClass.getSummonMinionOrNull()?.minions.orEmpty() }
+        .map { minion -> minion.name }
+        .toSet()
 }

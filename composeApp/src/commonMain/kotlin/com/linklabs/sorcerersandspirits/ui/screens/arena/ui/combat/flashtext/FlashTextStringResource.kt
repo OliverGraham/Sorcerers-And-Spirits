@@ -41,6 +41,7 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_knockout_t
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin_continues
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_lucky_coin_stopped
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_minion_attack
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_holds
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_mirror_image
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_miss
@@ -112,7 +113,12 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
                 }
         }
 
-    is ArenaMessageState.NormalRoll.Attack -> ""
+    is ArenaMessageState.NormalRoll.Attack ->
+        if (minionAttackerName != null) {
+            stringResource(resource = Res.string.arena_flash_minion_attack, minionAttackerName)
+        } else {
+            ""
+        }
 
     is ArenaMessageState.KillingMomentum ->
         stringResource(resource = Res.string.arena_flash_killing_momentum)

@@ -15,6 +15,8 @@
 		4892F1652E8A2361000068FB /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1642E8A2361000068FB /* FirebaseFirestoreCombine-Community */; };
 		4892F1862E8A3820000068FB /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; };
 		4892F1872E8A3820000068FB /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		AA11AA11AA11AA11AA110001 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = AA11AA11AA11AA11AA110002 /* GoogleSignIn */; };
+		BB22BB22BB22BB22BB220001 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = BB22BB22BB22BB22BB220002 /* FirebaseRemoteConfig */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -74,6 +76,8 @@
 				4892F1652E8A2361000068FB /* FirebaseFirestoreCombine-Community in Frameworks */,
 				4862D6732EECA3040046000D /* FirebaseDatabase in Frameworks */,
 				4892F15F2E8A2361000068FB /* FirebaseAuthCombine-Community in Frameworks */,
+				AA11AA11AA11AA11AA110001 /* GoogleSignIn in Frameworks */,
+				BB22BB22BB22BB22BB220001 /* FirebaseRemoteConfig in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +138,8 @@
 				4892F1622E8A2361000068FB /* FirebaseFirestore */,
 				4892F1642E8A2361000068FB /* FirebaseFirestoreCombine-Community */,
 				4862D6722EECA3040046000D /* FirebaseDatabase */,
+				AA11AA11AA11AA11AA110002 /* GoogleSignIn */,
+				BB22BB22BB22BB22BB220002 /* FirebaseRemoteConfig */,
 			);
 			productName = iosApp;
 			productReference = D798858DFD966DF0374C9A69 /* SorcerersAndSpirits.app */;
@@ -165,6 +171,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				AA11AA11AA11AA11AA110003 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 70DAEB74133EBC01A29247EF /* Products */;
@@ -430,6 +437,14 @@
 				minimumVersion = 12.3.0;
 			};
 		};
+		AA11AA11AA11AA11AA110003 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -462,6 +477,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = "FirebaseFirestoreCombine-Community";
+		};
+		AA11AA11AA11AA11AA110002 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AA11AA11AA11AA11AA110003 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		BB22BB22BB22BB22BB220002 /* FirebaseRemoteConfig */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseRemoteConfig;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

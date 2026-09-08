@@ -105,6 +105,7 @@ sealed interface AbilityActionEntity {
             val attackerRoll: TeleportDieEntity,
             val defenderRoll: TeleportDieEntity,
             val attackerDoublesBonus: Int = 0,
+            val rollOffAttempt: Int = 1,
         ) : PassiveEntity
 
         @Serializable data class TeleportDieEntity(val userId: String, val roll: Int? = null)
@@ -269,6 +270,7 @@ internal fun AbilityAction.toEntity(): AbilityActionEntity = when (this) {
                         roll = defenderRoll.roll,
                     ),
                     attackerDoublesBonus = attackerDoublesBonus,
+                    rollOffAttempt = rollOffAttempt,
                 )
 
             is AbilityAction.Passive.MirrorImage ->
@@ -373,6 +375,7 @@ internal fun AbilityActionEntity.toDomain(): AbilityAction = when (this) {
                         roll = defenderRoll.roll,
                     ),
                     attackerDoublesBonus = attackerDoublesBonus,
+                    rollOffAttempt = rollOffAttempt,
                 )
 
             is AbilityActionEntity.PassiveEntity.MirrorImageEntity ->

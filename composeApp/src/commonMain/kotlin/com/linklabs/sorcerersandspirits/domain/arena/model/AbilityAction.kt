@@ -45,6 +45,7 @@ sealed interface AbilityAction {
             val attackerRoll: TeleportDie,
             val defenderRoll: TeleportDie,
             val attackerDoublesBonus: Int,
+            val rollOffAttempt: Int,
         ) : Passive {
 
             data class TeleportDie(

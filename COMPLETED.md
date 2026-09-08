@@ -517,6 +517,8 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   persisted in `DiceRollEntity`, mapped to a class color in `DiceRoll.toState`. Bug 5: doubles badge
   sits over the die owned by the bonus holder in a roll-off. Follow-ups: SS-246 (wrongful re-roll),
   SS-247 (class-color all ability dice via a DieColor enum), SS-248 (badge persists to latest state).
+- **SS-246** — Teleport wrongful re-roll (roll-off resolving before rolls settled): resolved during
+  the settle-before-result / roll-off sequencing work (SS-244 and related); no longer reproduces.
 - **SS-247** — Class-color all ability dice via a domain `DieColor` enum (NormalAttack, Disabled, one
   per class) with a UI `toColor()`; the roll carries its color intent Domain → Data → UI. Every
   ability roll (offensive, defensive, roll-off) tints its dice by the die owner's class; normal

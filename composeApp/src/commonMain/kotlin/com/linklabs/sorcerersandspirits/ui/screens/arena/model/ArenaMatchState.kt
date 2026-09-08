@@ -61,8 +61,7 @@ sealed interface ArenaMatchState {
                     it.action is AbilityActionState.Passive.Teleport
             }
 
-        val isTeleportDoublesBonusSpent =
-            combatActionState.teleportAction()?.let { it.attackerDoublesBonus == 0 } ?: false
+        val teleportRollOffKey = combatActionState.teleportRollOffKey()
 
         val attacker = playerMap.getValue(key = attackerUserId)
 
@@ -133,6 +132,8 @@ internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Tele
 
     return abilityRoll.action as? AbilityActionState.Passive.Teleport
 }
+
+private fun CombatActionState.teleportRollOffKey(): Int? = teleportAction()?.rollOffAttempt
 
 private fun ArenaCombatControl.isImpersonate(): Boolean = this is ArenaCombatControl.ActivatedAbility &&
     action is AbilityActionState.Activated.Impersonate

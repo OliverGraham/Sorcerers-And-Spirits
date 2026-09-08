@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -66,12 +67,11 @@ private const val CLASS_END_TAG = "{/class}"
 @Composable
 internal fun ArenaMessageLog(
     messageGroups: List<ArenaMessageGroupState>,
+    listState: LazyListState,
     dismissConnection: NestedScrollConnection,
     isCombatOngoing: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val listState = rememberLazyListState()
-
     val currentRoundNumber =
         messageGroups.filterIsInstance<ArenaMessageGroupState.Round>().maxOfOrNull {
             it.roundNumber
@@ -317,6 +317,7 @@ private fun ArenaMessageLogPreview() {
         val duelistInfo = CharacterClassMessageInfoState("Duelist", CharacterClassType.Duelist)
 
         ArenaMessageLog(
+            listState = rememberLazyListState(),
             dismissConnection = remember { object : NestedScrollConnection {} },
             isCombatOngoing = true,
             messageGroups =

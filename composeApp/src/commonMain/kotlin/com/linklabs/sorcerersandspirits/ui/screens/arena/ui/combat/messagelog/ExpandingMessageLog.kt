@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +34,7 @@ import kotlinx.coroutines.flow.drop
 
 private const val LOG_HEIGHT_FRACTION = 0.47f
 private const val LOG_REVEAL_ANIM_LABEL = "MessageLogReveal"
-private const val SHEET_DISMISS_FLING_VELOCITY = 400f
+private const val SHEET_DISMISS_POSITION_FRACTION = 0.6f
 
 private enum class LogSheetAnchor { Open, Dismissed }
 
@@ -52,6 +54,7 @@ internal fun ExpandingMessageLog(
 
     var panelHeight by remember { mutableStateOf(value = 0f) }
     val sheetState = remember { AnchoredDraggableState(initialValue = LogSheetAnchor.Open) }
+    val listState = rememberLazyListState()
 
     LaunchedEffect(key1 = panelHeight) {
         if (panelHeight <= 0f) return@LaunchedEffect
@@ -74,10 +77,12 @@ internal fun ExpandingMessageLog(
 
     if (!isExpanded && revealProgress == 0f) return
 
-    val dismissConnection = remember { logSheetDismissConnection(state = sheetState) }
+    val dismissConnection =
+        remember { logSheetDismissConnection(state = sheetState, listState = listState) }
 
     ArenaMessageLog(
         messageGroups = messageGroups,
+        listState = listState,
         dismissConnection = dismissConnection,
         isCombatOngoing = isCombatOngoing,
         modifier = modifier
@@ -99,6 +104,7 @@ internal fun ExpandingMessageLog(
 
 private fun logSheetDismissConnection(
     state: AnchoredDraggableState<LogSheetAnchor>,
+    listState: LazyListState,
 ): NestedScrollConnection = object : NestedScrollConnection {
     override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
         val isReExtending = available.y > 0f && source == NestedScrollSource.UserInput
@@ -112,6 +118,8 @@ private fun logSheetDismissConnection(
         source: NestedScrollSource,
     ): Offset {
         if (source != NestedScrollSource.UserInput) return Offset.Zero
+        val isDismissDrag = available.y < 0f
+        if (isDismissDrag && listState.canScrollForward) return Offset.Zero
         return Offset(x = 0f, y = state.dispatchRawDelta(delta = available.y))
     }
 
@@ -119,23 +127,20 @@ private fun logSheetDismissConnection(
         val isReExtendFling =
             available.y > 0f && state.requireOffset() < state.anchors.maxPosition()
         if (!isReExtendFling) return Velocity.Zero
-        state.settleToNearestAnchor(velocity = available.y)
+        state.settleToNearestAnchor()
         return available
     }
 
     override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
-        state.settleToNearestAnchor(velocity = available.y)
+        state.settleToNearestAnchor()
         return available
     }
 }
 
-private suspend fun AnchoredDraggableState<LogSheetAnchor>.settleToNearestAnchor(velocity: Float) {
-    val target =
-        when {
-            velocity <= -SHEET_DISMISS_FLING_VELOCITY -> LogSheetAnchor.Dismissed
-            velocity >= SHEET_DISMISS_FLING_VELOCITY -> LogSheetAnchor.Open
-            else -> anchors.closestAnchor(position = requireOffset()) ?: LogSheetAnchor.Open
-        }
+private suspend fun AnchoredDraggableState<LogSheetAnchor>.settleToNearestAnchor() {
+    val dismissThreshold = anchors.minPosition() * SHEET_DISMISS_POSITION_FRACTION
+    val hasDraggedPastThreshold = requireOffset() <= dismissThreshold
+    val target = if (hasDraggedPastThreshold) LogSheetAnchor.Dismissed else LogSheetAnchor.Open
 
     animateTo(targetValue = target)
 }

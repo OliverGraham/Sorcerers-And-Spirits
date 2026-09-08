@@ -55,6 +55,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -93,13 +94,11 @@ private const val LABEL_RADIUS_FRACTION = 0.22f
 @Composable
 fun CharacterClassWheel(
     characterClasses: List<CharacterClassState>,
+    selectedClass: CharacterClassState?,
+    unavailableClasses: Set<CharacterClassType>,
+    isItThisUsersTurn: Boolean,
+    pinnedAuraClassType: CharacterClassType?,
     modifier: Modifier = Modifier,
-    selectedClass: CharacterClassState? = null,
-    unavailableClasses: Set<CharacterClassType> = emptySet(),
-    isSelectionAuraVisible: Boolean = false,
-    pinnedAuraClassType: CharacterClassType? = null,
-    onClassSelected: (CharacterClassState) -> Unit = {},
-    wheelOverlay: @Composable BoxScope.() -> Unit = {},
 ) {
     val count = characterClasses.size
     if (count == 0) return
@@ -138,12 +137,15 @@ fun CharacterClassWheel(
             }
     }
 
+    val onClassSelected = ArenaActionsProvider.current.onSelectCharacterClass
     fun select(index: Int) {
         animateRotationTo(
             targetDegrees = nearestRotationForIndex(index = index, fromDegrees = rotationDegrees),
         )
         val targetClass = characterClasses[index]
-        if (targetClass.type !in unavailableClasses) onClassSelected(targetClass)
+        if (targetClass.type !in unavailableClasses) {
+            if (isItThisUsersTurn) onClassSelected(targetClass)
+        }
     }
 
     LaunchedEffect(key1 = selectedClass) {
@@ -223,7 +225,7 @@ fun CharacterClassWheel(
                             pinnedAuraClassType != null ->
                                 characterClasses.indexOfFirst { it.type == pinnedAuraClassType }
 
-                            isSelectionAuraVisible -> centeredIndex
+                            isItThisUsersTurn -> centeredIndex
 
                             else -> -1
                         },
@@ -231,8 +233,6 @@ fun CharacterClassWheel(
                         onClassClick = { index -> select(index = index) },
                     )
                 }
-
-                wheelOverlay()
             }
 
             ClassPageStats(
@@ -468,9 +468,16 @@ private fun nearestRotationForIndex(index: Int, fromDegrees: Float): Float {
 @Preview
 @Composable
 private fun CharacterClassWheelPreview() {
+    val characterClasses = previewCharacterClassStates()
     SorcerersAndSpiritsTheme {
         CompositionLocalProvider(LocalCharacterClassCopy provides previewCharacterClassCopy()) {
-            CharacterClassWheel(characterClasses = previewCharacterClassStates())
+            CharacterClassWheel(
+                characterClasses = characterClasses,
+                selectedClass = characterClasses.first(),
+                unavailableClasses = emptySet(),
+                isItThisUsersTurn = true,
+                pinnedAuraClassType = null,
+            )
         }
     }
 }

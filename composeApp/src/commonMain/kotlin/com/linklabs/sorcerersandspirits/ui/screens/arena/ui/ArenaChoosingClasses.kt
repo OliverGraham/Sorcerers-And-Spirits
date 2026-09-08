@@ -71,7 +71,7 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
                 modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
             )
 
-            ChoosingClassesCards(
+            CharacterClassWheel(
                 characterClasses = screenState.characterClasses,
                 modifier = Modifier.weight(weight = 1f),
             )
@@ -89,19 +89,16 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
 }
 
 @Composable
-private fun ArenaMatchState.ChoosingClasses.ChoosingClassesCards(
+private fun ArenaMatchState.ChoosingClasses.CharacterClassWheel(
     characterClasses: List<CharacterClassState>,
     modifier: Modifier = Modifier,
 ) {
-    val onClassSelected = ArenaActionsProvider.current.onSelectCharacterClass
-
     CharacterClassWheel(
         characterClasses = characterClasses,
         selectedClass = selectedClass,
         unavailableClasses = unavailableClasses,
-        isSelectionAuraVisible = isItThisUsersTurn,
+        isItThisUsersTurn = isItThisUsersTurn,
         pinnedAuraClassType = userConfirmedClassType,
-        onClassSelected = { if (isItThisUsersTurn) onClassSelected(it) },
         modifier = modifier,
     )
 }

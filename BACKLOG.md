@@ -589,25 +589,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   first/last-of-collection bug masquerading as random.
 - **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
-### SS-246 — Teleport re-rolls when it shouldn't (roll-off resolving before rolls settle)
-
-- [ ] Not completed
-- **Symptom (intermittent):** In a Teleport roll-off the defender re-rolls even when they clearly
-  won. Observed: Mage rolled a 2, attacker (Bard) rolled a 1, no doubles bonus in play, yet the
-  Mage was made to roll again. 2 vs 1 with no bonus should let the Mage escape outright — a strict
-  higher roll, not a tie — so the re-roll is wrong. Does not reproduce every time.
-- **Suspected cause (owner's read):** it is possible to roll for Teleport before the other
-  combatant's roll has resolved, so the outcome is evaluated against a stale/incomplete roll value
-  (a race). Likely a regression around the settle-before-result / roll-off sequencing work.
-- **Not a display-only issue:** this is an actual extra roll being performed, not just a missing
-  badge — confirmed there was no doubles bonus, so it is not the legitimate tie/reroll path.
-- **Investigate:** the roll-off gating (can a roll be submitted before the opponent's roll settles?)
-  and how the domain compares attacker vs defender rolls (`TeleportHandler.handleTeleportOutcome` /
-  `rerollTeleport`) relative to when each roll-off roll is committed/emitted.
-- **Related:** SS-244 (settle-before-result timing, per-die roll-off sequencing), SS-245 (tie →
-  reroll communication), SS-242 (separate roll-off dice), [[dice-roll-must-be-roll-bearing]],
-  [[message-log-is-passive]].
-
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 
 - [ ] Not completed — **do not start until the owner describes the intended UI.**

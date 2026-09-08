@@ -69,7 +69,6 @@ class RealDiceRoller(initialBonus: DoublesBonus? = null) : DiceRoller {
     }
 
     override fun mirrorImagePass(firstDie: Int, secondDie: Int): DiceRoll.TwoDice {
-        println("MIRROR IMAGE DEBUG: mirrorImagePass() called and isMirrorImagePass == true")
         val untouchedDiceRoll =
             DiceRoll.TwoDice(
                 firstDie = firstDie,

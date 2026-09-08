@@ -79,13 +79,14 @@ internal fun CombatButtons(
 
     // TODO: refactor all this Teleport stuff here
     val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
+    val teleportRollOffKey = state.teleportRollOffKey
 
     var hasReachedTeleportRollBeat by
-        remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
+        remember(key1 = teleportRollOffKey) { mutableStateOf(value = false) }
     if (hasPendingTeleportRoll && !isBusy) hasReachedTeleportRollBeat = true
 
     var hasSubmittedTeleportRoll by
-        remember(key1 = hasPendingTeleportRoll) { mutableStateOf(value = false) }
+        remember(key1 = teleportRollOffKey) { mutableStateOf(value = false) }
     if (hasPendingTeleportRoll && isActionInFlight) hasSubmittedTeleportRoll = true
 
     val isTeleportRollButtonHeld = hasReachedTeleportRollBeat && !hasSubmittedTeleportRoll

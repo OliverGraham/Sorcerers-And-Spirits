@@ -84,6 +84,7 @@ sealed interface AbilityActionState {
             val attackerRoll: TeleportDieState,
             val defenderRoll: TeleportDieState,
             val attackerDoublesBonus: Int,
+            val rollOffAttempt: Int,
         ) : Passive
 
         @Immutable
@@ -265,6 +266,7 @@ internal fun AbilityActionState.toDomain(): AbilityAction = when (this) {
                         roll = defenderRoll.roll,
                     ),
                     attackerDoublesBonus = attackerDoublesBonus,
+                    rollOffAttempt = rollOffAttempt,
                 )
 
             is AbilityActionState.Passive.MirrorImage ->
@@ -382,6 +384,7 @@ internal fun AbilityAction.toState(): AbilityActionState = when (this) {
                         roll = defenderRoll.roll,
                     ),
                     attackerDoublesBonus = attackerDoublesBonus,
+                    rollOffAttempt = rollOffAttempt,
                 )
 
             is AbilityAction.Passive.MirrorImage ->

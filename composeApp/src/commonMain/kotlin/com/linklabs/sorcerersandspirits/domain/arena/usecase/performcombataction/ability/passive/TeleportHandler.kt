@@ -23,6 +23,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 defenderRoll =
                 TeleportDie(userId = defenderUserId, diePosition = DiePosition.Second),
                 attackerDoublesBonus = attackerDoublesBonus(),
+                rollOffAttempt = 1,
             )
 
         setBothCombatantsRolling(teleport = purpose)
@@ -88,6 +89,7 @@ internal class TeleportHandler(private val combatMutator: CombatMutator) {
                 attackerRoll = teleport.attackerRoll.copy(roll = null),
                 defenderRoll = teleport.defenderRoll.copy(roll = null),
                 attackerDoublesBonus = 0,
+                rollOffAttempt = teleport.rollOffAttempt + 1,
             )
 
         setBothCombatantsRolling(teleport = resetTeleport)

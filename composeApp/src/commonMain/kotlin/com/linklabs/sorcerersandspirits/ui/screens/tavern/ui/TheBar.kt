@@ -228,6 +228,7 @@ private fun ChallengeButton(
                 onSendChallengerNotifications(userTraveler, selectedTravelers)
                 resetSelectedTravelers()
             },
+            isEnabled = userTraveler.tavernStatus != TavernStatus.Busy,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
         ) {
             Text(text = "Challenge (${selectedTravelers.size})")

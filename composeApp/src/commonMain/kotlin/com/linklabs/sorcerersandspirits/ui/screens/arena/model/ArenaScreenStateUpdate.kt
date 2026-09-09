@@ -199,7 +199,7 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
             currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
             animatingMessage = null,
         ),
-        timerAction = TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS),
+        timerAction = finishedTimerAction(),
     )
 
 // TODO(SS-261): Can happen if someone leaves during choosing. Decide whether to kick everyone out.
@@ -213,7 +213,7 @@ private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
         messageGroups =
         currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
     ),
-    timerAction = TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS),
+    timerAction = finishedTimerAction(),
 )
 
 private fun ArenaMatch.ChoosingClasses.transitionFinishedToChoosingClasses(
@@ -261,8 +261,14 @@ private fun ArenaMatch.Finished.updateFinished(
         messageGroups =
         currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
     ),
-    timerAction = TimerAction.None,
+    timerAction = if (hasEnoughPlayersToContinue) TimerAction.None else TimerAction.Stop,
 )
+
+private fun ArenaMatch.Finished.finishedTimerAction() = if (hasEnoughPlayersToContinue) {
+    TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
+} else {
+    TimerAction.None
+}
 
 // TODO(SS-261): Reserved for ArenaMatch/ArenaScreenState combinations that should never occur.
 // Likely an

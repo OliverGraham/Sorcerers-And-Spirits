@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesU
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.SendChallengeResult
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernData
+import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
@@ -56,6 +57,8 @@ class TavernScreenViewModel(
     }
 
     fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
+        if (userTraveler.tavernStatus == TavernStatus.Busy) return
+
         val selectedComputers =
             selectedTravelerStates.filter { traveler ->
                 ComputerOpponents.isComputer(userId = traveler.userId)

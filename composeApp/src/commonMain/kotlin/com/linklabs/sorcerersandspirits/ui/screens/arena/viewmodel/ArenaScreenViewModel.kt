@@ -42,6 +42,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.TimerAction
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.WAITING_TIMER_DURATION_SECONDS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.addNewMessageDuringCombat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.appendNewMessages
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isUserTheRoller
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.players
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toChoosingClassesState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toCombatActionState
@@ -598,7 +599,11 @@ class ArenaScreenViewModel(
                     ),
                 )
 
-            is CombatActionState.AbilityRoll ->
+            is CombatActionState.AbilityRoll -> {
+                val isUserStillOwedThisRoll =
+                    actionState.action.isUserTheRoller(userPlayerId = userPlayerId)
+                if (!isUserStillOwedThisRoll) return
+
                 onUseAbility(
                     useAbilityArguments =
                     UseAbilityArguments(
@@ -612,6 +617,7 @@ class ArenaScreenViewModel(
                         combatActionState = actionState,
                     ),
                 )
+            }
         }
     }
 

@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
@@ -62,12 +63,16 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import kotlin.math.PI
 import kotlin.math.atan2
+import kotlin.math.ceil
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
 private const val DEGREES_PER_CLASS = 45f
 private const val QUARTER_TURN_DEGREES = 90f
+private const val HALF_TURN_DEGREES = 180f
+private const val LABEL_FLIP_LABEL = "class_label_flip"
+private const val LABEL_FLIP_DURATION_MILLIS = 300
 private const val DISABLED_ALPHA = 0.35f
 
 private const val AURA_TRANSITION_LABEL = "class_aura"
@@ -84,10 +89,11 @@ private const val AURA_PULSE_DURATION_MILLIS = 1200
 
 private const val SPOKE_LENGTH_FRACTION = 0.34f
 private const val SPOKE_THICKNESS_FRACTION = 0.06f
-private const val HUB_RADIUS_FRACTION = 0.10f
+private const val HUB_RADIUS_FRACTION = 0.06f
 private const val AVATAR_SIZE_FRACTION = 0.24f
 private const val AVATAR_RADIUS_FRACTION = 0.38f
-private const val LABEL_RADIUS_FRACTION = 0.22f
+private const val LABEL_RADIUS_FRACTION = 0.2f
+private const val LABEL_NUMBER_RADIUS_FRACTION = 0.08f
 
 // TODO: Refactor this BAD
 
@@ -256,6 +262,8 @@ private val WHEEL_SNAP_SPEC =
         stiffness = Spring.StiffnessMediumLow,
     )
 
+private val LABEL_FLIP_SPEC = tween<Float>(durationMillis = LABEL_FLIP_DURATION_MILLIS)
+
 @Composable
 private fun RotatingWheel(
     characterClasses: List<CharacterClassState>,
@@ -279,7 +287,9 @@ private fun RotatingWheel(
 
             ClassLabel(
                 name = characterClass.className,
+                turnOrder = index + 1,
                 baseAngle = baseAngle,
+                wheelRotationDegrees = rotationDegrees,
                 wheelSize = wheelSize,
                 isAvailable = isAvailable,
             )
@@ -425,32 +435,78 @@ private fun ClassAura(color: Color, diameter: Dp, modifier: Modifier = Modifier)
 @Composable
 private fun BoxScope.ClassLabel(
     name: String,
+    turnOrder: Int,
     baseAngle: Float,
+    wheelRotationDegrees: () -> Float,
+    wheelSize: Dp,
+    isAvailable: Boolean,
+) {
+    val flipTurns by
+        remember(key1 = baseAngle) {
+            derivedStateOf {
+                val settledRotation =
+                    (wheelRotationDegrees() / DEGREES_PER_CLASS).roundToInt() * DEGREES_PER_CLASS
+                flipTurnsFor(effectiveAngle = baseAngle + settledRotation)
+            }
+        }
+    val labelRotation by
+        animateFloatAsState(
+            targetValue = baseAngle - QUARTER_TURN_DEGREES - HALF_TURN_DEGREES * flipTurns,
+            animationSpec = LABEL_FLIP_SPEC,
+            label = LABEL_FLIP_LABEL,
+        )
+
+    LabelText(
+        text = name,
+        radiusFraction = LABEL_RADIUS_FRACTION,
+        baseAngle = baseAngle,
+        rotation = { labelRotation },
+        wheelSize = wheelSize,
+        isAvailable = isAvailable,
+    )
+    LabelText(
+        text = turnOrder.toString(),
+        radiusFraction = LABEL_NUMBER_RADIUS_FRACTION,
+        baseAngle = baseAngle,
+        rotation = { labelRotation },
+        wheelSize = wheelSize,
+        isAvailable = isAvailable,
+    )
+}
+
+@Composable
+private fun BoxScope.LabelText(
+    text: String,
+    radiusFraction: Float,
+    baseAngle: Float,
+    rotation: () -> Float,
     wheelSize: Dp,
     isAvailable: Boolean,
 ) {
     val angleRadians = baseAngle.toDouble() * PI / 180.0
-    val sinAngle = sin(angleRadians).toFloat()
-    val cosAngle = cos(angleRadians).toFloat()
+    val sinAngle = sin(x = angleRadians).toFloat()
+    val cosAngle = cos(x = angleRadians).toFloat()
 
     Text(
-        text = name,
+        text = text,
         style = MaterialTheme.typography.labelMedium,
         fontWeight = FontWeight.Bold,
         color = Color.White,
         modifier =
         Modifier.align(Alignment.Center)
             .offset {
-                val radius = (wheelSize * LABEL_RADIUS_FRACTION).toPx()
+                val radius = (wheelSize * radiusFraction).toPx()
                 IntOffset(
                     x = (radius * sinAngle).roundToInt(),
                     y = (-radius * cosAngle).roundToInt(),
                 )
             }
-            .graphicsLayer { rotationZ = baseAngle - QUARTER_TURN_DEGREES }
+            .graphicsLayer { rotationZ = rotation() }
             .alpha(alpha = if (isAvailable) 1f else DISABLED_ALPHA),
     )
 }
+
+private fun flipTurnsFor(effectiveAngle: Float): Int = ceil((effectiveAngle - HALF_TURN_DEGREES) / HALF_TURN_DEGREES).toInt()
 
 private fun rotationForIndex(index: Int) = -index * DEGREES_PER_CLASS
 

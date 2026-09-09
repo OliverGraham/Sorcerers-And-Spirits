@@ -26,11 +26,15 @@ interface ArenaRepository {
 
     fun connectArenaPresence(arenaId: String, userId: String)
 
+    suspend fun disconnectArenaPresence()
+
     fun getArenaPresenceFlow(arenaId: String): Flow<Map<String, Boolean>>
 
     fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?>
 
     suspend fun exitArena(arenaId: String, userId: String)
+
+    suspend fun syncArenaMembershipOnConnect(userId: String)
 
     suspend fun stayForAnotherMatch(arenaId: String, userId: String)
 

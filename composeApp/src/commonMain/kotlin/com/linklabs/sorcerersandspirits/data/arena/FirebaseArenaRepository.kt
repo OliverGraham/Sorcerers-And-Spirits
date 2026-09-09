@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.data.arena
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MATCHES_PATH
+import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_MEMBERSHIP_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.ARENA_PRESENCE_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CONNECTED_REFERENCE_PATH
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
@@ -17,6 +18,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
+import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -39,9 +42,12 @@ class FirebaseArenaRepository(
 
     private val arenaMatchesReference = database.reference(path = ARENA_MATCHES_PATH)
     private val arenaPresenceReference = database.reference(path = ARENA_PRESENCE_PATH)
+    private val arenaMembershipReference = database.reference(path = ARENA_MEMBERSHIP_PATH)
     private val connectedReference = database.reference(path = CONNECTED_REFERENCE_PATH)
 
     private var presenceJob: Job? = null
+    private var presenceReference: DatabaseReference? = null
+    private var presenceUserId: String? = null
 
     override suspend fun chooseCharacterClass(
         arenaId: String,
@@ -71,6 +77,8 @@ class FirebaseArenaRepository(
     override fun connectArenaPresence(arenaId: String, userId: String) {
         val playerPresenceReference =
             arenaPresenceReference.child(path = arenaId).child(path = userId)
+        presenceReference = playerPresenceReference
+        presenceUserId = userId
 
         presenceJob?.cancel()
         presenceJob =
@@ -80,6 +88,7 @@ class FirebaseArenaRepository(
                 .onEach {
                     playerPresenceReference.onDisconnect().setValue(value = false)
                     playerPresenceReference.setValue(value = true)
+                    arenaMembershipReference.child(path = userId).setValue(value = arenaId)
                 }
                 .launchIn(scope = coroutineScope)
     }
@@ -128,6 +137,57 @@ class FirebaseArenaRepository(
     override suspend fun exitArena(arenaId: String, userId: String) {
         ExitArena(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+
+        val isSelf = userId == presenceUserId
+        if (isSelf) {
+            tearDownPresenceWriter()
+        }
+
+        pruneArenaPresence(arenaId = arenaId, userId = userId)
+        arenaMembershipReference.child(path = userId).removeValue()
+    }
+
+    override suspend fun syncArenaMembershipOnConnect(userId: String) {
+        val orphanedArenaId = arenaMembershipReference.child(path = userId).awaitNullableString()
+        if (orphanedArenaId.isNullOrBlank()) return
+
+        exitArena(arenaId = orphanedArenaId, userId = userId)
+    }
+
+    override suspend fun disconnectArenaPresence() {
+        val leavingUserId = presenceUserId ?: return
+        val leavingPresenceReference = presenceReference
+
+        tearDownPresenceWriter()
+
+        leavingPresenceReference?.removeValue()
+        arenaMembershipReference.child(path = leavingUserId).removeValue()
+    }
+
+    private suspend fun tearDownPresenceWriter() {
+        presenceJob?.cancel()
+        presenceJob = null
+        presenceReference?.onDisconnect()?.cancel()
+        presenceReference = null
+        presenceUserId = null
+    }
+
+    private suspend fun pruneArenaPresence(arenaId: String, userId: String) {
+        val arenaPresenceForMatch = arenaPresenceReference.child(path = arenaId)
+        val isMatchGone = !arenaMatchesReference.child(path = arenaId).awaitExists()
+
+        if (isMatchGone) {
+            arenaPresenceForMatch.removeValue()
+        } else {
+            arenaPresenceForMatch.child(path = userId).removeValue()
+        }
+    }
+
+    private suspend fun DatabaseReference.awaitExists(): Boolean = valueEvents.first().exists
+
+    private suspend fun DatabaseReference.awaitNullableString(): String? {
+        val snapshot = valueEvents.first()
+        return if (snapshot.exists) snapshot.value<String?>() else null
     }
 
     override suspend fun stayForAnotherMatch(arenaId: String, userId: String) {

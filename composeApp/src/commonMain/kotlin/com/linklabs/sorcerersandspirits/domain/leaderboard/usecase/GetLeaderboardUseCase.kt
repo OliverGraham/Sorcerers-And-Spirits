@@ -13,6 +13,7 @@ class GetLeaderboardUseCase(
 
         return profileRepository.getTopProfiles(limit = LEADERBOARD_SIZE).map { profile ->
             LeaderboardEntry(
+                userId = profile.userId,
                 displayName = profile.displayName,
                 rating = profile.stats.rating,
                 gauntletsWon = profile.stats.overall.gauntletsWon,

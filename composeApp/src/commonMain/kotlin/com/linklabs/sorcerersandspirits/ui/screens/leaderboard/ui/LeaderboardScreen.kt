@@ -98,27 +98,29 @@ private fun LeaderboardContent(
     onSortSelected: (LeaderboardSort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(all = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+    Column(
+        verticalArrangement = Arrangement.spacedBy(space = 8.dp),
+        modifier = modifier.fillMaxSize().padding(top = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(space = 8.dp)) {
-                Text(
-                    text = stringResource(resource = Res.string.leaderboard_subtitle),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                LeaderboardSortControls(selectedSort = state.sort, onSortSelected = onSortSelected)
-            }
-        }
+        Text(
+            text = stringResource(resource = Res.string.leaderboard_subtitle),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        LeaderboardSortControls(selectedSort = state.sort, onSortSelected = onSortSelected)
 
-        if (state.entries.isEmpty()) {
-            item { EmptyLeaderboard() }
-        } else {
-            items(items = state.entries, key = { it.displayName }) { entry ->
-                LeaderboardRow(entry = entry)
+        LazyColumn(
+            modifier = Modifier.weight(weight = 1f),
+            contentPadding = PaddingValues(all = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+        ) {
+            if (state.entries.isEmpty()) {
+                item { EmptyLeaderboard() }
+            } else {
+                items(items = state.entries, key = { it.userId }) { entry ->
+                    LeaderboardRow(entry = entry, modifier = Modifier.animateItem())
+                }
             }
         }
     }
@@ -133,7 +135,7 @@ private fun LeaderboardSortControls(
 ) {
     FlowRow(
         modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(space = 8.dp, alignment = Alignment.CenterHorizontally),
     ) {
         LeaderboardSort.entries.forEach { sort ->
             FilterChip(
@@ -252,6 +254,7 @@ private fun LeaderboardScreenPreview() {
                     entries =
                     listOf(
                         LeaderboardRowState(
+                            userId = "gandalf",
                             rank = 1,
                             displayName = "Gandalf",
                             rating = 2_225,
@@ -260,6 +263,7 @@ private fun LeaderboardScreenPreview() {
                             isCurrentUser = false,
                         ),
                         LeaderboardRowState(
+                            userId = "radagast",
                             rank = 2,
                             displayName = "Radagast",
                             rating = 1_725,
@@ -268,6 +272,7 @@ private fun LeaderboardScreenPreview() {
                             isCurrentUser = true,
                         ),
                         LeaderboardRowState(
+                            userId = "saruman",
                             rank = 3,
                             displayName = "Saruman",
                             rating = 1_400,

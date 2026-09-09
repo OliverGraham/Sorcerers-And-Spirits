@@ -790,17 +790,6 @@ the generic infrastructure for persisting stats to a profile (SS-021), keeping i
 **then** decide which concrete stats to record (SS-072) and wire them into match outcomes (SS-071);
 and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
-### SS-279 — Leaderboard: animate the re-order when switching sort tabs
-
-- [ ] Not completed
-- **Goal:** Changing tabs in the LeaderboardScreen re-orders the list; that re-order should
-  **animate** (items slide to their new positions) rather than snap.
-- **Approach:** use `LazyColumn` item placement animation (`Modifier.animateItem()`) keyed on a
-  **stable per-entry id** so switching the sort animates positions. Confirm the list items have a
-  stable key (userId).
-- **Source:** `ui/screens/leaderboard/ui/LeaderboardScreen.kt` (the list + tab/sort control),
-  `ui/screens/leaderboard/LeaderboardState.kt`.
-
 ### SS-280 — Leaderboard: tapping a profile opens a view-only Profile
 
 - [ ] Not completed

@@ -1194,6 +1194,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   through `GetLeaderboardUseCase`/`LeaderboardEntry`. Tavern cards show rating only when > 0 (
   computer opponents/unrated players show just the name). Leaderboard ranking still by gauntlets
   won; client-side sort/filter split out to SS-132. Related: SS-128, SS-065, SS-124, SS-132.
+- **SS-279** — Leaderboard: animate the re-order when switching sort tabs: Threaded a stable
+  `userId` through `LeaderboardEntry` → `LeaderboardRowState` and keyed the `LazyColumn` items on
+  it (was `displayName`) so `Modifier.animateItem()` slides rows to their new positions when the
+  sort chip changes instead of snapping. Related: SS-130, SS-132, SS-280.
 
 ## Rules & Help
 

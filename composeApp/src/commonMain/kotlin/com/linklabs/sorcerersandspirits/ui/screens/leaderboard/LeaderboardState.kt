@@ -8,6 +8,7 @@ data class LeaderboardState(val entries: List<LeaderboardRowState>, val sort: Le
 
 @Immutable
 data class LeaderboardRowState(
+    val userId: String,
     val rank: Int,
     val displayName: String,
     val rating: Long,
@@ -37,6 +38,7 @@ private fun LeaderboardEntry.sortValue(sort: LeaderboardSort): Long = when (sort
 }
 
 private fun LeaderboardEntry.toRowState(rank: Int) = LeaderboardRowState(
+    userId = userId,
     rank = rank,
     displayName = displayName,
     rating = rating,

@@ -10,9 +10,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClas
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
+import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
@@ -72,6 +75,8 @@ class ArenaScreenViewModel(
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
     private val exitArenaUseCase: ExitArenaUseCase,
     private val finishMatchUseCase: FinishMatchUseCase,
+    private val getArenaPresenceFlowUseCase: GetArenaPresenceFlowUseCase,
+    private val removeDisconnectedPlayerUseCase: RemoveDisconnectedPlayerUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
     private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
     private val getUserIdUseCase: GetUserIdUseCase,
@@ -143,6 +148,10 @@ class ArenaScreenViewModel(
         )
 
     private var screenStateFlowJob: Job? = null
+    private var arenaPresenceFlowJob: Job? = null
+
+    // TODO: Purpose of this? What "ghost false entry"?
+    private val exitedDisconnectedPlayerIds = mutableSetOf<String>()
 
     init {
         loadArenaMatch()
@@ -198,6 +207,7 @@ class ArenaScreenViewModel(
 
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
+        arenaPresenceFlowJob?.cancel()
         computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
@@ -268,6 +278,9 @@ class ArenaScreenViewModel(
                     return@launch
                 }
 
+                // TODO: Should this be nested in screenStateFlowJob?
+                observeArenaPresence(userId = userId)
+
                 coordinateArenaMatchUseCase(
                     arenaId = arguments.arenaId,
                     expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
@@ -280,11 +293,51 @@ class ArenaScreenViewModel(
             }
     }
 
+    private fun observeArenaPresence(userId: String) {
+        arenaPresenceFlowJob?.cancel()
+        arenaPresenceFlowJob =
+            viewModelScope.launch {
+                getArenaPresenceFlowUseCase(arenaId = arguments.arenaId).collect { presenceByUserId ->
+                    removeDisconnectedPlayers(presenceByUserId = presenceByUserId, userId = userId)
+                }
+            }
+    }
+
+    private suspend fun removeDisconnectedPlayers(
+        presenceByUserId: Map<String, Boolean>,
+        userId: String,
+    ) {
+        val newlyDisconnectedPlayerIds =
+            presenceByUserId
+                .filter { (playerId, isConnected) ->
+                    val isDisconnected = !isConnected
+                    val isSelf = playerId == userId
+                    val isHumanPlayer = !ComputerOpponents.isComputer(userId = playerId)
+                    val isNotYetRemoved = playerId !in exitedDisconnectedPlayerIds
+                    isDisconnected && !isSelf && isHumanPlayer && isNotYetRemoved
+                }
+                .keys
+
+        newlyDisconnectedPlayerIds.forEach { disconnectedPlayerId ->
+            exitedDisconnectedPlayerIds += disconnectedPlayerId
+            removeDisconnectedPlayerUseCase(
+                arenaId = arguments.arenaId,
+                userId = disconnectedPlayerId,
+            )
+        }
+    }
+
     private suspend fun ArenaMatch?.updateScreenState(userId: String) {
         val currentScreenState = _uiStateFlow.getLoadedStateOrNull()
 
         if (this == null) {
             handleScreenStateUpdateError()
+            return
+        }
+
+        val isUserRemovedFromMatch = userId !in playerMap
+        if (isUserRemovedFromMatch) {
+            handleRemovedFromMatch()
             return
         }
 
@@ -479,11 +532,24 @@ class ArenaScreenViewModel(
         )
     }
 
+    private fun handleRemovedFromMatch() {
+        screenStateFlowJob?.cancel()
+        arenaPresenceFlowJob?.cancel()
+        computerOpponentHandler.cancel()
+
+        viewModelScope.launch {
+            setCurrentTravelerAvailableUseCase()
+            flushSessionStats()
+            _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+        }
+    }
+
     // TODO(SS-260): if there's one match error, just kill the whole thing? Or determine what to do
     // if
     //       happens in the middle of a match? For now, probably just show an error then leave.
     private suspend fun handleScreenStateUpdateError() {
         screenStateFlowJob?.cancel()
+        arenaPresenceFlowJob?.cancel()
 
         setCurrentTravelerAvailableUseCase()
         flushSessionStats()
@@ -570,6 +636,7 @@ class ArenaScreenViewModel(
 
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
+        arenaPresenceFlowJob?.cancel()
         computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)

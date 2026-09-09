@@ -271,6 +271,35 @@ are archived in [COMPLETED.md](COMPLETED.md).
   [[downsample-figma-raster-assets]]) or request/export it first. Related: SS-144 (target-selection
   transition), SS-136 (head icon).
 
+## Arena presence / connectivity
+
+### SS-285 — Clean up orphaned arenas/presence when the last human disconnects (app-start scan)
+
+- [ ] Not completed — **follow-up split out of SS-284.**
+- **Problem:** SS-284 relies on a *remaining* client to run `exitArena` for a disconnected player. When
+  the **sole remaining human** drops (or every human drops near-simultaneously), no live client is left
+  to reconcile, so the `ArenaMatches/{arenaId}` node — and its `ArenaPresence/{arenaId}` sub-tree —
+  linger in the database as orphans. Also: SS-284 follows the tavern precedent of *not* tearing down
+  the repo's presence/reconcile jobs on leave (they're replaced on the next `connectArenaPresence`), so
+  a left player's `ArenaPresence/{arenaId}/{userId}` entry can remain as a stale ghost.
+- **Goal:** mirror the **orphaned-Challenge** cleanup pattern — a client clears stale state it finds
+  itself part of at connect/app-start. See `FirebaseTavernRepository.syncTravelerPresenceOnConnect`:
+  on connect it reads its own mailbox and calls `expireChallenge(...)` for an expired challenge it
+  belongs to. The arena equivalent: at app-start (or arena-connect), detect an arena the user is a
+  member of that is abandoned (no other connected human / it's the sole stale entry) and clear it
+  (`ExitArena` already returns `null` — deletes the match — when no human remains), plus prune stale
+  `ArenaPresence` entries.
+- **Open questions:** where the scan runs (app-start like the tavern presence sync, vs. lazily on next
+  arena connect); how to tell "abandoned" from "temporarily all-backgrounded" given there is no rejoin;
+  whether to prune the whole `ArenaPresence/{arenaId}` tree when the match node is deleted.
+- **Sources:** `data/arena/FirebaseArenaRepository.kt` (presence refs + jobs added in SS-284),
+  `data/arena/utilities/ExitArena.kt` (the no-human `null` return), `FirebaseTavernRepository`
+  (`syncTravelerPresenceOnConnect`/`expireChallenge` reference pattern), app-start wiring in
+  `AppViewModel`.
+- **Related:** SS-284 (core disconnect handling), [[connectivity-resilience-priority]].
+
+---
+
 ## Combat animations
 
 Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system

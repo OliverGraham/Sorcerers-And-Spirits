@@ -47,9 +47,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Problem:** Combat button *view* state is computed inside composables instead of the VM, and the
   control/argument types are tangled. TODOs tagged `SS-257`.
 - **Move to VM (`ArenaMatchState.Combat` / VM mapping), out of composables:**
-    - `CombatButtons.kt` — the whole button-visibility/enablement derivation, incl. the teleport
-      per-user roll-suppression latch (`hasReachedTeleportRollBeat`); a user must not be able to roll
-      twice for a roll-off. (`// TODO: Move state to view model layer`, teleport note.)
+    - `CombatButtons.kt` — the whole button-visibility/enablement derivation.
+      (`// TODO: Move state to view model layer`.)
 - **Consolidate types (they overlap and confuse):** `ArenaCombatControl`, `CombatButtons`,
   `AttackArguments`, `CombatActionArguments`/`UseAbilityArguments`, and the two
   `*.toDomain()` `when`s in `CombatActionState.kt` (likely collapsible to one). `CombatControlActions`

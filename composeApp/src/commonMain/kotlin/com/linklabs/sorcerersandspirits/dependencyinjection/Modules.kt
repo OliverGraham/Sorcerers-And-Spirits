@@ -18,11 +18,13 @@ import com.linklabs.sorcerersandspirits.data.tavern.TavernDataSource
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.DisconnectArenaPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -126,6 +128,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::CreateProfileForCurrentUserUseCase)
     factoryOf(::CreateProfileUseCase)
     factoryOf(::DeleteProfileUseCase)
+    factoryOf(::DisconnectArenaPresenceUseCase)
     factoryOf(::ExitArenaUseCase)
     factoryOf(::FinishMatchUseCase)
     factoryOf(::FlushPendingStatsUseCase)
@@ -149,6 +152,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::SendChallengeUseCase)
     factoryOf(::SignInWithSocialUseCase)
     factoryOf(::StayForAnotherMatchUseCase)
+    factoryOf(::SyncArenaMembershipOnConnectUseCase)
     factoryOf(::UnlockAchievementsUseCase)
     factoryOf(::UpdateChallengerStatusUseCase)
     factoryOf(::UpdateProfileDisplayNameUseCase)

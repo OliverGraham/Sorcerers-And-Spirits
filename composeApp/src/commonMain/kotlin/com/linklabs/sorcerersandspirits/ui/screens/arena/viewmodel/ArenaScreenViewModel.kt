@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerClassType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.DisconnectArenaPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
@@ -73,6 +74,7 @@ class ArenaScreenViewModel(
     @InjectedParam private val arguments: ArenaScreenViewModelArguments,
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase,
+    private val disconnectArenaPresenceUseCase: DisconnectArenaPresenceUseCase,
     private val exitArenaUseCase: ExitArenaUseCase,
     private val finishMatchUseCase: FinishMatchUseCase,
     private val getArenaPresenceFlowUseCase: GetArenaPresenceFlowUseCase,
@@ -538,6 +540,7 @@ class ArenaScreenViewModel(
         computerOpponentHandler.cancel()
 
         viewModelScope.launch {
+            disconnectArenaPresenceUseCase()
             setCurrentTravelerAvailableUseCase()
             flushSessionStats()
             _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
@@ -551,6 +554,7 @@ class ArenaScreenViewModel(
         screenStateFlowJob?.cancel()
         arenaPresenceFlowJob?.cancel()
 
+        disconnectArenaPresenceUseCase()
         setCurrentTravelerAvailableUseCase()
         flushSessionStats()
         _eventChannelFlow.send(element = ArenaEvent.NavigateBack)

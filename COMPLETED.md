@@ -554,6 +554,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   flow and runs `exitArena` for any human whose presence flips to `false` (guarded, self excluded), so
   a disconnect is handled exactly like a manual leave. A client removed from `playerMap` while
   observing routes home. Follow-up: SS-285 (orphan cleanup when the last human drops).
+- **SS-285** — Clean up orphaned arenas/presence when the last human disconnects (app-start scan):
+  Added an `ArenaMembership/{userId} → arenaId` reverse index (written on `connectArenaPresence`,
+  cleared on exit) so a returning client can find the arena it was orphaned in. A once-per-launch
+  `syncArenaMembershipOnConnect` scan in `AppViewModel` reads the pointer and calls `exitArena` for
+  self (which deletes the match when no human remains). `exitArena` now tears down the presence
+  writer, prunes the presence entry (or whole `ArenaPresence/{arenaId}` subtree on match deletion),
+  and clears the membership pointer; a presence-only `disconnectArenaPresence` covers the
+  removed-from-match / error leave paths without touching the match transaction.
 
 ## Credits
 

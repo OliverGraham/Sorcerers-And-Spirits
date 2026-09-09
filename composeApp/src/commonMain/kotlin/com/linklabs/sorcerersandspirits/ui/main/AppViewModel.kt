@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
@@ -44,6 +45,7 @@ class AppViewModel(
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
     private val signInWithSocialUseCase: SignInWithSocialUseCase,
+    private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase,
 ) : ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<AppState>>(value = UiState.Loading)
@@ -54,6 +56,7 @@ class AppViewModel(
 
     private var screenStateJob: Job? = null
     private var hasCreatedProfile = false
+    private var hasSyncedOrphanedArena = false
 
     init {
         viewModelScope.launch {
@@ -234,6 +237,12 @@ class AppViewModel(
         _uiStateFlow.updateLoaded { it.copy(displayName = getRandomTravelerNameUseCase()) }
     }
 
+    private fun cleanUpOrphanedArenaOnce() {
+        if (hasSyncedOrphanedArena) return
+        hasSyncedOrphanedArena = true
+        viewModelScope.launch { syncArenaMembershipOnConnectUseCase() }
+    }
+
     private fun showSignInDialog() {
         _uiStateFlow.value =
             UiState.Loaded(
@@ -255,7 +264,10 @@ class AppViewModel(
             .collectLatest { (profile, isOnline) ->
                 when {
                     profile != null -> {
-                        if (isOnline) connectTravelerPresenceUseCase(profile = profile)
+                        if (isOnline) {
+                            connectTravelerPresenceUseCase(profile = profile)
+                            cleanUpOrphanedArenaOnce()
+                        }
 
                         _uiStateFlow.value =
                             UiState.Loaded(

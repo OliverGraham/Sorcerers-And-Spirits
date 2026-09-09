@@ -39,6 +39,8 @@ class CoordinateArenaMatchUseCase(
             )
 
         return if (isUserConnected) {
+            // TODO: Why isn't this part of connectToArena? Should be one operation, right?
+            arenaRepository.connectArenaPresence(arenaId = arenaId, userId = userId)
             arenaRepository.getArenaMatchFlow(arenaId = arenaId)
         } else {
             flowOf(value = null)

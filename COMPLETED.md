@@ -546,6 +546,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   drop shadow, and the flash swings back and forth (~7° keyframed over 900ms, hold bumped to 1100ms)
   before the scale/fade exit. Related: SS-164, SS-185, SS-179, SS-177, SS-215.
 
+## Arena presence / connectivity
+
+- **SS-284** — Detect a disconnected arena player and treat it as a manual leave: Added a top-level
+  `ArenaPresence/{arenaId}/{userId}` presence node (separate from the transaction-replaced arena node),
+  armed via `onDisconnect().setValue(false)` on `.info/connected`; the ViewModel observes the presence
+  flow and runs `exitArena` for any human whose presence flips to `false` (guarded, self excluded), so
+  a disconnect is handled exactly like a manual leave. A client removed from `playerMap` while
+  observing routes home. Follow-up: SS-285 (orphan cleanup when the last human drops).
+
 ## Credits
 
 - **SS-281** — CreditsScreen (movie-style scrolling credits + swinging logo): Added a CreditsScreen

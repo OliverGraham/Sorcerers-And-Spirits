@@ -20,6 +20,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClas
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
@@ -127,6 +129,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::ExitArenaUseCase)
     factoryOf(::FinishMatchUseCase)
     factoryOf(::FlushPendingStatsUseCase)
+    factoryOf(::GetArenaPresenceFlowUseCase)
     factoryOf(::GetCharacterClassCopyUseCase)
     factoryOf(::GetCharacterClassesUseCase)
     factoryOf(::GetCreditsUseCase)
@@ -141,6 +144,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::IsUserSignedInUseCase)
     factoryOf(::LinkAccountUseCase)
     factoryOf(::PerformCombatActionUseCase)
+    factoryOf(::RemoveDisconnectedPlayerUseCase)
     factoryOf(::SetCurrentTravelerAvailableUseCase)
     factoryOf(::SendChallengeUseCase)
     factoryOf(::SignInWithSocialUseCase)

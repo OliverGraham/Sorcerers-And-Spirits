@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.data.tavern
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGES_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CHALLENGE_MAILBOXES_PATH
+import com.linklabs.sorcerersandspirits.data.FireStoreKeys.CONNECTED_REFERENCE_PATH
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys.TAVERN_TRAVELERS_PATH
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
@@ -172,10 +173,6 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     }
 
     private class AbortTransactionException : RuntimeException()
-
-    companion object {
-        const val CONNECTED_REFERENCE_PATH = ".info/connected"
-    }
 }
 
 @Serializable

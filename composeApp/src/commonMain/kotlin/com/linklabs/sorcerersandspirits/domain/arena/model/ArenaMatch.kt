@@ -36,7 +36,13 @@ sealed interface ArenaMatch {
         override val messages: List<IncomingArenaMessage>,
         override val playerMap: Map<String, ArenaPlayer>,
         override val matchNumberInGauntlet: Int = 1,
-    ) : ArenaMatch
+    ) : ArenaMatch {
+        val hasEnoughPlayersToContinue = playerMap.size >= MINIMUM_PLAYERS_TO_CONTINUE
+
+        private companion object {
+            const val MINIMUM_PLAYERS_TO_CONTINUE = 2
+        }
+    }
 }
 
 // TODO: I don't like this, but it's not a priority. The Messages Header needs this for name and

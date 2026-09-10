@@ -6,6 +6,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -56,28 +57,32 @@ internal fun NavigationDisplay(backStack: NavBackStack<NavKey>, modifier: Modifi
     }
 
     Box(modifier = modifier) {
-        NavDisplay(
-            backStack = backStack,
-            entryProvider = { key ->
-                key.toScreen(
-                    backStack = backStack,
-                    popWithDust = popWithDust,
-                    leaveArenaWithDust = leaveArenaWithDust,
-                )
-            },
-            onBack = { popWithDust() },
-            entryDecorators = getRouteScopedEntryDecorators(),
-            transitionSpec = { ForwardScreenTransition.entries.random().toContentTransform() },
-            // The dust overlay covers the outgoing screen, so the system pop must stay silent to
-            // avoid animating the same screen twice.
-            popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-            predictivePopTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
-            modifier =
-            Modifier.fillMaxSize().drawWithContent {
-                screenLayer.record { this@drawWithContent.drawContent() }
-                drawLayer(graphicsLayer = screenLayer)
-            },
-        )
+        CompositionLocalProvider(LocalNavigateBack provides popWithDust) {
+            NavDisplay(
+                backStack = backStack,
+                entryProvider = { key ->
+                    key.toScreen(
+                        backStack = backStack,
+                        popWithDust = popWithDust,
+                        leaveArenaWithDust = leaveArenaWithDust,
+                    )
+                },
+                onBack = { popWithDust() },
+                entryDecorators = getRouteScopedEntryDecorators(),
+                transitionSpec = { ForwardScreenTransition.entries.random().toContentTransform() },
+                // The dust overlay covers the outgoing screen, so the system pop must stay silent to
+                // avoid animating the same screen twice.
+                popTransitionSpec = { EnterTransition.None togetherWith ExitTransition.None },
+                predictivePopTransitionSpec = {
+                    EnterTransition.None togetherWith ExitTransition.None
+                },
+                modifier =
+                Modifier.fillMaxSize().drawWithContent {
+                    screenLayer.record { this@drawWithContent.drawContent() }
+                    drawLayer(graphicsLayer = screenLayer)
+                },
+            )
+        }
 
         val snapshot = dustSnapshot
         if (snapshot != null) {

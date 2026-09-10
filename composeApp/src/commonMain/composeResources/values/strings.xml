@@ -28,7 +28,6 @@
     <string name="profile_name_update_error">Couldn't update your name. Please try again.</string>
     <string name="profile_save">Save</string>
     <string name="profile_cancel">Cancel</string>
-    <string name="profile_stats_title">Your stats</string>
     <string name="profile_stats_empty">Play a match to start your battle record.</string>
     <string name="profile_stats_rating">Rating</string>
     <string name="profile_stats_achievements">Achievements</string>

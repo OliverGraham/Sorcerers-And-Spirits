@@ -47,6 +47,7 @@ import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForC
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.FlushPendingStatsUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileByUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
@@ -138,6 +139,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::GetCreditsUseCase)
     factoryOf(::GetLeaderboardUseCase)
     factoryOf(::GetActiveChallengeFlowUseCase)
+    factoryOf(::GetProfileByUserIdUseCase)
     factoryOf(::GetProfileFlowUseCase)
     factoryOf(::GetProfileUseCase)
     factoryOf(::GetRandomTravelerNameUseCase)

@@ -1198,6 +1198,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   `userId` through `LeaderboardEntry` → `LeaderboardRowState` and keyed the `LazyColumn` items on
   it (was `displayName`) so `Modifier.animateItem()` slides rows to their new positions when the
   sort chip changes instead of snapping. Related: SS-130, SS-132, SS-280.
+- **SS-280** — Leaderboard: tapping a profile opens a view-only Profile: Tapping a leaderboard row
+  navigates to the target user's Profile, reusing `ProfileScreen`/`ProfileState`/
+  `ProfileScreenViewModel` in a read-only mode (name shown as text, achievements card non-clickable,
+  sign-in/link + delete hidden) driven by a new `ProfileScreenViewModelArguments.targetUserId` and
+  `GetProfileByUserIdUseCase`; added `Route.PlayerProfileScreen(userId)`. Tapping your own row still
+  opens the normal editable `Route.ProfileScreen`. Related: SS-279.
 
 ## Rules & Help
 

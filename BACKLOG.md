@@ -790,20 +790,6 @@ the generic infrastructure for persisting stats to a profile (SS-021), keeping i
 **then** decide which concrete stats to record (SS-072) and wire them into match outcomes (SS-071);
 and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
-### SS-280 — Leaderboard: tapping a profile opens a view-only Profile
-
-- [ ] Not completed
-- **Goal:** Tapping a row in the LeaderboardScreen navigates to a **view-only** version of that user's
-  Profile.
-- **Be DRY / reuse (owner):** reuse the existing `ProfileScreen` / `ProfileState` /
-  `ProfileScreenViewModel` (`ui/screens/profile/`) with a **read-only mode** + a target `userId`
-  argument, rather than building a parallel screen. Add a `Route` variant carrying a `userId` (today's
-  profile route is the self/editable one — see `NavigationRoutes.kt`) and hide the edit/delete
-  affordances when viewing someone else. Needs a use case to load a profile **by userId** (the
-  leaderboard already has userIds via `LeaderboardEntry`). Keep it simple.
-- **Source:** `ui/screens/leaderboard/ui/LeaderboardScreen.kt` (row click), `ui/screens/profile/*`,
-  `ui/main/navigation/NavigationRoutes.kt` + `NavigationDisplay.kt`, `domain/leaderboard/LeaderboardEntry.kt`.
-
 ### SS-127 — Per-ability event achievements (thematic two-per-ability set)
 
 - [ ] Not completed

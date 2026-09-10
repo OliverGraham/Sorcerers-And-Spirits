@@ -49,6 +49,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.playTeleport
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.meleeDashDistance
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.minionChargeDistance
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.GOLEM_STONEFIST_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.MinionGestureAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NECROMANCER_REAP_REACTION_DELAY_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SKELETON_LONGSWORD_REACTION_DELAY_MILLIS
@@ -231,7 +232,7 @@ private fun ArenaMessageState.NormalRoll.Attack.normalAttackReactionDelayMillis(
     WeaponType.Spell -> MAGE_BOLT_REACTION_DELAY_MILLIS
     WeaponType.Mace -> PALADIN_SWING_REACTION_DELAY_MILLIS
     WeaponType.LongSword -> SKELETON_LONGSWORD_REACTION_DELAY_MILLIS
-    else -> REACTION_DELAY_MILLIS
+    WeaponType.StoneFist -> GOLEM_STONEFIST_REACTION_DELAY_MILLIS
 }
 
 // TODO(SS-258): Duelist

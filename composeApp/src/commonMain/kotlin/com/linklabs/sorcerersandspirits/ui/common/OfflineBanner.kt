@@ -1,8 +1,11 @@
 package com.linklabs.sorcerersandspirits.ui.common
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -18,7 +21,10 @@ import sorcerersandspirits.composeapp.generated.resources.offline_banner_message
 
 @Composable
 internal fun OfflineBanner(isOffline: Boolean, modifier: Modifier = Modifier) {
-    AnimatedVisibility(visible = isOffline, modifier = modifier.fillMaxWidth()) {
+    AnimatedVisibility(
+        visible = isOffline,
+        modifier = modifier.fillMaxWidth().windowInsetsPadding(insets = WindowInsets.statusBars),
+    ) {
         Surface(
             color = MaterialTheme.colorScheme.errorContainer,
             contentColor = MaterialTheme.colorScheme.onErrorContainer,

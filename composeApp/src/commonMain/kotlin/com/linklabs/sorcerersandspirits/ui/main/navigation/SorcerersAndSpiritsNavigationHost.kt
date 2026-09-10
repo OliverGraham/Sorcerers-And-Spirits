@@ -1,7 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.main.navigation
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.DrawerDefaults
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
@@ -169,23 +171,22 @@ private fun AppContent(
         },
         gesturesEnabled = true,
     ) {
-        Scaffold(modifier = modifier) { innerPadding ->
-            val lastRoute = backStack.lastOrNull()
-            val isEdgeToEdgeRoute = lastRoute is Route.ArenaScreen || lastRoute is Route.TavernScreen
+        Scaffold(modifier = modifier) { _ ->
             CompositionLocalProvider(
                 LocalOpenDrawer provides { scope.launch { drawerState.open() } },
             ) {
-                Column(
-                    modifier =
-                    if (isEdgeToEdgeRoute) {
-                        Modifier
-                    } else {
-                        Modifier.padding(paddingValues = innerPadding)
-                    },
-                ) {
+                Column {
                     OfflineBanner(isOffline = isOffline)
 
-                    NavigationDisplay(backStack = backStack, modifier = modifier)
+                    NavigationDisplay(
+                        backStack = backStack,
+                        modifier =
+                        if (isOffline) {
+                            modifier.consumeWindowInsets(insets = WindowInsets.statusBars)
+                        } else {
+                            modifier
+                        },
+                    )
                 }
             }
         }

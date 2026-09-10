@@ -117,12 +117,35 @@ private fun NavKey.toScreen(
     Route.ProfileScreen ->
         NavEntry(key = this) {
             ProfileScreen(
+                targetUserId = null,
                 onProfileDeleted = popWithDust,
                 onNavigateToAchievements = { backStack.add(element = Route.AchievementsScreen) },
             )
         }
 
-    Route.LeaderboardScreen -> NavEntry(key = this) { LeaderboardScreen() }
+    is Route.PlayerProfileScreen ->
+        NavEntry(key = this) {
+            ProfileScreen(
+                targetUserId = userId,
+                onProfileDeleted = {},
+                onNavigateToAchievements = {},
+            )
+        }
+
+    Route.LeaderboardScreen ->
+        NavEntry(key = this) {
+            LeaderboardScreen(
+                onProfileClick = { userId, isCurrentUser ->
+                    val profileRoute =
+                        if (isCurrentUser) {
+                            Route.ProfileScreen
+                        } else {
+                            Route.PlayerProfileScreen(userId = userId)
+                        }
+                    backStack.add(element = profileRoute)
+                },
+            )
+        }
 
     Route.AchievementsScreen -> NavEntry(key = this) { AchievementsScreen() }
 

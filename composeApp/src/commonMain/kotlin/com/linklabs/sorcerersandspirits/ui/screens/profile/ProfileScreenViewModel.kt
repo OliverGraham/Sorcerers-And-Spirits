@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileByUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
@@ -19,17 +20,22 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
 
 @KoinViewModel
 class ProfileScreenViewModel(
+    @InjectedParam private val arguments: ProfileScreenViewModelArguments,
     private val getProfileFlowUseCase: GetProfileFlowUseCase,
+    private val getProfileByUserIdUseCase: GetProfileByUserIdUseCase,
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
     private val deleteProfileUseCase: DeleteProfileUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val linkAccountUseCase: LinkAccountUseCase,
 ) : ViewModel() {
+
+    val isReadOnly: Boolean = arguments.targetUserId != null
 
     private val _uiStateFlow = MutableStateFlow<UiState<ProfileState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
@@ -91,6 +97,12 @@ class ProfileScreenViewModel(
     }
 
     private fun collectProfile() {
+        val targetUserId = arguments.targetUserId
+        if (targetUserId != null) {
+            loadProfile(userId = targetUserId)
+            return
+        }
+
         profileJob?.cancel()
         profileJob =
             viewModelScope.launch {
@@ -99,6 +111,20 @@ class ProfileScreenViewModel(
                     .catch { _uiStateFlow.value = UiState.Error }
                     .collect { profile ->
                         _uiStateFlow.value = UiState.Loaded(data = profile.toProfileState())
+                    }
+            }
+    }
+
+    private fun loadProfile(userId: String) {
+        profileJob?.cancel()
+        profileJob =
+            viewModelScope.launch {
+                val profile = getProfileByUserIdUseCase(userId = userId)
+                _uiStateFlow.value =
+                    if (profile != null) {
+                        UiState.Loaded(data = profile.toProfileState())
+                    } else {
+                        UiState.Error
                     }
             }
     }

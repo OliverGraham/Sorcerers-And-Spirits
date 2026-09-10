@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
@@ -43,12 +44,14 @@ import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ClassStatsState
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileEvent
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.link_account_error_credential_in_use
 import sorcerersandspirits.composeapp.generated.resources.link_account_error_generic
@@ -74,15 +77,18 @@ import sorcerersandspirits.composeapp.generated.resources.profile_stats_matches
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_per_class_title
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_rating
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_record
-import sorcerersandspirits.composeapp.generated.resources.profile_stats_title
 import sorcerersandspirits.composeapp.generated.resources.profile_title
 import sorcerersandspirits.composeapp.generated.resources.sign_in_name_taken_message
 
 @Composable
 internal fun ProfileScreen(
+    targetUserId: String?,
     onProfileDeleted: () -> Unit,
     onNavigateToAchievements: () -> Unit,
-    viewModel: ProfileScreenViewModel = koinViewModel(),
+    viewModel: ProfileScreenViewModel =
+        koinViewModel(
+            parameters = { parametersOf(ProfileScreenViewModelArguments(targetUserId = targetUserId)) },
+        ),
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -121,6 +127,7 @@ internal fun ProfileScreen(
     ) { paddingValues ->
         ProfileScreen(
             uiState = uiState,
+            isReadOnly = viewModel.isReadOnly,
             linkResult = linkResult,
             onUpdateDisplayName = viewModel::onUpdateDisplayName,
             onDeleteProfile = viewModel::onDeleteProfile,
@@ -135,6 +142,7 @@ internal fun ProfileScreen(
 @Composable
 private fun ProfileScreen(
     uiState: UiState<ProfileState>,
+    isReadOnly: Boolean,
     linkResult: LinkAccountResult?,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
@@ -151,6 +159,7 @@ private fun ProfileScreen(
         is UiState.Loaded ->
             ProfileContent(
                 state = uiState.data,
+                isReadOnly = isReadOnly,
                 linkResult = linkResult,
                 onUpdateDisplayName = onUpdateDisplayName,
                 onDeleteProfile = onDeleteProfile,
@@ -165,6 +174,7 @@ private fun ProfileScreen(
 @Composable
 private fun ProfileContent(
     state: ProfileState,
+    isReadOnly: Boolean,
     linkResult: LinkAccountResult?,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
@@ -181,31 +191,43 @@ private fun ProfileContent(
         verticalArrangement = Arrangement.spacedBy(space = 24.dp),
     ) {
         item {
-            DisplayNameEditor(
-                displayName = state.displayName,
-                onUpdateDisplayName = onUpdateDisplayName,
-            )
-        }
-
-        item { StatsSection(state = state, onNavigateToAchievements = onNavigateToAchievements) }
-
-        item {
-            val isLinkSuccess = linkResult == LinkAccountResult.SUCCESS
-            SignInMethodsSection(
-                onSocialMethodClick = onLinkWithSocialMethod,
-                onEmailLink = onLinkWithEmail,
-                statusMessage = linkStatusMessage(result = linkResult),
-                isStatusError = !isLinkSuccess,
-            )
+            if (isReadOnly) {
+                DisplayName(displayName = state.displayName)
+            } else {
+                DisplayNameEditor(
+                    displayName = state.displayName,
+                    onUpdateDisplayName = onUpdateDisplayName,
+                )
+            }
         }
 
         item {
-            AppButton(
-                onClick = { isDeleteConfirmationShown = true },
-                borderColor = MaterialTheme.colorScheme.error,
-                contentColor = MaterialTheme.colorScheme.error,
-            ) {
-                Text(text = stringResource(resource = Res.string.profile_delete))
+            StatsSection(
+                state = state,
+                onNavigateToAchievements =
+                if (isReadOnly) null else onNavigateToAchievements,
+            )
+        }
+
+        if (!isReadOnly) {
+            item {
+                val isLinkSuccess = linkResult == LinkAccountResult.SUCCESS
+                SignInMethodsSection(
+                    onSocialMethodClick = onLinkWithSocialMethod,
+                    onEmailLink = onLinkWithEmail,
+                    statusMessage = linkStatusMessage(result = linkResult),
+                    isStatusError = !isLinkSuccess,
+                )
+            }
+
+            item {
+                AppButton(
+                    onClick = { isDeleteConfirmationShown = true },
+                    borderColor = MaterialTheme.colorScheme.error,
+                    contentColor = MaterialTheme.colorScheme.error,
+                ) {
+                    Text(text = stringResource(resource = Res.string.profile_delete))
+                }
             }
         }
     }
@@ -219,6 +241,16 @@ private fun ProfileContent(
             onDismiss = { isDeleteConfirmationShown = false },
         )
     }
+}
+
+@Composable
+private fun DisplayName(displayName: String, modifier: Modifier = Modifier) {
+    Text(
+        text = displayName,
+        style = MaterialTheme.typography.headlineSmall,
+        fontWeight = FontWeight.Bold,
+        modifier = modifier.fillMaxWidth(),
+    )
 }
 
 @Composable
@@ -272,18 +304,13 @@ private fun DisplayNameEditor(
 @Composable
 private fun StatsSection(
     state: ProfileState,
-    onNavigateToAchievements: () -> Unit,
+    onNavigateToAchievements: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(space = 12.dp),
     ) {
-        Text(
-            text = stringResource(resource = Res.string.profile_stats_title),
-            style = MaterialTheme.typography.titleLarge,
-        )
-
         RatingCard(rating = state.rating)
 
         AchievementsCard(
@@ -315,22 +342,33 @@ private fun RatingCard(rating: Long, modifier: Modifier = Modifier) {
 private fun AchievementsCard(
     unlocked: Int,
     total: Int,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
-    Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(all = 16.dp)) {
-            StatLabel(text = stringResource(resource = Res.string.profile_stats_achievements))
-            Text(
-                text =
-                stringResource(
-                    resource = Res.string.profile_stats_achievements_progress,
-                    unlocked,
-                    total,
-                ),
-                style = MaterialTheme.typography.bodyLarge,
-            )
+    if (onClick != null) {
+        Card(onClick = onClick, modifier = modifier.fillMaxWidth()) {
+            AchievementsCardContent(unlocked = unlocked, total = total)
         }
+    } else {
+        Card(modifier = modifier.fillMaxWidth()) {
+            AchievementsCardContent(unlocked = unlocked, total = total)
+        }
+    }
+}
+
+@Composable
+private fun AchievementsCardContent(unlocked: Int, total: Int) {
+    Column(modifier = Modifier.padding(all = 16.dp)) {
+        StatLabel(text = stringResource(resource = Res.string.profile_stats_achievements))
+        Text(
+            text =
+            stringResource(
+                resource = Res.string.profile_stats_achievements_progress,
+                unlocked,
+                total,
+            ),
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 
@@ -512,6 +550,7 @@ private fun ProfileScreenPreview() {
                     achievementsTotal = 4,
                 ),
             ),
+            isReadOnly = false,
             linkResult = null,
             onUpdateDisplayName = {},
             onDeleteProfile = {},

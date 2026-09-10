@@ -53,6 +53,7 @@ import sorcerersandspirits.composeapp.generated.resources.leaderboard_you
 
 @Composable
 internal fun LeaderboardScreen(
+    onProfileClick: (userId: String, isCurrentUser: Boolean) -> Unit,
     viewModel: LeaderboardScreenViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
 ) {
@@ -64,6 +65,7 @@ internal fun LeaderboardScreen(
     ) { paddingValues ->
         LeaderboardScreen(
             uiState = uiState,
+            onProfileClick = onProfileClick,
             onRetry = viewModel::onRetry,
             onSortSelected = viewModel::onSortSelected,
             modifier = Modifier.padding(paddingValues = paddingValues),
@@ -74,6 +76,7 @@ internal fun LeaderboardScreen(
 @Composable
 private fun LeaderboardScreen(
     uiState: UiState<LeaderboardState>,
+    onProfileClick: (userId: String, isCurrentUser: Boolean) -> Unit,
     onRetry: () -> Unit,
     onSortSelected: (LeaderboardSort) -> Unit,
     modifier: Modifier = Modifier,
@@ -86,6 +89,7 @@ private fun LeaderboardScreen(
         is UiState.Loaded ->
             LeaderboardContent(
                 state = uiState.data,
+                onProfileClick = onProfileClick,
                 onSortSelected = onSortSelected,
                 modifier = modifier,
             )
@@ -95,6 +99,7 @@ private fun LeaderboardScreen(
 @Composable
 private fun LeaderboardContent(
     state: LeaderboardState,
+    onProfileClick: (userId: String, isCurrentUser: Boolean) -> Unit,
     onSortSelected: (LeaderboardSort) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -119,7 +124,11 @@ private fun LeaderboardContent(
                 item { EmptyLeaderboard() }
             } else {
                 items(items = state.entries, key = { it.userId }) { entry ->
-                    LeaderboardRow(entry = entry, modifier = Modifier.animateItem())
+                    LeaderboardRow(
+                        entry = entry,
+                        onClick = { onProfileClick(entry.userId, entry.isCurrentUser) },
+                        modifier = Modifier.animateItem(),
+                    )
                 }
             }
         }
@@ -154,7 +163,11 @@ private fun LeaderboardSort.labelResource() = when (this) {
 }
 
 @Composable
-private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modifier) {
+private fun LeaderboardRow(
+    entry: LeaderboardRowState,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val containerColor =
         if (entry.isCurrentUser) {
             MaterialTheme.colorScheme.primaryContainer
@@ -163,6 +176,7 @@ private fun LeaderboardRow(entry: LeaderboardRowState, modifier: Modifier = Modi
         }
 
     Card(
+        onClick = onClick,
         modifier = modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = containerColor),
     ) {
@@ -283,6 +297,7 @@ private fun LeaderboardScreenPreview() {
                     ),
                 ),
             ),
+            onProfileClick = { _, _ -> },
             onRetry = {},
             onSortSelected = {},
         )

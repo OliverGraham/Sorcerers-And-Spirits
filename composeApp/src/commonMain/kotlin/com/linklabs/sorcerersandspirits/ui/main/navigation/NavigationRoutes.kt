@@ -18,6 +18,8 @@ sealed interface Route : NavKey {
 
     @Serializable data object ProfileScreen : Route
 
+    @Serializable data class PlayerProfileScreen(val userId: String) : Route
+
     @Serializable data object LeaderboardScreen : Route
 
     @Serializable data object AchievementsScreen : Route
@@ -42,6 +44,10 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
             subclass(
                 subclass = Route.ProfileScreen::class,
                 serializer = Route.ProfileScreen.serializer(),
+            )
+            subclass(
+                subclass = Route.PlayerProfileScreen::class,
+                serializer = Route.PlayerProfileScreen.serializer(),
             )
             subclass(
                 subclass = Route.LeaderboardScreen::class,

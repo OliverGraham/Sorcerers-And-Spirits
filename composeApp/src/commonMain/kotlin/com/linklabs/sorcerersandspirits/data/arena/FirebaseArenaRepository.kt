@@ -18,6 +18,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
+import dev.gitlive.firebase.database.DataSnapshot
 import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.CoroutineScope
@@ -138,6 +139,10 @@ class FirebaseArenaRepository(
         ExitArena(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
 
+        releaseArenaMembership(arenaId = arenaId, userId = userId)
+    }
+
+    private suspend fun releaseArenaMembership(arenaId: String, userId: String) {
         val isSelf = userId == presenceUserId
         if (isSelf) {
             tearDownPresenceWriter()
@@ -151,7 +156,34 @@ class FirebaseArenaRepository(
         val orphanedArenaId = arenaMembershipReference.child(path = userId).awaitNullableString()
         if (orphanedArenaId.isNullOrBlank()) return
 
-        exitArena(arenaId = orphanedArenaId, userId = userId)
+        try {
+            exitArena(arenaId = orphanedArenaId, userId = userId)
+        } catch (_: Exception) {
+            releaseArenaMembership(arenaId = orphanedArenaId, userId = userId)
+            deleteMatchIfUndecodable(arenaId = orphanedArenaId)
+        }
+    }
+
+    private suspend fun deleteMatchIfUndecodable(arenaId: String) {
+        val matchReference = arenaMatchesReference.child(path = arenaId)
+        val snapshot =
+            try {
+                matchReference.valueEvents.first()
+            } catch (_: Exception) {
+                return
+            }
+
+        if (!snapshot.exists) return
+        if (snapshot.isDecodableArenaMatch()) return
+
+        matchReference.removeValue()
+    }
+
+    private fun DataSnapshot.isDecodableArenaMatch(): Boolean = try {
+        value(strategy = ArenaMatchEntity.serializer().nullable)
+        true
+    } catch (_: Exception) {
+        false
     }
 
     override suspend fun disconnectArenaPresence() {

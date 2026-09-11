@@ -45,27 +45,28 @@ internal class SummonMinionActivated(
 
     private fun CombatMutator.getSummonResult(result: Int) = when (result) {
         in abilityConfig.summonSkeletonRange -> SummonResult(
-            minion = summonedMinion(type = MinionType.Skeleton),
+            minion = summonedMinion(type = MinionType.Skeleton, hitPoints = 1),
             shouldHealToFull = false,
         )
 
         in abilityConfig.summonSkeletonAndHealRange -> SummonResult(
-            minion = summonedMinion(type = MinionType.Skeleton),
+            minion = summonedMinion(type = MinionType.Skeleton, hitPoints = 1),
             shouldHealToFull = true,
         )
 
         abilityConfig.summonGolemRoll -> SummonResult(
-            minion = summonedMinion(type = MinionType.Golem),
+            minion = summonedMinion(type = MinionType.Golem, hitPoints = 2),
             shouldHealToFull = true,
         )
 
         else -> null
     }
 
-    private fun CombatMutator.summonedMinion(type: MinionType): Minion = Minion(
+    private fun CombatMutator.summonedMinion(type: MinionType, hitPoints: Int): Minion = Minion(
         type = type,
         name = MinionNames.nameNotIn(usedNames = livingMinionNames()),
         hasAttackedThisRound = false,
+        hitPoints = hitPoints
     )
 
     private fun CombatMutator.handleFailure() {

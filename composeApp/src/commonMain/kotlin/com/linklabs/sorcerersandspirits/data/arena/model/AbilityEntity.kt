@@ -8,7 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.game.ability.HolyShieldAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.ImpersonateAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.MirrorImageAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.ability.SummonMinionAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.SummonMinionAbility
 import kotlinx.serialization.Serializable
 
 @Serializable sealed interface AbilityEntity

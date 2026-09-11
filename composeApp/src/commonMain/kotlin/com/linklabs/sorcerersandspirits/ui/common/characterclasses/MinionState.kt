@@ -10,16 +10,19 @@ data class MinionState(
     override val type: MinionType,
     override val name: String,
     override val hasAttackedThisRound: Boolean,
+    override val hitPoints: Int,
 ) : MinionAttributes
 
 internal fun Minion.toState(): MinionState = MinionState(
     type = type,
     name = name,
     hasAttackedThisRound = hasAttackedThisRound,
+    hitPoints = hitPoints,
 )
 
 internal fun MinionState.toDomain(): Minion = Minion(
     type = type,
     name = name,
     hasAttackedThisRound = hasAttackedThisRound,
+    hitPoints = hitPoints,
 )

@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.config
 
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import kotlin.test.Test

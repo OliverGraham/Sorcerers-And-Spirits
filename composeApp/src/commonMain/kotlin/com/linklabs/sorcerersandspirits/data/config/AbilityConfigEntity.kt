@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.data.config
 
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import kotlinx.serialization.Serializable
 
 @Serializable

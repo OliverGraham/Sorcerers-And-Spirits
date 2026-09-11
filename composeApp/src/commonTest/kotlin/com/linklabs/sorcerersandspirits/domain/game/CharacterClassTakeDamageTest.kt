@@ -1,5 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.game
 
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.shieldPoints
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

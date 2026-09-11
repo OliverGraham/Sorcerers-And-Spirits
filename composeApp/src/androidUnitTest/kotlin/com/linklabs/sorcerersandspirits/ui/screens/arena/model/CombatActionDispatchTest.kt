@@ -2,9 +2,9 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import kotlin.test.Test

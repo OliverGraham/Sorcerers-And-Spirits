@@ -2,11 +2,11 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.game.Minion
-import com.linklabs.sorcerersandspirits.domain.game.MinionNames
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.withEffective
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionNames
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.withEffective
 
 internal class SummonMinionActivated(
     private val combatMutator: CombatMutator,

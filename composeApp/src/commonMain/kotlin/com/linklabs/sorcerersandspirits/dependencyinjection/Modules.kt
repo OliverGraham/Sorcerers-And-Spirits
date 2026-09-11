@@ -33,7 +33,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccoun
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.credits.CreditsProvider
 import com.linklabs.sorcerersandspirits.domain.credits.usecase.GetCreditsUseCase
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfigProvider
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfigProvider
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassProvider
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase

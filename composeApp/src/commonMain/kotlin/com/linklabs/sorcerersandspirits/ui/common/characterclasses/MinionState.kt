@@ -1,9 +1,9 @@
 package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.game.Minion
-import com.linklabs.sorcerersandspirits.domain.game.MinionAttributes
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionAttributes
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 
 @Immutable
 data class MinionState(

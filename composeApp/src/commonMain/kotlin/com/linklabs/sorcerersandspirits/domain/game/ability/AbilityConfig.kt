@@ -1,14 +1,6 @@
-package com.linklabs.sorcerersandspirits.domain.game
+package com.linklabs.sorcerersandspirits.domain.game.ability
 
 /**
- * The remotely-tunable roll thresholds for the class special abilities. These replace the constants
- * that used to live inside each ability handler so combat balance can be tuned from RemoteConfig
- * without a release (SS-058).
- *
- * Out of scope here: Teleport (a pure roll-off, defender-beats-attacker, with no threshold to
- * tune), the Mirror Image -1 reroll adjustment (it lives on the serialized [AbilityAction] model,
- * not in a handler), and the doubles +1 bonus (a normal-combat rule, not an ability threshold).
- *
  * [DEFAULT] is the canonical shipped balance and the ultimate safety net when no remote/bundled
  * value can be resolved. The bundled JSON default mirrors it (see ability_config.json).
  */

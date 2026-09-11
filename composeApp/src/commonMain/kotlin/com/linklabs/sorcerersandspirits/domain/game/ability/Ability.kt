@@ -1,4 +1,8 @@
-package com.linklabs.sorcerersandspirits.domain.game
+package com.linklabs.sorcerersandspirits.domain.game.ability
+
+import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.SummonMinionAbility
 
 sealed interface Ability
 
@@ -45,31 +49,6 @@ interface AllInAbility {
     val usedThisTurn: Boolean
 }
 
-interface SummonMinionAbility<out M : MinionAttributes> {
-    val minions: List<M>
-    val usedThisTurn: Boolean
-}
-
-val SummonMinionAbility<*>.shieldPoints: Int
-    get() = minions.sumOf { minion -> if (minion.type == MinionType.Golem) 2 else 1 }
-
-fun OffensiveAbility.SummonMinion.recordMinionAttack(): OffensiveAbility.SummonMinion {
-    val nextMinionIndex = minions.indexOfFirst { minion -> !minion.hasAttackedThisRound }
-    val updatedMinions = minions.mapIndexed { index, minion ->
-        if (index == nextMinionIndex) {
-            minion.copy(hasAttackedThisRound = true)
-        } else {
-            minion
-        }
-    }
-
-    return copy(minions = updatedMinions)
-}
-
-fun OffensiveAbility.SummonMinion.reset() = copy(
-    usedThisTurn = false,
-    minions = minions.map { minion -> minion.copy(hasAttackedThisRound = false) },
-)
 
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T

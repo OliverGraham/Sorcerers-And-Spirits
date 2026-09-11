@@ -23,7 +23,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.MinionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AvatarGesture
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.REACTION_DELAY_MILLIS

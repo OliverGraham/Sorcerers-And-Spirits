@@ -2,9 +2,9 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.HolyShieldHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.effective
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.effective
 
 internal fun CombatMutator.shouldMessageDoublesAfterArmorClassHit(): Boolean = when (val defensiveAbility = defender.defensiveAbility) {
     is DefensiveAbility.Teleport,

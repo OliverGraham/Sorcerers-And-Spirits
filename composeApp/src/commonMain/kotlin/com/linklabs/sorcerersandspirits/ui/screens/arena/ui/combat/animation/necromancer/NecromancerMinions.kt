@@ -10,7 +10,7 @@ import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import kotlin.math.roundToInt
 
 private val portalGrayCore = Color(color = 0xFFBFC2BB)

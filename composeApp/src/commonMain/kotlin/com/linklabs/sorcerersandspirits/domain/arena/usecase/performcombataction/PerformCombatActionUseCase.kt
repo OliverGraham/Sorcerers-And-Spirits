@@ -3,7 +3,7 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.RealDiceRoller
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfigProvider
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfigProvider
 
 class PerformCombatActionUseCase(
     private val arenaRepository: ArenaRepository,

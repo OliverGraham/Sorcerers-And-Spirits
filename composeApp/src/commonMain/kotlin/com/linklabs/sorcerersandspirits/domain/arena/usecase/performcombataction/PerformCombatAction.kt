@@ -15,7 +15,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 
 internal class PerformCombatAction(
     private val arguments: CombatActionArguments,

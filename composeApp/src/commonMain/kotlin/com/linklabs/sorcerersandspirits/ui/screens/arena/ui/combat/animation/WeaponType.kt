@@ -1,7 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 
 enum class WeaponType {
     Dagger,

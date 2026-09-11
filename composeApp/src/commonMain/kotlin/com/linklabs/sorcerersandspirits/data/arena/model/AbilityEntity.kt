@@ -1,14 +1,14 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.game.Ability
-import com.linklabs.sorcerersandspirits.domain.game.AllInAbility
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.DodgeAbility
-import com.linklabs.sorcerersandspirits.domain.game.HolyShieldAbility
-import com.linklabs.sorcerersandspirits.domain.game.ImpersonateAbility
-import com.linklabs.sorcerersandspirits.domain.game.MirrorImageAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.SummonMinionAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.Ability
+import com.linklabs.sorcerersandspirits.domain.game.ability.AllInAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.DodgeAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.HolyShieldAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.ImpersonateAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.MirrorImageAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.SummonMinionAbility
 import kotlinx.serialization.Serializable
 
 @Serializable sealed interface AbilityEntity

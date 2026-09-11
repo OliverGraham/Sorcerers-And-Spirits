@@ -20,10 +20,10 @@ import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase

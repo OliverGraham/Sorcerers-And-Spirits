@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.domain.game
+package com.linklabs.sorcerersandspirits.domain.game.ability.summonminion
 
 enum class MinionType {
     Skeleton,

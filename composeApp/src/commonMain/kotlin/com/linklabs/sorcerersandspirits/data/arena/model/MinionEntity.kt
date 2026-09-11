@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.game.Minion
-import com.linklabs.sorcerersandspirits.domain.game.MinionAttributes
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionAttributes
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import kotlinx.serialization.Serializable
 
 @Serializable

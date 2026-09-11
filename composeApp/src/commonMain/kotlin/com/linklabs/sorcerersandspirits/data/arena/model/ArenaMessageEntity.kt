@@ -6,8 +6,8 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -207,15 +207,41 @@ sealed interface ArenaMessageEntity {
 
     @Serializable
     @SerialName(value = SUMMON_MINION)
-    data class SummonMinion(
-        override val id: String,
-        val necromancerUserId: String,
-        val className: String,
-        val classType: CharacterClassType,
-        val singleDie: Int,
-        val minionIndex: Int,
-        val minionName: String?,
-    ) : ArenaMessageEntity
+    sealed interface SummonMinion : ArenaMessageEntity {
+
+        @Serializable
+        @SerialName(value = SUMMON_MINION_SUMMON)
+        data class Summon(
+            override val id: String,
+            val necromancerUserId: String,
+            val className: String,
+            val classType: CharacterClassType,
+            val singleDie: Int,
+            val minionIndex: Int,
+            val minionName: String?,
+        ) : SummonMinion
+
+        @Serializable
+        @SerialName(value = SUMMON_MINION_MINION_DAMAGED)
+        data class MinionDamaged(
+            override val id: String,
+            val summonerUserId: String,
+            val summonerClassName: String,
+            val summonerClassType: CharacterClassType,
+            val minionName: String,
+            val minionHitPointsRemaining: Int,
+        ) : SummonMinion
+
+        @Serializable
+        @SerialName(value = SUMMON_MINION_MINION_DESTROYED)
+        data class MinionDestroyed(
+            override val id: String,
+            val summonerUserId: String,
+            val summonerClassName: String,
+            val summonerClassType: CharacterClassType,
+            val minionName: String,
+        ) : SummonMinion
+    }
 
     @Serializable
     @SerialName(value = PERSUADE)
@@ -453,6 +479,9 @@ sealed interface ArenaMessageEntity {
         private const val RIPOSTE_TRIGGER = "RiposteTrigger"
         private const val RIPOSTE_EN_GARDE = "RiposteEnGarde"
         private const val SUMMON_MINION = "SummonMinion"
+        private const val SUMMON_MINION_SUMMON = "SummonMinionSummon"
+        private const val SUMMON_MINION_MINION_DAMAGED = "SummonMinionMinionDamaged"
+        private const val SUMMON_MINION_MINION_DESTROYED = "SummonMinionMinionDestroyed"
         private const val PERSUADE = "Persuade"
         private const val PERSUADE_TRIGGER = "PersuadeTrigger"
         private const val PERSUADE_STRUM_LUTE = "PersuadeStrumLute"
@@ -621,13 +650,30 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     isSuccessful = isSuccessful,
                 )
 
-            is ArenaMessageEntity.SummonMinion ->
-                ArenaMessage.SummonMinion(
+            is ArenaMessageEntity.SummonMinion.Summon ->
+                ArenaMessage.SummonMinion.Summon(
                     necromancerUserId = necromancerUserId,
                     className = className,
                     classType = classType,
                     singleDie = singleDie,
                     minionIndex = minionIndex,
+                    minionName = minionName,
+                )
+
+            is ArenaMessageEntity.SummonMinion.MinionDamaged ->
+                ArenaMessage.SummonMinion.MinionDamaged(
+                    summonerUserId = summonerUserId,
+                    summonerClassName = summonerClassName,
+                    summonerClassType = summonerClassType,
+                    minionName = minionName,
+                    minionHitPointsRemaining = minionHitPointsRemaining,
+                )
+
+            is ArenaMessageEntity.SummonMinion.MinionDestroyed ->
+                ArenaMessage.SummonMinion.MinionDestroyed(
+                    summonerUserId = summonerUserId,
+                    summonerClassName = summonerClassName,
+                    summonerClassType = summonerClassType,
                     minionName = minionName,
                 )
 
@@ -957,14 +1003,33 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             isSuccessful = isSuccessful,
         )
 
-    is ArenaMessage.SummonMinion ->
-        ArenaMessageEntity.SummonMinion(
+    is ArenaMessage.SummonMinion.Summon ->
+        ArenaMessageEntity.SummonMinion.Summon(
             id = id,
             necromancerUserId = necromancerUserId,
             className = className,
             classType = classType,
             singleDie = singleDie,
             minionIndex = minionIndex,
+            minionName = minionName,
+        )
+
+    is ArenaMessage.SummonMinion.MinionDamaged ->
+        ArenaMessageEntity.SummonMinion.MinionDamaged(
+            id = id,
+            summonerUserId = summonerUserId,
+            summonerClassName = summonerClassName,
+            summonerClassType = summonerClassType,
+            minionName = minionName,
+            minionHitPointsRemaining = minionHitPointsRemaining,
+        )
+
+    is ArenaMessage.SummonMinion.MinionDestroyed ->
+        ArenaMessageEntity.SummonMinion.MinionDestroyed(
+            id = id,
+            summonerUserId = summonerUserId,
+            summonerClassName = summonerClassName,
+            summonerClassType = summonerClassType,
             minionName = minionName,
         )
 

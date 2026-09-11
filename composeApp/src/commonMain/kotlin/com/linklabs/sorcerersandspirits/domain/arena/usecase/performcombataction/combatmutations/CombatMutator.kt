@@ -145,24 +145,20 @@ internal class CombatMutator(
     }
 
     fun takeDamage(damage: Int, userId: String) {
-        updatePlayerClass(userId = userId) { playerClass ->
-            val summonMinion =
-                playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
+        val playerClass = updatedPlayerMap.getValue(key = userId).characterClass
+        val summonMinion = playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
 
-            if (summonMinion != null) {
-                val summonerDamagedResult = summonMinion.getSummonerDamagedResult(
-                    damage = damage,
-                    summonerUserId = userId,
-                    summonerClassName = playerClass.className,
-                    summonerClassType = playerClass.type
-                )
-
-                playerClass.copy(
-                    hitPoints = playerClass.hitPoints - summonerDamagedResult.damageToSummoner,
-                    offensiveAbility = summonerDamagedResult.updatedSummonMinion,
-                )
-            } else {
-                playerClass.copy(hitPoints = playerClass.hitPoints - damage)
+        if (summonMinion != null) {
+           handleSummonerDamaged(
+               damage = damage,
+               userId = userId,
+               summonMinion = summonMinion,
+               summonerClassName =  playerClass.className,
+               summonerClassType = playerClass.type
+           )
+        } else {
+            updatePlayerClass(userId = userId) { currentClass ->
+                currentClass.copy(hitPoints = currentClass.hitPoints - damage)
             }
         }
     }
@@ -347,6 +343,30 @@ internal class CombatMutator(
             }
 
         return !anyActiveUnconsciousPlayers
+    }
+
+    private fun handleSummonerDamaged(
+        damage: Int,
+        userId: String,
+        summonMinion: OffensiveAbility.SummonMinion,
+        summonerClassName: String,
+        summonerClassType: CharacterClassType,
+        ) {
+        val summonerDamagedResult = summonMinion.getSummonerDamagedResult(
+            damage = damage,
+            summonerUserId = userId,
+            summonerClassName = summonerClassName,
+            summonerClassType = summonerClassType,
+        )
+
+        messages.addAll(elements = summonerDamagedResult.minionMessages)
+
+        updatePlayerClass(userId = userId) { currentClass ->
+            currentClass.copy(
+                hitPoints = currentClass.hitPoints - summonerDamagedResult.damageToSummoner,
+                offensiveAbility = summonerDamagedResult.updatedSummonMinion,
+            )
+        }
     }
 
     private fun CharacterClass.getSummonMinionOrNull() = offensiveAbility.effective as? OffensiveAbility.SummonMinion

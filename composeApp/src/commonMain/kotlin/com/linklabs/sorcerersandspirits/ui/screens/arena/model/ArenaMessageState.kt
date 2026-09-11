@@ -7,7 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.IncomingArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.WeaponType
 
@@ -415,21 +415,58 @@ sealed interface ArenaMessageState {
     }
 
     @Immutable
-    data class SummonMinion(
-        override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
-        override val id: String,
-        override val actingClassType: CharacterClassType,
-        val necromancerUserId: String,
-        val className: String,
-        val singleDie: Int,
-        val outcome: SummonMinionOutcome,
-        val minionIndex: Int,
-        val minionName: String?,
-        override val gestures: Map<String, AvatarGesture>,
-    ) : ArenaMessageState {
-        override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
-        override val coloredClassNames: List<CharacterClassMessageInfoState> =
-            listOf(CharacterClassMessageInfoState(className = className, type = actingClassType))
+    sealed interface SummonMinion : ArenaMessageState {
+
+        @Immutable
+        data class Summon(
+            override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
+            override val id: String,
+            override val actingClassType: CharacterClassType,
+            val necromancerUserId: String,
+            val className: String,
+            val singleDie: Int,
+            val outcome: SummonMinionOutcome,
+            val minionIndex: Int,
+            val minionName: String?,
+            override val gestures: Map<String, AvatarGesture>,
+        ) : SummonMinion {
+            override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = necromancerUserId)
+            override val coloredClassNames: List<CharacterClassMessageInfoState> =
+                listOf(CharacterClassMessageInfoState(className = className, type = actingClassType))
+        }
+
+        @Immutable
+        data class MinionDamaged(
+            override val animation: ArenaAnimationState = ArenaAnimationState.Avatar(),
+            override val id: String,
+            override val actingClassType: CharacterClassType,
+            val summonerUserId: String,
+            val summonerClassName: String,
+            val minionName: String,
+            val minionHitPointsRemaining: Int,
+        ) : SummonMinion {
+            override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = summonerUserId)
+            override val coloredClassNames: List<CharacterClassMessageInfoState> =
+                listOf(
+                    CharacterClassMessageInfoState(className = summonerClassName, type = actingClassType),
+                )
+        }
+
+        @Immutable
+        data class MinionDestroyed(
+            override val animation: ArenaAnimationState = ArenaAnimationState.Avatar(),
+            override val id: String,
+            override val actingClassType: CharacterClassType,
+            val summonerUserId: String,
+            val summonerClassName: String,
+            val minionName: String,
+        ) : SummonMinion {
+            override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = summonerUserId)
+            override val coloredClassNames: List<CharacterClassMessageInfoState> =
+                listOf(
+                    CharacterClassMessageInfoState(className = summonerClassName, type = actingClassType),
+                )
+        }
     }
 
     @Immutable
@@ -1052,8 +1089,8 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
         )
     }
 
-    is ArenaMessage.SummonMinion -> {
-        ArenaMessageState.SummonMinion(
+    is ArenaMessage.SummonMinion.Summon -> {
+        ArenaMessageState.SummonMinion.Summon(
             id = id,
             necromancerUserId = necromancerUserId,
             className = className,
@@ -1065,6 +1102,25 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             gestures = mapOf(necromancerUserId to AvatarGesture.Cast),
         )
     }
+
+    is ArenaMessage.SummonMinion.MinionDamaged ->
+        ArenaMessageState.SummonMinion.MinionDamaged(
+            id = id,
+            actingClassType = summonerClassType,
+            summonerUserId = summonerUserId,
+            summonerClassName = summonerClassName,
+            minionName = minionName,
+            minionHitPointsRemaining = minionHitPointsRemaining,
+        )
+
+    is ArenaMessage.SummonMinion.MinionDestroyed ->
+        ArenaMessageState.SummonMinion.MinionDestroyed(
+            id = id,
+            actingClassType = summonerClassType,
+            summonerUserId = summonerUserId,
+            summonerClassName = summonerClassName,
+            minionName = minionName,
+        )
 
     is ArenaMessage.Encore.Trigger ->
         ArenaMessageState.Encore.Trigger(
@@ -1265,6 +1321,12 @@ internal fun ArenaMessageState.minionAttackerIndexFor(attackerUserId: String): I
     if (this !is ArenaMessageState.NormalRoll.Attack) return null
     if (this.attackerUserId != attackerUserId) return null
     return minionAttackerIndex
+}
+
+internal fun ArenaMessageState.destroyedMinionsSurvivingCountFor(summonerUserId: String): Int? {
+    if (this !is ArenaMessageState.MinionsDestroyed) return null
+    if (this.summonerUserId != summonerUserId) return null
+    return survivingMinionCount
 }
 
 // TODO: Make mapping functions for all types in this manner. ArenaMessage.Type.toState()

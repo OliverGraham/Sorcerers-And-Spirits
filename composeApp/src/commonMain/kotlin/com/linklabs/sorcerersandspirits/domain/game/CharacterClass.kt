@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.game
 
-import kotlin.Int
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 
 data class CharacterClass(
     val type: CharacterClassType,
@@ -16,42 +17,6 @@ data class CharacterClass(
     val className = type.name
 
     fun isConscious() = hitPoints > 0
-
-    fun takeDamage(damage: Int): CharacterClass {
-        val summon = offensiveAbility.effective as? OffensiveAbility.SummonMinion
-            ?: return copy(hitPoints = hitPoints - damage)
-
-        return takeDamageBehindMinions(damage = damage, summon = summon)
-    }
-
-    private fun takeDamageBehindMinions(
-        damage: Int,
-        summon: OffensiveAbility.SummonMinion,
-    ): CharacterClass {
-        val golems = summon.minions.filter { minion -> minion.type == MinionType.Golem }
-        val skeletons = summon.minions.filter { minion -> minion.type == MinionType.Skeleton }
-        val absorbedByShield = minOf(damage, summon.shieldPoints)
-        val survivingShield = summon.shieldPoints - absorbedByShield
-        val survivingGolems = minOf(golems.size, survivingShield / 2)
-        val survivingSkeletons = survivingShield - survivingGolems * 2
-
-        val survivingGolemMinions =
-            golems.take(n = survivingGolems).map { minion -> minion.copy(hasAttackedThisRound = false) }
-        // TODO(SS-283): golems downgrade to skeletons because shields are fungible points; give golems
-        //   their own hit points so a hit golem survives as a damaged golem instead of morphing.
-        val downgradedGolems = golems.drop(n = survivingGolems)
-        val survivingSkeletonMinions =
-            (downgradedGolems + skeletons).take(n = survivingSkeletons).map { minion ->
-                minion.copy(type = MinionType.Skeleton, hasAttackedThisRound = false)
-            }
-
-        val survivingMinions = survivingGolemMinions + survivingSkeletonMinions
-
-        return copy(
-            hitPoints = hitPoints - (damage - absorbedByShield),
-            offensiveAbility = offensiveAbility.withEffective(summon.copy(minions = survivingMinions)),
-        )
-    }
 
     companion object {
         fun playableTypes(): List<CharacterClassType> = CharacterClassType.entries.filter { type ->

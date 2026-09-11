@@ -16,9 +16,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.effective
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.effective
 
 internal class NormalAttackRollHandler(
     private val firstDie: Int,
@@ -94,7 +94,7 @@ internal class NormalAttackRollHandler(
             return
         }
 
-        updateDefenderClass { defenderClass -> defenderClass.takeDamage(damage = diceTotal) }
+        takeDamage(damage = diceTotal, userId = defenderUserId)
 
         return if (!defender.isConscious()) {
             addNormalRoll(

@@ -443,6 +443,8 @@ sealed interface ArenaMessageState {
             val summonerUserId: String,
             val summonerClassName: String,
             val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
             val minionHitPointsRemaining: Int,
         ) : SummonMinion {
             override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = summonerUserId)
@@ -460,6 +462,8 @@ sealed interface ArenaMessageState {
             val summonerUserId: String,
             val summonerClassName: String,
             val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
         ) : SummonMinion {
             override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = summonerUserId)
             override val coloredClassNames: List<CharacterClassMessageInfoState> =
@@ -1110,6 +1114,8 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             summonerUserId = summonerUserId,
             summonerClassName = summonerClassName,
             minionName = minionName,
+            minionType = minionType,
+            minionIndex = minionIndex,
             minionHitPointsRemaining = minionHitPointsRemaining,
         )
 
@@ -1120,6 +1126,8 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             summonerUserId = summonerUserId,
             summonerClassName = summonerClassName,
             minionName = minionName,
+            minionType = minionType,
+            minionIndex = minionIndex,
         )
 
     is ArenaMessage.Encore.Trigger ->
@@ -1321,12 +1329,6 @@ internal fun ArenaMessageState.minionAttackerIndexFor(attackerUserId: String): I
     if (this !is ArenaMessageState.NormalRoll.Attack) return null
     if (this.attackerUserId != attackerUserId) return null
     return minionAttackerIndex
-}
-
-internal fun ArenaMessageState.destroyedMinionsSurvivingCountFor(summonerUserId: String): Int? {
-    if (this !is ArenaMessageState.MinionsDestroyed) return null
-    if (this.summonerUserId != summonerUserId) return null
-    return survivingMinionCount
 }
 
 // TODO: Make mapping functions for all types in this manner. ArenaMessage.Type.toState()

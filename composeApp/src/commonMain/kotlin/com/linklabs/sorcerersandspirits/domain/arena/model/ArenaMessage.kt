@@ -155,6 +155,8 @@ sealed interface ArenaMessage {
             val summonerClassName: String,
             val summonerClassType: CharacterClassType,
             val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
             val minionHitPointsRemaining: Int,
         ) : SummonMinion
 
@@ -163,6 +165,8 @@ sealed interface ArenaMessage {
             val summonerClassName: String,
             val summonerClassType: CharacterClassType,
             val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
         ) : SummonMinion
     }
 

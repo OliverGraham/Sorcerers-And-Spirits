@@ -169,7 +169,7 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
                 stringResource(resource = Res.string.arena_flash_all_in_bust)
         }
 
-    is ArenaMessageState.SummonMinion ->
+    is ArenaMessageState.SummonMinion.Summon ->
         when (outcome) {
             SummonMinionOutcome.Fizzle ->
                 stringResource(resource = Res.string.arena_flash_fizzle)
@@ -182,6 +182,10 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
 
             SummonMinionOutcome.Golem -> stringResource(resource = Res.string.arena_flash_golem)
         }
+
+    is ArenaMessageState.SummonMinion.MinionDamaged -> ""
+
+    is ArenaMessageState.SummonMinion.MinionDestroyed -> ""
 
     is ArenaMessageState.Teleport.Trigger ->
         stringResource(resource = Res.string.arena_flash_teleport)

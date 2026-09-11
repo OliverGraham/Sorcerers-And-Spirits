@@ -162,6 +162,7 @@ private fun LargeAvatar(
                 minions = summonedMinions,
                 attackingMinionIndex =
                 animatingMessage?.minionAttackerIndexFor(attackerUserId = player.userId),
+                hiddenFromDisplayIndex = null,
                 modifier = Modifier.fillMaxSize(),
             )
         }

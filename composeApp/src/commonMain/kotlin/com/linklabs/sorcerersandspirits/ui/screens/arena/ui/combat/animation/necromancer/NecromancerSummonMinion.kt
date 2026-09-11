@@ -70,7 +70,7 @@ private val healGreen = necroGlowGreen
 
 @Composable
 internal fun NecromancerSummonMinionOverlay(
-    animatingMessage: ArenaMessageState.SummonMinion,
+    animatingMessage: ArenaMessageState.SummonMinion.Summon,
     avatarBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
@@ -433,7 +433,7 @@ private fun NecromancerSummonMinionPreview(
         accentClass = actorClass,
         avatars = avatars,
         buildMessage = { id ->
-            ArenaMessageState.SummonMinion(
+            ArenaMessageState.SummonMinion.Summon(
                 id = id,
                 necromancerUserId = PREVIEW_ACTOR_ID,
                 className = actorClass.name,

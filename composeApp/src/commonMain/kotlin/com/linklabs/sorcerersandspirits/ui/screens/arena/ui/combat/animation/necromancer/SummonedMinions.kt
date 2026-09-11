@@ -17,6 +17,7 @@ import sorcerersandspirits.composeapp.generated.resources.skeleton_minion
 internal fun SummonedMinions(
     minions: List<MinionState>,
     attackingMinionIndex: Int?,
+    hiddenFromDisplayIndex: Int?,
     modifier: Modifier = Modifier,
 ) {
     val skeletonImage = imageResource(resource = Res.drawable.skeleton_minion)
@@ -26,6 +27,7 @@ internal fun SummonedMinions(
         drawGatheredMinions(
             minions = minions,
             attackingMinionIndex = attackingMinionIndex,
+            hiddenFromDisplayIndex = hiddenFromDisplayIndex,
             skeletonImage = skeletonImage,
             golemImage = golemImage,
         )
@@ -35,6 +37,7 @@ internal fun SummonedMinions(
 private fun DrawScope.drawGatheredMinions(
     minions: List<MinionState>,
     attackingMinionIndex: Int?,
+    hiddenFromDisplayIndex: Int?,
     skeletonImage: ImageBitmap,
     golemImage: ImageBitmap,
 ) {
@@ -42,6 +45,7 @@ private fun DrawScope.drawGatheredMinions(
 
     minions.indices.reversed().forEach { index ->
         if (index == attackingMinionIndex) return@forEach
+        if (hiddenFromDisplayIndex != null && index >= hiddenFromDisplayIndex) return@forEach
 
         val minion = minions[index]
         val slot = minionRestingSlot(displayIndex = index, minionType = minion.type, area = area)

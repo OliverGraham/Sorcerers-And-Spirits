@@ -33,7 +33,7 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
     val minionMessages = mutableListOf<ArenaMessage.SummonMinion>()
     var remainingDamageToApply = damage
 
-    minions.forEach { minion ->
+    minions.forEachIndexed { index, minion ->
         when {
             remainingDamageToApply <= 0 ->
                 updatedMinions.add(element = minion)
@@ -43,6 +43,8 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
                     summonerClassName = summonerClassName,
                     summonerClassType = summonerClassType,
                     minionName = minion.name,
+                    minionType = minion.type,
+                    minionIndex = index,
                 )
             )
             else -> {
@@ -54,6 +56,8 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
                         summonerClassName = summonerClassName,
                         summonerClassType = summonerClassType,
                         minionName = updatedMinion.name,
+                        minionType = updatedMinion.type,
+                        minionIndex = index,
                         minionHitPointsRemaining = updatedMinion.hitPoints
                     )
                 )

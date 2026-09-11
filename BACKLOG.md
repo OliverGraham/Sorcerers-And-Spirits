@@ -438,11 +438,27 @@ SS-191's generic lunges remain the fallback for classes not yet done.
         - **Tests are broken** and need the two `NormalRoll.Attack` fields: `CombatAnimationCueTest`
           (`ArenaMessageState.NormalRoll.Attack`) and `ArenaMessageEntityTest` (`ArenaMessage.NormalRoll
           .Attack` ×2). Per owner: "don't worry about tests" during the build — fix at the end.
-        - **Minion death animations — STILL NEEDED for both skeleton and golem.** When the summoner
-          takes damage and a minion is destroyed, each minion needs its **own** destruction animation
-          (breaking apart / disintegrating), not the shared avatar Collapse. Not started;
-          `CharacterClass.takeDamageBehindMinions` rebuilds surviving minions fresh (drops flags +
-          identity), fine for now but revisit for death.
+        - **Minion death animations — DONE (skeleton and golem share one explosion).** New
+          `ArenaMessage.MinionsDestroyed` (Domain→Data→UI). The death math lives on the ability itself:
+          `OffensiveAbility.SummonMinion.survivingMinionsAfter(damage)` / `minionsDestroyedBy(damage)` /
+          `absorbedShield(damage)` in `Ability.kt`, reused by `CharacterClass.takeDamageBehindMinions` (no
+          duplicated shield logic). A small `SummonMinionHandler.reportDestroyedMinions(summonerUserId,
+          incomingDamage)` reads the ability and adds the message; it's invoked **before** each damage is
+          applied so the death message is ordered ahead of the summoner's damage/KO message (minions
+          shatter first, then the avatar is hit). Wired at all four seated-principal damage sites: normal
+          attack (defender), spell potency (main target), lucky-coin high-roller (attacker retaliation),
+          mirror image (defender). Splash victims in the stands are intentionally excluded (they render no
+          minions and have no avatar bounds → would hang the queue). Nothing was added to `CombatMutator`.
+          `MinionDeath.kt` draws each dying minion at its resting slot fading out amid a burst + shards in
+          the **summoner's class color** (`actingClassType.toColor()`); `SummonedMinions` hides the dying
+          tail slots (`destroyedMinionsSurvivingCountFor`) during that animation. Interactive previews included.
+        - **KNOWN CAVEAT of the death-first ordering:** the persistent `SummonedMinions` renders off the
+          played `arenaMatchState`, which only jumps to the post-action state at the *end* of the message
+          batch. The gate only suppresses the dying minions while the `MinionsDestroyed` message itself is
+          animating; during the *following* damage/KO message (same batch) the gate is off, so the exploded
+          minions briefly re-appear behind the summoner until the batch ends. A per-message fix (carry a
+          surviving-minion count on the damage messages, or hold the suppression on the sequencer like
+          `collapsingSeatUserId`) would remove the flash — deferred pending on-device look.
     - **Related:** `SS-269` (review Claude's memories + CLAUDE.md) was created this session.
 
 ### SS-206 — Bard Encore animation

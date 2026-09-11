@@ -229,6 +229,8 @@ sealed interface ArenaMessageEntity {
             val summonerClassName: String,
             val summonerClassType: CharacterClassType,
             val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
             val minionHitPointsRemaining: Int,
         ) : SummonMinion
 
@@ -240,6 +242,8 @@ sealed interface ArenaMessageEntity {
             val summonerClassName: String,
             val summonerClassType: CharacterClassType,
             val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
         ) : SummonMinion
     }
 
@@ -666,6 +670,8 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     summonerClassName = summonerClassName,
                     summonerClassType = summonerClassType,
                     minionName = minionName,
+                    minionType = minionType,
+                    minionIndex = minionIndex,
                     minionHitPointsRemaining = minionHitPointsRemaining,
                 )
 
@@ -675,6 +681,8 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     summonerClassName = summonerClassName,
                     summonerClassType = summonerClassType,
                     minionName = minionName,
+                    minionType = minionType,
+                    minionIndex = minionIndex,
                 )
 
             is ArenaMessageEntity.Persuade.Trigger ->
@@ -1021,6 +1029,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             summonerClassName = summonerClassName,
             summonerClassType = summonerClassType,
             minionName = minionName,
+            minionType = minionType,
+            minionIndex = minionIndex,
             minionHitPointsRemaining = minionHitPointsRemaining,
         )
 
@@ -1031,6 +1041,8 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             summonerClassName = summonerClassName,
             summonerClassType = summonerClassType,
             minionName = minionName,
+            minionType = minionType,
+            minionIndex = minionIndex,
         )
 
     is ArenaMessage.Persuade.Trigger ->

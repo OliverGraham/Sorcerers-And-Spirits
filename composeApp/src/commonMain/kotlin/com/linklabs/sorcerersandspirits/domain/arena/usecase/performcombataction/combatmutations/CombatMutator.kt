@@ -149,18 +149,30 @@ internal class CombatMutator(
         val summonMinion = playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
 
         if (summonMinion != null) {
-           handleSummonerDamaged(
-               damage = damage,
-               userId = userId,
-               summonMinion = summonMinion,
-               summonerClassName =  playerClass.className,
-               summonerClassType = playerClass.type
-           )
+            handleSummonerDamaged(
+                damage = damage,
+                userId = userId,
+                summonMinion = summonMinion,
+                summonerClassName = playerClass.className,
+                summonerClassType = playerClass.type,
+            )
         } else {
             updatePlayerClass(userId = userId) { currentClass ->
                 currentClass.copy(hitPoints = currentClass.hitPoints - damage)
             }
         }
+    }
+
+    fun wouldBeKnockedOut(damage: Int, userId: String): Boolean {
+        val playerClass = updatedPlayerMap.getValue(key = userId).characterClass
+        val summonMinion = playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
+        val damageToPlayer = if (summonMinion != null) {
+            damage - summonMinion.minions.sumOf { minion -> minion.hitPoints }
+        } else {
+            damage
+        }
+
+        return playerClass.hitPoints - damageToPlayer <= 0
     }
 
     fun spendTurnOwnerAttack() {
@@ -351,7 +363,7 @@ internal class CombatMutator(
         summonMinion: OffensiveAbility.SummonMinion,
         summonerClassName: String,
         summonerClassType: CharacterClassType,
-        ) {
+    ) {
         val summonerDamagedResult = summonMinion.getSummonerDamagedResult(
             damage = damage,
             summonerUserId = userId,

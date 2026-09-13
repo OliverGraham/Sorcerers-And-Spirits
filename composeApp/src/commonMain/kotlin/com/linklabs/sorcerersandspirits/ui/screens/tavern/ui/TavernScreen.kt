@@ -15,7 +15,12 @@ import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
@@ -24,6 +29,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +37,9 @@ import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
@@ -50,15 +59,21 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleTavernState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.app_name
 import sorcerersandspirits.composeapp.generated.resources.ic_martini
 import sorcerersandspirits.composeapp.generated.resources.ic_menu
 import sorcerersandspirits.composeapp.generated.resources.ic_swords
+import sorcerersandspirits.composeapp.generated.resources.retry_button
 import sorcerersandspirits.composeapp.generated.resources.tavern_background
+import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_send_failed
+import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_travelers_unavailable
 
 @Composable
 internal fun TavernScreen(
@@ -70,10 +85,21 @@ internal fun TavernScreen(
         LocalTavernActions provides
             TavernActions(onSendChallengerNotifications = viewModel::onSendChallenge),
     ) {
-        viewModel.eventChannelFlow.collectEvents(onNavigateToArena = onNavigateToArena)
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        viewModel.eventChannelFlow.collectEvents(
+            onNavigateToArena = onNavigateToArena,
+            snackbarHostState = snackbarHostState,
+            onRetryChallenge = viewModel::retryLastChallenge,
+        )
         val uiState by viewModel.uiStateFlow.collectAsState()
 
-        TavernScreen(uiState = uiState, onRetry = viewModel::retry, modifier = modifier)
+        TavernScreen(
+            uiState = uiState,
+            onRetry = viewModel::retry,
+            snackbarHostState = snackbarHostState,
+            modifier = modifier,
+        )
     }
 }
 
@@ -81,11 +107,19 @@ internal fun TavernScreen(
 private fun TavernScreen(
     uiState: UiState<TavernState>,
     onRetry: () -> Unit,
+    snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
     when (uiState) {
         is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = modifier)
-        is UiState.Loaded -> LoadedTavernScreen(tavernState = uiState.data, modifier = modifier)
+
+        is UiState.Loaded ->
+            LoadedTavernScreen(
+                tavernState = uiState.data,
+                snackbarHostState = snackbarHostState,
+                modifier = modifier,
+            )
+
         is UiState.Loading -> LoadingIndicator(modifier = modifier)
     }
 }
@@ -94,11 +128,16 @@ private val TavernTopBarHeight = 48.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun LoadedTavernScreen(tavernState: TavernState, modifier: Modifier = Modifier) {
+private fun LoadedTavernScreen(
+    tavernState: TavernState,
+    snackbarHostState: SnackbarHostState,
+    modifier: Modifier = Modifier,
+) {
     val scaffoldState = rememberBottomSheetScaffoldState()
 
     BottomSheetScaffold(
         scaffoldState = scaffoldState,
+        snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         modifier =
         modifier
             .fillMaxSize()
@@ -156,7 +195,17 @@ private fun TavernTopBar(onToggleBar: () -> Unit, modifier: Modifier = Modifier)
     val hasActiveChallenge = LocalChallengeState.current != null
 
     TopAppBar(
-        title = {},
+        title = {
+            Text(
+                text = stringResource(resource = Res.string.app_name),
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold,
+                fontStyle = FontStyle.Italic,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
         modifier = modifier,
         navigationIcon = {
             IconButton(onClick = onToggleBar) {
@@ -203,18 +252,56 @@ private fun ScreenContent(
 @Composable
 private fun Flow<TavernEvent>.collectEvents(
     onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
+    snackbarHostState: SnackbarHostState,
+    onRetryChallenge: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
+    val sendFailedMessage = stringResource(resource = Res.string.tavern_challenge_send_failed)
+    val travelersUnavailableMessage =
+        stringResource(resource = Res.string.tavern_challenge_travelers_unavailable)
+    val retryLabel = stringResource(resource = Res.string.retry_button)
+
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
                 is TavernEvent.NavigateToArena -> onNavigateToArena(event.arguments)
 
                 is TavernEvent.ShowChallengeSendFailed ->
-                    println("TAVERN EVENT: ShowChallengeSendFailed")
+                    scope.showRetryableChallengeError(
+                        snackbarHostState = snackbarHostState,
+                        message = sendFailedMessage,
+                        retryLabel = retryLabel,
+                        onRetryChallenge = onRetryChallenge,
+                    )
 
                 is TavernEvent.NotEnoughChallengersAvailable ->
-                    println("TAVERN EVENT: Show traveler unavailable")
+                    scope.showRetryableChallengeError(
+                        snackbarHostState = snackbarHostState,
+                        message = travelersUnavailableMessage,
+                        retryLabel = retryLabel,
+                        onRetryChallenge = onRetryChallenge,
+                    )
             }
+        }
+    }
+}
+
+private fun CoroutineScope.showRetryableChallengeError(
+    snackbarHostState: SnackbarHostState,
+    message: String,
+    retryLabel: String,
+    onRetryChallenge: () -> Unit,
+) {
+    launch {
+        val result =
+            snackbarHostState.showSnackbar(
+                message = message,
+                actionLabel = retryLabel,
+                withDismissAction = true,
+            )
+
+        if (result == SnackbarResult.ActionPerformed) {
+            onRetryChallenge()
         }
     }
 }
@@ -239,6 +326,7 @@ private fun TavernScreenPreview() {
         TavernScreen(
             uiState = UiState.Loaded(data = exampleTavernState),
             onRetry = {},
+            snackbarHostState = remember { SnackbarHostState() },
             modifier = Modifier.fillMaxSize(),
         )
     }

@@ -1114,6 +1114,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   snapping; Mirror Image rerolls the exact die the player chose and dims the other; faces follow the
   authoritative slot-keyed roll value so every client agrees; and the DiceHome glide-to-stale-spot
   jank was fixed by homing to the live `homeCenter`. Related: SS-158, SS-149, SS-119.
+- **SS-264** — "Mark traveler busy" transaction crash → retryable error: `markTravelerBusyIfAvailable`
+  no longer throws across Firebase's runloop to abort; it returns the traveler unchanged (no-op write)
+  and reads the committed snapshot back, returning true only when the committed status is Busy. The
+  send-challenge failure now surfaces a "Try again" snackbar (both `ShowChallengeSendFailed` and
+  `NotEnoughChallengersAvailable`) that re-sends the last challenge attempt, instead of a `println`
+  dead-end.
 
 ## Profile & Auth
 

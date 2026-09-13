@@ -78,6 +78,8 @@
     <string name="tavern_search_travelers_hint">Search travelers by name</string>
     <string name="tavern_search_no_matches">No travelers match \"%1$s\".</string>
     <string name="tavern_traveler_rating">Rating %1$d</string>
+    <string name="tavern_challenge_send_failed">Couldn\'t send the challenge.</string>
+    <string name="tavern_challenge_travelers_unavailable">Some travelers are no longer available.</string>
 
     <string name="challenge_dialog_default_instigator">A Traveler</string>
     <string name="challenge_dialog_title">Do battle in The Arena</string>

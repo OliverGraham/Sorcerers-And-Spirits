@@ -47,6 +47,8 @@ class TavernScreenViewModel(
 
     private var tavernDataJob: Job? = null
 
+    private var lastChallengeAttempt: ChallengeAttempt? = null
+
     init {
         loadTavernData()
     }
@@ -56,8 +58,24 @@ class TavernScreenViewModel(
         loadTavernData()
     }
 
+    fun retryLastChallenge() {
+        val attempt = lastChallengeAttempt
+        if (attempt != null) {
+            onSendChallenge(
+                userTraveler = attempt.userTraveler,
+                selectedTravelerStates = attempt.selectedTravelerStates,
+            )
+        }
+    }
+
     fun onSendChallenge(userTraveler: TravelerState, selectedTravelerStates: Set<TravelerState>) {
         if (userTraveler.tavernStatus == TavernStatus.Busy) return
+
+        lastChallengeAttempt =
+            ChallengeAttempt(
+                userTraveler = userTraveler,
+                selectedTravelerStates = selectedTravelerStates,
+            )
 
         val selectedComputers =
             selectedTravelerStates.filter { traveler ->
@@ -151,3 +169,8 @@ class TavernScreenViewModel(
         _uiStateFlow.value = UiState.Loaded(data = tavernState)
     }
 }
+
+private data class ChallengeAttempt(
+    val userTraveler: TravelerState,
+    val selectedTravelerStates: Set<TravelerState>,
+)

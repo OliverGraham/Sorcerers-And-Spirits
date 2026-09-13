@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -53,6 +52,7 @@ import sorcerersandspirits.composeapp.generated.resources.tavern_travelers_to_ch
 private const val TRAVELERS_IN_TAVERN_COUNT_LABEL = "TravelersInTavernCount"
 private const val TRAVELER_CARD_SELECTION_LABEL = "TravelerCardSelection"
 private const val CHALLENGE_BUTTON_VISIBILITY_LABEL = "ChallengeButtonVisibility"
+private const val SEARCH_RESULTS_LABEL = "SearchResults"
 
 /** Location where users can challenge other users to fight in the Arena. */
 @Composable
@@ -138,9 +138,6 @@ private fun BarFolk(
     onToggleTraveler: (TravelerState) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // An active search that matches nobody, as opposed to an empty Tavern, gets its own message.
-    val isSearchWithoutMatches = searchQuery.isNotEmpty() && visibleTravelers.isEmpty()
-
     LazyColumn(
         modifier = modifier.fillMaxWidth().padding(bottom = 24.dp),
         contentPadding = PaddingValues(vertical = 12.dp),
@@ -181,23 +178,49 @@ private fun BarFolk(
             )
         }
 
-        if (isSearchWithoutMatches) {
-            item {
-                Text(
-                    text =
-                    stringResource(resource = Res.string.tavern_search_no_matches, searchQuery),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(
-                        horizontal = 20.dp,
-                        vertical = 24.dp,
-                    ),
+        item {
+            AnimatedContent(
+                targetState = visibleTravelers,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = SEARCH_RESULTS_LABEL,
+            ) { travelers ->
+                TravelerResults(
+                    travelers = travelers,
+                    searchQuery = searchQuery,
+                    selectedUserIds = selectedUserIds,
+                    onToggleTraveler = onToggleTraveler,
                 )
             }
         }
+    }
+}
 
-        items(items = visibleTravelers) { travelerState ->
+@Composable
+private fun TravelerResults(
+    travelers: List<TravelerState>,
+    searchQuery: String,
+    selectedUserIds: Set<String>,
+    onToggleTraveler: (TravelerState) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val isSearchWithoutMatches = searchQuery.isNotEmpty() && travelers.isEmpty()
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+    ) {
+        if (isSearchWithoutMatches) {
+            Text(
+                text = stringResource(resource = Res.string.tavern_search_no_matches, searchQuery),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+            )
+        }
+
+        travelers.forEach { travelerState ->
             travelerState.ToCard(
                 isSelected = travelerState.userId in selectedUserIds,
                 onClick = { onToggleTraveler(travelerState) },

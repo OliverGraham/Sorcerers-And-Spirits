@@ -15,6 +15,9 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Tavern UI
 
+- **SS-238** — Animate search-result filtering in TheBar (fade + content swap): Wrapped the traveler
+  results in `TheBar` in an `AnimatedContent` keyed on the visible set with a fade transition, so
+  filtering fades outgoing content out and new matches in; label extracted to a private `const val`.
 - **SS-239** — ChallengeButton slides up from off-screen, then back down to dismiss: Drove the
   `ChallengeButton` `AnimatedVisibility` in `TheBar` with `slideInVertically` (enter from below) /
   `slideOutVertically` (exit downward); label extracted to a private `const val`.

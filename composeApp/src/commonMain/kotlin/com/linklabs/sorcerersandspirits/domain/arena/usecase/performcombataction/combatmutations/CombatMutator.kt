@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessage
 import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
 import com.linklabs.sorcerersandspirits.domain.arena.model.toDieColor
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
@@ -144,23 +145,58 @@ internal class CombatMutator(
         updateDefenderClass { defender -> defender.copy(hitPoints = hitPoints) }
     }
 
-    fun takeDamage(damage: Int, userId: String) {
+    // TODO: Refactor takeDamage() for Summoners
+    fun takeDamage(damage: Int, userId: String): Int {
         val playerClass = updatedPlayerMap.getValue(key = userId).characterClass
         val summonMinion = playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
 
         if (summonMinion != null) {
-            handleSummonerDamaged(
+            return handleSummonerDamaged(
                 damage = damage,
                 userId = userId,
                 summonMinion = summonMinion,
                 summonerClassName = playerClass.className,
                 summonerClassType = playerClass.type,
             )
-        } else {
-            updatePlayerClass(userId = userId) { currentClass ->
-                currentClass.copy(hitPoints = currentClass.hitPoints - damage)
-            }
         }
+
+        updatePlayerClass(userId = userId) { currentClass ->
+            currentClass.copy(hitPoints = currentClass.hitPoints - damage)
+        }
+
+        return damage
+    }
+
+    // TODO: Move this somewhere else? - should just be part of takeDamage() - they're always called
+    //  together
+    fun hasAbsorbingMinions(userId: String): Boolean {
+        val summonMinion =
+            updatedPlayerMap.getValue(key = userId)
+                .characterClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
+        return summonMinion != null && summonMinion.minions.isNotEmpty()
+    }
+
+    // TODO: Move this somewhere else?
+    fun addMinionShieldResidualDamage(summonerUserId: String, damageAfterMinionShield: Int) {
+        val summoner = updatedPlayerMap.getValue(key = summonerUserId).characterClass
+        addMessage(
+            message =
+            ArenaMessage.NormalRoll.Outcome(
+                attackerUserId = attackerUserId,
+                defenderUserId = summonerUserId,
+                attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
+                minionAttackerName = null,
+                defenderClassName = summoner.className,
+                defenderClassType = summoner.type,
+                defenderArmorClass = summoner.armorClass,
+                firstDie = 0,
+                secondDie = 0,
+                bonus = 0,
+                type = NormalRollMessageType.Damage,
+                damageAfterMinionShield = damageAfterMinionShield,
+            ),
+        )
     }
 
     fun wouldBeKnockedOut(damage: Int, userId: String): Boolean {
@@ -363,7 +399,7 @@ internal class CombatMutator(
         summonMinion: OffensiveAbility.SummonMinion,
         summonerClassName: String,
         summonerClassType: CharacterClassType,
-    ) {
+    ): Int {
         val summonerDamagedResult = summonMinion.getSummonerDamagedResult(
             damage = damage,
             summonerUserId = userId,
@@ -379,6 +415,8 @@ internal class CombatMutator(
                 offensiveAbility = summonerDamagedResult.updatedSummonMinion,
             )
         }
+
+        return summonerDamagedResult.damageToSummoner
     }
 
     private fun CharacterClass.getSummonMinionOrNull() = offensiveAbility.effective as? OffensiveAbility.SummonMinion

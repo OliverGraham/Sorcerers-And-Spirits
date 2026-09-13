@@ -46,6 +46,7 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
                     minionName = minion.name,
                     minionType = minion.type,
                     minionIndex = index,
+                    damageAbsorbed = minion.hitPoints,
                 ),
             )
 
@@ -60,6 +61,7 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
                         minionName = updatedMinion.name,
                         minionType = updatedMinion.type,
                         minionIndex = index,
+                        damageAbsorbed = remainingDamageToApply,
                         minionHitPointsRemaining = updatedMinion.hitPoints,
                     ),
                 )
@@ -70,7 +72,7 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
     }
 
     return SummonerDamagedResult(
-        damageToSummoner = remainingDamageToApply,
+        damageToSummoner = remainingDamageToApply.coerceAtLeast(minimumValue = 0),
         updatedSummonMinion = copy(minions = updatedMinions),
         minionMessages = minionMessages,
     )

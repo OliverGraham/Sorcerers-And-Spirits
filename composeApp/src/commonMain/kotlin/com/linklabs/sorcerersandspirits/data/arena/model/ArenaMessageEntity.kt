@@ -75,6 +75,7 @@ sealed interface ArenaMessageEntity {
         val secondDie: Int,
         val bonus: Int = 0,
         val messageType: NormalRollMessageType,
+        val damageAfterMinionShield: Int?,
     ) : ArenaMessageEntity
 
     @Serializable
@@ -231,6 +232,7 @@ sealed interface ArenaMessageEntity {
             val minionName: String,
             val minionType: MinionType,
             val minionIndex: Int,
+            val damageAbsorbed: Int,
             val minionHitPointsRemaining: Int,
         ) : SummonMinion
 
@@ -244,6 +246,7 @@ sealed interface ArenaMessageEntity {
             val minionName: String,
             val minionType: MinionType,
             val minionIndex: Int,
+            val damageAbsorbed: Int,
         ) : SummonMinion
     }
 
@@ -562,6 +565,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     secondDie = secondDie,
                     bonus = bonus,
                     type = messageType,
+                    damageAfterMinionShield = damageAfterMinionShield,
                 )
 
             is ArenaMessageEntity.KillingMomentum ->
@@ -672,6 +676,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     minionName = minionName,
                     minionType = minionType,
                     minionIndex = minionIndex,
+                    damageAbsorbed = damageAbsorbed,
                     minionHitPointsRemaining = minionHitPointsRemaining,
                 )
 
@@ -683,6 +688,7 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                     minionName = minionName,
                     minionType = minionType,
                     minionIndex = minionIndex,
+                    damageAbsorbed = damageAbsorbed,
                 )
 
             is ArenaMessageEntity.Persuade.Trigger ->
@@ -909,6 +915,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             secondDie = secondDie,
             bonus = bonus,
             messageType = type,
+            damageAfterMinionShield = damageAfterMinionShield,
         )
 
     is ArenaMessage.KillingMomentum ->
@@ -1031,6 +1038,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             minionName = minionName,
             minionType = minionType,
             minionIndex = minionIndex,
+            damageAbsorbed = damageAbsorbed,
             minionHitPointsRemaining = minionHitPointsRemaining,
         )
 
@@ -1043,6 +1051,7 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
             minionName = minionName,
             minionType = minionType,
             minionIndex = minionIndex,
+            damageAbsorbed = damageAbsorbed,
         )
 
     is ArenaMessage.Persuade.Trigger ->

@@ -50,6 +50,7 @@ sealed interface ArenaMessage {
             val secondDie: Int,
             val bonus: Int,
             val type: NormalRollMessageType,
+            val damageAfterMinionShield: Int?,
         ) : NormalRoll
     }
 
@@ -157,6 +158,7 @@ sealed interface ArenaMessage {
             val minionName: String,
             val minionType: MinionType,
             val minionIndex: Int,
+            val damageAbsorbed: Int,
             val minionHitPointsRemaining: Int,
         ) : SummonMinion
 
@@ -167,6 +169,7 @@ sealed interface ArenaMessage {
             val minionName: String,
             val minionType: MinionType,
             val minionIndex: Int,
+            val damageAbsorbed: Int,
         ) : SummonMinion
     }
 

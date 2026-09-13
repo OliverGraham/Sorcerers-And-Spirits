@@ -253,15 +253,22 @@ internal class MirrorImageHandler(private val combatMutator: CombatMutator) {
         isAttackerDoublesLive: Boolean,
         message: (NormalRollMessageType) -> ArenaMessage,
     ) {
-        takeDamage(damage = totalRoll, userId = defenderUserId)
-
-        val isKnockout = !defender.isConscious()
+        val isKnockout = wouldBeKnockedOut(damage = totalRoll, userId = defenderUserId)
         addMessage(
             message =
             message(
                 if (isKnockout) NormalRollMessageType.Knockout else NormalRollMessageType.Damage,
             ),
         )
+
+        val hadAbsorbingMinions = hasAbsorbingMinions(userId = defenderUserId)
+        val damageAfterMinionShield = takeDamage(damage = totalRoll, userId = defenderUserId)
+        if (hadAbsorbingMinions && damageAfterMinionShield > 0) {
+            addMinionShieldResidualDamage(
+                summonerUserId = defenderUserId,
+                damageAfterMinionShield = damageAfterMinionShield,
+            )
+        }
 
         val isDoublesBonusStillLive =
             if (isKnockout) {

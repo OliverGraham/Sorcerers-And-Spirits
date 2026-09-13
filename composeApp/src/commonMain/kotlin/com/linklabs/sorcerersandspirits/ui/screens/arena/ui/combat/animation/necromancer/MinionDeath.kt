@@ -273,6 +273,7 @@ private fun MinionDeathPreview(minionType: MinionType) {
                 minionName = accentClass.name,
                 minionType = minionType,
                 minionIndex = 0,
+                damageAbsorbed = 1,
             )
         },
     ) { message ->

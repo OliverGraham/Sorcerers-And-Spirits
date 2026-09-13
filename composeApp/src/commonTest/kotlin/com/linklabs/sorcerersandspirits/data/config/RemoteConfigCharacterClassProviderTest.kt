@@ -1,9 +1,9 @@
 package com.linklabs.sorcerersandspirits.data.config
 
-import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

@@ -3,8 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
-import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.resolveTargetUserId
 import kotlin.test.Test

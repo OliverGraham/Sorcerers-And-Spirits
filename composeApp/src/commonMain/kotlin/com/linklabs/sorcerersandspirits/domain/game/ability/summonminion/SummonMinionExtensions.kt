@@ -25,7 +25,7 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
         return SummonerDamagedResult(
             damageToSummoner = damage,
             updatedSummonMinion = this,
-            minionMessages = emptyList()
+            minionMessages = emptyList(),
         )
     }
 
@@ -37,6 +37,7 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
         when {
             remainingDamageToApply <= 0 ->
                 updatedMinions.add(element = minion)
+
             remainingDamageToApply >= minion.hitPoints -> minionMessages.add(
                 element = ArenaMessage.SummonMinion.MinionDestroyed(
                     summonerUserId = summonerUserId,
@@ -45,8 +46,9 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
                     minionName = minion.name,
                     minionType = minion.type,
                     minionIndex = index,
-                )
+                ),
             )
+
             else -> {
                 val updatedMinion = minion.copy(hitPoints = minion.hitPoints - remainingDamageToApply)
                 updatedMinions.add(element = updatedMinion)
@@ -58,8 +60,8 @@ internal fun OffensiveAbility.SummonMinion.getSummonerDamagedResult(
                         minionName = updatedMinion.name,
                         minionType = updatedMinion.type,
                         minionIndex = index,
-                        minionHitPointsRemaining = updatedMinion.hitPoints
-                    )
+                        minionHitPointsRemaining = updatedMinion.hitPoints,
+                    ),
                 )
             }
         }

@@ -49,7 +49,6 @@ interface AllInAbility {
     val usedThisTurn: Boolean
 }
 
-
 interface ImpersonateAbility<out T> {
     val impersonatedAbility: T
 }

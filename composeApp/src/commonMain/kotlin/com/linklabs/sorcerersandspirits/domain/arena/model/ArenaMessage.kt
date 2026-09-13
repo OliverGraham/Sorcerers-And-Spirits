@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 
 sealed interface ArenaMessage {
 
@@ -169,8 +169,6 @@ sealed interface ArenaMessage {
             val minionIndex: Int,
         ) : SummonMinion
     }
-
-
 
     sealed interface Persuade : ArenaMessage {
 

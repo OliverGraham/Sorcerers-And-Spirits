@@ -2,10 +2,10 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
 import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionNames
 import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
-import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.withEffective
 
 internal class SummonMinionActivated(
@@ -66,7 +66,7 @@ internal class SummonMinionActivated(
         type = type,
         name = MinionNames.nameNotIn(usedNames = livingMinionNames()),
         hasAttackedThisRound = false,
-        hitPoints = hitPoints
+        hitPoints = hitPoints,
     )
 
     private fun CombatMutator.handleFailure() {

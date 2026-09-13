@@ -9,9 +9,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.hasPendingExtraAttack
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterDamage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.shouldMessageDoublesAfterKnockout
-import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
 import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.effective
 

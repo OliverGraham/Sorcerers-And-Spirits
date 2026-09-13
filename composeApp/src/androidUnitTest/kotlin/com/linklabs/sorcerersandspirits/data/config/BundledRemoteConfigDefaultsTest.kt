@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.config
 
-import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import kotlinx.serialization.json.Json
 import java.io.File
 import kotlin.test.Test

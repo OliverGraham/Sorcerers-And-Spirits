@@ -2,11 +2,11 @@ package com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombatactio
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMessage
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
-import com.linklabs.sorcerersandspirits.domain.game.Minion
-import com.linklabs.sorcerersandspirits.domain.game.MinionNames
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.withEffective
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionNames
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.withEffective
 
 internal class SummonMinionActivated(
     private val combatMutator: CombatMutator,
@@ -24,7 +24,7 @@ internal class SummonMinionActivated(
 
         addMessage(
             message =
-            ArenaMessage.SummonMinion(
+            ArenaMessage.SummonMinion.Summon(
                 necromancerUserId = attackerUserId,
                 className = attacker.className,
                 classType = attacker.type,
@@ -45,27 +45,28 @@ internal class SummonMinionActivated(
 
     private fun CombatMutator.getSummonResult(result: Int) = when (result) {
         in abilityConfig.summonSkeletonRange -> SummonResult(
-            minion = summonedMinion(type = MinionType.Skeleton),
+            minion = summonedMinion(type = MinionType.Skeleton, hitPoints = 1),
             shouldHealToFull = false,
         )
 
         in abilityConfig.summonSkeletonAndHealRange -> SummonResult(
-            minion = summonedMinion(type = MinionType.Skeleton),
+            minion = summonedMinion(type = MinionType.Skeleton, hitPoints = 1),
             shouldHealToFull = true,
         )
 
         abilityConfig.summonGolemRoll -> SummonResult(
-            minion = summonedMinion(type = MinionType.Golem),
+            minion = summonedMinion(type = MinionType.Golem, hitPoints = 2),
             shouldHealToFull = true,
         )
 
         else -> null
     }
 
-    private fun CombatMutator.summonedMinion(type: MinionType): Minion = Minion(
+    private fun CombatMutator.summonedMinion(type: MinionType, hitPoints: Int): Minion = Minion(
         type = type,
         name = MinionNames.nameNotIn(usedNames = livingMinionNames()),
         hasAttackedThisRound = false,
+        hitPoints = hitPoints,
     )
 
     private fun CombatMutator.handleFailure() {

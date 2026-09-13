@@ -63,7 +63,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
-- **SS-275** — Arena Finished: winner victory-dance animation: Added a looping `VictoryDanceAvatar`
+- **SS-268** — Persistent summoned minions: gather behind the summoner, attack, and death animations:
+  Summoned skeletons/golems became persistent avatars gathered behind the summoner (threaded
+  Domain → Data → UI via `characterClass.summonedMinions`), attacking one-by-one before the summoner via
+  the shared gesture/bounds/overlay system, and getting their own per-minion destruction explosions
+  (`MinionDeathOverlay`) driven by `MinionDestroyed` messages. Final fix: each minion is suppressed from
+  the resting `SummonedMinions` draw the moment its own death message animates (local set keyed off
+  `animatingMessage`, pruned at the state swap), so it neither double-draws under its explosion nor
+  re-appears before the batch's bulk state swap — removing the death-first-ordering flash. Added a looping `VictoryDanceAvatar`
   (Animatable + `graphicsLayer`/`applyGesture` cheer jig) played by the winner in the Finished state,
   with a `victoryDanceFor(classType)` seam (sealed `VictoryDance`) so a per-class dance can slot in
   later; wired into `MatchFinishedContent.WinnerAvatar` and shipped interactive previews.

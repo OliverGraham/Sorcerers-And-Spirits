@@ -63,12 +63,12 @@ internal class LuckyCoinHandler(
     }
 
     private fun CombatMutator.handleHighRoller() {
-        val result =
+        val singleDie =
             diceRoller
                 .roll1D6(userId = defenderUserId, dieColor = dieColorFor(userId = defenderUserId))
                 .total
 
-        updateAttackerClass { attacker -> attacker.takeDamage(damage = result) }
+        takeDamage(damage = singleDie, userId = attackerUserId)
 
         val isKnockout = !attacker.isConscious()
         addMessage(
@@ -78,7 +78,7 @@ internal class LuckyCoinHandler(
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
                 attackerClassType = attacker.type,
-                singleDie = result,
+                singleDie = singleDie,
                 isKnockout = isKnockout,
             ),
         )

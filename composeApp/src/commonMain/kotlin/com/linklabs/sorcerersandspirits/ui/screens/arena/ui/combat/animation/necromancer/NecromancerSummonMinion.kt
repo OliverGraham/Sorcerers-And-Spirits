@@ -27,7 +27,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
@@ -70,7 +70,7 @@ private val healGreen = necroGlowGreen
 
 @Composable
 internal fun NecromancerSummonMinionOverlay(
-    animatingMessage: ArenaMessageState.SummonMinion,
+    animatingMessage: ArenaMessageState.SummonMinion.Summon,
     avatarBounds: Rect,
     modifier: Modifier = Modifier,
 ) {
@@ -433,7 +433,7 @@ private fun NecromancerSummonMinionPreview(
         accentClass = actorClass,
         avatars = avatars,
         buildMessage = { id ->
-            ArenaMessageState.SummonMinion(
+            ArenaMessageState.SummonMinion.Summon(
                 id = id,
                 necromancerUserId = PREVIEW_ACTOR_ID,
                 className = actorClass.name,

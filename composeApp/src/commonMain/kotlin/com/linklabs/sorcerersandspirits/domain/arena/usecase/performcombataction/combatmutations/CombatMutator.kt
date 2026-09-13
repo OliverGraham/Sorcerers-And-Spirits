@@ -11,16 +11,17 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.toDieColor
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.effective
-import com.linklabs.sorcerersandspirits.domain.game.recordMinionAttack
-import com.linklabs.sorcerersandspirits.domain.game.reset
-import com.linklabs.sorcerersandspirits.domain.game.withEffective
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.effective
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.getSummonerDamagedResult
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.recordMinionAttack
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.resetMinionAttacks
+import com.linklabs.sorcerersandspirits.domain.game.ability.withEffective
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 
 internal data class AttackingMinion(val index: Int, val type: MinionType, val name: String)
@@ -121,11 +122,6 @@ internal class CombatMutator(
         diceRoll = diceRoller.getDiceRoll(),
     )
 
-    fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
-        val current = updatedPlayerMap.getValue(key = userId)
-        updatedPlayerMap[userId] = transform(current)
-    }
-
     fun updatePlayerClass(userId: UserId, transform: (CharacterClass) -> CharacterClass) {
         updatePlayer(userId = userId) { player ->
             player.copy(characterClass = transform(player.characterClass))
@@ -146,6 +142,37 @@ internal class CombatMutator(
 
     fun updateDefenderHitPoints(hitPoints: Int) {
         updateDefenderClass { defender -> defender.copy(hitPoints = hitPoints) }
+    }
+
+    fun takeDamage(damage: Int, userId: String) {
+        val playerClass = updatedPlayerMap.getValue(key = userId).characterClass
+        val summonMinion = playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
+
+        if (summonMinion != null) {
+            handleSummonerDamaged(
+                damage = damage,
+                userId = userId,
+                summonMinion = summonMinion,
+                summonerClassName = playerClass.className,
+                summonerClassType = playerClass.type,
+            )
+        } else {
+            updatePlayerClass(userId = userId) { currentClass ->
+                currentClass.copy(hitPoints = currentClass.hitPoints - damage)
+            }
+        }
+    }
+
+    fun wouldBeKnockedOut(damage: Int, userId: String): Boolean {
+        val playerClass = updatedPlayerMap.getValue(key = userId).characterClass
+        val summonMinion = playerClass.offensiveAbility.effective as? OffensiveAbility.SummonMinion
+        val damageToPlayer = if (summonMinion != null) {
+            damage - summonMinion.minions.sumOf { minion -> minion.hitPoints }
+        } else {
+            damage
+        }
+
+        return playerClass.hitPoints - damageToPlayer <= 0
     }
 
     fun spendTurnOwnerAttack() {
@@ -195,6 +222,11 @@ internal class CombatMutator(
         } else {
             goToNextRound()
         }
+    }
+
+    private fun updatePlayer(userId: UserId, transform: (ArenaPlayer.Selected) -> ArenaPlayer.Selected) {
+        val current = updatedPlayerMap.getValue(key = userId)
+        updatedPlayerMap[userId] = transform(current)
     }
 
     private fun grantAllInSecondAttackIfApplicable(): Boolean {
@@ -286,7 +318,7 @@ internal class CombatMutator(
         )
 
         is OffensiveAbility.SummonMinion -> withEffective(
-            updated = effectiveAbility.reset(),
+            updated = effectiveAbility.resetMinionAttacks(),
         )
 
         else -> this
@@ -323,6 +355,30 @@ internal class CombatMutator(
             }
 
         return !anyActiveUnconsciousPlayers
+    }
+
+    private fun handleSummonerDamaged(
+        damage: Int,
+        userId: String,
+        summonMinion: OffensiveAbility.SummonMinion,
+        summonerClassName: String,
+        summonerClassType: CharacterClassType,
+    ) {
+        val summonerDamagedResult = summonMinion.getSummonerDamagedResult(
+            damage = damage,
+            summonerUserId = userId,
+            summonerClassName = summonerClassName,
+            summonerClassType = summonerClassType,
+        )
+
+        messages.addAll(elements = summonerDamagedResult.minionMessages)
+
+        updatePlayerClass(userId = userId) { currentClass ->
+            currentClass.copy(
+                hitPoints = currentClass.hitPoints - summonerDamagedResult.damageToSummoner,
+                offensiveAbility = summonerDamagedResult.updatedSummonMinion,
+            )
+        }
     }
 
     private fun CharacterClass.getSummonMinionOrNull() = offensiveAbility.effective as? OffensiveAbility.SummonMinion

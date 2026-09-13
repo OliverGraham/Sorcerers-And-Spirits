@@ -32,6 +32,8 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_co
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_high_roller_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_lucky_coin_trigger
 import sorcerersandspirits.composeapp.generated.resources.arena_message_minion_attack
+import sorcerersandspirits.composeapp.generated.resources.arena_message_minion_damaged
+import sorcerersandspirits.composeapp.generated.resources.arena_message_minion_destroyed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_broke
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_armor_held
 import sorcerersandspirits.composeapp.generated.resources.arena_message_mirror_image_pass_damage
@@ -257,7 +259,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             )
         }
 
-    is ArenaMessageState.SummonMinion ->
+    is ArenaMessageState.SummonMinion.Summon ->
         when (outcome) {
             SummonMinionOutcome.Fizzle ->
                 stringResource(
@@ -290,6 +292,21 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
                     minionName.orEmpty(),
                 )
         }
+
+    is ArenaMessageState.SummonMinion.MinionDamaged ->
+        stringResource(
+            resource = Res.string.arena_message_minion_damaged,
+            summonerClassName,
+            minionName,
+            minionHitPointsRemaining,
+        )
+
+    is ArenaMessageState.SummonMinion.MinionDestroyed ->
+        stringResource(
+            resource = Res.string.arena_message_minion_destroyed,
+            summonerClassName,
+            minionName,
+        )
 
     is ArenaMessageState.Persuade.Trigger ->
         stringResource(resource = Res.string.arena_message_persuade_trigger)

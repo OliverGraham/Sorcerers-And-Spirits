@@ -8,9 +8,9 @@ import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CREDITS
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.LATEST_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.MINIMUM_SUPPORTED_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.RANDOM_TRAVELER_NAMES
-import com.linklabs.sorcerersandspirits.domain.game.AbilityConfig
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
+import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
 import dev.gitlive.firebase.remoteconfig.FirebaseRemoteConfig
 import kotlinx.serialization.json.Json
 import sorcerersandspirits.composeapp.generated.resources.Res

@@ -147,6 +147,8 @@
     <string name="arena_message_summon_minion_skeleton_heal">{class}%1$s{/class} rolled a %2$s — raises a skeleton, %3$s, (+1 Health shield, extra attack) and heals to full</string>
     <string name="arena_message_summon_minion_golem">{class}%1$s{/class} rolled a %2$s — raises a golem, %3$s, (+2 Health shield, extra attack) and heals to full</string>
     <string name="arena_message_minion_attack">{class}%1$s{/class}'s minion, %2$s, attacks!</string>
+    <string name="arena_message_minion_damaged">{class}%1$s{/class}'s minion, %2$s, takes a hit — %3$s Health left</string>
+    <string name="arena_message_minion_destroyed">{class}%1$s{/class}'s minion, %2$s, shatters!</string>
 
     <string name="arena_message_persuade_trigger">Persuade! The {class}Bard{/class} begins strumming a lute…</string>
     <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>

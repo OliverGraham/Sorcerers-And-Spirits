@@ -1,6 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

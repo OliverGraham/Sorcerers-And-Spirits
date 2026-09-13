@@ -1,8 +1,8 @@
 package com.linklabs.sorcerersandspirits.domain.arena.model
 
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.MinionType
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 
 sealed interface ArenaMessage {
 
@@ -139,14 +139,36 @@ sealed interface ArenaMessage {
         ) : Riposte
     }
 
-    data class SummonMinion(
-        val necromancerUserId: String,
-        val className: String,
-        val classType: CharacterClassType,
-        val singleDie: Int,
-        val minionIndex: Int,
-        val minionName: String?,
-    ) : ArenaMessage
+    sealed interface SummonMinion : ArenaMessage {
+
+        data class Summon(
+            val necromancerUserId: String,
+            val className: String,
+            val classType: CharacterClassType,
+            val singleDie: Int,
+            val minionIndex: Int,
+            val minionName: String?,
+        ) : SummonMinion
+
+        data class MinionDamaged(
+            val summonerUserId: String,
+            val summonerClassName: String,
+            val summonerClassType: CharacterClassType,
+            val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
+            val minionHitPointsRemaining: Int,
+        ) : SummonMinion
+
+        data class MinionDestroyed(
+            val summonerUserId: String,
+            val summonerClassName: String,
+            val summonerClassType: CharacterClassType,
+            val minionName: String,
+            val minionType: MinionType,
+            val minionIndex: Int,
+        ) : SummonMinion
+    }
 
     sealed interface Persuade : ArenaMessage {
 

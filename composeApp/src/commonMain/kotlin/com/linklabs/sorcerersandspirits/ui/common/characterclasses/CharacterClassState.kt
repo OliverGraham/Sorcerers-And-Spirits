@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.shieldPoints
 
 @Immutable
 data class CharacterClassState(
@@ -28,8 +27,9 @@ data class CharacterClassState(
     private fun buildHitPointsDisplay(): String {
         val offensiveAbility = offensiveAbility.effective
         return if (offensiveAbility is OffensiveAbilityState.SummonMinion) {
-            if (offensiveAbility.shieldPoints > 0) {
-                "$hitPoints + ${offensiveAbility.shieldPoints}"
+            val minionHitPoints = offensiveAbility.minions.sumOf { it.hitPoints }
+            if (minionHitPoints > 0) {
+                "$hitPoints + $minionHitPoints"
             } else {
                 hitPoints.toString()
             }

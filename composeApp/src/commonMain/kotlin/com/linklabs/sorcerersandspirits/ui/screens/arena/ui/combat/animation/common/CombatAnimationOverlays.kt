@@ -21,6 +21,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mag
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageSpellPotencyOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.mage.MageTeleportOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.GolemStoneFistOverlay
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.MinionDeathOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerNormalAttackOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.NecromancerSummonMinionOverlay
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.ScythePalette
@@ -102,7 +103,7 @@ internal fun CombatAnimationOverlays(
             )
         }
 
-        is ArenaMessageState.SummonMinion -> {
+        is ArenaMessageState.SummonMinion.Summon -> {
             val avatarBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.necromancerUserId)
                     ?: return
@@ -110,6 +111,36 @@ internal fun CombatAnimationOverlays(
             NecromancerSummonMinionOverlay(
                 animatingMessage = animatingMessage,
                 avatarBounds = avatarBounds,
+                modifier = modifier,
+            )
+        }
+
+        is ArenaMessageState.SummonMinion.MinionDamaged -> {
+            val avatarBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.summonerUserId)
+                    ?: return
+
+            MinionDeathOverlay(
+                messageId = animatingMessage.id,
+                minionType = animatingMessage.minionType,
+                minionIndex = animatingMessage.minionIndex,
+                avatarBounds = avatarBounds,
+                accentColor = animatingMessage.actingClassType.toColor(),
+                modifier = modifier,
+            )
+        }
+
+        is ArenaMessageState.SummonMinion.MinionDestroyed -> {
+            val avatarBounds =
+                avatarBoundsStateHolder.boundsFor(userId = animatingMessage.summonerUserId)
+                    ?: return
+
+            MinionDeathOverlay(
+                messageId = animatingMessage.id,
+                minionType = animatingMessage.minionType,
+                minionIndex = animatingMessage.minionIndex,
+                avatarBounds = avatarBounds,
+                accentColor = animatingMessage.actingClassType.toColor(),
                 modifier = modifier,
             )
         }

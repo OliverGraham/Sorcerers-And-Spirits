@@ -16,9 +16,9 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ability.passive.TeleportHandler
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.combatmutations.CombatMutator
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.domain.game.DefensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.OffensiveAbility
-import com.linklabs.sorcerersandspirits.domain.game.effective
+import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.effective
 
 internal class NormalAttackRollHandler(
     private val firstDie: Int,
@@ -94,19 +94,30 @@ internal class NormalAttackRollHandler(
             return
         }
 
-        updateDefenderClass { defenderClass -> defenderClass.takeDamage(damage = diceTotal) }
+        // TODO: Instead of checking willBeKnockedOut 3 times, make a new method
+        val willBeKnockedOut = wouldBeKnockedOut(damage = diceTotal, userId = defenderUserId)
+        val outcomeType =
+            if (willBeKnockedOut) {
+                knockoutMessageType()
+            } else {
+                NormalRollMessageType.Damage
+            }
 
-        return if (!defender.isConscious()) {
-            addNormalRoll(
-                type = knockoutMessageType(),
-                shouldMessageDoubles = shouldMessageDoublesAfterKnockout(),
-            )
+        addAttackMessage(normalRollMessageType = outcomeType)
+        takeDamage(damage = diceTotal, userId = defenderUserId)
+
+        val shouldMessageDoubles =
+            if (willBeKnockedOut) {
+                shouldMessageDoublesAfterKnockout()
+            } else {
+                shouldMessageDoublesAfterDamage()
+            }
+
+        addOutcomeMessage(type = outcomeType, shouldMessageDoubles = shouldMessageDoubles)
+
+        if (willBeKnockedOut) {
             resolveKnockout()
         } else {
-            addNormalRoll(
-                type = NormalRollMessageType.Damage,
-                shouldMessageDoubles = shouldMessageDoublesAfterDamage(),
-            )
             resolveDamage()
         }
     }
@@ -216,7 +227,13 @@ internal class NormalAttackRollHandler(
         shouldMessageDoubles: Boolean,
     ) {
         addAttackMessage(normalRollMessageType = type)
+        addOutcomeMessage(type = type, shouldMessageDoubles = shouldMessageDoubles)
+    }
 
+    private fun CombatMutator.addOutcomeMessage(
+        type: NormalRollMessageType,
+        shouldMessageDoubles: Boolean,
+    ) {
         addMessage(
             message =
             ArenaMessage.NormalRoll.Outcome(

@@ -113,22 +113,20 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
         }
     }
 
-    override suspend fun markTravelerBusyIfAvailable(userId: String): Boolean = try {
-        tavernTravelersReference.child(path = userId).runTransaction(
-            strategy = TravelerEntity.serializer().nullable,
-        ) { traveler ->
-            traveler ?: throw AbortTransactionException()
-
-            if (traveler.tavernStatus != TavernStatus.Available) {
-                throw AbortTransactionException()
+    override suspend fun markTravelerBusyIfAvailable(userId: String): Boolean {
+        val committedTraveler =
+            tavernTravelersReference.child(path = userId).runTransaction(
+                strategy = TravelerEntity.serializer().nullable,
+            ) { traveler ->
+                when {
+                    traveler == null -> traveler
+                    traveler.tavernStatus != TavernStatus.Available -> traveler
+                    else -> traveler.copy(tavernStatus = TavernStatus.Busy)
+                }
             }
+                .value(strategy = TravelerEntity.serializer().nullable)
 
-            traveler.copy(tavernStatus = TavernStatus.Busy)
-        }
-
-        true
-    } catch (_: AbortTransactionException) {
-        false
+        return committedTraveler?.tavernStatus == TavernStatus.Busy
     }
 
     override suspend fun setTravelerStatusIfPresent(userId: String, tavernStatus: TavernStatus) {
@@ -171,8 +169,6 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
     override suspend fun applyUpdates(updates: Map<String, Any?>) {
         root.updateChildren(update = updates)
     }
-
-    private class AbortTransactionException : RuntimeException()
 }
 
 @Serializable

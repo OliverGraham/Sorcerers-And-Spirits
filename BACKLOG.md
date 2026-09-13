@@ -753,40 +753,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   warrants
   it. SS-125 is expected to carry the load until then.
 
-### SS-264 — Aborting the "mark traveler busy" transaction crashes the app instead of surfacing a retryable error
-
-- [ ] Not completed
-- **Severity:** High — an app crash is never acceptable. Intermittent (does not reproduce every
-  time), but reproducible enough to have been seen in the wild.
-- **Symptom / crash:**
-  `com.google.firebase.database.DatabaseException: Firebase Database error: User code called from the
-  Firebase Database runloop threw an exception:
-  com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource$AbortTransactionException`,
-  originating at `FirebaseTavernDataSource.markTravelerBusyIfAvailable` (the `traveler ?: throw
-  AbortTransactionException()` / status-not-Available abort path).
-- **Root cause:** `markTravelerBusyIfAvailable` aborts the transaction by *throwing* an exception
-  from inside the `runTransaction` lambda. Although the call site wraps `runTransaction` in a
-  `try/catch (_: AbortTransactionException)`, the throw happens on Firebase's own runloop thread;
-  the
-  Android SDK catches user-code exceptions there, re-wraps them as a `DatabaseException`, and
-  rethrows on that thread — so it never reaches our `catch` and crashes the process as an uncaught
-  exception. Throwing to abort is fundamentally unsafe with this SDK.
-- **Fix direction:**
-    - Stop using an exception to model "don't write". Abort by returning the value unchanged (a
-      no-op write) or via whatever non-throwing abort the gitlive wrapper exposes, and detect the
-      "was I the one who claimed it" result by re-reading committed state / the transaction result
-      rather than by catching a throw. `markTravelerBusyIfAvailable` should still return `false`
-      when
-      the traveler is missing or already busy — just without ever throwing across the runloop.
-    - Audit the sibling transactions in the same file (`upsertTravelerPresence`,
-      `setTravelerStatusIfPresent`, `releaseTravelerIfBusy`) and any other `runTransaction` usage
-      (e.g. arena transactions) for the same throw-to-abort pattern and apply the same treatment.
-- **UX requirement:** when claiming a traveler genuinely fails (already busy, transient DB error),
-  the caller must land in a recoverable UI error state with a retry affordance — never a crash and
-  never a silent dead-end. Thread the failure up from the data source through the tavern domain/VM
-  to
-  a surfaced, retryable error.
-
 ### SS-270 — Support a match with both a computer and human opponents
 
 - [ ] Not completed

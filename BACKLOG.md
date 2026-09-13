@@ -993,22 +993,3 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   ([[remoteconfig-optional-override-not-required-map]]). Degrade gracefully to the bundled track on
   fetch failure/offline ([[connectivity-resilience-priority]]).
 - **Related:** SS-134 (foundation), SS-217 (bundled track is the fallback).
-
----
-
-## Tavern UI
-
-### SS-238 — Animate search-result filtering in TheBar (fade + content swap)
-
-- [ ] Not completed
-- **Goal:** When the traveler list is filtered by the name search in `TheBar`, transition the
-  results with a smooth **fade + content-swap** rather than an instant hard cut, so the list
-  reads as smoothly re-populating as the query changes.
-- **Source:** The filtered-list rendering in
-  `ui/screens/tavern/ui/TheBar.kt` — `BarFolk` renders `visibleTravelers`, which is derived from
-  `searchQuery`/`trimmedQuery`. Wrap the results in an `AnimatedContent` (or crossfade) keyed on
-  the query/visible set so filtering fades the outgoing content out and the new matches in.
-- **Notes:** Keep selection behavior intact — a picked traveler filtered out of view stays in the
-  outgoing challenge (existing comment in `TheBar`). Extract the animation label to a private
-  `const val` per [[animation-labels-as-const-vals]]. Related: SS-239 (ChallengeButton animation),
-  SS-240 (full Tavern overhaul).

@@ -26,18 +26,22 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - **Left:** the player's `classAvatarBust`, then their `displayName`.
     - **Right (outcome, varies):**
         - **Winner →** "Winner!" in the **all-class-color animating text** (same treatment as the
-          "Next match starting soon!" text — see `NextMatchBounceOverlay` in `MatchFinishedContent.kt`).
+          "Next match starting soon!" text — see `NextMatchBounceOverlay` in
+          `MatchFinishedContent.kt`).
         - **2-player game →** the loser reads "LOSER" in **grey** letters (depressing).
         - **Multiplayer →** "knocked out {Xth}" per eliminated player, and the **final** player
           knocked out reads **"last"** instead of a numeral. Reads top-to-bottom like a scoreboard.
 - **Data needed (open):** there is currently **no knockout-order/placement data** on the domain
-  player or `PlayerState.Selected`. Thread a knockout order (or final placement) Domain→Data→UI so the
-  UI can render "Xth"/"last" — display-ready per [[domain-provides-display-ready-values]]; the UI only
+  player or `PlayerState.Selected`. Thread a knockout order (or final placement) Domain→Data→UI so
+  the
+  UI can render "Xth"/"last" — display-ready per [[domain-provides-display-ready-values]]; the UI
+  only
   plugs the ordinal into a string. Decide the exact field (elimination index vs final placement)
   during work.
 - **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` (`MatchRecap`/`PlayerRecapRow`,
   `WinnerBanner`, `NextMatchBounceOverlay` for the animating-text treatment),
-  `ui/screens/arena/model/PlayerState.kt`, and the domain arena player + its Entity/State mappings for
+  `ui/screens/arena/model/PlayerState.kt`, and the domain arena player + its Entity/State mappings
+  for
   the new order field. Related: SS-179 (finished text styling), SS-097 (class-color class names),
   SS-275 (winner dance).
 
@@ -51,7 +55,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
       (`// TODO: Move state to view model layer`.)
 - **Consolidate types (they overlap and confuse):** `ArenaCombatControl`, `CombatButtons`,
   `AttackArguments`, `CombatActionArguments`/`UseAbilityArguments`, and the two
-  `*.toDomain()` `when`s in `CombatActionState.kt` (likely collapsible to one). `CombatControlActions`
+  `*.toDomain()` `when`s in `CombatActionState.kt` (likely collapsible to one).
+  `CombatControlActions`
   suggests `ArenaCombatControl` may be removable entirely.
 - **Sources:** `model/ArenaCombatControl.kt`, `ui/CombatControlActions.kt`,
   `ui/combat/CombatButtons.kt`, `viewmodel/handlers/CombatHandler.kt`, `model/CombatActionState.kt`.
@@ -62,7 +67,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ### SS-258 — Refactor CombatAnimationCue + AvatarGesture (build gestures at map time, split files, dedupe shared gestures)
 
 - [ ] Not completed
-- **Core idea:** gestures are known at VM/message-mapping time (top & bottom seats are known) — build
+- **Core idea:** gestures are known at VM/message-mapping time (top & bottom seats are known) —
+  build
   them into the message instead of querying from the composable. TODOs tagged `SS-258`.
 - **Do:**
     - Compute the per-message `gestures` map when mapping `ArenaMessage → ArenaMessageState`, not in
@@ -75,7 +81,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
       remember); rename `AvatarGestureState` → `AvatarGestureStateHolder`; continue the
       `CombatAnimationCue` rename/move started in `CombatAvatars.kt`; clarify the confusing
       `userPlayerId` pass-through there.
-    - Fill the missing/uncertain cue→overlay branches in `animation/common/CombatAnimationOverlays.kt`
+    - Fill the missing/uncertain cue→overlay branches in
+      `animation/common/CombatAnimationOverlays.kt`
       (KillingMomentum, Dodge, the "Where is it?" / "should never happen" cases).
     - Consider collapsing `ArenaAnimationState` to a plain enum if it now carries no data.
 - **Sources:** `ui/combat/CombatAvatarGesture.kt`, `ui/combat/CombatAvatars.kt`,
@@ -93,11 +100,13 @@ are archived in [COMPLETED.md](COMPLETED.md).
       `ArenaMessageState.kt` (`summonMinionOutcomeFor` / `allInOutcomeFor`) — move these back to the
       domain and pass them through on the message.
     - Message *grouping* (`ArenaMessageGroupState.appendNewMessages` "not-combat" vs
-      `addNewMessageDuringCombat` "combat-only", + the Setup handling) belongs in a domain MessageLog,
+      `addNewMessageDuringCombat` "combat-only", + the Setup handling) belongs in a domain
+      MessageLog,
       not two ugly UI functions.
     - Dedupe `CharacterClassMessageInfoState` vs `ParticipantClass` (same shape) in
       `ArenaMessageState.kt`.
-    - Rename the domain `NormalRoll` outcome type → `NormalRollOutcomeType` (`domain/.../ArenaMessage.kt`).
+    - Rename the domain `NormalRoll` outcome type → `NormalRollOutcomeType` (
+      `domain/.../ArenaMessage.kt`).
 - **Sources:** `model/ArenaMessageState.kt`, `model/ArenaMessageGroupState.kt`,
   `domain/arena/model/ArenaMessage.kt`.
 
@@ -111,7 +120,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - `updateCombatState`: confirm `selectedOpponentUserId` is carried correctly across a combat
       update (`// TODO: Correct?`); consider passing the resolved `arenaMatchState` into
       `notifyDepartedOpponents` during a branching update.
-    - `handleScreenStateUpdateError`: decide mid-match error behavior (currently: show error + leave).
+    - `handleScreenStateUpdateError`: decide mid-match error behavior (currently: show error +
+      leave).
 - **Sources:** `viewmodel/ArenaScreenViewModel.kt`, `ArenaSessionStats.kt`.
 
 ### SS-261 — ArenaScreenStateUpdate finished-transition gaps
@@ -129,11 +139,14 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 - [ ] Not completed
 - **Do (TODOs tagged `SS-262`):**
-    - When the Illusionist impersonates an ability, overlays use the *acted class's* color; the accent
-      should be the **Illusionist's** color instead (`gambler/GamblerAllIn.kt` accentColor default is
+    - When the Illusionist impersonates an ability, overlays use the *acted class's* color; the
+      accent
+      should be the **Illusionist's** color instead (`gambler/GamblerAllIn.kt` accentColor default
+      is
       the tell — every borrowed ability overlay has the same issue).
     - Verify the dice-kickoff path in `DiceStateHolder.kt` works for Impersonate (and other
-      dice-consuming abilities). [[illusionist-borrows-weapons]], [[dice-roll-must-be-roll-bearing]].
+      dice-consuming
+      abilities). [[illusionist-borrows-weapons]], [[dice-roll-must-be-roll-bearing]].
 
 ### SS-263 — Duelist Riposte animation visual polish
 
@@ -152,34 +165,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
   distinct palette (e.g. Illusionist-blue elemental variant) instead of the standard Mage elements.
 - **Source:** `animation/mage/MageSpellPotency.kt` (`mageElementFor`, `MageSpellElement.palette()`).
   The actor's real class is now available on the message via `actingClassType` (SS-262). Related:
-  SS-262, [[illusionist-borrows-weapons]]. Ship interactive previews ([[combat-animation-previews]]).
-
-### SS-266 — SummonMinion: Illusionist portal should be illusionist blue, not green
-
-- [ ] Not completed
-- **Goal:** When the Illusionist impersonates Summon Minion, the summoning portal should render in
-  Illusionist blue rather than the Necromancer green. Currently the portal color is baked to the
-  necromancer palette regardless of the actor.
-- **Source:** `animation/necromancer/NecromancerSummonMinion.kt` (`summonMinionScene` / portal
-  draw). The actor's real class is available on the message via `actingClassType` (SS-262); thread a
-  portal color off it (necro green vs illusionist blue). Related: SS-262,
-  [[illusionist-borrows-weapons]]. Ship interactive previews ([[combat-animation-previews]]).
-
-### SS-185 — Pare back which messages flash
-
-- [ ] Not completed
-- **Goal:** SS-164 makes **every** message flash (round/turn/connection/info and every intermediate
-  roll step). Decide which messages should be **log-only** and stop them flashing, so the flash
-  channel stays punchy and reads as combat narration rather than echoing the whole log.
-- **Mechanism:** `ArenaMessageState.flashCallout` (in `FlashCallout.kt`) already returns
-  `FlashCallout?` and `ArenaScreenState.flashMessages` already filters nulls — return `null` from
-  the
-  branches that should be log-only. No structural change needed.
-- **Open for owner:** the exact keep/cut list (likely cut: `NewRound`, `NewTurn`,
-  `ConnectedToArena`,
-  `ChoseCharacterClass`, and intermediate roll steps like `Teleport.Roll`,
-  `LuckyCoin.HighRollerTrigger`).
-- **Related:** SS-164 (one message → two resources).
+  SS-262, [[illusionist-borrows-weapons]]. Ship interactive
+  previews ([[combat-animation-previews]]).
 
 ### SS-178 — One reusable button for the whole app (text + icon, incl. combat)
 
@@ -207,14 +194,16 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ### SS-029 — Move combat-action availability to the domain + StringResources in ArenaCombatControl
 
 - [ ] Not completed
-- **Source:** `ArenaCombatControl.kt` (`// TODO(SS-029): Always StringResources`), `deriveCombatControls`
+- **Source:** `ArenaCombatControl.kt` (`// TODO(SS-029): Always StringResources`),
+  `deriveCombatControls`
 - **Goal (Phase 2 of the ArenaScreenState TODO cleanup):**
-  - Move the combat-action *availability* logic (`ArenaState.Combat.deriveCombatControls`) into the
-    domain, producing plain domain action types for the current user (no UI types, no labels). The
-    domain already has the userId + playerMap to compute this.
-  - Remove the hardcoded `label: String` from `ArenaCombatControl`; the UI maps action type →
-    `stringResource` at render time (the type carries the identity). Dynamic labels (e.g. Mirror
-    Image "Reroll the 3") carry the die value as data and use a parameterized string resource.
+    - Move the combat-action *availability* logic (`ArenaState.Combat.deriveCombatControls`) into
+      the
+      domain, producing plain domain action types for the current user (no UI types, no labels). The
+      domain already has the userId + playerMap to compute this.
+    - Remove the hardcoded `label: String` from `ArenaCombatControl`; the UI maps action type →
+      `stringResource` at render time (the type carries the identity). Dynamic labels (e.g. Mirror
+      Image "Reroll the 3") carry the die value as data and use a parameterized string resource.
 - **Note:** Phase 1 (turn owner / locked target / attacker resolution) already moved to the domain;
   this is the remaining piece.
 
@@ -244,7 +233,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ### SS-255 — Message log open/insert animation reads wrong (topmost line doesn't move)
 
 - [ ] Not completed
-- **Symptom:** When the log opens (and when a new line is revealed), the **topmost** message stays put
+- **Symptom:** When the log opens (and when a new line is revealed), the **topmost** message stays
+  put
   while everything below it slides — it should all move together as the content shifts.
 - **Goal:** Make the log content animate as a unit on open and on insert (the whole column slides),
   rather than the first item anchoring while the rest animate via `animateItem()`.
@@ -288,49 +278,6 @@ plus one ticket per ability, worked one at a time. The seam is ready:
 into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
 SS-191's generic lunges remain the fallback for classes not yet done.
 
-### SS-205 — Necromancer Summon Minion animation
-
-- [ ] Follow-up pending
-- **Goal:** every outcome opens the same green glowing portal at the summoner's feet, then diverges:
-  a fizzle drains the portal gray and closes it; a skeleton (white, green-eyed) or a larger brownish
-  clay golem (green runes/eyes) rises up out of the portal and then fades; a heal (skeleton-and-heal
-  or golem) plays a red-green burst off the Necromancer with a few `ic_health` icons floating up and
-  fading. Portal + creatures + heal drawn in the overlay; summoner plays the existing Cast gesture.
-- **Done (first pass, shipped):** portal/fizzle/heal/float-up and the choreography, wiring, and
-  per-outcome previews all landed; the skeleton and golem are hand-drawn Canvas shapes for now.
-- **Follow-up:** replace the hand-drawn skeleton and golem in `NecromancerMinions.kt` with an image
-  asset of each (keep the portal, heal burst, and rise/fade choreography). Then close the ticket.
-- **Cue sources:** `ArenaMessageState.SummonMinion`.
-- **Parent:** SS-191. Split out of SS-195.
-
-### SS-206 — Bard Encore animation
-
-- [ ] Follow-up pending
-- **Goal:** the moment Encore triggers (the Bard has dealt damage or scored a K.O.) the whole arena
-  drops into concert dark — the screen darkens on all sides to a spotlit stage with a 3D standing
-  microphone, and the crowd is made of numerous small copies of every class avatar packed into the
-  distance. The crowd and the light off the mic keep moving so the scene is alive while the roll is
-  awaited. On the roll the mic throws off sound and music notes; on a landing the crowd goes wild
-  (success) or boos (failure). A failed Encore grays the music the way the other Bard failures do.
-  After Encore finishes the lights come up and the darkness lifts.
-- **Done (first pass, shipped):** full-screen concert scene with the darkness fall/lift, spotlight
-  cone + pool, receding crowd of all eight avatars (ambient sway, wild-jump vs boo-shake), 3D
-  chrome microphone (radial-shaded head with sweeping glint, banded stand, domed base), music-note
-  burst + sound rings on the roll, the gray drain on failure, the vignette frame, and the cue/phase
-  wiring (`EncorePhase` SetStage/Success/Failure) plus success/failure previews. Everything is
-  hand-drawn Canvas over the avatar PNGs (`BardEncore.kt`, `EncoreStage.kt`).
-- **Note:** the concert scene now covers the **whole screen** (`EncoreFullScreenOverlay`, hosted in
-  the outer arena `Box` **below** `BottomControls`), so the darkness reaches the edges while the roll
-  buttons float on top of it and stay visible/usable — the arena darkens to a smooth gradient behind
-  the buttons rather than stopping at the stage region.
-- **Follow-up:** Replace the hand-drawn microphone with an image asset for a truer 3D look (keep
-  the
-  glint, note behaviours, gray drain, and darkness fall/lift choreography); polish/tune the crowd
-  density, proportions, colours, and timing once seen on-device; and consider a real crowd-noise
-  cue for the wild/boo beat. Then close the ticket.
-- **Cue sources:** `ArenaMessageState.Encore.*`.
-- **Parent:** SS-191. Split out of SS-196.
-
 ### SS-207 — Bard Persuade animation
 
 - [ ] Follow-up pending
@@ -362,13 +309,16 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - [ ] Not completed
 - **Goal:** Drop the managed Firebase Remote Config dependency and serve the same config JSON from a
   **GitHub-hosted** location (raw file URL / GitHub Pages / release asset), fetched over HTTPS and
-  cached, with the existing **bundled JSON** as the offline default. Gains built-in version control on
+  cached, with the existing **bundled JSON** as the offline default. Gains built-in version control
+  on
   the config.
 - **Owner wants a succinct, clear walkthrough first:** when this is picked up, produce a short setup
   walkthrough before coding — repo/branch layout for the JSON, raw-URL vs Pages vs release-asset
-  trade-off, caching/ETag + refresh cadence, and how it maps onto the current `RemoteConfigDataSource`
+  trade-off, caching/ETag + refresh cadence, and how it maps onto the current
+  `RemoteConfigDataSource`
   seam.
-- **Preserve the seam:** keep the `RemoteConfigDataSource` interface and every consumer (class stats,
+- **Preserve the seam:** keep the `RemoteConfigDataSource` interface and every consumer (class
+  stats,
   ability config, class copy, traveler names, credits, version gates) unchanged — swap only the
   implementation behind the interface. A KMP HTTP client (Ktor) replaces
   `dev.gitlive.firebase.remoteconfig`; the bundled defaults under
@@ -391,7 +341,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - [ ] Not completed
 - **Goal:** Formalize the credits **text types** (header, body, and any others) in the Remote Config
   schema and the domain/UI model, replacing SS-281's placeholder `title + entries` shape, and render
-  each type with its own styling so the scroll reads properly (section headers vs body lines, spacing,
+  each type with its own styling so the scroll reads properly (section headers vs body lines,
+  spacing,
   emphasis).
 - **Source:** builds on SS-281 — the `credits.json` schema, `CreditsEntity` / `CreditsSection`
   (domain), `CreditsState`, and the rendering in `CreditsScreen.kt` (`CreditsSection`). Decide the
@@ -400,26 +351,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 ---
 
 ## Domain layer
-
-### SS-283 — Give golems their own hit points instead of downgrading to a skeleton
-
-- [ ] Not completed
-- **Problem:** Minion shields are modeled as fungible points (`shieldPoints = golems*2 + skeletons*1`).
-  When a golem (2 shield) takes 1 damage, `CharacterClass.takeDamageBehindMinions` rebuilds the
-  survivors from the remaining shield total, so the golem re-materializes as a **skeleton** (a
-  "downgrade"). This is intentional today (see the passing test
-  `CharacterClassTakeDamageTest` — "the golem downgrades to a skeleton-equivalent"), but it will look
-  wrong on screen once minions are persistently rendered (SS-268): a golem visibly morphing into a
-  skeleton mid-match.
-- **Stronger fix:** Model each minion as its own entity with its own hit points (golem = 2 HP,
-  skeleton = 1 HP), so a golem can take a hit and **survive as a damaged golem** rather than becoming
-  a skeleton. Damage targets a specific minion; a minion is destroyed only when its own HP reaches 0.
-  This also removes the fungible-shield rebuild entirely, which is what currently discards minion
-  identity (names had to be threaded back through the rebuild in SS-273 — this would make that
-  unnecessary).
-- **Sources:** `domain/game/CharacterClass.kt` (`takeDamageBehindMinions`), `domain/game/Ability.kt`
-  (`shieldPoints`, `SummonMinion`), `domain/game/Minion.kt`, and the Entity/State mirrors +
-  `CharacterClassTakeDamageTest`. Related: SS-268 (persistent minion rendering), SS-273 (minion names).
 
 ### SS-048 — Die-value enum
 
@@ -430,21 +361,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 ---
 
 ## Bugs
-
-### SS-180 — Random character choice almost always picks Necromancer
-
-- [ ] Not completed
-- **Symptom:** The random "choose a character" path has landed on Necromancer 5+ times in a row,
-  i.e. it isn't actually random (or is biased to one class).
-- **Source:** The random class picks use `availableClasses.randomOrNull()` —
-  `ArenaScreenViewModel.kt:511` (user timeout auto-pick) and `ComputerOpponentHandler.kt`. Suspect a
-  non-uniform/iteration-order source (a `Set` iterated deterministically, a stale RNG, or selecting
-  off a fixed-order collection). Confirm which affordance the owner means (manual "random" control
-  vs. timeout auto-pick) and verify the selection is drawn uniformly from the live available
-  classes.
-- **Notes:** Necromancer is index 3 in `getAllClasses()` order — check for an off-by-index or
-  first/last-of-collection bug masquerading as random.
-- **Related:** SS-122 (class availability by type), SS-092 (computer opponent).
 
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 
@@ -470,19 +386,23 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   `AnimationKey.AvatarGesture(userId)` per entry in `gestures.keys`. The coordinator only resolves
   once **every** expected key has reported via `onAnimationComplete`.
 - **Symptom / hazard:** a gesture is only reported by a mounted, seated `GestureClassAvatar` (top =
-  targeted seat, bottom = attacker seat). If a message's `gestures` map names a userId that is **not**
+  targeted seat, bottom = attacker seat). If a message's `gestures` map names a userId that is **not
+  **
   seated — rendered only in the stands (`ClassIcons`), or otherwise not composing a
   `GestureClassAvatar` — that `AvatarGesture(userId)` key is never reported, the coordinator's
   `completion` never completes, `await()` blocks forever, and the queue stalls. That's the same
   end-state SS-256 fought (combat controls never return, match becomes unplayable).
-- **Identified case:** SpellPotency. Its `gestures` map carries the mage (`Cast`) and the main target
+- **Identified case:** SpellPotency. Its `gestures` map carries the mage (`Cast`) and the main
+  target
   (`Collapse`/`FlinchHeavy`). Confirm whether the main target (and any secondary/splash target that
-  ever receives a gesture) is guaranteed to be one of the two on-screen seats; splash victims live in
+  ever receives a gesture) is guaranteed to be one of the two on-screen seats; splash victims live
+  in
   the stands and must never end up as an expected gesture key while unseated.
 - **Fix direction:** restrict the expected-animator set to participants that will actually mount and
   report (only the seated attacker/target), or give the coordinator a bounded fallback so an
   unreported animator can't hang the whole queue. Decide which in `getExpectedAnimationKeys`.
-- **Related:** SS-256 (the queue/gating rearchitecture this rides on), [[never-drain-loop-combat-queue]],
+- **Related:** SS-256 (the queue/gating rearchitecture this rides
+  on), [[never-drain-loop-combat-queue]],
   [[combat-queue-signal-reentrancy]], [[combat-button-visibility-isanimating]].
 
 ## Profile & Auth
@@ -532,7 +452,8 @@ SS-191's generic lunges remain the fallback for classes not yet done.
       result=SUCCESS`); the **encrypted session is written to disk**
       (`shared_prefs/com.google.firebase.auth.api.Store.*.xml` → `FIREBASE_USER=ENCRYPTED:…`, with a
       self-contained Tink AES-GCM keyset, so it is not an Android-Keystore decryption failure).
-    - **Persistence is a timing race on this device:** kill the app ~2s after sign-in → session lost,
+    - **Persistence is a timing race on this device:** kill the app ~2s after sign-in → session
+      lost,
       dialog on relaunch; kill ~15s after → session survives into the app. The encrypted session is
       not durable for several seconds after sign-in and the S9 loses it if the process dies inside
       that window. The emulator and Pixel 7a persist correctly with short gaps.
@@ -546,13 +467,15 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Dependency update — tried, does NOT fix it (2026-07-25):** GitLive `2.4.0→2.5.0` is a no-op for
   this (both pin native `firebase-auth 23.2.1`). Forcing native `firebase-auth 24.2.0` (app-runtime
   `firebase-bom 34.16.0`) builds and runs (GitLive 2.4.0 runtime-compatible with native 24 on the
-  auth path), but a definitive S9 test — sign in, wait 20s, force-stop, relaunch — still **lost** the
+  auth path), but a definitive S9 test — sign in, wait 20s, force-stop, relaunch — still **lost**
+  the
   session (the encrypted `Store` file intermittently isn't even written). Reverted; it's an
   unsupported GitLive+native-24 combo with no benefit here.
 - **Options if picked up:** (a) accept as an old-device quirk (Pixel 7a fine, app unreleased); (b)
   app-side resilience — stop orphaning accounts on a lost session and/or persist a durable local
   record to detect+repair.
-- **Source:** `FirebaseAuthenticationRepository` (auth/session persistence), `AppViewModel.loadScreenState`
+- **Source:** `FirebaseAuthenticationRepository` (auth/session persistence),
+  `AppViewModel.loadScreenState`
   (the two dialog gates), `CreateProfileUseCase` (mints a new anon user when not signed in).
 - **Related:** SS-088 (Android Google enablement), SS-061/SS-086 (Google sign-in),
   [[auth-restore-race-bounded-wait]], the owner's standing emphasis on session/connectivity
@@ -695,38 +618,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 ## UI overhaul & input
 
-### SS-084 — Spinning-wheel visual fidelity (match Figma)
-
-- [ ] Not completed
-- **Source:** Child of SS-079. The wheel's interaction + structure shipped under SS-079; this ticket
-  is the look. Figma will keep iterating on icons/colors, so this is intentionally split out.
-- **Goal:** Bring `CharacterClassWheel` to Figma fidelity:
-    - Themed top header band and bottom stat band (the radial-gradient bars from the Figma frame).
-    - Background image behind the wheel.
-    - Spoke geometry/proportions — length, thickness, corner radius, gap from hub — tuned to the
-      Figma
-      `SPOKE_*` / `AVATAR_*` / `HUB_*` fractions instead of the current eyeballed values.
-    - ~~Final per-class spoke colors~~ **DONE (2026-06-26, SS-153):** the exact Figma per-family
-      gradients (Rogue/Duelist `#9D2920→#581310`, Gambler/Bard `#DAA73B→#74591F`,
-      Necromancer/Paladin
-      `#4B5F0D→#9BC51B`, Illusionist/Mage `#1D406D→#387CD3`) are applied in `ClassStyle.kt` (
-      `toGradient`/
-      `toColor`), feeding both the wheel spokes and the head icon. **Still to do here:** the final
-      avatar
-        + stat icon art polish — the new `*_avatar`/`*_bust` art and stat icons (`ic_armor_class`,
-          `ic_hit_points`, `ic_spc`, `ic_speed`) are imported but their sizing/placement on the
-          wheel still
-          needs the fidelity pass. The wheel currently uses one flat `toColor()` per spoke (the
-          gradient's top
-          stop) — decide whether spokes should render the full gradient. See
-          [[downsample-figma-raster-assets]] for the raster art.
-    - Selected-spoke highlight treatment and hub styling; label typography/placement polish.
-- **Steps:** Pull updated Figma assets/colors when ready; replace placeholder drawables; tune the
-  layout fraction constants; add the header/stat bands and background; revisit the selected-state
-  highlight.
-- **Notes:** Gated on Figma updates. Coordinate with SS-080 (responsive) and SS-081 (copy). Related:
-  SS-079, SS-068.
-
 ### SS-133 — Refine screen-transition feel
 
 - [ ] Not completed
@@ -779,8 +670,10 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   now shrink automatically. Combat avatars are proportional (`BoxWithConstraints`) so density leaves
   them untouched; window insets round-trip (same density both directions).
   Wheel + stats-card fit: `CharacterClassWheel` is now a root `BoxWithConstraints`; when the parent
-  bounds the height it caps the wheel to `WHEEL_HEIGHT_FRACTION` (0.6) of it so the stats card always
-  keeps room, and the stats card takes the remaining space via `weight(fill = false)` with the card's
+  bounds the height it caps the wheel to `WHEEL_HEIGHT_FRACTION` (0.6) of it so the stats card
+  always
+  keeps room, and the stats card takes the remaining space via `weight(fill = false)` with the
+  card's
   content in a `verticalScroll` so an expanded card scrolls instead of clipping. Unbounded-height
   hosts keep the old wrap-content behavior. The wheel is being moved off `TavernScreen` (overhaul
   pending), so Tavern-specific fit is deferred to that work.
@@ -873,7 +766,8 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   AbortTransactionException()` / status-not-Available abort path).
 - **Root cause:** `markTravelerBusyIfAvailable` aborts the transaction by *throwing* an exception
   from inside the `runTransaction` lambda. Although the call site wraps `runTransaction` in a
-  `try/catch (_: AbortTransactionException)`, the throw happens on Firebase's own runloop thread; the
+  `try/catch (_: AbortTransactionException)`, the throw happens on Firebase's own runloop thread;
+  the
   Android SDK catches user-code exceptions there, re-wraps them as a `DatabaseException`, and
   rethrows on that thread — so it never reaches our `catch` and crashes the process as an uncaught
   exception. Throwing to abort is fundamentally unsafe with this SDK.
@@ -881,14 +775,16 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
     - Stop using an exception to model "don't write". Abort by returning the value unchanged (a
       no-op write) or via whatever non-throwing abort the gitlive wrapper exposes, and detect the
       "was I the one who claimed it" result by re-reading committed state / the transaction result
-      rather than by catching a throw. `markTravelerBusyIfAvailable` should still return `false` when
+      rather than by catching a throw. `markTravelerBusyIfAvailable` should still return `false`
+      when
       the traveler is missing or already busy — just without ever throwing across the runloop.
     - Audit the sibling transactions in the same file (`upsertTravelerPresence`,
       `setTravelerStatusIfPresent`, `releaseTravelerIfBusy`) and any other `runTransaction` usage
       (e.g. arena transactions) for the same throw-to-abort pattern and apply the same treatment.
 - **UX requirement:** when claiming a traveler genuinely fails (already busy, transient DB error),
   the caller must land in a recoverable UI error state with a retry affordance — never a crash and
-  never a silent dead-end. Thread the failure up from the data source through the tavern domain/VM to
+  never a silent dead-end. Thread the failure up from the data source through the tavern domain/VM
+  to
   a surfaced, retryable error.
 
 ### SS-270 — Support a match with both a computer and human opponents
@@ -909,7 +805,8 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
     - Allow a challenge/lobby to seed one or more computer opponents alongside the human handshake,
       rather than the current either/or (`startComputerMatch` vs the human challenge path).
     - Derive `expectedNumberOfPlayers` from humans + computers together, not `computers + 1`.
-    - Decide arena-id/creation: a computer match currently uses `generateComputerMatchId()` and skips
+    - Decide arena-id/creation: a computer match currently uses `generateComputerMatchId()` and
+      skips
       the handshake; a mixed match must still run the human presence/claim handshake while carrying
       the computer seed through to `ArenaScreenViewModelArguments.computerOpponents`.
     - Confirm the computer(s) are only owned/driven by one client (the match creator) and that the
@@ -936,7 +833,8 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
     - Provide a roster of distinct computer opponents (stable unique `userId`s under
       `ComputerOpponents.ID_PREFIX`, distinct display names) and let the setup flow pick how many.
     - Verify no-duplicate-class selection holds when several computers choose classes in the same
-      `ChoosingClasses` phase (the handler picks from `unavailableClasses` — confirm it stays correct
+      `ChoosingClasses` phase (the handler picks from `unavailableClasses` — confirm it stays
+      correct
       as each computer's choice lands and the set updates).
     - Confirm total players (humans + computers) respects the 2–8 player rules and that
       `expectedNumberOfPlayers` is computed from the combined roster.
@@ -956,7 +854,8 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - [ ] Not completed
 - **Status (foundation shipped):** The KMP audio plumbing is built and merged — `commonMain`
   `MusicPlayer` / `SoundEffectPlayer` interfaces + `MusicTrack` / `SoundEffect` sealed catalogs (no
-  entries yet), Android `AndroidMusicPlayer` (Media3 ExoPlayer, gapless loop + volume cross-fade) and
+  entries yet), Android `AndroidMusicPlayer` (Media3 ExoPlayer, gapless loop + volume cross-fade)
+  and
   `AndroidSoundEffectPlayer` (SoundPool), iOS `IosMusicPlayer` (`AVAudioPlayer` fade) and
   `IosSoundEffectPlayer` (pooled `AVAudioPlayer`), and Koin DI in both `PlatformModule`s. Nothing
   plays yet: no asset files, no catalog entries, no trigger wiring, no mute UI, no remote-URL
@@ -1049,10 +948,13 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 - [ ] Not completed
 - **Goal:** Populate the SS-134 audio foundation with real content. Add `MusicTrack` /
-  `SoundEffect` implementations (each a `data object` overriding `assetFileName`) and drop the encoded
+  `SoundEffect` implementations (each a `data object` overriding `assetFileName`) and drop the
+  encoded
   files: SFX as 44.1 kHz / 16-bit mono WAV, music as 44.1 kHz stereo ~128–160 kbps VBR AAC in an
-  `.m4a` container (gapless-loop metadata intact). Android SFX resolve from `androidMain` assets under
-  `assets/audio/`; Android music loads via the `asset:///audio/…` URI; iOS resolves both from the app
+  `.m4a` container (gapless-loop metadata intact). Android SFX resolve from `androidMain` assets
+  under
+  `assets/audio/`; Android music loads via the `asset:///audio/…` URI; iOS resolves both from the
+  app
   bundle via `NSBundle`. Prep assets to the correct format/size before committing, per
   [[downsample-figma-raster-assets]] discipline.
 - **Related:** SS-134 (foundation).
@@ -1110,16 +1012,3 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   outgoing challenge (existing comment in `TheBar`). Extract the animation label to a private
   `const val` per [[animation-labels-as-const-vals]]. Related: SS-239 (ChallengeButton animation),
   SS-240 (full Tavern overhaul).
-
-### SS-240 — Complete UI overhaul of TavernScreen (owner to spec before work)
-
-- [ ] Not completed
-- **Goal:** Full visual/structural overhaul of `TavernScreen`. Known direction so far: the
-  **class wheel (`CharacterClassWheel`) will no longer be used here**, and **`TheBar` will likely
-  be modified substantially**. The rest of the new design is to be described by the owner **at the
-  start of the work** — do not begin building until the spec is given.
-- **Source:** `ui/screens/tavern/ui/TavernScreen.kt` (`LoadedTavernScreen`, `ScreenContent` — which
-  currently hosts `CharacterClassWheel`) and `ui/screens/tavern/ui/TheBar.kt`.
-- **Notes:** This is an epic; carve child tickets once the design is specified. Don't remove
-  existing functionality without an explicit instruction in the spec ([[never-remove-without-instruction]]).
-  Related: SS-238, SS-239 (fold in or supersede as the new design dictates).

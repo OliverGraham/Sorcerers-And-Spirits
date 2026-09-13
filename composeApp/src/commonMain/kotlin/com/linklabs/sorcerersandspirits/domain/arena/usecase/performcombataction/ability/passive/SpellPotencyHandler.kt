@@ -22,8 +22,8 @@ internal class SpellPotencyHandler(
                 diceTotal / abilityConfig.spellPotencySplashDivisor
             }
 
-        applyFullDamageToDefender()
         addSpellPotencyMessage(splashTargets = splashTargets, splashDamage = splashDamage)
+        applyFullDamageToDefender()
         applySplashDamage(splashTargets = splashTargets, splashDamage = splashDamage)
 
         if (!triggerHolyShieldIfApplicable()) {
@@ -38,7 +38,7 @@ internal class SpellPotencyHandler(
     }
 
     private fun CombatMutator.applyFullDamageToDefender() {
-        takeDamage(damage = diceTotal, userId = defenderUserId)
+        applyDamageWithMinionShield(damage = diceTotal, userId = defenderUserId)
     }
 
     private fun CombatMutator.applySplashDamage(
@@ -46,7 +46,18 @@ internal class SpellPotencyHandler(
         splashDamage: Int,
     ) {
         splashTargets.forEach { player ->
-            takeDamage(damage = splashDamage, userId = player.userId)
+            applyDamageWithMinionShield(damage = splashDamage, userId = player.userId)
+        }
+    }
+
+    private fun CombatMutator.applyDamageWithMinionShield(damage: Int, userId: String) {
+        val hadAbsorbingMinions = hasAbsorbingMinions(userId = userId)
+        val damageAfterMinionShield = takeDamage(damage = damage, userId = userId)
+        if (hadAbsorbingMinions && damageAfterMinionShield > 0) {
+            addMinionShieldResidualDamage(
+                summonerUserId = userId,
+                damageAfterMinionShield = damageAfterMinionShield,
+            )
         }
     }
 
@@ -67,7 +78,7 @@ internal class SpellPotencyHandler(
                 mainDamage = diceTotal,
                 splashDamage = splashDamage,
                 splashTargetUserIds = splashTargets.map { it.userId },
-                isMainTargetKnockedOut = !defender.isConscious(),
+                isMainTargetKnockedOut = wouldBeKnockedOut(damage = diceTotal, userId = defenderUserId),
             ),
         )
     }

@@ -135,7 +135,6 @@ sealed interface ArenaMessageState {
         // TODO(SS-258): Does this need to be used for Avatar Animations???
         @Immutable
         data class Outcome(
-            override val animation: ArenaAnimationState = ArenaAnimationState.Flash,
             override val id: String,
             override val attackerUserId: String,
             override val defenderUserId: String,
@@ -150,8 +149,16 @@ sealed interface ArenaMessageState {
             val firstDie: Int,
             val secondDie: Int,
             val bonus: Int,
+            val damageAfterMinionShield: Int?,
             val accentColor: Color,
         ) : NormalRoll {
+            val isMinionShieldResidual: Boolean = damageAfterMinionShield != null
+            override val animation: ArenaAnimationState =
+                if (isMinionShieldResidual && normalRollMessageType == NormalRollMessageType.Damage) {
+                    ArenaAnimationState.None
+                } else {
+                    ArenaAnimationState.Flash
+                }
             val baseRoll: Int = firstDie + secondDie
             val attackerDisplayName: String = minionAttackerName ?: attackerClassName
             override val coloredClassNames: List<CharacterClassMessageInfoState> =
@@ -445,6 +452,7 @@ sealed interface ArenaMessageState {
             val minionName: String,
             val minionType: MinionType,
             val minionIndex: Int,
+            val damageAbsorbed: Int,
             val minionHitPointsRemaining: Int,
         ) : SummonMinion {
             override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = summonerUserId)
@@ -464,6 +472,7 @@ sealed interface ArenaMessageState {
             val minionName: String,
             val minionType: MinionType,
             val minionIndex: Int,
+            val damageAbsorbed: Int,
         ) : SummonMinion {
             override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = summonerUserId)
             override val coloredClassNames: List<CharacterClassMessageInfoState> =
@@ -1116,6 +1125,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             minionName = minionName,
             minionType = minionType,
             minionIndex = minionIndex,
+            damageAbsorbed = damageAbsorbed,
             minionHitPointsRemaining = minionHitPointsRemaining,
         )
 
@@ -1128,6 +1138,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
             minionName = minionName,
             minionType = minionType,
             minionIndex = minionIndex,
+            damageAbsorbed = damageAbsorbed,
         )
 
     is ArenaMessage.Encore.Trigger ->
@@ -1394,6 +1405,7 @@ private fun ArenaMessage.NormalRoll.toState(id: String) = when (this) {
             secondDie = secondDie,
             bonus = bonus,
             normalRollMessageType = type,
+            damageAfterMinionShield = damageAfterMinionShield,
             accentColor = attackerClassType.toColor(),
         )
 }

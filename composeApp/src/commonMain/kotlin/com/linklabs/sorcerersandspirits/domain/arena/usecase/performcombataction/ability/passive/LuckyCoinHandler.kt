@@ -68,9 +68,7 @@ internal class LuckyCoinHandler(
                 .roll1D6(userId = defenderUserId, dieColor = dieColorFor(userId = defenderUserId))
                 .total
 
-        takeDamage(damage = singleDie, userId = attackerUserId)
-
-        val isKnockout = !attacker.isConscious()
+        val isKnockout = wouldBeKnockedOut(damage = singleDie, userId = attackerUserId)
         addMessage(
             message =
             ArenaMessage.LuckyCoin.HighRollerDamage(
@@ -82,6 +80,15 @@ internal class LuckyCoinHandler(
                 isKnockout = isKnockout,
             ),
         )
+
+        val hadAbsorbingMinions = hasAbsorbingMinions(userId = attackerUserId)
+        val damageAfterMinionShield = takeDamage(damage = singleDie, userId = attackerUserId)
+        if (hadAbsorbingMinions && damageAfterMinionShield > 0) {
+            addMinionShieldResidualDamage(
+                summonerUserId = attackerUserId,
+                damageAfterMinionShield = damageAfterMinionShield,
+            )
+        }
 
         if (isKnockout) {
             handleAttackerKnockout()

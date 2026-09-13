@@ -103,9 +103,6 @@ internal class NormalAttackRollHandler(
                 NormalRollMessageType.Damage
             }
 
-        addAttackMessage(normalRollMessageType = outcomeType)
-        takeDamage(damage = diceTotal, userId = defenderUserId)
-
         val shouldMessageDoubles =
             if (willBeKnockedOut) {
                 shouldMessageDoublesAfterKnockout()
@@ -113,7 +110,25 @@ internal class NormalAttackRollHandler(
                 shouldMessageDoublesAfterDamage()
             }
 
-        addOutcomeMessage(type = outcomeType, shouldMessageDoubles = shouldMessageDoubles)
+        addAttackMessage(normalRollMessageType = outcomeType)
+
+        if (hasAbsorbingMinions(userId = defenderUserId)) {
+            addOutcomeMessage(
+                type = NormalRollMessageType.Damage,
+                shouldMessageDoubles = shouldMessageDoubles,
+            )
+            val damageToSummoner = takeDamage(damage = diceTotal, userId = defenderUserId)
+            if (damageToSummoner > 0) {
+                addOutcomeMessage(
+                    type = outcomeType,
+                    shouldMessageDoubles = false,
+                    damageAfterMinionShield = damageToSummoner,
+                )
+            }
+        } else {
+            takeDamage(damage = diceTotal, userId = defenderUserId)
+            addOutcomeMessage(type = outcomeType, shouldMessageDoubles = shouldMessageDoubles)
+        }
 
         if (willBeKnockedOut) {
             resolveKnockout()
@@ -233,6 +248,7 @@ internal class NormalAttackRollHandler(
     private fun CombatMutator.addOutcomeMessage(
         type: NormalRollMessageType,
         shouldMessageDoubles: Boolean,
+        damageAfterMinionShield: Int? = null,
     ) {
         addMessage(
             message =
@@ -249,6 +265,7 @@ internal class NormalAttackRollHandler(
                 secondDie = secondDie,
                 bonus = bonus,
                 type = type,
+                damageAfterMinionShield = damageAfterMinionShield,
             ),
         )
 

@@ -16,7 +16,6 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacte
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
@@ -179,7 +178,7 @@ private fun ArenaCombatFlashPreview() {
             secondDie = 6,
             bonus = 0,
             normalRollMessageType = NormalRollMessageType.Knockout,
-            animation = ArenaAnimationState.Flash,
+            damageAfterMinionShield = null,
             accentColor = CharacterClassType.Mage.toColor(),
         ),
     )

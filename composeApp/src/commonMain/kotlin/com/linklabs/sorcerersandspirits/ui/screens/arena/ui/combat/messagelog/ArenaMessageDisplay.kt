@@ -69,6 +69,8 @@ import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_m
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_golem
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton
 import sorcerersandspirits.composeapp.generated.resources.arena_message_summon_minion_skeleton_heal
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summoner_damaged
+import sorcerersandspirits.composeapp.generated.resources.arena_message_summoner_damaged_knockout
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_escaped
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_failed
 import sorcerersandspirits.composeapp.generated.resources.arena_message_teleport_roll
@@ -114,41 +116,58 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             ""
         }
 
+    // TODO: Improve the readability of this
     is ArenaMessageState.NormalRoll.Outcome ->
-        when (normalRollMessageType) {
-            NormalRollMessageType.ArmorClassHit ->
+        if (damageAfterMinionShield != null) {
+            if (normalRollMessageType == NormalRollMessageType.Knockout) {
                 stringResource(
-                    resource = Res.string.arena_message_normal_roll_hit,
-                    attackerDisplayName,
+                    resource = Res.string.arena_message_summoner_damaged_knockout,
                     defenderClassName,
-                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
-                    defenderArmorClass,
+                    damageAfterMinionShield,
                 )
+            } else {
+                stringResource(
+                    resource = Res.string.arena_message_summoner_damaged,
+                    defenderClassName,
+                    damageAfterMinionShield,
+                )
+            }
+        } else {
+            when (normalRollMessageType) {
+                NormalRollMessageType.ArmorClassHit ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_hit,
+                        attackerDisplayName,
+                        defenderClassName,
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                        defenderArmorClass,
+                    )
 
-            NormalRollMessageType.ArmorClassMiss ->
-                stringResource(
-                    resource = Res.string.arena_message_normal_roll_miss,
-                    attackerDisplayName,
-                    defenderClassName,
-                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
-                    defenderArmorClass,
-                )
+                NormalRollMessageType.ArmorClassMiss ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_miss,
+                        attackerDisplayName,
+                        defenderClassName,
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                        defenderArmorClass,
+                    )
 
-            NormalRollMessageType.Damage ->
-                stringResource(
-                    resource = Res.string.arena_message_normal_roll_damage,
-                    attackerDisplayName,
-                    defenderClassName,
-                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
-                )
+                NormalRollMessageType.Damage ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_damage,
+                        attackerDisplayName,
+                        defenderClassName,
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                    )
 
-            NormalRollMessageType.Knockout ->
-                stringResource(
-                    resource = Res.string.arena_message_normal_roll_knockout,
-                    attackerDisplayName,
-                    defenderClassName,
-                    rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
-                )
+                NormalRollMessageType.Knockout ->
+                    stringResource(
+                        resource = Res.string.arena_message_normal_roll_knockout,
+                        attackerDisplayName,
+                        defenderClassName,
+                        rolledTotalDisplay(baseRoll = baseRoll, doublesBonus = bonus),
+                    )
+            }
         }
 
     is ArenaMessageState.KillingMomentum ->
@@ -298,6 +317,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             resource = Res.string.arena_message_minion_damaged,
             summonerClassName,
             minionName,
+            damageAbsorbed,
             minionHitPointsRemaining,
         )
 
@@ -306,6 +326,7 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             resource = Res.string.arena_message_minion_destroyed,
             summonerClassName,
             minionName,
+            damageAbsorbed,
         )
 
     is ArenaMessageState.Persuade.Trigger ->

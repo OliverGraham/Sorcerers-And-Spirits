@@ -81,11 +81,7 @@ sealed interface ArenaMatchState {
             playerMap[targetUserId]
         }
 
-        fun animatedContentKeyFor(targetUserId: String?): String =
-            "${bottomPlayer.userId}|${topPlayerFor(targetUserId = targetUserId)?.userId}"
-
-        fun playersInTheStandsFor(targetUserId: String?): List<PlayerState.Selected> =
-            playerMap.filterKeys { it != attackerUserId && it != targetUserId }.values.toList()
+        fun playersInTheStandsFor(targetUserId: String?): List<PlayerState.Selected> = playerMap.filterKeys { it != attackerUserId && it != targetUserId }.values.toList()
 
         fun canTurnOwnerTargetAnOpponent(isAnAnimationActive: Boolean) = !isAnAnimationActive &&
             isItThisUsersTurn &&

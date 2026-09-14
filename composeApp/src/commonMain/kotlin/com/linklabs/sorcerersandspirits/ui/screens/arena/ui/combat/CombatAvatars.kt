@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,12 +29,14 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.minionAttackerIndexFor
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.LargeAvatarPosition
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.necromancer.SummonedMinions
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -48,11 +50,12 @@ import sorcerersandspirits.composeapp.generated.resources.ic_user_player
 private val statPillShape = RoundedCornerShape(size = 8.dp)
 private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
+private const val LARGE_AVATAR_TRANSITION_LABEL = "combatLargeAvatar"
 
 // TODO(SS-258): Continue renaming, refactoring CombatAnimationCue. Move things into separate files
 // and such
 @Composable
-internal fun CombatAvatarColumn(
+internal fun SharedTransitionScope.CombatAvatarColumn(
     topPlayer: PlayerState.Selected?,
     bottomPlayer: PlayerState.Selected?,
     animatingMessage: ArenaMessageState?,
@@ -64,7 +67,8 @@ internal fun CombatAvatarColumn(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier.fillMaxSize()) {
-        SeatedAvatar(
+        val avatarModifier = Modifier.weight(weight = 1f).fillMaxWidth()
+        LargeAvatarPosition(
             player = topPlayer,
             animatingMessage = animatingMessage,
             isTopSeat = true,
@@ -72,11 +76,12 @@ internal fun CombatAvatarColumn(
             attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
+            modifier = avatarModifier,
         )
 
         DiceHomeSlot(onBoundsChanged = onDiceHomeBoundsChanged)
 
-        SeatedAvatar(
+        LargeAvatarPosition(
             player = bottomPlayer,
             animatingMessage = animatingMessage,
             isTopSeat = false,
@@ -84,6 +89,7 @@ internal fun CombatAvatarColumn(
             attackerUserId = attackerUserId,
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
+            modifier = avatarModifier,
         )
     }
 }
@@ -92,7 +98,7 @@ internal fun CombatAvatarColumn(
 // its used
 // for
 @Composable
-private fun ColumnScope.SeatedAvatar(
+private fun SharedTransitionScope.LargeAvatarPosition(
     player: PlayerState.Selected?,
     animatingMessage: ArenaMessageState?,
     isTopSeat: Boolean,
@@ -100,22 +106,33 @@ private fun ColumnScope.SeatedAvatar(
     attackerUserId: String,
     onInspect: (String) -> Unit,
     onAvatarBoundsChanged: (String, Rect) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
-    if (player != null) {
-        LargeAvatar(
-            player = player,
-            animatingMessage = animatingMessage,
-            isTopSeat = isTopSeat,
-            isUserPlayer = player.userId == userPlayerId,
-            isAttacker = player.userId == attackerUserId,
-            onInspect = onInspect,
-            onAvatarBoundsChanged = onAvatarBoundsChanged,
-            modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
-        )
-    } else {
+    AnimatedContent(
+        targetState = player,
+        contentKey = { it?.userId },
+        label = LARGE_AVATAR_TRANSITION_LABEL,
+        modifier = modifier,
+    ) { animatingPlayer ->
         // TODO(SS-234): If the player is null, then show the not-yet-created "Choose your target"
         // avatar
-        Spacer(modifier = Modifier.weight(weight = 1f))
+        if (animatingPlayer != null) {
+            SharedTransitionProvider(
+                sharedTransitionScope = this@LargeAvatarPosition,
+                animatedVisibilityScope = this@AnimatedContent,
+            ) {
+                LargeAvatar(
+                    player = animatingPlayer,
+                    animatingMessage = animatingMessage,
+                    isTopSeat = isTopSeat,
+                    isUserPlayer = animatingPlayer.userId == userPlayerId,
+                    isAttacker = animatingPlayer.userId == attackerUserId,
+                    onInspect = onInspect,
+                    onAvatarBoundsChanged = onAvatarBoundsChanged,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
+        }
     }
 }
 

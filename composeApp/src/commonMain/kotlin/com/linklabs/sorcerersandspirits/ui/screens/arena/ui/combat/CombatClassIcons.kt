@@ -1,17 +1,23 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
 import com.linklabs.sorcerersandspirits.ui.common.sharedBounds
 import com.linklabs.sorcerersandspirits.ui.screens.arena.LocalArenaActions
@@ -25,8 +31,9 @@ private val USER_MARKER_ICON_SIZE = 24.dp
 private val USER_MARKER_ICON_INSET = 4.dp
 
 @Composable
-internal fun ClassIcons(
-    headIconPlayers: List<PlayerState.Selected>,
+internal fun SharedTransitionScope.ClassIcons(
+    players: List<PlayerState.Selected>,
+    standsUserIds: Set<String>,
     userPlayerId: String,
     isTargetable: Boolean,
     onInspect: (String) -> Unit,
@@ -35,17 +42,32 @@ internal fun ClassIcons(
 ) {
     Column(
         modifier = modifier.fillMaxHeight(),
-        verticalArrangement = Arrangement.SpaceEvenly,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        headIconPlayers.forEach { player ->
-            ClassIcon(
-                player = player,
-                isUserPlayer = player.userId == userPlayerId,
-                isTargetable = isTargetable,
-                onInspect = onInspect,
-                animatingMessage = animatingMessage,
-            )
+        players.forEach { player ->
+            Box(
+                modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                this@Column.AnimatedVisibility(
+                    visible = player.userId in standsUserIds,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                ) {
+                    SharedTransitionProvider(
+                        sharedTransitionScope = this@ClassIcons,
+                        animatedVisibilityScope = this@AnimatedVisibility,
+                    ) {
+                        ClassIcon(
+                            player = player,
+                            isUserPlayer = player.userId == userPlayerId,
+                            isTargetable = isTargetable,
+                            onInspect = onInspect,
+                            animatingMessage = animatingMessage,
+                        )
+                    }
+                }
+            }
         }
     }
 }

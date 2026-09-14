@@ -1,6 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
@@ -25,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.unit.dp
-import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.InspectDrawer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
@@ -40,13 +38,12 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.Me
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
 
-private const val AVATAR_SEATING_TRANSITION_LABEL = "ArenaCombatAvatarSeatingTransition"
-
 @Composable
 internal fun ArenaCombat(
     screenState: ArenaScreenState,
     arenaMatchState: ArenaMatchState.Combat,
     timerState: () -> ArenaTimerState,
+    selectedOpponent: () -> String?,
     modifier: Modifier = Modifier,
 ) {
     val diceStateHolder =
@@ -69,6 +66,7 @@ internal fun ArenaCombat(
                 arenaScreenState = screenState,
                 arenaMatchState = arenaMatchState,
                 timerState = timerState,
+                selectedOpponent = selectedOpponent,
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 isLogExpanded = isLogExpanded,
                 onLogExpandedChange = { isLogExpanded = it },
@@ -79,6 +77,7 @@ internal fun ArenaCombat(
             OverlayContent(
                 arenaScreenState = screenState,
                 arenaMatchState = arenaMatchState,
+                selectedOpponent = selectedOpponent,
                 avatarBoundsStateHolder = avatarBoundsStateHolder,
                 diceStateHolder = diceStateHolder,
                 diceHomeBounds = diceHomeBounds,
@@ -96,6 +95,7 @@ private fun SharedTransitionScope.ScreenContent(
     arenaScreenState: ArenaScreenState,
     arenaMatchState: ArenaMatchState.Combat,
     timerState: () -> ArenaTimerState,
+    selectedOpponent: () -> String?,
     isLogExpanded: Boolean,
     onLogExpandedChange: (Boolean) -> Unit,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
@@ -121,6 +121,7 @@ private fun SharedTransitionScope.ScreenContent(
         CombatContent(
             animatingMessage = arenaScreenState.animatingMessage,
             arenaMatchState = arenaMatchState,
+            selectedOpponent = selectedOpponent,
             avatarBoundsStateHolder = avatarBoundsStateHolder,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
             onInspect = onInspect,
@@ -139,6 +140,7 @@ private fun SharedTransitionScope.ScreenContent(
 private fun BoxScope.OverlayContent(
     arenaScreenState: ArenaScreenState,
     arenaMatchState: ArenaMatchState.Combat,
+    selectedOpponent: () -> String?,
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     diceStateHolder: DiceStateHolder,
     diceHomeBounds: Rect?,
@@ -160,6 +162,7 @@ private fun BoxScope.OverlayContent(
     val isPlayingBack = animatingMessage != null && !animatingMessage.isContinuous()
     CombatButtons(
         state = arenaMatchState,
+        selectedOpponent = selectedOpponent,
         diceStateHolder = diceStateHolder,
         areControlsVisible = !arenaScreenState.isMatchEnding,
         isPlayingBack = isPlayingBack,
@@ -196,67 +199,41 @@ private fun BoxScope.OverlayContent(
 private fun SharedTransitionScope.CombatContent(
     arenaMatchState: ArenaMatchState.Combat,
     animatingMessage: ArenaMessageState?,
+    selectedOpponent: () -> String?,
     onInspect: (String) -> Unit,
     avatarBoundsStateHolder: AvatarBoundsStateHolder,
     onDiceHomeBoundsChanged: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AnimatedContent(
-        targetState = arenaMatchState,
-        contentKey = { it.animatedContentKey },
-        label = AVATAR_SEATING_TRANSITION_LABEL,
-        modifier = modifier.fillMaxSize(),
-    ) { animatingState ->
-        SharedTransitionProvider(
-            sharedTransitionScope = this@CombatContent,
-            animatedVisibilityScope = this@AnimatedContent,
-        ) {
-            CombatStage(
-                arenaMatchState = animatingState,
-                animatingMessage = animatingMessage,
-                onInspect = onInspect,
-                isTargetable =
-                arenaMatchState.canTurnOwnerTargetAnOpponent(
-                    isAnAnimationActive =
-                    animatingMessage != null && !animatingMessage.isContinuous(),
-                ),
-                onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
-                onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
-            )
-        }
-    }
-}
-
-@Composable
-private fun CombatStage(
-    arenaMatchState: ArenaMatchState.Combat,
-    animatingMessage: ArenaMessageState?,
-    onInspect: (String) -> Unit,
-    isTargetable: Boolean,
-    onAvatarBoundsChanged: (String, Rect) -> Unit,
-    onDiceHomeBoundsChanged: (Rect) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val areTherePlayersInTheStands = arenaMatchState.areTherePlayersInTheStands
+    val targetUserId =
+        arenaMatchState.resolveTargetUserId(selectedOpponentUserId = selectedOpponent())
 
     Box(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
-            topPlayer = arenaMatchState.topPlayer,
+            topPlayer = arenaMatchState.topPlayerFor(targetUserId = targetUserId),
             bottomPlayer = arenaMatchState.bottomPlayer,
             animatingMessage = animatingMessage,
             userPlayerId = arenaMatchState.userPlayerId,
             attackerUserId = arenaMatchState.attackerUserId,
             onInspect = onInspect,
-            onAvatarBoundsChanged = onAvatarBoundsChanged,
+            onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
             modifier = Modifier.fillMaxWidth(),
         )
 
-        if (areTherePlayersInTheStands) {
+        if (arenaMatchState.playerMap.size > 2) {
+            val standsUserIds =
+                arenaMatchState.playersInTheStandsFor(targetUserId = targetUserId)
+                    .map { it.userId }
+                    .toSet()
+
             ClassIcons(
-                headIconPlayers = arenaMatchState.playersInTheStands,
+                players = arenaMatchState.playerMap.values.toList(),
+                standsUserIds = standsUserIds,
                 userPlayerId = arenaMatchState.userPlayerId,
-                isTargetable = isTargetable,
+                isTargetable = arenaMatchState.canTurnOwnerTargetAnOpponent(
+                    isAnAnimationActive = animatingMessage != null && !animatingMessage.isContinuous(),
+                ),
                 onInspect = onInspect,
                 animatingMessage = animatingMessage,
                 modifier = Modifier.fillMaxWidth(fraction = 0.3f).align(alignment = Alignment.CenterEnd),

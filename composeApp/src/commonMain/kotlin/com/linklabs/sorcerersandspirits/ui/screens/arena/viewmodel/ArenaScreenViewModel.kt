@@ -98,6 +98,9 @@ class ArenaScreenViewModel(
     private val _timerStateFlow = MutableStateFlow(value = ArenaTimerState(secondsRemaining = 0))
     val timerStateFlow = _timerStateFlow.asStateFlow()
 
+    private val _selectedOpponentUserIdFlow = MutableStateFlow<String?>(value = null)
+    val selectedOpponentUserIdFlow = _selectedOpponentUserIdFlow.asStateFlow()
+
     private val computerOpponentIds = arguments.computerOpponents.map { it.userId }.toSet()
 
     private val arenaMatchCombatQueue =
@@ -169,9 +172,7 @@ class ArenaScreenViewModel(
     }
 
     fun onTargetOpponent(opponentUserId: String) {
-        _uiStateFlow.updateLoaded { screenState ->
-            combatHandler.targetOpponent(screenState = screenState, opponentUserId = opponentUserId)
-        }
+        _selectedOpponentUserIdFlow.value = opponentUserId
     }
 
     fun onAttack(attackArguments: AttackArguments) {
@@ -445,6 +446,8 @@ class ArenaScreenViewModel(
     }
 
     private fun onAnimationsComplete(arenaMatchCombatUpdate: ArenaMatch.Combat) {
+        _selectedOpponentUserIdFlow.value = null
+
         _uiStateFlow.updateLoaded { screenState ->
             updateCombatState(
                 currentScreenState = screenState,
@@ -498,8 +501,6 @@ class ArenaScreenViewModel(
                 nextCombatAction.lockedTargetUserId(
                     userId = currentArenaCombatState.userPlayerId,
                 ),
-                selectedOpponentUserId =
-                currentArenaCombatState.selectedOpponentUserId, // TODO(SS-260): Correct?
                 isActionInFlight = false,
             )
 

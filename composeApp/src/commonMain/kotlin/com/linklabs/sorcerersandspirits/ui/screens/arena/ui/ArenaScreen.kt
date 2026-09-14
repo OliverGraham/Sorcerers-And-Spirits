@@ -66,10 +66,12 @@ internal fun ArenaScreen(
         )
         val uiState by viewModel.uiStateFlow.collectAsState()
         val timerState = viewModel.timerStateFlow.collectAsState()
+        val selectedOpponent = viewModel.selectedOpponentUserIdFlow.collectAsState()
 
         ArenaScreen(
             uiState = uiState,
             timerState = { timerState.value },
+            selectedOpponent = { selectedOpponent.value },
             onRetry = viewModel::retry,
             snackbarHostState = snackbarHostState,
             modifier = modifier,
@@ -82,6 +84,7 @@ internal fun ArenaScreen(
 private fun ArenaScreen(
     uiState: UiState<ArenaScreenState>,
     timerState: () -> ArenaTimerState,
+    selectedOpponent: () -> String?,
     onRetry: () -> Unit,
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
@@ -93,6 +96,7 @@ private fun ArenaScreen(
             LoadedArenaScreen(
                 screenState = uiState.data,
                 timerState = timerState,
+                selectedOpponent = selectedOpponent,
                 snackbarHostState = snackbarHostState,
                 modifier = modifier,
             )

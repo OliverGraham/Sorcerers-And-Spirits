@@ -220,6 +220,7 @@ private fun PreviewArenaCombat(
                 screenState = screenState,
                 arenaMatchState = state,
                 timerState = { ArenaTimerState(secondsRemaining = secondsRemaining) },
+                selectedOpponent = { null },
                 modifier =
                 Modifier.fillMaxSize()
                     .paint(

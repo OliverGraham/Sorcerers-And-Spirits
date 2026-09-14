@@ -1,6 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.core.Animatable
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
@@ -187,21 +185,15 @@ private fun SpellPotencySplashPreview() {
             value = LocalCharacterClassCopy provides previewCharacterClassCopy(),
         ) {
             SharedTransitionLayout {
-                AnimatedVisibility(visible = true) {
-                    SharedTransitionProvider(
-                        sharedTransitionScope = this@SharedTransitionLayout,
-                        animatedVisibilityScope = this@AnimatedVisibility,
-                    ) {
-                        ClassIcons(
-                            headIconPlayers = headIconPlayers,
-                            userPlayerId = "rogue",
-                            isTargetable = false,
-                            onInspect = {},
-                            animatingMessage = animatingMessage,
-                            modifier = Modifier.size(width = 140.dp, height = 520.dp),
-                        )
-                    }
-                }
+                ClassIcons(
+                    players = headIconPlayers,
+                    standsUserIds = headIconPlayers.map { it.userId }.toSet(),
+                    userPlayerId = "rogue",
+                    isTargetable = false,
+                    onInspect = {},
+                    animatingMessage = animatingMessage,
+                    modifier = Modifier.size(width = 140.dp, height = 520.dp),
+                )
             }
         }
     }

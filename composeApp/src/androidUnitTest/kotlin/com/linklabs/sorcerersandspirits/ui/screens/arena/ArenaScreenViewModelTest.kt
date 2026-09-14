@@ -34,7 +34,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionStat
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.isImpersonateRedundant
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.isImpersonateRedundant
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState

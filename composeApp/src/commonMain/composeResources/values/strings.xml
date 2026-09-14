@@ -102,6 +102,8 @@
     <string name="arena_waiting_tip_gambler">All-In is a gamble: a 1 knocks you out, but a 5 or 6 lets the {class}Gambler{/class} strike twice this round.</string>
     <string name="arena_waiting_tip_paladin">A {class}Paladin{/class} can cheat death once a match — Holy Shield may leave them standing on 1 Health, then lash back.</string>
 
+    <string name="arena_combat_choose_target">Choose a target</string>
+
     <string name="arena_message_round">ROUND %1$s</string>
     <string name="arena_log_round">Round %1$s</string>
     <string name="arena_log_round_in_progress">Round %1$s — In Progress</string>

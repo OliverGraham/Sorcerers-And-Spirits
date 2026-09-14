@@ -39,6 +39,7 @@ private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
 internal fun LoadedArenaScreen(
     screenState: ArenaScreenState,
     timerState: () -> ArenaTimerState,
+    selectedOpponent: () -> String?,
     modifier: Modifier = Modifier,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
 ) {
@@ -54,7 +55,11 @@ internal fun LoadedArenaScreen(
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { _ ->
-            ScreenContent(screenState = screenState, timerState = timerState)
+            ScreenContent(
+                screenState = screenState,
+                timerState = timerState,
+                selectedOpponent = selectedOpponent,
+            )
         }
 
         if (screenState.showForfeitDialog) {
@@ -67,6 +72,7 @@ internal fun LoadedArenaScreen(
 private fun ScreenContent(
     screenState: ArenaScreenState,
     timerState: () -> ArenaTimerState,
+    selectedOpponent: () -> String?,
     modifier: Modifier = Modifier,
 ) {
     // TODO: Remove this column and have each ArenaState composable invoke its own container
@@ -80,6 +86,7 @@ private fun ScreenContent(
         ArenaStateContent(
             screenState = screenState,
             timerState = timerState,
+            selectedOpponent = selectedOpponent,
             transitionState = transition,
         )
     }
@@ -90,6 +97,7 @@ private fun ScreenContent(
 private fun ArenaStateContent(
     screenState: ArenaScreenState,
     timerState: () -> ArenaTimerState,
+    selectedOpponent: () -> String?,
     transitionState: Transition<ArenaMatchState>,
     modifier: Modifier = Modifier,
 ) {
@@ -110,6 +118,7 @@ private fun ArenaStateContent(
                     screenState = screenState,
                     arenaMatchState = arenaState,
                     timerState = timerState,
+                    selectedOpponent = selectedOpponent,
                 )
 
             is ArenaMatchState.WaitingForAllPlayers -> ArenaWaitingForPlayers()
@@ -133,6 +142,7 @@ private fun LoadedArenaScreenCollapsedPreview(
         LoadedArenaScreen(
             screenState = screenState,
             timerState = { ArenaTimerState(secondsRemaining = 0) },
+            selectedOpponent = { null },
         )
     }
 }

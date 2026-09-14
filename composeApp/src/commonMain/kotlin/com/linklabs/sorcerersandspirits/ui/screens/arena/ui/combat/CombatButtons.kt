@@ -33,15 +33,19 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.DiePosition
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.OffensiveAbilityState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaCombatControl
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatButton
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatButtonRoll
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatButtonsUiState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.deriveCombatButtonsUiState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.holdToRollGesture
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.rollActionFor
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -59,10 +63,10 @@ private val arenaButtonFaceColor = Color(color = 0xFF323232)
 private val arenaButtonNeutralBorder = Color(color = 0xFF555555)
 private const val ARENA_BUTTON_PRESS_LABEL = "ArenaButtonPress"
 
-// TODO(SS-257): Move state to view model layer. Goddamn you Claude
 @Composable
 internal fun CombatButtons(
     state: ArenaMatchState.Combat,
+    selectedOpponent: () -> String?,
     diceStateHolder: DiceStateHolder,
     areControlsVisible: Boolean,
     isPlayingBack: Boolean,
@@ -71,15 +75,15 @@ internal fun CombatButtons(
     val onAttack = ArenaActionsProvider.current.onAttack
     val onUseAbility = ArenaActionsProvider.current.onUseAbility
 
-    val classColor = state.userPlayer.characterClass.type.toColor()
-    val controls = state.combatControls
+    val buttonsState = state.deriveCombatButtonsUiState(selectedOpponentUserId = selectedOpponent())
 
-    val isActionInFlight = state.isActionInFlight
-    val isBusy = isPlayingBack || isActionInFlight
+    val classColor = buttonsState.userClassType.toColor()
+
+    val isBusy = isPlayingBack || buttonsState.isActionInFlight
 
     // TODO: refactor all this Teleport stuff here
-    val hasPendingTeleportRoll = state.isAwaitingTeleportRoll
-    val teleportRollOffKey = state.teleportRollOffKey
+    val hasPendingTeleportRoll = buttonsState.isAwaitingTeleportRoll
+    val teleportRollOffKey = buttonsState.teleportRollOffKey
 
     var hasReachedTeleportRollBeat by
         remember(key1 = teleportRollOffKey) { mutableStateOf(value = false) }
@@ -87,7 +91,7 @@ internal fun CombatButtons(
 
     var hasSubmittedTeleportRoll by
         remember(key1 = teleportRollOffKey) { mutableStateOf(value = false) }
-    if (hasPendingTeleportRoll && isActionInFlight) hasSubmittedTeleportRoll = true
+    if (hasPendingTeleportRoll && buttonsState.isActionInFlight) hasSubmittedTeleportRoll = true
 
     val isTeleportRollButtonHeld = hasReachedTeleportRollBeat && !hasSubmittedTeleportRoll
 
@@ -98,18 +102,8 @@ internal fun CombatButtons(
             else -> isBusy
         }
 
-    // TODO: Very, very rarely are nested functions allowable (these are not)
-    fun isEnabled(control: ArenaCombatControl): Boolean = !isActionInFlight &&
-        state.isControlEnabled(control = control, targetedOpponentUserId = state.targetedUserId)
-
-    fun rollAction(control: ArenaCombatControl): () -> Unit = state.rollActionFor(
-        control = control,
-        targetedOpponentUserId = state.targetedUserId,
-        onAttack = onAttack,
-        onUseAbility = onUseAbility,
-    )
-
-    val areButtonsShown = areControlsVisible && !isSuppressedByAnimation && controls.isNotEmpty()
+    val areButtonsShown =
+        areControlsVisible && !isSuppressedByAnimation && buttonsState.hasAnyButton
     Box(modifier = modifier.fillMaxWidth().height(height = BOTTOM_CONTROLS_HEIGHT)) {
         AnimatedVisibility(
             visible = areButtonsShown,
@@ -121,38 +115,89 @@ internal fun CombatButtons(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Top,
             ) {
-                val abilityControls = state.abilityControls
-                abilityControls.forEach { control ->
+                buttonsState.abilityButtons.forEach { button ->
                     AbilityButton(
-                        control = control,
-                        isEnabled = isEnabled(control = control),
+                        button = button,
                         classColor = classColor,
                         diceStateHolder = diceStateHolder,
-                        onRoll = rollAction(control = control),
-                        label = control.label.takeIf { abilityControls.size > 1 },
+                        onRoll =
+                        buttonsState.rollAction(
+                            roll = button.roll,
+                            onAttack = onAttack,
+                            onUseAbility = onUseAbility,
+                        ),
                     )
                 }
 
-                val normalAttackControl = state.arenaCombatControl
-                if (normalAttackControl != null) {
+                val attackButton = buttonsState.attackButton
+                if (attackButton != null) {
                     AttackButton(
-                        isEnabled = isEnabled(control = normalAttackControl),
+                        isEnabled = attackButton.isEnabled,
                         classColor = classColor,
                         diceStateHolder = diceStateHolder,
-                        onRoll = rollAction(control = normalAttackControl),
+                        onRoll =
+                        buttonsState.rollAction(
+                            roll = attackButton.roll,
+                            onAttack = onAttack,
+                            onUseAbility = onUseAbility,
+                        ),
                     )
                 }
 
-                val impersonateControl = state.impersonateControl
-                if (impersonateControl != null) {
+                val impersonateButton = buttonsState.impersonateButton
+                if (impersonateButton != null) {
                     ImpersonateButton(
-                        isEnabled = isEnabled(control = impersonateControl),
+                        isEnabled = impersonateButton.isEnabled,
                         classColor = classColor,
-                        label = state.impersonateLabel(),
+                        label = impersonateButton.label.orEmpty(),
                         diceStateHolder = diceStateHolder,
-                        onRoll = rollAction(control = impersonateControl),
+                        onRoll =
+                        buttonsState.rollAction(
+                            roll = impersonateButton.roll,
+                            onAttack = onAttack,
+                            onUseAbility = onUseAbility,
+                        ),
                     )
                 }
+            }
+        }
+    }
+}
+
+private fun CombatButtonsUiState.rollAction(
+    roll: CombatButtonRoll,
+    onAttack: (AttackArguments) -> Unit,
+    onUseAbility: (UseAbilityArguments) -> Unit,
+): () -> Unit {
+    val target = targetedOpponentUserId ?: return {}
+
+    return when (roll) {
+        is CombatButtonRoll.None -> {
+            {}
+        }
+
+        is CombatButtonRoll.Attack -> {
+            {
+                onAttack(
+                    AttackArguments(
+                        targetedOpponentUserId = target,
+                        userPlayerId = userPlayerId,
+                        combatActionState = combatActionState,
+                    ),
+                )
+            }
+        }
+
+        is CombatButtonRoll.UseAbility -> {
+            {
+                onUseAbility(
+                    UseAbilityArguments(
+                        abilityActionState = roll.action,
+                        targetedOpponentUserId = target,
+                        userPlayerId = userPlayerId,
+                        combatActionState = combatActionState,
+                    ),
+                )
             }
         }
     }
@@ -182,24 +227,23 @@ private fun AttackButton(
 
 @Composable
 private fun AbilityButton(
-    control: ArenaCombatControl,
-    isEnabled: Boolean,
+    button: CombatButton,
     classColor: Color,
     diceStateHolder: DiceStateHolder,
     onRoll: () -> Unit,
     modifier: Modifier = Modifier,
-    label: String? = null,
 ) {
+    val control = button.control
     ArenaButton(
         icon = control.toButtonIcon(),
         contentDescription = control.label,
-        isEnabled = isEnabled,
+        isEnabled = button.isEnabled,
         classColor = classColor,
         showClassBorder = true,
         diceStateHolder = diceStateHolder,
         rollingDiePositions = control.rollingDiePositions,
         onRoll = onRoll,
-        label = label,
+        label = button.label,
         modifier = modifier,
     )
 }
@@ -325,53 +369,4 @@ private fun ArenaCombatControl.toButtonIcon(): DrawableResource = when (this) {
         } else {
             Res.drawable.ic_defensive_ability
         }
-}
-
-// TODO(SS-257): Move to view model layer - in ArenaState.Combat itself
-private fun ArenaMatchState.Combat.isControlEnabled(
-    control: ArenaCombatControl,
-    targetedOpponentUserId: String?,
-): Boolean {
-    val hasRequiredTarget = !control.requiresTarget || !targetedOpponentUserId.isNullOrEmpty()
-    val isRedundantImpersonate =
-        isImpersonateRedundant(control = control, targetedOpponentUserId = targetedOpponentUserId)
-
-    return control.enabled && hasRequiredTarget && !isRedundantImpersonate
-}
-
-// TODO: Can likely be GREATLY simplified (is it the Illusionist's turn? have they impersonated?
-//       can they? done.)
-internal fun ArenaMatchState.Combat.isImpersonateRedundant(
-    control: ArenaCombatControl,
-    targetedOpponentUserId: String?,
-): Boolean {
-    val isImpersonateControl =
-        control is ArenaCombatControl.ActivatedAbility &&
-            control.action is AbilityActionState.Activated.Impersonate
-    if (!isImpersonateControl) return false
-
-    val target = playerMap[targetedOpponentUserId] ?: return false
-    val targetOffensiveAbility = target.characterClass.offensiveAbility
-    if (targetOffensiveAbility is OffensiveAbilityState.None) return true
-
-    val impersonateAbility = userPlayer.characterClass.offensiveAbility
-    val copiedAbility =
-        if (impersonateAbility is OffensiveAbilityState.Impersonate) {
-            impersonateAbility.impersonatedAbility
-        } else {
-            OffensiveAbilityState.None
-        }
-    if (copiedAbility is OffensiveAbilityState.None) return false
-
-    return targetOffensiveAbility::class == copiedAbility::class
-}
-
-private fun ArenaMatchState.Combat.impersonateLabel(): String {
-    val ability = userPlayer.characterClass.offensiveAbility
-    val isImpersonating =
-        ability is OffensiveAbilityState.Impersonate &&
-            ability.impersonatedAbility !is OffensiveAbilityState.None
-    // TODO(SS-151): show the copied class name ("Impersonating: $className") via SS-029 string
-    //  resources once the copied ability resolves to a class name.
-    return if (isImpersonating) "Impersonating" else "Impersonate"
 }

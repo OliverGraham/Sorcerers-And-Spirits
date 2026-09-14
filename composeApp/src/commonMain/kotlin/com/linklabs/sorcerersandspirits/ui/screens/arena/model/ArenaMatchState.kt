@@ -40,7 +40,6 @@ sealed interface ArenaMatchState {
         val turnOwnerClassType: CharacterClassType,
         val lockedTargetUserId: String?,
         val diceRollState: DiceRollState?,
-        val selectedOpponentUserId: String? = null,
         val isActionInFlight: Boolean = false,
     ) : ActiveMatchState {
         val userPlayer = playerMap.getValue(key = userPlayerId)
@@ -65,23 +64,28 @@ sealed interface ArenaMatchState {
 
         val attacker = playerMap.getValue(key = attackerUserId)
 
-        val targetedUserId = getTargetedPlayerUserId()
-
-        // TODO(SS-234): For "Choose your target avatar" if this is null, then show it
-        val targetedPlayer = playerMap[targetedUserId]
-
         private val isTwoPlayerMatch = playerMap.size == 2
         val bottomPlayer = if (isTwoPlayerMatch) userPlayer else attacker
-        val topPlayer =
-            if (isTwoPlayerMatch) {
-                playerMap.values.firstOrNull { it.userId != userPlayerId }
-            } else {
-                targetedPlayer
-            }
-        val animatedContentKey = "${bottomPlayer.userId}|${topPlayer?.userId}"
 
-        val playersInTheStands = getPlayersInTheStands(targetedUserId = targetedUserId)
-        val areTherePlayersInTheStands = playersInTheStands.isNotEmpty()
+        fun resolveTargetUserId(selectedOpponentUserId: String?): String? = lockedTargetUserId
+            ?: selectedOpponentUserId
+            ?: combatActionState.defenderUserId()
+            ?: playerMap.values
+                .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
+                ?.userId
+
+        // TODO(SS-234): For "Choose your target avatar" if this is null, then show it
+        fun topPlayerFor(targetUserId: String?): PlayerState.Selected? = if (isTwoPlayerMatch) {
+            playerMap.values.firstOrNull { it.userId != userPlayerId }
+        } else {
+            playerMap[targetUserId]
+        }
+
+        fun animatedContentKeyFor(targetUserId: String?): String =
+            "${bottomPlayer.userId}|${topPlayerFor(targetUserId = targetUserId)?.userId}"
+
+        fun playersInTheStandsFor(targetUserId: String?): List<PlayerState.Selected> =
+            playerMap.filterKeys { it != attackerUserId && it != targetUserId }.values.toList()
 
         fun canTurnOwnerTargetAnOpponent(isAnAnimationActive: Boolean) = !isAnAnimationActive &&
             isItThisUsersTurn &&
@@ -117,15 +121,6 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
     classSelections = emptyMap(),
     userConfirmedClassType = playerMap.userConfirmedClassType(userId = userPlayerId),
 )
-
-private fun ArenaMatchState.Combat.getTargetedPlayerUserId() = lockedTargetUserId
-    ?: selectedOpponentUserId
-    ?: combatActionState.defenderUserId()
-    ?: playerMap.values
-        .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }
-        ?.userId
-
-private fun ArenaMatchState.Combat.getPlayersInTheStands(targetedUserId: String?) = playerMap.filterKeys { it != attackerUserId && it != targetedUserId }.values.toList()
 
 internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Teleport? {
     val abilityRoll = this as? CombatActionState.AbilityRoll ?: return null

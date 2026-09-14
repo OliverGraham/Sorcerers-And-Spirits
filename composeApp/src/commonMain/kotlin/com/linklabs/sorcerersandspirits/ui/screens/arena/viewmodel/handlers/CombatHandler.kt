@@ -18,14 +18,6 @@ internal class CombatHandler(
     private val performCombatActionUseCase: PerformCombatActionUseCase,
 ) {
 
-    fun targetOpponent(screenState: ArenaScreenState, opponentUserId: String): ArenaScreenState {
-        val arenaState = screenState.arenaMatchState.asCombatStateOrNull() ?: return screenState
-
-        return screenState.copy(
-            arenaMatchState = arenaState.copy(selectedOpponentUserId = opponentUserId),
-        )
-    }
-
     // TODO(SS-257): Need to refactor ArenaCombatControl, CombatButtons and AttackArguments and
     // UseAbilityArguments
     fun updateLockedTargetUserId(

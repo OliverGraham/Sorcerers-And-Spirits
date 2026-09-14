@@ -6,10 +6,10 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -28,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.InspectDrawer
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
@@ -38,7 +37,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.flashtext.Fla
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.messageBarHeight
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceStateHolder
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.rememberDiceStateHolder
 
@@ -241,7 +239,7 @@ private fun CombatStage(
 ) {
     val areTherePlayersInTheStands = arenaMatchState.areTherePlayersInTheStands
 
-    Row(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
+    Box(modifier = modifier.fillMaxSize().padding(top = 8.dp)) {
         CombatAvatarColumn(
             topPlayer = arenaMatchState.topPlayer,
             bottomPlayer = arenaMatchState.bottomPlayer,
@@ -251,7 +249,7 @@ private fun CombatStage(
             onInspect = onInspect,
             onAvatarBoundsChanged = onAvatarBoundsChanged,
             onDiceHomeBoundsChanged = onDiceHomeBoundsChanged,
-            modifier = Modifier.weight(weight = if (areTherePlayersInTheStands) 0.7f else 1f),
+            modifier = Modifier.fillMaxWidth(),
         )
 
         if (areTherePlayersInTheStands) {
@@ -261,7 +259,7 @@ private fun CombatStage(
                 isTargetable = isTargetable,
                 onInspect = onInspect,
                 animatingMessage = animatingMessage,
-                modifier = Modifier.weight(weight = 0.3f),
+                modifier = Modifier.fillMaxWidth(fraction = 0.3f).align(alignment = Alignment.CenterEnd),
             )
         }
     }

@@ -48,7 +48,6 @@ import sorcerersandspirits.composeapp.generated.resources.ic_user_player
 private val statPillShape = RoundedCornerShape(size = 8.dp)
 private val statPillIconSize = 24.dp
 private const val ATTACKS_COUNT_LABEL = "attacksCount"
-private const val STATS_BAR_SHARED_KEY_PREFIX = "combatStatsBar:"
 
 // TODO(SS-258): Continue renaming, refactoring CombatAnimationCue. Move things into separate files
 // and such
@@ -143,9 +142,12 @@ private fun LargeAvatar(
 ) {
     Box(
         modifier =
-        modifier.clickable { onInspect(player.userId) }.onGloballyPositioned {
-            onAvatarBoundsChanged(player.userId, it.boundsInRoot())
-        },
+        modifier
+            .sharedBounds(key = player.userId)
+            .clickable { onInspect(player.userId) }
+            .onGloballyPositioned {
+                onAvatarBoundsChanged(player.userId, it.boundsInRoot())
+            },
         contentAlignment = Alignment.BottomCenter,
     ) {
         GestureClassAvatar(
@@ -153,7 +155,7 @@ private fun LargeAvatar(
             characterClass = player.characterClass,
             userId = player.userId,
             isTopSeat = isTopSeat,
-            modifier = Modifier.fillMaxSize().sharedBounds(key = player.userId),
+            modifier = Modifier.fillMaxSize(),
         )
 
         val summonedMinions = player.characterClass.summonedMinions
@@ -172,9 +174,7 @@ private fun LargeAvatar(
             isUserPlayer = isUserPlayer,
             isAttacker = isAttacker,
             classColor = player.characterClass.type.toColor(),
-            modifier =
-            Modifier.align(alignment = Alignment.CenterStart)
-                .sharedBounds(key = STATS_BAR_SHARED_KEY_PREFIX + player.userId),
+            modifier = Modifier.align(alignment = Alignment.CenterStart),
         )
     }
 }

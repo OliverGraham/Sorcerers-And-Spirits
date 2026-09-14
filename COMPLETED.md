@@ -66,6 +66,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-234** — Multiplayer no-target avatar placeholder: When no opponent is selected, the target
+  seat renders a `NoTargetAvatar` — a random class avatar desaturated (grayscale `ColorMatrix`) and
+  blurred, gray `?` stat pills (speed/armor/hit points), and a slanted "Choose a target" label —
+  wrapped in the same `SharedTransitionProvider`/`AnimatedContent` so it fades in/out on target
+  change. Placeholder uses an existing avatar since the `silhouette_avatar` art doesn't exist yet.
 - **SS-268** — Persistent summoned minions: gather behind the summoner, attack, and death animations:
   Summoned skeletons/golems became persistent avatars gathered behind the summoner (threaded
   Domain → Data → UI via `characterClass.summonedMinions`), attacking one-by-one before the summoner via

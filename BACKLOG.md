@@ -244,23 +244,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   rather than reveal it top-anchored.
 - **Notes:** Follow-up to SS-251; needs on-device animation iteration.
 
-### SS-234 — Multiplayer no-target avatar: silhouette, "?" gray stats, slanted "Choose a target"
-
-- [ ] Not completed
-- **Goal:** In a multiplayer match, when the current player has **no opponent selected**, the target
-  seat renders a placeholder instead of a real avatar:
-    - A new PNG avatar art, `silhouette_avatar` (a plain silhouette).
-    - The stat numbers (speed / armor / hit points) shown as **question marks** in a **gray** color
-      (not the class colors).
-    - The text **"Choose a target"** written **across** the avatar, angled/slanted a bit.
-- **Source:** The target-seat rendering in `ui/screens/arena/ui/combat/ArenaCombat.kt` /
-  `AvatarStatsBar`; stat icons per SS-136/SS-138. Add a no-target branch that swaps the avatar art,
-  grays + "?"s the stats, and overlays the rotated "Choose a target" label.
-- **Notes:** The `silhouette_avatar` PNG **may not exist in the repo yet** at ticket-writing time —
-  when working this ticket, confirm the asset is present (downsample per
-  [[downsample-figma-raster-assets]]) or request/export it first. Related: SS-144 (target-selection
-  transition), SS-136 (head icon).
-
 ## Combat animations
 
 Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system

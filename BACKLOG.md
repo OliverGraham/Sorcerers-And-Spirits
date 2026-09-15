@@ -672,31 +672,66 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Notes:** Distinct from tablet (SS-083) and landscape (SS-082). Related: SS-079, SS-081. The
   `ScreenSizeClass.Large` bucket also seeds SS-083 (tablet).
 
-### SS-082 — Decide on landscape support
+### SS-082 — Adaptive layout foundation (no orientation lock)
 
 - [ ] Not completed
-- **Goal:** Make a product + technical decision on whether the app supports landscape orientation,
-  and to what extent (all screens, or lock to portrait). The wheel selector and Arena combat layouts
-  assume portrait today.
-- **Steps:** Decide scope (lock portrait vs. full landscape vs. per-screen); if supported, define
-  how
-  the wheel + stats card and ArenaScreen reflow; otherwise set the orientation lock and remove the
-  ambiguity. Record the decision here.
-- **Notes:** Interacts with SS-080 (responsive) and SS-083 (tablet, where landscape is more
-  expected).
+- **Decision (2026-09-15):** No orientation lock, ever, on any platform. The app must adapt correctly
+  to any window — portrait/landscape phones, foldables, split-screen/multi-window, tablets, desktop.
+  Locking to portrait was explicitly rejected: the target is doing it right, not the easy way out.
+- **Goal:** Build the adaptive-layout foundation and apply the cheap, shared treatment to all flow/list
+  screens, so nothing stretches full-bleed and every screen survives free rotation without crashing.
+- **Key insight:** The existing `ScreenSizeClass` (SS-080) is **width-only and only drives *scaling***
+  (the `LocalDensity` override) — it makes things bigger/smaller but does **not reflow**. That is a
+  separate concern and is exactly why ArenaCombat looks bad in landscape. This ticket adds the *reflow*
+  signal; it does not touch the scaling foundation.
+- **Steps:**
+  - Add a cross-platform window-metrics signal carrying width **and** height (→ orientation/aspect),
+    sourced from `LocalWindowInfo.current.containerSize` (the iOS-safe source per SS-080's findings).
+    Provide it as a `LocalWindowSizeClass` alongside `LocalScreenSizeClass`. Screens read it to pick a
+    layout.
+  - Do NOT use the Google `adaptive` lib / Nav3 `NavigationSuiteScaffold` / `ListDetailPaneScaffold`
+    machinery — Android-only, and this is a KMP single-view-per-state game, not a nav/list-detail
+    productivity app. Roll the thin signal ourselves (SS-080 already established the adaptive lib fails
+    on iOS).
+  - Screen categorization: **flow/list screens** (Tavern, Profile, Leaderboard, Achievements,
+    GameRules, Credits) need one *shared* reusable treatment — a centered **max content width**
+    container (optional multi-column at wide widths). No per-screen design.
+  - Verify every screen survives rotation / window resize without crashing or losing state (state is
+    already hoisted in ViewModels).
+- **Out of scope (own tickets):** the two *spatial* screens that need genuinely designed second
+  layouts — class wheel + stats card → SS-083; ArenaCombat → SS-286.
+- **Notes:** Builds on SS-080 (scaling). Reference: `~/.android/skills/jetpack-compose/adaptive`
+  (Android-centric; adapt, don't follow literally). Related: SS-079, SS-081, SS-083, SS-286.
 
-### SS-083 — Tablet support
+### SS-083 — Class wheel + stats card: wide/landscape reflow
 
 - [ ] Not completed
-- **Goal:** Define and implement how the app presents on tablets / large screens (the layouts are
-  phone-first today).
-- **Steps:** Decide the target (basic "scaled-up phone" vs. adaptive multi-pane layouts); set max
-  content widths / adaptive breakpoints; review the wheel selector, Tavern, Arena, and profile/stats
-  screens at expanded window sizes. The `~/.android/skills/jetpack-compose/adaptive` skill is the
-  reference for adaptive layouts.
-- **Notes:** Likely depends on SS-082 (landscape) since tablets are commonly used landscape.
-  Related:
-  SS-080, SS-082.
+- **Goal:** Give the class-selection wheel + stats card a designed landscape/wide layout: **stacked
+  (tall)** vs **side-by-side (wide)** — wheel beside the stats card instead of above it.
+- **Depends on:** SS-082 (the `LocalWindowSizeClass` signal). This is the tablet/large-screen half of
+  landscape support (tablets are commonly held landscape).
+- **Steps:** Using SS-082's signal, branch the class-selection layout between the current stacked
+  portrait arrangement and a side-by-side wide arrangement; set sensible max widths so the wheel/card
+  don't over-stretch on very wide windows. Review at foldable, tablet, and desktop window sizes.
+- **Notes:** The wheel is being moved off `TavernScreen` (overhaul pending, per SS-080 notes) — keep
+  the reflow in the wheel/stats-card components so it follows the wheel to its new home. Related:
+  SS-080, SS-082, SS-286.
+
+### SS-286 — ArenaCombat: wide/landscape reflow
+
+- [ ] Not completed
+- **Goal:** Give the ArenaCombat screen a designed landscape/wide layout. Today it stacks
+  arena/avatars over the dice tray + action buttons and looks bad in landscape.
+- **Depends on:** SS-082 (the `LocalWindowSizeClass` signal). Hardest of the three spatial reflows;
+  broken out into its own ticket.
+- **Steps:** In `LoadedArenaScreen`, each `ArenaMatchState` branch (`ChoosingClasses`, `Combat`,
+  `Finished`) owns its composable, so the reflow lives cleanly inside each. For `Combat`: side-by-side
+  in wide windows — arena board/avatars on one side, dice tray + action buttons on the other — instead
+  of stacked. Ship an interactive Compose preview for the new wide layout per the combat-preview
+  convention.
+- **Notes:** Verify the combat animation/sequencing overlays (weapon travel, message-log overlay,
+  seat-hold) still land correctly under the reflowed geometry — avatar bounds are proportional
+  (`BoxWithConstraints`) so should follow, but confirm. Related: SS-082, SS-083.
 
 ---
 

@@ -2,12 +2,15 @@ package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.withActiveUserIds
+import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
-import kotlinx.serialization.builtins.nullable
 
 internal class ExitArena(private val userId: String) {
     suspend operator fun invoke(arenaReference: DatabaseReference) {
-        arenaReference.runTransaction(strategy = ArenaMatchEntity.serializer().nullable) { match ->
+        val strategy =
+            nullOnTransactionDecodeCrashSerializer(serializer = ArenaMatchEntity.serializer())
+
+        arenaReference.runTransaction(strategy = strategy) { match ->
             match?.exitArenaTransaction()
         }
     }

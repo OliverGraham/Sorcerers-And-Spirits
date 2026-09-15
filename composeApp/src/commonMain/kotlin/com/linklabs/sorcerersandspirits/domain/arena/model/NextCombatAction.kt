@@ -28,7 +28,12 @@ fun NextCombatAction.attackerUserId(): String = when (this) {
     is NextCombatAction.AbilityRoll -> attackTurn.attackerUserId
 }
 
-fun NextCombatAction.lockedTargetUserId(userId: String): String? {
-    val attack = this as? NextCombatAction.NormalAttack ?: return null
-    return if (attack.attackTurn.attackerUserId == userId) attack.defenderUserId else null
+fun NextCombatAction.lockedTargetUserId(userId: String): String? = when (this) {
+    is NextCombatAction.Idle -> null
+
+    is NextCombatAction.NormalAttack ->
+        if (attackTurn.attackerUserId == userId) defenderUserId else null
+
+    is NextCombatAction.AbilityRoll ->
+        if (userId in activeUserIds) defenderUserId else null
 }

@@ -179,7 +179,11 @@ private fun ArenaMatch.Combat.updateCombat(
 ): ArenaScreenStateUpdate = ArenaScreenStateUpdate(
     screenState =
     currentScreenState.copy(
-        arenaMatchState = currentArenaMatchState.copy(diceRollState = diceRoll?.toState()),
+        arenaMatchState =
+        currentArenaMatchState.copy(
+            diceRollState = diceRoll?.toState(),
+            currentTargetUserId = currentTargetUserId,
+        ),
     ),
     timerAction = TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS),
     messageQueueUpdate = this,
@@ -287,6 +291,7 @@ private fun ArenaMatch.Combat.toCombatState(userId: String) = ArenaMatchState.Co
     attackerUserId = nextCombatAction.attackerUserId(),
     turnOwnerClassType = turnOwnerClassType(),
     lockedTargetUserId = nextCombatAction.lockedTargetUserId(userId = userId),
+    currentTargetUserId = currentTargetUserId,
     diceRollState = diceRoll?.toState(),
     isActionInFlight = false,
 )

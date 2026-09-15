@@ -168,37 +168,38 @@ private fun CombatButtonsUiState.rollAction(
     roll: CombatButtonRoll,
     onAttack: (AttackArguments) -> Unit,
     onUseAbility: (UseAbilityArguments) -> Unit,
-): () -> Unit {
-    val target = targetedOpponentUserId ?: return {}
+): () -> Unit = when (roll) {
+    is CombatButtonRoll.None -> {
+        {}
+    }
 
-    return when (roll) {
-        is CombatButtonRoll.None -> {
+    is CombatButtonRoll.Attack -> {
+        val attackTarget = targetedOpponentUserId
+        if (attackTarget == null) {
             {}
-        }
-
-        is CombatButtonRoll.Attack -> {
+        } else {
             {
                 onAttack(
                     AttackArguments(
-                        targetedOpponentUserId = target,
+                        targetedOpponentUserId = attackTarget,
                         userPlayerId = userPlayerId,
                         combatActionState = combatActionState,
                     ),
                 )
             }
         }
+    }
 
-        is CombatButtonRoll.UseAbility -> {
-            {
-                onUseAbility(
-                    UseAbilityArguments(
-                        abilityActionState = roll.action,
-                        targetedOpponentUserId = target,
-                        userPlayerId = userPlayerId,
-                        combatActionState = combatActionState,
-                    ),
-                )
-            }
+    is CombatButtonRoll.UseAbility -> {
+        {
+            onUseAbility(
+                UseAbilityArguments(
+                    abilityActionState = roll.action,
+                    targetedOpponentUserId = targetedOpponentUserId.orEmpty(),
+                    userPlayerId = userPlayerId,
+                    combatActionState = combatActionState,
+                ),
+            )
         }
     }
 }

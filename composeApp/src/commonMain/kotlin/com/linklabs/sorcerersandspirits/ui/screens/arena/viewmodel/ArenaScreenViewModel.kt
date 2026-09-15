@@ -487,6 +487,8 @@ class ArenaScreenViewModel(
                 ?: return currentScreenState
 
         val nextCombatAction = arenaMatchCombatUpdate.nextCombatAction
+        val doesTurnContinueForActor =
+            currentArenaCombatState.attackerUserId in nextCombatAction.activeUserIds
         val finalArenaMatchUpdate =
             currentArenaCombatState.copy(
                 playerMap =
@@ -501,6 +503,8 @@ class ArenaScreenViewModel(
                 nextCombatAction.lockedTargetUserId(
                     userId = currentArenaCombatState.userPlayerId,
                 ),
+                currentTargetUserId =
+                arenaMatchCombatUpdate.currentTargetUserId.takeIf { doesTurnContinueForActor },
                 isActionInFlight = false,
             )
 

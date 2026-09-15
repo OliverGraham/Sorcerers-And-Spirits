@@ -10,6 +10,7 @@ data class ActionOutcome(
     val messages: List<ArenaMessage>,
     val updatedPlayerMap: Map<UserId, ArenaPlayer.Selected>,
     val nextCombatAction: NextCombatAction,
+    val currentTargetUserId: String?,
     val roundNumber: Int,
     val isNewRound: Boolean,
     val isMatchFinished: Boolean,

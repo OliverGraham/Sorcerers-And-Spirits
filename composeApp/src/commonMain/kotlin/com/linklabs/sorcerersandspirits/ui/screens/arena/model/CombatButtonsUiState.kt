@@ -79,7 +79,8 @@ private fun ArenaCombatControl.toCombatButton(
 )
 
 private fun ArenaCombatControl.toCombatButtonRoll(targetedOpponentUserId: String?): CombatButtonRoll {
-    if (targetedOpponentUserId == null) return CombatButtonRoll.None
+    val hasUnmetTargetRequirement = requiresTarget && targetedOpponentUserId == null
+    if (hasUnmetTargetRequirement) return CombatButtonRoll.None
 
     return when (this) {
         is ArenaCombatControl.NormalAttack -> CombatButtonRoll.Attack

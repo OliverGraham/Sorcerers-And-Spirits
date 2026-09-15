@@ -16,7 +16,6 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedP
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
-import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
@@ -30,7 +29,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaEvent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaSessionStats
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.UseAbilityArguments
-import com.linklabs.sorcerersandspirits.ui.screens.arena.computer.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.AbilityActionState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
@@ -101,8 +99,6 @@ class ArenaScreenViewModel(
     private val _selectedOpponentUserIdFlow = MutableStateFlow<String?>(value = null)
     val selectedOpponentUserIdFlow = _selectedOpponentUserIdFlow.asStateFlow()
 
-    private val computerOpponentIds = arguments.computerOpponents.map { it.userId }.toSet()
-
     private val arenaMatchCombatQueue =
         ArenaMatchCombatQueue(
             triggerAnimation = ::triggerAnimation,
@@ -111,7 +107,6 @@ class ArenaScreenViewModel(
             onTeleportRollOffComplete = ::onTeleportRollOffComplete,
             onHeaderAnimationsComplete = ::onHeaderAnimationsComplete,
             finishMatch = { finishMatchUseCase(arenaId = arguments.arenaId) },
-            computerOpponentIds = computerOpponentIds,
         )
 
     // TODO(SS-260): Probably a handler for this
@@ -119,16 +114,6 @@ class ArenaScreenViewModel(
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
     private val classCopy by lazy { getCharacterClassCopyUseCase() }
-
-    private val computerOpponentHandler =
-        ComputerOpponentHandler(
-            arenaId = arguments.arenaId,
-            computerOpponentIds = computerOpponentIds,
-            coroutineScope = viewModelScope,
-            chooseCharacterClassUseCase = chooseCharacterClassUseCase,
-            performCombatActionUseCase = performCombatActionUseCase,
-            stayForAnotherMatchUseCase = stayForAnotherMatchUseCase,
-        )
 
     private val chooseCharacterClassHandler =
         ChooseCharacterClassHandler(
@@ -211,7 +196,6 @@ class ArenaScreenViewModel(
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
         arenaPresenceFlowJob?.cancel()
-        computerOpponentHandler.cancel()
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -263,7 +247,6 @@ class ArenaScreenViewModel(
     fun onStayForAnotherMatch() {
         viewModelScope.launch {
             stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
-            computerOpponentHandler.readyUpForNextMatch()
 
             _uiStateFlow.updateLoaded { screenState ->
                 screenState.copy(hasReadiedForNextMatch = true)
@@ -287,7 +270,6 @@ class ArenaScreenViewModel(
                 coordinateArenaMatchUseCase(
                     arenaId = arguments.arenaId,
                     expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
-                    computerOpponents = arguments.computerOpponents,
                 )
                     .catch { _uiStateFlow.value = UiState.Error }
                     .collect { updatedArenaMatch ->
@@ -315,9 +297,8 @@ class ArenaScreenViewModel(
                 .filter { (playerId, isConnected) ->
                     val isDisconnected = !isConnected
                     val isSelf = playerId == userId
-                    val isHumanPlayer = !ComputerOpponents.isComputer(userId = playerId)
                     val isNotYetRemoved = playerId !in exitedDisconnectedPlayerIds
-                    isDisconnected && !isSelf && isHumanPlayer && isNotYetRemoved
+                    isDisconnected && !isSelf && isNotYetRemoved
                 }
                 .keys
 
@@ -355,8 +336,6 @@ class ArenaScreenViewModel(
         } else {
             handleScreenUpdate(userId = userId, currentScreenState = currentScreenState)
         }
-
-        coordinateComputerOpponents()
     }
 
     private suspend fun ArenaMatch.handleNewArenaScreen(userId: String) {
@@ -454,8 +433,6 @@ class ArenaScreenViewModel(
                 arenaMatchCombatUpdate = arenaMatchCombatUpdate,
             )
         }
-
-        coordinateComputerOpponents()
     }
 
     private fun onTeleportRollOffComplete(teleportRollsArguments: TeleportRollsArguments) {
@@ -531,18 +508,9 @@ class ArenaScreenViewModel(
         pendingStatsStore.save(delta = sessionStats.peekDelta())
     }
 
-    private fun coordinateComputerOpponents() {
-        val updatedScreenState = _uiStateFlow.getLoadedStateOrNull() ?: return
-        computerOpponentHandler.onArenaState(
-            arenaMatchState = updatedScreenState.arenaMatchState,
-            characterClasses = updatedScreenState.characterClasses,
-        )
-    }
-
     private fun handleRemovedFromMatch() {
         screenStateFlowJob?.cancel()
         arenaPresenceFlowJob?.cancel()
-        computerOpponentHandler.cancel()
 
         viewModelScope.launch {
             disconnectArenaPresenceUseCase()
@@ -646,7 +614,6 @@ class ArenaScreenViewModel(
     private suspend fun leaveTimedOutMatch() {
         screenStateFlowJob?.cancel()
         arenaPresenceFlowJob?.cancel()
-        computerOpponentHandler.cancel()
 
         exitArenaUseCase(arenaId = arguments.arenaId)
         setCurrentTravelerAvailableUseCase()

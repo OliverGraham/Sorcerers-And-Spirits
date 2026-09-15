@@ -2,8 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponent
-import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -13,7 +11,6 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
-import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -24,9 +21,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.KoinViewModel
-import kotlin.random.Random
-import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 
 @KoinViewModel
 class TavernScreenViewModel(
@@ -77,16 +71,6 @@ class TavernScreenViewModel(
                 selectedTravelerStates = selectedTravelerStates,
             )
 
-        val selectedComputers =
-            selectedTravelerStates.filter { traveler ->
-                ComputerOpponents.isComputer(userId = traveler.userId)
-            }
-
-        if (selectedComputers.isNotEmpty()) {
-            startComputerMatch(computers = selectedComputers)
-            return
-        }
-
         viewModelScope.launch {
             val event =
                 sendChallenges(
@@ -134,33 +118,6 @@ class TavernScreenViewModel(
                     .collect { data -> updateScreenState(data = data) }
             }
     }
-
-    /**
-     * Computer opponents have no Firebase presence to claim, so a computer match skips the human
-     * challenge handshake and navigates straight to a freshly created arena seeded with the user
-     * and the chosen computer opponents.
-     */
-    private fun startComputerMatch(computers: List<TravelerState>) {
-        val computerOpponents =
-            computers.map { traveler ->
-                ComputerOpponent(userId = traveler.userId, displayName = traveler.displayName)
-            }
-
-        val arguments =
-            ArenaScreenViewModelArguments(
-                arenaId = generateComputerMatchId(),
-                expectedNumberOfPlayers = computerOpponents.size + 1,
-                computerOpponents = computerOpponents,
-            )
-
-        viewModelScope.launch {
-            _eventChannelFlow.send(element = TavernEvent.NavigateToArena(arguments = arguments))
-        }
-    }
-
-    @OptIn(ExperimentalTime::class)
-    private fun generateComputerMatchId(): String = "${ComputerOpponents.ID_PREFIX}match-" +
-        "${Clock.System.now().toEpochMilliseconds()}-${Random.nextInt(from = 0, until = 1_000_000)}"
 
     private fun updateScreenState(data: TavernData) {
         val tavernState =

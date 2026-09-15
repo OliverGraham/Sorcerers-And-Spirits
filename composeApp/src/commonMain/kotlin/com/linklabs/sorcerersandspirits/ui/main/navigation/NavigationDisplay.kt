@@ -100,19 +100,7 @@ private fun NavKey.toScreen(
     popWithDust: () -> Unit,
     leaveArenaWithDust: () -> Unit,
 ): NavEntry<NavKey> = when (this) {
-    Route.TavernScreen ->
-        NavEntry(key = this) {
-            TavernScreen(
-                onNavigateToArena = { arenaScreenViewModelArguments ->
-                    backStack.add(
-                        element =
-                        Route.ArenaScreen(
-                            arguments = arenaScreenViewModelArguments.toSerializable(),
-                        ),
-                    )
-                },
-            )
-        }
+    Route.TavernScreen -> NavEntry(key = this) { TavernScreen() }
 
     is Route.ArenaScreen ->
         NavEntry(key = this) {

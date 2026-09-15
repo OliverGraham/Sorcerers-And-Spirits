@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.compose.runtime.Immutable
-import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponents
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenge
 import com.linklabs.sorcerersandspirits.domain.tavern.Challenger
@@ -65,18 +64,12 @@ internal fun TavernData.toState(
     val userTraveler =
         userTravelers.firstOrNull()?.toTravelerState(isThisTravelerTheUser = true) ?: return null
 
-    val computerTravelers =
-        ComputerOpponents.all.map { opponent ->
-            opponent.toTraveler().toTravelerState(isThisTravelerTheUser = false)
-        }
-
     return TavernState(
         userTraveler = userTraveler,
         otherTravelers =
-        computerTravelers +
-            otherTravelers.map { traveler ->
-                traveler.toTravelerState(isThisTravelerTheUser = false)
-            },
+        otherTravelers.map { traveler ->
+            traveler.toTravelerState(isThisTravelerTheUser = false)
+        },
         characterClasses = characterClasses,
         classCopy = classCopy,
     )

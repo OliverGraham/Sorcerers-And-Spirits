@@ -3,7 +3,6 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
-import com.linklabs.sorcerersandspirits.domain.computer.ComputerOpponent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -87,28 +86,14 @@ internal fun NavBackStack<NavKey>.popToTavern() {
 data class ArenaScreenViewModelArgumentsSerializable(
     val arenaId: String,
     val expectedNumberOfPlayers: Int,
-    val computerOpponents: List<ComputerOpponentSerializable> = emptyList(),
 )
-
-@Serializable data class ComputerOpponentSerializable(val userId: String, val displayName: String)
 
 internal fun ArenaScreenViewModelArgumentsSerializable.toDomain() = ArenaScreenViewModelArguments(
     arenaId = arenaId,
     expectedNumberOfPlayers = expectedNumberOfPlayers,
-    computerOpponents =
-    computerOpponents.map { opponent ->
-        ComputerOpponent(userId = opponent.userId, displayName = opponent.displayName)
-    },
 )
 
 fun ArenaScreenViewModelArguments.toSerializable() = ArenaScreenViewModelArgumentsSerializable(
     arenaId = arenaId,
     expectedNumberOfPlayers = expectedNumberOfPlayers,
-    computerOpponents =
-    computerOpponents.map { opponent ->
-        ComputerOpponentSerializable(
-            userId = opponent.userId,
-            displayName = opponent.displayName,
-        )
-    },
 )

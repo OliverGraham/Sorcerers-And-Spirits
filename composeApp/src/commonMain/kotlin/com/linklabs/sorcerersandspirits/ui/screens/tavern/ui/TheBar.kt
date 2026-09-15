@@ -340,14 +340,8 @@ private fun UnselectedTravelerCard(
     }
 }
 
-/** The shared footprint of a traveler card, so selected/unselected animate as the same size. */
 private fun Modifier.travelerCardSize(): Modifier = fillMaxWidth().padding(horizontal = 20.dp)
 
-/**
- * The shared centered label used by both the selected and unselected traveler cards: the name, with
- * the player's rating beneath it when they have one (computer opponents and unrated players show
- * just the name).
- */
 @Composable
 private fun TravelerCardLabel(
     name: String,

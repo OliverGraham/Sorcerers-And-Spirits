@@ -48,7 +48,6 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClas
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.main.navigation.LocalOpenDrawer
-import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
@@ -78,7 +77,6 @@ import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_trave
 @Composable
 internal fun TavernScreen(
     viewModel: TavernScreenViewModel = koinViewModel(),
-    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     CompositionLocalProvider(
@@ -88,7 +86,6 @@ internal fun TavernScreen(
         val snackbarHostState = remember { SnackbarHostState() }
 
         viewModel.eventChannelFlow.collectEvents(
-            onNavigateToArena = onNavigateToArena,
             snackbarHostState = snackbarHostState,
             onRetryChallenge = viewModel::retryLastChallenge,
         )
@@ -251,7 +248,6 @@ private fun ScreenContent(
 @Suppress("ComposableNaming")
 @Composable
 private fun Flow<TavernEvent>.collectEvents(
-    onNavigateToArena: (ArenaScreenViewModelArguments) -> Unit,
     snackbarHostState: SnackbarHostState,
     onRetryChallenge: () -> Unit,
 ) {
@@ -264,8 +260,6 @@ private fun Flow<TavernEvent>.collectEvents(
     LaunchedEffect(Unit) {
         collect { event ->
             when (event) {
-                is TavernEvent.NavigateToArena -> onNavigateToArena(event.arguments)
-
                 is TavernEvent.ShowChallengeSendFailed ->
                     scope.showRetryableChallengeError(
                         snackbarHostState = snackbarHostState,

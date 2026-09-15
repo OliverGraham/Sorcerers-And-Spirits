@@ -26,6 +26,7 @@ sealed interface ArenaMatch {
         override val playerMap: Map<String, ArenaPlayer.Selected>,
         override val matchNumberInGauntlet: Int = 1,
         val nextCombatAction: NextCombatAction,
+        val currentTargetUserId: String?,
         val roundNumber: Int,
         val isNewRound: Boolean,
         val isMatchOver: Boolean,

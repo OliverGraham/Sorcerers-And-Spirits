@@ -39,6 +39,7 @@ sealed interface ArenaMatchState {
         val attackerUserId: String,
         val turnOwnerClassType: CharacterClassType,
         val lockedTargetUserId: String?,
+        val currentTargetUserId: String?,
         val diceRollState: DiceRollState?,
         val isActionInFlight: Boolean = false,
     ) : ActiveMatchState {
@@ -69,6 +70,7 @@ sealed interface ArenaMatchState {
 
         fun resolveTargetUserId(selectedOpponentUserId: String?): String? = lockedTargetUserId
             ?: selectedOpponentUserId
+            ?: currentTargetUserId
             ?: combatActionState.defenderUserId()
             ?: playerMap.values
                 .singleOrNull { it.userId != attackerUserId && it.characterClass.isConscious }

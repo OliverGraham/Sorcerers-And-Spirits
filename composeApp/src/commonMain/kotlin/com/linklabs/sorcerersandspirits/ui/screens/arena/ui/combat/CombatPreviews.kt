@@ -270,6 +270,7 @@ private fun previewCombatState(
         attackerUserId = userId,
         turnOwnerClassType = players.first().characterClass.type,
         lockedTargetUserId = null,
+        currentTargetUserId = null,
         diceRollState = null,
     )
 }

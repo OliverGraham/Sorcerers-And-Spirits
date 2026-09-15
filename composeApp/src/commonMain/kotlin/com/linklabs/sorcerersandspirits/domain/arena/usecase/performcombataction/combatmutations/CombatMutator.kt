@@ -117,6 +117,7 @@ internal class CombatMutator(
         updatedPlayerMap = updatedPlayerMap,
         messages = messages,
         nextCombatAction = nextCombatAction,
+        currentTargetUserId = defenderUserId.takeIf { it != attackerUserId },
         roundNumber = updatedRoundNumber ?: roundNumber,
         isNewRound = updatedRoundNumber != null,
         isMatchFinished = getIsMatchFinished(),

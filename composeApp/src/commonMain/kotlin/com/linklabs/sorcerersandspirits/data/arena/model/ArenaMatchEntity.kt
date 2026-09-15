@@ -38,6 +38,7 @@ sealed interface ArenaMatchEntity {
         val isNewRound: Boolean,
         val isMatchOver: Boolean = false,
         val diceRoll: DiceRollEntity? = null,
+        val currentTargetUserId: String? = null,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -87,6 +88,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 messages = messages,
                 nextCombatAction = nextCombatActionEntity.toDomain(),
+                currentTargetUserId = currentTargetUserId,
                 roundNumber = roundNumber,
                 isNewRound = isNewRound,
                 isMatchOver = isMatchOver,

@@ -41,6 +41,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         newMessages = updatedMessages,
         playerEntitiesMap = result.updatedPlayerMap.mapValues { it.value.toSelectedEntity() },
         nextCombatActionEntity = mergedNextCombatActionEntity(),
+        currentTargetUserId = result.currentTargetUserId,
         roundNumber = result.roundNumber,
         isNewRound = result.isNewRound,
         isMatchOver = result.isMatchFinished,

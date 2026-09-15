@@ -104,6 +104,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
         attackerUserId = userPlayerId,
         turnOwnerClassType = playerMap.getValue(key = userPlayerId).characterClass.type,
         lockedTargetUserId = null,
+        currentTargetUserId = null,
         diceRollState = null,
     )
 

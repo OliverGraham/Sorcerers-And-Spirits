@@ -159,9 +159,9 @@
     <string name="arena_message_persuade_trigger">Persuade! The {class}Bard{/class} begins strumming a lute…</string>
     <string name="arena_message_persuade_strum_lute_success">Strummed the lute and rolled %1$s — the song takes hold</string>
     <string name="arena_message_persuade_strum_lute_failed">Strummed the lute and rolled %1$s — the song falls flat</string>
-    <string name="arena_message_persuade_charm_activation">The charm takes effect!</string>
+    <string name="arena_message_persuade_charm_activation">The {class}Bard{/class} charms {class}%1$s{/class} — choosing a new target…</string>
     <string name="arena_message_persuade_lull">The attacker is lulled…</string>
-    <string name="arena_message_persuade_charm">{class}%1$s{/class} charmed {class}%2$s{/class}</string>
+    <string name="arena_message_persuade_charm">{class}%1$s{/class} is charmed into attacking {class}%2$s{/class}!</string>
 
     <string name="arena_message_encore_trigger">Encore! The {class}Bard{/class} rolls 1d6 — %1$s–%2$s earns another attack</string>
     <string name="arena_message_encore_roll_success">Encore roll of %1$s — the crowd roars, the {class}Bard{/class} attacks again!</string>

@@ -179,7 +179,12 @@ sealed interface ArenaMessage {
 
         data class StrumLute(val bardUserId: String, val diceRoll: Int, val isSuccessful: Boolean) : Persuade
 
-        data class CharmActivation(val bardUserId: String) : Persuade
+        data class CharmActivation(
+            val bardUserId: String,
+            val attackerUserId: String,
+            val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
+        ) : Persuade
 
         data class Charm(
             val bardUserId: String,

@@ -47,6 +47,13 @@ sealed interface ArenaMatchState {
         val activeUserIds = combatActionState.activeUserIds
         val isItThisUsersTurn = userPlayerId in activeUserIds
 
+        val charmTargetableUserIds: Set<String> =
+            if (isItThisUsersTurn) {
+                combatActionState.charmTargetableUserIds()
+            } else {
+                emptySet()
+            }
+
         // TODO(SS-029): Obviously, this was supposed to simply come from the domain
         val combatControls = deriveCombatControls()
         val arenaCombatControl =
@@ -119,6 +126,13 @@ internal fun ArenaMatch.ChoosingClasses.toChoosingClassesState(
     classSelections = emptyMap(),
     userConfirmedClassType = playerMap.userConfirmedClassType(userId = userPlayerId),
 )
+
+private fun CombatActionState.charmTargetableUserIds(): Set<String> {
+    val abilityRoll = this as? CombatActionState.AbilityRoll ?: return emptySet()
+    val charm = abilityRoll.action as? AbilityActionState.Passive.Persuade.Charm ?: return emptySet()
+
+    return charm.targetableUserIds
+}
 
 internal fun CombatActionState.teleportAction(): AbilityActionState.Passive.Teleport? {
     val abilityRoll = this as? CombatActionState.AbilityRoll ?: return null

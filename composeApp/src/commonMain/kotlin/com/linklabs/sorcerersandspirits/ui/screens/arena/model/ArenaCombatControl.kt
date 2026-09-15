@@ -173,6 +173,9 @@ private fun AbilityActionState.toAbilityRollControls(
     is AbilityActionState.Passive.MirrorImage ->
         mirrorImageControls(userPlayerId = userPlayerId)
 
+    // TODO: Figure out if it does make sense to choose a target and then confirm with a button
+    is AbilityActionState.Passive.Persuade.Charm -> emptyList()
+
     else ->
         listOf(
             element =

@@ -34,10 +34,13 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.Ani
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationPreview
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_ACTOR_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_TARGET_ID
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberDuoAvatars
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.rememberSoloAvatar
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import androidx.compose.ui.geometry.lerp as lerpOffset
 
 private const val LUTE_APPEAR_MILLIS = 240
 private const val STRUM_RING_MILLIS = 540
@@ -48,6 +51,7 @@ private const val FLOURISH_MILLIS = 720
 private const val FLUTE_CROSSFADE_MILLIS = 460
 private const val AIR_FLOW_MILLIS = 1000
 private const val SWIRL_MILLIS = 1200
+private const val AIR_TRAVEL_MILLIS = 1300
 private const val LUTE_FADE_MILLIS = 280
 private const val LUTE_POP_SCALE = 0.72f
 
@@ -63,16 +67,24 @@ internal class PersuadeEffectState {
     val fluteReveal = Animatable(initialValue = 0f)
     val airFlow = Animatable(initialValue = 0f)
     val swirl = Animatable(initialValue = 0f)
+    val travel = Animatable(initialValue = 0f)
 
     var scene by mutableStateOf<PersuadeScene?>(value = null)
 }
 
-@Immutable internal data class PersuadeScene(val anchor: Offset, val accentColor: Color)
+@Immutable
+internal data class PersuadeScene(
+    val anchor: Offset,
+    val targetAnchor: Offset?,
+    val accentColor: Color,
+)
 
+// TODO: Make Flute's animation more dramatic
 @Composable
 internal fun PersuadeOverlay(
     animatingMessage: ArenaMessageState.Persuade,
     bardBounds: Rect,
+    charmTargetBounds: Rect?,
     modifier: Modifier = Modifier,
 ) {
     val state = remember { PersuadeEffectState() }
@@ -83,6 +95,7 @@ internal fun PersuadeOverlay(
         val scene =
             persuadeScene(
                 bardBounds = bardBounds,
+                charmTargetBounds = charmTargetBounds,
                 accentColor = CharacterClassType.Bard.toColor(),
                 density = density,
             )
@@ -94,15 +107,28 @@ internal fun PersuadeOverlay(
                 animationKey = AnimationKey.AvatarOverlay,
             ),
         )
+
+        if (animatingMessage.isContinuous()) {
+            state.playContinuous(message = animatingMessage)
+        }
     }
 
     Canvas(modifier = modifier) { drawPersuade(state = state) }
 }
 
-private fun persuadeScene(bardBounds: Rect, accentColor: Color, density: Density): PersuadeScene {
+// TODO: charmTargetBounds can be more explicit by using the message type
+private fun persuadeScene(
+    bardBounds: Rect,
+    charmTargetBounds: Rect?,
+    accentColor: Color,
+    density: Density,
+): PersuadeScene {
     val liftPx = with(density) { 6.dp.toPx() }
+    val lift = Offset(x = 0f, y = liftPx)
+    val targetAnchor = if (charmTargetBounds != null) charmTargetBounds.center - lift else null
     return PersuadeScene(
-        anchor = bardBounds.center - Offset(x = 0f, y = liftPx),
+        anchor = bardBounds.center - lift,
+        targetAnchor = targetAnchor,
         accentColor = accentColor,
     )
 }
@@ -117,9 +143,20 @@ private suspend fun PersuadeEffectState.play(
         is ArenaMessageState.Persuade.StrumLute ->
             strumLute(scene = scene, isSuccessful = message.isSuccessful)
 
-        is ArenaMessageState.Persuade.CharmActivation -> readyFlute(scene = scene)
+        is ArenaMessageState.Persuade.CharmActivation -> revealFlute(scene = scene)
 
-        is ArenaMessageState.Persuade.Charm -> blowFlute(scene = scene)
+        is ArenaMessageState.Persuade.Charm -> travelFlute(scene = scene)
+    }
+}
+
+private suspend fun PersuadeEffectState.playContinuous(message: ArenaMessageState.Persuade) {
+    when (message) {
+        is ArenaMessageState.Persuade.CharmActivation -> streamAir()
+
+        is ArenaMessageState.Persuade.Trigger,
+        is ArenaMessageState.Persuade.StrumLute,
+        is ArenaMessageState.Persuade.Charm,
+        -> Unit
     }
 }
 
@@ -175,7 +212,7 @@ private suspend fun PersuadeEffectState.strumLute(scene: PersuadeScene, isSucces
     fadeOut()
 }
 
-private suspend fun PersuadeEffectState.readyFlute(scene: PersuadeScene) {
+private suspend fun PersuadeEffectState.revealFlute(scene: PersuadeScene) {
     beginLuteResolve(scene = scene)
 
     ringStrings()
@@ -189,25 +226,53 @@ private suspend fun PersuadeEffectState.readyFlute(scene: PersuadeScene) {
     )
 }
 
-private suspend fun PersuadeEffectState.blowFlute(scene: PersuadeScene) {
+private suspend fun PersuadeEffectState.streamAir() {
+    while (true) {
+        airFlow.snapTo(targetValue = 0f)
+        swirl.snapTo(targetValue = 0f)
+        coroutineScope {
+            launch {
+                airFlow.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = AIR_FLOW_MILLIS, easing = LinearEasing),
+                )
+            }
+            launch {
+                swirl.animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = SWIRL_MILLIS, easing = LinearEasing),
+                )
+            }
+        }
+    }
+}
+
+private suspend fun PersuadeEffectState.travelFlute(scene: PersuadeScene) {
     this.scene = scene
+    resetChannels()
     luteAlpha.snapTo(targetValue = 1f)
+    luteScale.snapTo(targetValue = 1f)
     fluteReveal.snapTo(targetValue = 1f)
-    flourish.snapTo(targetValue = 1f)
-    airFlow.snapTo(targetValue = 0f)
-    swirl.snapTo(targetValue = 0f)
+    travel.snapTo(targetValue = 0f)
 
     coroutineScope {
         launch {
+            travel.animateTo(
+                targetValue = 1f,
+                animationSpec =
+                tween(durationMillis = AIR_TRAVEL_MILLIS, easing = FastOutSlowInEasing),
+            )
+        }
+        launch {
             airFlow.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = AIR_FLOW_MILLIS, easing = LinearEasing),
+                animationSpec = tween(durationMillis = AIR_TRAVEL_MILLIS, easing = LinearEasing),
             )
         }
         launch {
             swirl.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(durationMillis = SWIRL_MILLIS, easing = LinearEasing),
+                animationSpec = tween(durationMillis = AIR_TRAVEL_MILLIS, easing = LinearEasing),
             )
         }
     }
@@ -253,6 +318,7 @@ private suspend fun PersuadeEffectState.resetChannels() {
     fluteReveal.snapTo(targetValue = 0f)
     airFlow.snapTo(targetValue = 0f)
     swirl.snapTo(targetValue = 0f)
+    travel.snapTo(targetValue = 0f)
 }
 
 private fun DrawScope.drawPersuade(state: PersuadeEffectState) {
@@ -261,6 +327,14 @@ private fun DrawScope.drawPersuade(state: PersuadeEffectState) {
     val luteAlpha = state.luteAlpha.value
     val fluteReveal = state.fluteReveal.value
     val accent = scene.accentColor
+
+    val targetAnchor = scene.targetAnchor
+    val airAnchor =
+        if (targetAnchor != null) {
+            lerpOffset(start = scene.anchor, stop = targetAnchor, fraction = state.travel.value)
+        } else {
+            scene.anchor
+        }
 
     val isLuteShowing = luteAlpha > 0f && fluteReveal < 1f
     if (isLuteShowing) {
@@ -290,7 +364,7 @@ private fun DrawScope.drawPersuade(state: PersuadeEffectState) {
         flourish = state.flourish.value,
     )
     drawSwirlNotes(
-        anchor = scene.anchor,
+        anchor = airAnchor,
         accentColor = accent,
         swirl = state.swirl.value,
         alpha = luteAlpha,
@@ -311,8 +385,34 @@ private fun BardPersuadeStoppedPreview() {
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun BardPersuadeCharmPreview() {
+private fun BardPersuadeCharmActivationPreview() {
     val avatars = rememberSoloAvatar()
+    AnimationPreview(
+        accentClass = CharacterClassType.Bard,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Persuade.CharmActivation(
+                id = id,
+                bardUserId = PREVIEW_ACTOR_ID,
+                attackerUserId = "attacker",
+                attackerClassName = "Rogue",
+                attackerClassType = CharacterClassType.Rogue,
+            )
+        },
+    ) { message ->
+        PersuadeOverlay(
+            animatingMessage = message,
+            bardBounds = avatars.boundsFor(userId = PREVIEW_ACTOR_ID),
+            charmTargetBounds = null,
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun BardPersuadeCharmPreview() {
+    val avatars = rememberDuoAvatars()
     AnimationPreview(
         accentClass = CharacterClassType.Bard,
         avatars = avatars,
@@ -320,8 +420,10 @@ private fun BardPersuadeCharmPreview() {
             ArenaMessageState.Persuade.Charm(
                 id = id,
                 bardUserId = PREVIEW_ACTOR_ID,
+                attackerUserId = "attacker",
                 attackerClassName = "Rogue",
                 attackerClassType = CharacterClassType.Rogue,
+                defenderUserId = PREVIEW_TARGET_ID,
                 defenderClassName = "Mage",
                 defenderClassType = CharacterClassType.Mage,
             )
@@ -329,7 +431,8 @@ private fun BardPersuadeCharmPreview() {
     ) { message ->
         PersuadeOverlay(
             animatingMessage = message,
-            bardBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            bardBounds = avatars.boundsFor(userId = PREVIEW_ACTOR_ID),
+            charmTargetBounds = avatars.boundsFor(userId = PREVIEW_TARGET_ID),
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -353,6 +456,7 @@ private fun BardPersuadeStrumPreview(isSuccessful: Boolean) {
         PersuadeOverlay(
             animatingMessage = message,
             bardBounds = avatars.boundsFor(userId = PREVIEW_ACTOR_ID),
+            charmTargetBounds = null,
             modifier = Modifier.fillMaxSize(),
         )
     }

@@ -53,6 +53,7 @@ internal fun ArenaScreen(
                 onDismissForfeitDialog = viewModel::onDismissForfeitDialog,
                 onStayForAnotherMatch = viewModel::onStayForAnotherMatch,
                 onTargetOpponent = viewModel::onTargetOpponent,
+                onChooseCharmTarget = viewModel::onChooseCharmTarget,
             ),
         LocalShakeDetector provides koinInject(),
         LocalHaptics provides koinInject(),

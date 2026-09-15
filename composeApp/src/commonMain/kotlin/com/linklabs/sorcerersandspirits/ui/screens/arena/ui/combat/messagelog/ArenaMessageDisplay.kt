@@ -345,8 +345,12 @@ internal fun ArenaMessageState.getDisplayString(): String = when (this) {
             )
         }
 
+    // TODO: Double check language
     is ArenaMessageState.Persuade.CharmActivation ->
-        stringResource(resource = Res.string.arena_message_persuade_charm_activation)
+        stringResource(
+            resource = Res.string.arena_message_persuade_charm_activation,
+            attackerClassName,
+        )
 
     is ArenaMessageState.Persuade.Charm ->
         stringResource(

@@ -16,6 +16,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.SharedTransitionProvider
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassHeadIcon
@@ -36,7 +39,9 @@ internal fun SharedTransitionScope.ClassIcons(
     standsUserIds: Set<String>,
     userPlayerId: String,
     isTargetable: Boolean,
+    charmTargetableUserIds: Set<String>,
     onInspect: (String) -> Unit,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
     animatingMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
 ) {
@@ -62,7 +67,9 @@ internal fun SharedTransitionScope.ClassIcons(
                             player = player,
                             isUserPlayer = player.userId == userPlayerId,
                             isTargetable = isTargetable,
+                            isCharmTarget = player.userId in charmTargetableUserIds,
                             onInspect = onInspect,
+                            onAvatarBoundsChanged = onAvatarBoundsChanged,
                             animatingMessage = animatingMessage,
                         )
                     }
@@ -77,7 +84,9 @@ private fun ClassIcon(
     player: PlayerState.Selected,
     isUserPlayer: Boolean,
     isTargetable: Boolean,
+    isCharmTarget: Boolean,
     onInspect: (String) -> Unit,
+    onAvatarBoundsChanged: (String, Rect) -> Unit,
     animatingMessage: ArenaMessageState?,
     modifier: Modifier = Modifier,
 ) {
@@ -91,19 +100,27 @@ private fun ClassIcon(
         val headWidth = minOf(a = maxWidth, b = maxHeight)
 
         val onTargetOpponent = LocalArenaActions.current.onTargetOpponent
+        val onChooseCharmTarget = LocalArenaActions.current.onChooseCharmTarget
         ClassHeadIcon(
             characterClass = player.characterClass,
             isEnabled = isConscious,
             width = headWidth,
             hitPointsEmphasis = splash.hitPointsEmphasis,
             modifier =
-            Modifier.sharedBounds(key = player.userId).clickable {
-                if (isTargetingTap) {
-                    onTargetOpponent(player.userId)
-                } else {
-                    onInspect(player.userId)
+            Modifier.sharedBounds(key = player.userId)
+                .onGloballyPositioned {
+                    onAvatarBoundsChanged(player.userId, it.boundsInRoot())
                 }
-            },
+                .clickable {
+                    // TODO: Make this better
+                    if (isCharmTarget) {
+                        onChooseCharmTarget(player.userId)
+                    } else if (isTargetingTap) {
+                        onTargetOpponent(player.userId)
+                    } else {
+                        onInspect(player.userId)
+                    }
+                },
         )
 
         SpellPotencySplashIndicator(

@@ -22,6 +22,7 @@ internal data class ArenaActions(
     val onDismissForfeitDialog: () -> Unit = {},
     val onStayForAnotherMatch: () -> Unit = {},
     val onTargetOpponent: (userId: String) -> Unit = {},
+    val onChooseCharmTarget: (userId: String) -> Unit = {},
 )
 
 data class AttackArguments(

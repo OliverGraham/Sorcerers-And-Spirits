@@ -190,7 +190,9 @@ private fun SpellPotencySplashPreview() {
                     standsUserIds = headIconPlayers.map { it.userId }.toSet(),
                     userPlayerId = "rogue",
                     isTargetable = false,
+                    charmTargetableUserIds = emptySet(),
                     onInspect = {},
+                    onAvatarBoundsChanged = { _, _ -> },
                     animatingMessage = animatingMessage,
                     modifier = Modifier.size(width = 140.dp, height = 520.dp),
                 )

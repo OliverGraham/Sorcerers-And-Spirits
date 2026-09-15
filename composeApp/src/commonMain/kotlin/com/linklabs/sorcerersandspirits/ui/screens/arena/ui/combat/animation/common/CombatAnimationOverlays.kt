@@ -156,9 +156,17 @@ internal fun CombatAnimationOverlays(
             val avatarBounds =
                 avatarBoundsStateHolder.boundsFor(userId = animatingMessage.bardUserId) ?: return
 
+            val charmTargetBounds =
+                if (animatingMessage is ArenaMessageState.Persuade.Charm) {
+                    avatarBoundsStateHolder.boundsFor(userId = animatingMessage.defenderUserId)
+                } else {
+                    null
+                }
+
             PersuadeOverlay(
                 animatingMessage = animatingMessage,
                 bardBounds = avatarBounds,
+                charmTargetBounds = charmTargetBounds,
                 modifier = modifier,
             )
         }

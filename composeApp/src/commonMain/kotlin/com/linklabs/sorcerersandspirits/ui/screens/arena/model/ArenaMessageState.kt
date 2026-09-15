@@ -563,18 +563,36 @@ sealed interface ArenaMessageState {
 
         @Immutable
         data class CharmActivation(
-            override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
+            override val animation: ArenaAnimationState =
+                ArenaAnimationState.FlashAndAvatar(isContinuous = true),
             override val id: String,
             override val bardUserId: String,
-        ) : Persuade
+            val attackerUserId: String,
+            val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
+        ) : Persuade {
+            override val coloredClassNames: List<CharacterClassMessageInfoState> =
+                listOf(
+                    CharacterClassMessageInfoState(
+                        className = actingClassType.name,
+                        type = actingClassType,
+                    ),
+                    CharacterClassMessageInfoState(
+                        className = attackerClassName,
+                        type = attackerClassType,
+                    ),
+                )
+        }
 
         @Immutable
         data class Charm(
             override val animation: ArenaAnimationState = ArenaAnimationState.FlashAndAvatar(),
             override val id: String,
             override val bardUserId: String,
+            val attackerUserId: String,
             val attackerClassName: String,
             val attackerClassType: CharacterClassType,
+            val defenderUserId: String,
             val defenderClassName: String,
             val defenderClassType: CharacterClassType,
         ) : Persuade {
@@ -1163,17 +1181,21 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
         ArenaMessageState.Persuade.Charm(
             id = id,
             bardUserId = bardUserId,
+            attackerUserId = attackerUserId,
             attackerClassName = attackerClassName,
             attackerClassType = attackerClassType,
+            defenderUserId = defenderUserId,
             defenderClassName = defenderClassName,
             defenderClassType = defenderClassType,
         )
 
     is ArenaMessage.Persuade.CharmActivation ->
         ArenaMessageState.Persuade.CharmActivation(
-            animation = ArenaAnimationState.FlashAndAvatar(),
             id = id,
             bardUserId = bardUserId,
+            attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            attackerClassType = attackerClassType,
         )
 
     is ArenaMessage.Persuade.StrumLute ->

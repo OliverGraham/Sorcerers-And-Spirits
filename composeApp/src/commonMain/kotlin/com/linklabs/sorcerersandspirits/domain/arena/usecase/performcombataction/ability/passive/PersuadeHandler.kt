@@ -75,18 +75,46 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
     }
 
     private fun CombatMutator.strumLuteToCharm(targetableUserIds: Set<String>) {
-        addMessage(message = ArenaMessage.Persuade.CharmActivation(bardUserId = defenderUserId))
-
-        setNextAbilityRoll(
-            purpose = AbilityAction.Passive.Persuade.Charm(targetableUserIds = targetableUserIds),
-            activeUserIds = setOf(element = defenderUserId),
+        addMessage(
+            message =
+            ArenaMessage.Persuade.CharmActivation(
+                bardUserId = defenderUserId,
+                attackerUserId = attackerUserId,
+                attackerClassName = attacker.className,
+                attackerClassType = attacker.type,
+            ),
         )
+
+        val onlyLegalTargetUserId = targetableUserIds.singleOrNull()
+        if (onlyLegalTargetUserId != null) {
+            resolveCharm(charmTargetUserId = onlyLegalTargetUserId)
+        } else {
+            setNextAbilityRoll(
+                purpose =
+                AbilityAction.Passive.Persuade.Charm(targetableUserIds = targetableUserIds),
+                activeUserIds = setOf(element = defenderUserId),
+            )
+        }
     }
 
     private fun CombatMutator.charm(charm: AbilityAction.Passive.Persuade.Charm) {
-        val selectedCharmTargetUserId = charm.selectedCharmTargetUserId ?: return
-        val charmTargetClass =
-            consciousPlayers.first { it.userId == selectedCharmTargetUserId }.characterClass
+        val selectedCharmTargetUserId = charm.selectedCharmTargetUserId
+        if (selectedCharmTargetUserId == null) {
+            resolveTurnEnd()
+            return
+        }
+        resolveCharm(charmTargetUserId = selectedCharmTargetUserId)
+    }
+
+    private fun CombatMutator.resolveCharm(charmTargetUserId: String) {
+        val charmTarget = consciousPlayers.firstOrNull { it.userId == charmTargetUserId }
+        if (charmTarget == null) {
+            resolveTurnEnd()
+            return
+        }
+        val charmTargetClass = charmTarget.characterClass
+
+        redirectCurrentTarget()
 
         addMessage(
             message =
@@ -95,7 +123,7 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
                 attackerUserId = attackerUserId,
                 attackerClassName = attacker.className,
                 attackerClassType = attacker.type,
-                defenderUserId = selectedCharmTargetUserId,
+                defenderUserId = charmTargetUserId,
                 defenderClassName = charmTargetClass.className,
                 defenderClassType = charmTargetClass.type,
             ),
@@ -106,14 +134,13 @@ internal class PersuadeHandler(private val combatMutator: CombatMutator) {
             NextCombatAction.NormalAttack(
                 roll = NormalAttackType.ArmorClass,
                 attackTurn = currentAttackTurn(),
-                defenderUserId = selectedCharmTargetUserId,
+                defenderUserId = charmTargetUserId,
                 activeUserIds = setOf(element = attackerUserId),
             ),
         )
     }
 
     companion object {
-        // Charm needs at least two non-Bard targets to redirect to, so three conscious players.
         private const val CHARM_MINIMUM_PLAYERS = 3
     }
 }

@@ -268,7 +268,13 @@ sealed interface ArenaMessageEntity {
 
         @Serializable
         @SerialName(value = PERSUADE_CHARM_ACTIVATION)
-        data class CharmActivation(override val id: String, val bardUserId: String) : Persuade
+        data class CharmActivation(
+            override val id: String,
+            val bardUserId: String,
+            val attackerUserId: String,
+            val attackerClassName: String,
+            val attackerClassType: CharacterClassType,
+        ) : Persuade
 
         @Serializable
         @SerialName(value = PERSUADE_CHARM)
@@ -702,7 +708,12 @@ fun ArenaMessageEntity.toDomain(roundNumber: Int): IncomingArenaMessage {
                 )
 
             is ArenaMessageEntity.Persuade.CharmActivation ->
-                ArenaMessage.Persuade.CharmActivation(bardUserId = bardUserId)
+                ArenaMessage.Persuade.CharmActivation(
+                    bardUserId = bardUserId,
+                    attackerUserId = attackerUserId,
+                    attackerClassName = attackerClassName,
+                    attackerClassType = attackerClassType,
+                )
 
             is ArenaMessageEntity.Persuade.Charm ->
                 ArenaMessage.Persuade.Charm(
@@ -1066,7 +1077,13 @@ internal fun ArenaMessage.toEntity(id: String): ArenaMessageEntity = when (this)
         )
 
     is ArenaMessage.Persuade.CharmActivation ->
-        ArenaMessageEntity.Persuade.CharmActivation(id = id, bardUserId = bardUserId)
+        ArenaMessageEntity.Persuade.CharmActivation(
+            id = id,
+            bardUserId = bardUserId,
+            attackerUserId = attackerUserId,
+            attackerClassName = attackerClassName,
+            attackerClassType = attackerClassType,
+        )
 
     is ArenaMessage.Persuade.Charm ->
         ArenaMessageEntity.Persuade.Charm(

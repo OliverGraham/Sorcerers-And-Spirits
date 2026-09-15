@@ -41,6 +41,9 @@ internal class CombatMutator(
     private lateinit var nextCombatAction: NextCombatAction
     private var updatedRoundNumber: Int? = null
 
+    // TODO: Use PersuadeHandler - don't put class-wide state here
+    private var isCurrentTargetRedirected = false
+
     val attacker
         get() = updatedPlayerMap.getValue(key = attackerUserId).characterClass
 
@@ -54,6 +57,10 @@ internal class CombatMutator(
 
     fun setNextCombatAction(nextAction: NextCombatAction) {
         nextCombatAction = nextAction
+    }
+
+    fun redirectCurrentTarget() {
+        isCurrentTargetRedirected = true
     }
 
     fun currentAttackTurn(): AttackTurn = attackTurnFor(attackerUserId = attackerUserId)
@@ -117,7 +124,8 @@ internal class CombatMutator(
         updatedPlayerMap = updatedPlayerMap,
         messages = messages,
         nextCombatAction = nextCombatAction,
-        currentTargetUserId = defenderUserId.takeIf { it != attackerUserId },
+        currentTargetUserId =
+        if (isCurrentTargetRedirected) null else defenderUserId.takeIf { it != attackerUserId },
         roundNumber = updatedRoundNumber ?: roundNumber,
         isNewRound = updatedRoundNumber != null,
         isMatchFinished = getIsMatchFinished(),

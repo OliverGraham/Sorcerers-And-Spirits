@@ -347,18 +347,25 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 ### SS-235 — Persuade: crash + multiple UI bugs (owner to spec the intended UI before work)
 
-- [ ] Not completed — **do not start until the owner describes the intended UI.**
-- **Symptom:** Bard's Persuade is badly broken — multiple bugs plus a **crash**, to the point the
-  exact misbehavior can't be pinned down from observation alone. The owner's read is that the lack
-  of a clearly-defined intended UI is part of the problem.
-- **Action when picked up:** the **owner will first fully describe how the Persuade UI should
-  behave** (armor-passed prompt, the 1d6 roll, 5 = stop, 6 = stop + redirect to a legal non-Bard
-  target, and the multiplayer-only redirect constraint). Only then implement against that spec.
-  Reproduce and capture the crash stack as step one.
-- **Source:** `domain/.../ability/passive/` Persuade handler + Persuade combat controls +
-  `bard/BardLute.kt` / `bardUserId` plumbing (SS-207).
-- **Related:** SS-207 (Persuade animation), game rule: Persuade redirect needs ≥2 alive non-Bard
-  players.
+- [ ] Core work done and verified by owner (3-player auto-target + 4+ player choose); ticket stays
+  open only for the small follow-up TODOs below.
+- **Done:** Fixed the crash (Charm resolution left `CombatMutator.nextCombatAction` unset →
+  `getOutcome()` lateinit throw → Bard client crash / "Bard left"). Implemented per owner spec:
+  single legal target auto-redirects; ≥2 targets → Bard taps a stands avatar to choose (no Charm
+  button); lute strum → flute crossfade on the Bard → swirling air travels to the chosen head icon →
+  avatars swap last. Fixed the redirect-target propagation (redirect now clears
+  `currentTargetUserId` so seats hold during the animation and swap from `combatActionState`
+  afterward, on all clients — also removed the SS-267-style gesture hang on repeat redirects).
+- **Remaining follow-up TODOs (not blockers):**
+    - `ArenaCombatControl.toAbilityRollControls` (Charm → emptyList): decide whether choose-a-target
+      should be confirmed with a button instead of commit-on-tap.
+    - `CombatClassIcons` ClassIcon `onClick` branch: clean up the charm/target/inspect if-else.
+    - `BardPersuade` (~line 83): make the flute animation more dramatic.
+    - `BardPersuade` (~line 120): make `charmTargetBounds` more explicit via the message type.
+- **Source:** `domain/.../ability/passive/PersuadeHandler`, `CombatMutator`, Persuade combat controls,
+  `bard/BardPersuade.kt` / `bardUserId` plumbing (SS-207).
+- **Related:** SS-207 (Persuade animation), SS-267 (gesture-key hang), game rule: Persuade redirect
+  needs ≥2 alive non-Bard players.
 
 ### SS-267 — Combat queue can hang when a gesture participant isn't a seated avatar (SpellPotency splash targets)
 

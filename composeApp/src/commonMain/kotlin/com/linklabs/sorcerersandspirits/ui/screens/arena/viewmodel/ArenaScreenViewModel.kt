@@ -160,6 +160,27 @@ class ArenaScreenViewModel(
         _selectedOpponentUserIdFlow.value = opponentUserId
     }
 
+    // TODO: What arguments can be passed to reduce the madness of these early returns
+    fun onChooseCharmTarget(targetUserId: String) {
+        val combatState =
+            _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState as? ArenaMatchState.Combat ?: return
+        val abilityRoll =
+            combatState.combatActionState as? CombatActionState.AbilityRoll ?: return
+        val charm =
+            abilityRoll.action as? AbilityActionState.Passive.Persuade.Charm ?: return
+        if (targetUserId !in charm.targetableUserIds) return
+
+        onUseAbility(
+            useAbilityArguments =
+            UseAbilityArguments(
+                abilityActionState = charm,
+                targetedOpponentUserId = targetUserId,
+                userPlayerId = combatState.userPlayerId,
+                combatActionState = abilityRoll,
+            ),
+        )
+    }
+
     fun onAttack(attackArguments: AttackArguments) {
         _uiStateFlow.updateLoaded { screenState ->
             combatHandler.updateLockedTargetUserId(

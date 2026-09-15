@@ -234,7 +234,9 @@ private fun SharedTransitionScope.CombatContent(
                 isTargetable = arenaMatchState.canTurnOwnerTargetAnOpponent(
                     isAnAnimationActive = animatingMessage != null && !animatingMessage.isContinuous(),
                 ),
+                charmTargetableUserIds = arenaMatchState.charmTargetableUserIds,
                 onInspect = onInspect,
+                onAvatarBoundsChanged = avatarBoundsStateHolder::reportAvatarBounds,
                 animatingMessage = animatingMessage,
                 modifier = Modifier.fillMaxWidth(fraction = 0.3f).align(alignment = Alignment.CenterEnd),
             )

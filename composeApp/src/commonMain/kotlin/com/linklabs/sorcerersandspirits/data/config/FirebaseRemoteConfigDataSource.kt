@@ -1,13 +1,11 @@
 package com.linklabs.sorcerersandspirits.data.config
 
-import com.linklabs.sorcerersandspirits.data.config.RemoteConfigDataSource.Companion.UNGATED_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.ABILITY_CONFIG
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CHARACTER_CLASS_COPY
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CHARACTER_CLASS_STATS
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.CREDITS
-import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.LATEST_VERSION
-import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.MINIMUM_SUPPORTED_VERSION
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.RANDOM_TRAVELER_NAMES
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigKeys.VERSION_GATE
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
 import com.linklabs.sorcerersandspirits.domain.game.ability.AbilityConfig
@@ -43,6 +41,8 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
 
     private var defaultCredits: CreditsEntity = CreditsEntity.EMPTY
 
+    private var defaultVersionGate: VersionGateEntity = VersionGateEntity.UNGATED
+
     override suspend fun initialize() {
         defaultStats =
             loadBundledDefault(path = BUNDLED_CLASS_STATS_PATH, fallback = defaultStats).ifEmpty {
@@ -57,6 +57,8 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
             loadBundledDefault(path = BUNDLED_TRAVELER_NAMES_PATH, fallback = defaultNames)
                 .ifEmpty { defaultNames }
         defaultCredits = loadBundledDefault(path = BUNDLED_CREDITS_PATH, fallback = defaultCredits)
+        defaultVersionGate =
+            loadBundledDefault(path = BUNDLED_VERSION_GATE_PATH, fallback = defaultVersionGate)
         remoteConfig.settings { minimumFetchInterval = MINIMUM_FETCH_INTERVAL }
         remoteConfig.setDefaults(
             CHARACTER_CLASS_STATS to json.encodeToString(value = defaultStats),
@@ -64,8 +66,7 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
             CHARACTER_CLASS_COPY to json.encodeToString(value = defaultClassCopy),
             RANDOM_TRAVELER_NAMES to json.encodeToString(value = defaultNames),
             CREDITS to json.encodeToString(value = defaultCredits),
-            MINIMUM_SUPPORTED_VERSION to UNGATED_VERSION,
-            LATEST_VERSION to UNGATED_VERSION,
+            VERSION_GATE to json.encodeToString(value = defaultVersionGate),
         )
         remoteConfig.fetchAndActivate()
     }
@@ -114,9 +115,15 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
     }
         .getOrDefault(defaultValue = defaultCredits)
 
-    override fun minimumSupportedVersionCode(): Long = remoteConfig.getValue(key = MINIMUM_SUPPORTED_VERSION).asLong()
+    override fun minimumSupportedVersionCode(): Long = versionGate().minimumSupportedVersionCode
 
-    override fun latestVersionCode(): Long = remoteConfig.getValue(key = LATEST_VERSION).asLong()
+    override fun latestVersionCode(): Long = versionGate().latestVersionCode
+
+    private fun versionGate(): VersionGateEntity = runCatching {
+        val raw = remoteConfig.getValue(key = VERSION_GATE).asString()
+        json.decodeFromString<VersionGateEntity>(string = raw)
+    }
+        .getOrDefault(defaultValue = defaultVersionGate)
 
     companion object {
         val MINIMUM_FETCH_INTERVAL: Duration = 1.hours
@@ -125,6 +132,7 @@ class FirebaseRemoteConfigDataSource(private val remoteConfig: FirebaseRemoteCon
         const val BUNDLED_CLASS_COPY_PATH = "files/remote_config/character_class_copy.json"
         const val BUNDLED_TRAVELER_NAMES_PATH = "files/remote_config/random_traveler_names.json"
         const val BUNDLED_CREDITS_PATH = "files/remote_config/credits.json"
+        const val BUNDLED_VERSION_GATE_PATH = "files/remote_config/version_gate.json"
         const val FALLBACK_TRAVELER_NAME = "a mysterious traveler"
     }
 }

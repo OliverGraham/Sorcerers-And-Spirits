@@ -42,6 +42,8 @@ kotlin {
 
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)
+
+            implementation(dependencyNotation = libs.ktor.client.okhttp)
         }
         androidUnitTest.dependencies {
             implementation(dependencyNotation = libs.kotlin.test)
@@ -69,17 +71,21 @@ kotlin {
 
             implementation(dependencyNotation = libs.firebase.gitlive.app)
             implementation(dependencyNotation = libs.firebase.gitlive.auth)
-            implementation(dependencyNotation = libs.firebase.gitlive.config)
             implementation(dependencyNotation = libs.firebase.gitlive.database)
             implementation(dependencyNotation = libs.firebase.gitlive.firestore)
 
             implementation(dependencyNotation = libs.kotlinx.serialization.json)
+
+            implementation(dependencyNotation = libs.ktor.client.core)
 
             implementation(dependencyNotation = project.dependencies.platform(libs.koin.bom))
             implementation(dependencyNotation = libs.koin.annotations)
             implementation(dependencyNotation = libs.koin.compose)
             implementation(dependencyNotation = libs.koin.compose.viewmodel)
             implementation(dependencyNotation = libs.koin.core)
+        }
+        iosMain.dependencies {
+            implementation(dependencyNotation = libs.ktor.client.darwin)
         }
         commonTest.dependencies {
             implementation(dependencyNotation = libs.kotlin.test)

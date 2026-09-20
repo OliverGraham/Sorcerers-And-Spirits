@@ -287,33 +287,40 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 
 ## Config & Infrastructure
 
-### SS-277 — Replace Firebase Remote Config with GitHub-hosted JSON (free, version-controlled)
+### SS-287 — Single source of truth for config JSON (stop hand-maintaining two copies)
 
 - [ ] Not completed
-- **Goal:** Drop the managed Firebase Remote Config dependency and serve the same config JSON from a
-  **GitHub-hosted** location (raw file URL / GitHub Pages / release asset), fetched over HTTPS and
-  cached, with the existing **bundled JSON** as the offline default. Gains built-in version control
-  on
-  the config.
-- **Owner wants a succinct, clear walkthrough first:** when this is picked up, produce a short setup
-  walkthrough before coding — repo/branch layout for the JSON, raw-URL vs Pages vs release-asset
-  trade-off, caching/ETag + refresh cadence, and how it maps onto the current
-  `RemoteConfigDataSource`
-  seam.
-- **Preserve the seam:** keep the `RemoteConfigDataSource` interface and every consumer (class
-  stats,
-  ability config, class copy, traveler names, credits, version gates) unchanged — swap only the
-  implementation behind the interface. A KMP HTTP client (Ktor) replaces
-  `dev.gitlive.firebase.remoteconfig`; the bundled defaults under
-  `composeResources/files/remote_config/*.json` stay the offline fallback; update the DI bind in
-  `Modules.kt`.
-- **Open questions:** refresh/fetch cadence (currently a 1h min interval), whether the version-gate
-  values (`minimum_supported_version` / `latest_version`) should stay dynamic and how they move, and
-  whether to keep Firebase for auth/db while removing only Remote Config.
-- **Source:** `data/config/RemoteConfigDataSource.kt`, `FirebaseRemoteConfigDataSource.kt`,
-  `RemoteConfigKeys.kt`, the `RemoteConfig*Provider`s, `dependencyinjection/Modules.kt`.
-  [[remoteconfig-optional-override-not-required-map]], [[serialization-backcompat-non-concern]],
-  [[connectivity-resilience-priority]].
+- **Context:** SS-277 landed with the live config in the public repo
+  `OliverGraham/sorcerers-and-spirits-config` and an identical *bundled* copy under
+  `composeApp/src/commonMain/composeResources/files/remote_config/*.json` (the offline/first-launch
+  default baked into the APK). Some baked-in snapshot is unavoidable, but hand-maintaining both
+  copies lets them silently drift. Owner does not want two hand-edited copies.
+- **Goal:** Make the **public config repo the single source of truth** and derive the bundled copy
+  automatically, so config is edited in exactly one place. Preferred approach: a Gradle task (or CI
+  step) that fetches the config repo's JSON into `composeResources/files/remote_config/` before
+  packaging, so the bundled files become a generated build artifact, not hand-edited. Consider a git
+  submodule as an alternative, but weigh the Compose-resources pathing/CI friction.
+- **Constraints:** the offline default must still ship in the APK (no network on first launch); the
+  fetch must be pinned/reproducible (a specific ref/commit, not a moving `main`, for release builds)
+  so a build is deterministic. Keep `GithubJsonRemoteConfigDataSource.RAW_BASE_URL` as the runtime
+  source.
+- **Source:** `GithubJsonRemoteConfigDataSource`, `composeApp/build.gradle.kts`, the bundled
+  `remote_config/*.json`. [[config-hosted-in-public-repo]], [[connectivity-resilience-priority]].
+
+---
+
+### SS-288 — Persist last-fetched config across launches (ETag/304 offline cache)
+
+- [ ] Not completed
+- **Context:** SS-277 does fetch-per-launch, in-memory only. On an offline launch the app falls back
+  to the *bundled* (build-time) config rather than the *last successfully fetched* config.
+- **Goal:** Persist each fetched payload + its `ETag` (DataStore) and send `If-None-Match`; treat
+  `304` as "keep the cached body". An offline launch then uses the last-fetched config instead of the
+  older bundled default — better freshness under intermittent connectivity, and less bandwidth.
+- **Constraints:** bundled JSON remains the ultimate fallback when nothing has ever been fetched;
+  keep the fetch-per-launch cadence (no throttle) unless a reason emerges.
+- **Source:** `GithubJsonRemoteConfigDataSource`, `androidx-datastore-preferences-core`.
+  [[config-hosted-in-public-repo]], [[connectivity-resilience-priority]].
 
 ---
 

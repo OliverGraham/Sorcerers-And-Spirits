@@ -74,28 +74,25 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
         }
     }
 
-    private suspend inline fun <reified T> loadBundled(fileName: String, fallback: T): T =
-        runCatching {
-            val bytes = Res.readBytes(path = BUNDLED_DIRECTORY + fileName)
-            json.decodeFromString<T>(string = bytes.decodeToString())
-        }
-            .getOrDefault(defaultValue = fallback)
+    private suspend inline fun <reified T> loadBundled(fileName: String, fallback: T): T = runCatching {
+        val bytes = Res.readBytes(path = BUNDLED_DIRECTORY + fileName)
+        json.decodeFromString<T>(string = bytes.decodeToString())
+    }
+        .getOrDefault(defaultValue = fallback)
 
-    private suspend inline fun <reified T> fetchRemote(fileName: String): T? =
-        runCatching {
-            val body = httpClient.get(urlString = RAW_BASE_URL + fileName).bodyAsText()
-            json.decodeFromString<T>(string = body)
-        }
-            .getOrNull()
+    private suspend inline fun <reified T> fetchRemote(fileName: String): T? = runCatching {
+        val body = httpClient.get(urlString = RAW_BASE_URL + fileName).bodyAsText()
+        json.decodeFromString<T>(string = body)
+    }
+        .getOrNull()
 
-    override fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity> =
-        activeClassStats
-            .mapNotNull { (name, stats) ->
-                runCatching { CharacterClassType.valueOf(value = name) }
-                    .getOrNull()
-                    ?.let { it to stats }
-            }
-            .toMap()
+    override fun characterClassStats(): Map<CharacterClassType, CharacterClassStatsEntity> = activeClassStats
+        .mapNotNull { (name, stats) ->
+            runCatching { CharacterClassType.valueOf(value = name) }
+                .getOrNull()
+                ?.let { it to stats }
+        }
+        .toMap()
 
     override fun abilityConfig(): AbilityConfigEntity = activeAbilityConfig
 
@@ -111,8 +108,7 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
 
     companion object {
         const val RAW_BASE_URL =
-            "https://raw.githubusercontent.com/OliverGraham/Sorcerers-And-Spirits/main/" +
-                "composeApp/src/commonMain/composeResources/files/remote_config/"
+            "https://raw.githubusercontent.com/OliverGraham/sorcerers-and-spirits-config/main/"
         const val BUNDLED_DIRECTORY = "files/remote_config/"
 
         const val CHARACTER_CLASS_STATS_FILE = "character_class_stats.json"

@@ -675,6 +675,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   parameter's version-controlled JSON from
   `composeApp/src/commonMain/composeResources/files/remote_config/<key>.json` and uses it as both
   the RemoteConfig in-app default (`setDefaults`) and…
+- **SS-277** — Replace Firebase Remote Config with GitHub-hosted JSON: Swapped the Firebase Remote
+  Config implementation behind the unchanged `RemoteConfigDataSource` seam for
+  `GithubJsonRemoteConfigDataSource`, which fetches each config file over Ktor (fetch-per-launch,
+  in-memory) from the public repo `OliverGraham/sorcerers-and-spirits-config` with the bundled JSON
+  as offline fallback; merged the two version-gate keys into one `version_gate.json`/`VersionGateEntity`
+  and removed the `firebase-config` dependency. Follow-ups: SS-287 (single source of truth), SS-288
+  (persistent ETag cache).
 - **SS-049** — Persuade: pass selectedCharmTargetUserId from UI: Ensure the UI supplies the Charm
   target id for Persuade. Related: SS-020.
 - **SS-050** — Implement KillingMomentum: Implement the Rogue "Killing Momentum" rule — on a K.O.,

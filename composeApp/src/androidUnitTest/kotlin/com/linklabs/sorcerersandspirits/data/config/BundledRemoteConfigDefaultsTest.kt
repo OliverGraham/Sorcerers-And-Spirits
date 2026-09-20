@@ -54,7 +54,7 @@ class BundledRemoteConfigDefaultsTest {
 
         assertEquals(
             expected = true,
-            actual = names.contains(FirebaseRemoteConfigDataSource.FALLBACK_TRAVELER_NAME),
+            actual = names.contains(GithubJsonRemoteConfigDataSource.FALLBACK_TRAVELER_NAME),
         )
     }
 

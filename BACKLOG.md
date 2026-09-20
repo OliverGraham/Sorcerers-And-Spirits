@@ -15,6 +15,110 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ---
 
+## Release
+
+### SS-289 — Release-readiness tracker (what gates shipping)
+
+- [ ] Not completed — **umbrella; the single place to re-read when picking release work back up.**
+- **Purpose:** Capture, in one ticket, everything that must be true before Sorcerers and Spirits
+  ships, so a future session can start immediately without re-auditing the backlog. This ticket does
+  no work itself; it points at the blockers and confirms what is *not* a blocker.
+- **Hard blockers (must land before any release):**
+    - **SS-249 — stop orphaning accounts / losing stats.** The only outstanding *data-loss* bug: on a
+      lost session the app mints a fresh anonymous user and abandons the existing profile + stats.
+      Non-negotiable given the standing connectivity/data-loss priority
+      ([[connectivity-resilience-priority]]). Android + iOS.
+    - **SS-088 / SS-089 — store auth config (iOS-gated).** Sign in with Apple is *mandatory* at App
+      Store review (Guideline 4.8) once Google is offered on iOS; blocked on the $99 Apple Developer
+      enrollment done at release time. Also register release/Play SHA-1 + SHA-256 fingerprints
+      (Android) and finish the iOS Google `REVERSED_CLIENT_ID` URL-scheme wiring. **Android can ship
+      without the iOS pieces**; only the Play SHA fingerprints block an Android store release.
+    - **SS-290 — release signing + R8/minify + version bump.** (untracked until now)
+    - **SS-291 — store listing assets + final app icon.** (untracked until now)
+    - **SS-292 — privacy policy.** (untracked until now)
+    - **SS-293 — crash reporting.** (untracked until now)
+- **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207, SS-263,
+  SS-265), the combat/message refactors (SS-257–262), stats/achievements (SS-127), credits polish
+  (SS-282), audio (SS-134 + SS-217…SS-221), remaining small-phone tuning (SS-080), config
+  single-source/offline-cache (SS-287, SS-288).
+- **Correctly deferred:** landscape/wide reflow (SS-083, SS-286) is parked behind the portrait lock
+  (SS-082) — do not reopen for launch.
+- **Note:** As each child blocker closes, tick it here; SS-289 closes when every hard blocker above is
+  done (per platform — an Android-first release closes the Android-relevant set).
+
+### SS-290 — Release build config: signing, R8/minify, version bump
+
+- [ ] Not completed
+- **Problem:** `composeApp/build.gradle.kts` ships an unreleasable `release` build type —
+  `isMinifyEnabled = false`, **no `signingConfig`** (release build is unsigned / falls back to debug),
+  and `versionCode = 1` / `versionName = "1.0"` are untouched defaults.
+- **Do:**
+    - Add a release `signingConfig` sourced from a keystore via env/`local.properties` (never commit
+      the keystore or its passwords); wire it into `buildTypes.release`. For Android store submission
+      rely on Play App Signing — this is the upload key.
+    - Turn on `isMinifyEnabled = true` (+ `isShrinkResources = true`) and add
+      `proguard-rules.pro`; keep rules for Firebase/GitLive, Ktor, kotlinx-serialization, Koin, and
+      any reflectively-accessed types (`default_web_client_id` is read reflectively —
+      `AndroidSocialSignInProvider`). Verify a release build runs end-to-end (sign-in, arena match,
+      config fetch) before trusting the shrink.
+    - Bump `versionCode`/`versionName` to the intended first-release values.
+    - iOS: confirm the Release configuration's bundle id, signing team, and marketing/build version
+      are release-ready (coordinate with SS-089's Apple enrollment).
+- **Source:** `composeApp/build.gradle.kts` (`buildTypes`, `defaultConfig`), new
+  `composeApp/proguard-rules.pro`. Related: SS-088 (SHA fingerprints for the release key), SS-289.
+
+### SS-291 — Store listing assets + final app icon
+
+- [ ] Not completed
+- **Problem:** No store-submission assets exist, and the Android launcher icon
+  (`androidMain/res/mipmap-*/ic_launcher*`, adaptive `mipmap-anydpi-v26`) has not been confirmed as
+  final art vs. a template.
+- **Do:**
+    - Confirm/replace the app icon with final art across all densities + the adaptive
+      foreground/background layers; add the iOS `AppIcon` asset set (all required sizes).
+    - Produce Play Store listing assets: 512×512 icon, feature graphic, phone screenshots (portrait,
+      per the SS-082 lock), short + full description, category, content rating questionnaire.
+    - Produce App Store listing assets: screenshots per required device sizes, name/subtitle,
+      keywords, description, support URL, age rating.
+- **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store
+  consoles. Asset-prep discipline per [[downsample-figma-raster-assets]]. Related: SS-289.
+
+### SS-292 — Privacy policy (required by both stores)
+
+- [ ] Not completed
+- **Problem:** The app collects auth identity (anonymous/Google/Apple) and persists per-user profile
+  + game stats to Firebase; both Play and the App Store require a reachable privacy policy URL and
+  accurate data-safety / privacy-nutrition-label declarations. None exist.
+- **Do:**
+    - Write a privacy policy covering: anonymous + Google + Apple sign-in, the userId/displayName +
+      GameStats stored in Firebase (RealTime DB + Firestore), and any crash-reporting data (see
+      SS-293). Host it at a stable public URL.
+    - Fill the Play **Data safety** form and the App Store **App Privacy** ("nutrition label") to
+      match what the app actually collects.
+- **Source:** external (hosted policy + store consoles); cross-check against
+  `FirebaseAuthenticationRepository`, the profile/stats writes, and SS-293's reporting scope.
+  Related: SS-289, SS-293.
+
+### SS-293 — Crash & error reporting
+
+- [ ] Not completed
+- **Problem:** No crash/error reporting is wired in (no Crashlytics/Sentry/etc. anywhere in the
+  build). A first release with no crash visibility means field crashes are invisible — especially the
+  device-specific auth/session edge cases (SS-223) we already know exist.
+- **Do:**
+    - Add a KMP-friendly crash-reporting path. Firebase Crashlytics is the natural fit (Firebase is
+      already the backend) — Android has first-class support; for iOS/KMP confirm the integration
+      approach (Crashlytics via the iOS Firebase SDK, or a KMP wrapper). Evaluate before committing.
+    - Ensure release builds upload symbols/mapping (ties to R8 mapping from SS-290) so stack traces
+      deobfuscate.
+    - Keep reporting privacy-accurate — reflect whatever it collects in SS-292's policy + data-safety
+      declarations.
+- **Source:** `composeApp/build.gradle.kts`, `gradle/libs.versions.toml`, platform DI
+  (`PlatformModule`). Related: SS-290 (mapping upload), SS-292 (privacy), SS-223 (the field edge
+  cases worth seeing), SS-289.
+
+---
+
 ## Arena UI
 
 ### SS-274 — Arena Finished: scoreboard-style outcome chips (winner / loser / knocked-out order)

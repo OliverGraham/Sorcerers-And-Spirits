@@ -2,7 +2,7 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
-import com.linklabs.sorcerersandspirits.data.config.FirebaseRemoteConfigDataSource
+import com.linklabs.sorcerersandspirits.data.config.GithubJsonRemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigAbilityConfigProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassProvider
@@ -75,7 +75,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.database.database
 import dev.gitlive.firebase.firestore.firestore
-import dev.gitlive.firebase.remoteconfig.remoteConfig
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -100,7 +100,7 @@ val commonModule = module {
 private fun Module.initializeExternalDependencies() {
     single { Firebase.database }
     single { Firebase.firestore }
-    single { Firebase.remoteConfig }
+    single { HttpClient() }
     single { CoroutineScope(context = Dispatchers.IO) }
     single<Clock> { Clock.System }
 }
@@ -108,7 +108,7 @@ private fun Module.initializeExternalDependencies() {
 private fun Module.initializeRepositories() {
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
-    singleOf(::FirebaseRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
+    singleOf(::GithubJsonRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }
     singleOf(::RemoteConfigAbilityConfigProvider) { bind<AbilityConfigProvider>() }
     singleOf(::RemoteConfigCharacterClassCopyProvider) { bind<CharacterClassCopyProvider>() }

@@ -675,9 +675,16 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 ### SS-082 — Adaptive layout foundation (no orientation lock)
 
 - [ ] Not completed
-- **Decision (2026-09-15):** No orientation lock, ever, on any platform. The app must adapt correctly
-  to any window — portrait/landscape phones, foldables, split-screen/multi-window, tablets, desktop.
-  Locking to portrait was explicitly rejected: the target is doing it right, not the easy way out.
+- **Decision (2026-09-20 — supersedes 2026-09-15):** Orientation is now **locked to portrait** on both
+  platforms to get closer to shipping. Android: `android:screenOrientation="portrait"` on
+  `MainActivity`. iOS: `INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone`/`_iPad` set to
+  `UIInterfaceOrientationPortrait` only (both Debug + Release configs). This defers all landscape/wide
+  reflow work — SS-083 and SS-286 are blocked until the lock is lifted. The prior "no orientation lock,
+  ever" goal is a post-ship aspiration, not a shipping requirement.
+- **Prior decision (2026-09-15, superseded):** No orientation lock, ever, on any platform. The app must
+  adapt correctly to any window — portrait/landscape phones, foldables, split-screen/multi-window,
+  tablets, desktop. Locking to portrait was explicitly rejected: the target is doing it right, not the
+  easy way out.
 - **Goal:** Build the adaptive-layout foundation and apply the cheap, shared treatment to all flow/list
   screens, so nothing stretches full-bleed and every screen survives free rotation without crashing.
 - **Key insight:** The existing `ScreenSizeClass` (SS-080) is **width-only and only drives *scaling***
@@ -706,6 +713,8 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 ### SS-083 — Class wheel + stats card: wide/landscape reflow
 
 - [ ] Not completed
+- **Blocked (2026-09-20):** Orientation is locked to portrait for shipping (SS-082). This landscape/wide
+  reflow is deferred until the lock is lifted.
 - **Goal:** Give the class-selection wheel + stats card a designed landscape/wide layout: **stacked
   (tall)** vs **side-by-side (wide)** — wheel beside the stats card instead of above it.
 - **Depends on:** SS-082 (the `LocalWindowSizeClass` signal). This is the tablet/large-screen half of
@@ -720,6 +729,8 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 ### SS-286 — ArenaCombat: wide/landscape reflow
 
 - [ ] Not completed
+- **Blocked (2026-09-20):** Orientation is locked to portrait for shipping (SS-082). This landscape/wide
+  reflow is deferred until the lock is lifted.
 - **Goal:** Give the ArenaCombat screen a designed landscape/wide layout. Today it stacks
   arena/avatars over the dice tray + action buttons and looks bad in landscape.
 - **Depends on:** SS-082 (the `LocalWindowSizeClass` signal). Hardest of the three spatial reflows;

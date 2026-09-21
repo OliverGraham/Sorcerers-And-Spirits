@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.data.authentication
 
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.EmailAuthProvider
@@ -21,13 +22,16 @@ private fun googleCredential(idToken: String, accessToken: String?): AuthCredent
 
 private fun appleCredential(idToken: String, rawNonce: String): AuthCredential = OAuthProvider.credential(providerId = APPLE_PROVIDER_ID, idToken = idToken, rawNonce = rawNonce)
 
-class FirebaseAuthenticationRepository : AuthenticationRepository {
+class FirebaseAuthenticationRepository(private val sessionStore: SessionStore) : AuthenticationRepository {
     private val auth: FirebaseAuth = Firebase.auth
 
-    override fun getUserId() = auth.currentUser?.uid
+    override fun getUserId() = auth.currentUser?.uid ?: sessionStore.cached()?.userId
 
-    /** Awaits the first auth-state emission instead of reading auth.currentUser outright. */
-    override suspend fun isSignedIn() = auth.authStateChanged.first() != null
+    override suspend fun isSignedIn(): Boolean {
+        val localSession = sessionStore.restore()
+        val firebaseUser = auth.authStateChanged.first()
+        return firebaseUser != null || localSession != null
+    }
 
     override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
 

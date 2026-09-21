@@ -1155,6 +1155,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-109** — ProfileScreen name-change success/failure feedback: Surface the `DisplayNameResult`
   of a name save to the UI as a one-shot `ProfileEvent.DisplayNameUpdated` event and show a
   snackbar (success / name-taken / error) from a `Scaffold`-hosted `SnackbarHost`.
+- **SS-249** — Keep users signed in with a local session record (fix re-login + duplicate accounts):
+  Offline-first data-layer cache (no Credential Manager) that stops the S9 lost-session dialog +
+  stat-orphaning. New `SessionStore`/`DataStoreSessionStore` durably caches `userId`+`displayName`;
+  `FirebaseAuthenticationRepository.getUserId()` falls back to it and `isSignedIn()` is true when a
+  local record exists (bridges GitLive's premature-null emission). `FirebaseProfileRepository` saves
+  the record on every profile read, clears on delete, seeds `getProfileFlow` with the cached profile
+  via `onStart`, and time-bounds the remote `getProfile` read — so the launch never hangs waiting on
+  an unauthenticated Firestore read; Firebase reconnects on its own in the background.
 
 ## Game Stats & Leaderboard
 

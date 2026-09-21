@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.data.profile
 
 import com.linklabs.sorcerersandspirits.data.FireStoreKeys
 import com.linklabs.sorcerersandspirits.domain.achievement.AchievementId
+import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
@@ -14,8 +15,14 @@ import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Transaction
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.withTimeoutOrNull
 
-class FirebaseProfileRepository(private val database: FirebaseFirestore) : ProfileRepository {
+class FirebaseProfileRepository(
+    private val database: FirebaseFirestore,
+    private val sessionStore: SessionStore,
+) : ProfileRepository {
 
     private val profilesCollection = database.collection(collectionPath = FireStoreKeys.PROFILES)
     private val displayNamesCollection =
@@ -52,12 +59,18 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
                 delete(documentRef = displayNameReference(displayName = reservedDisplayName))
             }
         }
+
+        sessionStore.clear()
     }
 
     override suspend fun getProfile(userId: String): Profile? {
-        val profileDocument = profilesCollection.document(documentPath = userId).get()
+        val remoteProfile = fetchRemoteProfile(userId = userId)
+        if (remoteProfile != null) {
+            cacheSession(profile = remoteProfile)
+            return remoteProfile
+        }
 
-        return profileDocument.data<ProfileEntity?>()?.toDomain()
+        return cachedProfileFor(userId = userId)
     }
 
     override suspend fun getTopProfiles(limit: Int): List<Profile> = profilesCollection
@@ -69,6 +82,15 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
 
     override fun getProfileFlow(userId: String): Flow<Profile?> = profilesCollection.document(documentPath = userId).snapshots.map { snapshot ->
         snapshot.data<ProfileEntity?>()?.toDomain()
+    }.onEach { profile ->
+        if (profile != null) {
+            cacheSession(profile = profile)
+        }
+    }.onStart {
+        val cachedProfile = cachedProfileFor(userId = userId)
+        if (cachedProfile != null) {
+            emit(cachedProfile)
+        }
     }
 
     override suspend fun updateDisplayName(
@@ -128,7 +150,30 @@ class FirebaseProfileRepository(private val database: FirebaseFirestore) : Profi
     }
 
     private fun displayNameReference(displayName: String): DocumentReference = displayNamesCollection.document(documentPath = displayName.normalize())
+
+    private suspend fun fetchRemoteProfile(userId: String): Profile? = try {
+        withTimeoutOrNull(timeMillis = REMOTE_PROFILE_TIMEOUT_MILLIS) {
+            profilesCollection.document(documentPath = userId).get()
+                .data<ProfileEntity?>()
+                ?.toDomain()
+        }
+    } catch (_: Exception) {
+        null
+    }
+
+    private fun cachedProfileFor(userId: String): Profile? {
+        val cachedSession = sessionStore.cached() ?: return null
+        if (cachedSession.userId != userId) return null
+
+        return Profile(userId = cachedSession.userId, displayName = cachedSession.displayName)
+    }
+
+    private suspend fun cacheSession(profile: Profile) {
+        sessionStore.save(userId = profile.userId, displayName = profile.displayName)
+    }
 }
+
+private const val REMOTE_PROFILE_TIMEOUT_MILLIS = 5_000L
 
 private const val OVERALL_GAUNTLETS_WON_PATH =
     FireStoreKeys.STATS + "." + FireStoreKeys.OVERALL + "." + FireStoreKeys.GAUNTLETS_WON

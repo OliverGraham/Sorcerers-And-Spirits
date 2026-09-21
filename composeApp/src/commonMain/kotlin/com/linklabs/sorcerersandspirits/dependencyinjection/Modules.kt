@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
+import com.linklabs.sorcerersandspirits.data.authentication.DataStoreSessionStore
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
 import com.linklabs.sorcerersandspirits.data.config.GithubJsonRemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigAbilityConfigProvider
@@ -29,6 +30,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.credits.CreditsProvider
@@ -107,6 +109,7 @@ private fun Module.initializeExternalDependencies() {
 
 private fun Module.initializeRepositories() {
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
+    singleOf(::DataStoreSessionStore) { bind<SessionStore>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
     singleOf(::GithubJsonRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }

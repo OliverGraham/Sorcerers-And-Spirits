@@ -24,10 +24,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   ships, so a future session can start immediately without re-auditing the backlog. This ticket does
   no work itself; it points at the blockers and confirms what is *not* a blocker.
 - **Hard blockers (must land before any release):**
-    - **SS-249 — stop orphaning accounts / losing stats.** The only outstanding *data-loss* bug: on a
-      lost session the app mints a fresh anonymous user and abandons the existing profile + stats.
-      Non-negotiable given the standing connectivity/data-loss priority
-      ([[connectivity-resilience-priority]]). Android + iOS.
     - **SS-088 / SS-089 — store auth config (iOS-gated).** Sign in with Apple is *mandatory* at App
       Store review (Guideline 4.8) once Google is offered on iOS; blocked on the $99 Apple Developer
       enrollment done at release time. Also register release/Play SHA-1 + SHA-256 fingerprints
@@ -104,7 +100,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - [ ] Not completed
 - **Problem:** No crash/error reporting is wired in (no Crashlytics/Sentry/etc. anywhere in the
   build). A first release with no crash visibility means field crashes are invisible — especially the
-  device-specific auth/session edge cases (SS-223) we already know exist.
+  device-specific auth/session edge cases we already know exist.
 - **Do:**
     - Add a KMP-friendly crash-reporting path. Firebase Crashlytics is the natural fit (Firebase is
       already the backend) — Android has first-class support; for iOS/KMP confirm the integration
@@ -114,8 +110,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - Keep reporting privacy-accurate — reflect whatever it collects in SS-292's policy + data-safety
       declarations.
 - **Source:** `composeApp/build.gradle.kts`, `gradle/libs.versions.toml`, platform DI
-  (`PlatformModule`). Related: SS-290 (mapping upload), SS-292 (privacy), SS-223 (the field edge
-  cases worth seeing), SS-289.
+  (`PlatformModule`). Related: SS-290 (mapping upload), SS-292 (privacy), SS-289.
 
 ---
 
@@ -507,80 +502,6 @@ SS-191's generic lunges remain the fallback for classes not yet done.
   [[combat-queue-signal-reentrancy]], [[combat-button-visibility-isanimating]].
 
 ## Profile & Auth
-
-### SS-249 — Keep users signed in with a local session record (fix re-login + duplicate accounts)
-
-- [ ] Not completed — **fixes the SS-223 symptom for good.**
-- **The bug (user-facing):** on some devices Firebase Auth loses the saved session between app
-  launches. When that happens the app (1) shows the "choose your name" sign-in screen again, and
-  (2) if the user continues, creates a **brand-new anonymous account** — orphaning their existing
-  profile and stats. Confirmed on the Galaxy S9 (see SS-223). The user must never be asked to sign
-  in again once they already have, and must never lose their stats.
-- **The fix:** keep our own tiny durable record of the signed-in user in local storage (DataStore —
-  already used in the app), and use it alongside Firebase to decide the launch screen. Never trust
-  Firebase's session alone.
-    1. **On successful sign-in / profile load**, save locally: `userId`, `displayName`, and sign-in
-       method (guest vs Google).
-    2. **On launch**, if Firebase has a live session → behave as today. If Firebase has **no**
-       session but a local record exists:
-        - **Google:** silently re-authenticate with the stored Google account (Credential Manager
-          can return the already-authorized credential with no prompt) → same account restored, no
-          dialog.
-        - **Guest:** skip the name dialog, keep the stored `displayName`, and re-establish the
-          session **without** discarding the old account. (An anonymous token can't be resurrected
-          from just the uid; decide during implementation whether to re-link or do a one-time silent
-          repair — the hard rule is: do NOT create a new account when a local record exists.)
-    3. **Never mint a new anonymous user when a local record is present** — this is what stops the
-       stat-orphaning today.
-- **Done when:** on the S9, after signing in once (guest or Google), relaunching the app goes
-  straight in — no name dialog, no duplicate account, stats intact — every time.
-- **Source:** local record in DataStore; `AppViewModel.loadScreenState` (the launch gating);
-  `FirebaseAuthenticationRepository`; `CreateProfileUseCase` (the code path that currently mints a
-  new anonymous user); `AndroidSocialSignInProvider` (silent Google re-auth).
-- **Related:** SS-223 (root-cause investigation), [[sign-in-not-cached-device-specific]],
-  [[connectivity-resilience-priority]].
-
-### SS-223 — Google Sign-In no longer cached on a physical device (regression)
-
-- [~] Diagnosed 2026-07-25 — **device-specific, not a code regression.** Reproduces only on the old
-  Galaxy S9 (Android 10); does **not** occur on a Pixel 7a. **Fix tracked in SS-249** (local session
-  record); this entry keeps the root-cause investigation.
-- **Symptom:** On a physical Android device, sign-in is **not cached** — the user is not kept signed
-  in across launches and must re-authenticate. Affects **both Google and guest/anonymous** (so it is
-  auth-level, not a Google/Credential-Manager/SHA issue).
-- **Findings (traced live on the S9 via adb):**
-    - Sign-in always succeeds — guest and Google both create the user + profile (`createProfile
-      result=SUCCESS`); the **encrypted session is written to disk**
-      (`shared_prefs/com.google.firebase.auth.api.Store.*.xml` → `FIREBASE_USER=ENCRYPTED:…`, with a
-      self-contained Tink AES-GCM keyset, so it is not an Android-Keystore decryption failure).
-    - **Persistence is a timing race on this device:** kill the app ~2s after sign-in → session
-      lost,
-      dialog on relaunch; kill ~15s after → session survives into the app. The encrypted session is
-      not durable for several seconds after sign-in and the S9 loses it if the process dies inside
-      that window. The emulator and Pixel 7a persist correctly with short gaps.
-    - Secondary damage: on a lost session the app treats the user as new and mints a **fresh
-      anonymous user, orphaning prior stats** (gate: `isSignedIn=false`, or `isSignedIn=true` but
-      `getProfile==null`). This orphaning is the part worth fixing in code regardless of the device.
-    - Ruled out: `firebase-bom` pin (it is `androidInstrumentedTest`-only, not app runtime); any
-      `signOut`/persistence-disable (none exist); the `isSignedIn` gate logic. GMS log noise
-      (`SecurityException: Unknown calling package name 'com.google.android.gms'`, Phenotype
-      `DEVELOPER_ERROR`) appears even in working runs → benign.
-- **Dependency update — tried, does NOT fix it (2026-07-25):** GitLive `2.4.0→2.5.0` is a no-op for
-  this (both pin native `firebase-auth 23.2.1`). Forcing native `firebase-auth 24.2.0` (app-runtime
-  `firebase-bom 34.16.0`) builds and runs (GitLive 2.4.0 runtime-compatible with native 24 on the
-  auth path), but a definitive S9 test — sign in, wait 20s, force-stop, relaunch — still **lost**
-  the
-  session (the encrypted `Store` file intermittently isn't even written). Reverted; it's an
-  unsupported GitLive+native-24 combo with no benefit here.
-- **Options if picked up:** (a) accept as an old-device quirk (Pixel 7a fine, app unreleased); (b)
-  app-side resilience — stop orphaning accounts on a lost session and/or persist a durable local
-  record to detect+repair.
-- **Source:** `FirebaseAuthenticationRepository` (auth/session persistence),
-  `AppViewModel.loadScreenState`
-  (the two dialog gates), `CreateProfileUseCase` (mints a new anon user when not signed in).
-- **Related:** SS-088 (Android Google enablement), SS-061/SS-086 (Google sign-in),
-  [[auth-restore-race-bounded-wait]], the owner's standing emphasis on session/connectivity
-  resilience ([[connectivity-resilience-priority]]).
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers
 

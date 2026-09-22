@@ -123,10 +123,13 @@ private fun SorcerersAndSpirits(
     modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(navigationRoutesConfiguration, Route.TavernScreen)
+    val dissolveController = rememberScreenDissolveController()
 
     LaunchedEffect(key1 = Unit) {
         challengeViewModel.navigateToArenaFlow.collect { arguments ->
-            backStack.add(element = Route.ArenaScreen(arguments = arguments.toSerializable()))
+            dissolveController.captureThenNavigate {
+                backStack.add(element = Route.ArenaScreen(arguments = arguments.toSerializable()))
+            }
         }
     }
 
@@ -142,7 +145,12 @@ private fun SorcerersAndSpirits(
             ),
         LocalChallengeState provides challengeState,
     ) {
-        AppContent(isOffline = isOffline, backStack = backStack, modifier = modifier)
+        AppContent(
+            isOffline = isOffline,
+            backStack = backStack,
+            dissolveController = dissolveController,
+            modifier = modifier,
+        )
 
         val challengeState = LocalChallengeState.current
         if (challengeState?.showChallengeDialog == true) {
@@ -155,6 +163,7 @@ private fun SorcerersAndSpirits(
 private fun AppContent(
     isOffline: Boolean,
     backStack: NavBackStack<NavKey>,
+    dissolveController: ScreenDissolveController,
     modifier: Modifier = Modifier,
     drawerState: DrawerState = rememberDrawerState(initialValue = DrawerValue.Closed),
 ) {
@@ -166,7 +175,11 @@ private fun AppContent(
             ModalDrawerSheet(
                 drawerContainerColor = DrawerDefaults.modalContainerColor.copy(alpha = 0.9f),
             ) {
-                SettingsDrawer(backStack = backStack, drawerState = drawerState)
+                SettingsDrawer(
+                    backStack = backStack,
+                    dissolveController = dissolveController,
+                    drawerState = drawerState,
+                )
             }
         },
         gesturesEnabled = true,
@@ -180,6 +193,7 @@ private fun AppContent(
 
                     NavigationDisplay(
                         backStack = backStack,
+                        dissolveController = dissolveController,
                         modifier =
                         if (isOffline) {
                             modifier.consumeWindowInsets(insets = WindowInsets.statusBars)

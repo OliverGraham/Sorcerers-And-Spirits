@@ -2,14 +2,10 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation.transitions
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -19,59 +15,39 @@ import androidx.compose.ui.unit.IntSize
 import kotlin.math.sin
 import kotlin.random.Random
 
-private const val EFFECT_DURATION_MILLIS = 900f
-private const val NANOS_PER_MILLI = 1_000_000f
-
-// Coarser than a per-pixel sample so the particle count stays smooth on lower-end devices and iOS.
-private const val SAMPLE_STEP_PIXELS = 36
+private const val SAMPLE_STEP_PIXELS = 30
 private const val STRIP_COUNT = 24
-
-// Fraction of the timeline over which the dissolve sweeps left-to-right; the remainder is the time
-// any given column's particles take to drift away once they have been released.
 private const val SWEEP_FRACTION = 0.45f
 
 private const val PARTICLE_RADIUS_PIXELS = 7f
 private const val PARTICLE_MIN_DRIFT_X = 40f
-private const val PARTICLE_MAX_DRIFT_X = 220f
-private const val PARTICLE_MIN_RISE = 120f
-private const val PARTICLE_MAX_RISE = 360f
-private const val PARTICLE_WOBBLE_AMPLITUDE = 26f
+private const val PARTICLE_MAX_DRIFT_X = 260f
+private const val PARTICLE_MIN_RISE = 150f
+private const val PARTICLE_MAX_RISE = 480f
+private const val PARTICLE_GRAVITY_PIXELS = 150f
+private const val PARTICLE_WOBBLE_AMPLITUDE = 34f
 private const val PARTICLE_WOBBLE_MIN_FREQUENCY = 6f
 private const val PARTICLE_WOBBLE_MAX_FREQUENCY = 14f
 private const val FULL_TURN_RADIANS = 6.2831855f
 
+private val EMBER_GLOW_COLOR = Color(red = 1f, green = 0.45f, blue = 0.12f)
+private const val EMBER_GLOW_ALPHA = 0.6f
+private const val EMBER_GLOW_SCALE = 2.6f
+private const val EMBER_COOL_RATE = 1.6f
+
+private val BURN_EDGE_COLOR = Color(red = 1f, green = 0.55f, blue = 0.18f)
+private const val BURN_EDGE_ALPHA = 0.55f
+private const val BURN_EDGE_WINDOW = 0.14f
+
 @Composable
-fun DisintegrationEffect(
-    snapshot: ImageBitmap,
-    onComplete: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var progress by remember(key1 = snapshot) { mutableFloatStateOf(value = 0f) }
+fun DisintegrateDissolve(snapshot: ImageBitmap, progress: Float, modifier: Modifier = Modifier) {
     val particles = remember(key1 = snapshot) { snapshot.toDustParticles() }
     val stripWidth =
         remember(key1 = snapshot) { (snapshot.width / STRIP_COUNT).coerceAtLeast(minimumValue = 1) }
 
-    LaunchedEffect(key1 = snapshot) {
-        var startNanos = 0L
-        do {
-            withFrameNanos { frameNanos ->
-                if (startNanos == 0L) {
-                    startNanos = frameNanos
-                }
-                val elapsedMillis = (frameNanos - startNanos) / NANOS_PER_MILLI
-                progress =
-                    (elapsedMillis / EFFECT_DURATION_MILLIS).coerceIn(
-                        minimumValue = 0f,
-                        maximumValue = 1f,
-                    )
-            }
-        } while (progress < 1f)
-
-        onComplete()
-    }
-
     Canvas(modifier = modifier) {
         drawDissolvingStrips(snapshot = snapshot, stripWidth = stripWidth, progress = progress)
+        drawBurnFront(snapshot = snapshot, stripWidth = stripWidth, progress = progress)
         drawDriftingParticles(particles = particles, progress = progress)
     }
 }
@@ -105,6 +81,28 @@ private fun DrawScope.drawDissolvingStrips(
     }
 }
 
+private fun DrawScope.drawBurnFront(snapshot: ImageBitmap, stripWidth: Int, progress: Float) {
+    var stripIndex = 0
+    while (stripIndex < STRIP_COUNT) {
+        val stripStartX = stripIndex * stripWidth
+        val columnProgress =
+            columnLocalProgress(
+                columnFraction = stripStartX.toFloat() / snapshot.width,
+                progress = progress,
+            )
+        val isAtFront = columnProgress > 0f && columnProgress < BURN_EDGE_WINDOW
+        if (isAtFront) {
+            val frontIntensity = 1f - columnProgress / BURN_EDGE_WINDOW
+            drawRect(
+                color = BURN_EDGE_COLOR.copy(alpha = frontIntensity * BURN_EDGE_ALPHA),
+                topLeft = Offset(x = stripStartX.toFloat(), y = 0f),
+                size = Size(width = stripWidth.toFloat(), height = snapshot.height.toFloat()),
+            )
+        }
+        stripIndex++
+    }
+}
+
 private fun DrawScope.drawDriftingParticles(particles: List<DustParticle>, progress: Float) {
     particles.forEach { particle ->
         val localProgress =
@@ -114,13 +112,24 @@ private fun DrawScope.drawDriftingParticles(particles: List<DustParticle>, progr
             val wobble =
                 sin(x = localProgress * particle.wobbleFrequency + particle.wobblePhase) *
                     PARTICLE_WOBBLE_AMPLITUDE
+            val gravityFall = PARTICLE_GRAVITY_PIXELS * localProgress * localProgress
             val center =
                 Offset(
                     x = particle.origin.x + localProgress * particle.driftX + wobble,
-                    y = particle.origin.y - localProgress * particle.rise,
+                    y = particle.origin.y - localProgress * particle.rise + gravityFall,
                 )
+            val life = 1f - localProgress
+            val heat = (1f - localProgress * EMBER_COOL_RATE).coerceAtLeast(minimumValue = 0f)
+            val hasHeat = heat > 0f
+            if (hasHeat) {
+                drawCircle(
+                    color = EMBER_GLOW_COLOR.copy(alpha = heat * EMBER_GLOW_ALPHA),
+                    radius = PARTICLE_RADIUS_PIXELS * EMBER_GLOW_SCALE * heat,
+                    center = center,
+                )
+            }
             drawCircle(
-                color = particle.color.copy(alpha = particle.color.alpha * (1f - localProgress)),
+                color = particle.color.copy(alpha = particle.color.alpha * life),
                 radius = PARTICLE_RADIUS_PIXELS * (1f - localProgress * 0.5f),
                 center = center,
             )
@@ -128,10 +137,6 @@ private fun DrawScope.drawDriftingParticles(particles: List<DustParticle>, progr
     }
 }
 
-/**
- * Maps overall [progress] to how far a single column has dissolved. Columns on the left release
- * first; each then has the back half of the timeline to drift clear.
- */
 private fun columnLocalProgress(columnFraction: Float, progress: Float): Float {
     val columnStart = columnFraction * SWEEP_FRACTION
     val driftWindow = 1f - SWEEP_FRACTION
@@ -173,8 +178,6 @@ private fun ImageBitmap.toDustParticles(): List<DustParticle> {
 
     return particles
 }
-
-private fun randomBetween(min: Float, max: Float): Float = min + Random.nextFloat() * (max - min)
 
 private class DustParticle(
     val origin: Offset,

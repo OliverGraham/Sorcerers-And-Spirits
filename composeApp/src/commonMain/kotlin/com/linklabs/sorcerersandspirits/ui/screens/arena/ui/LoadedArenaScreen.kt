@@ -1,9 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.core.Transition
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -22,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.DissolveStateContent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
@@ -31,8 +28,6 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_background
-
-private const val ARENA_STATE_TRANSITION_LABEL = "ArenaStateTransition"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,32 +72,23 @@ private fun ScreenContent(
 ) {
     // TODO: Remove this column and have each ArenaState composable invoke its own container
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)) {
-        val transition =
-            updateTransition(
-                targetState = screenState.arenaMatchState,
-                label = ARENA_STATE_TRANSITION_LABEL,
-            )
-
         ArenaStateContent(
             screenState = screenState,
             timerState = timerState,
             selectedOpponent = selectedOpponent,
-            transitionState = transition,
         )
     }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun ArenaStateContent(
     screenState: ArenaScreenState,
     timerState: () -> ArenaTimerState,
     selectedOpponent: () -> String?,
-    transitionState: Transition<ArenaMatchState>,
     modifier: Modifier = Modifier,
 ) {
-    // TODO: Make crossfade animation more dramatic
-    transitionState.Crossfade(
+    DissolveStateContent(
+        targetState = screenState.arenaMatchState,
         contentKey = { arenaState -> arenaState::class },
         modifier = modifier.fillMaxSize(),
     ) { arenaState ->

@@ -1260,6 +1260,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-110** — Screen-transition (navigation) animations: Randomly-chosen forward transitions (
   portal / fade-through / slide+fade) plus a signature "burn to dust" disintegration on back, built
   cross-platform in commonMain via GraphicsLayer capture + Canvas particles.
+- **SS-133** — Refine screen-transition feel: Generalized the dust pop into a random pool of
+  class-themed dissolves (Disintegrate/Shatter/Smoke/Slash) via a shared `ScreenDissolveEffect`;
+  unified forward + back on one `ScreenDissolveController` snapshot-capture (fixes crossfade-only
+  forward + first-nav jank); arena phase transitions use a reusable `DissolveStateContent`.
+  Remaining (predictive-back live particles, low-end perf pass) deferred to follow-ups.
 - **SS-153** — Extract `ClassStyle` for class artwork + color lookups: Renamed `ClassColors.kt` →
   `ClassStyle.kt` (the single source of per-class artwork *and* color) and converted every lookup to
   `.to…` `CharacterClassType` extensions — `toBustResource`/`toAvatarResource`, `toColorGroup`,

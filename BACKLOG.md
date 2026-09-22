@@ -638,30 +638,6 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 
 ---
 
-## UI overhaul & input
-
-### SS-133 — Refine screen-transition feel
-
-- [ ] Not completed
-- **Source:** Follow-up to SS-110 (which delivered the randomized forward presets + "burn to dust"
-  pop). The mechanism works, but the *feel* isn't quite right yet.
-- **Goal:** Tune the transitions so they feel intentional and polished rather than busy/off.
-- **Areas to explore:**
-    - Disintegration tuning in `DisintegrationEffect.kt` — particle density (`SAMPLE_STEP_PIXELS`),
-      duration (`EFFECT_DURATION_MILLIS`), drift/rise/wobble constants, and the left-to-right
-      `SWEEP_FRACTION`. Consider gravity/easing on the dust, a subtle glow/ember tint, and a
-      burn-edge front rather than a uniform strip fade.
-    - Whether random-per-navigation forward transitions actually feel good, or whether a curated
-      per-screen mapping (or fewer presets) reads as more deliberate.
-    - Forward/back coherence — the forward presets and the dust pop should feel like one language.
-    - Predictive-back: currently silent during the gesture, dust plays on commit (documented
-      SS-110 limitation). Investigate driving particles from live predictive-back progress.
-    - Performance pass on the dust (first-play jank from pixel sampling) on lower-end devices/iOS.
-- **Steps:** Run on device, iterate on the constants, decide selection strategy, verify
-  forward/back/predictive-back all feel cohesive. Related: SS-110, SS-068.
-
----
-
 ## Responsive & form factors
 
 ### SS-080 — Responsive scaling for small/medium phones

@@ -101,6 +101,8 @@ fun DieColor.toColor(): Color? = when (this) {
 
 fun classFamilyColors(): List<Color> = listOf(RED.topStop, YELLOW.topStop, GREEN.topStop, BLUE.topStop)
 
+fun classFamilyGradients(): List<ClassGradient> = listOf(RED, YELLOW, GREEN, BLUE)
+
 private val RED =
     ClassGradient(topStop = Color(color = 0xFF9D2920), bottomStop = Color(color = 0xFF581310))
 private val YELLOW =

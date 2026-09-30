@@ -6,11 +6,9 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserAnonymousUse
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileByUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.Job
@@ -31,10 +29,8 @@ class ProfileScreenViewModel(
     private val getProfileByUserIdUseCase: GetProfileByUserIdUseCase,
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase,
     private val deleteProfileUseCase: DeleteProfileUseCase,
-    private val createProfileUseCase: CreateProfileUseCase,
-    private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val linkAccountUseCase: LinkAccountUseCase,
-    private val isUserAnonymousUseCase: IsUserAnonymousUseCase,
+    isUserAnonymousUseCase: IsUserAnonymousUseCase,
 ) : ViewModel() {
 
     val isReadOnly: Boolean = arguments.targetUserId != null
@@ -69,18 +65,10 @@ class ProfileScreenViewModel(
 
     fun onDeleteProfile() {
         viewModelScope.launch {
-            // Stop collecting the about-to-be-deleted profile so its null emission can't surface as
-            // a transient blank name before we pop the screen.
             profileJob?.cancel()
             _uiStateFlow.value = UiState.Loading
 
             deleteProfileUseCase()
-
-            // The anonymous identity persists, so silently provision a fresh profile with a random
-            // name rather than stranding the player. A deliberate profile-creation / sign-in flow
-            // is
-            // future work (SS-061).
-            createProfileUseCase(displayName = getRandomTravelerNameUseCase())
 
             _eventChannelFlow.send(element = ProfileEvent.ProfileDeleted)
         }

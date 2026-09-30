@@ -11,6 +11,8 @@ interface AuthenticationRepository {
 
     suspend fun signOut()
 
+    suspend fun deleteAccount()
+
     // link* attaches a provider to the CURRENT account (preserving its userId/stats); a collision
     // with an existing account is an error. Used when upgrading an anonymous account in place.
     suspend fun linkWithGoogle(idToken: String, accessToken: String?): LinkAccountResult

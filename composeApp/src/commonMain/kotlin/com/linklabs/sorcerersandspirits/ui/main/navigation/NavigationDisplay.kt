@@ -99,9 +99,10 @@ private fun NavKey.toScreen(
 
     Route.ProfileScreen ->
         NavEntry(key = this) {
+            val signOut = LocalSignOut.current
             ProfileScreen(
                 targetUserId = null,
-                onProfileDeleted = popBack,
+                onProfileDeleted = signOut,
                 onNavigateToAchievements = {
                     dissolveController.captureThenNavigate {
                         backStack.add(element = Route.AchievementsScreen)

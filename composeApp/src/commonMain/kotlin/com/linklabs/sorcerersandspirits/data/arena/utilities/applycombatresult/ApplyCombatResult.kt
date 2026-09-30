@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.withUpdatedKnockoutOrder
 import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import dev.gitlive.firebase.database.DatabaseReference
@@ -47,6 +48,8 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         isMatchOver = result.isMatchFinished,
         matchNumberInGauntlet = matchNumberInGauntlet,
         diceRoll = result.diceRoll?.toEntity(),
+        participantEntitiesMap =
+        participantEntitiesMap.withUpdatedKnockoutOrder(updatedPlayerMap = result.updatedPlayerMap),
     )
 
     // TODO: Refactor. This should be named with Teleport in mind. And, is needed for anything else?

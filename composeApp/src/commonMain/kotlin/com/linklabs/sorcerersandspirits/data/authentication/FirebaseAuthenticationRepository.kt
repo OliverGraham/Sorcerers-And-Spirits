@@ -42,6 +42,12 @@ class FirebaseAuthenticationRepository(private val sessionStore: SessionStore) :
         sessionStore.clear()
     }
 
+    override suspend fun deleteAccount() {
+        try {
+            auth.currentUser?.delete()
+        } catch (_: Exception) {}
+    }
+
     override suspend fun linkWithGoogle(idToken: String, accessToken: String?): LinkAccountResult = link(credential = googleCredential(idToken = idToken, accessToken = accessToken))
 
     override suspend fun linkWithApple(idToken: String, rawNonce: String): LinkAccountResult = link(credential = appleCredential(idToken = idToken, rawNonce = rawNonce))

@@ -1147,6 +1147,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   Sign-In and phone (mobile) auth are the leading candidates — for a KMP (Android + iOS) app, and…
 - **SS-062** — Profile deletion in Firestore: Add the ability to delete a user's profile from
   Firestore, with the corresponding domain use case and repository method.
+- **SS-295** — Account deletion tears down the auth account + associated data: `DeleteProfileUseCase`
+  now clears local pending-stats and calls a new `AuthenticationRepository.deleteAccount()`
+  (`currentUser.delete()`) after the Firestore profile delete; post-delete UX routes through the
+  existing sign-out path to the sign-in dialog instead of silently recreating an anonymous profile.
+  Ephemeral RTDB arena/tavern records self-clean, so no teardown pass; inline re-auth deferred (SS-296).
 - **SS-063** — App Drawer cleanup: The drawer currently holds ad-hoc items (a raw Display Name
   field, Tavern/Arena links). Replace it with a deliberate set of entries. The name-change
   capability moves out of the drawer and into the ProfileScreen…

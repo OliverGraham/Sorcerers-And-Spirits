@@ -33,7 +33,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - **SS-291 — store listing assets + final app icon.** (untracked until now)
     - **SS-292 — privacy policy.** (untracked until now)
     - **SS-293 — crash reporting.** (untracked until now)
-    - **SS-295 — account deletion must destroy the auth account + all associated data** (both stores).
     - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
     - **SS-297 — Google Play web deletion link + Data safety deletion questions** (Play submission).
 - **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207, SS-263,
@@ -114,37 +113,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
       declarations.
 - **Source:** `composeApp/build.gradle.kts`, `gradle/libs.versions.toml`, platform DI
   (`PlatformModule`). Related: SS-290 (mapping upload), SS-292 (privacy), SS-289.
-
-### SS-295 — Account deletion must tear down the auth account + all associated data
-
-- [ ] Not completed — **store-compliance blocker (both platforms).**
-- **Problem:** `DeleteProfileUseCase` only deletes the profile record
-  (`FirebaseProfileRepository.deleteProfile(userId)`). It does **not** delete the Firebase **Auth
-  account**, and does not guarantee every other per-user record is removed (pending stats, tavern
-  presence/availability, arena membership, leaderboard entry, achievements, etc.). Both stores require
-  that an in-app deletion remove the account **and its associated user data**. Google Play: "when an app
-  account is deleted based on a user's request, developers must also delete the user data associated
-  with that app account." Apple 5.1.1(v): delete the account *along with* its personal data — deactivate
-  is not enough.
-- **Do:**
-    - Add `AuthenticationRepository.deleteAccount()` → `auth.currentUser?.delete()` and call it from the
-      delete flow (a recent-login/`requiresRecentLogin` re-auth may be needed for linked accounts —
-      handle that path).
-    - Audit every place we key data by `userId` and delete it all on account deletion (profile, stats,
-      pending-stats store, tavern presence/availability, arena membership, leaderboard, achievements).
-      Prefer a single server-authoritative teardown if feasible (see note).
-    - Reconcile with the current post-delete behavior: `ProfileScreenViewModel.onDeleteProfile()` today
-      deletes the profile then silently provisions a fresh anonymous profile. Decide the correct UX —
-      full sign-out to the sign-in screen vs. reset-in-place — and make deletion actually destroy the
-      identity rather than recycle it.
-- **Scope note (Google):** Google defines an "app account" as an identity backed by auth
-  (password/OTP/2FA/SSO); a purely anonymous, never-linked account is arguably out of scope, but a
-  **linked** (Google/Apple/email) account is firmly in scope. We already offer in-app delete to every
-  current user (kept intentionally as the safe superset), so the gap is the *teardown*, not the button.
-- **Source:** `DeleteProfileUseCase`, `FirebaseProfileRepository`, `FirebaseAuthenticationRepository`,
-  `ProfileScreenViewModel.onDeleteProfile`. Related: SS-296 (Apple token revocation), SS-292, SS-289.
-  Refs: [Google Play account deletion](https://support.google.com/googleplay/android-developer/answer/13327111),
-  [Apple 5.1.1(v)](https://developer.apple.com/support/offering-account-deletion-in-your-app).
 
 ### SS-296 — Sign in with Apple: revoke tokens on account deletion
 

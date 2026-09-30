@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.authentication.IsUserAnonymousUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
@@ -33,9 +34,13 @@ class ProfileScreenViewModel(
     private val createProfileUseCase: CreateProfileUseCase,
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val linkAccountUseCase: LinkAccountUseCase,
+    private val isUserAnonymousUseCase: IsUserAnonymousUseCase,
 ) : ViewModel() {
 
     val isReadOnly: Boolean = arguments.targetUserId != null
+
+    private val _canSignOutFlow = MutableStateFlow(value = false)
+    val canSignOutFlow = _canSignOutFlow.asStateFlow()
 
     private val _uiStateFlow = MutableStateFlow<UiState<ProfileState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
@@ -51,6 +56,7 @@ class ProfileScreenViewModel(
     private var profileJob: Job? = null
 
     init {
+        _canSignOutFlow.value = !isReadOnly && !isUserAnonymousUseCase()
         collectProfile()
     }
 
@@ -88,12 +94,14 @@ class ProfileScreenViewModel(
         linkCurrentAccount { linkAccountUseCase.withEmail(email = email, password = password) }
     }
 
-    /**
-     * A profile (and anonymous account) already exists here, so linking is a direct in-place
-     * upgrade — no profile creation, just surface the outcome.
-     */
     private fun linkCurrentAccount(link: suspend () -> LinkAccountResult) {
-        viewModelScope.launch { _linkResultFlow.value = link() }
+        viewModelScope.launch {
+            val result = link()
+            _linkResultFlow.value = result
+            if (result == LinkAccountResult.SUCCESS) {
+                _canSignOutFlow.value = true
+            }
+        }
     }
 
     private fun collectProfile() {

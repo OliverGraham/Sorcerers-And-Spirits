@@ -87,7 +87,9 @@ internal fun SorcerersAndSpiritsNavigationHost(
                         },
                     )
                 } else {
-                    SorcerersAndSpirits(isOffline = isOffline, modifier = modifier)
+                    CompositionLocalProvider(LocalSignOut provides viewModel::onSignOut) {
+                        SorcerersAndSpirits(isOffline = isOffline, modifier = modifier)
+                    }
                 }
             }
 

@@ -33,7 +33,14 @@ class FirebaseAuthenticationRepository(private val sessionStore: SessionStore) :
         return firebaseUser != null || localSession != null
     }
 
+    override fun isAnonymous(): Boolean = auth.currentUser?.isAnonymous ?: true
+
     override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
+
+    override suspend fun signOut() {
+        auth.signOut()
+        sessionStore.clear()
+    }
 
     override suspend fun linkWithGoogle(idToken: String, accessToken: String?): LinkAccountResult = link(credential = googleCredential(idToken = idToken, accessToken = accessToken))
 

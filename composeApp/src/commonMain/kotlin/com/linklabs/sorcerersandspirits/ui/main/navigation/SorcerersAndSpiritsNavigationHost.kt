@@ -28,6 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
+import com.linklabs.sorcerersandspirits.ui.main.splash.SplashGate
 import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInNameDialog
@@ -53,41 +54,45 @@ internal fun SorcerersAndSpiritsNavigationHost(
     val uiState by viewModel.uiStateFlow.collectAsState()
     val appUpgradeStatus by viewModel.appUpgradeStatusFlow.collectAsState()
 
-    when (val state = uiState) {
-        is UiState.Error -> ErrorContent(onRetry = viewModel::retry, modifier = modifier)
+    val isAppReady = uiState !is UiState.Loading
 
-        is UiState.Loaded -> {
-            val appState = state.data
-            val isOffline = appState.isOffline
+    SplashGate(isAppReady = isAppReady, modifier = modifier) {
+        when (val state = uiState) {
+            is UiState.Error -> ErrorContent(onRetry = viewModel::retry, modifier = modifier)
 
-            if (appState.showSignInDialog) {
-                SignInNameDialog(
-                    displayName = appState.displayName,
-                    isOffline = isOffline,
-                    isNameTaken = appState.isNameTaken,
-                    linkStatusMessage = linkErrorMessage(result = appState.linkResult),
-                    onRandomNameClick = viewModel::getRandomName,
-                    onAcceptClick = viewModel::createProfile,
-                    onSocialMethodClick = { method ->
-                        viewModel.onSignInWithSocialMethod(
-                            displayName = appState.displayName,
-                            method = method,
-                        )
-                    },
-                    onEmailLink = { email, password ->
-                        viewModel.onSignInWithEmail(
-                            displayName = appState.displayName,
-                            email = email,
-                            password = password,
-                        )
-                    },
-                )
-            } else {
-                SorcerersAndSpirits(isOffline = isOffline, modifier = modifier)
+            is UiState.Loaded -> {
+                val appState = state.data
+                val isOffline = appState.isOffline
+
+                if (appState.showSignInDialog) {
+                    SignInNameDialog(
+                        displayName = appState.displayName,
+                        isOffline = isOffline,
+                        isNameTaken = appState.isNameTaken,
+                        linkStatusMessage = linkErrorMessage(result = appState.linkResult),
+                        onRandomNameClick = viewModel::getRandomName,
+                        onAcceptClick = viewModel::createProfile,
+                        onSocialMethodClick = { method ->
+                            viewModel.onSignInWithSocialMethod(
+                                displayName = appState.displayName,
+                                method = method,
+                            )
+                        },
+                        onEmailLink = { email, password ->
+                            viewModel.onSignInWithEmail(
+                                displayName = appState.displayName,
+                                email = email,
+                                password = password,
+                            )
+                        },
+                    )
+                } else {
+                    SorcerersAndSpirits(isOffline = isOffline, modifier = modifier)
+                }
             }
-        }
 
-        is UiState.Loading -> LoadingIndicator(modifier = modifier)
+            is UiState.Loading -> LoadingIndicator(modifier = modifier)
+        }
     }
 
     if (appUpgradeStatus != AppUpgradeStatus.UP_TO_DATE) {

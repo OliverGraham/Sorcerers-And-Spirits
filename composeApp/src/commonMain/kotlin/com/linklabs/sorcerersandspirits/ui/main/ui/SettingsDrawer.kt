@@ -13,15 +13,26 @@ import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
+import com.linklabs.sorcerersandspirits.ui.main.bugreport.BugReportViewModel
 import com.linklabs.sorcerersandspirits.ui.main.navigation.Route
 import com.linklabs.sorcerersandspirits.ui.main.navigation.ScreenDissolveController
 import com.linklabs.sorcerersandspirits.ui.main.navigation.popToNearestHomeScreen
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
+import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.drawer_bug_report
 
 @Composable
 internal fun SettingsDrawer(
@@ -29,8 +40,20 @@ internal fun SettingsDrawer(
     dissolveController: ScreenDissolveController,
     drawerState: DrawerState,
     modifier: Modifier = Modifier,
+    bugReportViewModel: BugReportViewModel = koinViewModel(),
 ) {
     val scope = rememberCoroutineScope()
+
+    var isBugReportDialogVisible by remember { mutableStateOf(value = false) }
+    val isBugReportingEnabled by bugReportViewModel.isBugReportingEnabledFlow.collectAsState()
+    val bugReportSubmissionState by bugReportViewModel.submissionStateFlow.collectAsState()
+
+    val isDrawerOpen = drawerState.isOpen
+    LaunchedEffect(key1 = isDrawerOpen) {
+        if (isDrawerOpen) {
+            bugReportViewModel.refreshBugReportingEnabled()
+        }
+    }
 
     fun navigateTo(route: Route) {
         val isAlreadyOnRoute = backStack.lastOrNull() == route
@@ -59,8 +82,24 @@ internal fun SettingsDrawer(
         onNavigateToAchievements = { navigateTo(route = Route.AchievementsScreen) },
         onNavigateToGameRules = { navigateTo(route = Route.GameRulesScreen) },
         onNavigateToCredits = { navigateTo(route = Route.CreditsScreen) },
+        isBugReportingEnabled = isBugReportingEnabled,
+        onReportBug = {
+            bugReportViewModel.reset()
+            isBugReportDialogVisible = true
+        },
         modifier = modifier,
     )
+
+    if (isBugReportDialogVisible) {
+        BugReportDialog(
+            submissionState = bugReportSubmissionState,
+            onSubmit = bugReportViewModel::submit,
+            onDismiss = {
+                isBugReportDialogVisible = false
+                bugReportViewModel.reset()
+            },
+        )
+    }
 }
 
 // TODO: StringResources
@@ -73,6 +112,8 @@ private fun DrawerContent(
     onNavigateToAchievements: () -> Unit,
     onNavigateToGameRules: () -> Unit,
     onNavigateToCredits: () -> Unit,
+    isBugReportingEnabled: Boolean,
+    onReportBug: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -93,6 +134,13 @@ private fun DrawerContent(
         DrawerEntry(label = "Achievements", onClick = onNavigateToAchievements)
         DrawerEntry(label = "Game Rules", onClick = onNavigateToGameRules)
         DrawerEntry(label = "Credits", onClick = onNavigateToCredits)
+
+        if (isBugReportingEnabled) {
+            DrawerEntry(
+                label = stringResource(resource = Res.string.drawer_bug_report),
+                onClick = onReportBug,
+            )
+        }
     }
 }
 

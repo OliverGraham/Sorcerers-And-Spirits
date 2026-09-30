@@ -63,6 +63,17 @@
 
     <string name="offline_banner_message">You're offline — reconnecting…</string>
 
+    <string name="drawer_bug_report">Report a Bug</string>
+    <string name="bug_report_title">Report a Bug</string>
+    <string name="bug_report_description">Tell us what went wrong. Your name and app version are included to help us track it down.</string>
+    <string name="bug_report_message_label">What happened?</string>
+    <string name="bug_report_submit">Send</string>
+    <string name="bug_report_cancel">Cancel</string>
+    <string name="bug_report_close">Close</string>
+    <string name="bug_report_sending">Sending…</string>
+    <string name="bug_report_sent">Thanks! Your report was sent.</string>
+    <string name="bug_report_error">Couldn't send your report. Please try again.</string>
+
     <string name="app_update_force_title">Update required</string>
     <string name="app_update_force_message">This version of Sorcerers &amp; Spirits is no longer supported. Update to keep playing.</string>
     <string name="app_update_available_title">Update available</string>

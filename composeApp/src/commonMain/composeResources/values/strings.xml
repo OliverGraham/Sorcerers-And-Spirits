@@ -39,6 +39,10 @@
     <string name="profile_stats_record">%1$d won · %2$d lost · %3$d played</string>
     <string name="profile_stats_per_class_title">By class</string>
     <string name="profile_stats_class_record">%1$d match wins · %2$d gauntlet wins</string>
+    <string name="profile_sign_out">Sign out</string>
+    <string name="profile_sign_out_confirm_title">Sign out?</string>
+    <string name="profile_sign_out_confirm_message">You will return to the sign-in screen. You can sign back in anytime with your linked account.</string>
+    <string name="profile_sign_out_confirm_button">Sign out</string>
     <string name="profile_delete">Delete profile</string>
     <string name="profile_delete_confirm_title">Delete profile?</string>
     <string name="profile_delete_confirm_message">This permanently deletes your profile, including your display name and game stats. This can't be undone.</string>

@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
@@ -45,6 +46,7 @@ class AppViewModel(
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
     private val signInWithSocialUseCase: SignInWithSocialUseCase,
+    private val signOutUseCase: SignOutUseCase,
     private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase,
 ) : ViewModel() {
 
@@ -79,6 +81,20 @@ class AppViewModel(
     fun retry() {
         _uiStateFlow.value = UiState.Loading
         loadScreenState()
+    }
+
+    fun onSignOut() {
+        viewModelScope.launch {
+            screenStateJob?.cancel()
+            _uiStateFlow.value = UiState.Loading
+
+            signOutUseCase()
+
+            hasCreatedProfile = false
+            hasSyncedOrphanedArena = false
+
+            showSignInDialog()
+        }
     }
 
     private fun loadScreenState() {

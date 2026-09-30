@@ -31,10 +31,12 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembership
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.IsUserAnonymousUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
 import com.linklabs.sorcerersandspirits.domain.bugreport.BugReportConfigProvider
 import com.linklabs.sorcerersandspirits.domain.bugreport.BugReportDataSource
 import com.linklabs.sorcerersandspirits.domain.bugreport.usecase.IsBugReportingEnabledUseCase
@@ -159,6 +161,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::GetTavernDataFlowUseCase)
     factoryOf(::GetUserIdUseCase)
     factoryOf(::IsBugReportingEnabledUseCase)
+    factoryOf(::IsUserAnonymousUseCase)
     factoryOf(::IsUserSignedInUseCase)
     factoryOf(::LinkAccountUseCase)
     factoryOf(::PerformCombatActionUseCase)
@@ -166,6 +169,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::SetCurrentTravelerAvailableUseCase)
     factoryOf(::SendChallengeUseCase)
     factoryOf(::SignInWithSocialUseCase)
+    factoryOf(::SignOutUseCase)
     factoryOf(::StayForAnotherMatchUseCase)
     factoryOf(::SubmitBugReportUseCase)
     factoryOf(::SyncArenaMembershipOnConnectUseCase)

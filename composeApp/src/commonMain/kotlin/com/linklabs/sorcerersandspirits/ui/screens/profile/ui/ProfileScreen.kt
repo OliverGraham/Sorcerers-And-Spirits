@@ -40,6 +40,7 @@ import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.MenuTopBar
+import com.linklabs.sorcerersandspirits.ui.main.navigation.LocalSignOut
 import com.linklabs.sorcerersandspirits.ui.main.ui.SignInMethodsSection
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ClassStatsState
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ProfileEvent
@@ -67,6 +68,10 @@ import sorcerersandspirits.composeapp.generated.resources.profile_display_name_l
 import sorcerersandspirits.composeapp.generated.resources.profile_name_update_error
 import sorcerersandspirits.composeapp.generated.resources.profile_name_update_success
 import sorcerersandspirits.composeapp.generated.resources.profile_save
+import sorcerersandspirits.composeapp.generated.resources.profile_sign_out
+import sorcerersandspirits.composeapp.generated.resources.profile_sign_out_confirm_button
+import sorcerersandspirits.composeapp.generated.resources.profile_sign_out_confirm_message
+import sorcerersandspirits.composeapp.generated.resources.profile_sign_out_confirm_title
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_achievements
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_achievements_progress
 import sorcerersandspirits.composeapp.generated.resources.profile_stats_class_record
@@ -119,6 +124,7 @@ internal fun ProfileScreen(
 
     val uiState by viewModel.uiStateFlow.collectAsState()
     val linkResult by viewModel.linkResultFlow.collectAsState()
+    val canSignOut by viewModel.canSignOutFlow.collectAsState()
 
     Scaffold(
         modifier = modifier,
@@ -128,6 +134,7 @@ internal fun ProfileScreen(
         ProfileScreen(
             uiState = uiState,
             isReadOnly = viewModel.isReadOnly,
+            canSignOut = canSignOut,
             linkResult = linkResult,
             onUpdateDisplayName = viewModel::onUpdateDisplayName,
             onDeleteProfile = viewModel::onDeleteProfile,
@@ -143,6 +150,7 @@ internal fun ProfileScreen(
 private fun ProfileScreen(
     uiState: UiState<ProfileState>,
     isReadOnly: Boolean,
+    canSignOut: Boolean,
     linkResult: LinkAccountResult?,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
@@ -160,6 +168,7 @@ private fun ProfileScreen(
             ProfileContent(
                 state = uiState.data,
                 isReadOnly = isReadOnly,
+                canSignOut = canSignOut,
                 linkResult = linkResult,
                 onUpdateDisplayName = onUpdateDisplayName,
                 onDeleteProfile = onDeleteProfile,
@@ -175,6 +184,7 @@ private fun ProfileScreen(
 private fun ProfileContent(
     state: ProfileState,
     isReadOnly: Boolean,
+    canSignOut: Boolean,
     linkResult: LinkAccountResult?,
     onUpdateDisplayName: (String) -> Unit,
     onDeleteProfile: () -> Unit,
@@ -184,6 +194,8 @@ private fun ProfileContent(
     modifier: Modifier = Modifier,
 ) {
     var isDeleteConfirmationShown by rememberSaveable { mutableStateOf(value = false) }
+    var isSignOutConfirmationShown by rememberSaveable { mutableStateOf(value = false) }
+    val signOut = LocalSignOut.current
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -220,6 +232,17 @@ private fun ProfileContent(
                 )
             }
 
+            if (canSignOut) {
+                item {
+                    AppButton(
+                        onClick = { isSignOutConfirmationShown = true },
+                        borderColor = MaterialTheme.colorScheme.outline,
+                    ) {
+                        Text(text = stringResource(resource = Res.string.profile_sign_out))
+                    }
+                }
+            }
+
             item {
                 AppButton(
                     onClick = { isDeleteConfirmationShown = true },
@@ -230,6 +253,16 @@ private fun ProfileContent(
                 }
             }
         }
+    }
+
+    if (isSignOutConfirmationShown) {
+        SignOutConfirmationDialog(
+            onConfirm = {
+                isSignOutConfirmationShown = false
+                signOut()
+            },
+            onDismiss = { isSignOutConfirmationShown = false },
+        )
     }
 
     if (isDeleteConfirmationShown) {
@@ -490,6 +523,29 @@ private fun linkStatusMessage(result: LinkAccountResult?): String? = when (resul
 }
 
 @Composable
+private fun SignOutConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(text = stringResource(resource = Res.string.profile_sign_out_confirm_title))
+        },
+        text = {
+            Text(text = stringResource(resource = Res.string.profile_sign_out_confirm_message))
+        },
+        confirmButton = {
+            AppButton(onClick = onConfirm, borderColor = MaterialTheme.colorScheme.outline) {
+                Text(text = stringResource(resource = Res.string.profile_sign_out_confirm_button))
+            }
+        },
+        dismissButton = {
+            AppButton(onClick = onDismiss, borderColor = MaterialTheme.colorScheme.outline) {
+                Text(text = stringResource(resource = Res.string.profile_cancel))
+            }
+        },
+    )
+}
+
+@Composable
 private fun DeleteProfileConfirmationDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -551,6 +607,7 @@ private fun ProfileScreenPreview() {
                 ),
             ),
             isReadOnly = false,
+            canSignOut = true,
             linkResult = null,
             onUpdateDisplayName = {},
             onDeleteProfile = {},

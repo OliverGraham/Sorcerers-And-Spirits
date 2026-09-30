@@ -8,6 +8,7 @@ import com.linklabs.sorcerersandspirits.data.audio.AndroidSoundEffectPlayer
 import com.linklabs.sorcerersandspirits.data.authentication.AndroidSocialSignInProvider
 import com.linklabs.sorcerersandspirits.data.connectivity.AndroidConnectivityObserver
 import com.linklabs.sorcerersandspirits.data.haptics.AndroidHaptics
+import com.linklabs.sorcerersandspirits.data.platform.AndroidPlatformInfoProvider
 import com.linklabs.sorcerersandspirits.data.profile.PENDING_STATS_DATASTORE_FILE
 import com.linklabs.sorcerersandspirits.data.profile.createPendingStatsDataStore
 import com.linklabs.sorcerersandspirits.data.sensor.AndroidShakeDetector
@@ -17,6 +18,7 @@ import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.SocialSignInProvider
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.haptics.Haptics
+import com.linklabs.sorcerersandspirits.domain.platform.PlatformInfoProvider
 import com.linklabs.sorcerersandspirits.domain.sensor.ShakeDetector
 import com.linklabs.sorcerersandspirits.domain.version.CurrentAppVersionProvider
 import com.linklabs.sorcerersandspirits.platform.CurrentActivityHolder
@@ -30,6 +32,7 @@ actual fun platformModule(): Module = module {
     single<MusicPlayer> { AndroidMusicPlayer(context = get()) }
     single<SoundEffectPlayer> { AndroidSoundEffectPlayer(context = get()) }
     single<CurrentAppVersionProvider> { AndroidCurrentAppVersionProvider(context = get()) }
+    single<PlatformInfoProvider> { AndroidPlatformInfoProvider() }
     single { CurrentActivityHolder() }
     single<DataStore<Preferences>> {
         val context: Context = get()

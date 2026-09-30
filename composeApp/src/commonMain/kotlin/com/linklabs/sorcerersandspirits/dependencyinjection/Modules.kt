@@ -3,8 +3,10 @@ package com.linklabs.sorcerersandspirits.dependencyinjection
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
 import com.linklabs.sorcerersandspirits.data.authentication.DataStoreSessionStore
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
+import com.linklabs.sorcerersandspirits.data.bugreport.AppsScriptBugReportDataSource
 import com.linklabs.sorcerersandspirits.data.config.GithubJsonRemoteConfigDataSource
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigAbilityConfigProvider
+import com.linklabs.sorcerersandspirits.data.config.RemoteConfigBugReportConfigProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassCopyProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCharacterClassProvider
 import com.linklabs.sorcerersandspirits.data.config.RemoteConfigCreditsProvider
@@ -33,6 +35,10 @@ import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseC
 import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
+import com.linklabs.sorcerersandspirits.domain.bugreport.BugReportConfigProvider
+import com.linklabs.sorcerersandspirits.domain.bugreport.BugReportDataSource
+import com.linklabs.sorcerersandspirits.domain.bugreport.usecase.IsBugReportingEnabledUseCase
+import com.linklabs.sorcerersandspirits.domain.bugreport.usecase.SubmitBugReportUseCase
 import com.linklabs.sorcerersandspirits.domain.credits.CreditsProvider
 import com.linklabs.sorcerersandspirits.domain.credits.usecase.GetCreditsUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopyProvider
@@ -67,6 +73,7 @@ import com.linklabs.sorcerersandspirits.domain.version.SupportedAppVersionProvid
 import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
+import com.linklabs.sorcerersandspirits.ui.main.bugreport.BugReportViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.AchievementsScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.credits.CreditsScreenViewModel
@@ -118,6 +125,8 @@ private fun Module.initializeRepositories() {
     singleOf(::RemoteConfigCreditsProvider) { bind<CreditsProvider>() }
     singleOf(::RemoteConfigRandomNameProvider) { bind<RandomNameProvider>() }
     singleOf(::RemoteConfigSupportedAppVersionProvider) { bind<SupportedAppVersionProvider>() }
+    singleOf(::RemoteConfigBugReportConfigProvider) { bind<BugReportConfigProvider>() }
+    singleOf(::AppsScriptBugReportDataSource) { bind<BugReportDataSource>() }
     singleOf(::FirebaseProfileRepository) { bind<ProfileRepository>() }
     singleOf(::DataStorePendingStatsStore) { bind<PendingStatsStore>() }
     singleOf(::FirebaseTavernDataSource) { bind<TavernDataSource>() }
@@ -149,6 +158,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::InitializeGameConfigUseCase)
     factoryOf(::GetTavernDataFlowUseCase)
     factoryOf(::GetUserIdUseCase)
+    factoryOf(::IsBugReportingEnabledUseCase)
     factoryOf(::IsUserSignedInUseCase)
     factoryOf(::LinkAccountUseCase)
     factoryOf(::PerformCombatActionUseCase)
@@ -157,6 +167,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::SendChallengeUseCase)
     factoryOf(::SignInWithSocialUseCase)
     factoryOf(::StayForAnotherMatchUseCase)
+    factoryOf(::SubmitBugReportUseCase)
     factoryOf(::SyncArenaMembershipOnConnectUseCase)
     factoryOf(::UnlockAchievementsUseCase)
     factoryOf(::UpdateChallengerStatusUseCase)
@@ -168,6 +179,7 @@ private fun Module.initializeViewModels() {
     viewModelOf(::AchievementsScreenViewModel)
     viewModelOf(::AppViewModel)
     viewModelOf(::ArenaScreenViewModel)
+    viewModelOf(::BugReportViewModel)
     viewModelOf(::ChallengeViewModel)
     viewModelOf(::CreditsScreenViewModel)
     viewModelOf(::GameRulesScreenViewModel)

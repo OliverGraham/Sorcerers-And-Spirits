@@ -597,6 +597,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   instead of hanging on the loading indicator. Also fixed `isSignedIn()` to await the first
   auth-state emission so a cold start no longer reports a returning user as signed-out.
 
+## Feedback
+
+- **SS-294** — In-app bug report (test users email a report to the owner): Config-gated "Report a
+  Bug" drawer item opening a dialog that POSTs the message + reporter profile/version/platform to a
+  Google Apps Script web app which emails the owner; gate + endpoint/token ship empty by default and
+  are flipped on via the public config repo's `bug_report.json` with no app rebuild.
+
 ## Navigation
 
 - **SS-135** — Drawer navigation should pop back to a home screen: When opening a screen from the

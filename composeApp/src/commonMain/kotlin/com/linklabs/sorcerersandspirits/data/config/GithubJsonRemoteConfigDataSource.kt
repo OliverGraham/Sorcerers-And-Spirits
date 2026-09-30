@@ -18,6 +18,7 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
     private var activeTravelerNames: List<String> = listOf(FALLBACK_TRAVELER_NAME)
     private var activeCredits: CreditsEntity = CreditsEntity.EMPTY
     private var activeVersionGate: VersionGateEntity = VersionGateEntity.UNGATED
+    private var activeBugReportConfig: BugReportConfigEntity = BugReportConfigEntity.EMPTY
 
     override suspend fun initialize() {
         loadBundledDefaults()
@@ -37,6 +38,8 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
                 .ifEmpty { activeTravelerNames }
         activeCredits = loadBundled(fileName = CREDITS_FILE, fallback = activeCredits)
         activeVersionGate = loadBundled(fileName = VERSION_GATE_FILE, fallback = activeVersionGate)
+        activeBugReportConfig =
+            loadBundled(fileName = BUG_REPORT_FILE, fallback = activeBugReportConfig)
     }
 
     private suspend fun applyRemoteOverrides() {
@@ -58,6 +61,8 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
         )
         activeCredits = fetchedOrKept(fileName = CREDITS_FILE, current = activeCredits)
         activeVersionGate = fetchedOrKept(fileName = VERSION_GATE_FILE, current = activeVersionGate)
+        activeBugReportConfig =
+            fetchedOrKept(fileName = BUG_REPORT_FILE, current = activeBugReportConfig)
     }
 
     private suspend inline fun <reified T> fetchedOrKept(
@@ -106,6 +111,10 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
 
     override fun latestVersionCode(): Long = activeVersionGate.latestVersionCode
 
+    override fun bugReportEndpointUrl(): String = activeBugReportConfig.endpointUrl
+
+    override fun bugReportToken(): String = activeBugReportConfig.token
+
     companion object {
         const val RAW_BASE_URL =
             "https://raw.githubusercontent.com/OliverGraham/sorcerers-and-spirits-config/main/"
@@ -117,6 +126,7 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
         const val RANDOM_TRAVELER_NAMES_FILE = "random_traveler_names.json"
         const val CREDITS_FILE = "credits.json"
         const val VERSION_GATE_FILE = "version_gate.json"
+        const val BUG_REPORT_FILE = "bug_report.json"
 
         const val FALLBACK_TRAVELER_NAME = "a mysterious traveler"
     }

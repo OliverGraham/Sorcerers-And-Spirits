@@ -90,6 +90,7 @@ private fun ArenaStateContent(
     DissolveStateContent(
         targetState = screenState.arenaMatchState,
         contentKey = { arenaState -> arenaState::class },
+        isDramatic = { from, to -> !from.isWaitingScreen() && !to.isWaitingScreen() },
         modifier = modifier.fillMaxSize(),
     ) { arenaState ->
         when (arenaState) {
@@ -117,6 +118,8 @@ private fun ArenaStateContent(
         }
     }
 }
+
+private fun ArenaMatchState.isWaitingScreen(): Boolean = this is ArenaMatchState.WaitingForAllPlayers
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Preview

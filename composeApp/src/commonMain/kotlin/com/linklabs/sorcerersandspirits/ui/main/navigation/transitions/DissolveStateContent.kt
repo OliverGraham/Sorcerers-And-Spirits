@@ -20,16 +20,19 @@ fun <T> DissolveStateContent(
     targetState: T,
     contentKey: (T) -> Any,
     modifier: Modifier = Modifier,
+    isDramatic: (from: T, to: T) -> Boolean = { _, _ -> true },
     content: @Composable (T) -> Unit,
 ) {
     val contentLayer = rememberGraphicsLayer()
     var displayedState by remember { mutableStateOf(targetState) }
     var isCapturingContent by remember { mutableStateOf(value = false) }
     var snapshot by remember { mutableStateOf<ImageBitmap?>(value = null) }
+    var isDramaticTransition by remember { mutableStateOf(value = true) }
 
     LaunchedEffect(key1 = targetState) {
         val isNewContent = contentKey(targetState) != contentKey(displayedState)
         if (isNewContent) {
+            isDramaticTransition = isDramatic(displayedState, targetState)
             isCapturingContent = true
             withFrameNanos {}
             withFrameNanos {}
@@ -57,11 +60,19 @@ fun <T> DissolveStateContent(
 
         val currentSnapshot = snapshot
         if (currentSnapshot != null) {
-            ScreenDissolveEffect(
-                snapshot = currentSnapshot,
-                onComplete = { snapshot = null },
-                modifier = Modifier.fillMaxSize(),
-            )
+            if (isDramaticTransition) {
+                ScreenDissolveEffect(
+                    snapshot = currentSnapshot,
+                    onComplete = { snapshot = null },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                ScreenCrossfadeEffect(
+                    snapshot = currentSnapshot,
+                    onComplete = { snapshot = null },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
         }
     }
 }

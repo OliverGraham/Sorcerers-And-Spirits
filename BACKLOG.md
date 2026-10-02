@@ -152,34 +152,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Arena UI
 
-### SS-274 — Arena Finished: scoreboard-style outcome chips (winner / loser / knocked-out order)
-
-- [ ] Not completed
-- **Goal:** In the Finished state, each player's recap row reads like a **scoreboard** line:
-    - A `fadedBlackBackground` behind the chip (the faded-black scrim style already used in the
-      Finished UI).
-    - **Left:** the player's `classAvatarBust`, then their `displayName`.
-    - **Right (outcome, varies):**
-        - **Winner →** "Winner!" in the **all-class-color animating text** (same treatment as the
-          "Next match starting soon!" text — see `NextMatchBounceOverlay` in
-          `MatchFinishedContent.kt`).
-        - **2-player game →** the loser reads "LOSER" in **grey** letters (depressing).
-        - **Multiplayer →** "knocked out {Xth}" per eliminated player, and the **final** player
-          knocked out reads **"last"** instead of a numeral. Reads top-to-bottom like a scoreboard.
-- **Data needed (open):** there is currently **no knockout-order/placement data** on the domain
-  player or `PlayerState.Selected`. Thread a knockout order (or final placement) Domain→Data→UI so
-  the
-  UI can render "Xth"/"last" — display-ready per [[domain-provides-display-ready-values]]; the UI
-  only
-  plugs the ordinal into a string. Decide the exact field (elimination index vs final placement)
-  during work.
-- **Source:** `ui/screens/arena/ui/MatchFinishedContent.kt` (`MatchRecap`/`PlayerRecapRow`,
-  `WinnerBanner`, `NextMatchBounceOverlay` for the animating-text treatment),
-  `ui/screens/arena/model/PlayerState.kt`, and the domain arena player + its Entity/State mappings
-  for
-  the new order field. Related: SS-179 (finished text styling), SS-097 (class-color class names),
-  SS-275 (winner dance).
-
 ### SS-257 — Move combat button/control state into the ViewModel; consolidate the control + argument types
 
 - [ ] Not completed

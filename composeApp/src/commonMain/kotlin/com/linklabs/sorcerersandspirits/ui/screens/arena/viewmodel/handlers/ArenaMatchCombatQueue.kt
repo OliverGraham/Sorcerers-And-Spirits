@@ -103,6 +103,7 @@ internal class ArenaMatchCombatQueue(
         return TeleportRollsArguments(
             mageUserId = mageUserId,
             playerMap = playerMap,
+            participantMap = participantMap,
             roundNumber = roundNumber,
             nextCombatAction = nextCombatAction,
             teleportOfNextCombatAction = teleport,

@@ -283,6 +283,7 @@ private fun ArenaMatch.handleImpossibleScreenUpdate(
 
 private fun ArenaMatch.Combat.toCombatState(userId: String) = ArenaMatchState.Combat(
     playerMap = playerMap.mapValues { it.value.toSelectedState() },
+    participantMap = participantMap.mapValues { it.value.toState() },
     userPlayerId = userId,
     combatActionState = nextCombatAction.toCombatActionState(),
     roundNumber = roundNumber,
@@ -298,6 +299,7 @@ private fun ArenaMatch.Combat.toCombatState(userId: String) = ArenaMatchState.Co
 
 private fun ArenaMatch.Finished.toFinishedState() = ArenaMatchState.Finished(
     players = playerMap.values.map { it.toState() }.filterIsInstance<PlayerState.Selected>(),
+    recap = participantMap.toFinishedRecap(),
 )
 
 private fun Map<String, ArenaPlayer>.prepareClassSelectionInfo(

@@ -33,6 +33,7 @@ internal class ExitArena(private val userId: String) {
                         newMessages = emptyList(),
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
+                        participantEntitiesMap = emptyMap(),
                     )
                 } else {
                     val nextActivePlayerId =
@@ -58,6 +59,7 @@ internal class ExitArena(private val userId: String) {
                         newMessages = emptyList(),
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
+                        participantEntitiesMap = participantEntitiesMap,
                     )
                 } else {
                     val updatedNextCombatAction =

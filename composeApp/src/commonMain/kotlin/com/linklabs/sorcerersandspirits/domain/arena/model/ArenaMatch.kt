@@ -31,12 +31,14 @@ sealed interface ArenaMatch {
         val isNewRound: Boolean,
         val isMatchOver: Boolean,
         val diceRoll: DiceRoll?,
+        val participantMap: Map<String, MatchParticipant>,
     ) : ArenaMatch
 
     data class Finished(
         override val messages: List<IncomingArenaMessage>,
         override val playerMap: Map<String, ArenaPlayer>,
         override val matchNumberInGauntlet: Int = 1,
+        val participantMap: Map<String, MatchParticipant>,
     ) : ArenaMatch {
         val hasEnoughPlayersToContinue = playerMap.size >= MINIMUM_PLAYERS_TO_CONTINUE
 

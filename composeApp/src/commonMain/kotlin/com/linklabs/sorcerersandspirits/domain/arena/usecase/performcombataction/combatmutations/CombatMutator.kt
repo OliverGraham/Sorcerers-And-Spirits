@@ -6,9 +6,11 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CharacterClassMessageInfo
 import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
+import com.linklabs.sorcerersandspirits.domain.arena.model.MatchParticipant
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalRollMessageType
+import com.linklabs.sorcerersandspirits.domain.arena.model.ParticipantStatus
 import com.linklabs.sorcerersandspirits.domain.arena.model.toDieColor
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import com.linklabs.sorcerersandspirits.domain.arena.utilities.DiceRoller
@@ -36,6 +38,7 @@ internal class CombatMutator(
     val diceRoller: DiceRoller,
     val abilityConfig: AbilityConfig,
     private val roundNumber: Int,
+    private val participantMap: Map<UserId, MatchParticipant>,
     private val messages: MutableList<ArenaMessage> = mutableListOf(),
 ) {
     private lateinit var nextCombatAction: NextCombatAction
@@ -130,6 +133,7 @@ internal class CombatMutator(
         isNewRound = updatedRoundNumber != null,
         isMatchFinished = getIsMatchFinished(),
         diceRoll = diceRoller.getDiceRoll(),
+        participantMap = updatedParticipantMap(),
     )
 
     fun updatePlayerClass(userId: UserId, transform: (CharacterClass) -> CharacterClass) {
@@ -400,6 +404,24 @@ internal class CombatMutator(
             }
 
         return !anyActiveUnconsciousPlayers
+    }
+
+    private fun updatedParticipantMap(): Map<UserId, MatchParticipant> {
+        var knockoutCount = participantMap.values.count { it.status is ParticipantStatus.KnockedOut }
+
+        return participantMap.mapValues { (userId, participant) ->
+            val isStillStanding = participant.status is ParticipantStatus.Conscious
+            val player = updatedPlayerMap[userId]
+            val isNowKnockedOut = player != null && !player.characterClass.isConscious()
+            val hasJustBeenKnockedOut = isStillStanding && isNowKnockedOut
+
+            if (hasJustBeenKnockedOut) {
+                knockoutCount += 1
+                participant.copy(status = ParticipantStatus.KnockedOut(knockoutOrder = knockoutCount))
+            } else {
+                participant
+            }
+        }
     }
 
     private fun handleSummonerDamaged(

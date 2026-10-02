@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.NextCombatActionEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.toEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.toParticipantEntitiesMap
 import com.linklabs.sorcerersandspirits.data.arena.model.toSelectedEntity
 import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
@@ -47,6 +48,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         isMatchOver = result.isMatchFinished,
         matchNumberInGauntlet = matchNumberInGauntlet,
         diceRoll = result.diceRoll?.toEntity(),
+        participantEntitiesMap = result.participantMap.toParticipantEntitiesMap(),
     )
 
     // TODO: Refactor. This should be named with Teleport in mind. And, is needed for anything else?

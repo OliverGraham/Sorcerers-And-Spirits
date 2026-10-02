@@ -19,6 +19,7 @@ internal class FinishMatch {
             newMessages = emptyList(),
             playerEntitiesMap = playerEntitiesMap,
             matchNumberInGauntlet = matchNumberInGauntlet,
+            participantEntitiesMap = participantEntitiesMap,
         )
     }
 }

@@ -39,6 +39,7 @@ sealed interface ArenaMatchEntity {
         val isMatchOver: Boolean = false,
         val diceRoll: DiceRollEntity? = null,
         val currentTargetUserId: String? = null,
+        val participantEntitiesMap: Map<String, MatchParticipantEntity>,
     ) : ArenaMatchEntity
 
     @Serializable
@@ -47,6 +48,7 @@ sealed interface ArenaMatchEntity {
         override val newMessages: List<ArenaMessageEntity>,
         override val playerEntitiesMap: Map<String, ArenaPlayerEntity>,
         override val matchNumberInGauntlet: Int = 1,
+        val participantEntitiesMap: Map<String, MatchParticipantEntity>,
     ) : ArenaMatchEntity
 
     companion object {
@@ -94,6 +96,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 isMatchOver = isMatchOver,
                 matchNumberInGauntlet = matchNumberInGauntlet,
                 diceRoll = diceRoll?.toDomain(),
+                participantMap = participantEntitiesMap.toDomain(),
             )
 
         is ArenaMatchEntity.Finished ->
@@ -101,6 +104,7 @@ internal fun ArenaMatchEntity.toDomain(): ArenaMatch {
                 messages = messages,
                 playerMap = playerEntitiesMap.mapValues { it.value.toDomain() },
                 matchNumberInGauntlet = matchNumberInGauntlet,
+                participantMap = participantEntitiesMap.toDomain(),
             )
     }
 }

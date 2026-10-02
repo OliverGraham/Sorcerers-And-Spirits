@@ -12,6 +12,8 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CombatActionState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FinishedOutcome
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FinishedPlayerRecap
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 
 class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenState> {
@@ -68,6 +70,21 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
                 characterClass = rogueState.copy(hitPoints = 0),
             ),
         ),
+        recap =
+        listOf(
+            FinishedPlayerRecap(
+                userId = "player1",
+                displayName = "Sorcerer Supreme",
+                classType = CharacterClassType.Mage,
+                outcome = FinishedOutcome.Winner,
+            ),
+            FinishedPlayerRecap(
+                userId = "player2",
+                displayName = "Spirit Walker",
+                classType = CharacterClassType.Rogue,
+                outcome = FinishedOutcome.Placement(place = 2),
+            ),
+        ),
     )
 
     private fun getExampleChoosingClassesState(
@@ -96,6 +113,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
             ),
     ) = ArenaMatchState.Combat(
         playerMap = playerMap,
+        participantMap = emptyMap(),
         userPlayerId = userPlayerId,
         combatActionState = combatActionState,
         roundNumber = 1,

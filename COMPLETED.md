@@ -66,6 +66,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-274** — Arena Finished scoreboard-style outcome chips: Threaded a match-participant roster +
+  knockout order Domain→Data→UI (via `participantsMap`) so the Finished recap renders each player as
+  a scoreboard line — winner in all-class-color animating text, the 2-player loser as grey "LOSER",
+  and each eliminated player as "knocked out {Xth}" with the final elimination reading "last".
 - **SS-234** — Multiplayer no-target avatar placeholder: When no opponent is selected, the target
   seat renders a `NoTargetAvatar` — a random class avatar desaturated (grayscale `ColorMatrix`) and
   blurred, gray `?` stat pills (speed/armor/hit points), and a slanted "Choose a target" label —

@@ -6,5 +6,5 @@ data class MatchParticipant(
     val userId: String,
     val displayName: String,
     val classType: CharacterClassType,
-    val knockoutOrder: Int?,
+    val status: ParticipantStatus,
 )

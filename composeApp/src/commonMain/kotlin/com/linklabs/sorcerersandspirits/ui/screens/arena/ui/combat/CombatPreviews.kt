@@ -255,6 +255,7 @@ private fun previewCombatState(
 
     return ArenaMatchState.Combat(
         playerMap = players.associateBy { it.userId },
+        participantMap = emptyMap(),
         userPlayerId = userId,
         combatActionState =
         combatActionState

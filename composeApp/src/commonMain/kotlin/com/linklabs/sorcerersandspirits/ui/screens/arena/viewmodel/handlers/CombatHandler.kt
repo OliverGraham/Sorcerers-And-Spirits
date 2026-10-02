@@ -89,6 +89,7 @@ internal class CombatHandler(
             CombatActionArguments(
                 arenaId = arenaId,
                 playerMap = playerMap.mapValues { it.value.toDomain() },
+                participantMap = participantMap.mapValues { it.value.toDomain() },
                 roundNumber = roundNumber,
                 doublesBonus = diceRollState?.doublesBonus?.toDomain(),
             )
@@ -118,6 +119,7 @@ internal class CombatHandler(
             CombatActionArguments(
                 arenaId = arenaId,
                 playerMap = playerMap,
+                participantMap = participantMap,
                 roundNumber = roundNumber,
                 doublesBonus = null,
             )

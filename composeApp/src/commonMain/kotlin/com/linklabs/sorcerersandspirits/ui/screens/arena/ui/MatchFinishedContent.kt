@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -12,15 +13,19 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,10 +39,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +56,7 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyColors
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toBustResource
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
 import com.linklabs.sorcerersandspirits.ui.common.fadedBlackBackground
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
@@ -59,23 +66,22 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaScreenState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaTimerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.CharacterClassMessageInfoState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FinishedOutcome
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FinishedPlayerRecap
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.finished.VictoryDanceAvatar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
-import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.classHighlightedText
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_draw
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_everyone_left
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_leave
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_knocked_out
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_player_survived
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_waiting_for_others
-import sorcerersandspirits.composeapp.generated.resources.arena_finished_winner
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_winner_label
 import sorcerersandspirits.composeapp.generated.resources.arena_message_next_match_starting_soon
 import kotlin.math.roundToInt
 
@@ -84,6 +90,11 @@ private const val NANOS_PER_SECOND = 1_000_000_000f
 private const val BOUNCE_COLOR_TRANSITION_LABEL = "NextMatchBounceColor"
 private const val BOUNCE_COLOR_SHIFT_LABEL = "NextMatchBounceColorShift"
 private const val BOUNCE_COLOR_CYCLE_MILLIS = 2000
+private const val WINNER_COLOR_TRANSITION_LABEL = "WinnerColor"
+private const val WINNER_COLOR_SHIFT_LABEL = "WinnerColorShift"
+private const val RECAP_VISIBLE_ROW_COUNT = 2
+private val RECAP_ROW_HEIGHT = 76.dp
+private val RECAP_ROW_SPACING = 8.dp
 
 @Composable
 internal fun ArenaMatchState.Finished.MatchFinishedContent(
@@ -118,11 +129,7 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
                 modifier = Modifier.weight(weight = 1f).fillMaxWidth().padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                MatchRecap(players = players)
-
-                Spacer(modifier = Modifier.padding(12.dp))
-
-                WinnerBanner(winner = winner)
+                MatchRecap(recap = recap)
 
                 Spacer(modifier = Modifier.padding(8.dp))
 
@@ -329,98 +336,123 @@ private fun MatchDecisionControls(
 }
 
 @Composable
-private fun WinnerBanner(winner: PlayerState.Selected?, modifier: Modifier = Modifier) {
-    val text =
-        if (winner != null) {
-            classHighlightedText(
-                text =
-                stringResource(
-                    resource = Res.string.arena_finished_winner,
-                    winner.displayName,
-                    winner.characterClass.className,
-                ),
-                coloredClassNames =
-                listOf(
-                    CharacterClassMessageInfoState(
-                        className = winner.characterClass.className,
-                        type = winner.characterClass.type,
-                    ),
-                ),
-            )
-        } else {
-            AnnotatedString(text = stringResource(resource = Res.string.arena_finished_draw))
-        }
+private fun MatchRecap(recap: List<FinishedPlayerRecap>, modifier: Modifier = Modifier) {
+    val visibleRowsHeight =
+        RECAP_ROW_HEIGHT * RECAP_VISIBLE_ROW_COUNT +
+            RECAP_ROW_SPACING * (RECAP_VISIBLE_ROW_COUNT - 1)
 
-    Text(
+    LazyColumn(
+        modifier = modifier.fillMaxWidth().heightIn(max = visibleRowsHeight),
+        verticalArrangement = Arrangement.spacedBy(RECAP_ROW_SPACING),
+    ) {
+        items(items = recap, key = { it.userId }) { entry -> PlayerRecapRow(recap = entry) }
+    }
+}
+
+@Composable
+private fun PlayerRecapRow(recap: FinishedPlayerRecap, modifier: Modifier = Modifier) {
+    Row(
         modifier =
         modifier
+            .fillMaxWidth()
+            .height(height = RECAP_ROW_HEIGHT)
             .fadedBlackBackground(alpha = 0.5f)
             .padding(horizontal = 16.dp, vertical = 8.dp),
-        text = text,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.Bold,
-        color = MaterialTheme.colorScheme.primary,
-    )
-}
-
-@Composable
-private fun MatchRecap(players: List<PlayerState.Selected>, modifier: Modifier = Modifier) {
-    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        players.forEach { player -> PlayerRecapRow(player = player) }
-    }
-}
-
-@Composable
-private fun PlayerRecapRow(player: PlayerState.Selected, modifier: Modifier = Modifier) {
-    val isConscious = player.characterClass.isConscious
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        colors =
-        CardDefaults.cardColors(
-            containerColor =
-            if (isConscious) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceVariant
-            },
-        ),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.weight(weight = 1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
-                Text(text = player.displayName, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    text = player.characterClass.className,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = player.characterClass.type.toColor(),
-                )
-            }
-
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text =
-                    if (isConscious) {
-                        stringResource(resource = Res.string.arena_finished_player_survived)
-                    } else {
-                        stringResource(resource = Res.string.arena_finished_player_knocked_out)
-                    },
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color =
-                    if (isConscious) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.error
-                    },
-                )
-            }
+            Image(
+                painter = painterResource(resource = recap.classType.toBustResource()),
+                contentDescription = recap.classType.name,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxHeight().aspectRatio(ratio = 1f),
+            )
+            Text(
+                text = recap.displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                maxLines = 1,
+            )
         }
+
+        Spacer(modifier = Modifier.padding(all = 4.dp))
+
+        RecapOutcome(outcome = recap.outcome, classType = recap.classType)
     }
+}
+
+@Composable
+private fun RecapOutcome(
+    outcome: FinishedOutcome,
+    classType: CharacterClassType,
+    modifier: Modifier = Modifier,
+) {
+    when (outcome) {
+        is FinishedOutcome.Winner ->
+            AnimatedClassColorText(
+                text = stringResource(resource = Res.string.arena_finished_winner_label),
+                style =
+                MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                modifier = modifier,
+            )
+
+        is FinishedOutcome.Placement ->
+            Text(
+                text = outcome.place.toString(),
+                modifier = modifier,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = classType.toColor(),
+            )
+    }
+}
+
+@Composable
+private fun AnimatedClassColorText(
+    text: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+) {
+    val colorTransition = rememberInfiniteTransition(label = WINNER_COLOR_TRANSITION_LABEL)
+    val sweepProgress by
+        colorTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 1f,
+            animationSpec =
+            infiniteRepeatable(
+                animation =
+                tween(durationMillis = BOUNCE_COLOR_CYCLE_MILLIS, easing = LinearEasing),
+            ),
+            label = WINNER_COLOR_SHIFT_LABEL,
+        )
+
+    val sweepColors = remember { classFamilyColors().let { it + it.first() } }
+
+    var textWidthPx by remember { mutableStateOf(value = 1f) }
+    val sweepStartX = sweepProgress * textWidthPx
+    val sweepBrush =
+        Brush.linearGradient(
+            colors = sweepColors,
+            start = Offset(x = sweepStartX, y = 0f),
+            end = Offset(x = sweepStartX + textWidthPx, y = 0f),
+            tileMode = TileMode.Repeated,
+        )
+
+    Text(
+        text = text,
+        modifier =
+        modifier.onSizeChanged {
+            textWidthPx = it.width.toFloat().coerceAtLeast(minimumValue = 1f)
+        },
+        style = style.copy(brush = sweepBrush),
+        maxLines = 1,
+    )
 }
 
 private fun exampleMessageGroups(): List<ArenaMessageGroupState> {
@@ -472,6 +504,21 @@ private fun exampleFinishedState(): ArenaMatchState.Finished {
                 userId = "player2",
                 displayName = "Spirit Walker",
                 characterClass = rogue.copy(hitPoints = 0),
+            ),
+        ),
+        recap =
+        listOf(
+            FinishedPlayerRecap(
+                userId = "player1",
+                displayName = "Sorcerer Supreme",
+                classType = CharacterClassType.Mage,
+                outcome = FinishedOutcome.Winner,
+            ),
+            FinishedPlayerRecap(
+                userId = "player2",
+                displayName = "Spirit Walker",
+                classType = CharacterClassType.Rogue,
+                outcome = FinishedOutcome.Placement(place = 2),
             ),
         ),
     )

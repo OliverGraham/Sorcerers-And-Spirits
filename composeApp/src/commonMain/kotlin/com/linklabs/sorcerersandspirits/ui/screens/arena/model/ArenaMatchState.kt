@@ -2,12 +2,15 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.model
 
 import androidx.compose.runtime.Immutable
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
+import com.linklabs.sorcerersandspirits.domain.arena.model.MatchParticipant
+import com.linklabs.sorcerersandspirits.domain.arena.model.ParticipantStatus
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.utilities.UserId
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.dice.DiceRollState
 
 private const val MINIMUM_PLAYERS_FOR_NEXT_MATCH = 2
+private const val WINNER_PLACE = 1
 
 @Immutable
 sealed interface ArenaMatchState {
@@ -31,6 +34,7 @@ sealed interface ArenaMatchState {
     @Immutable
     data class Combat(
         override val playerMap: Map<UserId, PlayerState.Selected>,
+        val participantMap: Map<UserId, MatchParticipantState>,
         override val userPlayerId: String,
         val combatActionState: CombatActionState,
         val roundNumber: Int,
@@ -101,11 +105,38 @@ sealed interface ArenaMatchState {
     @Immutable
     data class Finished(
         val players: List<PlayerState.Selected>,
+        val recap: List<FinishedPlayerRecap>,
     ) : ArenaMatchState {
         val survivors = players.filter { it.characterClass.isConscious }
         val winner = survivors.singleOrNull()
         val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
     }
+}
+
+internal fun Map<String, MatchParticipant>.toFinishedRecap(): List<FinishedPlayerRecap> {
+    val playerCount = size
+
+    return values
+        .sortedBy { it.status.finishedPlace(playerCount = playerCount) }
+        .map { participant ->
+            val place = participant.status.finishedPlace(playerCount = playerCount)
+            FinishedPlayerRecap(
+                userId = participant.userId,
+                displayName = participant.displayName,
+                classType = participant.classType,
+                outcome =
+                if (place == WINNER_PLACE) {
+                    FinishedOutcome.Winner
+                } else {
+                    FinishedOutcome.Placement(place = place)
+                },
+            )
+        }
+}
+
+private fun ParticipantStatus.finishedPlace(playerCount: Int): Int = when (this) {
+    is ParticipantStatus.Conscious -> WINNER_PLACE
+    is ParticipantStatus.KnockedOut -> playerCount - knockoutOrder + 1
 }
 
 @Immutable

@@ -29,6 +29,7 @@ internal class PerformCombatAction(
         combatMutator =
             CombatMutator(
                 updatedPlayerMap = arguments.playerMap.toMutableMap(),
+                participantMap = arguments.participantMap,
                 attackerUserId = currentAction.attackTurn.attackerUserId,
                 defenderUserId = currentAction.defenderUserId,
                 rollingUserId = currentAction.rollingUserId(),

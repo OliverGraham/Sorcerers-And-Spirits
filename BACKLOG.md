@@ -31,7 +31,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
       without the iOS pieces**; only the Play SHA fingerprints block an Android store release.
     - **SS-290 — release signing + R8/minify + version bump.** (untracked until now)
     - **SS-291 — store listing assets + final app icon.** (untracked until now)
-    - **SS-293 — crash reporting.** (untracked until now)
     - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
     - **SS-297 — Google Play web deletion link + Data safety deletion questions** (Play submission).
 - **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207, SS-263,
@@ -80,22 +79,19 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store
   consoles. Asset-prep discipline per [[downsample-figma-raster-assets]]. Related: SS-289.
 
-### SS-293 — Crash & error reporting
+### SS-298 — iOS Crashlytics (finish the deferred platform)
 
-- [ ] Not completed
-- **Problem:** No crash/error reporting is wired in (no Crashlytics/Sentry/etc. anywhere in the
-  build). A first release with no crash visibility means field crashes are invisible — especially the
-  device-specific auth/session edge cases we already know exist.
+- [ ] Not completed — **only matters once iOS actually ships** (iOS not enrolled yet, per SS-088).
+- **Problem:** SS-293 wired Crashlytics on Android only; iOS currently binds a `NoOpCrashReporter`, so
+  iOS field crashes are invisible. gitlive has no Crashlytics module, so iOS needs native wiring.
 - **Do:**
-    - Add a KMP-friendly crash-reporting path. Firebase Crashlytics is the natural fit (Firebase is
-      already the backend) — Android has first-class support; for iOS/KMP confirm the integration
-      approach (Crashlytics via the iOS Firebase SDK, or a KMP wrapper). Evaluate before committing.
-    - Ensure release builds upload symbols/mapping (ties to R8 mapping from SS-290) so stack traces
-      deobfuscate.
-    - Keep reporting privacy-accurate — reflect whatever it collects in SS-292's policy + data-safety
-      declarations.
-- **Source:** `composeApp/build.gradle.kts`, `gradle/libs.versions.toml`, platform DI
-  (`PlatformModule`). Related: SS-290 (mapping upload), SS-292 (privacy), SS-289.
+    - Add the `FirebaseCrashlytics` SPM product to the iOS target and a dSYM-upload build phase in the
+      Xcode project (ties to iOS symbol upload).
+    - Add a Swift `CrashReporterBridge` (mirror `SocialSignInBridge`) and an `IosCrashReporter` actual
+      that forwards to it; swap it in for `NoOpCrashReporter` in `PlatformModule.ios.kt`.
+    - Update `privacy-policy.html` + `data-safety.md`: drop the "Android only" qualifier once live.
+- **Source:** `iosApp/` Xcode project, `IosSocialSignInBridge`/`SocialSignInBridge.swift` as the
+  bridge pattern, `PlatformModule.ios.kt`. Related: SS-293, SS-292, SS-290.
 
 ### SS-296 — Sign in with Apple: revoke tokens on account deletion
 

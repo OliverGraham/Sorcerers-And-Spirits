@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.data.audio.IosMusicPlayer
 import com.linklabs.sorcerersandspirits.data.audio.IosSoundEffectPlayer
 import com.linklabs.sorcerersandspirits.data.authentication.IosSocialSignInProvider
 import com.linklabs.sorcerersandspirits.data.connectivity.IosConnectivityObserver
+import com.linklabs.sorcerersandspirits.data.crashreporting.NoOpCrashReporter
 import com.linklabs.sorcerersandspirits.data.haptics.IosHaptics
 import com.linklabs.sorcerersandspirits.data.platform.IosPlatformInfoProvider
 import com.linklabs.sorcerersandspirits.data.profile.PENDING_STATS_DATASTORE_FILE
@@ -16,6 +17,7 @@ import com.linklabs.sorcerersandspirits.domain.audio.MusicPlayer
 import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.SocialSignInProvider
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
+import com.linklabs.sorcerersandspirits.domain.crashreporting.CrashReporter
 import com.linklabs.sorcerersandspirits.domain.haptics.Haptics
 import com.linklabs.sorcerersandspirits.domain.platform.PlatformInfoProvider
 import com.linklabs.sorcerersandspirits.domain.sensor.ShakeDetector
@@ -32,6 +34,7 @@ actual fun platformModule(): Module = module {
     single<ConnectivityObserver> { IosConnectivityObserver() }
     single<ShakeDetector> { IosShakeDetector() }
     single<Haptics> { IosHaptics() }
+    single<CrashReporter> { NoOpCrashReporter() }
     single<MusicPlayer> { IosMusicPlayer() }
     single<SoundEffectPlayer> { IosSoundEffectPlayer() }
     single<CurrentAppVersionProvider> { IosCurrentAppVersionProvider() }

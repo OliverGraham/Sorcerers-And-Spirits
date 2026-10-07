@@ -6,6 +6,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
+import com.linklabs.sorcerersandspirits.domain.crashreporting.CrashReporter
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
@@ -47,6 +48,7 @@ class AppViewModelTest {
     private val connectivityObserver: ConnectivityObserver = mockk()
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase =
         mockk(relaxed = true)
+    private val crashReporter: CrashReporter = mockk(relaxed = true)
     private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase =
         mockk(relaxed = true)
     private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
@@ -84,6 +86,7 @@ class AppViewModelTest {
         checkAppVersionUseCase = checkAppVersionUseCase,
         connectivityObserver = connectivityObserver,
         connectTravelerPresenceUseCase = connectTravelerPresenceUseCase,
+        crashReporter = crashReporter,
         createProfileForCurrentUserUseCase = createProfileForCurrentUserUseCase,
         createProfileUseCase = createProfileUseCase,
         flushPendingStatsUseCase = flushPendingStatsUseCase,

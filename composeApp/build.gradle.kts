@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.googleServices)
+    alias(libs.plugins.firebaseCrashlytics)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.ksp)
@@ -39,6 +40,9 @@ kotlin {
             implementation(dependencyNotation = libs.googleid)
 
             implementation(dependencyNotation = libs.androidx.media3.exoplayer)
+
+            implementation(dependencyNotation = project.dependencies.platform(libs.firebase.bom))
+            implementation(dependencyNotation = libs.firebase.crashlytics)
 
             implementation(dependencyNotation = libs.koin.android)
             implementation(dependencyNotation = libs.koin.androidx.compose)

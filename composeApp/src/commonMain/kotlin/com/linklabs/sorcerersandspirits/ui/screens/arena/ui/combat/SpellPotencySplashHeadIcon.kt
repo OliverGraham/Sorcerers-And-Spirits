@@ -32,9 +32,12 @@ import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.AnimationKey
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -79,31 +82,36 @@ internal class SpellPotencySplashState {
 
 @Composable
 internal fun rememberSpellPotencySplash(
-    animatingMessage: ArenaMessageState?,
+    spellPotencyMessage: ArenaMessageState.SpellPotency,
     player: PlayerState.Selected,
 ): SpellPotencySplashState {
     val state = remember { SpellPotencySplashState() }
-    var lastPlayedCueId by remember { mutableStateOf(value = animatingMessage?.id) }
+    var lastPlayedCueId by remember { mutableStateOf<String?>(value = null) }
+    val onAnimationComplete = ArenaActionsProvider.current.onAnimationComplete
 
-    LaunchedEffect(key1 = animatingMessage) {
-        val splashDamage = animatingMessage.spellPotencySplashFor(player = player)
+    LaunchedEffect(key1 = spellPotencyMessage) {
+        val splashDamage = spellPotencyMessage.splashDamageFor(player = player)
         if (splashDamage == null) {
             state.cancel()
-            lastPlayedCueId = animatingMessage?.id
             return@LaunchedEffect
         }
-        if (animatingMessage?.id == lastPlayedCueId) return@LaunchedEffect
-        lastPlayedCueId = animatingMessage?.id
+        if (spellPotencyMessage.id == lastPlayedCueId) return@LaunchedEffect
+        lastPlayedCueId = spellPotencyMessage.id
         state.play(damage = splashDamage)
+        onAnimationComplete(
+            AnimationCompleteArguments(
+                messageId = spellPotencyMessage.id,
+                animationKey = AnimationKey.SplashDamage(userId = player.userId),
+            ),
+        )
     }
     return state
 }
 
-private fun ArenaMessageState?.spellPotencySplashFor(player: PlayerState.Selected): Int? {
-    val cue = this as? ArenaMessageState.SpellPotency ?: return null
-    val wasSplashed = player.userId in cue.splashTargetUserIds
+private fun ArenaMessageState.SpellPotency.splashDamageFor(player: PlayerState.Selected): Int? {
+    val wasSplashed = player.userId in splashTargetUserIds
     if (!wasSplashed) return null
-    return cue.splashDamage.takeIf { it > 0 }
+    return splashDamage.takeIf { it > 0 }
 }
 
 @Composable

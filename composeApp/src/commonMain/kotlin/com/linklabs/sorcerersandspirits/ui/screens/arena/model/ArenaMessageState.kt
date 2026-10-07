@@ -734,6 +734,8 @@ sealed interface ArenaMessageState {
     ) : ArenaMessageState {
         override val actingClassType: CharacterClassType = CharacterClassType.Mage
         override val flashAnchor: FlashAnchor = FlashAnchor.Avatar(userId = mageUserId)
+        val splashAnimationUserIds: List<String> =
+            if (splashDamage > 0) splashTargetUserIds else emptyList()
         override val coloredClassNames: List<CharacterClassMessageInfoState> =
             listOf(
                 CharacterClassMessageInfoState(className = mageName, type = actingClassType),

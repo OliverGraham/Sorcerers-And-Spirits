@@ -6,4 +6,6 @@ internal sealed interface AnimationKey {
     data object AvatarOverlay : AnimationKey
 
     data class AvatarGesture(val userId: String) : AnimationKey
+
+    data class SplashDamage(val userId: String) : AnimationKey
 }

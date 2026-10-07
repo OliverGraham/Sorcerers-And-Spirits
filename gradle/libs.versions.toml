@@ -11,6 +11,7 @@ composeMultiplatform = "1.10.3"
 coroutines = "1.10.2"
 datastore = "1.1.7"
 firebaseBom = "33.15.0"
+firebaseCrashlyticsPlugin = "3.0.3"
 firebaseGitLive = "2.4.0"
 google-services = "4.4.4"
 koin = "4.2.1"
@@ -45,6 +46,7 @@ androidx-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:navigat
 androidx-lifecycle-viewmodel-navigation3 = { module = "org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-navigation3", version.ref = "androidx-lifecycle" }
 
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 firebase-gitlive-app = { module = "dev.gitlive:firebase-app", version.ref = "firebaseGitLive" }
 firebase-gitlive-auth = { module = "dev.gitlive:firebase-auth", version.ref = "firebaseGitLive" }
 firebase-gitlive-firestore = { module = "dev.gitlive:firebase-firestore", version.ref = "firebaseGitLive" }
@@ -77,6 +79,7 @@ androidLibrary = { id = "com.android.library", version.ref = "agp" }
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
+firebaseCrashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebaseCrashlyticsPlugin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -7,6 +7,7 @@ import com.linklabs.sorcerersandspirits.data.audio.AndroidMusicPlayer
 import com.linklabs.sorcerersandspirits.data.audio.AndroidSoundEffectPlayer
 import com.linklabs.sorcerersandspirits.data.authentication.AndroidSocialSignInProvider
 import com.linklabs.sorcerersandspirits.data.connectivity.AndroidConnectivityObserver
+import com.linklabs.sorcerersandspirits.data.crashreporting.AndroidCrashReporter
 import com.linklabs.sorcerersandspirits.data.haptics.AndroidHaptics
 import com.linklabs.sorcerersandspirits.data.platform.AndroidPlatformInfoProvider
 import com.linklabs.sorcerersandspirits.data.profile.PENDING_STATS_DATASTORE_FILE
@@ -17,6 +18,7 @@ import com.linklabs.sorcerersandspirits.domain.audio.MusicPlayer
 import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.SocialSignInProvider
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
+import com.linklabs.sorcerersandspirits.domain.crashreporting.CrashReporter
 import com.linklabs.sorcerersandspirits.domain.haptics.Haptics
 import com.linklabs.sorcerersandspirits.domain.platform.PlatformInfoProvider
 import com.linklabs.sorcerersandspirits.domain.sensor.ShakeDetector
@@ -29,6 +31,7 @@ actual fun platformModule(): Module = module {
     single<ConnectivityObserver> { AndroidConnectivityObserver(context = get()) }
     single<ShakeDetector> { AndroidShakeDetector(context = get()) }
     single<Haptics> { AndroidHaptics(context = get()) }
+    single<CrashReporter> { AndroidCrashReporter() }
     single<MusicPlayer> { AndroidMusicPlayer(context = get()) }
     single<SoundEffectPlayer> { AndroidSoundEffectPlayer(context = get()) }
     single<CurrentAppVersionProvider> { AndroidCurrentAppVersionProvider(context = get()) }

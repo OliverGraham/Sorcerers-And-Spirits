@@ -9,6 +9,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
+import com.linklabs.sorcerersandspirits.domain.crashreporting.CrashReporter
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileForCurrentUserUseCase
@@ -37,6 +38,7 @@ class AppViewModel(
     private val checkAppVersionUseCase: CheckAppVersionUseCase,
     private val connectivityObserver: ConnectivityObserver,
     private val connectTravelerPresenceUseCase: ConnectTravelerPresenceUseCase,
+    private val crashReporter: CrashReporter,
     private val createProfileForCurrentUserUseCase: CreateProfileForCurrentUserUseCase,
     private val createProfileUseCase: CreateProfileUseCase,
     private val flushPendingStatsUseCase: FlushPendingStatsUseCase,
@@ -280,6 +282,8 @@ class AppViewModel(
             .collectLatest { (profile, isOnline) ->
                 when {
                     profile != null -> {
+                        crashReporter.setUserId(userId = profile.userId)
+
                         if (isOnline) {
                             connectTravelerPresenceUseCase(profile = profile)
                             cleanUpOrphanedArenaOnce()

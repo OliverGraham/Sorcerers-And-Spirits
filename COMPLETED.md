@@ -1327,6 +1327,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Release & versioning
 
+- **SS-293** — Crash & error reporting: Wired Firebase Crashlytics on Android via a common
+  `CrashReporter` domain interface (expect/actual + Koin, like the other platform services) — Android
+  actual wraps `FirebaseCrashlytics`, iOS binds a `NoOpCrashReporter` (deferred to SS-298). Sets the
+  Firebase uid on the reporter from `AppViewModel` so crashes correlate to the known auth races.
+  Updated the privacy policy + data-safety reference to declare crash/diagnostic collection.
 - **SS-292** — Privacy policy (required by both stores): Wrote a store-ready privacy policy covering
   anonymous/Google/Apple/email auth, the userId + displayName + GameStats + achievements stored in
   Firebase, public leaderboard + in-match presence sharing, and local session cache; hosted it on

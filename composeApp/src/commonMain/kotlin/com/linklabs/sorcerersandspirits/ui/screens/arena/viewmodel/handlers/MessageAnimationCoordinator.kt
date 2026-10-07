@@ -46,5 +46,15 @@ internal class MessageAnimationCoordinator(private val message: ArenaMessageStat
                 add(element = AnimationKey.AvatarOverlay)
             }
         }
+
+        val message = this@getExpectedAnimationKeys
+        if (message is ArenaMessageState.SpellPotency) {
+            addAll(
+                elements =
+                message.splashAnimationUserIds.map { userId ->
+                    AnimationKey.SplashDamage(userId = userId)
+                },
+            )
+        }
     }
 }

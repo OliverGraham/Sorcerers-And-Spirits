@@ -93,8 +93,13 @@ private fun ClassIcon(
     val isConscious = player.characterClass.isConscious
     val isTargetingTap = isTargetable && isConscious
 
-    // TODO: only call this function if there's a conscious character with SpellPotency
-    val splash = rememberSpellPotencySplash(animatingMessage = animatingMessage, player = player)
+    val spellPotencyMessage = animatingMessage as? ArenaMessageState.SpellPotency
+    val splash =
+        if (spellPotencyMessage != null) {
+            rememberSpellPotencySplash(spellPotencyMessage = spellPotencyMessage, player = player)
+        } else {
+            null
+        }
 
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val headWidth = minOf(a = maxWidth, b = maxHeight)
@@ -105,7 +110,7 @@ private fun ClassIcon(
             characterClass = player.characterClass,
             isEnabled = isConscious,
             width = headWidth,
-            hitPointsEmphasis = splash.hitPointsEmphasis,
+            hitPointsEmphasis = splash?.hitPointsEmphasis ?: 0f,
             modifier =
             Modifier.sharedBounds(key = player.userId)
                 .onGloballyPositioned {
@@ -123,11 +128,13 @@ private fun ClassIcon(
                 },
         )
 
-        SpellPotencySplashIndicator(
-            splash = splash,
-            headWidth = headWidth,
-            modifier = Modifier.align(alignment = Alignment.TopEnd),
-        )
+        if (splash != null) {
+            SpellPotencySplashIndicator(
+                splash = splash,
+                headWidth = headWidth,
+                modifier = Modifier.align(alignment = Alignment.TopEnd),
+            )
+        }
 
         if (isUserPlayer) {
             Image(

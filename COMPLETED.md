@@ -66,6 +66,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-267** — Combat queue hang when a gesture participant isn't a seated avatar (SpellPotency
+  splash targets): Made each stands head-icon's splash-damage animation a first-class reported
+  animation step instead of an unawaited side effect — added `AnimationKey.SplashDamage(userId)`,
+  had `rememberSpellPotencySplash` report completion after `play()`, and taught
+  `MessageAnimationCoordinator` to expect a `SplashDamage` key per splash target (scoped to
+  `ArenaMessageState.SpellPotency`). The splash composable is now only invoked when a SpellPotency
+  message is animating. Confirmed the main target is always the top seat and splash victims always
+  the stands during playback, so every expected key reliably mounts and reports.
 - **SS-274** — Arena Finished scoreboard-style outcome chips: Threaded a match-participant roster +
   knockout order Domain→Data→UI (via `participantsMap`) so the Finished recap renders each player as
   a scoreboard line — winner in all-class-color animating text, the 2-player loser as grey "LOSER",

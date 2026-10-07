@@ -1327,6 +1327,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Release & versioning
 
+- **SS-292** — Privacy policy (required by both stores): Wrote a store-ready privacy policy covering
+  anonymous/Google/Apple/email auth, the userId + displayName + GameStats + achievements stored in
+  Firebase, public leaderboard + in-match presence sharing, and local session cache; hosted it on
+  GitHub Pages in the public config repo and added `legal/data-safety.md` mapping every field to the
+  Play Data-safety and App Store privacy-label answers. Console form entry remains an external task.
 - **SS-070** — Investigate app version control & force-upgrade: Establish a way to gate clients by
   app version so an outdated client can be soft- or force-upgraded — important since all clients
   share one RTDB game-state schema and a stale client could read/write incompatible data.

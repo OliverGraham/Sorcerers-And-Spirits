@@ -31,7 +31,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
       without the iOS pieces**; only the Play SHA fingerprints block an Android store release.
     - **SS-290 — release signing + R8/minify + version bump.** (untracked until now)
     - **SS-291 — store listing assets + final app icon.** (untracked until now)
-    - **SS-292 — privacy policy.** (untracked until now)
     - **SS-293 — crash reporting.** (untracked until now)
     - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
     - **SS-297 — Google Play web deletion link + Data safety deletion questions** (Play submission).
@@ -80,22 +79,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
       keywords, description, support URL, age rating.
 - **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store
   consoles. Asset-prep discipline per [[downsample-figma-raster-assets]]. Related: SS-289.
-
-### SS-292 — Privacy policy (required by both stores)
-
-- [ ] Not completed
-- **Problem:** The app collects auth identity (anonymous/Google/Apple) and persists per-user profile
-  + game stats to Firebase; both Play and the App Store require a reachable privacy policy URL and
-  accurate data-safety / privacy-nutrition-label declarations. None exist.
-- **Do:**
-    - Write a privacy policy covering: anonymous + Google + Apple sign-in, the userId/displayName +
-      GameStats stored in Firebase (RealTime DB + Firestore), and any crash-reporting data (see
-      SS-293). Host it at a stable public URL.
-    - Fill the Play **Data safety** form and the App Store **App Privacy** ("nutrition label") to
-      match what the app actually collects.
-- **Source:** external (hosted policy + store consoles); cross-check against
-  `FirebaseAuthenticationRepository`, the profile/stats writes, and SS-293's reporting scope.
-  Related: SS-289, SS-293.
 
 ### SS-293 — Crash & error reporting
 

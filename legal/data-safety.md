@@ -17,7 +17,7 @@ Published policy URL: https://olivergraham.github.io/sorcerers-and-spirits-confi
 | Achievements unlocked (+ timestamps) | Firestore | Yes | App functionality | No |
 | In-match state / presence | Realtime DB | Yes | Multiplayer gameplay | Yes — players in the same session |
 | Session cache (uid + display name) | On device only | Yes | Keep user signed in | No |
-| Crash logs + diagnostics (stack trace, device model, OS version, app state) | Firebase Crashlytics | Yes (tagged with uid) | Diagnose/fix crashes | No — Google as processor only. **Android only** (iOS deferred). |
+| Crash logs + diagnostics (stack trace, device model, OS version, app state) | Firebase Crashlytics | Yes (tagged with uid) | Diagnose/fix crashes | No — Google as processor only. |
 
 **Not collected:** location, contacts, photos/media, advertising ID, usage analytics. No ads.
 
@@ -32,7 +32,7 @@ Published policy URL: https://olivergraham.github.io/sorcerers-and-spirits-confi
   - *App activity → Other user-generated content / in-app actions* — display name + game stats +
     achievements + in-match state. Collected, linked, shared (stats/leaderboard portion).
   - *App info and performance → Crash logs* and *→ Diagnostics* — via Firebase Crashlytics.
-    Collected, linked to the user (tagged with uid), not shared. (Android only for now.)
+    Collected, linked to the user (tagged with uid), not shared.
 - **Is all collected data encrypted in transit?** Yes (Firebase TLS).
 - **Do you provide a way to request data deletion?** Yes — in-app account deletion, plus email
   request. (Play also wants a web deletion URL — tracked separately in **SS-297**.)
@@ -47,8 +47,7 @@ Published policy URL: https://olivergraham.github.io/sorcerers-and-spirits-confi
   - *Contact Info → Email Address* (only for email/password sign-in)
   - *User Content → Other User Content* (game stats, achievements, in-match state)
   - *Identifiers → User ID* (Firebase account identifier)
-  - *Diagnostics → Crash Data* and *→ Other Diagnostic Data* (Firebase Crashlytics; Android only
-    today, but declare it for the shared app privacy label)
+  - *Diagnostics → Crash Data* and *→ Other Diagnostic Data* (Firebase Crashlytics)
   - Purpose for all: **App Functionality**. Not used for tracking or advertising.
 - **Data not linked to you:** None.
 - No web-deletion-link requirement on iOS; in-app deletion suffices (SS-295).

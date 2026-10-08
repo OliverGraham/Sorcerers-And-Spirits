@@ -79,20 +79,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store
   consoles. Asset-prep discipline per [[downsample-figma-raster-assets]]. Related: SS-289.
 
-### SS-298 — iOS Crashlytics (finish the deferred platform)
-
-- [ ] Not completed — **only matters once iOS actually ships** (iOS not enrolled yet, per SS-088).
-- **Problem:** SS-293 wired Crashlytics on Android only; iOS currently binds a `NoOpCrashReporter`, so
-  iOS field crashes are invisible. gitlive has no Crashlytics module, so iOS needs native wiring.
-- **Do:**
-    - Add the `FirebaseCrashlytics` SPM product to the iOS target and a dSYM-upload build phase in the
-      Xcode project (ties to iOS symbol upload).
-    - Add a Swift `CrashReporterBridge` (mirror `SocialSignInBridge`) and an `IosCrashReporter` actual
-      that forwards to it; swap it in for `NoOpCrashReporter` in `PlatformModule.ios.kt`.
-    - Update `privacy-policy.html` + `data-safety.md`: drop the "Android only" qualifier once live.
-- **Source:** `iosApp/` Xcode project, `IosSocialSignInBridge`/`SocialSignInBridge.swift` as the
-  bridge pattern, `PlatformModule.ios.kt`. Related: SS-293, SS-292, SS-290.
-
 ### SS-296 — Sign in with Apple: revoke tokens on account deletion
 
 - [ ] Not completed — **App Store review blocker (iOS, once Apple sign-in is live).**

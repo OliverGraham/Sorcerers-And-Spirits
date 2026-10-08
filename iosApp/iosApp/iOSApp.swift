@@ -9,7 +9,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
-        InitializeKoinKt.initializeKoin(socialSignInBridge: SocialSignInBridge())
+        InitializeKoinKt.initializeKoin(
+            socialSignInBridge: SocialSignInBridge(),
+            crashReporterBridge: CrashReporterBridge()
+        )
         return true
     }
 

@@ -17,6 +17,7 @@
 		4892F1872E8A3820000068FB /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AA11AA11AA11AA11AA110001 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = AA11AA11AA11AA11AA110002 /* GoogleSignIn */; };
 		BB22BB22BB22BB22BB220001 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = BB22BB22BB22BB22BB220002 /* FirebaseRemoteConfig */; };
+		CC33CC33CC33CC33CC330001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = CC33CC33CC33CC33CC330002 /* FirebaseCrashlytics */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -78,6 +79,7 @@
 				4892F15F2E8A2361000068FB /* FirebaseAuthCombine-Community in Frameworks */,
 				AA11AA11AA11AA11AA110001 /* GoogleSignIn in Frameworks */,
 				BB22BB22BB22BB22BB220001 /* FirebaseRemoteConfig in Frameworks */,
+				CC33CC33CC33CC33CC330001 /* FirebaseCrashlytics in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -122,6 +124,7 @@
 				997DC4E6F2CB6411953E1424 /* Frameworks */,
 				1F7551E159D53E3E74F16228 /* Resources */,
 				4892F1882E8A3820000068FB /* Embed Frameworks */,
+				CC33CC33CC33CC33CC330003 /* Upload Crashlytics dSYMs */,
 			);
 			buildRules = (
 			);
@@ -140,6 +143,7 @@
 				4862D6722EECA3040046000D /* FirebaseDatabase */,
 				AA11AA11AA11AA11AA110002 /* GoogleSignIn */,
 				BB22BB22BB22BB22BB220002 /* FirebaseRemoteConfig */,
+				CC33CC33CC33CC33CC330002 /* FirebaseCrashlytics */,
 			);
 			productName = iosApp;
 			productReference = D798858DFD966DF0374C9A69 /* SorcerersAndSpirits.app */;
@@ -212,6 +216,22 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ \"YES\" = \"$OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED\" ]; then\n  echo \"Skipping Gradle build task invocation due to OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED environment variable set to \\\"YES\\\"\"\n  exit 0\nfi\ncd \"$SRCROOT/..\"\n./gradlew :composeApp:embedAndSignAppleFrameworkForXcode\n";
+		};
+		CC33CC33CC33CC33CC330003 /* Upload Crashlytics dSYMs */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}",
+				"$(SRCROOT)/$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Upload Crashlytics dSYMs";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${BUILD_DIR%/Build/*}/SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -487,6 +507,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseRemoteConfig;
+		};
+		CC33CC33CC33CC33CC330002 /* FirebaseCrashlytics */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4892F15B2E8A2361000068FB /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCrashlytics;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1327,6 +1327,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Release & versioning
 
+- **SS-298** — iOS Crashlytics (finish the deferred platform): Added the `FirebaseCrashlytics` SPM
+  product + a dSYM-upload build phase to the Xcode project, a Swift `CrashReporterBridge` and Kotlin
+  `IosCrashReporter` actual (mirroring the sign-in bridge) wired through Koin, replacing the iOS
+  `NoOpCrashReporter`; dropped the "Android only" qualifier from the privacy policy + data-safety doc.
 - **SS-293** — Crash & error reporting: Wired Firebase Crashlytics on Android via a common
   `CrashReporter` domain interface (expect/actual + Koin, like the other platform services) — Android
   actual wraps `FirebaseCrashlytics`, iOS binds a `NoOpCrashReporter` (deferred to SS-298). Sets the

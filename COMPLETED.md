@@ -1327,6 +1327,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Release & versioning
 
+- **SS-297** — Google Play web account-deletion resource: Added `account-deletion.html` to the public
+  config repo (GitHub Pages), served at
+  `https://olivergraham.github.io/sorcerers-and-spirits-config/account-deletion.html` — documents the
+  in-app delete path, an email request path (`og.singletonne@gmail.com`) for the no-app case, and what
+  is deleted vs. retained (Crashlytics 90-day). Matches the privacy-policy page. Play Console Data
+  safety deletion questions + honoring emailed requests remain external tasks.
 - **SS-298** — iOS Crashlytics (finish the deferred platform): Added the `FirebaseCrashlytics` SPM
   product + a dSYM-upload build phase to the Xcode project, a Swift `CrashReporterBridge` and Kotlin
   `IosCrashReporter` actual (mirroring the sign-in bridge) wired through Koin, replacing the iOS

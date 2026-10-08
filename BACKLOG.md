@@ -32,7 +32,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - **SS-290 — release signing + R8/minify + version bump.** (untracked until now)
     - **SS-291 — store listing assets + final app icon.** (untracked until now)
     - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
-    - **SS-297 — Google Play web deletion link + Data safety deletion questions** (Play submission).
+    - ~~**SS-297 — Google Play web deletion link**~~ — page shipped; only the Play Console Data safety
+      deletion questions remain (external, at submission).
 - **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207, SS-263,
   SS-265), the combat/message refactors (SS-257–262), stats/achievements (SS-127), credits polish
   (SS-282), audio (SS-134 + SS-217…SS-221), remaining small-phone tuning (SS-080), config
@@ -95,23 +96,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Source:** `FirebaseAuthenticationRepository` (Apple credential paths), the SS-295 delete flow.
   Related: SS-295, SS-087/SS-088/SS-089 (Apple enablement), SS-289.
   Ref: [Apple — offering account deletion](https://developer.apple.com/support/offering-account-deletion-in-your-app).
-
-### SS-297 — Google Play: web-based account-deletion resource + Data safety deletion questions
-
-- [ ] Not completed — **Play submission blocker.**
-- **Problem:** Google Play requires **two** deletion paths when an app enables account creation: the
-  in-app path (SS-295) **and** a **web link** where a user can request account + data deletion *without
-  reinstalling the app*. The **Data safety** form's Data-deletion questions must also be completed. We
-  have neither.
-- **Do:**
-    - Host a public web resource (form or documented request path) where a user can request deletion of
-      their app account and associated data; verify it actually triggers the same teardown as SS-295.
-    - Complete the Play Console **Data safety** Data-deletion questions (the in-app path + this URL), and
-      keep it consistent with the privacy policy (SS-292).
-- **Note:** iOS/App Store has **no** web-link requirement — in-app deletion suffices there; this ticket
-  is Play-specific.
-- **Source:** external (hosted resource + Play Console). Related: SS-295, SS-292, SS-289.
-  Ref: [Google Play account deletion](https://support.google.com/googleplay/android-developer/answer/13327111).
 
 ---
 

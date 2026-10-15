@@ -66,6 +66,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Arena UI
 
+- **SS-263** — Duelist Riposte animation visual polish: Rebuilt the parry sweep around real
+  ballistic limb motion — anticipation backswing, a fast accelerate-to-peak sweep, follow-through
+  overshoot that settles, and a separate blade-angle animatable that lags and overshoots the hilt
+  (overlapping-action drag). The hilt now travels (arm/shoulder arc) rather than spinning about a
+  fixed pivot, settling low and angled while the counter sword thrusts. Twin-sword resting pose:
+  one in a parry guard, one cocked back ready to strike.
+
 - **SS-267** — Combat queue hang when a gesture participant isn't a seated avatar (SpellPotency
   splash targets): Made each stands head-icon's splash-damage animation a first-class reported
   animation step instead of an unawaited side effect — added `AnimationKey.SplashDamage(userId)`,

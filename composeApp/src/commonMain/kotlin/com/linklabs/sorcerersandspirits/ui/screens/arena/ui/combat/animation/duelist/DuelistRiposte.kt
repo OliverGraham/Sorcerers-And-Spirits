@@ -3,6 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.du
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
@@ -50,23 +52,33 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 internal const val RIPOSTE_APPEAR_MILLIS = 200
-internal const val RIPOSTE_PARRY_MILLIS = 260
 internal const val RIPOSTE_STAB_MILLIS = 200
 private const val RIPOSTE_EMBED_MILLIS = 150L
 private const val RIPOSTE_FADE_MILLIS = 220
 
-private const val PARRY_DEFLECT_DEGREES = 20f
-private const val PARRY_VIBRATION_DEGREES = 6f
-private const val PARRY_VIBRATION_CYCLES = 5f
+private const val PARRY_ANTICIPATION_MILLIS = 90
+private const val PARRY_SWEEP_PEAK_MILLIS = 240
+private const val PARRY_ARM_MILLIS = 330
+private const val PARRY_BLADE_LAG_MILLIS = 60
+private const val PARRY_BLADE_MILLIS = 300
+
+internal const val RIPOSTE_PARRY_MILLIS = PARRY_BLADE_LAG_MILLIS + PARRY_BLADE_MILLIS
+
+private const val PARRY_GUARD_DEGREES = 26f
+private const val PARRY_SWEEP_END_DEGREES = 118f
+private const val PARRY_ARM_ANTICIPATION = -0.12f
+private const val PARRY_ARM_OVERSHOOT = 1.08f
+private const val PARRY_BLADE_ANTICIPATION = -0.18f
+private const val PARRY_BLADE_OVERSHOOT = 1.16f
+private val parrySweepLateralTravel = 72.dp
+private val parrySweepDrop = 38.dp
+private const val COUNTER_WINDUP_DEGREES = 38f
 private const val WHIFF_OVERSHOOT_TRAVEL = 1.3f
 private const val RIPOSTE_BURST_PEAK_SCALE = 1.2f
-private const val UPRIGHT_DEGREES = -90f
 
 private val upright = Offset(x = 0f, y = -1f)
 
 internal const val RIPOSTE_STRIKE_MILLIS = (RIPOSTE_PARRY_MILLIS + RIPOSTE_STAB_MILLIS).toLong()
-
-// TODO(SS-263): Riposte Animation needs some work, visually
 
 @Composable
 internal fun RiposteOverlay(
@@ -139,7 +151,8 @@ private suspend fun RiposteEffectState.play(
 }
 
 private suspend fun RiposteEffectState.raiseIntoGuard(scene: RiposteScene) {
-    parry.snapTo(targetValue = 0f)
+    parryArm.snapTo(targetValue = 0f)
+    parryBlade.snapTo(targetValue = 0f)
     stab.snapTo(targetValue = 0f)
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
@@ -155,15 +168,13 @@ private suspend fun RiposteEffectState.raiseIntoGuard(scene: RiposteScene) {
 private suspend fun RiposteEffectState.resolve(scene: RiposteScene, isLanded: Boolean) {
     this.scene = scene
     bladeAlpha.snapTo(targetValue = 1f)
-    parry.snapTo(targetValue = 0f)
+    parryArm.snapTo(targetValue = 0f)
+    parryBlade.snapTo(targetValue = 0f)
     stab.snapTo(targetValue = 0f)
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
 
-    parry.animateTo(
-        targetValue = 1f,
-        animationSpec = tween(durationMillis = RIPOSTE_PARRY_MILLIS, easing = FastOutSlowInEasing),
-    )
+    sweepParry()
 
     if (isLanded) {
         land()
@@ -172,6 +183,34 @@ private suspend fun RiposteEffectState.resolve(scene: RiposteScene, isLanded: Bo
     }
 
     this.scene = null
+}
+
+private suspend fun RiposteEffectState.sweepParry() = coroutineScope {
+    launch {
+        parryArm.animateTo(
+            targetValue = 1f,
+            animationSpec =
+            keyframes {
+                durationMillis = PARRY_ARM_MILLIS
+                0f at 0 using LinearOutSlowInEasing
+                PARRY_ARM_ANTICIPATION at PARRY_ANTICIPATION_MILLIS using FastOutSlowInEasing
+                PARRY_ARM_OVERSHOOT at PARRY_SWEEP_PEAK_MILLIS using LinearOutSlowInEasing
+            },
+        )
+    }
+    launch {
+        delay(timeMillis = PARRY_BLADE_LAG_MILLIS.toLong())
+        parryBlade.animateTo(
+            targetValue = 1f,
+            animationSpec =
+            keyframes {
+                durationMillis = PARRY_BLADE_MILLIS
+                0f at 0 using LinearOutSlowInEasing
+                PARRY_BLADE_ANTICIPATION at PARRY_ANTICIPATION_MILLIS using FastOutSlowInEasing
+                PARRY_BLADE_OVERSHOOT at PARRY_SWEEP_PEAK_MILLIS using LinearOutSlowInEasing
+            },
+        )
+    }
 }
 
 private suspend fun RiposteEffectState.land() {
@@ -240,14 +279,18 @@ private fun DrawScope.drawParryBlade(scene: RiposteScene, state: RiposteEffectSt
     val alpha = state.bladeAlpha.value
     if (alpha <= 0f) return
 
-    val progress = state.parry.value
-    val deflectDegrees = sin(x = (progress * PI)).toFloat() * PARRY_DEFLECT_DEGREES
-    val vibrationDegrees =
-        sin(x = (progress * PI * PARRY_VIBRATION_CYCLES)).toFloat() *
-            PARRY_VIBRATION_DEGREES *
-            (1f - progress)
-    val tipDirection = upright.rotatedBy(degrees = deflectDegrees + vibrationDegrees)
-    drawBlade(hand = scene.parryHand, tipDirection = tipDirection, scene = scene, alpha = alpha)
+    val armProgress = state.parryArm.value
+    val bladeProgress = state.parryBlade.value
+    val sweepDegrees =
+        -PARRY_GUARD_DEGREES - bladeProgress * (PARRY_SWEEP_END_DEGREES - PARRY_GUARD_DEGREES)
+    val tipDirection = upright.rotatedBy(degrees = sweepDegrees)
+
+    val lateral = Offset(x = -scene.axis.y, y = scene.axis.x)
+    val handSweep =
+        lateral * (-parrySweepLateralTravel.toPx() * armProgress) +
+            Offset(x = 0f, y = parrySweepDrop.toPx() * armProgress)
+    val hand = scene.parryHand + handSweep
+    drawBlade(hand = hand, tipDirection = tipDirection, scene = scene, alpha = alpha)
 }
 
 private fun DrawScope.drawCounterBlade(scene: RiposteScene, state: RiposteEffectState) {
@@ -257,8 +300,10 @@ private fun DrawScope.drawCounterBlade(scene: RiposteScene, state: RiposteEffect
     val travel = state.stab.value
     val swingFraction = travel.coerceAtMost(maximumValue = 1f)
     val axisDegrees = atan2(y = scene.axis.y, x = scene.axis.x) * 180f / PI.toFloat()
+    val windupDirection = upright.rotatedBy(degrees = COUNTER_WINDUP_DEGREES)
+    val windupDegrees = atan2(y = windupDirection.y, x = windupDirection.x) * 180f / PI.toFloat()
     val degrees =
-        lerpAngle(fromDegrees = UPRIGHT_DEGREES, toDegrees = axisDegrees, fraction = swingFraction)
+        lerpAngle(fromDegrees = windupDegrees, toDegrees = axisDegrees, fraction = swingFraction)
     val radians = degrees * PI.toFloat() / 180f
     val tipDirection = Offset(x = cos(x = radians), y = sin(x = radians))
 
@@ -285,7 +330,8 @@ private fun DrawScope.drawBlade(
 @Stable
 private class RiposteEffectState {
     val bladeAlpha = Animatable(initialValue = 0f)
-    val parry = Animatable(initialValue = 0f)
+    val parryArm = Animatable(initialValue = 0f)
+    val parryBlade = Animatable(initialValue = 0f)
     val stab = Animatable(initialValue = 0f)
     val impactAlpha = Animatable(initialValue = 0f)
     val impactScale = Animatable(initialValue = 0f)

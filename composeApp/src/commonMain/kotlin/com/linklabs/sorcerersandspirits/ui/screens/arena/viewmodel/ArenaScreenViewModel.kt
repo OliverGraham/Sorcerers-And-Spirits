@@ -627,8 +627,11 @@ class ArenaScreenViewModel(
 
             is ArenaMatchState.Combat -> autoResolveCombatForUser(arenaMatchState = arenaState)
 
-            is ArenaMatchState.Finished ->
-                if (!loadedState.hasReadiedForNextMatch) onStayForAnotherMatch()
+            is ArenaMatchState.Finished -> {
+                val isGauntletComplete = loadedState.gauntletProgressState.isFinalMatch
+                val shouldAutoReady = !isGauntletComplete && !loadedState.hasReadiedForNextMatch
+                if (shouldAutoReady) onStayForAnotherMatch()
+            }
         }
     }
 

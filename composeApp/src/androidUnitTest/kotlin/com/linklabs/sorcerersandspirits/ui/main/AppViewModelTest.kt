@@ -1,10 +1,12 @@
 package com.linklabs.sorcerersandspirits.ui.main
 
 import app.cash.turbine.test
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
 import com.linklabs.sorcerersandspirits.domain.connectivity.ConnectivityObserver
 import com.linklabs.sorcerersandspirits.domain.crashreporting.CrashReporter
 import com.linklabs.sorcerersandspirits.domain.game.usecase.InitializeGameConfigUseCase
@@ -59,6 +61,9 @@ class AppViewModelTest {
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
     private val signInWithSocialUseCase: SignInWithSocialUseCase = mockk(relaxed = true)
+    private val signOutUseCase: SignOutUseCase = mockk(relaxed = true)
+    private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase =
+        mockk(relaxed = true)
 
     private val profileFlow = MutableStateFlow<Profile?>(null)
     private val isOnlineFlow = MutableStateFlow(value = true)
@@ -96,6 +101,8 @@ class AppViewModelTest {
         initializeGameConfigUseCase = initializeGameConfigUseCase,
         isUserSignedInUseCase = isUserSignedInUseCase,
         signInWithSocialUseCase = signInWithSocialUseCase,
+        signOutUseCase = signOutUseCase,
+        syncArenaMembershipOnConnectUseCase = syncArenaMembershipOnConnectUseCase,
     )
 
     private fun UiState<AppState>.loaded(): AppState = assertIs<UiState.Loaded<AppState>>(value = this).data

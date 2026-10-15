@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
+import com.linklabs.sorcerersandspirits.domain.arena.model.MatchParticipant
+import com.linklabs.sorcerersandspirits.domain.arena.model.ParticipantStatus
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
@@ -207,10 +209,22 @@ class ArenaSessionStatsTest {
                     ),
             ),
             matchNumberInGauntlet = matchNumber,
-            participants =
+            participantMap =
             mapOf(
-                USER_ID to survivingClass.type,
-                OPPONENT_ID to TestCharacterClasses.mage().type,
+                USER_ID to
+                    MatchParticipant(
+                        userId = USER_ID,
+                        displayName = USER_ID,
+                        classType = survivingClass.type,
+                        status = ParticipantStatus.Conscious,
+                    ),
+                OPPONENT_ID to
+                    MatchParticipant(
+                        userId = OPPONENT_ID,
+                        displayName = OPPONENT_ID,
+                        classType = TestCharacterClasses.mage().type,
+                        status = ParticipantStatus.KnockedOut(knockoutOrder = 1),
+                    ),
             ),
         )
     }

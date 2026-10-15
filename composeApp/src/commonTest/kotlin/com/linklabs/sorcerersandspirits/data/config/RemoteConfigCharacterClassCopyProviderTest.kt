@@ -56,5 +56,9 @@ class RemoteConfigCharacterClassCopyProviderTest {
         override fun minimumSupportedVersionCode() = RemoteConfigDataSource.UNGATED_VERSION
 
         override fun latestVersionCode() = RemoteConfigDataSource.UNGATED_VERSION
+
+        override fun bugReportEndpointUrl() = ""
+
+        override fun bugReportToken() = ""
     }
 }

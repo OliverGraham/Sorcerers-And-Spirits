@@ -430,6 +430,33 @@ SS-191's generic lunges remain the fallback for classes not yet done.
 - **Related:** SS-207 (Persuade animation), SS-267 (gesture-key hang), game rule: Persuade redirect
   needs ≥2 alive non-Bard players.
 
+### SS-299 — ArenaScreenViewModel: three suspected behavior bugs surfaced by the test fix-up
+
+- [ ] Not completed — three `ArenaScreenViewModelTest` cases left intentionally failing (217/220
+  green otherwise). Each looks like a real production behavior gap, not test drift, so they are
+  tracked here rather than papered over by weakening the tests.
+- **1. Match-ending hold never triggers (`isMatchEnding` stays false).** `ArenaScreenStateUpdate.updateCombat`
+  copies only `diceRollState` + `currentTargetUserId` onto the existing combat state; it drops
+  `isMatchOver`. So when the domain emits a terminal `Combat` mid-match, the screen's `isMatchOver`
+  stays false and `ArenaScreenState.isMatchEnding` never flips — the SS-154 "hold combat for the
+  killing-roll flash, then transition to Finished" flow wouldn't run in the real app either.
+  Fix: propagate `isMatchOver` (and audit whether `roundNumber`/`isNewRound` should update too) in
+  `updateCombat`. Failing test: *"Given the match-ending roll lands, then combat is held for the flash…"*.
+- **2. Gauntlet-final still auto-readies.** `onTimerExpiration`'s `Finished` branch calls
+  `onStayForAnotherMatch()` unconditionally; there is no gauntlet-final gate. Per the game rules a
+  completed gauntlet should return to class selection ("Go Again"), not auto-ready into another
+  match. Fix: gate the auto-ready on not-gauntlet-complete (the Finished state needs to carry/derive
+  that). Failing test: *"Given the gauntlet finishes and nobody readies, then the user is not auto-readied"*.
+- **3. OpponentLeft not detected from WaitingForAllPlayers (likely obsolete test).** `ArenaMatchState.WaitingForAllPlayers`
+  is a singleton with no player map, so `notifyDepartedOpponents` can't see a departure while waiting;
+  the test only ever observes the `MatchTimedOut` timer event. Decide whether departures should be
+  surfaced during the waiting phase (production change) or the test premise is outdated (update/remove
+  it). Failing test: *"Given an opponent leaves, then an OpponentLeft event names them"*.
+- **Source:** `ui/screens/arena/model/ArenaScreenStateUpdate.kt` (`updateCombat`),
+  `ui/screens/arena/viewmodel/ArenaScreenViewModel.kt` (`onTimerExpiration`, `notifyDepartedOpponents`),
+  `ui/screens/arena/model/ArenaMatchState.kt` (`WaitingForAllPlayers`).
+- **Related:** SS-154 (held Finished transition), gauntlet rule in CLAUDE.md.
+
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

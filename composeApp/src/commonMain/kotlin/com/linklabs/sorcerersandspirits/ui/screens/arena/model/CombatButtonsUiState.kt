@@ -102,7 +102,7 @@ private fun ArenaMatchState.Combat.isControlEnabled(
 
 // TODO: Can likely be GREATLY simplified (is it the Illusionist's turn? have they impersonated?
 //       can they? done.)
-private fun ArenaMatchState.Combat.isImpersonateRedundant(
+internal fun ArenaMatchState.Combat.isImpersonateRedundant(
     control: ArenaCombatControl,
     targetedOpponentUserId: String?,
 ): Boolean {

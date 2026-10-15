@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.domain.profile.usecase
 
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
+import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileRepository
 import io.mockk.coVerify
 import io.mockk.every
@@ -10,13 +11,15 @@ import kotlin.test.Test
 
 class DeleteProfileUseCaseTest {
 
-    private val authenticationRepository: AuthenticationRepository = mockk()
+    private val authenticationRepository: AuthenticationRepository = mockk(relaxed = true)
     private val profileRepository: ProfileRepository = mockk(relaxed = true)
+    private val pendingStatsStore: PendingStatsStore = mockk(relaxed = true)
 
     private val useCase =
         DeleteProfileUseCase(
             authenticationRepository = authenticationRepository,
             profileRepository = profileRepository,
+            pendingStatsStore = pendingStatsStore,
         )
 
     @Test

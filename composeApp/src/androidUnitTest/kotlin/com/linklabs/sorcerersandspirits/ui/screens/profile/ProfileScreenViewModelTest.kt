@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.profile
 
 import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.achievement.AchievementId
+import com.linklabs.sorcerersandspirits.domain.authentication.IsUserAnonymousUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
@@ -9,10 +10,9 @@ import com.linklabs.sorcerersandspirits.domain.profile.DisplayNameResult
 import com.linklabs.sorcerersandspirits.domain.profile.GameStats
 import com.linklabs.sorcerersandspirits.domain.profile.Profile
 import com.linklabs.sorcerersandspirits.domain.profile.ProfileStats
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.CreateProfileUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.DeleteProfileUseCase
+import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileByUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetProfileFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.profile.usecase.GetRandomTravelerNameUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.usecase.UpdateProfileDisplayNameUseCase
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import io.mockk.coEvery
@@ -39,12 +39,12 @@ class ProfileScreenViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
 
     private val getProfileFlowUseCase: GetProfileFlowUseCase = mockk()
+    private val getProfileByUserIdUseCase: GetProfileByUserIdUseCase = mockk()
     private val updateProfileDisplayNameUseCase: UpdateProfileDisplayNameUseCase =
         mockk(relaxed = true)
     private val deleteProfileUseCase: DeleteProfileUseCase = mockk(relaxed = true)
-    private val createProfileUseCase: CreateProfileUseCase = mockk(relaxed = true)
-    private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val linkAccountUseCase: LinkAccountUseCase = mockk(relaxed = true)
+    private val isUserAnonymousUseCase: IsUserAnonymousUseCase = mockk(relaxed = true)
 
     private val profileFlow = MutableStateFlow<Profile?>(null)
 
@@ -52,7 +52,6 @@ class ProfileScreenViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         every { getProfileFlowUseCase() } returns profileFlow
-        every { getRandomTravelerNameUseCase() } returns RANDOM_NAME
     }
 
     @AfterTest
@@ -61,12 +60,13 @@ class ProfileScreenViewModelTest {
     }
 
     private fun createViewModel() = ProfileScreenViewModel(
+        arguments = ProfileScreenViewModelArguments(targetUserId = null),
         getProfileFlowUseCase = getProfileFlowUseCase,
+        getProfileByUserIdUseCase = getProfileByUserIdUseCase,
         updateProfileDisplayNameUseCase = updateProfileDisplayNameUseCase,
         deleteProfileUseCase = deleteProfileUseCase,
-        createProfileUseCase = createProfileUseCase,
-        getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
         linkAccountUseCase = linkAccountUseCase,
+        isUserAnonymousUseCase = isUserAnonymousUseCase,
     )
 
     private fun UiState<ProfileState>.loaded(): ProfileState = assertIs<UiState.Loaded<ProfileState>>(value = this).data
@@ -150,7 +150,7 @@ class ProfileScreenViewModelTest {
     }
 
     @Test
-    fun `When the profile is deleted, then a fresh one is provisioned and the deleted event is emitted`() = runTest {
+    fun `When the profile is deleted, then the delete use case runs and the deleted event is emitted`() = runTest {
         val viewModel = createViewModel()
 
         viewModel.eventChannelFlow.test {
@@ -163,7 +163,6 @@ class ProfileScreenViewModelTest {
         }
 
         coVerify(exactly = 1) { deleteProfileUseCase() }
-        coVerify(exactly = 1) { createProfileUseCase(displayName = RANDOM_NAME) }
     }
 
     @Test
@@ -180,16 +179,12 @@ class ProfileScreenViewModelTest {
 
             cancelAndIgnoreRemainingEvents()
         }
-
-        // Linking upgrades the existing account in place — no new profile is created.
-        coVerify(exactly = 0) { createProfileUseCase(displayName = any()) }
     }
 
     private companion object {
         private const val USER_ID = "user-1"
         private const val DISPLAY_NAME = "Gandalf"
         private const val NEW_NAME = "Mithrandir"
-        private const val RANDOM_NAME = "a mysterious traveler"
         private const val EMAIL = "wizard@example.com"
         private const val PASSWORD = "you-shall-pass"
     }

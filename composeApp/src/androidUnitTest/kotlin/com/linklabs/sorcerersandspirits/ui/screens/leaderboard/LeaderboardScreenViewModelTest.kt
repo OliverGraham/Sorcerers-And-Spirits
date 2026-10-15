@@ -121,6 +121,7 @@ class LeaderboardScreenViewModelTest {
     private companion object {
         val ENTRY =
             LeaderboardEntry(
+                userId = "user-gandalf",
                 displayName = "Gandalf",
                 rating = 2_225,
                 gauntletsWon = 12,
@@ -130,6 +131,7 @@ class LeaderboardScreenViewModelTest {
 
         val GRINDER =
             LeaderboardEntry(
+                userId = "user-grinder",
                 displayName = "Grinder",
                 rating = 100,
                 gauntletsWon = 10,
@@ -139,6 +141,7 @@ class LeaderboardScreenViewModelTest {
 
         val ACE =
             LeaderboardEntry(
+                userId = "user-ace",
                 displayName = "Ace",
                 rating = 900,
                 gauntletsWon = 1,

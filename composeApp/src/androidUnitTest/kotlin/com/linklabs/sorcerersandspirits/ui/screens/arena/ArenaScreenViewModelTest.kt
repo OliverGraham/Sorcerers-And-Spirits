@@ -7,12 +7,17 @@ import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
 import com.linklabs.sorcerersandspirits.domain.arena.model.AttackTurn
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.Gauntlet
+import com.linklabs.sorcerersandspirits.domain.arena.model.MatchParticipant
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.NormalAttackType
+import com.linklabs.sorcerersandspirits.domain.arena.model.ParticipantStatus
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.DisconnectArenaPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
@@ -25,6 +30,8 @@ import com.linklabs.sorcerersandspirits.domain.game.MirrorImageRerollSelection
 import com.linklabs.sorcerersandspirits.domain.game.TestCharacterClasses
 import com.linklabs.sorcerersandspirits.domain.game.ability.DefensiveAbility
 import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.Minion
+import com.linklabs.sorcerersandspirits.domain.game.ability.summonminion.MinionType
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
@@ -69,6 +76,9 @@ class ArenaScreenViewModelTest {
 
     private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase = mockk()
     private val coordinateArenaMatchUseCase: CoordinateArenaMatchUseCase = mockk()
+    private val disconnectArenaPresenceUseCase: DisconnectArenaPresenceUseCase = mockk(relaxed = true)
+    private val getArenaPresenceFlowUseCase: GetArenaPresenceFlowUseCase = mockk()
+    private val removeDisconnectedPlayerUseCase: RemoveDisconnectedPlayerUseCase = mockk(relaxed = true)
     private val exitArenaUseCase: ExitArenaUseCase = mockk(relaxed = true)
     private val finishMatchUseCase: FinishMatchUseCase = mockk(relaxed = true)
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase = mockk()
@@ -95,6 +105,7 @@ class ArenaScreenViewModelTest {
         every { getCharacterClassesUseCase() } returns TestCharacterClasses.all()
         every { getCharacterClassCopyUseCase() } returns CharacterClassCopy.EMPTY
         coEvery { coordinateArenaMatchUseCase(any(), any()) } returns arenaMatchFlow
+        every { getArenaPresenceFlowUseCase(any()) } returns MutableStateFlow(value = emptyMap())
         coEvery {
             performCombatActionUseCase(
                 arguments = capture(combatActionArgumentsSlot),
@@ -112,8 +123,11 @@ class ArenaScreenViewModelTest {
         arguments = arguments,
         chooseCharacterClassUseCase = chooseCharacterClassUseCase,
         coordinateArenaMatchUseCase = coordinateArenaMatchUseCase,
+        disconnectArenaPresenceUseCase = disconnectArenaPresenceUseCase,
         exitArenaUseCase = exitArenaUseCase,
         finishMatchUseCase = finishMatchUseCase,
+        getArenaPresenceFlowUseCase = getArenaPresenceFlowUseCase,
+        removeDisconnectedPlayerUseCase = removeDisconnectedPlayerUseCase,
         getCharacterClassesUseCase = getCharacterClassesUseCase,
         getCharacterClassCopyUseCase = getCharacterClassCopyUseCase,
         getUserIdUseCase = getUserIdUseCase,
@@ -132,9 +146,14 @@ class ArenaScreenViewModelTest {
         nextCombatAction: NextCombatAction,
         playerMap: Map<String, ArenaPlayer.Selected>,
     ): ArenaScreenViewModel {
+        // A fresh screen can only enter Combat by transitioning from ChoosingClasses, mirroring the
+        // real flow (a match never starts a brand-new screen directly in Combat).
+        arenaMatchFlow.value = choosingClassesMatch(playerMap = playerMap)
+        val viewModel = createViewModel().also { runCurrent() }
         arenaMatchFlow.value =
             createCombatMatch(nextCombatAction = nextCombatAction, playerMap = playerMap)
-        return createViewModel().also { runCurrent() }
+        runCurrent()
+        return viewModel
     }
 
     /** Two-player convenience wrapper that also returns the loaded [ArenaMatchState.Combat]. */
@@ -182,6 +201,7 @@ class ArenaScreenViewModelTest {
             abilityActionState = action,
             targetedOpponentUserId = targetedOpponentUserId,
             userPlayerId = userPlayerId,
+            combatActionState = requireCombatState().combatActionState,
         ),
     )
 
@@ -193,6 +213,7 @@ class ArenaScreenViewModelTest {
         AttackArguments(
             targetedOpponentUserId = targetedOpponentUserId,
             userPlayerId = userPlayerId,
+            combatActionState = requireCombatState().combatActionState,
         ),
     )
 
@@ -332,8 +353,16 @@ class ArenaScreenViewModelTest {
                 .copy(
                     offensiveAbility =
                     OffensiveAbility.SummonMinion(
-                        skeletonCount = 2,
-                        attacksTakenThisTurn = 1,
+                        minions =
+                        List(size = 2) { index ->
+                            Minion(
+                                type = MinionType.Skeleton,
+                                name = "skeleton-$index",
+                                hasAttackedThisRound = true,
+                                hitPoints = 1,
+                            )
+                        },
+                        usedThisTurn = true,
                     ),
                 )
         val (_, combatState) =
@@ -423,7 +452,11 @@ class ArenaScreenViewModelTest {
 
         viewModel.onAttack(
             attackArguments =
-            AttackArguments(targetedOpponentUserId = OPPONENT_ID, userPlayerId = USER_ID),
+            AttackArguments(
+                targetedOpponentUserId = OPPONENT_ID,
+                userPlayerId = USER_ID,
+                combatActionState = combatState.combatActionState,
+            ),
         )
         runCurrent()
 
@@ -462,6 +495,7 @@ class ArenaScreenViewModelTest {
                 abilityActionState = allInControl.action,
                 targetedOpponentUserId = "",
                 userPlayerId = USER_ID,
+                combatActionState = combatState.combatActionState,
             ),
         )
         runCurrent()
@@ -495,6 +529,7 @@ class ArenaScreenViewModelTest {
                 abilityActionState = prepareAttackControl.action,
                 targetedOpponentUserId = OPPONENT_ID,
                 userPlayerId = USER_ID,
+                combatActionState = combatState.combatActionState,
             ),
         )
         runCurrent()
@@ -527,6 +562,7 @@ class ArenaScreenViewModelTest {
                 abilityActionState = teleportControl.action,
                 targetedOpponentUserId = "",
                 userPlayerId = USER_ID,
+                combatActionState = combatState.combatActionState,
             ),
         )
         runCurrent()
@@ -579,7 +615,7 @@ class ArenaScreenViewModelTest {
             ArenaMatch.Finished(
                 messages = emptyList(),
                 playerMap = playerMap,
-                participants = playerMap.mapValues { it.value.characterClass.type },
+                participantMap = finishedParticipantMap(playerMap = playerMap),
             )
         runCurrent()
 
@@ -597,7 +633,7 @@ class ArenaScreenViewModelTest {
             ArenaMatch.Finished(
                 messages = emptyList(),
                 playerMap = playerMap,
-                participants = playerMap.mapValues { it.value.characterClass.type },
+                participantMap = finishedParticipantMap(playerMap = playerMap),
             )
         runCurrent()
 
@@ -617,7 +653,7 @@ class ArenaScreenViewModelTest {
                 messages = emptyList(),
                 matchNumberInGauntlet = Gauntlet.MATCHES_PER_GAUNTLET,
                 playerMap = playerMap,
-                participants = playerMap.mapValues { it.value.characterClass.type },
+                participantMap = finishedParticipantMap(playerMap = playerMap),
             )
         runCurrent()
 
@@ -710,21 +746,24 @@ class ArenaScreenViewModelTest {
 
     @Test
     fun `onStayForAnotherMatch calls use case and updates state`() = runTest {
-        arenaMatchFlow.value =
-            ArenaMatch.Finished(
-                messages = emptyList(),
-                playerMap =
-                mapOf(
-                    USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User"),
-                ),
-                participants = emptyMap(),
-            )
+        val players =
+            mapOf(USER_ID to ArenaPlayer.Unselected(userId = USER_ID, displayName = "User"))
+        // The screen must be established before Finished (a fresh screen can't start in Finished).
+        arenaMatchFlow.value = choosingClassesMatch(playerMap = players)
         val viewModel = createViewModel()
 
         viewModel.uiStateFlow.test {
             // Loading
             awaitItem()
-            // Loaded
+            // Loaded (ChoosingClasses)
+            awaitItem()
+
+            arenaMatchFlow.value =
+                ArenaMatch.Finished(
+                    messages = emptyList(),
+                    playerMap = players,
+                    participantMap = emptyMap(),
+                )
             val initialState = awaitItem() as UiState.Loaded
             assertFalse(initialState.data.hasReadiedForNextMatch)
 
@@ -742,26 +781,27 @@ class ArenaScreenViewModelTest {
     fun `participants maintains class names even after players leave`() = runTest {
         val viewModel = createViewModel()
 
+        val startingPlayers =
+            mapOf(
+                USER_ID to selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue()),
+                OPPONENT_ID to selectedPlayer(OPPONENT_ID, "Bob", TestCharacterClasses.mage()),
+            )
+
         viewModel.uiStateFlow.test {
             // Loading
             awaitItem()
 
+            // The screen enters Combat by transitioning from ChoosingClasses (never directly).
+            arenaMatchFlow.value = choosingClassesMatch(playerMap = startingPlayers)
+            awaitItem()
+
             // 1. Combat with two players; the data layer captured the participants at combat start.
             arenaMatchFlow.value =
-                createCombatMatch(
-                    nextCombatAction = idleTurn(USER_ID),
-                    playerMap =
-                    mapOf(
-                        USER_ID to
-                            selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue()),
-                        OPPONENT_ID to
-                            selectedPlayer(OPPONENT_ID, "Bob", TestCharacterClasses.mage()),
-                    ),
-                )
+                createCombatMatch(nextCombatAction = idleTurn(USER_ID), playerMap = startingPlayers)
 
-            val state1 = (awaitItem() as UiState.Loaded).data
-            assertEquals(CharacterClassType.Rogue.name, state1.participants[USER_ID]?.className)
-            assertEquals(CharacterClassType.Mage.name, state1.participants[OPPONENT_ID]?.className)
+            val state1 = assertIs<ArenaMatchState.Combat>((awaitItem() as UiState.Loaded).data.arenaMatchState)
+            assertEquals(CharacterClassType.Rogue, state1.participantMap[USER_ID]?.classType)
+            assertEquals(CharacterClassType.Mage, state1.participantMap[OPPONENT_ID]?.classType)
 
             // 2. Opponent leaves: they drop out of the player map, but the data layer carries the
             // participants forward, so their class still resolves for earlier messages.
@@ -780,10 +820,10 @@ class ArenaScreenViewModelTest {
                     ),
                 )
 
-            val state2 = (awaitItem() as UiState.Loaded).data
-            assertEquals(CharacterClassType.Rogue.name, state2.participants[USER_ID]?.className)
+            val state2 = assertIs<ArenaMatchState.Combat>((awaitItem() as UiState.Loaded).data.arenaMatchState)
+            assertEquals(CharacterClassType.Rogue, state2.participantMap[USER_ID]?.classType)
             // Bob's class should still be here so their earlier messages still resolve!
-            assertEquals(CharacterClassType.Mage.name, state2.participants[OPPONENT_ID]?.className)
+            assertEquals(CharacterClassType.Mage, state2.participantMap[OPPONENT_ID]?.classType)
         }
     }
 
@@ -1104,13 +1144,24 @@ class ArenaScreenViewModelTest {
     }
 
     @Test
-    fun `Given a Persuade charm that belongs to the user's Bard, then a Persuade control that requires a target is offered`() = runTest {
-        assertPassiveRollControl(
-            purpose =
-            AbilityAction.Passive.Persuade.Charm(targetableUserIds = setOf(OPPONENT_ID)),
-            userClass = TestCharacterClasses.bard(),
-            expectedLabel = "Persuade",
-            expectedRequiresTarget = true,
+    fun `Given a Persuade charm that belongs to the user's Bard, then the charmable targets are offered for selection`() = runTest {
+        val combatState =
+            combatViewModel(
+                nextCombatAction =
+                abilityRollAction(
+                    purpose =
+                    AbilityAction.Passive.Persuade.Charm(targetableUserIds = setOf(OPPONENT_ID)),
+                    attackerUserId = OPPONENT_ID,
+                    defenderUserId = USER_ID,
+                    activeUserIds = setOf(USER_ID),
+                ),
+                playerMap = twoPlayerMap(userClass = TestCharacterClasses.bard()),
+            )
+                .requireCombatState()
+
+        assertEquals(expected = setOf(OPPONENT_ID), actual = combatState.charmTargetableUserIds)
+        assertTrue(
+            actual = combatState.combatControls.none { it is ArenaCombatControl.AbilityRoll },
         )
     }
 
@@ -1448,12 +1499,8 @@ class ArenaScreenViewModelTest {
                     secondOpponentClass = TestCharacterClasses.mage(),
                 ),
             )
-        val control = viewModel.requireCombatState().abilityRollControl()
 
-        viewModel.useAbility(
-            action = control.action,
-            targetedOpponentUserId = SECOND_OPPONENT_ID,
-        )
+        viewModel.onChooseCharmTarget(targetUserId = SECOND_OPPONENT_ID)
         runCurrent()
 
         val abilityRoll = capturedAbilityRoll()
@@ -1486,16 +1533,15 @@ class ArenaScreenViewModelTest {
                     secondOpponentClass = TestCharacterClasses.mage(),
                 ),
             )
-        val control = viewModel.requireCombatState().abilityRollControl()
 
-        // The Bard (USER_ID) is not among the charmable targets, so selecting itself is
-        // rejected.
-        viewModel.useAbility(action = control.action, targetedOpponentUserId = USER_ID)
+        // The Bard (USER_ID) is not among the charmable targets, so selecting it is a no-op and
+        // no charm action is sent to the Domain.
+        viewModel.onChooseCharmTarget(targetUserId = USER_ID)
         runCurrent()
 
-        val abilityRoll = capturedAbilityRoll()
-        val charm = assertIs<AbilityAction.Passive.Persuade.Charm>(value = abilityRoll.purpose)
-        assertNull(actual = charm.selectedCharmTargetUserId)
+        coVerify(exactly = 0) {
+            performCombatActionUseCase(arguments = any(), currentAction = any())
+        }
     }
 
     companion object {
@@ -1532,6 +1578,34 @@ class ArenaScreenViewModelTest {
                 selectedPlayer(SECOND_OPPONENT_ID, "Second Opponent", secondOpponentClass),
         )
 
+        private fun participantMapOf(
+            classTypes: Map<String, CharacterClassType>,
+            playerMap: Map<String, ArenaPlayer.Selected> = emptyMap(),
+        ): Map<String, MatchParticipant> = classTypes.mapValues { (userId, classType) ->
+            MatchParticipant(
+                userId = userId,
+                displayName = playerMap[userId]?.displayName ?: userId,
+                classType = classType,
+                status = ParticipantStatus.Conscious,
+            )
+        }
+
+        private fun finishedParticipantMap(
+            playerMap: Map<String, ArenaPlayer.Selected>,
+        ): Map<String, MatchParticipant> = participantMapOf(
+            classTypes = playerMap.mapValues { it.value.characterClass.type },
+            playerMap = playerMap,
+        )
+
+        private fun choosingClassesMatch(
+            playerMap: Map<String, ArenaPlayer>,
+        ): ArenaMatch.ChoosingClasses = ArenaMatch.ChoosingClasses(
+            messages = emptyList(),
+            playerMap = playerMap,
+            activePlayer = playerMap.getValue(key = USER_ID),
+            activePlayerUserId = USER_ID,
+        )
+
         private fun createCombatMatch(
             nextCombatAction: NextCombatAction,
             playerMap: Map<String, ArenaPlayer.Selected>,
@@ -1543,11 +1617,12 @@ class ArenaScreenViewModelTest {
             messages = emptyList(),
             playerMap = playerMap,
             nextCombatAction = nextCombatAction,
+            currentTargetUserId = null,
             roundNumber = roundNumber,
             isNewRound = false,
             isMatchOver = isMatchOver,
             diceRoll = null,
-            participants = participants,
+            participantMap = participantMapOf(classTypes = participants, playerMap = playerMap),
         )
 
         private fun idleTurn(vararg activeUserIds: String) = NextCombatAction.Idle(activeUserIds = activeUserIds.toSet())
@@ -1612,6 +1687,7 @@ class ArenaScreenViewModelTest {
                     roll = defenderRoll,
                 ),
                 attackerDoublesBonus = 0,
+                rollOffAttempt = 1,
             ),
             attackerUserId = OPPONENT_ID,
             defenderUserId = USER_ID,

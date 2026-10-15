@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.layer.drawLayer
@@ -17,6 +18,7 @@ import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
+import com.linklabs.sorcerersandspirits.domain.audio.MusicPlayer
 import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.ScreenDissolveEffect
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.ui.AchievementsScreen
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.ArenaScreen
@@ -25,18 +27,27 @@ import com.linklabs.sorcerersandspirits.ui.screens.gamerules.ui.GameRulesScreen
 import com.linklabs.sorcerersandspirits.ui.screens.leaderboard.ui.LeaderboardScreen
 import com.linklabs.sorcerersandspirits.ui.screens.profile.ui.ProfileScreen
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.TavernScreen
+import org.koin.compose.koinInject
 
 @Composable
 internal fun NavigationDisplay(
     backStack: NavBackStack<NavKey>,
     dissolveController: ScreenDissolveController,
     modifier: Modifier = Modifier,
+    musicPlayer: MusicPlayer = koinInject(),
 ) {
     val popBack: () -> Unit = {
         dissolveController.captureThenNavigate { backStack.removeLastOrNull() }
     }
     val leaveArena: () -> Unit = {
         dissolveController.captureThenNavigate { backStack.popToTavern() }
+    }
+
+    val currentRoute = backStack.lastOrNull() as? Route
+    LaunchedEffect(key1 = currentRoute) {
+        if (currentRoute != null) {
+            musicPlayer.play(track = currentRoute.musicTrack())
+        }
     }
 
     Box(modifier = modifier) {

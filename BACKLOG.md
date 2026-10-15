@@ -34,7 +34,7 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
     - ~~**SS-297 — Google Play web deletion link**~~ — page shipped; only the Play Console Data safety
       deletion questions remain (external, at submission).
-- **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207, SS-263,
+- **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207,
   SS-265), the combat/message refactors (SS-257–262), stats/achievements (SS-127), credits polish
   (SS-282), audio (SS-134 + SS-217…SS-221), remaining small-phone tuning (SS-080), config
   single-source/offline-cache (SS-287, SS-288).
@@ -203,14 +203,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
     - Verify the dice-kickoff path in `DiceStateHolder.kt` works for Impersonate (and other
       dice-consuming
       abilities). [[illusionist-borrows-weapons]], [[dice-roll-must-be-roll-bearing]].
-
-### SS-263 — Duelist Riposte animation visual polish
-
-- [ ] Not completed
-- **Goal:** the Riposte animation "needs some work, visually" — polish pass on the reversal overlay.
-- **Source:** `animation/duelist/DuelistRiposte.kt`. Parent: SS-191. Domain Riposte work is done
-  (SS-165, SS-216); this is the animation-only follow-up. Ship interactive previews
-  ([[combat-animation-previews]]).
 
 ### SS-265 — SpellPotency: possible accent/color palette update when impersonated
 

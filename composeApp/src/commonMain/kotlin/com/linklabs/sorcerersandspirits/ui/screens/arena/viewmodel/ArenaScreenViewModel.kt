@@ -15,6 +15,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlo
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
+import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
@@ -85,6 +86,7 @@ class ArenaScreenViewModel(
     private val setCurrentTravelerAvailableUseCase: SetCurrentTravelerAvailableUseCase,
     private val updateProfileStatsUseCase: UpdateProfileStatsUseCase,
     private val pendingStatsStore: PendingStatsStore,
+    private val soundEffectPlayer: SoundEffectPlayer,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
@@ -102,6 +104,7 @@ class ArenaScreenViewModel(
     private val arenaMatchCombatQueue =
         ArenaMatchCombatQueue(
             triggerAnimation = ::triggerAnimation,
+            playSoundEffect = soundEffectPlayer::play,
             addMessageToScreenState = ::addMessageToScreenState,
             onAnimationsComplete = ::onAnimationsComplete,
             onTeleportRollOffComplete = ::onTeleportRollOffComplete,

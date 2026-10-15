@@ -21,6 +21,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedP
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
+import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClass
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
@@ -90,6 +91,7 @@ class ArenaScreenViewModelTest {
         mockk(relaxed = true)
     private val updateProfileStatsUseCase: UpdateProfileStatsUseCase = mockk(relaxed = true)
     private val pendingStatsStore: PendingStatsStore = mockk(relaxed = true)
+    private val soundEffectPlayer: SoundEffectPlayer = mockk(relaxed = true)
 
     private val combatActionArgumentsSlot = slot<CombatActionArguments>()
     private val currentCombatActionSlot = slot<CurrentCombatAction>()
@@ -136,6 +138,7 @@ class ArenaScreenViewModelTest {
         setCurrentTravelerAvailableUseCase = setCurrentTravelerAvailableUseCase,
         updateProfileStatsUseCase = updateProfileStatsUseCase,
         pendingStatsStore = pendingStatsStore,
+        soundEffectPlayer = soundEffectPlayer,
     )
 
     /**

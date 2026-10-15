@@ -3,8 +3,10 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.NextCombatAction
+import com.linklabs.sorcerersandspirits.domain.audio.SoundEffect
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AnimationCompleteArguments
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.soundEffect
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toMessageStates
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -14,6 +16,7 @@ private const val MATCH_OVER_PAUSE_MILLIS = 1500L
 
 internal class ArenaMatchCombatQueue(
     private val triggerAnimation: (ArenaMessageState?) -> Unit,
+    private val playSoundEffect: (SoundEffect) -> Unit,
     private val addMessageToScreenState: (ArenaMessageState) -> Unit,
     private val onAnimationsComplete: (ArenaMatch.Combat) -> Unit,
     private val onTeleportRollOffComplete: (TeleportRollsArguments) -> Unit,
@@ -69,6 +72,11 @@ internal class ArenaMatchCombatQueue(
     private suspend fun ArenaMessageState.animateMessage() {
         val animationCoordinator = MessageAnimationCoordinator(message = this)
         currentAnimationCoordinator = animationCoordinator
+
+        val soundEffect = soundEffect()
+        if (soundEffect != null) {
+            playSoundEffect(/* effect = */ soundEffect)
+        }
 
         if (isAnimated()) {
             triggerAnimation(/* arenaMessageState = */ this)

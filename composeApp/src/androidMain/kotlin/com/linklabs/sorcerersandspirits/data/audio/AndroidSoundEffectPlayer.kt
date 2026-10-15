@@ -1,10 +1,12 @@
 package com.linklabs.sorcerersandspirits.data.audio
 
 import android.content.Context
+import android.content.res.AssetFileDescriptor
 import android.media.AudioAttributes
 import android.media.SoundPool
 import com.linklabs.sorcerersandspirits.domain.audio.SoundEffect
 import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
+import java.io.IOException
 
 private const val MAX_SIMULTANEOUS_EFFECTS = 8
 private const val LOAD_PRIORITY = 1
@@ -46,11 +48,17 @@ class AndroidSoundEffectPlayer(private val context: Context) : SoundEffectPlayer
             return
         }
 
-        val descriptor = context.assets.openFd("$AUDIO_ASSET_DIRECTORY/${effect.assetFileName}")
+        val descriptor = openAssetOrNull(effect = effect) ?: return
         val sampleId = soundPool.load(descriptor, LOAD_PRIORITY)
         descriptor.close()
         sampleIdsByEffect[effect] = sampleId
         samplesPendingPlay.add(element = sampleId)
+    }
+
+    private fun openAssetOrNull(effect: SoundEffect): AssetFileDescriptor? = try {
+        context.assets.openFd("$AUDIO_ASSET_DIRECTORY/${effect.assetFileName}")
+    } catch (exception: IOException) {
+        null
     }
 
     override fun setMuted(isMuted: Boolean) {

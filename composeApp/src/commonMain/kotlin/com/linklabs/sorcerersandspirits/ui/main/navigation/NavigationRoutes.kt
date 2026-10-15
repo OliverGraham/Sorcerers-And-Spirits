@@ -3,6 +3,7 @@ package com.linklabs.sorcerersandspirits.ui.main.navigation
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.savedstate.serialization.SavedStateConfiguration
+import com.linklabs.sorcerersandspirits.domain.audio.MusicTrack
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModelArguments
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.modules.SerializersModule
@@ -66,6 +67,19 @@ internal val navigationRoutesConfiguration = SavedStateConfiguration {
             )
         }
     }
+}
+
+internal fun Route.musicTrack(): MusicTrack = when (this) {
+    is Route.ArenaScreen -> MusicTrack.ArenaBattle
+
+    is Route.TavernScreen,
+    is Route.ProfileScreen,
+    is Route.PlayerProfileScreen,
+    is Route.LeaderboardScreen,
+    is Route.AchievementsScreen,
+    is Route.GameRulesScreen,
+    is Route.CreditsScreen,
+    -> MusicTrack.TavernTheme
 }
 
 internal fun NavKey.isHomeScreen(): Boolean = this is Route.TavernScreen || this is Route.ArenaScreen

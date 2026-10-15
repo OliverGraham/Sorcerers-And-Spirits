@@ -827,40 +827,6 @@ class ArenaScreenViewModelTest {
         }
     }
 
-    @Test
-    fun `Given an opponent leaves, then an OpponentLeft event names them`() = runTest {
-        arenaMatchFlow.value =
-            ArenaMatch.WaitingForAllPlayers(
-                messages = emptyList(),
-                playerMap =
-                mapOf(
-                    USER_ID to selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue()),
-                    OPPONENT_ID to
-                        selectedPlayer(OPPONENT_ID, "Bob", TestCharacterClasses.mage()),
-                ),
-            )
-        val viewModel = createViewModel()
-
-        viewModel.eventChannelFlow.test {
-            runCurrent()
-
-            arenaMatchFlow.value =
-                ArenaMatch.WaitingForAllPlayers(
-                    messages = emptyList(),
-                    playerMap =
-                    mapOf(
-                        USER_ID to
-                            selectedPlayer(USER_ID, "Alice", TestCharacterClasses.rogue()),
-                    ),
-                )
-            runCurrent()
-
-            val event = awaitItem()
-            assertIs<ArenaEvent.OpponentLeft>(event)
-            assertEquals("Bob", event.displayName)
-        }
-    }
-
     // ---------- Idle-turn controls per class (no activated ability) ----------
 
     @Test

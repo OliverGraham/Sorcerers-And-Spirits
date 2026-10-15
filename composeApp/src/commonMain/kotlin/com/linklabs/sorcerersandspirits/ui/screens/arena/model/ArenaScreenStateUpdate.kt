@@ -183,6 +183,7 @@ private fun ArenaMatch.Combat.updateCombat(
         currentArenaMatchState.copy(
             diceRollState = diceRoll?.toState(),
             currentTargetUserId = currentTargetUserId,
+            isMatchOver = isMatchOver,
         ),
     ),
     timerAction = TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS),
@@ -201,6 +202,7 @@ private fun ArenaMatch.Finished.transitionCombatToFinished(
             hasReadiedForNextMatch = false,
             messageGroups =
             currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
+            gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
             animatingMessage = null,
         ),
         timerAction = finishedTimerAction(),
@@ -216,6 +218,7 @@ private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
         hasReadiedForNextMatch = false,
         messageGroups =
         currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
+        gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
     ),
     timerAction = finishedTimerAction(),
 )
@@ -264,6 +267,7 @@ private fun ArenaMatch.Finished.updateFinished(
         arenaMatchState = toFinishedState(),
         messageGroups =
         currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
+        gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
     ),
     timerAction = if (hasEnoughPlayersToContinue) TimerAction.None else TimerAction.Stop,
 )

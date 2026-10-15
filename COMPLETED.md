@@ -572,6 +572,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   Black italic with a proportional black stroke outline (readable at any class color, incl. green) +
   drop shadow, and the flash swings back and forth (~7° keyframed over 900ms, hold bumped to 1100ms)
   before the scale/fade exit. Related: SS-164, SS-185, SS-179, SS-177, SS-215.
+- **SS-299** — Fix three ArenaScreenViewModel behavior gaps: `updateCombat` now propagates
+  `isMatchOver` so a terminal `Combat` flips `isMatchEnding` and the SS-154 killing-roll hold runs;
+  the Finished transitions set `gauntletProgressState` from the match's `matchNumberInGauntlet` and
+  `onTimerExpiration` gates auto-ready on `!isFinalMatch` so a completed gauntlet returns to class
+  selection; retired the obsolete OpponentLeft-during-WaitingForAllPlayers test (lobby churn stays
+  silent). Related: SS-154.
 
 ## Arena presence / connectivity
 

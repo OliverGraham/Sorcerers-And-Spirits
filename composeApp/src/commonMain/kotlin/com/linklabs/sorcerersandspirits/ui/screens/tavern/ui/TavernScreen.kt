@@ -47,6 +47,7 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassPager
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
+import com.linklabs.sorcerersandspirits.ui.main.FirstScreenReadySignal
 import com.linklabs.sorcerersandspirits.ui.main.navigation.LocalOpenDrawer
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
@@ -63,6 +64,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.app_name
@@ -90,6 +92,14 @@ internal fun TavernScreen(
             onRetryChallenge = viewModel::retryLastChallenge,
         )
         val uiState by viewModel.uiStateFlow.collectAsState()
+
+        val firstScreenReadySignal = koinInject<FirstScreenReadySignal>()
+        val isTavernSettled = uiState !is UiState.Loading
+        LaunchedEffect(key1 = isTavernSettled) {
+            if (isTavernSettled) {
+                firstScreenReadySignal.markReady()
+            }
+        }
 
         TavernScreen(
             uiState = uiState,

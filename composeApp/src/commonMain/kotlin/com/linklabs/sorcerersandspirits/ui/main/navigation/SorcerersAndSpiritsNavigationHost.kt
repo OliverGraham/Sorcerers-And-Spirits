@@ -28,6 +28,7 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
+import com.linklabs.sorcerersandspirits.ui.main.FirstScreenReadySignal
 import com.linklabs.sorcerersandspirits.ui.main.splash.SplashGate
 import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
@@ -39,6 +40,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.ChallengeDialog
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.link_account_error_credential_in_use
@@ -48,15 +50,21 @@ import sorcerersandspirits.composeapp.generated.resources.link_account_error_una
 
 @Composable
 internal fun SorcerersAndSpiritsNavigationHost(
-    viewModel: AppViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
+    viewModel: AppViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
     val appUpgradeStatus by viewModel.appUpgradeStatusFlow.collectAsState()
+    val firstScreenReadySignal = koinInject<FirstScreenReadySignal>()
+    val isFirstScreenReady by firstScreenReadySignal.isReady.collectAsState()
 
+    val loadedState = uiState as? UiState.Loaded
+    val isSignInRequired = loadedState?.data?.showSignInDialog == true
     val isAppReady = uiState !is UiState.Loading
+    val isWaitingForFirstScreen = loadedState != null && !isSignInRequired && !isFirstScreenReady
+    val canRevealContent = isAppReady && !isWaitingForFirstScreen
 
-    SplashGate(isAppReady = isAppReady, modifier = modifier) {
+    SplashGate(canRevealContent = canRevealContent, modifier = modifier) { isContentRevealed ->
         when (val state = uiState) {
             is UiState.Error -> ErrorContent(onRetry = viewModel::retry, modifier = modifier)
 
@@ -65,27 +73,29 @@ internal fun SorcerersAndSpiritsNavigationHost(
                 val isOffline = appState.isOffline
 
                 if (appState.showSignInDialog) {
-                    SignInNameDialog(
-                        displayName = appState.displayName,
-                        isOffline = isOffline,
-                        isNameTaken = appState.isNameTaken,
-                        linkStatusMessage = linkErrorMessage(result = appState.linkResult),
-                        onRandomNameClick = viewModel::getRandomName,
-                        onAcceptClick = viewModel::createProfile,
-                        onSocialMethodClick = { method ->
-                            viewModel.onSignInWithSocialMethod(
-                                displayName = appState.displayName,
-                                method = method,
-                            )
-                        },
-                        onEmailLink = { email, password ->
-                            viewModel.onSignInWithEmail(
-                                displayName = appState.displayName,
-                                email = email,
-                                password = password,
-                            )
-                        },
-                    )
+                    if (isContentRevealed) {
+                        SignInNameDialog(
+                            displayName = appState.displayName,
+                            isOffline = isOffline,
+                            isNameTaken = appState.isNameTaken,
+                            linkStatusMessage = linkErrorMessage(result = appState.linkResult),
+                            onRandomNameClick = viewModel::getRandomName,
+                            onAcceptClick = viewModel::createProfile,
+                            onSocialMethodClick = { method ->
+                                viewModel.onSignInWithSocialMethod(
+                                    displayName = appState.displayName,
+                                    method = method,
+                                )
+                            },
+                            onEmailLink = { email, password ->
+                                viewModel.onSignInWithEmail(
+                                    displayName = appState.displayName,
+                                    email = email,
+                                    password = password,
+                                )
+                            },
+                        )
+                    }
                 } else {
                     CompositionLocalProvider(LocalSignOut provides viewModel::onSignOut) {
                         SorcerersAndSpirits(isOffline = isOffline, modifier = modifier)

@@ -75,6 +75,7 @@ import com.linklabs.sorcerersandspirits.domain.version.SupportedAppVersionProvid
 import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUseCase
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
+import com.linklabs.sorcerersandspirits.ui.main.FirstScreenReadySignal
 import com.linklabs.sorcerersandspirits.ui.main.bugreport.BugReportViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.achievements.AchievementsScreenViewModel
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.ArenaScreenViewModel
@@ -114,6 +115,7 @@ private fun Module.initializeExternalDependencies() {
     single { HttpClient() }
     single { CoroutineScope(context = Dispatchers.IO) }
     single<Clock> { Clock.System }
+    singleOf(::FirstScreenReadySignal)
 }
 
 private fun Module.initializeRepositories() {

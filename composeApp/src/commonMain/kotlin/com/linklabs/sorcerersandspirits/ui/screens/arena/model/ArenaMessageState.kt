@@ -522,7 +522,6 @@ sealed interface ArenaMessageState {
         ) : Encore
     }
 
-    // TODO: Figure out Persuade UI and usage
     @Immutable
     sealed interface Persuade : ArenaMessageState {
         override val actingClassType: CharacterClassType

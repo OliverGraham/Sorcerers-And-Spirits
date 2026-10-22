@@ -1406,6 +1406,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   on a successful reversal, or sailing past on a failure. Split across Trigger/EnGarde with the cue
   held live between them; Trigger/EnGarde plumbed with duelist + attacker userIds through all
   layers.
+- **SS-207** — Bard Persuade animation: the moment the Bard's armor is passed a 3D-styled lute
+  appears and holds through the roll; strings vibrate as if strummed with bard-colored notes
+  blooming around it. A not-stopped attack drains the lute and notes to gray and drops them
+  sideways; a stopped attack keeps color and flourishes the notes. A charming 6 (multiplayer with a
+  legal redirect) plays the success beat, crossfades the lute into a flute, then wreathes the chosen
+  target in hypnotic snake-charmer swirl with air wisps. Lute/flute hand-drawn as Canvas shapes
+  (`BardLute.kt`); cue/phase wiring + `bardUserId` plumbed through the Persuade domain/entity/state
+  messages; per-phase previews (failed/stopped/charm). Parent: SS-191; split out of SS-196.
 - **SS-194** — Duelist normal-attack animation: twin swords (CombatWeapon.TwinSwords) rise into an
   erect ready pose, hold, then slash the defender one after the other — lead from the left, follow
   from the right ~half a second later — in smooth fluid arcs, each flaring a class-color burst on

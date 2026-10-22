@@ -31,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
+import com.linklabs.sorcerersandspirits.ui.common.loading.ClassColorGlowBackground
+import com.linklabs.sorcerersandspirits.ui.common.loading.SwingingLogoStyle
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -75,13 +77,15 @@ internal fun SplashScreen(phase: SplashPhase, modifier: Modifier = Modifier) {
         when (phase) {
             SplashPhase.LinkLabs -> LinkLabsBeaker()
 
-            SplashPhase.Game ->
+            SplashPhase.Game -> {
+                ClassColorGlowBackground(style = SwingingLogoStyle.Energetic, isVisible = true)
                 Image(
                     painter = painterResource(resource = Res.drawable.sorcerers_and_spirits_full_logo),
                     contentDescription = null,
                     contentScale = ContentScale.FillWidth,
                     modifier = Modifier.fillMaxSize(),
                 )
+            }
         }
     }
 }

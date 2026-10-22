@@ -29,7 +29,11 @@ are archived in [COMPLETED.md](COMPLETED.md).
       enrollment done at release time. Also register release/Play SHA-1 + SHA-256 fingerprints
       (Android) and finish the iOS Google `REVERSED_CLIENT_ID` URL-scheme wiring. **Android can ship
       without the iOS pieces**; only the Play SHA fingerprints block an Android store release.
-    - **SS-290 — release signing + R8/minify + version bump.** (untracked until now)
+    - **SS-290 — release signing + R8/minify + version bump.** Code work done (upload keystore +
+      `keystore.properties`, release `signingConfig`, `isMinifyEnabled`/`isShrinkResources`,
+      `proguard-rules.pro`, `res/raw/keep.xml`); verified a signed release APK builds and runs
+      (launch + anonymous sign-in). Remaining (external): on-device arena/config-fetch/Google-sign-in
+      pass, iOS Release config, and SHA registration (SS-088).
     - **SS-291 — store listing assets + final app icon.** (untracked until now)
     - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
     - ~~**SS-297 — Google Play web deletion link**~~ — page shipped; only the Play Console Data safety

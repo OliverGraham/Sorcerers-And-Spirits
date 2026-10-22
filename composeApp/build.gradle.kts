@@ -1,4 +1,16 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+
+val keystoreProperties =
+    Properties().apply {
+        val keystorePropertiesFile = rootProject.file("keystore.properties")
+        if (keystorePropertiesFile.exists()) {
+            keystorePropertiesFile.inputStream().use { load(it) }
+        }
+    }
+
+fun signingProperty(key: String): String? =
+    keystoreProperties.getProperty(key) ?: System.getenv(key)
 
 plugins {
     alias(libs.plugins.androidApplication)
@@ -122,9 +134,30 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    signingConfigs {
+        create("release") {
+            val releaseStoreFile = signingProperty("RELEASE_STORE_FILE")
+            if (releaseStoreFile != null) {
+                storeFile = rootProject.file(releaseStoreFile)
+                storePassword = signingProperty("RELEASE_PASSWORD")
+                keyAlias = signingProperty("RELEASE_KEY_ALIAS")
+                keyPassword = signingProperty("RELEASE_PASSWORD")
+            }
+        }
+    }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            val releaseSigningConfig = signingConfigs.getByName("release")
+            val isReleaseKeystoreConfigured = releaseSigningConfig.storeFile != null
+            if (isReleaseKeystoreConfigured) {
+                signingConfig = releaseSigningConfig
+            }
         }
     }
     compileOptions {

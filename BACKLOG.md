@@ -296,47 +296,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
   rather than reveal it top-anchored.
 - **Notes:** Follow-up to SS-251; needs on-device animation iteration.
 
-## Combat animations
-
-Pure-Compose avatar animations for the two seated large avatars during ArenaCombat. The system
-(SS-191) is the extensibility seam; the per-class tickets (SS-192…SS-199 normal attacks,
-SS-203…SS-212
-abilities) fill in their animations on top of it. No Lottie/Compottie — plain Compose `Animatable`/
-`graphicsLayer` transforms plus
-`ColorMatrix` color effects on the existing avatar art (SS-068 dropped Lottie).
-
-Owner direction (2026-07-02): every class gets a **unique attacker-side animation set for normal
-attacks** (its hit / miss / knockout strikes); the **defender-side reactions stay shared** (Flinch /
-Sidestep / Collapse — may be revisited later). Each class now has a dedicated normal-attack ticket
-plus one ticket per ability, worked one at a time. The seam is ready:
-`ArenaMessageState.NormalRoll` already carries `attackerClassType`, so a class ticket threads it
-into the `CombatAnimationCue.NormalAttack` cue and branches the attacker gesture on it —
-SS-191's generic lunges remain the fallback for classes not yet done.
-
-### SS-207 — Bard Persuade animation
-
-- [ ] Follow-up pending
-- **Goal:** the moment the Bard's armor is passed a lute appears in front of them and holds through
-  the roll. On the roll the strings vibrate as if just strummed and music notes appear around the
-  lute; a not-stopped attack turns the lute and everything gray and drops the notes sideways
-  (failure), a stopped attack keeps everything in color and gives the notes a flourish. On a
-  charming 6 (multiplayer with a legal redirect target) the lute plays the same success animation as
-  a 5, then crossfades into a flute; once Persuade's redirect resolves the flute looks played (air
-  moving through it) wreathed in swirly, hypnotic notes — snake-charming visuals. Instruments should
-  look 3D.
-- **Done (first pass, shipped):** the full choreography, gray/fall-vs-flourish split, lute→flute
-  crossfade, air-wisps, and hypnotic swirl all landed, plus the cue/phase wiring, `bardUserId`
-  plumbed through the Persuade domain/entity/state messages, and per-phase previews
-  (failed/stopped/charm). The lute and flute are hand-drawn Canvas shapes for now (`BardLute.kt`).
-- **Follow-up:** replace the hand-drawn lute and flute in `BardLute.kt` with image assets for a
-  truer 3D look (keep the strum vibration, note behaviors, gray drain, crossfade, air, and swirl
-  choreography); do a polish/tuning pass on proportions, colors, and timing once seen on-device; and
-  consider making the charm swirl read more literally as a snake-charm coil. Then close the ticket.
-- **Cue sources:** `ArenaMessageState.Persuade.*`.
-- **Parent:** SS-191. Split out of SS-196.
-
----
-
 ## Config & Infrastructure
 
 ### SS-287 — Single source of truth for config JSON (stop hand-maintaining two copies)

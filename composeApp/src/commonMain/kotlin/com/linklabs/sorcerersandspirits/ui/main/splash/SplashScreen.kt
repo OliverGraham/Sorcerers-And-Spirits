@@ -10,10 +10,13 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -22,13 +25,18 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.link_labs_logo
 import sorcerersandspirits.composeapp.generated.resources.sorcerers_and_spirits_full_logo
+import sorcerersandspirits.composeapp.generated.resources.splash_link_labs_wordmark
 import kotlin.math.PI
 import kotlin.math.sin
 
@@ -80,17 +88,30 @@ internal fun SplashScreen(phase: SplashPhase, modifier: Modifier = Modifier) {
 
 @Composable
 private fun LinkLabsBeaker(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxWidth().padding(horizontal = 48.dp).aspectRatio(ratio = 1f),
-        contentAlignment = Alignment.Center,
+    Column(
+        modifier = modifier.fillMaxWidth().padding(horizontal = 48.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Image(
-            painter = painterResource(resource = Res.drawable.link_labs_logo),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier.fillMaxSize(),
+        Box(
+            modifier = Modifier.fillMaxWidth().aspectRatio(ratio = 1f),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(resource = Res.drawable.link_labs_logo),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+            BeakerBubbles(modifier = Modifier.fillMaxSize())
+        }
+        Text(
+            text = stringResource(resource = Res.string.splash_link_labs_wordmark),
+            color = Color.White,
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 4.sp,
+            textAlign = TextAlign.Center,
         )
-        BeakerBubbles(modifier = Modifier.fillMaxSize())
     }
 }
 

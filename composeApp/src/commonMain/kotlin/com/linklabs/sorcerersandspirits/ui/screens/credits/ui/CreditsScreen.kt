@@ -43,6 +43,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.MenuTopBar
@@ -54,8 +55,12 @@ import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.credits_legal_copyright
+import sorcerersandspirits.composeapp.generated.resources.credits_legal_trademarks
+import sorcerersandspirits.composeapp.generated.resources.credits_legal_wordmark
 import sorcerersandspirits.composeapp.generated.resources.sorcerers_and_spirits_small_logo
 
 private const val LOGO_SWING_LABEL = "credits_logo_swing"
@@ -224,6 +229,37 @@ private fun CreditsRoll(
         verticalArrangement = Arrangement.spacedBy(space = 40.dp),
     ) {
         state.sections.forEach { section -> CreditsSection(section = section) }
+        LegalFooter()
+    }
+}
+
+@Composable
+private fun LegalFooter(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth().padding(top = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(space = 6.dp),
+    ) {
+        Text(
+            text = stringResource(resource = Res.string.credits_legal_wordmark),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 4.sp,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Text(
+            text = stringResource(resource = Res.string.credits_legal_copyright),
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = stringResource(resource = Res.string.credits_legal_trademarks),
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

@@ -300,4 +300,9 @@
     <string name="achievement_win_a_match_every_class_description">Win a match with every class.</string>
     <string name="achievement_win_a_gauntlet_every_class_name">Master of All</string>
     <string name="achievement_win_a_gauntlet_every_class_description">Win a Gauntlet with every class.</string>
+
+    <string name="splash_link_labs_wordmark">Link Labs™</string>
+    <string name="credits_legal_wordmark">LINK LABS™</string>
+    <string name="credits_legal_copyright">© 2026 Link Labs</string>
+    <string name="credits_legal_trademarks">Sorcerers &amp; Spirits™ and the Link Labs logo are trademarks of Link Labs.</string>
 </resources>

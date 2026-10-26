@@ -13,15 +13,8 @@ import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelBright
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.steelShade
 
-/** The length of the Duelist's rapier blade, shared by the twin-sword strike and Prepare Attack. */
 internal val rapierBladeLength = 88.dp
 
-/**
- * A slender rapier in local coordinates: tip at the origin leading the cut, a thin fencing blade
- * holding its width then tapering to a sharp point, in bright steel with a specular glint down its
- * length and a white flash at the tip. The hilt carries the class-color accent — curved quillons, a
- * swept knuckle bow curling around the hand, the grip, and the pommel.
- */
 internal fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
     val bladeLength = rapierBladeLength.toPx()
     val bladeHalfWidth = 2.6.dp.toPx()
@@ -60,13 +53,6 @@ internal fun DrawScope.drawSwordShape(accentColor: Color, alpha: Float) {
         strokeWidth = 1.dp.toPx(),
         cap = StrokeCap.Round,
         alpha = alpha * 0.85f,
-    )
-
-    drawCircle(
-        color = Color.White,
-        radius = 2.dp.toPx(),
-        center = Offset(x = 0f, y = 0f),
-        alpha = alpha * 0.9f,
     )
 
     val quillons =

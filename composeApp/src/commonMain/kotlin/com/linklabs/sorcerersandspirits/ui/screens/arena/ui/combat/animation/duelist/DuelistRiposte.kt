@@ -4,6 +4,8 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -76,6 +78,20 @@ private const val COUNTER_WINDUP_DEGREES = 38f
 private const val WHIFF_OVERSHOOT_TRAVEL = 1.3f
 private const val RIPOSTE_BURST_PEAK_SCALE = 1.2f
 
+private val parrySwayLateralTravel = 7.dp
+private val parrySwayVerticalTravel = 4.dp
+private const val PARRY_SWAY_ANGLE_DEGREES = 5f
+private const val PARRY_SWAY_LATERAL_MILLIS = 820
+private const val PARRY_SWAY_VERTICAL_MILLIS = 1100
+private const val PARRY_SWAY_ANGLE_MILLIS = 940
+
+private val counterSwayLateralTravel = 3.dp
+private val counterSwayVerticalTravel = 2.5.dp
+private const val COUNTER_SWAY_ANGLE_DEGREES = 3f
+private const val COUNTER_SWAY_LATERAL_MILLIS = 1300
+private const val COUNTER_SWAY_VERTICAL_MILLIS = 1000
+private const val COUNTER_SWAY_ANGLE_MILLIS = 1180
+
 private val upright = Offset(x = 0f, y = -1f)
 
 internal const val RIPOSTE_STRIKE_MILLIS = (RIPOSTE_PARRY_MILLIS + RIPOSTE_STAB_MILLIS).toLong()
@@ -100,13 +116,24 @@ internal fun RiposteOverlay(
                 density = density,
             ) ?: return@LaunchedEffect
 
-        state.play(scene = scene, message = riposteMessage)
-        onAnimationComplete(
+        val completion =
             AnimationCompleteArguments(
                 messageId = riposteMessage.id,
                 animationKey = AnimationKey.AvatarOverlay,
-            ),
-        )
+            )
+
+        when (riposteMessage) {
+            is ArenaMessageState.Riposte.Trigger -> {
+                state.raiseIntoGuard(scene = scene)
+                onAnimationComplete(completion)
+                state.idleGuardSway(scene = scene)
+            }
+
+            is ArenaMessageState.Riposte.EnGarde -> {
+                state.resolve(scene = scene, isLanded = riposteMessage.isSuccessful)
+                onAnimationComplete(completion)
+            }
+        }
     }
 
     Canvas(modifier = modifier) { drawRiposte(state = state) }
@@ -138,18 +165,6 @@ private fun riposteScene(
     )
 }
 
-private suspend fun RiposteEffectState.play(
-    scene: RiposteScene,
-    message: ArenaMessageState.Riposte,
-) {
-    when (message) {
-        is ArenaMessageState.Riposte.EnGarde ->
-            resolve(scene = scene, isLanded = message.isSuccessful)
-
-        is ArenaMessageState.Riposte.Trigger -> raiseIntoGuard(scene = scene)
-    }
-}
-
 private suspend fun RiposteEffectState.raiseIntoGuard(scene: RiposteScene) {
     parryArm.snapTo(targetValue = 0f)
     parryBlade.snapTo(targetValue = 0f)
@@ -165,6 +180,40 @@ private suspend fun RiposteEffectState.raiseIntoGuard(scene: RiposteScene) {
     )
 }
 
+private suspend fun RiposteEffectState.idleGuardSway(scene: RiposteScene) = coroutineScope {
+    this@idleGuardSway.scene = scene
+
+    launch { parrySwayLateral.sway(startValue = -1f, durationMillis = PARRY_SWAY_LATERAL_MILLIS) }
+    launch { parrySwayVertical.sway(startValue = 1f, durationMillis = PARRY_SWAY_VERTICAL_MILLIS) }
+    launch { parrySwayAngle.sway(startValue = -1f, durationMillis = PARRY_SWAY_ANGLE_MILLIS) }
+    launch { counterSwayLateral.sway(startValue = 1f, durationMillis = COUNTER_SWAY_LATERAL_MILLIS) }
+    launch {
+        counterSwayVertical.sway(startValue = -1f, durationMillis = COUNTER_SWAY_VERTICAL_MILLIS)
+    }
+    launch { counterSwayAngle.sway(startValue = 1f, durationMillis = COUNTER_SWAY_ANGLE_MILLIS) }
+}
+
+private suspend fun Animatable<Float, *>.sway(startValue: Float, durationMillis: Int) {
+    snapTo(targetValue = startValue)
+    animateTo(
+        targetValue = -startValue,
+        animationSpec =
+        infiniteRepeatable(
+            animation = tween(durationMillis = durationMillis, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse,
+        ),
+    )
+}
+
+private suspend fun RiposteEffectState.settleSway() {
+    parrySwayLateral.snapTo(targetValue = 0f)
+    parrySwayVertical.snapTo(targetValue = 0f)
+    parrySwayAngle.snapTo(targetValue = 0f)
+    counterSwayLateral.snapTo(targetValue = 0f)
+    counterSwayVertical.snapTo(targetValue = 0f)
+    counterSwayAngle.snapTo(targetValue = 0f)
+}
+
 private suspend fun RiposteEffectState.resolve(scene: RiposteScene, isLanded: Boolean) {
     this.scene = scene
     bladeAlpha.snapTo(targetValue = 1f)
@@ -173,6 +222,7 @@ private suspend fun RiposteEffectState.resolve(scene: RiposteScene, isLanded: Bo
     stab.snapTo(targetValue = 0f)
     impactAlpha.snapTo(targetValue = 0f)
     impactScale.snapTo(targetValue = 0f)
+    settleSway()
 
     sweepParry()
 
@@ -282,14 +332,18 @@ private fun DrawScope.drawParryBlade(scene: RiposteScene, state: RiposteEffectSt
     val armProgress = state.parryArm.value
     val bladeProgress = state.parryBlade.value
     val sweepDegrees =
-        -PARRY_GUARD_DEGREES - bladeProgress * (PARRY_SWEEP_END_DEGREES - PARRY_GUARD_DEGREES)
+        -PARRY_GUARD_DEGREES - bladeProgress * (PARRY_SWEEP_END_DEGREES - PARRY_GUARD_DEGREES) +
+            state.parrySwayAngle.value * PARRY_SWAY_ANGLE_DEGREES
     val tipDirection = upright.rotatedBy(degrees = sweepDegrees)
 
     val lateral = Offset(x = -scene.axis.y, y = scene.axis.x)
     val handSweep =
         lateral * (-parrySweepLateralTravel.toPx() * armProgress) +
             Offset(x = 0f, y = parrySweepDrop.toPx() * armProgress)
-    val hand = scene.parryHand + handSweep
+    val sway =
+        lateral * (parrySwayLateralTravel.toPx() * state.parrySwayLateral.value) +
+            Offset(x = 0f, y = parrySwayVerticalTravel.toPx() * state.parrySwayVertical.value)
+    val hand = scene.parryHand + handSweep + sway
     drawBlade(hand = hand, tipDirection = tipDirection, scene = scene, alpha = alpha)
 }
 
@@ -303,12 +357,17 @@ private fun DrawScope.drawCounterBlade(scene: RiposteScene, state: RiposteEffect
     val windupDirection = upright.rotatedBy(degrees = COUNTER_WINDUP_DEGREES)
     val windupDegrees = atan2(y = windupDirection.y, x = windupDirection.x) * 180f / PI.toFloat()
     val degrees =
-        lerpAngle(fromDegrees = windupDegrees, toDegrees = axisDegrees, fraction = swingFraction)
+        lerpAngle(fromDegrees = windupDegrees, toDegrees = axisDegrees, fraction = swingFraction) +
+            state.counterSwayAngle.value * COUNTER_SWAY_ANGLE_DEGREES
     val radians = degrees * PI.toFloat() / 180f
     val tipDirection = Offset(x = cos(x = radians), y = sin(x = radians))
 
+    val lateral = Offset(x = -scene.axis.y, y = scene.axis.x)
+    val sway =
+        lateral * (counterSwayLateralTravel.toPx() * state.counterSwayLateral.value) +
+            Offset(x = 0f, y = counterSwayVerticalTravel.toPx() * state.counterSwayVertical.value)
     val landedHand = scene.strikePoint - scene.axis * scene.bladeLengthPx
-    val hand = lerp(start = scene.attackHand, stop = landedHand, fraction = travel)
+    val hand = lerp(start = scene.attackHand, stop = landedHand, fraction = travel) + sway
     drawBlade(hand = hand, tipDirection = tipDirection, scene = scene, alpha = alpha)
 }
 
@@ -336,6 +395,13 @@ private class RiposteEffectState {
     val impactAlpha = Animatable(initialValue = 0f)
     val impactScale = Animatable(initialValue = 0f)
 
+    val parrySwayLateral = Animatable(initialValue = 0f)
+    val parrySwayVertical = Animatable(initialValue = 0f)
+    val parrySwayAngle = Animatable(initialValue = 0f)
+    val counterSwayLateral = Animatable(initialValue = 0f)
+    val counterSwayVertical = Animatable(initialValue = 0f)
+    val counterSwayAngle = Animatable(initialValue = 0f)
+
     var scene by mutableStateOf<RiposteScene?>(value = null)
 }
 
@@ -359,6 +425,34 @@ private fun DuelistRiposteLandedPreview() {
 @Composable
 private fun DuelistRiposteMissedPreview() {
     DuelistRipostePreview(isSuccessful = false)
+}
+
+@Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
+@Composable
+private fun DuelistRiposteGuardSwayPreview() {
+    val avatars = rememberDuoAvatars()
+    AnimationPreview(
+        accentClass = CharacterClassType.Duelist,
+        avatars = avatars,
+        buildMessage = { id ->
+            ArenaMessageState.Riposte.Trigger(
+                id = id,
+                duelistUserId = PREVIEW_ACTOR_ID,
+                attackerUserId = PREVIEW_TARGET_ID,
+                attackerClassName = "Rogue",
+                attackerClassType = CharacterClassType.Rogue,
+                successRangeMin = 6,
+                successRangeMax = 8,
+            )
+        },
+    ) { message ->
+        RiposteOverlay(
+            riposteMessage = message,
+            duelistBounds = avatars.boundsFor(PREVIEW_ACTOR_ID),
+            attackerBounds = avatars.boundsFor(PREVIEW_TARGET_ID),
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
 }
 
 @Composable

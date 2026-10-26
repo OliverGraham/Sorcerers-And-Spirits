@@ -82,7 +82,7 @@ class ArenaStatePreviewParameterProvider : PreviewParameterProvider<ArenaScreenS
                 userId = "player2",
                 displayName = "Spirit Walker",
                 classType = CharacterClassType.Rogue,
-                outcome = FinishedOutcome.Placement(place = 2),
+                outcome = FinishedOutcome.Loser,
             ),
         ),
     )

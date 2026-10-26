@@ -115,20 +115,23 @@ sealed interface ArenaMatchState {
 
 internal fun Map<String, MatchParticipant>.toFinishedRecap(): List<FinishedPlayerRecap> {
     val playerCount = size
+    val isTwoPlayerMatch = playerCount == 2
 
     return values
         .sortedBy { it.status.finishedPlace(playerCount = playerCount) }
         .map { participant ->
             val place = participant.status.finishedPlace(playerCount = playerCount)
+            val isWinner = place == WINNER_PLACE
+            val isLoserInDuel = isTwoPlayerMatch && !isWinner
             FinishedPlayerRecap(
                 userId = participant.userId,
                 displayName = participant.displayName,
                 classType = participant.classType,
                 outcome =
-                if (place == WINNER_PLACE) {
-                    FinishedOutcome.Winner
-                } else {
-                    FinishedOutcome.Placement(place = place)
+                when {
+                    isWinner -> FinishedOutcome.Winner
+                    isLoserInDuel -> FinishedOutcome.Loser
+                    else -> FinishedOutcome.Placement(place = place)
                 },
             )
         }

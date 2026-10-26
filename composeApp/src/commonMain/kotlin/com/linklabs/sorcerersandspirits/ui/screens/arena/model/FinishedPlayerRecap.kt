@@ -16,5 +16,7 @@ sealed interface FinishedOutcome {
 
     @Immutable data object Winner : FinishedOutcome
 
+    @Immutable data object Loser : FinishedOutcome
+
     @Immutable data class Placement(val place: Int) : FinishedOutcome
 }

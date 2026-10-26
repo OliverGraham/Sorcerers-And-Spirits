@@ -71,11 +71,10 @@ private fun StatChip(stat: AvatarStat, modifier: Modifier = Modifier) {
             contentDescription = stat.name,
             modifier = Modifier.size(size = 36.dp),
         )
-        val value = stat.value
-        val title = if (value != null) "${stat.name} · $value" else stat.name
-        AnimatedContent(targetState = title, label = STAT_CHIP_VALUE_ANIMATION_LABEL) { animatedTitle ->
+        val label = stat.value ?: stat.name
+        AnimatedContent(targetState = label, label = STAT_CHIP_VALUE_ANIMATION_LABEL) { animatedLabel ->
             Text(
-                text = animatedTitle,
+                text = animatedLabel,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 maxLines = 1,

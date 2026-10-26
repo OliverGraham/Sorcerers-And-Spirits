@@ -80,6 +80,7 @@ import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_everyone_left
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_leave
+import sorcerersandspirits.composeapp.generated.resources.arena_finished_loser_label
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_waiting_for_others
 import sorcerersandspirits.composeapp.generated.resources.arena_finished_winner_label
 import sorcerersandspirits.composeapp.generated.resources.arena_message_next_match_starting_soon
@@ -95,6 +96,7 @@ private const val WINNER_COLOR_SHIFT_LABEL = "WinnerColorShift"
 private const val RECAP_VISIBLE_ROW_COUNT = 2
 private val RECAP_ROW_HEIGHT = 76.dp
 private val RECAP_ROW_SPACING = 8.dp
+private val LOSER_COLOR = Color(red = 0x8A, green = 0x8A, blue = 0x8A)
 
 @Composable
 internal fun ArenaMatchState.Finished.MatchFinishedContent(
@@ -402,6 +404,15 @@ private fun RecapOutcome(
                 modifier = modifier,
             )
 
+        is FinishedOutcome.Loser ->
+            Text(
+                text = stringResource(resource = Res.string.arena_finished_loser_label),
+                modifier = modifier,
+                style =
+                MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = LOSER_COLOR,
+            )
+
         is FinishedOutcome.Placement ->
             Text(
                 text = outcome.place.toString(),
@@ -518,7 +529,7 @@ private fun exampleFinishedState(): ArenaMatchState.Finished {
                 userId = "player2",
                 displayName = "Spirit Walker",
                 classType = CharacterClassType.Rogue,
-                outcome = FinishedOutcome.Placement(place = 2),
+                outcome = FinishedOutcome.Loser,
             ),
         ),
     )

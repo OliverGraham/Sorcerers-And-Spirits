@@ -140,6 +140,7 @@ internal fun Map<String, MatchParticipant>.toFinishedRecap(): List<FinishedPlaye
 private fun ParticipantStatus.finishedPlace(playerCount: Int): Int = when (this) {
     is ParticipantStatus.Conscious -> WINNER_PLACE
     is ParticipantStatus.KnockedOut -> playerCount - knockoutOrder + 1
+    is ParticipantStatus.Left -> playerCount + 1
 }
 
 @Immutable

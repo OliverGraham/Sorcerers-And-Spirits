@@ -9,14 +9,18 @@ sealed interface ParticipantStatusState {
     @Immutable data object Conscious : ParticipantStatusState
 
     @Immutable data class KnockedOut(val knockoutOrder: Int) : ParticipantStatusState
+
+    @Immutable data object Left : ParticipantStatusState
 }
 
 internal fun ParticipantStatus.toState(): ParticipantStatusState = when (this) {
     is ParticipantStatus.Conscious -> ParticipantStatusState.Conscious
     is ParticipantStatus.KnockedOut -> ParticipantStatusState.KnockedOut(knockoutOrder = knockoutOrder)
+    is ParticipantStatus.Left -> ParticipantStatusState.Left
 }
 
 internal fun ParticipantStatusState.toDomain(): ParticipantStatus = when (this) {
     is ParticipantStatusState.Conscious -> ParticipantStatus.Conscious
     is ParticipantStatusState.KnockedOut -> ParticipantStatus.KnockedOut(knockoutOrder = knockoutOrder)
+    is ParticipantStatusState.Left -> ParticipantStatus.Left
 }

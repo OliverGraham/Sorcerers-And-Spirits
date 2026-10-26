@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -57,6 +58,7 @@ import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyCo
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toBustResource
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toGradient
 import com.linklabs.sorcerersandspirits.ui.common.fadedBlackBackground
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ArenaActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
@@ -366,12 +368,31 @@ private fun PlayerRecapRow(recap: FinishedPlayerRecap, modifier: Modifier = Modi
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(
-                painter = painterResource(resource = recap.classType.toBustResource()),
-                contentDescription = recap.classType.name,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxHeight().aspectRatio(ratio = 1f),
-            )
+            val gradient = recap.classType.toGradient()
+            Box(
+                modifier =
+                Modifier.fillMaxHeight()
+                    .aspectRatio(ratio = 1f)
+                    .background(
+                        brush =
+                        Brush.radialGradient(
+                            colorStops =
+                            arrayOf(
+                                0f to gradient.bottomStop,
+                                0.6f to gradient.topStop,
+                                1f to Color.Transparent,
+                            ),
+                        ),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Image(
+                    painter = painterResource(resource = recap.classType.toBustResource()),
+                    contentDescription = recap.classType.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(fraction = 0.8f),
+                )
+            }
             Text(
                 text = recap.displayName,
                 style = MaterialTheme.typography.titleMedium,

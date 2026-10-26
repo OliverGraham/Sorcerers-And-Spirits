@@ -43,14 +43,14 @@ internal fun MirrorSplitClassAvatar(
 ) {
     Box(modifier = modifier) {
         AvatarImage(
-            characterClass = characterClass,
+            classType = characterClass.type,
             modifier =
             Modifier.matchParentSize().graphicsLayer {
                 applyMirrorFake(gestureState = gestureState)
             },
         )
         AvatarImage(
-            characterClass = characterClass,
+            classType = characterClass.type,
             colorFilter = gestureState.colorFilter,
             modifier =
             Modifier.matchParentSize().graphicsLayer {

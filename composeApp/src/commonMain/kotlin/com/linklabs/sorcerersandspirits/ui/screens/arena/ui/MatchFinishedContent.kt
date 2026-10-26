@@ -136,9 +136,10 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
 
                 Spacer(modifier = Modifier.padding(8.dp))
 
-                if (winner != null) {
+                val winnerClassType = winnerClassType
+                if (winnerClassType != null) {
                     WinnerAvatar(
-                        winner = winner,
+                        classType = winnerClassType,
                         modifier = Modifier.weight(weight = 1f).fillMaxWidth(),
                     )
                 }
@@ -273,10 +274,10 @@ private fun NextMatchBounceOverlay(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun WinnerAvatar(winner: PlayerState.Selected, modifier: Modifier = Modifier) {
+private fun WinnerAvatar(classType: CharacterClassType, modifier: Modifier = Modifier) {
     Box(modifier = modifier, contentAlignment = Alignment.Center) {
         VictoryDanceAvatar(
-            characterClass = winner.characterClass,
+            classType = classType,
             modifier = Modifier.fillMaxSize(),
         )
     }

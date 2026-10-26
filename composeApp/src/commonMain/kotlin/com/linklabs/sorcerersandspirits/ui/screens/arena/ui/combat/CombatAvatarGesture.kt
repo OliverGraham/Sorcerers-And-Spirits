@@ -103,7 +103,7 @@ internal fun GestureClassAvatar(
     when {
         attackingMinion != null -> {
             AvatarImage(
-                characterClass = characterClass,
+                classType = characterClass.type,
                 colorFilter = gestureState.colorFilter,
                 modifier = modifier,
             )
@@ -124,7 +124,7 @@ internal fun GestureClassAvatar(
 
         else ->
             AvatarImage(
-                characterClass = characterClass,
+                classType = characterClass.type,
                 colorFilter = gestureState.colorFilter,
                 modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
             )

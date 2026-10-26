@@ -11,7 +11,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.previewCharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_HEIGHT_DP
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.PREVIEW_WIDTH_DP
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
@@ -44,7 +43,7 @@ private fun VictoryDanceSeatPreview(classType: CharacterClassType) {
             contentAlignment = Alignment.Center,
         ) {
             VictoryDanceAvatar(
-                characterClass = previewCharacterClassState(type = classType),
+                classType = classType,
                 modifier = Modifier.size(width = 140.dp, height = 190.dp),
             )
         }

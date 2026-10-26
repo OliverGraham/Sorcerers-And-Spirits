@@ -11,7 +11,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarGestureState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.AvatarImage
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.common.applyGesture
@@ -34,10 +33,10 @@ internal fun victoryDanceFor(classType: CharacterClassType): VictoryDance = when
 }
 
 @Composable
-internal fun VictoryDanceAvatar(characterClass: CharacterClassState, modifier: Modifier = Modifier) {
+internal fun VictoryDanceAvatar(classType: CharacterClassType, modifier: Modifier = Modifier) {
     val gestureState = remember { AvatarGestureState() }
     val density = LocalDensity.current
-    val dance = victoryDanceFor(classType = characterClass.type)
+    val dance = victoryDanceFor(classType = classType)
 
     LaunchedEffect(key1 = dance) {
         while (true) {
@@ -46,7 +45,7 @@ internal fun VictoryDanceAvatar(characterClass: CharacterClassState, modifier: M
     }
 
     AvatarImage(
-        characterClass = characterClass,
+        classType = classType,
         modifier = modifier.graphicsLayer { applyGesture(gestureState = gestureState) },
     )
 }

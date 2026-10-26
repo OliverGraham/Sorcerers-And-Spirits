@@ -97,7 +97,8 @@
     <string name="tavern_challenge_travelers_unavailable">Some travelers are no longer available.</string>
 
     <string name="challenge_dialog_default_instigator">A Traveler</string>
-    <string name="challenge_dialog_title">Do battle in The Arena</string>
+    <string name="challenge_dialog_title">Do battle in</string>
+    <string name="challenge_dialog_arena_name">The Arena</string>
     <string name="challenge_dialog_awaiting_responses">You are awaiting responses</string>
     <string name="challenge_dialog_challenged_by">%1$s has challenged you!</string>
     <string name="challenge_dialog_button_decline">Decline</string>

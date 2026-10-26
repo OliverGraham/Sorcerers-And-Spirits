@@ -39,11 +39,13 @@ data class ChallengeState(
     val instigator: ChallengerState? =
         challengerStates.find { challengerState -> challengerState.isInstigator }
 
-    private val minutes = secondsRemaining / SIXTY_SECONDS
-    private val seconds = secondsRemaining % SIXTY_SECONDS
-
-    val formattedTimeRemaining = "$minutes:${seconds.toString().padStart(2, '0')}"
     val isLessThanTenSeconds = secondsRemaining <= 10
+}
+
+internal fun formatSecondsRemaining(secondsRemaining: Int): String {
+    val minutes = secondsRemaining / SIXTY_SECONDS
+    val seconds = secondsRemaining % SIXTY_SECONDS
+    return "$minutes:${seconds.toString().padStart(2, '0')}"
 }
 
 @Immutable

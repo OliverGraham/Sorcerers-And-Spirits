@@ -107,8 +107,8 @@ sealed interface ArenaMatchState {
         val players: List<PlayerState.Selected>,
         val recap: List<FinishedPlayerRecap>,
     ) : ArenaMatchState {
-        val survivors = players.filter { it.characterClass.isConscious }
-        val winner = survivors.singleOrNull()
+        val winnerClassType: CharacterClassType? =
+            recap.firstOrNull { it.outcome is FinishedOutcome.Winner }?.classType
         val canStartNextMatch = players.size >= MINIMUM_PLAYERS_FOR_NEXT_MATCH
     }
 }

@@ -113,7 +113,7 @@ internal fun InspectContent(
             color = Color.White,
         )
         AvatarImage(
-            characterClass = characterClass,
+            classType = characterClass.type,
             modifier = Modifier.fillMaxWidth().height(height = 200.dp),
         )
         stats.forEach { stat -> InspectStatRow(stat = stat) }

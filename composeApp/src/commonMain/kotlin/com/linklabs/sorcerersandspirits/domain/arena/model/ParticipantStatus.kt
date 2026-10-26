@@ -5,4 +5,6 @@ sealed interface ParticipantStatus {
     data object Conscious : ParticipantStatus
 
     data class KnockedOut(val knockoutOrder: Int) : ParticipantStatus
+
+    data object Left : ParticipantStatus
 }

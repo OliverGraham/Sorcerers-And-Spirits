@@ -1,6 +1,8 @@
 package com.linklabs.sorcerersandspirits.data.arena.utilities
 
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMatchEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.MatchParticipantEntity
+import com.linklabs.sorcerersandspirits.data.arena.model.ParticipantStatusEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.withActiveUserIds
 import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
@@ -59,7 +61,7 @@ internal class ExitArena(private val userId: String) {
                         newMessages = emptyList(),
                         playerEntitiesMap = updatedPlayers,
                         matchNumberInGauntlet = matchNumberInGauntlet,
-                        participantEntitiesMap = participantEntitiesMap,
+                        participantEntitiesMap = participantEntitiesMap.withLeaverMarkedLeft(),
                     )
                 } else {
                     val updatedNextCombatAction =
@@ -84,5 +86,10 @@ internal class ExitArena(private val userId: String) {
             is ArenaMatchEntity.Finished ->
                 copy(playerEntitiesMap = playerEntitiesMap - userId, newMessages = emptyList())
         }
+    }
+
+    private fun Map<String, MatchParticipantEntity>.withLeaverMarkedLeft(): Map<String, MatchParticipantEntity> {
+        val leaver = this[userId] ?: return this
+        return this + (userId to leaver.copy(statusEntity = ParticipantStatusEntity.Left))
     }
 }

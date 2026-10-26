@@ -30,6 +30,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.unit.Velocity
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletMatchMessages
 import kotlinx.coroutines.flow.drop
 
 private const val LOG_HEIGHT_FRACTION = 0.47f
@@ -45,6 +46,45 @@ internal fun ExpandingMessageLog(
     onDismiss: () -> Unit,
     isCombatOngoing: Boolean,
     modifier: Modifier = Modifier,
+) {
+    ExpandingLogSheet(isExpanded = isExpanded, onDismiss = onDismiss, modifier = modifier) { listState, dismissConnection, sheetModifier ->
+        ArenaMessageLog(
+            messageGroups = messageGroups,
+            listState = listState,
+            dismissConnection = dismissConnection,
+            isCombatOngoing = isCombatOngoing,
+            modifier = sheetModifier,
+        )
+    }
+}
+
+@Composable
+internal fun ExpandingGauntletMessageLog(
+    isExpanded: Boolean,
+    gauntletLog: List<GauntletMatchMessages>,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ExpandingLogSheet(isExpanded = isExpanded, onDismiss = onDismiss, modifier = modifier) { listState, dismissConnection, sheetModifier ->
+        GauntletMessageLog(
+            gauntletLog = gauntletLog,
+            listState = listState,
+            dismissConnection = dismissConnection,
+            modifier = sheetModifier,
+        )
+    }
+}
+
+@Composable
+private fun ExpandingLogSheet(
+    isExpanded: Boolean,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable (
+        listState: LazyListState,
+        dismissConnection: NestedScrollConnection,
+        modifier: Modifier,
+    ) -> Unit,
 ) {
     val revealProgress by
         animateFloatAsState(
@@ -80,12 +120,10 @@ internal fun ExpandingMessageLog(
     val dismissConnection =
         remember { logSheetDismissConnection(state = sheetState, listState = listState) }
 
-    ArenaMessageLog(
-        messageGroups = messageGroups,
-        listState = listState,
-        dismissConnection = dismissConnection,
-        isCombatOngoing = isCombatOngoing,
-        modifier = modifier
+    content(
+        listState,
+        dismissConnection,
+        modifier
             .windowInsetsPadding(insets = WindowInsets.statusBars)
             .padding(top = messageBarHeight)
             .fillMaxWidth()

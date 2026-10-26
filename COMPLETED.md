@@ -585,6 +585,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   `onTimerExpiration` gates auto-ready on `!isFinalMatch` so a completed gauntlet returns to class
   selection; retired the obsolete OpponentLeft-during-WaitingForAllPlayers test (lobby churn stays
   silent). Related: SS-154.
+- **SS-301** — Gauntlet-end full message recap across all matches: Accumulate each match's
+  `messageGroups` in memory on `ArenaScreenState.gauntletMatchHistory` (archived on the
+  within-Gauntlet `transitionFinishedToCombat`, cleared on new-Gauntlet
+  `transitionFinishedToChoosingClasses`), derive a `gauntletMessageLog`, and on the final match's
+  Finished screen render a new `GauntletMessageLog` with `Match N` section headers above each match's
+  existing Round/Setup/Finished groups (shared `messageGroupItems` + `ExpandingLogSheet` chrome, no
+  Data-layer change). Related: SS-261, no-mid-gauntlet-reconnect.
 
 ## Arena presence / connectivity
 

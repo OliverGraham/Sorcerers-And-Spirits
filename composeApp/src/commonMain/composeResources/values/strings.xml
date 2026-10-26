@@ -130,6 +130,7 @@
     <string name="arena_log_header">Round %1$s · {class}%2$s{/class}'s turn</string>
     <string name="arena_log_setup">Match Setup</string>
     <string name="arena_log_finished">Match Over</string>
+    <string name="arena_log_match">Match %1$s</string>
     <string name="arena_message_chose_character_class">%1$s chose {class}%2$s{/class}</string>
     <string name="arena_message_joined_arena">%1$s joined the arena</string>
     <string name="arena_message_readied_for_next_match">%1$s is ready for the next match</string>

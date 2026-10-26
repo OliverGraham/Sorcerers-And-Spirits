@@ -26,11 +26,18 @@ data class ArenaScreenState(
     val arenaMatchState: ArenaMatchState,
     val messageGroups: List<ArenaMessageGroupState>,
     val gauntletProgressState: GauntletProgressState = GauntletProgressState(),
+    val gauntletMatchHistory: List<GauntletMatchMessages> = emptyList(),
     val characterClasses: List<CharacterClassState> = emptyList(),
     val classCopy: CharacterClassCopy = CharacterClassCopy.EMPTY,
     val animatingMessage: ArenaMessageState? = null,
 ) {
     val isMatchEnding: Boolean = (arenaMatchState as? ArenaMatchState.Combat)?.isMatchOver == true
+
+    val gauntletMessageLog: List<GauntletMatchMessages> =
+        gauntletMatchHistory + GauntletMatchMessages(
+            matchNumber = gauntletProgressState.currentMatch,
+            groups = messageGroups,
+        )
 
     val latestCombatHeaderMessage = messageGroups.getLatestCombatHeaderMessage()
 

@@ -1189,6 +1189,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 - **SS-087** — iOS: native Google + Apple Sign-In token acquisition: Implement Google (GoogleSignIn
   SDK → `SocialTokenResult.Google(idToken, accessToken)`) and Apple (`AuthenticationServices` /
   `ASAuthorizationAppleIDProvider` → `SocialTokenResult.Apple(idToken, rawNonce)` with a…
+- **SS-089** — Enable Sign in with Apple before App Store release: Post-enrollment Apple/Firebase
+  config + iOS wiring — Services ID `com.linklabs.sorcerersandspirits.signin` + .p8 key, Apple
+  provider + iOS Google enabled in Firebase, re-downloaded `GoogleService-Info.plist`, real
+  `REVERSED_CLIENT_ID` in `Info.plist`, Sign in with Apple entitlement on the `iosApp` target;
+  verified on simulator (anonymous uid links `apple.com` in place). Release-time on-device re-verify
+  tracked under SS-289; Apple token revocation under SS-296.
 - **SS-109** — ProfileScreen name-change success/failure feedback: Surface the `DisplayNameResult`
   of a name save to the UI as a one-shot `ProfileEvent.DisplayNameUpdated` event and show a
   snackbar (success / name-taken / error) from a `Scaffold`-hosted `SnackbarHost`.

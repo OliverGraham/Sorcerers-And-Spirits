@@ -2,6 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CLIENT_ID</key>
+	<string>848564605750-lvl9cjq3kaeiv9ln2ej0gll62kue0qco.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.848564605750-lvl9cjq3kaeiv9ln2ej0gll62kue0qco</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>848564605750-3h0pud7tqcans6sqo8pc2tpodilk306v.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyA-XCCknOlvIMcEMBxaTyFVZCMIEB8g8BU</string>
 	<key>GCM_SENDER_ID</key>
@@ -26,5 +32,7 @@
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
 	<string>1:848564605750:ios:e55b0f1fd76e4a9de85997</string>
+	<key>DATABASE_URL</key>
+	<string>https://sorcerers-and-spirits-default-rtdb.firebaseio.com</string>
 </dict>
 </plist>

@@ -30,16 +30,20 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
+import com.linklabs.sorcerersandspirits.ui.common.AnimatedSeconds
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengerState
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.formatSecondsRemaining
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleInstigatorChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleRecipientChallengeState
 import com.linklabs.sorcerersandspirits.ui.theme.SorcerersAndSpiritsTheme
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
+import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_arena_name
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_awaiting_responses
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_button_accept
 import sorcerersandspirits.composeapp.generated.resources.challenge_dialog_button_decline
@@ -84,7 +88,7 @@ private fun ChallengeState.DialogContent(modifier: Modifier = Modifier) {
     ) {
         val isThisUserTheInstigator = isThisUserTheInstigator
         HeaderSection(
-            formattedTimeRemaining = formattedTimeRemaining,
+            secondsRemaining = secondsRemaining,
             isLessThanTenSeconds = isLessThanTenSeconds,
             instigatorDisplayName =
             instigator?.displayName
@@ -102,7 +106,7 @@ private fun ChallengeState.DialogContent(modifier: Modifier = Modifier) {
 
 @Composable
 private fun HeaderSection(
-    formattedTimeRemaining: String,
+    secondsRemaining: Int,
     isLessThanTenSeconds: Boolean,
     instigatorDisplayName: String,
     isThisUserTheInstigator: Boolean,
@@ -124,10 +128,12 @@ private fun HeaderSection(
             )
 
             TimerChip(
-                formattedTimeRemaining = formattedTimeRemaining,
+                secondsRemaining = secondsRemaining,
                 isLessThanTenSeconds = isLessThanTenSeconds,
             )
         }
+
+        ArenaTitle()
 
         val subtitle =
             if (isThisUserTheInstigator) {
@@ -147,8 +153,20 @@ private fun HeaderSection(
 }
 
 @Composable
+private fun ArenaTitle(modifier: Modifier = Modifier) {
+    Text(
+        text = stringResource(resource = Res.string.challenge_dialog_arena_name),
+        style = MaterialTheme.typography.headlineMedium,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = 2.sp,
+        color = MaterialTheme.colorScheme.secondary,
+        modifier = modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
 private fun TimerChip(
-    formattedTimeRemaining: String,
+    secondsRemaining: Int,
     isLessThanTenSeconds: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -158,17 +176,21 @@ private fun TimerChip(
         } else {
             MaterialTheme.colorScheme.primary
         }
-    Text(
-        text = formattedTimeRemaining,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = accentColor,
+    AnimatedSeconds(
+        seconds = secondsRemaining,
         modifier =
         modifier
             .clip(shape = CircleShape)
             .border(width = 1.5.dp, color = accentColor, shape = CircleShape)
             .padding(horizontal = 14.dp, vertical = 6.dp),
-    )
+    ) { animatedSeconds ->
+        Text(
+            text = formatSecondsRemaining(secondsRemaining = animatedSeconds),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = accentColor,
+        )
+    }
 }
 
 @Composable

@@ -284,7 +284,7 @@ class FirebaseTavernRepository(
     private fun resolveChallengeState(challengeEntity: ChallengeEntity): ChallengeResolution {
         val nonDeclinedStatuses =
             challengeEntity.challengerEntitiesMap.values
-                .map { it.status }
+                .map { it.status.toDomain() }
                 .filterNot { it == ChallengerStatus.Declined }
 
         val doesNotHaveEnoughPlayersLeft = nonDeclinedStatuses.size < MINIMUM_CHALLENGERS

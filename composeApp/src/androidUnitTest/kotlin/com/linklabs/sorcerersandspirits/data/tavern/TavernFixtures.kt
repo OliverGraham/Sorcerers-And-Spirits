@@ -20,7 +20,7 @@ fun challengerEntity(
     userId = userId,
     displayName = displayName,
     isInstigator = isInstigator,
-    status = status,
+    status = status.toEntity(),
 )
 
 fun challengeEntity(

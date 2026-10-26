@@ -102,6 +102,9 @@
     <string name="challenge_dialog_challenged_by">%1$s has challenged you!</string>
     <string name="challenge_dialog_button_decline">Decline</string>
     <string name="challenge_dialog_button_accept">Accept Challenge</string>
+    <string name="challenge_status_accepted">Accepted</string>
+    <string name="challenge_status_declined">Declined</string>
+    <string name="challenge_status_pending">Pending</string>
 
     <string name="arena_choosing_classes_title">Choose Your Class</string>
     <string name="arena_choosing_classes_waiting">%1$s is choosing their class…</string>

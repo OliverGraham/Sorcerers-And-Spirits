@@ -3,11 +3,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -68,7 +65,6 @@ internal fun ArenaMatchState.ChoosingClasses.ArenaChoosingClasses(
                 timerState = timerState,
                 isExpanded = isLogExpanded,
                 onExpandedChange = { isLogExpanded = it },
-                modifier = Modifier.windowInsetsPadding(insets = WindowInsets.statusBars),
             )
 
             CharacterClassWheel(

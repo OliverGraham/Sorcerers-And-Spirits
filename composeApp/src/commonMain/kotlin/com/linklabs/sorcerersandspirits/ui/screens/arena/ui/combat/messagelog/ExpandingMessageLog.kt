@@ -97,7 +97,7 @@ internal fun ExpandingMessageLog(
                 val dragTranslation = if (sheetState.offset.isNaN()) 0f else sheetState.offset
                 translationY = minOf(revealTranslation, dragTranslation)
             }
-            .background(brush = messagesBackgroundBrush())
+            .background(color = messagesBackgroundColor)
             .clickable(onClick = onDismiss),
     )
 }

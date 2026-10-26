@@ -252,7 +252,7 @@ private fun AvatarStatsBar(
     classColor: Color,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(space = 6.dp)) {
+    Column(modifier = modifier.padding(start = 4.dp), verticalArrangement = Arrangement.spacedBy(space = 6.dp)) {
         if (isUserPlayer) {
             Image(
                 painter = painterResource(resource = Res.drawable.ic_user_player),

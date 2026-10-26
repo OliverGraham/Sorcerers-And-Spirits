@@ -37,7 +37,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
-import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toColor
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toLegibleOnDarkColor
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaAnimationState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageGroupState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMessageState
@@ -171,7 +171,7 @@ private fun GroupHeader(
         )
         Text(
             text = text,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary,
             letterSpacing = 2.sp,
@@ -238,7 +238,7 @@ private fun TurnMessage(state: ArenaMessageState.NewTurn, modifier: Modifier = M
             ),
             coloredClassNames = state.coloredClassNames,
         ),
-        style = MaterialTheme.typography.titleSmall,
+        style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
         textAlign = TextAlign.Center,
         modifier = modifier.fillMaxWidth().padding(top = 6.dp, bottom = 2.dp),
@@ -290,7 +290,8 @@ internal fun classHighlightedText(
     coloredClassNames: List<CharacterClassMessageInfoState>,
     hasBullet: Boolean = false,
 ): AnnotatedString {
-    val colorByClassName = coloredClassNames.associate { it.className to it.type.toColor() }
+    val colorByClassName =
+        coloredClassNames.associate { it.className to it.type.toLegibleOnDarkColor() }
     val segments = text.split(CLASS_START_TAG, CLASS_END_TAG)
 
     return buildAnnotatedString {

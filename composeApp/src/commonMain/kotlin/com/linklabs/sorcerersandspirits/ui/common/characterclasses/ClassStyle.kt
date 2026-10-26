@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.linklabs.sorcerersandspirits.domain.arena.model.DieColor
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
 import org.jetbrains.compose.resources.DrawableResource
@@ -85,6 +86,12 @@ fun CharacterClassType.toGradient(): ClassGradient = when (toColorGroup()) {
 }
 
 fun CharacterClassType.toColor(): Color = toGradient().topStop
+
+fun CharacterClassType.toLegibleOnDarkColor(): Color {
+    val gradient = toGradient()
+    val isTopBrighter = gradient.topStop.luminance() >= gradient.bottomStop.luminance()
+    return if (isTopBrighter) gradient.topStop else gradient.bottomStop
+}
 
 fun DieColor.toColor(): Color? = when (this) {
     DieColor.NormalAttack -> null

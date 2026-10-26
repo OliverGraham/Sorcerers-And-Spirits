@@ -16,11 +16,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,7 +40,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -133,18 +135,17 @@ private fun MessagesBarSurface(
     onToggleExpanded: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val spanEndY = with(receiver = LocalDensity.current) { messageBarHeight.toPx() }
-
     Column(
         modifier =
         modifier
             .fillMaxWidth()
-            .height(height = messageBarHeight)
-            .background(brush = messagesBackgroundBrush(startY = 0f, endY = spanEndY))
+            .background(color = messagesBackgroundColor)
             .clickable(onClick = onToggleExpanded)
+            .windowInsetsPadding(insets = WindowInsets.statusBars)
+            .height(height = messageBarHeight)
             .padding(horizontal = 8.dp),
     ) {
-        Box(modifier = Modifier.fillMaxWidth()) {
+        Box(modifier = Modifier.fillMaxWidth().height(height = messagesIconSize)) {
             MessagesIcon(
                 unreadMessageCount = unreadMessageCount,
                 modifier = Modifier.align(alignment = Alignment.CenterStart),

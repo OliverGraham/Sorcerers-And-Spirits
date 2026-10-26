@@ -1,9 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.ui
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -16,7 +13,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.LocalCharacterClassCopy
 import com.linklabs.sorcerersandspirits.ui.main.navigation.transitions.DissolveStateContent
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.ArenaMatchState
@@ -29,7 +25,6 @@ import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.arena_background
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun LoadedArenaScreen(
     screenState: ArenaScreenState,
@@ -50,7 +45,7 @@ internal fun LoadedArenaScreen(
             containerColor = Color.Transparent,
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
         ) { _ ->
-            ScreenContent(
+            ArenaStateContent(
                 screenState = screenState,
                 timerState = timerState,
                 selectedOpponent = selectedOpponent,
@@ -60,23 +55,6 @@ internal fun LoadedArenaScreen(
         if (screenState.showForfeitDialog) {
             ForfeitDialog()
         }
-    }
-}
-
-@Composable
-private fun ScreenContent(
-    screenState: ArenaScreenState,
-    timerState: () -> ArenaTimerState,
-    selectedOpponent: () -> String?,
-    modifier: Modifier = Modifier,
-) {
-    // TODO: Remove this column and have each ArenaState composable invoke its own container
-    Column(modifier = modifier.fillMaxSize().padding(horizontal = 4.dp)) {
-        ArenaStateContent(
-            screenState = screenState,
-            timerState = timerState,
-            selectedOpponent = selectedOpponent,
-        )
     }
 }
 
@@ -121,7 +99,6 @@ private fun ArenaStateContent(
 
 private fun ArenaMatchState.isWaitingScreen(): Boolean = this is ArenaMatchState.WaitingForAllPlayers
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Preview
 @Composable
 private fun LoadedArenaScreenCollapsedPreview(

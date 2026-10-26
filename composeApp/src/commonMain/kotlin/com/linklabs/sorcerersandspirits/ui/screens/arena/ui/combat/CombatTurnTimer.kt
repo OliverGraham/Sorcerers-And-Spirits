@@ -38,7 +38,7 @@ internal fun TurnTimer(timerState: () -> ArenaTimerState, modifier: Modifier = M
 
     AnimatedSeconds(
         seconds = timer.secondsRemaining,
-        modifier = modifier.padding(all = TIMER_CORNER_PADDING),
+        modifier = modifier.padding(horizontal = TIMER_CORNER_PADDING),
     ) { seconds ->
         Text(
             text = "$seconds",

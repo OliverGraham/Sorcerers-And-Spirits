@@ -9,13 +9,12 @@
 		<key>UIColorName</key>
 		<string>LaunchBackground</string>
 	</dict>
-	<!-- TODO(SS-089): replace the placeholder with the real REVERSED_CLIENT_ID from the re-downloaded GoogleService-Info.plist once iOS Google is enabled in Firebase. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>REVERSED_CLIENT_ID_GOES_HERE</string>
+				<string>com.googleusercontent.apps.848564605750-lvl9cjq3kaeiv9ln2ej0gll62kue0qco</string>
 			</array>
 		</dict>
 	</array>

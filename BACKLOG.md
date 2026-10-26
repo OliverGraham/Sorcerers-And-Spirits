@@ -472,31 +472,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Note:** Anonymous auth is already enabled and unaffected; existing anonymous accounts upgrade in
   place via `linkWithCredential` (no user migration).
 
-### SS-089 — Enable Sign in with Apple before App Store release
-
-- [ ] Not completed — **blocking for iOS App Store release; parked until Apple Developer enrollment.
-  **
-- **Source:** SS-061 / SS-087 follow-up. The Apple *code* is done (SS-087); this ticket tracks the
-  account-gated config that can only happen with a paid membership.
-- **Why mandatory:** **App Store Review Guideline 4.8** — offering Google sign-in on iOS requires
-  also offering Sign in with Apple. Enforced at App Store review.
-- **Blocked by:** a **paid Apple Developer Program membership** ($99/yr), planned for release time.
-  Until then the iOS Apple button is dormant and the app still works.
-- **Progress (2026-10-22):** Membership **purchased** — Apple says enrollment may take up to ~48h to
-  process; all portal/Keys/Identifiers work is gated on that completing. Pre-staged
-  `iosApp/iosApp/Info.plist` with a `CFBundleURLTypes` → `CFBundleURLSchemes` block carrying a
-  `TODO(SS-089)` placeholder (`REVERSED_CLIENT_ID_GOES_HERE`); swap in the real reversed id after
-  enabling iOS Google in Firebase and re-downloading `GoogleService-Info.plist` (the checked-in plist
-  has no `CLIENT_ID`/`REVERSED_CLIENT_ID` yet). iOS sign-in **code** is already complete (SS-087): Apple
-  is native `ASAuthorization` (no URL scheme needed, entitlement only); Google's callback is already
-  forwarded in `iOSApp.swift`.
-- **Steps (do together once enrolled):**
-    1. Apple Developer portal: Services ID + Sign in with Apple key (.p8) — see SS-088 "Steps —
-       Apple".
-    2. Firebase console: enable the Apple provider with those values — see SS-088 "Steps — Apple".
-    3. Xcode: add the **Sign in with Apple** capability to the `iosApp` target — see SS-087.
-    4. Verify on device/simulator: the Apple button presents the sheet and linking succeeds.
-
 ---
 
 ## Game Stats & Leaderboard

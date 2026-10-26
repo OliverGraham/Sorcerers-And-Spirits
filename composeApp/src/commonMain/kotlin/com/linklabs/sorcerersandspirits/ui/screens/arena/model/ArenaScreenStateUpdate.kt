@@ -239,6 +239,7 @@ private fun ArenaMatch.ChoosingClasses.transitionFinishedToChoosingClasses(
         emptyList<ArenaMessageGroupState>()
             .appendNewMessages(incomingMessages = messages),
         gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
+        gauntletMatchHistory = emptyList(),
     ),
     timerAction = TimerAction.Start(timerDuration = CHOOSING_CLASSES_TIMER_DURATION_SECONDS),
 )
@@ -255,8 +256,14 @@ private fun ArenaMatch.Combat.transitionFinishedToCombat(
         emptyList<ArenaMessageGroupState>()
             .appendNewMessages(incomingMessages = messages),
         gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
+        gauntletMatchHistory = currentScreenState.archiveCurrentMatchMessages(),
     ),
     timerAction = TimerAction.Start(timerDuration = COMBAT_TIMER_DURATION_SECONDS),
+)
+
+private fun ArenaScreenState.archiveCurrentMatchMessages(): List<GauntletMatchMessages> = gauntletMatchHistory + GauntletMatchMessages(
+    matchNumber = gauntletProgressState.currentMatch,
+    groups = messageGroups,
 )
 
 private fun ArenaMatch.Finished.updateFinished(

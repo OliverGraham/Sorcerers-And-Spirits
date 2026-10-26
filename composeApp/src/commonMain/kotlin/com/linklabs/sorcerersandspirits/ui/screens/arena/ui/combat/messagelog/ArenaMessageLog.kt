@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -20,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -59,6 +61,8 @@ private const val CARET_COLLAPSED_ROTATION = -90f
 private const val SETUP_GROUP_KEY = 0
 private const val FINISHED_GROUP_KEY = -1
 
+private const val IN_MATCH_LOG_NAMESPACE = "match"
+
 private const val MESSAGE_BULLET_PREFIX = "•  "
 
 private const val CLASS_START_TAG = "{class}"
@@ -72,11 +76,7 @@ internal fun ArenaMessageLog(
     isCombatOngoing: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    val currentRoundNumber =
-        messageGroups.filterIsInstance<ArenaMessageGroupState.Round>().maxOfOrNull {
-            it.roundNumber
-        }
-    val expandedGroups = remember { mutableStateMapOf<Int, Boolean>() }
+    val expandedGroups = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(key1 = messageGroups) { listState.animateScrollToItem(index = 0) }
 
@@ -86,35 +86,54 @@ internal fun ArenaMessageLog(
         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(space = 2.dp),
     ) {
-        for (group in messageGroups.asReversed()) {
-            val groupKey = group.groupKey()
-            val isCurrentRound =
-                group is ArenaMessageGroupState.Round && group.roundNumber == currentRoundNumber
-            val isDefaultExpanded = isCurrentRound || group is ArenaMessageGroupState.Finished
-            val isExpanded = expandedGroups[groupKey] ?: isDefaultExpanded
+        messageGroupItems(
+            messageGroups = messageGroups,
+            isCombatOngoing = isCombatOngoing,
+            keyNamespace = IN_MATCH_LOG_NAMESPACE,
+            expandedGroups = expandedGroups,
+        )
+    }
+}
 
-            item(key = "group-$groupKey") {
-                GroupHeader(
-                    group = group,
-                    isRoundInProgress = isCurrentRound && isCombatOngoing,
-                    isExpanded = isExpanded,
-                    onToggle = { expandedGroups[groupKey] = !isExpanded },
-                    modifier = Modifier.animateItem(),
-                )
-            }
+internal fun LazyListScope.messageGroupItems(
+    messageGroups: List<ArenaMessageGroupState>,
+    isCombatOngoing: Boolean,
+    keyNamespace: String,
+    expandedGroups: SnapshotStateMap<String, Boolean>,
+) {
+    val currentRoundNumber =
+        messageGroups.filterIsInstance<ArenaMessageGroupState.Round>().maxOfOrNull {
+            it.roundNumber
+        }
 
-            if (!isExpanded) continue
+    messageGroups.asReversed().forEach { group ->
+        val groupKey = "$keyNamespace-${group.groupKey()}"
+        val isCurrentRound =
+            group is ArenaMessageGroupState.Round && group.roundNumber == currentRoundNumber
+        val isDefaultExpanded = isCurrentRound || group is ArenaMessageGroupState.Finished
+        val isExpanded = expandedGroups[groupKey] ?: isDefaultExpanded
 
-            items(
-                items =
-                group.messages.filterNot {
-                    it is ArenaMessageState.NewRound ||
-                        it is ArenaMessageState.NormalRoll.Attack
-                },
-                key = { it.id },
-            ) { message ->
-                ArenaMessageItem(messageState = message, modifier = Modifier.animateItem())
-            }
+        item(key = "group-$groupKey") {
+            GroupHeader(
+                group = group,
+                isRoundInProgress = isCurrentRound && isCombatOngoing,
+                isExpanded = isExpanded,
+                onToggle = { expandedGroups[groupKey] = !isExpanded },
+                modifier = Modifier.animateItem(),
+            )
+        }
+
+        if (!isExpanded) return@forEach
+
+        items(
+            items =
+            group.messages.filterNot {
+                it is ArenaMessageState.NewRound ||
+                    it is ArenaMessageState.NormalRoll.Attack
+            },
+            key = { "$keyNamespace-${it.id}" },
+        ) { message ->
+            ArenaMessageItem(messageState = message, modifier = Modifier.animateItem())
         }
     }
 }

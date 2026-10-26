@@ -835,3 +835,34 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
   ([[remoteconfig-optional-override-not-required-map]]). Degrade gracefully to the bundled track on
   fetch failure/offline ([[connectivity-resilience-priority]]).
 - **Related:** SS-134 (foundation), SS-217 (bundled track is the fallback).
+
+### SS-302 — Combat-queue boundary reset + authoritative-state backstop for match-end freeze
+
+- [ ] Not completed
+- **Context:** Observed once (not reliably reproducible): in match 1 of a second consecutive Gauntlet
+  (no navigation away between Gauntlets), two clients desynced on a Rogue→Necromancer K.O. — one
+  client showed the Necromancer knocked out, the other showed it still standing, both stuck in
+  Combat, neither advancing to Finished. Both clients read identical Firebase state, so the
+  divergence is client-side: the stale client never applied the authoritative K.O. update, so it
+  never saw `isMatchOver` and `finishMatch()` never fired. Ruled out: the Winner/Loser recap display
+  change (SS, commit 494a2672, display-only) and `ParticipantStatus.Left` serialization (round-trips
+  correctly). Suspected trigger exposing a latent combat-queue fragility
+  ([[unblocked-flows-expose-latent-bugs]]).
+- **Root-cause suspects:** `ArenaMatchCombatQueue` holds one session-scoped `ArrayDeque` and a
+  `currentAnimationCoordinator` that are **never reset** between matches or Gauntlets (no `clear()`
+  anywhere); a hung completion signal ([[combat-queue-signal-reentrancy]]) or a residual queued
+  update can carry across a match boundary and wedge the queue on one client.
+- **Approach (option B — queue hardening):** On match-end / new-match start, `clear()` the combat
+  queue and null `currentAnimationCoordinator`, and add a watchdog so a completion signal that never
+  arrives cannot wedge the queue indefinitely. Do NOT dequeue-loop the queue
+  ([[never-drain-loop-combat-queue]]); preserve the capture-and-clear signal ordering
+  ([[combat-queue-signal-reentrancy]]).
+- **Approach (option D — authoritative-state backstop):** If the authoritative `ArenaMatch` reports
+  match-over / Finished while the client is still mid-Combat with a stuck or non-empty queue,
+  force-sync the client to the authoritative state so it can never sit wedged in a stale Combat.
+- **Verify:** Hard to reproduce; exercise several consecutive Gauntlets (Go Again, no navigation
+  away) across two clients and confirm no desync/freeze at match end. Consider temporary
+  instrumentation (option A) to capture queue size / `isMatchOver` / participant statuses on the next
+  occurrence.
+- **Related:** [[match-end-terminal-combat]], [[never-drain-loop-combat-queue]],
+  [[combat-queue-signal-reentrancy]], SS-261 (Finished-screen transitions).

@@ -72,6 +72,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.FinishedPlayerRec
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.GauntletProgressState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.model.PlayerState
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.animation.finished.VictoryDanceAvatar
+import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingGauntletMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.ExpandingMessageLog
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBar
 import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.messagelog.MessagesBarHeaderTarget
@@ -158,12 +159,20 @@ internal fun ArenaMatchState.Finished.MatchFinishedContent(
             NextMatchBounceOverlay()
         }
 
-        ExpandingMessageLog(
-            isExpanded = isLogExpanded,
-            messageGroups = screenState.messageGroups,
-            onDismiss = { isLogExpanded = false },
-            isCombatOngoing = false,
-        )
+        if (gauntletProgressState.isFinalMatch) {
+            ExpandingGauntletMessageLog(
+                isExpanded = isLogExpanded,
+                gauntletLog = screenState.gauntletMessageLog,
+                onDismiss = { isLogExpanded = false },
+            )
+        } else {
+            ExpandingMessageLog(
+                isExpanded = isLogExpanded,
+                messageGroups = screenState.messageGroups,
+                onDismiss = { isLogExpanded = false },
+                isCombatOngoing = false,
+            )
+        }
     }
 }
 

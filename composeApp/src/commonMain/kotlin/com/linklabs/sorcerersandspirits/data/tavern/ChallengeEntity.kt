@@ -22,25 +22,44 @@ data class ChallengerEntity(
     val userId: String = "",
     val displayName: String = "",
     val isInstigator: Boolean = false,
-    val status: ChallengerStatus = ChallengerStatus.Pending,
+    val status: ChallengerStatusEntity = ChallengerStatusEntity.Pending,
 ) {
     companion object {
         val statusName = ChallengerEntity::status.name
     }
 }
 
+@Serializable
+enum class ChallengerStatusEntity {
+    Accepted,
+    Declined,
+    Pending,
+}
+
+fun ChallengerStatus.toEntity(): ChallengerStatusEntity = when (this) {
+    ChallengerStatus.Accepted -> ChallengerStatusEntity.Accepted
+    ChallengerStatus.Declined -> ChallengerStatusEntity.Declined
+    ChallengerStatus.Pending -> ChallengerStatusEntity.Pending
+}
+
+fun ChallengerStatusEntity.toDomain(): ChallengerStatus = when (this) {
+    ChallengerStatusEntity.Accepted -> ChallengerStatus.Accepted
+    ChallengerStatusEntity.Declined -> ChallengerStatus.Declined
+    ChallengerStatusEntity.Pending -> ChallengerStatus.Pending
+}
+
 fun Challenger.toEntity(): ChallengerEntity = ChallengerEntity(
     userId = userId,
     displayName = displayName,
     isInstigator = isInstigator,
-    status = status,
+    status = status.toEntity(),
 )
 
 fun ChallengerEntity.toDomain(): Challenger = Challenger(
     userId = userId,
     displayName = displayName,
     isInstigator = isInstigator,
-    status = status,
+    status = status.toDomain(),
 )
 
 fun ChallengeEntity.toDomain(): Challenge = Challenge(

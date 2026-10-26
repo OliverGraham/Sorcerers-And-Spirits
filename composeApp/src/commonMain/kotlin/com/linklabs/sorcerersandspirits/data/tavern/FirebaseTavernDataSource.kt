@@ -159,7 +159,7 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
             .child(path = ChallengeEntity.challengerEntitiesMapName)
             .child(path = userId)
             .child(path = ChallengerEntity.statusName)
-            .setValue(value = status)
+            .setValue(strategy = ChallengerStatusEntity.serializer(), value = status.toEntity())
     }
 
     override suspend fun removeMailbox(userId: String) {

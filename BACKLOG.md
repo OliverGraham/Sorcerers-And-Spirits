@@ -80,8 +80,10 @@ are archived in [COMPLETED.md](COMPLETED.md).
       final art generated from `master_icon.png` (1024²) across all Android densities (legacy square +
       circular round + adaptive foreground fit to safe zone over a solid-black background layer) and the
       iOS `AppIcon` 1024; verified on Android and iOS.
-    - Produce Play Store listing assets: 512×512 icon, feature graphic, phone screenshots (portrait,
-      per the SS-082 lock), short + full description, category, content rating questionnaire.
+    - Produce Play Store listing assets: ~~512×512 icon, feature graphic~~ **(done — generated from
+      `master_icon.png`; held in `~/Desktop/SorcerersAndSpirits-ReleaseAssets/` for console upload, not
+      in the repo)**, phone screenshots (portrait, per the SS-082 lock), short + full description,
+      category, content rating questionnaire.
     - Produce App Store listing assets: screenshots per required device sizes, name/subtitle,
       keywords, description, support URL, age rating.
 - **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store

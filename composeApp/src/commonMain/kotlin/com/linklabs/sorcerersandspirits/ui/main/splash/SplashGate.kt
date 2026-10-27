@@ -6,6 +6,7 @@ import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -17,13 +18,14 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 
 private const val PHASE_CROSSFADE_LABEL = "splashGatePhaseCrossfade"
 private const val CROSSFADE_DURATION_MILLIS = 1000
 private const val LINK_LABS_MIN_DURATION_MILLIS = 1400L
-private const val GAME_MIN_DURATION_MILLIS = 1800L
+private const val GAME_MIN_DURATION_MILLIS = 5000L
 
 @Composable
 internal fun SplashGate(
@@ -60,6 +62,7 @@ internal fun SplashGate(
         ) {
             Crossfade(
                 targetState = phase,
+                modifier = Modifier.fillMaxSize().background(color = Color.Black),
                 animationSpec = tween(
                     durationMillis = CROSSFADE_DURATION_MILLIS,
                     easing = FastOutSlowInEasing,

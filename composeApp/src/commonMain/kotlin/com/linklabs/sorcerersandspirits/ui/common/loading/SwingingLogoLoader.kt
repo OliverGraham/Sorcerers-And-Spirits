@@ -28,6 +28,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.linklabs.sorcerersandspirits.ui.common.characterclasses.ClassGradient
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.classFamilyGradients
 import org.jetbrains.compose.resources.painterResource
 import sorcerersandspirits.composeapp.generated.resources.Res
@@ -74,13 +75,9 @@ internal fun ClassColorGlowBackground(
         label = GLOW_VISIBILITY_LABEL,
     )
 
-    val colorCycle = (millis % GLOW_CYCLE_MILLIS).toFloat() / GLOW_CYCLE_MILLIS * gradients.size
-    val segment = colorCycle.toInt() % gradients.size
-    val fraction = colorCycle - colorCycle.toInt()
-    val from = gradients[segment]
-    val to = gradients[(segment + 1) % gradients.size]
-    val innerColor = lerp(start = from.topStop, stop = to.topStop, fraction = fraction)
-    val outerColor = lerp(start = from.bottomStop, stop = to.bottomStop, fraction = fraction)
+    val cyclingGradient = cyclingClassGradient(gradients = gradients, millis = millis)
+    val innerColor = cyclingGradient.innerColor
+    val outerColor = cyclingGradient.outerColor
 
     val pulseWave = oscillation(millis = millis, periodMillis = style.glowPulseDurationMillis * 2)
     val pulse = style.glowMinAlpha + (style.glowMaxAlpha - style.glowMinAlpha) * pulseWave
@@ -103,6 +100,27 @@ internal fun ClassColorGlowBackground(
             )
         }
     }
+}
+
+@Composable
+internal fun ClassColorLightningBurst(
+    modifier: Modifier = Modifier,
+    alpha: Float = 1f,
+    originFraction: Offset = Offset(x = 0.5f, y = 0.5f),
+    intensity: Float = 1f,
+) {
+    val gradients = remember { classFamilyGradients() }
+    val millis = sharedAnimationMillis()
+    val boltColor = cyclingClassGradient(gradients = gradients, millis = millis).innerColor
+    val strike = (millis % LIGHTNING_STRIKE_MILLIS).toFloat() / LIGHTNING_STRIKE_MILLIS
+    ElectricBolts(
+        boltColor = boltColor,
+        strike = strike,
+        alpha = alpha,
+        modifier = modifier,
+        originFraction = originFraction,
+        intensity = intensity,
+    )
 }
 
 @Composable
@@ -142,15 +160,24 @@ private fun ElectricBolts(
     strike: Float,
     alpha: Float,
     modifier: Modifier = Modifier,
+    originFraction: Offset = Offset(x = 0.5f, y = 0.5f),
+    intensity: Float = 1f,
 ) {
     val bolts = remember { electricBolts() }
     val boltPaths = remember { List(size = BOLT_COUNT) { Path() } }
 
     Canvas(modifier = modifier) {
-        val coreWidth = size.minDimension * 0.004f
-        val glowWidth = size.minDimension * 0.018f
+        val coreWidth = size.minDimension * 0.004f * intensity
+        val glowWidth = size.minDimension * 0.018f * intensity
         val jitterAmplitude = size.minDimension * BOLT_JITTER_FRACTION
-        val maxRadius = max(a = size.width, b = size.height) / 2f
+        val origin = Offset(x = originFraction.x * size.width, y = originFraction.y * size.height)
+        val screenCorners = listOf(
+            Offset(x = 0f, y = 0f),
+            Offset(x = size.width, y = 0f),
+            Offset(x = 0f, y = size.height),
+            Offset(x = size.width, y = size.height),
+        )
+        val reachToEdge = screenCorners.maxOf { corner -> (corner - origin).getDistance() }
 
         bolts.forEachIndexed { index, bolt ->
             val local = (strike + bolt.phaseOffset).mod(other = 1f)
@@ -159,13 +186,13 @@ private fun ElectricBolts(
 
             val direction = Offset(x = cos(x = bolt.angleRadians), y = sin(x = bolt.angleRadians))
             val perpendicular = Offset(x = -direction.y, y = direction.x)
-            val reach = maxRadius * bolt.lengthFraction
+            val reach = reachToEdge * bolt.lengthFraction
             val path = boltPaths[index]
             path.rewind()
             (0..BOLT_SEGMENTS).forEach { segment ->
                 val progress = segment.toFloat() / BOLT_SEGMENTS
                 val taper = sin(x = progress * PI.toFloat())
-                val along = center + direction * (reach * progress)
+                val along = origin + direction * (reach * progress)
                 val point = along + perpendicular * (bolt.segmentJitter[segment] * jitterAmplitude * taper)
                 if (segment == 0) {
                     path.moveTo(x = point.x, y = point.y)
@@ -176,7 +203,7 @@ private fun ElectricBolts(
 
             drawPath(
                 path = path,
-                color = boltColor.copy(alpha = flash * 0.6f),
+                color = boltColor.copy(alpha = (flash * 0.6f * intensity).coerceAtMost(maximumValue = 1f)),
                 style = Stroke(width = glowWidth * bolt.thickness, cap = StrokeCap.Round, join = StrokeJoin.Round),
             )
             drawPath(
@@ -203,6 +230,20 @@ private fun SwingingLogoLoaderMellowPreview() {
         SwingingLogoLoader(style = SwingingLogoStyle.Mellow)
     }
 }
+
+private fun cyclingClassGradient(gradients: List<ClassGradient>, millis: Long): CyclingGradient {
+    val colorCycle = (millis % GLOW_CYCLE_MILLIS).toFloat() / GLOW_CYCLE_MILLIS * gradients.size
+    val segment = colorCycle.toInt() % gradients.size
+    val fraction = colorCycle - colorCycle.toInt()
+    val from = gradients[segment]
+    val to = gradients[(segment + 1) % gradients.size]
+    return CyclingGradient(
+        innerColor = lerp(start = from.topStop, stop = to.topStop, fraction = fraction),
+        outerColor = lerp(start = from.bottomStop, stop = to.bottomStop, fraction = fraction),
+    )
+}
+
+private class CyclingGradient(val innerColor: Color, val outerColor: Color)
 
 private fun oscillation(millis: Long, periodMillis: Int): Float {
     val progress = (millis % periodMillis).toFloat() / periodMillis

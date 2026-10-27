@@ -10,7 +10,10 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.ActionOutcome
 import dev.gitlive.firebase.database.DatabaseReference
 
-internal class ApplyCombatResult(private val result: ActionOutcome) {
+internal class ApplyCombatResult(
+    private val result: ActionOutcome,
+    private val actionId: String,
+) {
     suspend operator fun invoke(arenaReference: DatabaseReference) {
         val messagesReference =
             arenaReference.child(path = ArenaMatchEntity.Companion.newMessagesName)
@@ -26,6 +29,9 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         messagesReference: DatabaseReference,
     ): ArenaMatchEntity {
         if (this !is ArenaMatchEntity.Combat) return this
+
+        val isActionAlreadyApplied = lastAppliedActionId == actionId
+        if (isActionAlreadyApplied) return this
 
         // TODO: return updatedMessages from a function. FFS
         val newMessages =
@@ -49,6 +55,7 @@ internal class ApplyCombatResult(private val result: ActionOutcome) {
         matchNumberInGauntlet = matchNumberInGauntlet,
         diceRoll = result.diceRoll?.toEntity(),
         participantEntitiesMap = result.participantMap.toParticipantEntitiesMap(),
+        lastAppliedActionId = actionId,
     )
 
     // TODO: Refactor. This should be named with Teleport in mind. And, is needed for anything else?

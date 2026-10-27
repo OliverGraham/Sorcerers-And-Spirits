@@ -13,6 +13,7 @@ import com.linklabs.sorcerersandspirits.data.arena.utilities.ConnectToArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.ExitArena
 import com.linklabs.sorcerersandspirits.data.arena.utilities.FinishMatch
 import com.linklabs.sorcerersandspirits.data.arena.utilities.StayForAnotherMatch
+import com.linklabs.sorcerersandspirits.data.arena.utilities.addNewKey
 import com.linklabs.sorcerersandspirits.data.arena.utilities.applycombatresult.ApplyCombatResult
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -32,9 +34,15 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
+import kotlin.coroutines.cancellation.CancellationException
+
+private const val MAX_COMBAT_WRITE_ATTEMPTS = 4
+private const val COMBAT_WRITE_TIMEOUT_MILLIS = 4000L
+private const val COMBAT_WRITE_RETRY_BACKOFF_MILLIS = 500L
 
 class FirebaseArenaRepository(
     database: FirebaseDatabase,
@@ -123,8 +131,28 @@ class FirebaseArenaRepository(
     }
 
     override suspend fun applyCombatResult(arenaId: String, result: ActionOutcome) {
-        ApplyCombatResult(result = result)
-            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+        val arenaReference = arenaMatchesReference.child(path = arenaId)
+        val actionId = arenaReference.addNewKey()
+        val applyCombatResult = ApplyCombatResult(result = result, actionId = actionId)
+
+        repeat(times = MAX_COMBAT_WRITE_ATTEMPTS) {
+            val didApply =
+                applyCombatResult.tryApply(arenaReference = arenaReference)
+            if (didApply) return
+
+            delay(timeMillis = COMBAT_WRITE_RETRY_BACKOFF_MILLIS)
+        }
+    }
+
+    private suspend fun ApplyCombatResult.tryApply(arenaReference: DatabaseReference): Boolean = try {
+        withTimeoutOrNull(timeMillis = COMBAT_WRITE_TIMEOUT_MILLIS) {
+            invoke(arenaReference = arenaReference)
+            true
+        } ?: false
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (error: Throwable) {
+        false
     }
 
     override fun getArenaMatchFlow(arenaId: String): Flow<ArenaMatch?> = arenaMatchesReference

@@ -84,6 +84,7 @@ internal class ChooseCharacterClass(
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet,
             participantEntitiesMap = selectedPlayers.toInitialParticipantMap(),
+            lastAppliedActionId = "",
         )
     }
 

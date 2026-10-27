@@ -609,6 +609,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   writer, prunes the presence entry (or whole `ArenaPresence/{arenaId}` subtree on match deletion),
   and clears the membership pointer; a presence-only `disconnectArenaPresence` covers the
   removed-from-match / error leave paths without touching the match transaction.
+- **SS-302** — Combat-queue boundary reset + authoritative-state backstop for match-end freeze:
+  Reframed the intermittent combat stall to the single-writer dependency — each turn's next state is
+  computed and written by one client via a fire-and-forget `applyCombatResult` transaction, so a
+  slow/lost write on a still-connected client silently dropped the turn with no retry. Hardened the
+  write (Data layer): per-action idempotency token (Firebase push key) persisted as
+  `lastAppliedActionId`, `await` + retry the transaction (4 attempts, 4s timeout, 500ms backoff), and
+  `ApplyCombatResult` no-ops if the token was already applied (no double-apply / duplicate messages).
+  Queue-reset + authoritative backstop (options B/D) implemented then reverted; peer-takeover (Layer B)
+  considered, not pursued (collapses into retry or presence removal).
 
 ## Credits
 

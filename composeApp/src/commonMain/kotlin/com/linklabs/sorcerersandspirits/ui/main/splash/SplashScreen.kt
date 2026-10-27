@@ -1,8 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.main.splash
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -10,6 +12,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,12 +21,18 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,18 +40,27 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
-import com.linklabs.sorcerersandspirits.ui.common.loading.ClassColorGlowBackground
-import com.linklabs.sorcerersandspirits.ui.common.loading.SwingingLogoStyle
+import com.linklabs.sorcerersandspirits.ui.common.loading.ClassColorLightningBurst
+import kotlinx.coroutines.delay
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.link_labs_logo
+import sorcerersandspirits.composeapp.generated.resources.outside_tavern_background
 import sorcerersandspirits.composeapp.generated.resources.sorcerers_and_spirits_full_logo
 import sorcerersandspirits.composeapp.generated.resources.splash_link_labs_wordmark
 import kotlin.math.PI
 import kotlin.math.sin
 
 enum class SplashPhase { LinkLabs, Game }
+
+private const val LOGO_RISE_LABEL = "gameSplashLogoRise"
+private const val LIGHTNING_ALPHA_LABEL = "gameSplashLightningAlpha"
+private const val LOGO_RISE_DURATION_MILLIS = 2000
+private const val LIGHTNING_FADE_IN_MILLIS = 400
+private const val LOGO_WIDTH_FRACTION = 0.6f
+private const val LOGO_REST_VERTICAL_BIAS = -0.5f
+private const val LIGHTNING_INTENSITY = 1.8f
 
 private const val BUBBLE_RISE_LABEL = "linkLabsBeakerBubbles"
 private const val BUBBLE_RISE_PROGRESS_LABEL = "linkLabsBeakerBubbleProgress"
@@ -76,16 +94,60 @@ internal fun SplashScreen(phase: SplashPhase, modifier: Modifier = Modifier) {
     ) {
         when (phase) {
             SplashPhase.LinkLabs -> LinkLabsBeaker()
+            SplashPhase.Game -> GameSplash()
+        }
+    }
+}
 
-            SplashPhase.Game -> {
-                ClassColorGlowBackground(style = SwingingLogoStyle.Energetic, isVisible = true)
-                Image(
-                    painter = painterResource(resource = Res.drawable.sorcerers_and_spirits_full_logo),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillWidth,
-                    modifier = Modifier.fillMaxSize(),
-                )
-            }
+@Composable
+private fun GameSplash(modifier: Modifier = Modifier) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val travelDistance = constraints.maxHeight.toFloat()
+        var hasStarted by remember { mutableStateOf(value = false) }
+        var hasLightningStarted by remember { mutableStateOf(value = false) }
+        LaunchedEffect(key1 = Unit) {
+            hasStarted = true
+            delay(timeMillis = LOGO_RISE_DURATION_MILLIS.toLong())
+            hasLightningStarted = true
+        }
+        val riseProgress by animateFloatAsState(
+            targetValue = if (hasStarted) 1f else 0f,
+            animationSpec = tween(durationMillis = LOGO_RISE_DURATION_MILLIS, easing = FastOutSlowInEasing),
+            label = LOGO_RISE_LABEL,
+        )
+        val lightningAlpha by animateFloatAsState(
+            targetValue = if (hasLightningStarted) 1f else 0f,
+            animationSpec = tween(durationMillis = LIGHTNING_FADE_IN_MILLIS),
+            label = LIGHTNING_ALPHA_LABEL,
+        )
+
+        Image(
+            painter = painterResource(resource = Res.drawable.outside_tavern_background),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize(),
+        )
+
+        ClassColorLightningBurst(
+            modifier = Modifier.fillMaxSize(),
+            alpha = lightningAlpha,
+            originFraction = Offset(x = 0.5f, y = (LOGO_REST_VERTICAL_BIAS + 1f) / 2f),
+            intensity = LIGHTNING_INTENSITY,
+        )
+
+        Box(
+            modifier = Modifier
+                .align(BiasAlignment(horizontalBias = 0f, verticalBias = LOGO_REST_VERTICAL_BIAS))
+                .fillMaxWidth(fraction = LOGO_WIDTH_FRACTION)
+                .graphicsLayer { translationY = (1f - riseProgress) * travelDistance },
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(resource = Res.drawable.sorcerers_and_spirits_full_logo),
+                contentDescription = null,
+                contentScale = ContentScale.FillWidth,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }

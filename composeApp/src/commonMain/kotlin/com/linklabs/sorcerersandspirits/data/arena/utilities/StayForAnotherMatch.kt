@@ -99,6 +99,7 @@ internal class StayForAnotherMatch(private val userId: String) {
             isNewRound = true,
             matchNumberInGauntlet = matchNumberInGauntlet + 1,
             participantEntitiesMap = freshPlayers.toInitialParticipantMap(),
+            lastAppliedActionId = "",
         )
     }
 

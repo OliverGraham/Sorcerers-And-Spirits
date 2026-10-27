@@ -865,6 +865,35 @@ and finally surface them (SS-064 ProfileScreen, SS-065 Leaderboard).
 - **Approach (option D — authoritative-state backstop):** If the authoritative `ArenaMatch` reports
   match-over / Finished while the client is still mid-Combat with a stuck or non-empty queue,
   force-sync the client to the authoritative state so it can never sit wedged in a stale Combat.
+- **2026-10-26 trace (mid-combat stalls, seen twice same day, correlated with very slow/never-arriving
+  responses):** Confirmed the trigger is the network, not game state. Combat is gated on a Firebase
+  round-trip at EVERY step with no optimistic rendering: the acting client resolves and writes via
+  `applyCombatResult` (`FirebaseArenaRepository:125`), then every client — including the one that just
+  acted — only advances when the new state echoes back through `getArenaMatchFlow` (`:130`, a
+  `valueEvents` listener), which is enqueued (`ArenaScreenViewModel:437`) and animated one step at a
+  time. A slow/lost write therefore freezes all clients by design, with no commonality between
+  occurrences. Two non-self-healing modes on top of the gating: (1) **valueEvents coalescing** —
+  `getArenaMatchFlow` is a value listener with `distinctUntilChanged()`; RTDB value listeners emit only
+  the current value and coalesce rapid writes, so on reconnect the client gets only the latest snapshot,
+  not each intermediate Combat state, starving the per-step queue of a step it was waiting to animate;
+  (2) **no watchdog** — the queue waits on `onDiceSettled`→`onCombatActionResolved` with no timeout, so
+  a step that never arrives wedges indefinitely (the never-reset `currentAnimationCoordinator`/
+  `ArrayDeque` fragility). This elevates option D (authoritative-state backstop) from speculative to the
+  primary fix; it also covers the coalescing case.
+- **2026-10-27 resolution (write-side hardening shipped):** Reframed root cause to the single-writer
+  dependency — each turn's next state is computed and written by one client via a fire-and-forget
+  `applyCombatResult` transaction; a slow/lost write on a still-connected client silently dropped the
+  turn with no retry. Fix (Data layer only): generate a per-action idempotency token (Firebase push
+  key), `await` + retry the transaction (4 attempts, 4s timeout, 500ms backoff), and `ApplyCombatResult`
+  no-ops if the token was already applied (`lastAppliedActionId`), so retries can't double-apply or
+  duplicate messages. Options B/D (queue reset + authoritative backstop) were implemented then reverted
+  — they only recover a received-but-UI-wedged state, not the write-never-landed cause.
+- **Peer-takeover (Layer B) — considered, not pursued:** timed peer takeover of a frozen-but-connected
+  active player collapses into cases already handled — a transient freeze retries (Layer A), and a
+  dropped socket triggers presence removal (`ExitArena` reassigns `activeUserIds` to the fastest
+  remaining player, advancing the turn). The only residual gap is a permanent main-thread hang that
+  keeps heartbeating, which is rare and usually OS-killed. Not worth the Domain/UI sequence threading it
+  would require.
 - **Verify:** Hard to reproduce; exercise several consecutive Gauntlets (Go Again, no navigation
   away) across two clients and confirm no desync/freeze at match end. Consider temporary
   instrumentation (option A) to capture queue size / `isMatchOver` / participant statuses on the next

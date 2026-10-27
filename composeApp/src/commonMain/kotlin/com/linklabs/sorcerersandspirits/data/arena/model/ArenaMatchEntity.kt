@@ -40,6 +40,7 @@ sealed interface ArenaMatchEntity {
         val diceRoll: DiceRollEntity? = null,
         val currentTargetUserId: String? = null,
         val participantEntitiesMap: Map<String, MatchParticipantEntity>,
+        val lastAppliedActionId: String,
     ) : ArenaMatchEntity
 
     @Serializable

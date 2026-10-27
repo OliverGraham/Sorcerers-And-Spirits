@@ -41,6 +41,7 @@ sealed interface ArenaMatch {
         val participantMap: Map<String, MatchParticipant>,
     ) : ArenaMatch {
         val hasEnoughPlayersToContinue = playerMap.size >= MINIMUM_PLAYERS_TO_CONTINUE
+        val isFinalMatch = matchNumberInGauntlet >= Gauntlet.MATCHES_PER_GAUNTLET
 
         private companion object {
             const val MINIMUM_PLAYERS_TO_CONTINUE = 2

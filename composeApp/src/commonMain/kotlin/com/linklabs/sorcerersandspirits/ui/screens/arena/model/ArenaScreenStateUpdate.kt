@@ -192,21 +192,18 @@ private fun ArenaMatch.Combat.updateCombat(
 
 private fun ArenaMatch.Finished.transitionCombatToFinished(
     currentScreenState: ArenaScreenState,
-): ArenaScreenStateUpdate = // TODO(SS-261): MATCH_FINISHED vs GAUNTLET_FINISHED timer depends on
-    // whether
-    // this is the final match
-    ArenaScreenStateUpdate(
-        screenState =
-        currentScreenState.copy(
-            arenaMatchState = toFinishedState(),
-            hasReadiedForNextMatch = false,
-            messageGroups =
-            currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
-            gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
-            animatingMessage = null,
-        ),
-        timerAction = finishedTimerAction(),
-    )
+): ArenaScreenStateUpdate = ArenaScreenStateUpdate(
+    screenState =
+    currentScreenState.copy(
+        arenaMatchState = toFinishedState(),
+        hasReadiedForNextMatch = false,
+        messageGroups =
+        currentScreenState.messageGroups.appendFinishedMessages(incomingMessages = messages),
+        gauntletProgressState = GauntletProgressState(currentMatch = matchNumberInGauntlet),
+        animatingMessage = null,
+    ),
+    timerAction = finishedTimerAction(),
+)
 
 // TODO(SS-261): Can happen if someone leaves during choosing. Decide whether to kick everyone out.
 private fun ArenaMatch.Finished.transitionChoosingClassesToFinished(
@@ -279,10 +276,13 @@ private fun ArenaMatch.Finished.updateFinished(
     timerAction = if (hasEnoughPlayersToContinue) TimerAction.None else TimerAction.Stop,
 )
 
-private fun ArenaMatch.Finished.finishedTimerAction() = if (hasEnoughPlayersToContinue) {
-    TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
-} else {
-    TimerAction.None
+private fun ArenaMatch.Finished.finishedTimerAction(): TimerAction {
+    val shouldRunNextMatchTimer = hasEnoughPlayersToContinue && !isFinalMatch
+    return if (shouldRunNextMatchTimer) {
+        TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
+    } else {
+        TimerAction.None
+    }
 }
 
 // TODO(SS-261): Reserved for ArenaMatch/ArenaScreenState combinations that should never occur.

@@ -193,8 +193,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 - [ ] Not completed
 - **Gaps (TODOs tagged `SS-261`, all in `model/ArenaScreenStateUpdate.kt`):**
-    - `transitionCombatToFinished` uses `MATCH_FINISHED_TIMER_DURATION_SECONDS` unconditionally —
-      the final match of a Gauntlet should use a GAUNTLET_FINISHED duration. Distinguish them.
     - `transitionChoosingClassesToFinished` fires when someone leaves *during class selection* —
       decide whether that should kick everyone out.
     - `handleImpossibleScreenUpdate` is a no-op for ArenaMatch/ArenaScreenState combos that should

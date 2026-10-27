@@ -597,7 +597,10 @@ class ArenaScreenViewModel(
                 arenaTimer.startTimer(timerDuration = timerAction.timerDuration)
             }
 
-            is TimerAction.Stop -> arenaTimer.stopTimer()
+            is TimerAction.Stop -> {
+                arenaTimer.stopTimer()
+                _timerStateFlow.value = ArenaTimerState(secondsRemaining = 0)
+            }
 
             is TimerAction.None -> {
                 /* No changes needed */

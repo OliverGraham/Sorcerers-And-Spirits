@@ -233,7 +233,7 @@
     <string name="arena_flash_doubles">Doubles!</string>
     <string name="arena_flash_impersonate">Impersonate!</string>
     <string name="arena_flash_prepared_strike">%1$s · Prepared Strike!</string>
-    <string name="arena_flash_attack_whiffed">%1$s · Whiffed!</string>
+    <string name="arena_flash_attack_missed">%1$s · Missed!</string>
     <string name="arena_flash_encore">Encore · Need %1$s–%2$s!</string>
     <string name="arena_flash_all_in_no_effect">No effect</string>
     <string name="arena_flash_all_in_strike_twice">Extra attack!</string>

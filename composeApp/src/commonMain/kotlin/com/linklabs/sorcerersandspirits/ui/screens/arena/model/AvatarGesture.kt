@@ -14,10 +14,10 @@ enum class AvatarGesture {
     StabOvershoot,
     Slash,
     SlashFinish,
-    SlashWhiff,
+    SlashMiss,
     Cast,
     PreparedThrust,
-    PreparedThrustWhiff,
+    PreparedThrustMiss,
     Throw,
     ThrowStrong,
     ThrowOvershoot,
@@ -67,7 +67,7 @@ internal fun attackerStrike(
 
 private fun paladinStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
     NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
-    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashMiss
     NormalRollMessageType.Damage -> AvatarGesture.Slash
     NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
 }
@@ -88,7 +88,7 @@ private fun gamblerStrike(messageType: NormalRollMessageType): AvatarGesture = w
 
 private fun duelistStrike(messageType: NormalRollMessageType): AvatarGesture = when (messageType) {
     NormalRollMessageType.ArmorClassHit -> AvatarGesture.Slash
-    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashWhiff
+    NormalRollMessageType.ArmorClassMiss -> AvatarGesture.SlashMiss
     NormalRollMessageType.Damage -> AvatarGesture.Slash
     NormalRollMessageType.Knockout -> AvatarGesture.SlashFinish
 }

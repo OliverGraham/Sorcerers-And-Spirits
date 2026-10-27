@@ -1056,7 +1056,7 @@ private fun ArenaMessage.toState(id: String): ArenaMessageState = when (this) {
                 if (isSuccessful) {
                     AvatarGesture.PreparedThrust
                 } else {
-                    AvatarGesture.PreparedThrustWhiff
+                    AvatarGesture.PreparedThrustMiss
                 },
             )
             put(targetUserId, targetGesture)

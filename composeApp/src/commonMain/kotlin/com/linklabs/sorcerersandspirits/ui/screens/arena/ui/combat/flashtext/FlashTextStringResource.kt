@@ -11,8 +11,8 @@ import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_bus
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_no_effect
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_all_in_strike_twice
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_continues
+import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_missed
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_stopped
-import sorcerersandspirits.composeapp.generated.resources.arena_flash_attack_whiffed
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_caught
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_charmed
 import sorcerersandspirits.composeapp.generated.resources.arena_flash_chose_class
@@ -144,7 +144,7 @@ internal fun ArenaMessageState.toStringResource(): String = when (this) {
         if (isSuccessful) {
             stringResource(resource = Res.string.arena_flash_prepared_strike, total)
         } else {
-            stringResource(resource = Res.string.arena_flash_attack_whiffed, total)
+            stringResource(resource = Res.string.arena_flash_attack_missed, total)
         }
 
     is ArenaMessageState.Encore.Trigger ->

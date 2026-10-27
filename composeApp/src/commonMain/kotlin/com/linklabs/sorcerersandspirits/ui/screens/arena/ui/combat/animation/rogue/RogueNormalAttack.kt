@@ -108,7 +108,7 @@ internal suspend fun RogueStrikeState.play(
         NormalRollMessageType.ArmorClassHit ->
             pierce(dashFraction = geometry.dashFraction, burstScale = 0.8f)
 
-        NormalRollMessageType.ArmorClassMiss -> whiff(dashFraction = geometry.dashFraction)
+        NormalRollMessageType.ArmorClassMiss -> miss(dashFraction = geometry.dashFraction)
 
         NormalRollMessageType.Damage ->
             pierce(dashFraction = geometry.dashFraction, burstScale = 1f)
@@ -183,7 +183,7 @@ private suspend fun RogueStrikeState.pierceDeep(dashFraction: Float) {
     }
 }
 
-private suspend fun RogueStrikeState.whiff(dashFraction: Float) {
+private suspend fun RogueStrikeState.miss(dashFraction: Float) {
     closeIn(dashFraction = dashFraction)
     travel.animateTo(
         targetValue = 1f,

@@ -59,7 +59,7 @@ private const val PREPARE_EMBED_MILLIS = 170L
 private const val PREPARE_FADE_MILLIS = 220
 
 private const val TWIRL_DEGREES = 360f
-private const val WHIFF_OVERSHOOT_TRAVEL = 1.18f
+private const val MISS_OVERSHOOT_TRAVEL = 1.18f
 
 internal const val PREPARE_ATTACK_WINDUP_MILLIS =
     (PREPARE_APPEAR_MILLIS + PREPARE_TWIRL_MILLIS + PREPARE_PULL_BACK_MILLIS + PREPARE_GLEAM_MILLIS)
@@ -216,7 +216,7 @@ private suspend fun PrepareAttackEffectState.sailPast() {
     coroutineScope {
         launch {
             thrust.animateTo(
-                targetValue = WHIFF_OVERSHOOT_TRAVEL,
+                targetValue = MISS_OVERSHOOT_TRAVEL,
                 animationSpec = tween(durationMillis = PREPARE_FADE_MILLIS),
             )
         }
@@ -356,7 +356,7 @@ private fun DuelistPrepareAttackSuccessPreview() {
 
 @Preview(widthDp = PREVIEW_WIDTH_DP, heightDp = PREVIEW_HEIGHT_DP)
 @Composable
-private fun DuelistPrepareAttackWhiffPreview() {
+private fun DuelistPrepareAttackMissPreview() {
     DuelistPrepareAttackPreview(isSuccessful = false)
 }
 

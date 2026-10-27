@@ -75,7 +75,7 @@ private const val PARRY_BLADE_OVERSHOOT = 1.16f
 private val parrySweepLateralTravel = 72.dp
 private val parrySweepDrop = 38.dp
 private const val COUNTER_WINDUP_DEGREES = 38f
-private const val WHIFF_OVERSHOOT_TRAVEL = 1.3f
+private const val MISS_OVERSHOOT_TRAVEL = 1.3f
 private const val RIPOSTE_BURST_PEAK_SCALE = 1.2f
 
 private val parrySwayLateralTravel = 7.dp
@@ -290,7 +290,7 @@ private suspend fun RiposteEffectState.sailPast() {
     coroutineScope {
         launch {
             stab.animateTo(
-                targetValue = WHIFF_OVERSHOOT_TRAVEL,
+                targetValue = MISS_OVERSHOOT_TRAVEL,
                 animationSpec =
                 tween(
                     durationMillis = RIPOSTE_STAB_MILLIS + RIPOSTE_FADE_MILLIS,

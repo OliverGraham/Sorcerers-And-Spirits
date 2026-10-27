@@ -277,14 +277,14 @@ internal suspend fun AvatarGestureState.play(
             AvatarGesture.SlashFinish ->
                 slashCombo(reachPx = 30.dp.toPx() * strikeDirection, isFinisher = true)
 
-            AvatarGesture.SlashWhiff -> slashWhiff(reachPx = 30.dp.toPx() * strikeDirection)
+            AvatarGesture.SlashMiss -> slashMiss(reachPx = 30.dp.toPx() * strikeDirection)
 
             AvatarGesture.Cast -> cast(reachPx = 14.dp.toPx() * strikeDirection)
 
             AvatarGesture.PreparedThrust -> preparedThrust(reachPx = 36.dp.toPx() * strikeDirection)
 
-            AvatarGesture.PreparedThrustWhiff ->
-                preparedThrustWhiff(reachPx = 36.dp.toPx() * strikeDirection)
+            AvatarGesture.PreparedThrustMiss ->
+                preparedThrustMiss(reachPx = 36.dp.toPx() * strikeDirection)
 
             AvatarGesture.Throw ->
                 throwFlick(flickPx = 26.dp.toPx() * strikeDirection, peakScale = 1.05f)
@@ -516,7 +516,7 @@ private suspend fun AvatarGestureState.slashBeat(reachPx: Float, tiltDegrees: Fl
     }
 }
 
-private suspend fun AvatarGestureState.slashWhiff(reachPx: Float) {
+private suspend fun AvatarGestureState.slashMiss(reachPx: Float) {
     delay(timeMillis = twinSlashPreambleMillis())
     coroutineScope {
         launch { slashBeat(reachPx = reachPx, tiltDegrees = 7f) }
@@ -561,7 +561,7 @@ private suspend fun AvatarGestureState.preparedThrust(reachPx: Float) {
     settleBack()
 }
 
-private suspend fun AvatarGestureState.preparedThrustWhiff(reachPx: Float) {
+private suspend fun AvatarGestureState.preparedThrustMiss(reachPx: Float) {
     prepareCoil(reachPx = reachPx)
     coroutineScope {
         launch {

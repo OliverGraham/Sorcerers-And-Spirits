@@ -159,7 +159,7 @@ private fun ArenaTitle(modifier: Modifier = Modifier) {
         style = MaterialTheme.typography.headlineMedium,
         fontWeight = FontWeight.Bold,
         letterSpacing = 2.sp,
-        color = MaterialTheme.colorScheme.secondary,
+        color = MaterialTheme.colorScheme.primary,
         modifier = modifier.fillMaxWidth(),
     )
 }
@@ -256,8 +256,8 @@ private fun AcceptedStatusChip(modifier: Modifier = Modifier) {
 private fun PendingStatusChip(modifier: Modifier = Modifier) {
     StatusChipContent(
         label = stringResource(resource = Res.string.challenge_status_pending),
-        containerColor = MaterialTheme.colorScheme.secondary,
-        contentColor = MaterialTheme.colorScheme.onSecondary,
+        containerColor = MaterialTheme.colorScheme.outline,
+        contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = modifier,
     )
 }

@@ -281,6 +281,23 @@ are archived in [COMPLETED.md](COMPLETED.md).
   rather than reveal it top-anchored.
 - **Notes:** Follow-up to SS-251; needs on-device animation iteration.
 
+### SS-303 — Settings drawer rows: real icons + final sizing
+
+- [ ] Not completed
+- **Context:** The drawer layout was reworked — "Menu" title removed, each row is now text + a
+  trailing icon (icons right-aligned in a vertical column), bigger rows (`headlineSmall`, 20.dp
+  vertical padding). Each row currently renders `DrawerEntryIconPlaceholder` (a bordered 32.dp box)
+  because this project uses local vector drawables (via `painterResource`), not the Material Icons
+  library, and most rows have no asset yet.
+- **Do:**
+    - Supply/export vector drawables for Profile, Leaderboard, Achievements, Credits, Bug Report
+      (Tavern can reuse `ic_martini`, Game Rules can reuse `ic_info` if desired).
+    - Replace `DrawerEntryIconPlaceholder` with the per-row icon; decide on tint (currently expect
+      `onSurface` monochrome to match the text) vs. render-as-is.
+    - Confirm final row sizing/typography on device (nudge padding or drop to `titleLarge` if
+      `headlineSmall` is too large).
+- **Source:** `ui/main/ui/SettingsDrawer.kt`.
+
 ## Config & Infrastructure
 
 ### SS-287 — Single source of truth for config JSON (stop hand-maintaining two copies)

@@ -19,6 +19,7 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
     private var activeCredits: CreditsEntity = CreditsEntity.EMPTY
     private var activeVersionGate: VersionGateEntity = VersionGateEntity.UNGATED
     private var activeBugReportConfig: BugReportConfigEntity = BugReportConfigEntity.EMPTY
+    private var activeAppleRevokeConfig: AppleRevokeConfigEntity = AppleRevokeConfigEntity.EMPTY
 
     override suspend fun initialize() {
         loadBundledDefaults()
@@ -40,6 +41,8 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
         activeVersionGate = loadBundled(fileName = VERSION_GATE_FILE, fallback = activeVersionGate)
         activeBugReportConfig =
             loadBundled(fileName = BUG_REPORT_FILE, fallback = activeBugReportConfig)
+        activeAppleRevokeConfig =
+            loadBundled(fileName = APPLE_REVOKE_FILE, fallback = activeAppleRevokeConfig)
     }
 
     private suspend fun applyRemoteOverrides() {
@@ -63,6 +66,8 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
         activeVersionGate = fetchedOrKept(fileName = VERSION_GATE_FILE, current = activeVersionGate)
         activeBugReportConfig =
             fetchedOrKept(fileName = BUG_REPORT_FILE, current = activeBugReportConfig)
+        activeAppleRevokeConfig =
+            fetchedOrKept(fileName = APPLE_REVOKE_FILE, current = activeAppleRevokeConfig)
     }
 
     private suspend inline fun <reified T> fetchedOrKept(
@@ -115,6 +120,10 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
 
     override fun bugReportToken(): String = activeBugReportConfig.token
 
+    override fun appleRevokeEndpointUrl(): String = activeAppleRevokeConfig.endpointUrl
+
+    override fun appleRevokeToken(): String = activeAppleRevokeConfig.token
+
     companion object {
         const val RAW_BASE_URL =
             "https://raw.githubusercontent.com/OliverGraham/sorcerers-and-spirits-config/main/"
@@ -127,6 +136,7 @@ class GithubJsonRemoteConfigDataSource(private val httpClient: HttpClient) : Rem
         const val CREDITS_FILE = "credits.json"
         const val VERSION_GATE_FILE = "version_gate.json"
         const val BUG_REPORT_FILE = "bug_report.json"
+        const val APPLE_REVOKE_FILE = "apple_revoke.json"
 
         const val FALLBACK_TRAVELER_NAME = "a mysterious traveler"
     }

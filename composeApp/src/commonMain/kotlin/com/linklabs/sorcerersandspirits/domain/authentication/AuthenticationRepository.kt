@@ -7,6 +7,8 @@ interface AuthenticationRepository {
 
     fun isAnonymous(): Boolean
 
+    fun hasAppleProvider(): Boolean
+
     suspend fun signInAnonymously(): String?
 
     suspend fun signOut()

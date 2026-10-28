@@ -84,5 +84,9 @@ class RemoteConfigCharacterClassProviderTest {
         override fun bugReportEndpointUrl() = ""
 
         override fun bugReportToken() = ""
+
+        override fun appleRevokeEndpointUrl() = ""
+
+        override fun appleRevokeToken() = ""
     }
 }

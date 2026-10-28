@@ -34,5 +34,6 @@ data class IosGoogleSignInResult(
 data class IosAppleSignInResult(
     val idToken: String?,
     val rawNonce: String?,
+    val authorizationCode: String?,
     val isCancelled: Boolean,
 )

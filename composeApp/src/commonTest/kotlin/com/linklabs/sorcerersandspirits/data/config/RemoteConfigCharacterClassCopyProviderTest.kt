@@ -9,7 +9,7 @@ import kotlin.test.assertEquals
 class RemoteConfigCharacterClassCopyProviderTest {
 
     @Test
-    fun `maps each entity's name, long and short copy through to the domain`() {
+    fun `maps each entity's name long and short copy through to the domain`() {
         val holyShield =
             AbilityCopyEntity(name = "Holy Shield", long = "Long text.", short = "Short text.")
         val provider =
@@ -60,5 +60,9 @@ class RemoteConfigCharacterClassCopyProviderTest {
         override fun bugReportEndpointUrl() = ""
 
         override fun bugReportToken() = ""
+
+        override fun appleRevokeEndpointUrl() = ""
+
+        override fun appleRevokeToken() = ""
     }
 }

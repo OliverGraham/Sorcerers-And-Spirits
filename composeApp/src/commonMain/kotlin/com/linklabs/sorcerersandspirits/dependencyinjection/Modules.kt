@@ -1,6 +1,7 @@
 package com.linklabs.sorcerersandspirits.dependencyinjection
 
 import com.linklabs.sorcerersandspirits.data.arena.FirebaseArenaRepository
+import com.linklabs.sorcerersandspirits.data.authentication.AppsScriptAppleTokenRevoker
 import com.linklabs.sorcerersandspirits.data.authentication.DataStoreSessionStore
 import com.linklabs.sorcerersandspirits.data.authentication.FirebaseAuthenticationRepository
 import com.linklabs.sorcerersandspirits.data.bugreport.AppsScriptBugReportDataSource
@@ -29,6 +30,7 @@ import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedP
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
+import com.linklabs.sorcerersandspirits.domain.authentication.AppleTokenRevoker
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserAnonymousUseCase
@@ -121,6 +123,7 @@ private fun Module.initializeExternalDependencies() {
 private fun Module.initializeRepositories() {
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
     singleOf(::DataStoreSessionStore) { bind<SessionStore>() }
+    singleOf(::AppsScriptAppleTokenRevoker) { bind<AppleTokenRevoker>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
     singleOf(::GithubJsonRemoteConfigDataSource) { bind<RemoteConfigDataSource>() }
     singleOf(::RemoteConfigCharacterClassProvider) { bind<CharacterClassProvider>() }

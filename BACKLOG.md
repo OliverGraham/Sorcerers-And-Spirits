@@ -35,7 +35,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
       (launch + anonymous sign-in). Remaining (external): on-device arena/config-fetch/Google-sign-in
       pass, iOS Release config, and SHA registration (SS-088).
     - **SS-291 — store listing assets + final app icon.** (untracked until now)
-    - **SS-296 — Sign in with Apple token revocation on delete** (iOS review, once Apple is live).
     - ~~**SS-297 — Google Play web deletion link**~~ — page shipped; only the Play Console Data safety
       deletion questions remain (external, at submission).
 - **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207,
@@ -88,23 +87,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
       keywords, description, support URL, age rating.
 - **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store
   consoles. Asset-prep discipline per [[downsample-figma-raster-assets]]. Related: SS-289.
-
-### SS-296 — Sign in with Apple: revoke tokens on account deletion
-
-- [ ] Not completed — **App Store review blocker (iOS, once Apple sign-in is live).**
-- **Problem:** Apple 5.1.1(v) requires that apps offering Sign in with Apple call the **Sign in with
-  Apple REST API to revoke the user's tokens** when the account is deleted. Our delete path does no
-  token revocation. We support Apple sign-in (`signInWithApple` / `linkWithApple`), so this is required
-  for App Store approval.
-- **Do:**
-    - On account deletion, revoke the Apple refresh/authorization token via the Sign in with Apple REST
-      API (`/auth/revoke`). This needs the server-side Apple client secret (a signed JWT) — implement in
-      a trusted backend (Cloud Function / Apps Script), not in the client, and stash the refresh token
-      at Apple sign-in time so it's available at deletion.
-    - Sequence revocation as part of the SS-295 teardown.
-- **Source:** `FirebaseAuthenticationRepository` (Apple credential paths), the SS-295 delete flow.
-  Related: SS-295, SS-087/SS-088/SS-089 (Apple enablement), SS-289.
-  Ref: [Apple — offering account deletion](https://developer.apple.com/support/offering-account-deletion-in-your-app).
 
 ---
 

@@ -45,6 +45,10 @@ interface RemoteConfigDataSource {
 
     fun bugReportToken(): String
 
+    fun appleRevokeEndpointUrl(): String
+
+    fun appleRevokeToken(): String
+
     companion object {
         // A 0 floor/ceiling means every real build (version code >= 1) compares as up to date, so a
         // missing or failed config can never strand clients behind an upgrade wall.

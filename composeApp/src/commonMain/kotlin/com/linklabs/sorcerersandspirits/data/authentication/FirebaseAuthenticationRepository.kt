@@ -1,8 +1,12 @@
 package com.linklabs.sorcerersandspirits.data.authentication
 
+import com.linklabs.sorcerersandspirits.domain.authentication.AppleTokenRevoker
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
 import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
+import com.linklabs.sorcerersandspirits.domain.authentication.SocialSignInProvider
+import com.linklabs.sorcerersandspirits.domain.authentication.SocialTokenResult
 import dev.gitlive.firebase.Firebase
 import dev.gitlive.firebase.auth.AuthCredential
 import dev.gitlive.firebase.auth.EmailAuthProvider
@@ -22,7 +26,11 @@ private fun googleCredential(idToken: String, accessToken: String?): AuthCredent
 
 private fun appleCredential(idToken: String, rawNonce: String): AuthCredential = OAuthProvider.credential(providerId = APPLE_PROVIDER_ID, idToken = idToken, rawNonce = rawNonce)
 
-class FirebaseAuthenticationRepository(private val sessionStore: SessionStore) : AuthenticationRepository {
+class FirebaseAuthenticationRepository(
+    private val sessionStore: SessionStore,
+    private val socialSignInProvider: SocialSignInProvider,
+    private val appleTokenRevoker: AppleTokenRevoker,
+) : AuthenticationRepository {
     private val auth: FirebaseAuth = Firebase.auth
 
     override fun getUserId() = auth.currentUser?.uid ?: sessionStore.cached()?.userId
@@ -35,6 +43,11 @@ class FirebaseAuthenticationRepository(private val sessionStore: SessionStore) :
 
     override fun isAnonymous(): Boolean = auth.currentUser?.isAnonymous ?: true
 
+    override fun hasAppleProvider(): Boolean {
+        val providers = auth.currentUser?.providerData ?: return false
+        return providers.any { it.providerId == APPLE_PROVIDER_ID }
+    }
+
     override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
 
     override suspend fun signOut() {
@@ -43,9 +56,22 @@ class FirebaseAuthenticationRepository(private val sessionStore: SessionStore) :
     }
 
     override suspend fun deleteAccount() {
+        revokeAppleTokenIfNeeded()
         try {
             auth.currentUser?.delete()
         } catch (_: Exception) {}
+    }
+
+    private suspend fun revokeAppleTokenIfNeeded() {
+        if (!hasAppleProvider()) return
+
+        val tokenResult = socialSignInProvider.requestToken(method = SignInMethod.APPLE)
+        if (tokenResult is SocialTokenResult.Apple) {
+            val authorizationCode = tokenResult.authorizationCode
+            if (authorizationCode != null) {
+                appleTokenRevoker.revoke(authorizationCode = authorizationCode)
+            }
+        }
     }
 
     override suspend fun linkWithGoogle(idToken: String, accessToken: String?): LinkAccountResult = link(credential = googleCredential(idToken = idToken, accessToken = accessToken))

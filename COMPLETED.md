@@ -1193,6 +1193,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   (`currentUser.delete()`) after the Firestore profile delete; post-delete UX routes through the
   existing sign-out path to the sign-in dialog instead of silently recreating an anonymous profile.
   Ephemeral RTDB arena/tavern records self-clean, so no teardown pass; inline re-auth deferred (SS-296).
+- **SS-296** — Sign in with Apple token revocation on account deletion: `deleteAccount()` now, for
+  Apple users (`hasAppleProvider()`), re-authenticates with Apple to harvest a fresh one-time
+  `authorizationCode`, POSTs it to an Apps Script endpoint (`AppsScriptAppleTokenRevoker`, config via
+  `apple_revoke.json` in the public config repo) that builds the ES256 client secret from the `.p8`
+  and calls Apple's `/auth/token` + `/auth/revoke`, then does the Firebase delete. No tokens stored;
+  Android is a no-op. Satisfies App Store Guideline 5.1.1(v). Backend in `backend/apple-account-revoke/`.
 - **SS-063** — App Drawer cleanup: The drawer currently holds ad-hoc items (a raw Display Name
   field, Tavern/Arena links). Replace it with a deliberate set of entries. The name-change
   capability moves out of the drawer and into the ProfileScreen…

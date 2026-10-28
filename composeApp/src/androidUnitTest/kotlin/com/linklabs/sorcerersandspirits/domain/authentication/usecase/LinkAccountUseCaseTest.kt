@@ -48,7 +48,7 @@ class LinkAccountUseCaseTest {
     @Test
     fun `Given an Apple token is granted, when linking Apple, then the repository links with token and nonce`() = runTest {
         coEvery { socialSignInProvider.requestToken(method = SignInMethod.APPLE) } returns
-            SocialTokenResult.Apple(idToken = ID_TOKEN, rawNonce = NONCE)
+            SocialTokenResult.Apple(idToken = ID_TOKEN, rawNonce = NONCE, authorizationCode = null)
         coEvery {
             authenticationRepository.linkWithApple(idToken = ID_TOKEN, rawNonce = NONCE)
         } returns LinkAccountResult.SUCCESS

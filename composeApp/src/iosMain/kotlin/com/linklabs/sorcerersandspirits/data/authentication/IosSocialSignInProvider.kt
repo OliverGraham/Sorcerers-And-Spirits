@@ -48,6 +48,7 @@ class IosSocialSignInProvider(private val bridge: IosSocialSignInBridge) : Socia
                         SocialTokenResult.Apple(
                             idToken = appleResult.idToken,
                             rawNonce = appleResult.rawNonce,
+                            authorizationCode = appleResult.authorizationCode,
                         )
                 }
             continuation.resume(value = result)

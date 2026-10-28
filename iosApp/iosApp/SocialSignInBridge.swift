@@ -109,10 +109,11 @@ private final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerD
             let tokenData = credential.identityToken,
             let idToken = String(data: tokenData, encoding: .utf8)
         else {
-            onResult(IosAppleSignInResult(idToken: nil, rawNonce: nil, isCancelled: false))
+            onResult(IosAppleSignInResult(idToken: nil, rawNonce: nil, authorizationCode: nil, isCancelled: false))
             return
         }
-        onResult(IosAppleSignInResult(idToken: idToken, rawNonce: rawNonce, isCancelled: false))
+        let authorizationCode = credential.authorizationCode.flatMap { String(data: $0, encoding: .utf8) }
+        onResult(IosAppleSignInResult(idToken: idToken, rawNonce: rawNonce, authorizationCode: authorizationCode, isCancelled: false))
     }
 
     func authorizationController(
@@ -120,7 +121,7 @@ private final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerD
         didCompleteWithError error: Error
     ) {
         let isCancelled = (error as? ASAuthorizationError)?.code == .canceled
-        onResult(IosAppleSignInResult(idToken: nil, rawNonce: nil, isCancelled: isCancelled))
+        onResult(IosAppleSignInResult(idToken: nil, rawNonce: nil, authorizationCode: nil, isCancelled: isCancelled))
     }
 
     func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {

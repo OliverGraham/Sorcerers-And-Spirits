@@ -18,7 +18,11 @@ sealed interface SocialTokenResult {
     // null there.
     data class Google(val idToken: String, val accessToken: String?) : SocialTokenResult
 
-    data class Apple(val idToken: String, val rawNonce: String) : SocialTokenResult
+    data class Apple(
+        val idToken: String,
+        val rawNonce: String,
+        val authorizationCode: String?,
+    ) : SocialTokenResult
 
     data object Cancelled : SocialTokenResult
 

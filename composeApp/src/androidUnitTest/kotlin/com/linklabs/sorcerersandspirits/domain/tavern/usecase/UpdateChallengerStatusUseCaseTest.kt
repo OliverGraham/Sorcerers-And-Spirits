@@ -4,6 +4,7 @@ import com.linklabs.sorcerersandspirits.data.tavern.FakeTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
 import com.linklabs.sorcerersandspirits.data.tavern.challengeEntity
 import com.linklabs.sorcerersandspirits.data.tavern.challengerEntity
+import com.linklabs.sorcerersandspirits.data.tavern.toDomain
 import com.linklabs.sorcerersandspirits.data.tavern.travelerEntity
 import com.linklabs.sorcerersandspirits.domain.authentication.AuthenticationRepository
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -18,7 +19,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class UpdateChallengerStatusUseCaseTest {
 
     private val dataSource = FakeTavernDataSource()
@@ -58,7 +58,8 @@ class UpdateChallengerStatusUseCaseTest {
                 .challenge(challengeId = CHALLENGE_ID)
                 ?.challengerEntitiesMap
                 ?.get(key = INVITEE)
-                ?.status,
+                ?.status
+                ?.toDomain(),
         )
         assertTrue(actual = dataSource.appliedUpdates.isEmpty())
     }
@@ -90,7 +91,7 @@ class UpdateChallengerStatusUseCaseTest {
         val challenge = dataSource.challenge(challengeId = CHALLENGE_ID)
         assertEquals(
             expected = ChallengerStatus.Accepted,
-            actual = challenge?.challengerEntitiesMap?.get(key = INVITEE)?.status,
+            actual = challenge?.challengerEntitiesMap?.get(key = INVITEE)?.status?.toDomain(),
         )
         assertTrue(actual = dataSource.appliedUpdates.isEmpty())
     }
@@ -150,7 +151,7 @@ class UpdateChallengerStatusUseCaseTest {
         val challenge = dataSource.challenge(challengeId = CHALLENGE_ID)
         assertEquals(
             expected = ChallengerStatus.Declined,
-            actual = challenge?.challengerEntitiesMap?.get(key = INVITEE)?.status,
+            actual = challenge?.challengerEntitiesMap?.get(key = INVITEE)?.status?.toDomain(),
         )
         assertNull(actual = dataSource.mailbox(userId = INVITEE))
         assertEquals(

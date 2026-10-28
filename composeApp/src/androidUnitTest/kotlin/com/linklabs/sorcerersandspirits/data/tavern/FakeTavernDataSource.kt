@@ -151,7 +151,7 @@ class FakeTavernDataSource : TavernDataSource {
             val challenge = current[challengeId] ?: return@update current
             val challenger = challenge.challengerEntitiesMap[userId] ?: return@update current
             val updatedMap =
-                challenge.challengerEntitiesMap + (userId to challenger.copy(status = status))
+                challenge.challengerEntitiesMap + (userId to challenger.copy(status = status.toEntity()))
             current + (challengeId to challenge.copy(challengerEntitiesMap = updatedMap))
         }
     }

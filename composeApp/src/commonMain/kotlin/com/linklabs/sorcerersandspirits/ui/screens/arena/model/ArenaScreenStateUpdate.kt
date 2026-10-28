@@ -281,7 +281,7 @@ private fun ArenaMatch.Finished.finishedTimerAction(): TimerAction {
     return if (shouldRunNextMatchTimer) {
         TimerAction.Start(timerDuration = MATCH_FINISHED_TIMER_DURATION_SECONDS)
     } else {
-        TimerAction.None
+        TimerAction.Stop
     }
 }
 

@@ -32,10 +32,12 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassType
@@ -100,6 +102,7 @@ internal fun LazyListScope.messageGroupItems(
     isCombatOngoing: Boolean,
     keyNamespace: String,
     expandedGroups: SnapshotStateMap<String, Boolean>,
+    areGroupsCollapsedByDefault: Boolean = false,
 ) {
     val currentRoundNumber =
         messageGroups.filterIsInstance<ArenaMessageGroupState.Round>().maxOfOrNull {
@@ -110,7 +113,8 @@ internal fun LazyListScope.messageGroupItems(
         val groupKey = "$keyNamespace-${group.groupKey()}"
         val isCurrentRound =
             group is ArenaMessageGroupState.Round && group.roundNumber == currentRoundNumber
-        val isDefaultExpanded = isCurrentRound || group is ArenaMessageGroupState.Finished
+        val isLiveExpandedGroup = isCurrentRound || group is ArenaMessageGroupState.Finished
+        val isDefaultExpanded = !areGroupsCollapsedByDefault && isLiveExpandedGroup
         val isExpanded = expandedGroups[groupKey] ?: isDefaultExpanded
 
         item(key = "group-$groupKey") {
@@ -173,6 +177,28 @@ private fun GroupHeader(
                 }
         }
 
+    CollapsibleHeader(
+        text = text,
+        color = MaterialTheme.colorScheme.primary,
+        textStyle = MaterialTheme.typography.headlineSmall,
+        isExpanded = isExpanded,
+        onToggle = onToggle,
+        contentPadding = PaddingValues(vertical = 6.dp),
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun CollapsibleHeader(
+    text: String,
+    color: Color,
+    textStyle: TextStyle,
+    isExpanded: Boolean,
+    onToggle: () -> Unit,
+    contentPadding: PaddingValues,
+    modifier: Modifier = Modifier,
+    horizontalSpacing: Dp = 6.dp,
+) {
     val caretRotation by
         animateFloatAsState(
             targetValue = if (isExpanded) CARET_EXPANDED_ROTATION else CARET_COLLAPSED_ROTATION,
@@ -180,19 +206,17 @@ private fun GroupHeader(
         )
 
     Row(
-        modifier = modifier.fillMaxWidth().clickable(onClick = onToggle).padding(vertical = 6.dp),
+        modifier =
+        modifier.fillMaxWidth().clickable(onClick = onToggle).padding(paddingValues = contentPadding),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(space = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(space = horizontalSpacing),
     ) {
-        Caret(
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.rotate(degrees = caretRotation),
-        )
+        Caret(color = color, modifier = Modifier.rotate(degrees = caretRotation))
         Text(
             text = text,
-            style = MaterialTheme.typography.headlineSmall,
+            style = textStyle,
             fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
+            color = color,
             letterSpacing = 2.sp,
         )
     }

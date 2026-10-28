@@ -1,14 +1,17 @@
 package com.linklabs.sorcerersandspirits.ui.main.ui
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation3.runtime.NavBackStack
@@ -120,14 +124,6 @@ private fun DrawerContent(
         modifier = modifier.fillMaxHeight().width(300.dp).padding(16.dp),
         verticalArrangement = Arrangement.Top,
     ) {
-        Text(
-            text = "Menu",
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         DrawerEntry(label = "Tavern", onClick = onNavigateToHome)
         DrawerEntry(label = "Profile", onClick = onNavigateToProfile)
         DrawerEntry(label = "Leaderboard", onClick = onNavigateToLeaderboard)
@@ -146,10 +142,29 @@ private fun DrawerContent(
 
 @Composable
 private fun DrawerEntry(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Text(
-        text = label,
-        style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurface,
-        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 12.dp),
+    Row(
+        modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 20.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        DrawerEntryIconPlaceholder()
+    }
+}
+
+@Composable
+private fun DrawerEntryIconPlaceholder(modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(32.dp)
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
+                shape = RoundedCornerShape(size = 6.dp),
+            ),
     )
 }

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.ui.common.fadedBlackBackground
@@ -34,20 +35,21 @@ internal fun ClassPageStats(
 ) {
     val classCopy = LocalCharacterClassCopy.current
     val stats = avatarStats(characterClass = characterClass, classCopy = classCopy)
+    val classColor = characterClass.type.toLegibleOnDarkColor()
 
     Box(modifier = modifier.padding(horizontal = 12.dp)) {
         FlowRow(
             modifier =
             Modifier.fillMaxWidth()
                 .clip(shape = RoundedCornerShape(size = 20.dp))
-                .fadedBlackBackground()
+                .fadedBlackBackground(alpha = 0.55f)
                 .clickable(onClick = onInspect)
                 .padding(all = 16.dp),
             verticalArrangement = Arrangement.spacedBy(space = 8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly,
             maxItemsInEachRow = 3,
         ) {
-            stats.forEach { stat -> StatChip(stat = stat) }
+            stats.forEach { stat -> StatChip(stat = stat, classColor = classColor) }
         }
 
         Image(
@@ -60,7 +62,7 @@ internal fun ClassPageStats(
 }
 
 @Composable
-private fun StatChip(stat: AvatarStat, modifier: Modifier = Modifier) {
+private fun StatChip(stat: AvatarStat, classColor: Color, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
@@ -72,11 +74,13 @@ private fun StatChip(stat: AvatarStat, modifier: Modifier = Modifier) {
             modifier = Modifier.size(size = 36.dp),
         )
         val label = stat.value ?: stat.name
+        val labelColor = if (stat.isAbility) classColor else Color.Unspecified
         AnimatedContent(targetState = label, label = STAT_CHIP_VALUE_ANIMATION_LABEL) { animatedLabel ->
             Text(
                 text = animatedLabel,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
+                color = labelColor,
                 maxLines = 1,
             )
         }

@@ -39,6 +39,7 @@ import org.jetbrains.compose.resources.painterResource
 
 private val inspectDrawerColor = Color(color = 0xCC1A1A1A)
 private val inspectScrimColor = Color(color = 0x99000000)
+private val INSPECT_STAT_ICON_SIZE = 44.dp
 
 @Composable
 internal fun InspectDrawer(
@@ -90,12 +91,13 @@ internal fun InspectContent(
         remember(characterClass, classCopy, isDetailed) {
             avatarStats(characterClass = characterClass, classCopy = classCopy, isDetailed = isDetailed)
         }
+    val classColor = characterClass.type.toLegibleOnDarkColor()
 
     Column(
         modifier =
         modifier
             .fillMaxHeight()
-            .width(width = 280.dp)
+            .width(width = 300.dp)
             .background(color = inspectDrawerColor)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -103,48 +105,53 @@ internal fun InspectContent(
                 onClick = onClose,
             )
             .verticalScroll(state = rememberScrollState())
-            .padding(all = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(space = 12.dp),
+            .padding(all = 20.dp),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(
-            text = characterClass.className,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = Color.White,
-        )
-        AvatarImage(
-            classType = characterClass.type,
-            modifier = Modifier.fillMaxWidth().height(height = 200.dp),
-        )
-        stats.forEach { stat -> InspectStatRow(stat = stat) }
+        Column(verticalArrangement = Arrangement.spacedBy(space = 16.dp)) {
+            Text(
+                text = characterClass.className,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = classColor,
+            )
+            AvatarImage(
+                classType = characterClass.type,
+                modifier = Modifier.fillMaxWidth().height(height = 220.dp),
+            )
+        }
+        stats.forEach { stat -> InspectStatRow(stat = stat, classColor = classColor) }
     }
 }
 
 @Composable
-private fun InspectStatRow(stat: AvatarStat, modifier: Modifier = Modifier) {
-    Row(
+private fun InspectStatRow(stat: AvatarStat, classColor: Color, modifier: Modifier = Modifier) {
+    val nameColor = if (stat.isAbility) classColor else Color.White
+    Column(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(space = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        verticalArrangement = Arrangement.spacedBy(space = 4.dp),
     ) {
-        Image(
-            painter = painterResource(resource = stat.icon),
-            contentDescription = stat.name,
-            modifier = Modifier.size(size = STAT_ICON_SIZE),
-        )
-        Column {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(space = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                painter = painterResource(resource = stat.icon),
+                contentDescription = stat.name,
+                modifier = Modifier.size(size = INSPECT_STAT_ICON_SIZE),
+            )
             val title = if (stat.value != null) "${stat.name} · ${stat.value}" else stat.name
             Text(
                 text = title,
-                style = MaterialTheme.typography.labelLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
-            Text(
-                text = stat.explanation,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White,
+                color = nameColor,
             )
         }
+        Text(
+            text = stat.explanation,
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White,
+        )
     }
 }

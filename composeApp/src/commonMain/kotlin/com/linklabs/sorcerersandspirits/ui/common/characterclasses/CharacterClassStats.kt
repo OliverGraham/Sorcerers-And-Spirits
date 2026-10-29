@@ -19,6 +19,7 @@ internal data class AvatarStat(
     val value: String?,
     val name: String,
     val explanation: String,
+    val isAbility: Boolean,
 )
 
 internal fun avatarStats(
@@ -44,6 +45,7 @@ internal fun avatarStats(
                 value = characterClass.speed.toString(),
                 name = speed.name,
                 explanation = speed.explanation(),
+                isAbility = false,
             ),
         )
         add(
@@ -52,6 +54,7 @@ internal fun avatarStats(
                 value = characterClass.armorClassDisplay,
                 name = armor.name,
                 explanation = armor.explanation(),
+                isAbility = false,
             ),
         )
         add(
@@ -60,6 +63,7 @@ internal fun avatarStats(
                 value = characterClass.hitPointsDisplay,
                 name = health.name,
                 explanation = health.explanation(),
+                isAbility = false,
             ),
         )
         if (hasOffensive) {
@@ -69,6 +73,7 @@ internal fun avatarStats(
                     value = null,
                     name = offensive.name,
                     explanation = offensive.explanation(),
+                    isAbility = true,
                 ),
             )
         }
@@ -79,6 +84,7 @@ internal fun avatarStats(
                     value = null,
                     name = defensive.name,
                     explanation = defensive.explanation(),
+                    isAbility = true,
                 ),
             )
         }

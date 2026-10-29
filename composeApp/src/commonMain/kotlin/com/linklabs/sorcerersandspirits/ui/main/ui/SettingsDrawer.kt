@@ -1,9 +1,7 @@
 package com.linklabs.sorcerersandspirits.ui.main.ui
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -11,8 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DrawerState
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,10 +31,19 @@ import com.linklabs.sorcerersandspirits.ui.main.navigation.Route
 import com.linklabs.sorcerersandspirits.ui.main.navigation.ScreenDissolveController
 import com.linklabs.sorcerersandspirits.ui.main.navigation.popToNearestHomeScreen
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.drawer_bug_report
+import sorcerersandspirits.composeapp.generated.resources.ic_crown
+import sorcerersandspirits.composeapp.generated.resources.ic_gavel
+import sorcerersandspirits.composeapp.generated.resources.ic_martini
+import sorcerersandspirits.composeapp.generated.resources.ic_menu_book
+import sorcerersandspirits.composeapp.generated.resources.ic_person
+import sorcerersandspirits.composeapp.generated.resources.ic_pest_control
+import sorcerersandspirits.composeapp.generated.resources.ic_trophy
 
 @Composable
 internal fun SettingsDrawer(
@@ -124,16 +131,33 @@ private fun DrawerContent(
         modifier = modifier.fillMaxHeight().width(300.dp).padding(16.dp),
         verticalArrangement = Arrangement.Top,
     ) {
-        DrawerEntry(label = "Tavern", onClick = onNavigateToHome)
-        DrawerEntry(label = "Profile", onClick = onNavigateToProfile)
-        DrawerEntry(label = "Leaderboard", onClick = onNavigateToLeaderboard)
-        DrawerEntry(label = "Achievements", onClick = onNavigateToAchievements)
-        DrawerEntry(label = "Game Rules", onClick = onNavigateToGameRules)
-        DrawerEntry(label = "Credits", onClick = onNavigateToCredits)
+        DrawerEntry(label = "Tavern", icon = Res.drawable.ic_martini, onClick = onNavigateToHome)
+        DrawerEntry(label = "Profile", icon = Res.drawable.ic_person, onClick = onNavigateToProfile)
+        DrawerEntry(
+            label = "Leaderboard",
+            icon = Res.drawable.ic_crown,
+            onClick = onNavigateToLeaderboard,
+        )
+        DrawerEntry(
+            label = "Achievements",
+            icon = Res.drawable.ic_trophy,
+            onClick = onNavigateToAchievements,
+        )
+        DrawerEntry(
+            label = "Game Rules",
+            icon = Res.drawable.ic_gavel,
+            onClick = onNavigateToGameRules,
+        )
+        DrawerEntry(
+            label = "Credits",
+            icon = Res.drawable.ic_menu_book,
+            onClick = onNavigateToCredits,
+        )
 
         if (isBugReportingEnabled) {
             DrawerEntry(
                 label = stringResource(resource = Res.string.drawer_bug_report),
+                icon = Res.drawable.ic_pest_control,
                 onClick = onReportBug,
             )
         }
@@ -141,7 +165,12 @@ private fun DrawerContent(
 }
 
 @Composable
-private fun DrawerEntry(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun DrawerEntry(
+    label: String,
+    icon: DrawableResource,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Row(
         modifier = modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -152,19 +181,11 @@ private fun DrawerEntry(label: String, onClick: () -> Unit, modifier: Modifier =
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        DrawerEntryIconPlaceholder()
+        Icon(
+            painter = painterResource(resource = icon),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.size(size = 32.dp),
+        )
     }
-}
-
-@Composable
-private fun DrawerEntryIconPlaceholder(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier
-            .size(32.dp)
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(size = 6.dp),
-            ),
-    )
 }

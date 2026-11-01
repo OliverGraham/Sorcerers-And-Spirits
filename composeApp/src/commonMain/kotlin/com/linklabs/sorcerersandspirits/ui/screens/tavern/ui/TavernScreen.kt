@@ -1,6 +1,10 @@
 package com.linklabs.sorcerersandspirits.ui.screens.tavern.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,10 +80,13 @@ import sorcerersandspirits.composeapp.generated.resources.tavern_background
 import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_send_failed
 import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_travelers_unavailable
 
+private const val TAVERN_CONTENT_CROSSFADE_LABEL = "tavernContentCrossfade"
+private const val TAVERN_CONTENT_FADE_MILLIS = 1000
+
 @Composable
 internal fun TavernScreen(
-    viewModel: TavernScreenViewModel = koinViewModel(),
     modifier: Modifier = Modifier,
+    viewModel: TavernScreenViewModel = koinViewModel(),
 ) {
     CompositionLocalProvider(
         LocalTavernActions provides
@@ -110,6 +117,7 @@ internal fun TavernScreen(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 private fun TavernScreen(
     uiState: UiState<TavernState>,
@@ -117,17 +125,24 @@ private fun TavernScreen(
     snackbarHostState: SnackbarHostState,
     modifier: Modifier = Modifier,
 ) {
-    when (uiState) {
-        is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = modifier)
+    val transition = updateTransition(targetState = uiState, label = TAVERN_CONTENT_CROSSFADE_LABEL)
+    transition.Crossfade(
+        modifier = modifier,
+        animationSpec = tween(durationMillis = TAVERN_CONTENT_FADE_MILLIS),
+        contentKey = { state -> state::class },
+    ) { state ->
+        when (state) {
+            is UiState.Error -> ErrorContent(onRetry = onRetry, modifier = Modifier.fillMaxSize())
 
-        is UiState.Loaded ->
-            LoadedTavernScreen(
-                tavernState = uiState.data,
-                snackbarHostState = snackbarHostState,
-                modifier = modifier,
-            )
+            is UiState.Loaded ->
+                LoadedTavernScreen(
+                    tavernState = state.data,
+                    snackbarHostState = snackbarHostState,
+                    modifier = Modifier.fillMaxSize(),
+                )
 
-        is UiState.Loading -> LoadingIndicator(modifier = modifier)
+            is UiState.Loading -> LoadingIndicator(modifier = Modifier.fillMaxSize())
+        }
     }
 }
 

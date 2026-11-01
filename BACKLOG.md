@@ -387,29 +387,6 @@ are archived in [COMPLETED.md](COMPLETED.md).
 - **Related:** SS-207 (Persuade animation), SS-267 (gesture-key hang), game rule: Persuade redirect
   needs ≥2 alive non-Bard players.
 
-### SS-300 — Loading animation stutters after sign-in (post-dialog → Tavern)
-
-- [ ] Not completed.
-- **Symptom:** After completing the sign-in dialog, the loading animation (SwingingLogoLoader)
-  visibly drops frames / janks for a beat right before the TavernScreen appears. The
-  already-signed-in path (second splash → Tavern) is smooth.
-- **Root cause (diagnosed):** The already-signed-in path is smooth because `SorcerersAndSpirits`
-  (full nav tree + Tavern) composes *beneath the splash while it is held*, so by reveal the tree is
-  built and Tavern data loaded. The sign-in path shows the dialog instead, so none of that is
-  preloaded — after sign-in the entire app tree + Tavern composes in one frame on the main thread,
-  stalling that frame and stuttering the loader. Not a loader bug; the shared-clock change already
-  makes the two loader instances visually continuous, so the remaining stutter is the compose frame
-  itself. Heavily amplified by a bogged-down dev machine; likely a brief blip on real hardware.
-- **Already done (this PR):** shared animation clock across loader instances (no restart/t=0 flash on
-  handoff); reuse of lightning `Path` objects per frame to cut GC pressure.
-- **Possible fix (needs scoping):** warm/preload the app tree during the sign-in step the way the
-  splash does — e.g. compose `SorcerersAndSpirits` under a loader overlay once signed-in and only
-  reveal once `FirstScreenReadySignal` fires — so the heavy composition happens under cover rather
-  than at the swap. Verify on-device first before investing; the single compose-frame cost may not be
-  worth a refactor.
-- **Source:** `ui/main/splash/SplashGate.kt`, `ui/main/navigation/SorcerersAndSpiritsNavigationHost.kt`,
-  `ui/main/FirstScreenReadySignal.kt`, `ui/common/loading/SwingingLogoLoader.kt`.
-
 ## Profile & Auth
 
 ### SS-088 — Firebase console: enable Google/Apple auth providers

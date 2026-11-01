@@ -637,6 +637,9 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   profile (when online) and route back to the name dialog to create one for the current account
   instead of hanging on the loading indicator. Also fixed `isSignedIn()` to await the first
   auth-state emission so a cold start no longer reports a returning user as signed-out.
+- **SS-300** — Crossfade loader → Tavern after sign-in: Wrap TavernScreen's Loading/Loaded/Error
+  switch in a `Crossfade` keyed on `UiState::class` so the post-sign-in loading animation smoothly
+  crossfades into the Tavern, matching the already-signed-in (splash → Tavern) path.
 
 ## Feedback
 

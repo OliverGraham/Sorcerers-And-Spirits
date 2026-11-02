@@ -139,6 +139,12 @@ class ArenaScreenViewModelTest {
         updateProfileStatsUseCase = updateProfileStatsUseCase,
         pendingStatsStore = pendingStatsStore,
         soundEffectPlayer = soundEffectPlayer,
+        getComputerOpponentMatchUseCase = mockk(relaxed = true),
+        chooseComputerOpponentMatchClassUseCase = mockk(relaxed = true),
+        performComputerOpponentMatchCombatActionUseCase = mockk(relaxed = true),
+        finishComputerOpponentMatchUseCase = mockk(relaxed = true),
+        stayInComputerOpponentMatchUseCase = mockk(relaxed = true),
+        leaveComputerOpponentMatchUseCase = mockk(relaxed = true),
     )
 
     /**

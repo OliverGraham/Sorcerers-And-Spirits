@@ -100,14 +100,17 @@ internal fun NavBackStack<NavKey>.popToTavern() {
 data class ArenaScreenViewModelArgumentsSerializable(
     val arenaId: String,
     val expectedNumberOfPlayers: Int,
+    val computerOpponentUserId: String? = null,
 )
 
 internal fun ArenaScreenViewModelArgumentsSerializable.toDomain() = ArenaScreenViewModelArguments(
     arenaId = arenaId,
     expectedNumberOfPlayers = expectedNumberOfPlayers,
+    computerOpponentUserId = computerOpponentUserId,
 )
 
 fun ArenaScreenViewModelArguments.toSerializable() = ArenaScreenViewModelArgumentsSerializable(
     arenaId = arenaId,
     expectedNumberOfPlayers = expectedNumberOfPlayers,
+    computerOpponentUserId = computerOpponentUserId,
 )

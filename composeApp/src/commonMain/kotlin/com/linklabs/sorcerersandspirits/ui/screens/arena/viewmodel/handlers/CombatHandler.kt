@@ -2,7 +2,6 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.CurrentCombatAction
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.CombatActionArguments
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.game.ability.OffensiveAbility
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
 import com.linklabs.sorcerersandspirits.ui.screens.arena.AttackArguments
@@ -15,7 +14,7 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.ui.combat.toDomain
 
 internal class CombatHandler(
     private val arenaId: String,
-    private val performCombatActionUseCase: PerformCombatActionUseCase,
+    private val applyCombatAction: suspend (CombatActionArguments, CurrentCombatAction) -> Unit,
 ) {
 
     // TODO(SS-257): Need to refactor ArenaCombatControl, CombatButtons and AttackArguments and
@@ -94,7 +93,7 @@ internal class CombatHandler(
                 doublesBonus = diceRollState?.doublesBonus?.toDomain(),
             )
 
-        performCombatActionUseCase(arguments = combatActionArguments, currentAction = currentAction)
+        applyCombatAction(combatActionArguments, currentAction)
     }
 
     private fun UseAbilityArguments.withImpersonatedTarget(
@@ -132,10 +131,7 @@ internal class CombatHandler(
                 rollingUserId = mageUserId,
             )
 
-        performCombatActionUseCase(
-            arguments = combatActionArguments,
-            currentAction = currentCombatAction,
-        )
+        applyCombatAction(combatActionArguments, currentCombatAction)
     }
 
     private fun ArenaMatchState.asCombatStateOrNull() = this as? ArenaMatchState.Combat

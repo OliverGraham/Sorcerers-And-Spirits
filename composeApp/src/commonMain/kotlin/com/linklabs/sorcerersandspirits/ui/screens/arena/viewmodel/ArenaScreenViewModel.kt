@@ -2,24 +2,20 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentDecision
+import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.attackerUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.turnOwnerClassType
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseComputerOpponentMatchClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.DisconnectArenaPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishComputerOpponentMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetComputerOpponentMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.LeaveComputerOpponentMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformComputerOpponentMatchCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayInComputerOpponentMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.audio.SoundEffectPlayer
 import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
@@ -60,8 +56,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toUpdatedScreenSt
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ArenaMatchCombatQueue
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ChooseCharacterClassHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.CombatHandler
-import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ComputerOpponentDecision
-import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers.TeleportRollsArguments
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.getLoadedStateOrNull
@@ -76,6 +70,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState as toAbilityActionState
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -96,12 +91,7 @@ class ArenaScreenViewModel(
     private val updateProfileStatsUseCase: UpdateProfileStatsUseCase,
     private val pendingStatsStore: PendingStatsStore,
     private val soundEffectPlayer: SoundEffectPlayer,
-    private val getComputerOpponentMatchUseCase: GetComputerOpponentMatchUseCase,
-    private val chooseComputerOpponentMatchClassUseCase: ChooseComputerOpponentMatchClassUseCase,
-    private val performComputerOpponentMatchCombatActionUseCase: PerformComputerOpponentMatchCombatActionUseCase,
-    private val finishComputerOpponentMatchUseCase: FinishComputerOpponentMatchUseCase,
-    private val stayInComputerOpponentMatchUseCase: StayInComputerOpponentMatchUseCase,
-    private val leaveComputerOpponentMatchUseCase: LeaveComputerOpponentMatchUseCase,
+    private val computerOpponentHandler: ComputerOpponentHandler,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
@@ -141,7 +131,12 @@ class ArenaScreenViewModel(
             arenaId = arguments.arenaId,
             applyCharacterClassChoice =
             if (isComputerMatch) {
-                chooseComputerOpponentMatchClassUseCase::invoke
+                { _, selectedArenaPlayer, allPlayers ->
+                    computerOpponentHandler.chooseCharacterClass(
+                        selectedArenaPlayer = selectedArenaPlayer,
+                        allPlayers = allPlayers,
+                    )
+                }
             } else {
                 chooseCharacterClassUseCase::invoke
             },
@@ -155,14 +150,11 @@ class ArenaScreenViewModel(
             arenaId = arguments.arenaId,
             applyCombatAction =
             if (isComputerMatch) {
-                performComputerOpponentMatchCombatActionUseCase::invoke
+                computerOpponentHandler::performCombatAction
             } else {
                 performCombatActionUseCase::invoke
             },
         )
-
-    private val computerOpponentHandler =
-        computerOpponentUserId?.let { userId -> ComputerOpponentHandler(computerUserId = userId) }
 
     // TODO(SS-260): Handler for all timer-related operations
     private val arenaTimer =
@@ -257,7 +249,7 @@ class ArenaScreenViewModel(
         computerOpponentJob?.cancel()
 
         if (isComputerMatch) {
-            leaveComputerOpponentMatchUseCase()
+            computerOpponentHandler.leave()
             viewModelScope.launch {
                 _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
                 _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
@@ -315,7 +307,7 @@ class ArenaScreenViewModel(
     fun onStayForAnotherMatch() {
         viewModelScope.launch {
             if (isComputerMatch) {
-                stayInComputerOpponentMatchUseCase()
+                computerOpponentHandler.stayForAnotherMatch()
             } else {
                 stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
             }
@@ -337,7 +329,7 @@ class ArenaScreenViewModel(
                 }
 
                 if (isComputerMatch) {
-                    getComputerOpponentMatchUseCase().collect { updatedArenaMatch ->
+                    computerOpponentHandler.matchFlow.collect { updatedArenaMatch ->
                         updatedArenaMatch.updateScreenState(userId = userId)
                     }
                 } else {
@@ -357,44 +349,66 @@ class ArenaScreenViewModel(
     }
 
     private fun observeComputerOpponentTurns() {
-        val handler = computerOpponentHandler ?: return
+        if (!isComputerMatch) return
 
         computerOpponentJob =
             viewModelScope.launch {
                 uiStateFlow.collectLatest { uiState ->
-                val arenaMatchState =
-                    (uiState as? UiState.Loaded)?.data?.arenaMatchState ?: return@collectLatest
+                    val arenaMatchState =
+                        (uiState as? UiState.Loaded)?.data?.arenaMatchState ?: return@collectLatest
+                    if (arenaMatchState.isAwaitingAnimation()) return@collectLatest
 
-                val decision =
-                    handler.decideTurn(
-                        arenaMatchState = arenaMatchState,
-                        characterClasses = characterClasses,
-                    ) ?: return@collectLatest
-
-                applyComputerOpponentDecision(decision = decision)
+                    val decision = computerOpponentHandler.decideTurn() ?: return@collectLatest
+                    applyComputerOpponentDecision(decision = decision)
+                }
             }
-        }
     }
 
+    private fun ArenaMatchState.isAwaitingAnimation(): Boolean = this is ArenaMatchState.Combat && isActionInFlight
+
     private fun applyComputerOpponentDecision(decision: ComputerOpponentDecision) {
+        val computerUserId = computerOpponentUserId ?: return
+        val arenaMatchState = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState ?: return
+
         when (decision) {
-            is ComputerOpponentDecision.ChooseClass ->
+            is ComputerOpponentDecision.ChooseClass -> {
+                val choosingClasses = arenaMatchState as? ArenaMatchState.ChoosingClasses ?: return
                 onChooseCharacterClass(
-                    playerState = decision.playerState,
-                    characterClassState = decision.characterClassState,
+                    playerState = choosingClasses.playerMap.getValue(key = decision.userId),
+                    characterClassState = decision.characterClass.toState(),
                 )
+            }
 
-            is ComputerOpponentDecision.Attack ->
-                onAttack(attackArguments = decision.attackArguments)
+            is ComputerOpponentDecision.Attack -> {
+                val combat = arenaMatchState as? ArenaMatchState.Combat ?: return
+                onAttack(
+                    attackArguments =
+                    AttackArguments(
+                        targetedOpponentUserId = decision.targetUserId,
+                        userPlayerId = computerUserId,
+                        combatActionState = combat.combatActionState,
+                    ),
+                )
+            }
 
-            is ComputerOpponentDecision.UseAbility ->
-                onUseAbility(useAbilityArguments = decision.useAbilityArguments)
+            is ComputerOpponentDecision.UseAbility -> {
+                val combat = arenaMatchState as? ArenaMatchState.Combat ?: return
+                onUseAbility(
+                    useAbilityArguments =
+                    UseAbilityArguments(
+                        abilityActionState = decision.abilityAction.toAbilityActionState(),
+                        targetedOpponentUserId = decision.targetUserId,
+                        userPlayerId = computerUserId,
+                        combatActionState = combat.combatActionState,
+                    ),
+                )
+            }
         }
     }
 
     private suspend fun finishMatch() {
         if (isComputerMatch) {
-            finishComputerOpponentMatchUseCase()
+            computerOpponentHandler.finishMatch()
         } else {
             finishMatchUseCase(arenaId = arguments.arenaId)
         }

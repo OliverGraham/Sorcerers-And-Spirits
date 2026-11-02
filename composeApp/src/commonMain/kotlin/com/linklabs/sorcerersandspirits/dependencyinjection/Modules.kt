@@ -20,23 +20,17 @@ import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernDataSource
 import com.linklabs.sorcerersandspirits.data.tavern.FirebaseTavernRepository
 import com.linklabs.sorcerersandspirits.data.tavern.TavernDataSource
 import com.linklabs.sorcerersandspirits.domain.arena.ArenaRepository
+import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentIdentity
-import com.linklabs.sorcerersandspirits.domain.arena.local.LocalArenaRepository
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseComputerOpponentMatchClassUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.CoordinateArenaMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.DisconnectArenaPresenceUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.ExitArenaUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishComputerOpponentMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.FinishMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetArenaPresenceFlowUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.GetComputerOpponentMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.LeaveComputerOpponentMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.PerformComputerOpponentMatchCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.RemoveDisconnectedPlayerUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StartComputerOpponentMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayForAnotherMatchUseCase
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.StayInComputerOpponentMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.performcombataction.PerformCombatActionUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.AppleTokenRevoker
@@ -131,8 +125,8 @@ private fun Module.initializeExternalDependencies() {
 
 private fun Module.initializeRepositories() {
     singleOf(::FirebaseArenaRepository) { bind<ArenaRepository>() }
-    singleOf(::LocalArenaRepository)
     singleOf(::ComputerOpponentIdentity)
+    singleOf(::ComputerOpponentHandler)
     singleOf(::DataStoreSessionStore) { bind<SessionStore>() }
     singleOf(::AppsScriptAppleTokenRevoker) { bind<AppleTokenRevoker>() }
     singleOf(::FirebaseAuthenticationRepository) { bind<AuthenticationRepository>() }
@@ -153,14 +147,8 @@ private fun Module.initializeRepositories() {
 
 private fun Module.initializeUseCases() {
     factoryOf(::ChooseCharacterClassUseCase)
-    factoryOf(::ChooseComputerOpponentMatchClassUseCase)
     factoryOf(::CheckAppVersionUseCase)
     factoryOf(::CoordinateArenaMatchUseCase)
-    factoryOf(::FinishComputerOpponentMatchUseCase)
-    factoryOf(::GetComputerOpponentMatchUseCase)
-    factoryOf(::LeaveComputerOpponentMatchUseCase)
-    factoryOf(::PerformComputerOpponentMatchCombatActionUseCase)
-    factoryOf(::StayInComputerOpponentMatchUseCase)
     factoryOf(::ConnectTravelerPresenceUseCase)
     factoryOf(::CreateProfileForCurrentUserUseCase)
     factoryOf(::CreateProfileUseCase)

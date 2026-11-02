@@ -1,4 +1,4 @@
-package com.linklabs.sorcerersandspirits.domain.arena.local
+package com.linklabs.sorcerersandspirits.domain.arena.computeropponent
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.AbilityAction
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
@@ -23,17 +23,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class LocalArenaRepository(private val abilityConfigProvider: AbilityConfigProvider) {
+internal class LocalArenaMatch(private val abilityConfigProvider: AbilityConfigProvider) {
 
     private val _matchFlow = MutableStateFlow<ArenaMatch?>(value = null)
     val matchFlow: StateFlow<ArenaMatch?> = _matchFlow.asStateFlow()
 
     private var messageIdCounter = 0L
 
-    fun createComputerOpponentMatch(
-        userPlayer: ArenaPlayer.Unselected,
-        computerPlayer: ArenaPlayer.Unselected,
-    ) {
+    fun start(userPlayer: ArenaPlayer.Unselected, computerPlayer: ArenaPlayer.Unselected) {
         messageIdCounter = 0L
 
         _matchFlow.value =
@@ -54,7 +51,7 @@ class LocalArenaRepository(private val abilityConfigProvider: AbilityConfigProvi
             )
     }
 
-    fun chooseCharacterClass(
+    suspend fun chooseCharacterClass(
         selectedArenaPlayer: ArenaPlayer.Selected,
         allPlayers: List<ArenaPlayer>,
     ) {
@@ -71,11 +68,10 @@ class LocalArenaRepository(private val abilityConfigProvider: AbilityConfigProvi
         arguments: CombatActionArguments,
         currentAction: CurrentCombatAction,
     ) {
-        val diceRoller = RealDiceRoller(initialBonus = arguments.doublesBonus)
         val outcome =
             PerformCombatAction(
                 arguments = arguments,
-                diceRoller = diceRoller,
+                diceRoller = RealDiceRoller(initialBonus = arguments.doublesBonus),
                 abilityConfig = abilityConfigProvider.getAbilityConfig(),
             )
                 .invoke(currentAction = currentAction)
@@ -107,7 +103,7 @@ class LocalArenaRepository(private val abilityConfigProvider: AbilityConfigProvi
         }
     }
 
-    fun exit() {
+    fun leave() {
         _matchFlow.value = null
     }
 

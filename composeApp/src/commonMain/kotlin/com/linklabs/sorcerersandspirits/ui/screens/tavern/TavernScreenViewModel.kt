@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.screens.tavern
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentIdentity
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassCopyUseCase
 import com.linklabs.sorcerersandspirits.domain.game.usecase.GetCharacterClassesUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
@@ -30,6 +31,7 @@ class TavernScreenViewModel(
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
     private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
+    private val computerOpponentIdentity: ComputerOpponentIdentity,
     private val firstScreenReadySignal: FirstScreenReadySignal,
 ) : ViewModel() {
 
@@ -131,9 +133,22 @@ class TavernScreenViewModel(
         val tavernState =
             data.toState(characterClasses = characterClasses, classCopy = classCopy) ?: return
 
-        _uiStateFlow.value = UiState.Loaded(data = tavernState)
+        _uiStateFlow.value = UiState.Loaded(data = tavernState.withComputerOpponent())
         signalFirstScreenReadyAfterSettle()
     }
+
+    private fun TavernState.withComputerOpponent(): TavernState = copy(
+        otherTravelers = listOf(computerOpponentTraveler()) + otherTravelers,
+    )
+
+    private fun computerOpponentTraveler(): TravelerState = TravelerState(
+        userId = computerOpponentIdentity.userId,
+        displayName = computerOpponentIdentity.displayName,
+        isThisTravelerTheUser = false,
+        tavernStatus = TavernStatus.Available,
+        rating = 0,
+        isComputerOpponent = true,
+    )
 
     private fun signalFirstScreenReadyAfterSettle() {
         if (hasScheduledFirstScreenReady) return

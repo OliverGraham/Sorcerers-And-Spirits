@@ -13,6 +13,7 @@ internal data class ChallengeActions(
     val onDeclineChallenge: (challengeId: String) -> Unit = {},
     val onShowChallengeDialog: () -> Unit = {},
     val onHideChallengeDialog: () -> Unit = {},
+    val onStartComputerOpponentMatch: () -> Unit = {},
 )
 
 internal val LocalChallengeActions = staticCompositionLocalOf { ChallengeActions() }

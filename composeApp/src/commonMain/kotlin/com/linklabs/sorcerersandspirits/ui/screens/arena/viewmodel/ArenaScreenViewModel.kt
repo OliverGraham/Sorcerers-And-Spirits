@@ -2,6 +2,8 @@ package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentDecision
+import com.linklabs.sorcerersandspirits.domain.arena.computeropponent.ComputerOpponentHandler
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaMatch
 import com.linklabs.sorcerersandspirits.domain.arena.model.attackerUserId
 import com.linklabs.sorcerersandspirits.domain.arena.model.lockedTargetUserId
@@ -63,10 +65,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import org.koin.core.annotation.InjectedParam
 import org.koin.core.annotation.KoinViewModel
+import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toState as toAbilityActionState
 
 @KoinViewModel
 class ArenaScreenViewModel(
@@ -87,6 +91,7 @@ class ArenaScreenViewModel(
     private val updateProfileStatsUseCase: UpdateProfileStatsUseCase,
     private val pendingStatsStore: PendingStatsStore,
     private val soundEffectPlayer: SoundEffectPlayer,
+    private val computerOpponentHandler: ComputerOpponentHandler,
 ) : ViewModel() {
 
     private val _eventChannelFlow = Channel<ArenaEvent>()
@@ -101,6 +106,9 @@ class ArenaScreenViewModel(
     private val _selectedOpponentUserIdFlow = MutableStateFlow<String?>(value = null)
     val selectedOpponentUserIdFlow = _selectedOpponentUserIdFlow.asStateFlow()
 
+    private val computerOpponentUserId = arguments.computerOpponentUserId
+    private val isComputerMatch = computerOpponentUserId != null
+
     private val arenaMatchCombatQueue =
         ArenaMatchCombatQueue(
             triggerAnimation = ::triggerAnimation,
@@ -109,7 +117,7 @@ class ArenaScreenViewModel(
             onAnimationsComplete = ::onAnimationsComplete,
             onTeleportRollOffComplete = ::onTeleportRollOffComplete,
             onHeaderAnimationsComplete = ::onHeaderAnimationsComplete,
-            finishMatch = { finishMatchUseCase(arenaId = arguments.arenaId) },
+            finishMatch = ::finishMatch,
         )
 
     // TODO(SS-260): Probably a handler for this
@@ -121,15 +129,31 @@ class ArenaScreenViewModel(
     private val chooseCharacterClassHandler =
         ChooseCharacterClassHandler(
             arenaId = arguments.arenaId,
-            chooseCharacterClassUseCase = chooseCharacterClassUseCase,
+            applyCharacterClassChoice =
+            if (isComputerMatch) {
+                { _, selectedArenaPlayer, allPlayers ->
+                    computerOpponentHandler.chooseCharacterClass(
+                        selectedArenaPlayer = selectedArenaPlayer,
+                        allPlayers = allPlayers,
+                    )
+                }
+            } else {
+                chooseCharacterClassUseCase::invoke
+            },
             sessionStats = sessionStats,
             pendingStatsStore = pendingStatsStore,
+            isStatsEnabled = !isComputerMatch,
         )
 
     private val combatHandler =
         CombatHandler(
             arenaId = arguments.arenaId,
-            performCombatActionUseCase = performCombatActionUseCase,
+            applyCombatAction =
+            if (isComputerMatch) {
+                computerOpponentHandler::performCombatAction
+            } else {
+                performCombatActionUseCase::invoke
+            },
         )
 
     // TODO(SS-260): Handler for all timer-related operations
@@ -142,12 +166,14 @@ class ArenaScreenViewModel(
 
     private var screenStateFlowJob: Job? = null
     private var arenaPresenceFlowJob: Job? = null
+    private var computerOpponentJob: Job? = null
 
     // TODO: Purpose of this? What "ghost false entry"?
     private val exitedDisconnectedPlayerIds = mutableSetOf<String>()
 
     init {
         loadArenaMatch()
+        observeComputerOpponentTurns()
     }
 
     fun retry() {
@@ -220,6 +246,16 @@ class ArenaScreenViewModel(
     fun onConfirmLeaveArena() {
         screenStateFlowJob?.cancel()
         arenaPresenceFlowJob?.cancel()
+        computerOpponentJob?.cancel()
+
+        if (isComputerMatch) {
+            computerOpponentHandler.leave()
+            viewModelScope.launch {
+                _uiStateFlow.updateLoaded { screenState -> screenState.copy(showForfeitDialog = false) }
+                _eventChannelFlow.send(element = ArenaEvent.NavigateBack)
+            }
+            return
+        }
 
         val userKnockedOut = _uiStateFlow.getLoadedStateOrNull()?.isUserPlayerKnockedOut ?: false
         sessionStats.onLeave(userKnockedOut = userKnockedOut)
@@ -270,7 +306,11 @@ class ArenaScreenViewModel(
 
     fun onStayForAnotherMatch() {
         viewModelScope.launch {
-            stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
+            if (isComputerMatch) {
+                computerOpponentHandler.stayForAnotherMatch()
+            } else {
+                stayForAnotherMatchUseCase(arenaId = arguments.arenaId)
+            }
 
             _uiStateFlow.updateLoaded { screenState ->
                 screenState.copy(hasReadiedForNextMatch = true)
@@ -288,18 +328,90 @@ class ArenaScreenViewModel(
                     return@launch
                 }
 
-                // TODO: Should this be nested in screenStateFlowJob?
-                observeArenaPresence(userId = userId)
-
-                coordinateArenaMatchUseCase(
-                    arenaId = arguments.arenaId,
-                    expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
-                )
-                    .catch { _uiStateFlow.value = UiState.Error }
-                    .collect { updatedArenaMatch ->
+                if (isComputerMatch) {
+                    computerOpponentHandler.matchFlow.collect { updatedArenaMatch ->
                         updatedArenaMatch.updateScreenState(userId = userId)
                     }
+                } else {
+                    // TODO: Should this be nested in screenStateFlowJob?
+                    observeArenaPresence(userId = userId)
+
+                    coordinateArenaMatchUseCase(
+                        arenaId = arguments.arenaId,
+                        expectedNumberOfPlayers = arguments.expectedNumberOfPlayers,
+                    )
+                        .catch { _uiStateFlow.value = UiState.Error }
+                        .collect { updatedArenaMatch ->
+                            updatedArenaMatch.updateScreenState(userId = userId)
+                        }
+                }
             }
+    }
+
+    private fun observeComputerOpponentTurns() {
+        if (!isComputerMatch) return
+
+        computerOpponentJob =
+            viewModelScope.launch {
+                uiStateFlow.collectLatest { uiState ->
+                    val arenaMatchState =
+                        (uiState as? UiState.Loaded)?.data?.arenaMatchState ?: return@collectLatest
+                    if (arenaMatchState.isAwaitingAnimation()) return@collectLatest
+
+                    val decision = computerOpponentHandler.decideTurn() ?: return@collectLatest
+                    applyComputerOpponentDecision(decision = decision)
+                }
+            }
+    }
+
+    private fun ArenaMatchState.isAwaitingAnimation(): Boolean = this is ArenaMatchState.Combat && isActionInFlight
+
+    private fun applyComputerOpponentDecision(decision: ComputerOpponentDecision) {
+        val computerUserId = computerOpponentUserId ?: return
+        val arenaMatchState = _uiStateFlow.getLoadedStateOrNull()?.arenaMatchState ?: return
+
+        when (decision) {
+            is ComputerOpponentDecision.ChooseClass -> {
+                val choosingClasses = arenaMatchState as? ArenaMatchState.ChoosingClasses ?: return
+                onChooseCharacterClass(
+                    playerState = choosingClasses.playerMap.getValue(key = decision.userId),
+                    characterClassState = decision.characterClass.toState(),
+                )
+            }
+
+            is ComputerOpponentDecision.Attack -> {
+                val combat = arenaMatchState as? ArenaMatchState.Combat ?: return
+                onAttack(
+                    attackArguments =
+                    AttackArguments(
+                        targetedOpponentUserId = decision.targetUserId,
+                        userPlayerId = computerUserId,
+                        combatActionState = combat.combatActionState,
+                    ),
+                )
+            }
+
+            is ComputerOpponentDecision.UseAbility -> {
+                val combat = arenaMatchState as? ArenaMatchState.Combat ?: return
+                onUseAbility(
+                    useAbilityArguments =
+                    UseAbilityArguments(
+                        abilityActionState = decision.abilityAction.toAbilityActionState(),
+                        targetedOpponentUserId = decision.targetUserId,
+                        userPlayerId = computerUserId,
+                        combatActionState = combat.combatActionState,
+                    ),
+                )
+            }
+        }
+    }
+
+    private suspend fun finishMatch() {
+        if (isComputerMatch) {
+            computerOpponentHandler.finishMatch()
+        } else {
+            finishMatchUseCase(arenaId = arguments.arenaId)
+        }
     }
 
     private fun observeArenaPresence(userId: String) {
@@ -350,9 +462,11 @@ class ArenaScreenViewModel(
         }
 
         // TODO(SS-260): Refactor sessionStats
-        val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
-        if (recordedStat) {
-            persistPendingStats()
+        if (!isComputerMatch) {
+            val recordedStat = sessionStats.onMatchUpdate(match = this, userId = userId)
+            if (recordedStat) {
+                persistPendingStats()
+            }
         }
 
         if (currentScreenState == null) {
@@ -519,6 +633,8 @@ class ArenaScreenViewModel(
     }
 
     private suspend fun flushSessionStats() {
+        if (isComputerMatch) return
+
         val delta = sessionStats.consumeDelta()
         val wasWritten = updateProfileStatsUseCase(delta = delta)
         if (wasWritten || delta.isEmpty) {

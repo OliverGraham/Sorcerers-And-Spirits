@@ -2,6 +2,7 @@ package com.linklabs.sorcerersandspirits.ui.main
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.linklabs.sorcerersandspirits.domain.arena.usecase.StartComputerOpponentMatchUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.ActiveChallenge
 import com.linklabs.sorcerersandspirits.domain.tavern.ChallengerStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetActiveChallengeFlowUseCase
@@ -22,6 +23,7 @@ import org.koin.core.annotation.KoinViewModel
 class ChallengeViewModel(
     private val getActiveChallengeFlowUseCase: GetActiveChallengeFlowUseCase,
     private val updateChallengerStatusUseCase: UpdateChallengerStatusUseCase,
+    private val startComputerOpponentMatchUseCase: StartComputerOpponentMatchUseCase,
 ) : ViewModel() {
 
     private val _challengeStateFlow = MutableStateFlow<ChallengeState?>(value = null)
@@ -43,6 +45,21 @@ class ChallengeViewModel(
 
     init {
         observeActiveChallenge()
+    }
+
+    fun onStartComputerOpponentMatch() {
+        viewModelScope.launch {
+            val computerOpponentMatch = startComputerOpponentMatchUseCase() ?: return@launch
+
+            _navigateToArenaFlow.send(
+                element =
+                ArenaScreenViewModelArguments(
+                    arenaId = computerOpponentMatch.arenaId,
+                    expectedNumberOfPlayers = computerOpponentMatch.expectedNumberOfPlayers,
+                    computerOpponentUserId = computerOpponentMatch.computerOpponentUserId,
+                ),
+            )
+        }
     }
 
     fun onAcceptChallenge(challengeId: String) {

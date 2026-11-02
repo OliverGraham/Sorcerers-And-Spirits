@@ -150,6 +150,7 @@ private fun SorcerersAndSpirits(
                 onDeclineChallenge = challengeViewModel::onDeclineChallenge,
                 onShowChallengeDialog = challengeViewModel::showChallengeDialog,
                 onHideChallengeDialog = challengeViewModel::hideChallengeDialog,
+                onStartComputerOpponentMatch = challengeViewModel::onStartComputerOpponentMatch,
             ),
         LocalChallengeState provides challengeState,
     ) {

@@ -1,7 +1,6 @@
 package com.linklabs.sorcerersandspirits.ui.screens.arena.viewmodel.handlers
 
 import com.linklabs.sorcerersandspirits.domain.arena.model.ArenaPlayer
-import com.linklabs.sorcerersandspirits.domain.arena.usecase.ChooseCharacterClassUseCase
 import com.linklabs.sorcerersandspirits.domain.profile.PendingStatsStore
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassState
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toDomain
@@ -14,9 +13,14 @@ import com.linklabs.sorcerersandspirits.ui.screens.arena.model.toDomain
 /** To be used when the [ArenaMatchState] is [ArenaMatchState.ChoosingClasses] */
 internal class ChooseCharacterClassHandler(
     private val arenaId: String,
-    private val chooseCharacterClassUseCase: ChooseCharacterClassUseCase,
+    private val applyCharacterClassChoice: suspend (
+        arenaId: String,
+        selectedArenaPlayer: ArenaPlayer.Selected,
+        allPlayers: List<ArenaPlayer>,
+    ) -> Unit,
     private val sessionStats: ArenaSessionStats,
     private val pendingStatsStore: PendingStatsStore,
+    private val isStatsEnabled: Boolean = true,
 ) {
     fun selectCharacterClass(
         screenState: ArenaScreenState,
@@ -65,16 +69,18 @@ internal class ChooseCharacterClassHandler(
                 characterClass = characterClassState.toDomain(),
             )
 
-        chooseCharacterClassUseCase(
-            arenaId = arenaId,
-            selectedArenaPlayer = selectedArenaPlayer,
-            allPlayers = arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
+        applyCharacterClassChoice(
+            arenaId,
+            selectedArenaPlayer,
+            arenaState.otherPlayers.values.map { it.toDomain() } + selectedArenaPlayer,
         )
 
-        val recordedStat =
-            sessionStats.onClassSelected(classType = selectedArenaPlayer.characterClass.type)
-        if (recordedStat) {
-            pendingStatsStore.save(delta = sessionStats.peekDelta())
+        if (isStatsEnabled) {
+            val recordedStat =
+                sessionStats.onClassSelected(classType = selectedArenaPlayer.characterClass.type)
+            if (recordedStat) {
+                pendingStatsStore.save(delta = sessionStats.peekDelta())
+            }
         }
 
         return true

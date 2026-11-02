@@ -26,6 +26,7 @@ data class TravelerState(
     val isThisTravelerTheUser: Boolean,
     val tavernStatus: TavernStatus,
     val rating: Long,
+    val isComputerOpponent: Boolean = false,
 )
 
 @Immutable

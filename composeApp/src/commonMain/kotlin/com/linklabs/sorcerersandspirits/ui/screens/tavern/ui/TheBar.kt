@@ -19,11 +19,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.ui.common.AppButton
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.ChallengeActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActionsProvider
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TravelerState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.preview.exampleOtherTravelers
@@ -63,17 +66,35 @@ internal fun TheBar(
 ) {
     var selectedUserIds by remember { mutableStateOf(setOf<String>()) }
     var searchQuery by remember { mutableStateOf("") }
+    var isComputerOpponentDialogShown by remember { mutableStateOf(value = false) }
 
     // A traveler can only be challenged while present in the Tavern and available, so selections of
     // travelers who have since left or become busy drop out of the count and the outgoing
     // challenge. Selection is derived from the full list rather than the search-filtered one, so a
-    // traveler that is picked and then filtered out of view stays in the outgoing challenge.
+    // traveler that is picked and then filtered out of view stays in the outgoing challenge. The
+    // computer opponent is never part of a human challenge, so it can never join the selection.
     val selectedTravelers =
         otherTravelers
             .filter { traveler ->
-                traveler.userId in selectedUserIds && traveler.tavernStatus != TavernStatus.Busy
+                val isSelectable =
+                    !traveler.isComputerOpponent && traveler.tavernStatus != TavernStatus.Busy
+                traveler.userId in selectedUserIds && isSelectable
             }
             .toSet()
+
+    val isUserBusy = userTraveler.tavernStatus == TavernStatus.Busy
+
+    if (isComputerOpponentDialogShown) {
+        val onStartComputerOpponentMatch =
+            ChallengeActionsProvider.current.onStartComputerOpponentMatch
+        ComputerOpponentConfirmDialog(
+            onConfirm = {
+                isComputerOpponentDialogShown = false
+                onStartComputerOpponentMatch()
+            },
+            onDismiss = { isComputerOpponentDialogShown = false },
+        )
+    }
 
     val trimmedQuery = searchQuery.trim()
     val visibleTravelers =
@@ -100,6 +121,9 @@ internal fun TheBar(
                     } else {
                         selectedUserIds + traveler.userId
                     }
+            },
+            onComputerOpponentClick = {
+                if (!isUserBusy) isComputerOpponentDialogShown = true
             },
             modifier = Modifier.weight(weight = 1f),
         )
@@ -136,6 +160,7 @@ private fun BarFolk(
     searchQuery: String,
     selectedUserIds: Set<String>,
     onToggleTraveler: (TravelerState) -> Unit,
+    onComputerOpponentClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -189,6 +214,7 @@ private fun BarFolk(
                     searchQuery = searchQuery,
                     selectedUserIds = selectedUserIds,
                     onToggleTraveler = onToggleTraveler,
+                    onComputerOpponentClick = onComputerOpponentClick,
                 )
             }
         }
@@ -201,6 +227,7 @@ private fun TravelerResults(
     searchQuery: String,
     selectedUserIds: Set<String>,
     onToggleTraveler: (TravelerState) -> Unit,
+    onComputerOpponentClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val isSearchWithoutMatches = searchQuery.isNotEmpty() && travelers.isEmpty()
@@ -221,10 +248,17 @@ private fun TravelerResults(
         }
 
         travelers.forEach { travelerState ->
-            travelerState.ToCard(
-                isSelected = travelerState.userId in selectedUserIds,
-                onClick = { onToggleTraveler(travelerState) },
-            )
+            if (travelerState.isComputerOpponent) {
+                ComputerOpponentCard(
+                    displayName = travelerState.displayName,
+                    onClick = onComputerOpponentClick,
+                )
+            } else {
+                travelerState.ToCard(
+                    isSelected = travelerState.userId in selectedUserIds,
+                    onClick = { onToggleTraveler(travelerState) },
+                )
+            }
         }
     }
 }
@@ -338,6 +372,68 @@ private fun UnselectedTravelerCard(
             fontWeight = FontWeight.Normal,
         )
     }
+}
+
+@Composable
+private fun ComputerOpponentCard(
+    displayName: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.travelerCardSize(),
+        shape = MaterialTheme.shapes.medium,
+        border = BorderStroke(width = 2.dp, color = MaterialTheme.colorScheme.tertiary),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors =
+        CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        ),
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(space = 2.dp),
+        ) {
+            Text(
+                text = displayName,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+
+            Text(
+                text = "Practice fight • No rating",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun ComputerOpponentConfirmDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = modifier,
+        title = { Text(text = "Start a practice fight?") },
+        text = {
+            Text(
+                text =
+                "You're about to brawl with a very inebriated patron — a practice opponent to " +
+                    "test out arena combat. You won't gain or lose any rating, win or lose.",
+            )
+        },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(text = "Fight") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(text = "Cancel") } },
+    )
 }
 
 private fun Modifier.travelerCardSize(): Modifier = fillMaxWidth().padding(horizontal = 20.dp)

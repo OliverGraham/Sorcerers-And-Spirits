@@ -64,6 +64,7 @@ class AppViewModelTest {
     private val signOutUseCase: SignOutUseCase = mockk(relaxed = true)
     private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase =
         mockk(relaxed = true)
+    private val firstScreenReadySignal = FirstScreenReadySignal()
 
     private val profileFlow = MutableStateFlow<Profile?>(null)
     private val isOnlineFlow = MutableStateFlow(value = true)
@@ -103,6 +104,7 @@ class AppViewModelTest {
         signInWithSocialUseCase = signInWithSocialUseCase,
         signOutUseCase = signOutUseCase,
         syncArenaMembershipOnConnectUseCase = syncArenaMembershipOnConnectUseCase,
+        firstScreenReadySignal = firstScreenReadySignal,
     )
 
     private fun UiState<AppState>.loaded(): AppState = assertIs<UiState.Loaded<AppState>>(value = this).data

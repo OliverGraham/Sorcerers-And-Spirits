@@ -1,6 +1,5 @@
 package com.linklabs.sorcerersandspirits.ui.common.characterclasses
 
-import androidx.compose.ui.unit.dp
 import com.linklabs.sorcerersandspirits.domain.game.AbilityCopy
 import com.linklabs.sorcerersandspirits.domain.game.CharacterClassCopy
 import com.linklabs.sorcerersandspirits.domain.game.ClassCopyKeys
@@ -11,8 +10,6 @@ import sorcerersandspirits.composeapp.generated.resources.ic_defensive_ability
 import sorcerersandspirits.composeapp.generated.resources.ic_hit_points
 import sorcerersandspirits.composeapp.generated.resources.ic_offensive_ability
 import sorcerersandspirits.composeapp.generated.resources.ic_speed
-
-internal val STAT_ICON_SIZE = 28.dp
 
 internal data class AvatarStat(
     val icon: DrawableResource,

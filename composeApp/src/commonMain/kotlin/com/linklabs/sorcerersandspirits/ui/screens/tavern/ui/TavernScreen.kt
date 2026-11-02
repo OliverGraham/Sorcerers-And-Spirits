@@ -55,6 +55,7 @@ import com.linklabs.sorcerersandspirits.ui.main.navigation.LocalOpenDrawer
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalChallengeState
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.LocalTavernActions
+import com.linklabs.sorcerersandspirits.ui.screens.tavern.TAVERN_CONTENT_FADE_MILLIS
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernActions
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernEvent
 import com.linklabs.sorcerersandspirits.ui.screens.tavern.TavernScreenViewModel
@@ -79,7 +80,6 @@ import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_send_
 import sorcerersandspirits.composeapp.generated.resources.tavern_challenge_travelers_unavailable
 
 private const val TAVERN_CONTENT_CROSSFADE_LABEL = "tavernContentCrossfade"
-private const val TAVERN_CONTENT_FADE_MILLIS = 1000
 
 @Composable
 internal fun TavernScreen(

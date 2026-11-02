@@ -24,6 +24,7 @@ import com.linklabs.sorcerersandspirits.domain.version.usecase.CheckAppVersionUs
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import com.linklabs.sorcerersandspirits.ui.uistate.updateLoaded
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -50,10 +51,16 @@ class AppViewModel(
     private val signInWithSocialUseCase: SignInWithSocialUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase,
+    private val firstScreenReadySignal: FirstScreenReadySignal,
 ) : ViewModel() {
 
     private val _uiStateFlow = MutableStateFlow<UiState<AppState>>(value = UiState.Loading)
     val uiStateFlow = _uiStateFlow.asStateFlow()
+
+    val canRevealContentFlow: Flow<Boolean> =
+        combine(flow = _uiStateFlow, flow2 = firstScreenReadySignal.isReady) { uiState, isFirstScreenReady ->
+            canRevealContent(uiState = uiState, isFirstScreenReady = isFirstScreenReady)
+        }
 
     private val _appUpgradeStatusFlow = MutableStateFlow(value = AppUpgradeStatus.UP_TO_DATE)
     val appUpgradeStatusFlow = _appUpgradeStatusFlow.asStateFlow()
@@ -71,6 +78,12 @@ class AppViewModel(
         viewModelScope.launch { flushPendingStatsUseCase() }
 
         loadScreenState()
+    }
+
+    private fun canRevealContent(uiState: UiState<AppState>, isFirstScreenReady: Boolean): Boolean = when (uiState) {
+        is UiState.Loading -> false
+        is UiState.Error -> true
+        is UiState.Loaded -> uiState.data.showSignInDialog || isFirstScreenReady
     }
 
     fun onDismissUpdateNudge() {

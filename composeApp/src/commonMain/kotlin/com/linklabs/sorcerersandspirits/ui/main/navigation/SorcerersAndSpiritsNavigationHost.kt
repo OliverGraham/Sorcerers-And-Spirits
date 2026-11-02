@@ -28,7 +28,6 @@ import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.OfflineBanner
 import com.linklabs.sorcerersandspirits.ui.main.AppViewModel
 import com.linklabs.sorcerersandspirits.ui.main.ChallengeViewModel
-import com.linklabs.sorcerersandspirits.ui.main.FirstScreenReadySignal
 import com.linklabs.sorcerersandspirits.ui.main.splash.SplashGate
 import com.linklabs.sorcerersandspirits.ui.main.ui.AppUpgradeDialog
 import com.linklabs.sorcerersandspirits.ui.main.ui.SettingsDrawer
@@ -40,7 +39,6 @@ import com.linklabs.sorcerersandspirits.ui.screens.tavern.ui.ChallengeDialog
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import sorcerersandspirits.composeapp.generated.resources.Res
 import sorcerersandspirits.composeapp.generated.resources.link_account_error_credential_in_use
@@ -55,14 +53,7 @@ internal fun SorcerersAndSpiritsNavigationHost(
 ) {
     val uiState by viewModel.uiStateFlow.collectAsState()
     val appUpgradeStatus by viewModel.appUpgradeStatusFlow.collectAsState()
-    val firstScreenReadySignal = koinInject<FirstScreenReadySignal>()
-    val isFirstScreenReady by firstScreenReadySignal.isReady.collectAsState()
-
-    val loadedState = uiState as? UiState.Loaded
-    val isSignInRequired = loadedState?.data?.showSignInDialog == true
-    val isAppReady = uiState !is UiState.Loading
-    val isWaitingForFirstScreen = loadedState != null && !isSignInRequired && !isFirstScreenReady
-    val canRevealContent = isAppReady && !isWaitingForFirstScreen
+    val canRevealContent by viewModel.canRevealContentFlow.collectAsState(initial = false)
 
     SplashGate(canRevealContent = canRevealContent, modifier = modifier) { isContentRevealed ->
         when (val state = uiState) {

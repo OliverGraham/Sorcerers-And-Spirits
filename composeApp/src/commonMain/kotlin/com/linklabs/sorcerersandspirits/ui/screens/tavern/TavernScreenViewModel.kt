@@ -15,6 +15,7 @@ import com.linklabs.sorcerersandspirits.ui.main.FirstScreenReadySignal
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
@@ -44,6 +45,8 @@ class TavernScreenViewModel(
     private var tavernDataJob: Job? = null
 
     private var lastChallengeAttempt: ChallengeAttempt? = null
+
+    private var hasScheduledFirstScreenReady = false
 
     init {
         loadTavernData()
@@ -129,9 +132,20 @@ class TavernScreenViewModel(
             data.toState(characterClasses = characterClasses, classCopy = classCopy) ?: return
 
         _uiStateFlow.value = UiState.Loaded(data = tavernState)
-        firstScreenReadySignal.markReady()
+        signalFirstScreenReadyAfterSettle()
+    }
+
+    private fun signalFirstScreenReadyAfterSettle() {
+        if (hasScheduledFirstScreenReady) return
+        hasScheduledFirstScreenReady = true
+        viewModelScope.launch {
+            delay(timeMillis = TAVERN_CONTENT_FADE_MILLIS.toLong())
+            firstScreenReadySignal.markReady()
+        }
     }
 }
+
+internal const val TAVERN_CONTENT_FADE_MILLIS = 1000
 
 private data class ChallengeAttempt(
     val userTraveler: TravelerState,

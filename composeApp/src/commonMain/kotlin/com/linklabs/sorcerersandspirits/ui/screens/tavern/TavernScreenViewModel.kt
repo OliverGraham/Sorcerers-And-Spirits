@@ -11,6 +11,7 @@ import com.linklabs.sorcerersandspirits.domain.tavern.TavernStatus
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.GetTavernDataFlowUseCase
 import com.linklabs.sorcerersandspirits.domain.tavern.usecase.SendChallengeUseCase
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.toState
+import com.linklabs.sorcerersandspirits.ui.main.FirstScreenReadySignal
 import com.linklabs.sorcerersandspirits.ui.uistate.UiState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -28,6 +29,7 @@ class TavernScreenViewModel(
     private val sendChallengeUseCase: SendChallengeUseCase,
     private val getCharacterClassesUseCase: GetCharacterClassesUseCase,
     private val getCharacterClassCopyUseCase: GetCharacterClassCopyUseCase,
+    private val firstScreenReadySignal: FirstScreenReadySignal,
 ) : ViewModel() {
 
     private val characterClasses by lazy { getCharacterClassesUseCase().map { it.toState() } }
@@ -114,7 +116,10 @@ class TavernScreenViewModel(
             viewModelScope.launch {
                 getTavernDataFlowUseCase()
                     .filterNotNull()
-                    .catch { _uiStateFlow.value = UiState.Error }
+                    .catch {
+                        _uiStateFlow.value = UiState.Error
+                        firstScreenReadySignal.markReady()
+                    }
                     .collect { data -> updateScreenState(data = data) }
             }
     }
@@ -124,6 +129,7 @@ class TavernScreenViewModel(
             data.toState(characterClasses = characterClasses, classCopy = classCopy) ?: return
 
         _uiStateFlow.value = UiState.Loaded(data = tavernState)
+        firstScreenReadySignal.markReady()
     }
 }
 

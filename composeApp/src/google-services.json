@@ -15,11 +15,43 @@
       },
       "oauth_client": [
         {
+          "client_id": "848564605750-26ig5bend4a3vkmkulbqcqunc9ji5aqa.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linklabs.sorcerersandspirits",
+            "certificate_hash": "e07b1e0471f088a0e7697ac2b93bc3459dd1fc53"
+          }
+        },
+        {
           "client_id": "848564605750-3h0pud7tqcans6sqo8pc2tpodilk306v.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.linklabs.sorcerersandspirits",
             "certificate_hash": "8fa473ada86b3d5d4e7878a9e5e2af6e8267cc44"
+          }
+        },
+        {
+          "client_id": "848564605750-5vegeb59fofvdss243bsln9nq9if1r5i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linklabs.sorcerersandspirits",
+            "certificate_hash": "ce3412f1813cb5596b16ddb12d4f5208f8e221d5"
+          }
+        },
+        {
+          "client_id": "848564605750-a8vpi27u18n6f1bu280qbmiitq4sa3of.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linklabs.sorcerersandspirits",
+            "certificate_hash": "1f6bd92a7ca60166fda250608170d08a663cdae9"
+          }
+        },
+        {
+          "client_id": "848564605750-trbfqf41q24lnmnjphsm5m5jemhe3232.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.linklabs.sorcerersandspirits",
+            "certificate_hash": "acb01da319128862df656f4a70b8bc0c7d2df9a2"
           }
         },
         {

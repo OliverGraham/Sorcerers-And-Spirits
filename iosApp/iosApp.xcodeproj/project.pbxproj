@@ -14,7 +14,6 @@
 		4892F1632E8A2361000068FB /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1622E8A2361000068FB /* FirebaseFirestore */; };
 		4892F1652E8A2361000068FB /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = 4892F1642E8A2361000068FB /* FirebaseFirestoreCombine-Community */; };
 		4892F1862E8A3820000068FB /* ComposeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; };
-		4892F1872E8A3820000068FB /* ComposeApp.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 4892F1852E8A3820000068FB /* ComposeApp.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AA11AA11AA11AA11AA110001 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = AA11AA11AA11AA11AA110002 /* GoogleSignIn */; };
 		BB22BB22BB22BB22BB220001 /* FirebaseRemoteConfig in Frameworks */ = {isa = PBXBuildFile; productRef = BB22BB22BB22BB22BB220002 /* FirebaseRemoteConfig */; };
 		CC33CC33CC33CC33CC330001 /* FirebaseCrashlytics in Frameworks */ = {isa = PBXBuildFile; productRef = CC33CC33CC33CC33CC330002 /* FirebaseCrashlytics */; };
@@ -27,7 +26,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				4892F1872E8A3820000068FB /* ComposeApp.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -40,7 +38,7 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		2E0652165E4080E4BA2C86B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+		2E0652165E4080E4BA2C86B1 /* Exceptions for "iosApp" folder in "iosApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
@@ -53,21 +51,13 @@
 		3250F55DD3BC8B5EDF8470D4 /* iosApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				2E0652165E4080E4BA2C86B1 /* PBXFileSystemSynchronizedBuildFileExceptionSet */,
-			);
-			explicitFileTypes = {
-			};
-			explicitFolders = (
+				2E0652165E4080E4BA2C86B1 /* Exceptions for "iosApp" folder in "iosApp" target */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
 		};
 		CD5C5D3459C18CEE4D44CF1A /* Configuration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			explicitFileTypes = {
-			};
-			explicitFolders = (
-			);
 			path = Configuration;
 			sourceTree = "<group>";
 		};
@@ -320,9 +310,9 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
@@ -335,9 +325,10 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Debug;
 		};
@@ -414,9 +405,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = iosApp/iosApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				CODE_SIGN_STYLE = Manual;
 				DEVELOPMENT_ASSET_PATHS = "\"iosApp/Preview Content\"";
-				DEVELOPMENT_TEAM = "${TEAM_ID}";
+				DEVELOPMENT_TEAM = "";
+				"DEVELOPMENT_TEAM[sdk=iphoneos*]" = 3PGNWL9JD2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
@@ -429,9 +422,11 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				"PROVISIONING_PROFILE_SPECIFIER[sdk=iphoneos*]" = "SorcerersAndSpirits App Store";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = "1";
 			};
 			name = Release;
 		};

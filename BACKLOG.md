@@ -20,28 +20,29 @@ are archived in [COMPLETED.md](COMPLETED.md).
 ### SS-289 — Release-readiness tracker (what gates shipping)
 
 - [ ] Not completed — **the single release ticket; absorbs former SS-290 (build config) and SS-291
-  (store assets) so there is one place to track shipping.**
+  (store assets). Android SUBMITTED to Play review 2026-11-02; iOS release remains (separate track).**
 - **Purpose:** One place that captures everything that must be true before Sorcerers and Spirits
-  ships, so a future session starts without re-auditing. Releasing Android-first.
-- **Hard blockers (must land before release):**
-    - **Store auth config (SS-088 / SS-089, iOS-gated).** Sign in with Apple is *mandatory* at App
-      Store review (Guideline 4.8) once Google is offered on iOS; blocked on the $99 Apple Developer
-      enrollment done at release time, plus the iOS Google `REVERSED_CLIENT_ID` URL-scheme wiring.
-      **Android can ship without the iOS pieces.**
-    - **Android SHA fingerprints — DONE.** Play app-signing + upload SHA-1/SHA-256 registered in
-      Firebase; refreshed `google-services.json` committed.
-    - **Release build config (absorbs SS-290).** DONE: upload keystore + `keystore.properties`,
+  ships, so a future session starts without re-auditing. Shipped Android-first; iOS follows.
+- **Android — DONE / submitted to Google Play review (2026-11-02):**
+    - **SHA fingerprints — DONE.** Play app-signing + upload SHA-1/SHA-256 registered in Firebase;
+      `google-services.json` in sync.
+    - **Release build config (absorbs SS-290) — DONE.** Upload keystore + `keystore.properties`,
       release `signingConfig`, `isMinifyEnabled`/`isShrinkResources`, `proguard-rules.pro`,
       `res/raw/keep.xml`, native debug symbols (`debugSymbolLevel = "FULL"`),
-      `versionCode`/`versionName`; signed release AAB built. Remaining (external): on-device
-      arena/config-fetch/Google-sign-in pass on the Play build; iOS Release config.
-    - **Store listing assets (absorbs SS-291).** DONE: final app icon (all Android densities +
-      adaptive + iOS AppIcon), 512 icon, feature graphic, short + full description, data-safety
-      answers — all in `~/Desktop/SorcerersAndSpirits-ReleaseAssets/`. Remaining: phone screenshots
-      (portrait, per the SS-082 lock — in progress), content-rating questionnaire, iOS App Store
-      assets.
-    - ~~**SS-297 — Google Play web deletion link**~~ — page shipped; only the Play Console Data safety
-      deletion questions remain (external, at submission).
+      `versionCode`/`versionName`; signed release AAB built and uploaded.
+    - **Store listing (absorbs SS-291) — DONE.** App icon (all Android densities + adaptive), 512
+      icon, feature graphic, short + full description, screenshots, data safety, content rating,
+      privacy-policy + account-deletion URLs — all submitted. Draft assets held in
+      `~/Desktop/SorcerersAndSpirits-ReleaseAssets/`.
+    - Remaining (external): watch the review verdict; on-device Google-sign-in/arena smoke-test on the
+      Play build once live.
+- **iOS — remaining hard blockers (separate release track):**
+    - **Store auth config (SS-088 / SS-089).** Sign in with Apple is *mandatory* at App Store review
+      (Guideline 4.8) once Google is offered on iOS; blocked on the $99 Apple Developer enrollment done
+      at release time, plus the iOS Google `REVERSED_CLIENT_ID` URL-scheme wiring.
+    - iOS Release config (bundle id, signing team, marketing/build version); iOS App Store listing
+      assets (screenshots per device sizes, name/subtitle, keywords, description, support URL, age
+      rating).
 - **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207,
   SS-265), the combat/message refactors (SS-257–262), stats/achievements (SS-127), credits polish
   (SS-282), audio (SS-134 + SS-217…SS-221), remaining small-phone tuning (SS-080), config

@@ -1371,6 +1371,11 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Release & versioning
 
+- **SS-289** — Release-readiness tracker (what gates shipping): Single ticket gating launch (absorbed
+  SS-290 build config + SS-291 store assets). Android submitted to Play review 2026-11-02; iOS submitted
+  to App Store review 2026-11-03 (Xcode 26 / iOS 26 SDK build, iPhone-only, manual App Store signing,
+  full ASC listing + App Privacy labels). Both platforms submitted — review verdicts are external
+  follow-up.
 - **SS-297** — Google Play web account-deletion resource: Added `account-deletion.html` to the public
   config repo (GitHub Pages), served at
   `https://olivergraham.github.io/sorcerers-and-spirits-config/account-deletion.html` — documents the

@@ -19,22 +19,27 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ### SS-289 — Release-readiness tracker (what gates shipping)
 
-- [ ] Not completed — **umbrella; the single place to re-read when picking release work back up.**
-- **Purpose:** Capture, in one ticket, everything that must be true before Sorcerers and Spirits
-  ships, so a future session can start immediately without re-auditing the backlog. This ticket does
-  no work itself; it points at the blockers and confirms what is *not* a blocker.
-- **Hard blockers (must land before any release):**
-    - **SS-088 / SS-089 — store auth config (iOS-gated).** Sign in with Apple is *mandatory* at App
+- [ ] Not completed — **the single release ticket; absorbs former SS-290 (build config) and SS-291
+  (store assets) so there is one place to track shipping.**
+- **Purpose:** One place that captures everything that must be true before Sorcerers and Spirits
+  ships, so a future session starts without re-auditing. Releasing Android-first.
+- **Hard blockers (must land before release):**
+    - **Store auth config (SS-088 / SS-089, iOS-gated).** Sign in with Apple is *mandatory* at App
       Store review (Guideline 4.8) once Google is offered on iOS; blocked on the $99 Apple Developer
-      enrollment done at release time. Also register release/Play SHA-1 + SHA-256 fingerprints
-      (Android) and finish the iOS Google `REVERSED_CLIENT_ID` URL-scheme wiring. **Android can ship
-      without the iOS pieces**; only the Play SHA fingerprints block an Android store release.
-    - **SS-290 — release signing + R8/minify + version bump.** Code work done (upload keystore +
-      `keystore.properties`, release `signingConfig`, `isMinifyEnabled`/`isShrinkResources`,
-      `proguard-rules.pro`, `res/raw/keep.xml`); verified a signed release APK builds and runs
-      (launch + anonymous sign-in). Remaining (external): on-device arena/config-fetch/Google-sign-in
-      pass, iOS Release config, and SHA registration (SS-088).
-    - **SS-291 — store listing assets + final app icon.** (untracked until now)
+      enrollment done at release time, plus the iOS Google `REVERSED_CLIENT_ID` URL-scheme wiring.
+      **Android can ship without the iOS pieces.**
+    - **Android SHA fingerprints — DONE.** Play app-signing + upload SHA-1/SHA-256 registered in
+      Firebase; refreshed `google-services.json` committed.
+    - **Release build config (absorbs SS-290).** DONE: upload keystore + `keystore.properties`,
+      release `signingConfig`, `isMinifyEnabled`/`isShrinkResources`, `proguard-rules.pro`,
+      `res/raw/keep.xml`, native debug symbols (`debugSymbolLevel = "FULL"`),
+      `versionCode`/`versionName`; signed release AAB built. Remaining (external): on-device
+      arena/config-fetch/Google-sign-in pass on the Play build; iOS Release config.
+    - **Store listing assets (absorbs SS-291).** DONE: final app icon (all Android densities +
+      adaptive + iOS AppIcon), 512 icon, feature graphic, short + full description, data-safety
+      answers — all in `~/Desktop/SorcerersAndSpirits-ReleaseAssets/`. Remaining: phone screenshots
+      (portrait, per the SS-082 lock — in progress), content-rating questionnaire, iOS App Store
+      assets.
     - ~~**SS-297 — Google Play web deletion link**~~ — page shipped; only the Play Console Data safety
       deletion questions remain (external, at submission).
 - **Explicitly NOT blockers (ship-quality, punt to post-launch):** animation polish (SS-207,
@@ -43,50 +48,8 @@ are archived in [COMPLETED.md](COMPLETED.md).
   single-source/offline-cache (SS-287, SS-288).
 - **Correctly deferred:** landscape/wide reflow (SS-083, SS-286) is parked behind the portrait lock
   (SS-082) — do not reopen for launch.
-- **Note:** As each child blocker closes, tick it here; SS-289 closes when every hard blocker above is
-  done (per platform — an Android-first release closes the Android-relevant set).
-
-### SS-290 — Release build config: signing, R8/minify, version bump
-
-- [ ] Not completed
-- **Problem:** `composeApp/build.gradle.kts` ships an unreleasable `release` build type —
-  `isMinifyEnabled = false`, **no `signingConfig`** (release build is unsigned / falls back to debug),
-  and `versionCode = 1` / `versionName = "1.0"` are untouched defaults.
-- **Do:**
-    - Add a release `signingConfig` sourced from a keystore via env/`local.properties` (never commit
-      the keystore or its passwords); wire it into `buildTypes.release`. For Android store submission
-      rely on Play App Signing — this is the upload key.
-    - Turn on `isMinifyEnabled = true` (+ `isShrinkResources = true`) and add
-      `proguard-rules.pro`; keep rules for Firebase/GitLive, Ktor, kotlinx-serialization, Koin, and
-      any reflectively-accessed types (`default_web_client_id` is read reflectively —
-      `AndroidSocialSignInProvider`). Verify a release build runs end-to-end (sign-in, arena match,
-      config fetch) before trusting the shrink.
-    - Bump `versionCode`/`versionName` to the intended first-release values.
-    - iOS: confirm the Release configuration's bundle id, signing team, and marketing/build version
-      are release-ready (coordinate with SS-089's Apple enrollment).
-- **Source:** `composeApp/build.gradle.kts` (`buildTypes`, `defaultConfig`), new
-  `composeApp/proguard-rules.pro`. Related: SS-088 (SHA fingerprints for the release key), SS-289.
-
-### SS-291 — Store listing assets + final app icon
-
-- [ ] Not completed
-- **Problem:** No store-submission assets exist, and the Android launcher icon
-  (`androidMain/res/mipmap-*/ic_launcher*`, adaptive `mipmap-anydpi-v26`) has not been confirmed as
-  final art vs. a template.
-- **Do:**
-    - ~~Confirm/replace the app icon with final art across all densities + the adaptive
-      foreground/background layers; add the iOS `AppIcon` asset set (all required sizes).~~ **Done** —
-      final art generated from `master_icon.png` (1024²) across all Android densities (legacy square +
-      circular round + adaptive foreground fit to safe zone over a solid-black background layer) and the
-      iOS `AppIcon` 1024; verified on Android and iOS.
-    - Produce Play Store listing assets: ~~512×512 icon, feature graphic~~ **(done — generated from
-      `master_icon.png`; held in `~/Desktop/SorcerersAndSpirits-ReleaseAssets/` for console upload, not
-      in the repo)**, phone screenshots (portrait, per the SS-082 lock), short + full description,
-      category, content rating questionnaire.
-    - Produce App Store listing assets: screenshots per required device sizes, name/subtitle,
-      keywords, description, support URL, age rating.
-- **Source:** `composeApp/src/androidMain/res/mipmap-*`, `iosApp` asset catalog; external store
-  consoles. Asset-prep discipline per [[downsample-figma-raster-assets]]. Related: SS-289.
+- **Note:** SS-289 closes when every hard blocker above is done (per platform — an Android-first
+  release closes the Android-relevant set).
 
 ---
 

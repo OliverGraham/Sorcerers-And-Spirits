@@ -225,6 +225,26 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Config & Infrastructure
 
+### SS-304 — Make the GitHub repo public (for portfolio/employer visibility)
+
+- [ ] Not completed
+- **Goal:** Flip `OliverGraham/Sorcerers-And-Spirits` from private to public so potential employers
+  can view the code. Low priority / nice-to-have — the repo is a closer for an interview that already
+  exists, not a way to generate interviews.
+- **Pre-flip verification (credentials already confirmed safe — no keys/keystores/service accounts in
+  tree or history; Apple-revocation secrets externalized to Apps Script properties; bundled config
+  ships empty secrets):**
+    - **Firebase App Check is enforced** for Realtime Database + Firestore — this is the real
+      protection once `google-services.json` / `GoogleService-Info.plist` are public, since those
+      configs are already extractable from any shipped binary.
+    - Review which **auth providers** are enabled; if Anonymous auth is on, `auth != null` is a very
+      low bar against the broad `ArenaMatches` / `Challenges` read-write rules.
+    - Confirm comfort with the **game design, combat tuning, and code** being publicly readable and
+      the committed **placeholder assets** being redistributable.
+- **Done when:** the above are verified and the repo visibility is set to public.
+- **Related:** security rules are now version-controlled (`firebase.json`, `database.rules.json`,
+  `firestore.rules`); the README was rewritten to frame the project for readers.
+
 ### SS-287 — Single source of truth for config JSON (stop hand-maintaining two copies)
 
 - [ ] Not completed

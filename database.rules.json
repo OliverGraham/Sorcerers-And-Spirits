@@ -1,0 +1,48 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "ArenaMatches": {
+      "$arenaId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "ArenaPresence": {
+      "$arenaId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "ArenaMembership": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "auth != null && auth.uid === $userId"
+      }
+    },
+
+    "Challenges": {
+      "$challengeId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "ChallengeMailboxes": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "TavernTravelers": {
+      ".read": "auth != null",
+      "$userId": {
+        ".write": "auth != null && auth.uid === $userId"
+      }
+    }
+  }
+}

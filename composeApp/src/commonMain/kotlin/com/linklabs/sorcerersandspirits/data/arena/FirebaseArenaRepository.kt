@@ -181,11 +181,20 @@ class FirebaseArenaRepository(
     }
 
     override suspend fun syncArenaMembershipOnConnect(userId: String) {
-        val orphanedArenaId = arenaMembershipReference.child(path = userId).awaitNullableString()
+        val orphanedArenaId =
+            try {
+                arenaMembershipReference.child(path = userId).awaitNullableString()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                return
+            }
         if (orphanedArenaId.isNullOrBlank()) return
 
         try {
             exitArena(arenaId = orphanedArenaId, userId = userId)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (_: Exception) {
             releaseArenaMembership(arenaId = orphanedArenaId, userId = userId)
             deleteMatchIfUndecodable(arenaId = orphanedArenaId)
@@ -197,6 +206,8 @@ class FirebaseArenaRepository(
         val snapshot =
             try {
                 matchReference.valueEvents.first()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
             } catch (_: Exception) {
                 return
             }

@@ -5,6 +5,7 @@ import com.linklabs.sorcerersandspirits.data.arena.model.ArenaMessageEntity
 import com.linklabs.sorcerersandspirits.data.arena.model.ArenaPlayerEntity
 import com.linklabs.sorcerersandspirits.nullOnTransactionDecodeCrashSerializer
 import dev.gitlive.firebase.database.DatabaseReference
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Connects a user to the arena. Uses a transaction so the first player initializes the match, and
@@ -24,6 +25,8 @@ internal class ConnectToArena(
             existingMatch.connectToArenaTransaction(messagesReference = messagesReference)
         }
         true
+    } catch (cancellation: CancellationException) {
+        throw cancellation
     } catch (_: Exception) {
         false
     }

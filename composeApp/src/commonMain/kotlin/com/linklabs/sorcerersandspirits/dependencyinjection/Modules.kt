@@ -39,6 +39,7 @@ import com.linklabs.sorcerersandspirits.domain.authentication.GetUserIdUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserAnonymousUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.SessionStore
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInAnonymouslyUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.LinkAccountUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
@@ -178,6 +179,7 @@ private fun Module.initializeUseCases() {
     factoryOf(::RemoveDisconnectedPlayerUseCase)
     factoryOf(::SetCurrentTravelerAvailableUseCase)
     factoryOf(::SendChallengeUseCase)
+    factoryOf(::SignInAnonymouslyUseCase)
     factoryOf(::SignInWithSocialUseCase)
     factoryOf(::SignOutUseCase)
     factoryOf(::StartComputerOpponentMatchUseCase)

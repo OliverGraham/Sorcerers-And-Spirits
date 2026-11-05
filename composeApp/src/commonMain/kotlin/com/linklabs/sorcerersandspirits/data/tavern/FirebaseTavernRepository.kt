@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.transformLatest
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.ExperimentalTime
 
 class FirebaseTavernRepository(
@@ -106,6 +107,8 @@ class FirebaseTavernRepository(
             )
 
             SendChallengeResult.Success(challengeId = challengeId)
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (_: Exception) {
             releaseTravelersIfMailboxMatches(userIds = claimedUserIds, challengeId = challengeId)
             SendChallengeResult.Failure(errorMessage = SEND_RESULT_FAILURE_MESSAGE)

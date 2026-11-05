@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.cancellation.CancellationException
 
 class FirebaseProfileRepository(
     private val database: FirebaseFirestore,
@@ -157,6 +158,8 @@ class FirebaseProfileRepository(
                 .data<ProfileEntity?>()
                 ?.toDomain()
         }
+    } catch (cancellation: CancellationException) {
+        throw cancellation
     } catch (_: Exception) {
         null
     }

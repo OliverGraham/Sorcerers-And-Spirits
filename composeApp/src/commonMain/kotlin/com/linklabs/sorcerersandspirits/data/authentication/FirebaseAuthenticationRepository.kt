@@ -15,10 +15,13 @@ import dev.gitlive.firebase.auth.FirebaseAuthInvalidCredentialsException
 import dev.gitlive.firebase.auth.FirebaseAuthInvalidUserException
 import dev.gitlive.firebase.auth.FirebaseAuthUserCollisionException
 import dev.gitlive.firebase.auth.FirebaseAuthWeakPasswordException
+import dev.gitlive.firebase.auth.FirebaseUser
 import dev.gitlive.firebase.auth.GoogleAuthProvider
 import dev.gitlive.firebase.auth.OAuthProvider
 import dev.gitlive.firebase.auth.auth
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlin.coroutines.cancellation.CancellationException
 
 private const val APPLE_PROVIDER_ID = "apple.com"
 
@@ -33,12 +36,18 @@ class FirebaseAuthenticationRepository(
 ) : AuthenticationRepository {
     private val auth: FirebaseAuth = Firebase.auth
 
-    override fun getUserId() = auth.currentUser?.uid ?: sessionStore.cached()?.userId
+    override fun getUserId() = auth.currentUser?.uid
 
-    override suspend fun isSignedIn(): Boolean {
-        val localSession = sessionStore.restore()
-        val firebaseUser = auth.authStateChanged.first()
-        return firebaseUser != null || localSession != null
+    override suspend fun isSignedIn(): Boolean = awaitRestoredUser() != null
+
+    private suspend fun awaitRestoredUser(): FirebaseUser? {
+        val liveUser = auth.currentUser
+        if (liveUser != null) return liveUser
+
+        val hasOnboardedBefore = sessionStore.restore() != null
+        if (!hasOnboardedBefore) return null
+
+        return auth.authStateChanged.filterNotNull().first()
     }
 
     override fun isAnonymous(): Boolean = auth.currentUser?.isAnonymous ?: true
@@ -48,7 +57,13 @@ class FirebaseAuthenticationRepository(
         return providers.any { it.providerId == APPLE_PROVIDER_ID }
     }
 
-    override suspend fun signInAnonymously() = auth.signInAnonymously().user?.uid
+    override suspend fun signInAnonymously(): String? = try {
+        auth.signInAnonymously().user?.uid
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Exception) {
+        null
+    }
 
     override suspend fun signOut() {
         auth.signOut()
@@ -59,6 +74,8 @@ class FirebaseAuthenticationRepository(
         revokeAppleTokenIfNeeded()
         try {
             auth.currentUser?.delete()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (_: Exception) {}
     }
 
@@ -102,6 +119,8 @@ class FirebaseAuthenticationRepository(
         LinkAccountResult.INVALID_CREDENTIAL
     } catch (_: FirebaseAuthInvalidCredentialsException) {
         LinkAccountResult.INVALID_CREDENTIAL
+    } catch (cancellation: CancellationException) {
+        throw cancellation
     } catch (_: Exception) {
         LinkAccountResult.ERROR
     }
@@ -117,6 +136,8 @@ class FirebaseAuthenticationRepository(
     } catch (_: FirebaseAuthInvalidCredentialsException) {
         // The email exists but the password is wrong.
         LinkAccountResult.INVALID_CREDENTIAL
+    } catch (cancellation: CancellationException) {
+        throw cancellation
     } catch (_: Exception) {
         LinkAccountResult.ERROR
     }
@@ -139,6 +160,8 @@ class FirebaseAuthenticationRepository(
             LinkAccountResult.INVALID_CREDENTIAL
         } catch (_: FirebaseAuthInvalidCredentialsException) {
             LinkAccountResult.INVALID_CREDENTIAL
+        } catch (cancellation: CancellationException) {
+            throw cancellation
         } catch (_: Exception) {
             LinkAccountResult.ERROR
         }
@@ -154,6 +177,8 @@ class FirebaseAuthenticationRepository(
         LinkAccountResult.SUCCESS
     } catch (_: FirebaseAuthInvalidCredentialsException) {
         LinkAccountResult.INVALID_CREDENTIAL
+    } catch (cancellation: CancellationException) {
+        throw cancellation
     } catch (_: Exception) {
         LinkAccountResult.ERROR
     }

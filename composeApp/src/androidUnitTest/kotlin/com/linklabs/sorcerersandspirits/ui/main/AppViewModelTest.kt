@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
+import com.linklabs.sorcerersandspirits.domain.authentication.SignInAnonymouslyUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
@@ -60,6 +61,7 @@ class AppViewModelTest {
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase = mockk()
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase = mockk(relaxed = true)
     private val isUserSignedInUseCase: IsUserSignedInUseCase = mockk()
+    private val signInAnonymouslyUseCase: SignInAnonymouslyUseCase = mockk(relaxed = true)
     private val signInWithSocialUseCase: SignInWithSocialUseCase = mockk(relaxed = true)
     private val signOutUseCase: SignOutUseCase = mockk(relaxed = true)
     private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase =
@@ -101,6 +103,7 @@ class AppViewModelTest {
         getRandomTravelerNameUseCase = getRandomTravelerNameUseCase,
         initializeGameConfigUseCase = initializeGameConfigUseCase,
         isUserSignedInUseCase = isUserSignedInUseCase,
+        signInAnonymouslyUseCase = signInAnonymouslyUseCase,
         signInWithSocialUseCase = signInWithSocialUseCase,
         signOutUseCase = signOutUseCase,
         syncArenaMembershipOnConnectUseCase = syncArenaMembershipOnConnectUseCase,

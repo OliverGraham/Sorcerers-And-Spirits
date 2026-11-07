@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.linklabs.sorcerersandspirits.domain.arena.usecase.SyncArenaMembershipOnConnectUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.IsUserSignedInUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.LinkAccountResult
-import com.linklabs.sorcerersandspirits.domain.authentication.SignInAnonymouslyUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.SignInMethod
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignInWithSocialUseCase
 import com.linklabs.sorcerersandspirits.domain.authentication.usecase.SignOutUseCase
@@ -49,7 +48,6 @@ class AppViewModel(
     private val getRandomTravelerNameUseCase: GetRandomTravelerNameUseCase,
     private val initializeGameConfigUseCase: InitializeGameConfigUseCase,
     private val isUserSignedInUseCase: IsUserSignedInUseCase,
-    private val signInAnonymouslyUseCase: SignInAnonymouslyUseCase,
     private val signInWithSocialUseCase: SignInWithSocialUseCase,
     private val signOutUseCase: SignOutUseCase,
     private val syncArenaMembershipOnConnectUseCase: SyncArenaMembershipOnConnectUseCase,
@@ -118,17 +116,12 @@ class AppViewModel(
         screenStateJob?.cancel()
         screenStateJob =
             viewModelScope.launch {
-                val isOnline = connectivityObserver.isOnline.first()
-
-                if (isOnline) {
-                    signInAnonymouslyUseCase()
-                }
-
                 if (!isUserSignedInUseCase()) {
                     showSignInDialog()
                     return@launch
                 }
 
+                val isOnline = connectivityObserver.isOnline.first()
                 if (isOnline && getProfileUseCase() == null) {
                     showSignInDialog()
                 } else {

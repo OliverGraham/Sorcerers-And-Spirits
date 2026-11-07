@@ -21,9 +21,11 @@ import dev.gitlive.firebase.auth.OAuthProvider
 import dev.gitlive.firebase.auth.auth
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.cancellation.CancellationException
 
 private const val APPLE_PROVIDER_ID = "apple.com"
+private const val AUTH_RESTORE_TIMEOUT_MILLIS = 5000L
 
 private fun googleCredential(idToken: String, accessToken: String?): AuthCredential = GoogleAuthProvider.credential(idToken = idToken, accessToken = accessToken)
 
@@ -47,7 +49,9 @@ class FirebaseAuthenticationRepository(
         val hasOnboardedBefore = sessionStore.restore() != null
         if (!hasOnboardedBefore) return null
 
-        return auth.authStateChanged.filterNotNull().first()
+        return withTimeoutOrNull(timeMillis = AUTH_RESTORE_TIMEOUT_MILLIS) {
+            auth.authStateChanged.filterNotNull().first()
+        }
     }
 
     override fun isAnonymous(): Boolean = auth.currentUser?.isAnonymous ?: true

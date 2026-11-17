@@ -1382,6 +1382,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   stay-for-another-match path readies the bot too. Domain `ComputerOpponent`/`ComputerOpponents`
   registry keyed off a `computer-` id prefix so more bots and human/bot detection extend cleanly.
   Related: SS-122, SS-014, SS-101.
+- **SS-308** — Computer opponent bypassed human button-enable guards: gate its random action on the
+  same conditions a human faces so it can't repeat All-In in one turn (`usedThisTurn`) or redundantly
+  re-Impersonate a class it already copies / a target with no offensive ability; fix in
+  `ComputerOpponentHandler.decideIdleTurn`.
 
 ## Release & versioning
 

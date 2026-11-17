@@ -28,6 +28,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
@@ -62,7 +63,7 @@ class FirebaseArenaRepository(
         arenaId: String,
         selectedArenaPlayer: ArenaPlayer.Selected,
         nextPlayerId: String,
-    ) {
+    ) = swallowFirebaseErrors {
         ChooseCharacterClass(
             arenaReference = arenaMatchesReference.child(path = arenaId),
             selectedArenaPlayer = selectedArenaPlayer.toSelectedEntity(),
@@ -76,12 +77,18 @@ class FirebaseArenaRepository(
         expectedNumberOfPlayers: Int,
         userId: String,
         displayName: String,
-    ) = ConnectToArena(
-        expectedNumberOfPlayers = expectedNumberOfPlayers,
-        userId = userId,
-        displayName = displayName,
-    )
-        .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    ): Boolean = try {
+        ConnectToArena(
+            expectedNumberOfPlayers = expectedNumberOfPlayers,
+            userId = userId,
+            displayName = displayName,
+        )
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Throwable) {
+        false
+    }
 
     override fun connectArenaPresence(arenaId: String, userId: String) {
         val playerPresenceReference =
@@ -95,9 +102,14 @@ class FirebaseArenaRepository(
                 .distinctUntilChanged()
                 .filter { isConnected -> isConnected }
                 .onEach {
-                    playerPresenceReference.onDisconnect().setValue(value = false)
-                    playerPresenceReference.setValue(value = true)
-                    arenaMembershipReference.child(path = userId).setValue(value = arenaId)
+                    try {
+                        playerPresenceReference.onDisconnect().setValue(value = false)
+                        playerPresenceReference.setValue(value = true)
+                        arenaMembershipReference.child(path = userId).setValue(value = arenaId)
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (_: Throwable) {
+                    }
                 }
                 .launchIn(scope = coroutineScope)
     }
@@ -117,17 +129,28 @@ class FirebaseArenaRepository(
                 ?: emptyMap()
         }
         .distinctUntilChanged()
+        .catch { emit(value = emptyMap()) }
 
     private fun connectedFlow(): Flow<Boolean> = connectedReference.valueEvents.map { snapshot ->
         snapshot.value<Boolean?>() ?: false
     }
+        .catch { emit(value = false) }
 
-    override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) {
+    override suspend fun updateArenaPlayer(arenaId: String, arenaPlayer: ArenaPlayer) = swallowFirebaseErrors {
         arenaMatchesReference
             .child(path = arenaId)
             .child(path = ArenaMatchEntity.playerEntitiesMapName)
             .child(path = arenaPlayer.userId)
             .setValue(value = arenaPlayer.toEntity())
+    }
+
+    private suspend fun swallowFirebaseErrors(write: suspend () -> Unit) {
+        try {
+            write()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+        }
     }
 
     override suspend fun applyCombatResult(arenaId: String, result: ActionOutcome) {
@@ -162,13 +185,18 @@ class FirebaseArenaRepository(
             snapshot.value(strategy = ArenaMatchEntity.serializer().nullable)?.toDomain()
         }
         .distinctUntilChanged()
+        .catch { emit(value = null) }
 
-    override suspend fun exitArena(arenaId: String, userId: String) {
+    override suspend fun exitArena(arenaId: String, userId: String) = swallowFirebaseErrors {
+        exitArenaOrThrow(arenaId = arenaId, userId = userId)
+    }
+
+    private suspend fun exitArenaOrThrow(arenaId: String, userId: String) {
         removeFromMatch(arenaId = arenaId, userId = userId)
         releaseOwnArenaMembership(arenaId = arenaId, userId = userId)
     }
 
-    override suspend fun removeDisconnectedPlayer(arenaId: String, userId: String) {
+    override suspend fun removeDisconnectedPlayer(arenaId: String, userId: String) = swallowFirebaseErrors {
         removeFromMatch(arenaId = arenaId, userId = userId)
         pruneArenaPresence(arenaId = arenaId, userId = userId)
     }
@@ -196,12 +224,14 @@ class FirebaseArenaRepository(
         if (orphanedArenaId.isNullOrBlank()) return
 
         try {
-            exitArena(arenaId = orphanedArenaId, userId = userId)
+            exitArenaOrThrow(arenaId = orphanedArenaId, userId = userId)
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
-            releaseOwnArenaMembership(arenaId = orphanedArenaId, userId = userId)
-            deleteMatchIfUndecodable(arenaId = orphanedArenaId)
+            swallowFirebaseErrors {
+                releaseOwnArenaMembership(arenaId = orphanedArenaId, userId = userId)
+                deleteMatchIfUndecodable(arenaId = orphanedArenaId)
+            }
         }
     }
 
@@ -235,8 +265,10 @@ class FirebaseArenaRepository(
 
         tearDownPresenceWriter()
 
-        leavingPresenceReference?.removeValue()
-        arenaMembershipReference.child(path = leavingUserId).removeValue()
+        swallowFirebaseErrors {
+            leavingPresenceReference?.removeValue()
+            arenaMembershipReference.child(path = leavingUserId).removeValue()
+        }
     }
 
     private suspend fun tearDownPresenceWriter() {
@@ -265,12 +297,12 @@ class FirebaseArenaRepository(
         return if (snapshot.exists) snapshot.value<String?>() else null
     }
 
-    override suspend fun stayForAnotherMatch(arenaId: String, userId: String) {
+    override suspend fun stayForAnotherMatch(arenaId: String, userId: String) = swallowFirebaseErrors {
         StayForAnotherMatch(userId = userId)
             .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 
-    override suspend fun finishMatch(arenaId: String) {
+    override suspend fun finishMatch(arenaId: String) = swallowFirebaseErrors {
         FinishMatch().invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
     }
 }

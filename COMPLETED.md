@@ -1409,6 +1409,13 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   in-app delete path, an email request path (`og.singletonne@gmail.com`) for the no-app case, and what
   is deleted vs. retained (Crashlytics 90-day). Matches the privacy-policy page. Play Console Data
   safety deletion questions + honoring emailed requests remain external tasks.
+- **SS-311** — iOS Crashlytics never captured Kotlin crashes: Kotlin/Native installs its own
+  `std::terminate` handler that overwrote Crashlytics' (SDK warned about this), so uncaught Kotlin
+  exceptions died without a report — "app detected, waiting for a crash" forever. Added a
+  `setUnhandledExceptionHook` (`KotlinCrashHook.kt`) that forwards the throwable to the `CrashReporter`
+  bridge before `terminateWithUnhandledException`, wired at iOS startup in `initializeKoin`. Also set
+  the Debug build config to `dwarf-with-dsym` so simulator crashes generate + auto-upload dSYMs for
+  local verification (Release already did).
 - **SS-298** — iOS Crashlytics (finish the deferred platform): Added the `FirebaseCrashlytics` SPM
   product + a dSYM-upload build phase to the Xcode project, a Swift `CrashReporterBridge` and Kotlin
   `IosCrashReporter` actual (mirroring the sign-in bridge) wired through Koin, replacing the iOS

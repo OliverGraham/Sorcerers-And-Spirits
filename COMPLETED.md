@@ -754,6 +754,12 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-305** — Challenge send crash from owner-scoped TavernTravelers write rule: SS-304's rule
+  hardening scoped `TavernTravelers/$userId` writes to `auth.uid === $userId`, but sending a
+  challenge marks every invitee's traveler node Busy (a cross-user write), so
+  `markTravelerBusyIfAvailable` hit permission-denied and the uncaught exception (thrown in
+  `claimChallengers`, before `sendChallenge`'s try) crashed the app. Reverted that node's write to
+  `auth != null`, matching the cooperative `Challenges` / `ChallengeMailboxes` nodes; deployed to prod.
 - **SS-224** — Teleport roll-off crash / stuck roll-off / button hidden: the domain kept both
   combatants active for simultaneous rolling but the computer re-selected an already-rolled Mage
   (crashing on the uninitialized `nextCombatAction`), and `isSequencing` hid the second combatant's

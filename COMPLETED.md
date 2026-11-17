@@ -1423,6 +1423,10 @@ Active work is in [BACKLOG.md](BACKLOG.md).
   Firebase, public leaderboard + in-match presence sharing, and local session cache; hosted it on
   GitHub Pages in the public config repo and added `legal/data-safety.md` mapping every field to the
   Play Data-safety and App Store privacy-label answers. Console form entry remains an external task.
+- **SS-310** — Lower iOS deployment target to 16.7: Dropped `IPHONEOS_DEPLOYMENT_TARGET` from 18.2
+  (an Xcode default, never a real floor) to 16.7 in both Debug/Release configs, widening device reach;
+  all deps clear it — Firebase iOS SDK 12.x floors at iOS 15, GoogleSignIn 8.0 and Compose Multiplatform
+  1.10 at iOS 13.
 - **SS-070** — Investigate app version control & force-upgrade: Establish a way to gate clients by
   app version so an outdated client can be soft- or force-upgraded — important since all clients
   share one RTDB game-state schema and a stale client could read/write incompatible data.

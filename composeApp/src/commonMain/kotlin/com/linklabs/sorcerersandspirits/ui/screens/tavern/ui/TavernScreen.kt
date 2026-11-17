@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -46,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.linklabs.sorcerersandspirits.ui.common.ErrorContent
 import com.linklabs.sorcerersandspirits.ui.common.LoadingIndicator
 import com.linklabs.sorcerersandspirits.ui.common.characterclasses.CharacterClassPager
@@ -215,6 +217,12 @@ private fun TavernTopBar(onToggleBar: () -> Unit, modifier: Modifier = Modifier)
                 fontStyle = FontStyle.Italic,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
+                maxLines = 1,
+                softWrap = false,
+                autoSize = TextAutoSize.StepBased(
+                    minFontSize = 16.sp,
+                    maxFontSize = MaterialTheme.typography.headlineLarge.fontSize,
+                ),
                 modifier = Modifier.fillMaxWidth(),
             )
         },

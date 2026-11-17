@@ -754,6 +754,15 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-307** — Data-layer exception handling: never crash: Hardened every ViewModel-facing Firebase
+  call across the arena/tavern/profile repositories so a backend/permission/network throw can't reach
+  a crashing scope — `.catch` on all `valueEvents`/`snapshots`/`childEvents` flows, try/catch around
+  the fire-and-forget presence `onEach` writes, and a `swallowFirebaseErrors` guard (rethrows
+  `CancellationException`) on void writes with safe fallbacks on value-returning ones
+  (`connectToArena`→false, `sendChallenge`→Failure, `createProfile`/`updateDisplayName`→ERROR,
+  `getTopProfiles`→emptyList). Throwing inner variants (`exitArenaOrThrow`, `sendChallengeOrThrow`)
+  preserve callers' partial-failure recovery. Temporary swallow-only fix; follow-up SS-309 threads a
+  real Result/error type to UI messages.
 - **SS-306** — Arena crash when a player leaves between matches: the presence observer on the
   remaining client called `exitArena(otherUserId)`, which removed `ArenaMembership/<otherUserId>` — a
   cross-user write against the owner-scoped rule → permission-denied → uncaught in the viewModelScope

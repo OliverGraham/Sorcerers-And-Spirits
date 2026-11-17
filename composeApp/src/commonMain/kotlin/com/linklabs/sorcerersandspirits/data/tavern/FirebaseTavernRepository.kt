@@ -62,17 +62,33 @@ class FirebaseTavernRepository(
                 .distinctUntilChanged()
                 .filter { isConnected -> isConnected }
                 .onEach {
-                    dataSource.registerTravelerRemovalOnDisconnect(userId = userId)
-                    syncTravelerPresenceOnConnect(
-                        userId = userId,
-                        displayName = displayName,
-                        rating = rating,
-                    )
+                    try {
+                        dataSource.registerTravelerRemovalOnDisconnect(userId = userId)
+                        syncTravelerPresenceOnConnect(
+                            userId = userId,
+                            displayName = displayName,
+                            rating = rating,
+                        )
+                    } catch (cancellation: CancellationException) {
+                        throw cancellation
+                    } catch (_: Throwable) {
+                    }
                 }
                 .launchIn(scope = coroutineScope)
     }
 
     override suspend fun sendChallenge(
+        instigator: Challenger,
+        invitees: List<Challenger>,
+    ): SendChallengeResult = try {
+        sendChallengeOrThrow(instigator = instigator, invitees = invitees)
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Throwable) {
+        SendChallengeResult.Failure(errorMessage = SEND_RESULT_FAILURE_MESSAGE)
+    }
+
+    private suspend fun sendChallengeOrThrow(
         instigator: Challenger,
         invitees: List<Challenger>,
     ): SendChallengeResult {
@@ -119,7 +135,7 @@ class FirebaseTavernRepository(
         challengeId: String,
         userId: String,
         status: ChallengerStatus,
-    ) {
+    ) = swallowFirebaseErrors {
         dataSource.setChallengerStatus(challengeId = challengeId, userId = userId, status = status)
 
         if (status == ChallengerStatus.Declined) {
@@ -130,14 +146,22 @@ class FirebaseTavernRepository(
         reconcileChallengeState(challengeId = challengeId)
     }
 
-    override suspend fun setTravelerAvailableIfPresent(userId: String) {
+    override suspend fun setTravelerAvailableIfPresent(userId: String) = swallowFirebaseErrors {
         dataSource.setTravelerStatusIfPresent(
             userId = userId,
             tavernStatus = TavernStatus.Available,
         )
     }
 
-    @OptIn(ExperimentalTime::class)
+    private suspend fun swallowFirebaseErrors(write: suspend () -> Unit) {
+        try {
+            write()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+        }
+    }
+
     private suspend fun syncTravelerPresenceOnConnect(
         userId: String,
         displayName: String,

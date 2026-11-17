@@ -11,6 +11,7 @@ import dev.gitlive.firebase.database.DatabaseReference
 import dev.gitlive.firebase.database.FirebaseDatabase
 import dev.gitlive.firebase.database.ServerValue
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.scan
@@ -45,19 +46,23 @@ class FirebaseTavernDataSource(database: FirebaseDatabase) : TavernDataSource {
             }
         }
         .map { travelersByUserId -> travelersByUserId.values.toList() }
+        .catch { emit(value = emptyList()) }
 
     override fun mailboxChallengeIdFlow(userId: String): Flow<String?> = mailboxChallengesReference.child(path = userId).valueEvents.map { snapshot ->
         if (snapshot.exists) snapshot.value(strategy = String.serializer().nullable) else null
     }
+        .catch { emit(value = null) }
 
     override fun challengeEntityFlow(challengeId: String): Flow<ChallengeEntity?> = challengesReference.child(path = challengeId).valueEvents.map { snapshot ->
         snapshot.value(strategy = ChallengeEntity.serializer().nullable)
     }
+        .catch { emit(value = null) }
 
     override fun connectedFlow(): Flow<Boolean> = connectedReference.valueEvents.map { snapshot ->
         snapshot.value<Boolean?>()
             ?: false
     }
+        .catch { emit(value = false) }
 
     override suspend fun getMailboxChallengeId(userId: String): String? = mailboxChallengesReference.child(path = userId).awaitNullableValue<String>()
 

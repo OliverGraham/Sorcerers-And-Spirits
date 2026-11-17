@@ -14,6 +14,7 @@ import dev.gitlive.firebase.firestore.FieldValue
 import dev.gitlive.firebase.firestore.FirebaseFirestore
 import dev.gitlive.firebase.firestore.Transaction
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
@@ -29,11 +30,11 @@ class FirebaseProfileRepository(
     private val displayNamesCollection =
         database.collection(collectionPath = FireStoreKeys.DISPLAY_NAMES)
 
-    override suspend fun createProfile(profile: Profile): DisplayNameResult {
+    override suspend fun createProfile(profile: Profile): DisplayNameResult = try {
         val profileRef = profilesCollection.document(documentPath = profile.userId)
         val nameRef = displayNameReference(displayName = profile.displayName)
 
-        return database.runTransaction {
+        database.runTransaction {
             if (isReservedByOther(nameRef = nameRef, userId = profile.userId)) {
                 return@runTransaction DisplayNameResult.NAME_TAKEN
             }
@@ -42,9 +43,13 @@ class FirebaseProfileRepository(
             reserve(nameRef = nameRef, userId = profile.userId, displayName = profile.displayName)
             DisplayNameResult.SUCCESS
         }
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Throwable) {
+        DisplayNameResult.ERROR
     }
 
-    override suspend fun deleteProfile(userId: String) {
+    override suspend fun deleteProfile(userId: String) = swallowFirebaseErrors {
         val profileRef = profilesCollection.document(documentPath = userId)
 
         database.runTransaction {
@@ -74,12 +79,18 @@ class FirebaseProfileRepository(
         return cachedProfileFor(userId = userId)
     }
 
-    override suspend fun getTopProfiles(limit: Int): List<Profile> = profilesCollection
-        .orderBy(field = OVERALL_GAUNTLETS_WON_PATH, direction = Direction.DESCENDING)
-        .limit(limit = limit)
-        .get()
-        .documents
-        .mapNotNull { document -> document.data<ProfileEntity?>()?.toDomain() }
+    override suspend fun getTopProfiles(limit: Int): List<Profile> = try {
+        profilesCollection
+            .orderBy(field = OVERALL_GAUNTLETS_WON_PATH, direction = Direction.DESCENDING)
+            .limit(limit = limit)
+            .get()
+            .documents
+            .mapNotNull { document -> document.data<ProfileEntity?>()?.toDomain() }
+    } catch (cancellation: CancellationException) {
+        throw cancellation
+    } catch (_: Throwable) {
+        emptyList()
+    }
 
     override fun getProfileFlow(userId: String): Flow<Profile?> = profilesCollection.document(documentPath = userId).snapshots.map { snapshot ->
         snapshot.data<ProfileEntity?>()?.toDomain()
@@ -88,6 +99,11 @@ class FirebaseProfileRepository(
             cacheSession(profile = profile)
         }
     }.onStart {
+        val cachedProfile = cachedProfileFor(userId = userId)
+        if (cachedProfile != null) {
+            emit(cachedProfile)
+        }
+    }.catch {
         val cachedProfile = cachedProfileFor(userId = userId)
         if (cachedProfile != null) {
             emit(cachedProfile)
@@ -101,27 +117,33 @@ class FirebaseProfileRepository(
         val profileRef = profilesCollection.document(documentPath = userId)
         val newNameRef = displayNameReference(displayName = newDisplayName)
 
-        return database.runTransaction {
-            if (isReservedByOther(nameRef = newNameRef, userId = userId)) {
-                return@runTransaction DisplayNameResult.NAME_TAKEN
-            }
-
-            // Firestore requires all reads before any writes, so read the old name here.
-            val currentDisplayName =
-                get(documentRef = profileRef).data<ProfileEntity?>()?.displayName
-
-            val nameToRelease =
-                currentDisplayName?.takeIf {
-                    it.isNotBlank() && it.normalize() != newDisplayName.normalize()
+        return try {
+            database.runTransaction {
+                if (isReservedByOther(nameRef = newNameRef, userId = userId)) {
+                    return@runTransaction DisplayNameResult.NAME_TAKEN
                 }
 
-            if (nameToRelease != null) {
-                delete(documentRef = displayNameReference(displayName = nameToRelease))
-            }
+                // Firestore requires all reads before any writes, so read the old name here.
+                val currentDisplayName =
+                    get(documentRef = profileRef).data<ProfileEntity?>()?.displayName
 
-            reserve(nameRef = newNameRef, userId = userId, displayName = newDisplayName)
-            updateFields(documentRef = profileRef) { FireStoreKeys.DISPLAY_NAME to newDisplayName }
-            DisplayNameResult.SUCCESS
+                val nameToRelease =
+                    currentDisplayName?.takeIf {
+                        it.isNotBlank() && it.normalize() != newDisplayName.normalize()
+                    }
+
+                if (nameToRelease != null) {
+                    delete(documentRef = displayNameReference(displayName = nameToRelease))
+                }
+
+                reserve(nameRef = newNameRef, userId = userId, displayName = newDisplayName)
+                updateFields(documentRef = profileRef) { FireStoreKeys.DISPLAY_NAME to newDisplayName }
+                DisplayNameResult.SUCCESS
+            }
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
+            DisplayNameResult.ERROR
         }
     }
 
@@ -129,9 +151,11 @@ class FirebaseProfileRepository(
         val increments = delta.toStatIncrements()
         if (increments.isEmpty()) return
 
-        profilesCollection.document(documentPath = userId).updateFields {
-            increments.forEach { (fieldPathSegments, amount) ->
-                FieldPath(*fieldPathSegments.toTypedArray()) to FieldValue.increment(value = amount)
+        swallowFirebaseErrors {
+            profilesCollection.document(documentPath = userId).updateFields {
+                increments.forEach { (fieldPathSegments, amount) ->
+                    FieldPath(*fieldPathSegments.toTypedArray()) to FieldValue.increment(value = amount)
+                }
             }
         }
     }
@@ -143,10 +167,21 @@ class FirebaseProfileRepository(
     ) {
         if (achievementIds.isEmpty()) return
 
-        profilesCollection.document(documentPath = userId).updateFields {
-            achievementIds.forEach { achievementId ->
-                FieldPath(FireStoreKeys.UNLOCKED_ACHIEVEMENTS, achievementId.name) to unlockedAt
+        swallowFirebaseErrors {
+            profilesCollection.document(documentPath = userId).updateFields {
+                achievementIds.forEach { achievementId ->
+                    FieldPath(FireStoreKeys.UNLOCKED_ACHIEVEMENTS, achievementId.name) to unlockedAt
+                }
             }
+        }
+    }
+
+    private suspend fun swallowFirebaseErrors(write: suspend () -> Unit) {
+        try {
+            write()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Throwable) {
         }
     }
 

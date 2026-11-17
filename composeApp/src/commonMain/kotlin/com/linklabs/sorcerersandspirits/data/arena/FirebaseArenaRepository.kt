@@ -164,18 +164,22 @@ class FirebaseArenaRepository(
         .distinctUntilChanged()
 
     override suspend fun exitArena(arenaId: String, userId: String) {
-        ExitArena(userId = userId)
-            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
-
-        releaseArenaMembership(arenaId = arenaId, userId = userId)
+        removeFromMatch(arenaId = arenaId, userId = userId)
+        releaseOwnArenaMembership(arenaId = arenaId, userId = userId)
     }
 
-    private suspend fun releaseArenaMembership(arenaId: String, userId: String) {
-        val isSelf = userId == presenceUserId
-        if (isSelf) {
-            tearDownPresenceWriter()
-        }
+    override suspend fun removeDisconnectedPlayer(arenaId: String, userId: String) {
+        removeFromMatch(arenaId = arenaId, userId = userId)
+        pruneArenaPresence(arenaId = arenaId, userId = userId)
+    }
 
+    private suspend fun removeFromMatch(arenaId: String, userId: String) {
+        ExitArena(userId = userId)
+            .invoke(arenaReference = arenaMatchesReference.child(path = arenaId))
+    }
+
+    private suspend fun releaseOwnArenaMembership(arenaId: String, userId: String) {
+        tearDownPresenceWriter()
         pruneArenaPresence(arenaId = arenaId, userId = userId)
         arenaMembershipReference.child(path = userId).removeValue()
     }
@@ -196,7 +200,7 @@ class FirebaseArenaRepository(
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
-            releaseArenaMembership(arenaId = orphanedArenaId, userId = userId)
+            releaseOwnArenaMembership(arenaId = orphanedArenaId, userId = userId)
             deleteMatchIfUndecodable(arenaId = orphanedArenaId)
         }
     }

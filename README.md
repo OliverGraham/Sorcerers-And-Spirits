@@ -7,9 +7,6 @@ Players pick a class — each with a distinct offensive and defensive special ab
 an arena where combat is resolved with dice. Matches are grouped into a three-match *Gauntlet*, and
 game state is shared and persisted live across devices through Firebase.
 
-> Art and audio are placeholder assets; this repository is shared primarily to show the architecture
-> and engineering.
-
 ## Tech stack
 
 - **Kotlin Multiplatform** — one shared codebase targeting Android and iOS.

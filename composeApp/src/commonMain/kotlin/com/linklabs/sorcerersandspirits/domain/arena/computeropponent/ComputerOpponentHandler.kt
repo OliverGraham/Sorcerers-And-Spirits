@@ -157,10 +157,14 @@ class ComputerOpponentHandler(
         offensiveAbility: OffensiveAbility,
     ): ComputerOpponentDecision.UseAbility? = when (offensiveAbility) {
         is OffensiveAbility.AllIn ->
-            ComputerOpponentDecision.UseAbility(
-                abilityAction = AbilityAction.Activated.AllIn(allInAbility = offensiveAbility),
-                targetUserId = "",
-            )
+            if (offensiveAbility.usedThisTurn) {
+                null
+            } else {
+                ComputerOpponentDecision.UseAbility(
+                    abilityAction = AbilityAction.Activated.AllIn(allInAbility = offensiveAbility),
+                    targetUserId = "",
+                )
+            }
 
         is OffensiveAbility.SummonMinion ->
             ComputerOpponentDecision.UseAbility(
@@ -177,7 +181,7 @@ class ComputerOpponentHandler(
             }
 
         is OffensiveAbility.Impersonate ->
-            randomLivingOpponentUserId()?.let { targetUserId ->
+            randomImpersonationTargetUserId(impersonateAbility = offensiveAbility)?.let { targetUserId ->
                 ComputerOpponentDecision.UseAbility(
                     abilityAction =
                     AbilityAction.Activated.Impersonate(
@@ -210,6 +214,31 @@ class ComputerOpponentHandler(
         }
         .randomOrNull()
         ?.userId
+
+    private fun ArenaMatch.Combat.randomImpersonationTargetUserId(
+        impersonateAbility: OffensiveAbility.Impersonate,
+    ): String? = playerMap.values
+        .filter { player ->
+            val isLivingOpponent =
+                player.userId != computerUserId && player.characterClass.hitPoints > 0
+            val isRedundant =
+                isImpersonateRedundant(
+                    targetOffensiveAbility = player.characterClass.offensiveAbility,
+                    copiedAbility = impersonateAbility.impersonatedAbility,
+                )
+            isLivingOpponent && !isRedundant
+        }
+        .randomOrNull()
+        ?.userId
+
+    private fun isImpersonateRedundant(
+        targetOffensiveAbility: OffensiveAbility,
+        copiedAbility: OffensiveAbility,
+    ): Boolean {
+        if (targetOffensiveAbility is OffensiveAbility.None) return true
+        if (copiedAbility is OffensiveAbility.None) return false
+        return targetOffensiveAbility::class == copiedAbility::class
+    }
 }
 
 internal fun AbilityAction.rerollingHigherMirrorImageDie(): AbilityAction {

@@ -105,6 +105,12 @@ live here and apply every turn.
   packages (one cohesive component + its private helpers per file) before a file bloats past a few
   hundred lines. Bundle a long param list into an existing state holder.
 
+## Resilience
+
+- **An uncaught exception must NEVER crash the app — absolute.** Catch at the data layer and
+  propagate a `Result`/error type up through Domain to a UI error message; a backend/permission error
+  is a handled result, never fatal. Always rethrow `CancellationException`.
+
 ## Communication
 
 - **Plain, professional language — no absorbed jargon.** Never say "clobber" (use "overwrite"/"replace"/

@@ -225,6 +225,19 @@ are archived in [COMPLETED.md](COMPLETED.md).
 
 ## Config & Infrastructure
 
+### SS-307 — Data-layer exception handling: never crash, propagate a Result to the UI
+
+- [ ] Not completed
+- **Goal:** Enforce the hard rule (CLAUDE.md Resilience): an uncaught exception must never crash the
+  app. Catch exceptions in the **data layer** (repositories/data sources) and propagate a `Result` /
+  error type up through Domain to a UI error message — never let a backend/permission/network error
+  become fatal. Always rethrow `CancellationException`.
+- **Scope:** Audit every data-layer try/catch and every Firebase read/write (RTDB + Firestore) call
+  site for unhandled throws; standardize on one error-result type and the mapping to a UI error
+  message. SS-305/SS-306 were point fixes of this same class — this ticket makes it systemic.
+- **Done when:** data-layer Firebase calls can't propagate an uncaught exception to a crashing scope,
+  and the pattern is consistent across arena/tavern/profile repositories.
+
 ### SS-304 — Make the GitHub repo public (for portfolio/employer visibility)
 
 - [ ] Not completed

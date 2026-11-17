@@ -754,6 +754,14 @@ Active work is in [BACKLOG.md](BACKLOG.md).
 
 ## Bugs
 
+- **SS-306** — Arena crash when a player leaves between matches: the presence observer on the
+  remaining client called `exitArena(otherUserId)`, which removed `ArenaMembership/<otherUserId>` — a
+  cross-user write against the owner-scoped rule → permission-denied → uncaught in the viewModelScope
+  presence collector → both clients crashed. Split the repo: `removeDisconnectedPlayer` prunes
+  match+presence only (never another user's membership); `exitArena` is self-only and the sole
+  membership-removal path. Wrapped `RemoveDisconnectedPlayerUseCase` so best-effort cleanup can't
+  crash. Also loosened the `ArenaMembership` write rule to `auth != null` for immediate relief on
+  already-installed clients. Follow-up: SS-307 (systemic data-layer error handling).
 - **SS-305** — Challenge send crash from owner-scoped TavernTravelers write rule: SS-304's rule
   hardening scoped `TavernTravelers/$userId` writes to `auth.uid === $userId`, but sending a
   challenge marks every invitee's traveler node Busy (a cross-user write), so
